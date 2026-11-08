@@ -37,7 +37,7 @@ export interface CheckInStore {
   photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
-  /** The member's 练了 check-ins made from `since` on, the earliest made first. */
+  /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
     readonly since: Date;
@@ -59,7 +59,7 @@ export interface CheckInStore {
    * each once.
    */
   squadsCheckedInto(query: DayRange & { readonly before: Date }): Promise<SquadId[]>;
-  /** A member's 练了 for days `from` to `to`, by day, then the earliest made first. */
+  /** A member's 训练 for days `from` to `to`, by day, then the earliest made first. */
   trainingsForMember(query: {
     readonly member: MemberId;
     readonly from: string;
@@ -217,7 +217,7 @@ export interface WeeklyPlanStore {
     readonly days: PlanDays;
   }): Promise<void>;
   /**
-   * Saves the member's plan for a week, replacing any saved before, with the days a 练了 turned
+   * Saves the member's plan for a week, replacing any saved before, with the days a 训练 turned
    * into training (none when left out).
    */
   save(plan: {
@@ -226,7 +226,7 @@ export interface WeeklyPlanStore {
     readonly days: PlanDays;
     readonly trainedBy?: TrainedBy;
   }): Promise<void>;
-  /** The days of the member's saved plan for `weekStart` a 练了 turned into training. */
+  /** The days of the member's saved plan for `weekStart` a 训练 turned into training. */
   trainedBy(member: MemberId, weekStart: WeekStart): Promise<TrainedBy>;
   /** The member's 饮食小目标 saved for `weekStart`; goals don't carry over to later weeks. */
   fuelGoals(member: MemberId, weekStart: WeekStart): Promise<FuelGoals | undefined>;

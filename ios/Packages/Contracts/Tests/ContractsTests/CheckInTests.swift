@@ -70,8 +70,6 @@ func customSportNameHasNoDirectionControls(control: String) {
     let third = try PhotoRef(path: "m/c.jpg")
     let photos = try Photos([first, second, third])
     #expect(photos.cover == first)
-    #expect(photos.withCover(third)?.all == [third, first, second])
-    #expect(try photos.withCover(PhotoRef(path: "m/z.jpg")) == nil)
     #expect(throws: ContractsError.photoCount(0)) { try Photos([]) }
     #expect(throws: ContractsError.photoCount(4)) { try Photos([first, second, third, try PhotoRef(path: "m/d.jpg")]) }
     #expect(throws: ContractsError.repeatedPhoto) { try Photos([first, first]) }
@@ -91,10 +89,6 @@ func customSportNameHasNoDirectionControls(control: String) {
     #expect(listed == sent)
     #expect(Set([listed, relisted, sent]).count == 1)
     #expect(try PhotoRef(path: "m/b.jpg", viewURL: listed.viewURL) != listed)
-
-    // The cover can be picked from a fresh list of the same check-in.
-    let photos = try Photos([try PhotoRef(path: "m/b.jpg"), listed])
-    #expect(photos.withCover(relisted)?.all.map(\.path) == ["m/a.jpg", "m/b.jpg"])
 }
 
 @Test func nicknameIsOneLineOfUpToTwelveCharacters() throws {

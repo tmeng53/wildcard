@@ -513,22 +513,6 @@
         }
       }
     },
-    "分钟" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "min"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "分鐘"
-          }
-        }
-      }
-    },
     "删除" : {
       "localizations" : {
         "en" : {

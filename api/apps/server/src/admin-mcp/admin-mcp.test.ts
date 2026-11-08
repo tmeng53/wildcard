@@ -826,6 +826,11 @@ describe('the admin MCP server', () => {
         ['change_coach_settings', { model: 'anthropic/claude-haiku-5-5' }],
         ['change_coach_settings', {}],
         ['put_coach', { id: 'nuannuan', name: '暖暖' }],
+        // Leaving out the translations would take them away: refused like any field.
+        [
+          'put_coach',
+          Object.fromEntries(Object.entries(edit).filter(([key]) => key !== 'translations')),
+        ],
       ] as const) {
         expect((await call(name, args)).isError).toBe(true);
       }

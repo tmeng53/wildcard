@@ -65,6 +65,8 @@ public enum AppDestination: Hashable, Sendable {
     case schedule
     /// 小队.
     case squad
+    /// 教练招聘会, over 今天.
+    case coaches
     /// 动态.
     case feed
     /// The squad's 战报 for the week starting `week`.

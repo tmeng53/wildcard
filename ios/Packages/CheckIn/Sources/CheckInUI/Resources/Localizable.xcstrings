@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "招聘教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hire a coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "招聘教練"
+          }
+        }
+      }
+    },
     "继续编辑": {
       "localizations": {
         "en": {
@@ -653,22 +669,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "改回我寫的"
-          }
-        }
-      }
-    },
-    "编个借口吧…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Make up an excuse…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "找個藉口吧…"
           }
         }
       }
@@ -1453,22 +1453,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "訓練日"
-          }
-        }
-      }
-    },
-    "全屏看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens full screen"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "全螢幕看"
           }
         }
       }

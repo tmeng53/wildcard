@@ -4,7 +4,7 @@ import Testing
 
 @testable import ScheduleDomain
 
-/// The 每周模板 beside the weeks: shown and planned like a week, saved apart from them, and
+/// The 我的每周计划 beside the weeks: shown and planned like a week, saved apart from them, and
 /// offered after a week's plan changes.
 @MainActor
 struct ScheduleStoreTemplateTests {

@@ -32,14 +32,14 @@ const Unlock = z
     reason: z
       .strictObject({
         sports: z.array(SportId).meta({
-          description: 'The sports whose 练了 counted; empty for any sport.',
+          description: 'The sports whose 训练 counted; empty for any sport.',
           example: ['tennis', 'pickleball', 'squash'],
         }),
         checkIns: z
           .int()
           .min(1)
           .max(AFTER_MAX)
-          .meta({ description: 'How many 练了 check-ins in them it took.', example: 3 }),
+          .meta({ description: 'How many 训练 check-ins in them it took.', example: 3 }),
       })
       .openapi('UnlockReason'),
   })
@@ -59,14 +59,14 @@ const LockedPiece = z
   .strictObject({
     id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'lap-singlet' }),
     sports: z.array(SportId).meta({
-      description: 'The sports whose 练了 count towards it; empty for any sport.',
+      description: 'The sports whose 训练 count towards it; empty for any sport.',
       example: ['run', 'walk'],
     }),
     checkInsToGo: z
       .int()
       .min(1)
       .max(AFTER_MAX)
-      .meta({ description: 'How many more 练了 check-ins in its sports open it.', example: 2 }),
+      .meta({ description: 'How many more 训练 check-ins in its sports open it.', example: 2 }),
   })
   .openapi('LockedPiece');
 
@@ -79,7 +79,7 @@ const ShelfStore = z
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
       description:
-        'For a store whose rule the member hasn’t reached yet: how many more 练了 check-ins ' +
+        'For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins ' +
         'in its sports open it.',
     }),
   })
@@ -96,17 +96,17 @@ const ShelfPiece = z
         'other starter that is out now, `locked` for one still to earn (a 「？」 box).',
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
-      description: 'For a locked piece: how many more 练了 check-ins in its sports open it.',
+      description: 'For a locked piece: how many more 训练 check-ins in its sports open it.',
     }),
     sports: z.array(SportId).meta({
-      description: 'The sports whose 练了 count towards it; empty for any sport.',
+      description: 'The sports whose 训练 count towards it; empty for any sport.',
       example: ['ski', 'snowboard'],
     }),
     checkIns: z
       .int()
       .min(0)
       .max(AFTER_MAX)
-      .meta({ description: 'How many 练了 check-ins it takes; 0 for a starter.', example: 1 }),
+      .meta({ description: 'How many 训练 check-ins it takes; 0 for a starter.', example: 1 }),
   })
   .openapi('ShelfPiece');
 const GiftedPiece = z
@@ -190,7 +190,7 @@ export function unlocks(deps: {
     operationId: 'getMyUnlocks',
     summary: 'The stores, props and pieces the signed-in member unlocked',
     description:
-      'Stores on the character editor’s 商店街, props and clothing pieces open by 练了 ' +
+      'Stores on the character editor’s 商店街, props and clothing pieces open by 训练 ' +
       'check-ins in their sports, counting only those made since the rule was added; pieces a ' +
       'squad’s coach gave come apart, in `gifts`. Starters ' +
       '(WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and ' +

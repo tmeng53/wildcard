@@ -33,22 +33,6 @@
         }
       }
     },
-    "出赛表": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lineup"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "出賽表"
-          }
-        }
-      }
-    },
     "我": {
       "localizations": {
         "en": {
@@ -301,22 +285,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ 的本週頒獎卡住了：試了 %2$@ 次，最後一次是 %3$@。去儲值吧"
-          }
-        }
-      }
-    },
-    "加载中": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Loading"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "載入中"
           }
         }
       }

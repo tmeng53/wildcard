@@ -4,7 +4,7 @@ import Foundation
 import ScenePickDomain
 import SquadDomain
 
-/// 小队设置 over our API: the member's first squad with its members' characters, the week's
+/// 小队设置 over our API: the member's squad with its members' characters, the week's
 /// scene and its coach, and the captain's changes, leaving, the scene pick and the coach.
 public struct APISquadSettingsService: SquadSettingsService {
     private let api: WildcardAPI
