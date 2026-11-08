@@ -925,6 +925,70 @@
         }
       }
     },
+    "换成%@？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to %@?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換成%@？"
+          }
+        }
+      }
+    },
+    "%@会离开，%@会来": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ will leave, and %2$@ will come"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@會離開，%2$@會來"
+          }
+        }
+      }
+    },
+    "先不换": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先不換"
+          }
+        }
+      }
+    },
+    "确认换教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確認換教練"
+          }
+        }
+      }
+    },
     "先不解雇": {
       "localizations": {
         "en": {

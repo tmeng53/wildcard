@@ -122,14 +122,16 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
 
 extension InMemorySquadSettingsService {
     public func coaches() async throws(SquadError) -> [Coach] {
-        [sampleCoach]
+        sampleCoaches
     }
 
     public func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
         if failsSaving { throw .unavailable }
-        guard current.coach.canHire, coach == sampleCoach.id else { throw .outdated }
+        guard current.coach.canHire, let hired = sampleCoaches.first(where: { $0.id == coach }) else {
+            throw .outdated
+        }
         if current.coach.hire?.coach.id != coach {
-            current.coach = SquadCoach(hire: .init(coach: sampleCoach, since: .now), canHire: true)
+            current.coach = SquadCoach(hire: .init(coach: hired, since: .now), canHire: true)
         }
         return current.coach
     }
@@ -155,6 +157,15 @@ private let sampleCoach = Coach(
     id: "xiaohun", name: "毛头", title: "混混教练", catchphrase: "先动起来，证书以后再说",
     background: "体育学院刚毕业，该学的都学了，就是证还没考下来", yearsCoaching: 0, experience: "热情满格",
     style: "懂行、松弛、风趣", tags: ["体院应届", "懂行", "松弛", "风趣"], pay: "管饭就行")
+
+/// The second coach, 柚子, with the 简历 Tracy approved (2026-11-08).
+private let sampleCoaches = [
+    sampleCoach,
+    Coach(
+        id: "youzi", name: "柚子", title: "团课教练", catchphrase: "最后八个，跟上",
+        background: "持证团课教练，一周带二十节课，下了课也不走", yearsCoaching: 5, experience: "一周二十节团课",
+        style: "专业、利落、带劲", tags: ["持证上岗", "团课", "节奏感", "元气"], pay: "课别排早八"),
+]
 
 extension Squad {
     fileprivate func with(name: String? = nil, members: [MemberID]? = nil) -> Squad {

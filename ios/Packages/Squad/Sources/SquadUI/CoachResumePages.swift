@@ -44,12 +44,26 @@ public struct CoachPage: View {
                 note: model.coach?.coach.id == coach.id && note?.coach.id == coach.id ? note : nil,
                 canHire: model.canHireCoach,
                 isSaving: model.isSaving, failed: failed,
-                hire: { Task { finish(await model.hire(coach.id)) } },
+                hire: { hire(coach) },
                 change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
             FireCoachPage(
                 coach: coach, isSaving: model.isSaving, failed: failed, back: back,
                 fire: { Task { finish(await model.fireCoach()) } })
+        case .swap(let leaving, let coming):
+            SwapCoachPage(
+                leaving: leaving, coming: coming, isSaving: model.isSaving, failed: failed, back: back,
+                swap: { Task { finish(await model.hire(coming.id)) } })
+        }
+    }
+
+    /// 招聘 hires at once into an empty spot; with a coach in it, it asks first, since that
+    /// coach leaves.
+    private func hire(_ coach: Coach) {
+        if let current = model.coach?.coach, current.id != coach.id {
+            push(.swap(from: current, to: coach))
+        } else {
+            Task { finish(await model.hire(coach.id)) }
         }
     }
 
@@ -292,6 +306,68 @@ struct FireCoachPage: View {
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("coach.fire")
+    }
+}
+
+/// 换教练: the leaving coach crying on its stage, that it leaves and the other comes, 先不换 and,
+/// in red, 确认换教练.
+struct SwapCoachPage: View {
+    let leaving: Coach
+    let coming: Coach
+    let isSaving: Bool
+    let failed: Bool
+    let back: () -> Void
+    let swap: () -> Void
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Space.l) {
+                Text("换成\(coming.name)？", bundle: .module)
+                    .typeStyle(TypeRamp.largeTitle)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .accessibilityAddTraits(.isHeader)
+                CoachStage(
+                    coach: leaving.id,
+                    catchphrase: String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage),
+                    bubble: .center, figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
+                    mood: .crying, surface: .page
+                )
+                .frame(height: CoachMetrics.fireStage)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
+                Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module)
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, Space.pageMargin)
+            .padding(.top, Space.xs)
+            .padding(.bottom, Space.l)
+        }
+        .scrollIndicators(.hidden)
+        .actionBar {
+            VStack(spacing: Space.xs) {
+                if failed {
+                    InlineFailure()
+                }
+                Button(action: back) {
+                    Text("先不换", bundle: .module).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(PrimaryButtonStyle(.large))
+                .accentTone(.ink)
+                .accessibilityIdentifier("coach.swap.keep")
+                Button(action: swap) {
+                    Text("确认换教练", bundle: .module).loadingLabel(isSaving)
+                }
+                .buttonStyle(TextButtonStyle(.danger))
+                .disabled(isSaving)
+                .accessibilityIdentifier("coach.swap.confirm")
+            }
+        }
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("coach.swap")
     }
 }
 

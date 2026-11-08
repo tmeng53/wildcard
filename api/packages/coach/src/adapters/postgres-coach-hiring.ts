@@ -30,6 +30,38 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
       );
     },
 
+    async backAgain(squad) {
+      const row = await db
+        .selectFrom('squad_coaches as now')
+        .select('now.squad_id')
+        .where('now.squad_id', '=', squad)
+        .where((eb) =>
+          eb.exists(
+            eb
+              .selectFrom('squad_coach_events as before')
+              .select('before.id')
+              .whereRef('before.squad_id', '=', 'now.squad_id')
+              .whereRef('before.coach_id', '=', 'now.coach_id')
+              .where('before.kind', '=', 'fired')
+              .whereRef('before.at', '<=', 'now.hired_at'),
+          ),
+        )
+        .where((eb) =>
+          eb.not(
+            eb.exists(
+              eb
+                .selectFrom('coach_wakes as woke')
+                .select('woke.id')
+                .whereRef('woke.squad_id', '=', 'now.squad_id')
+                .where('woke.state', '=', 'done')
+                .whereRef('woke.claimed_at', '>=', 'now.hired_at'),
+            ),
+          ),
+        )
+        .executeTakeFirst();
+      return row !== undefined;
+    },
+
     async hire({ squad, coach, by }) {
       try {
         // One statement: the hire and its log row, only when the squad had no coach.

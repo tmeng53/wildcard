@@ -94,8 +94,8 @@ final class CoachHireUITests: XCTestCase {
         XCTAssertFalse(app.buttons["coach.resume.hire"].exists, "a mate can hire from 教练招聘会")
     }
 
-    /// English names are the longest; they still keep one line each. 教练招聘会 counts its one
-    /// coach in the singular.
+    /// English names are the longest; they still keep one line each. 教练招聘会 counts its
+    /// coaches.
     func testTheResumeInEnglish() {
         let app = launch(language: "en", extra: ["-squad-seat", "coached"])
         let open = app.buttons["squad.coach.open"]
@@ -108,8 +108,41 @@ final class CoachHireUITests: XCTestCase {
         // 换教练 waits on the coach's 简历 and opens 教练招聘会.
         app.buttons["coach.resume.change"].tap()
         XCTAssertTrue(
-            app.staticTexts["1 coach looking for a squad"].waitForExistence(timeout: 30),
-            "教练招聘会 doesn't count one coach in the singular")
+            app.staticTexts["2 coaches looking for a squad"].waitForExistence(timeout: 30),
+            "教练招聘会 doesn't count its coaches")
+    }
+
+    /// 换教练 asks first, since the coach the squad has leaves: 毛头 crying, that he leaves and
+    /// 柚子 comes; 先不换 goes back, 确认换教练 changes it.
+    func testTheCaptainConfirmsChangingTheCoach() {
+        let app = launch(extra: ["-squad-seat", "coached"])
+        let open = app.buttons["squad.coach.open"]
+        XCTAssertTrue(open.waitForExistence(timeout: 30), "the captain doesn't see the squad's coach")
+        open.tap()
+        let change = app.buttons["coach.resume.change"]
+        XCTAssertTrue(change.waitForExistence(timeout: 30), "the 简历 has no 换教练 for the captain")
+        change.tap()
+        let coaches = app.buttons.matching(identifier: "coach.market.coach")
+        XCTAssertTrue(coaches.element(boundBy: 1).waitForExistence(timeout: 30), "教练招聘会 shows no other coach")
+        let hireCoach = app.buttons["coach.resume.hire"]
+        tap(coaches.element(boundBy: 1), until: hireCoach, "exists == true", "柚子's 简历 has no 招聘")
+        hireCoach.tap()
+
+        let confirm = app.buttons["coach.swap.confirm"]
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "换教练 didn't ask first")
+        XCTAssertTrue(app.staticTexts["毛头会离开，柚子会来"].exists, "换教练 doesn't say who leaves and who comes")
+        assertInside(confirm, app)
+        settle()
+        keepScreenshot(named: "90-coach-swap")
+
+        app.buttons["coach.swap.keep"].tap()
+        XCTAssertTrue(hireCoach.waitForExistence(timeout: 30), "先不换 didn't go back to the 简历")
+        hireCoach.tap()
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "换教练 didn't ask again")
+        confirm.tap()
+        let week = app.staticTexts["squad.coach.week"]
+        XCTAssertTrue(week.waitForExistence(timeout: 30), "确认换教练 didn't end on 小队 with the new coach")
+        XCTAssertEqual(week.label, "执教第 1 周")
     }
 
     /// Opens 我, then 设置, then 我的小队.
