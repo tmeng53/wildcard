@@ -129,7 +129,7 @@ extension ScoreCell.Unit {
 }
 
 extension ScoreCell.Label {
-    var text: Text {
+    public var text: Text {
         switch self {
         case .duration: Text("时长", bundle: .module)
         case .distance: Text("距离", bundle: .module)

@@ -47,15 +47,33 @@ public struct CharacterStage<Content: View, Stub: View>: View {
     }
 }
 
-/// A ticket: rounded corners and a half-round notch in each side at the tear line.
+/// A ticket: rounded corners and a half-round notch in each side at the tear line, which is
+/// measured from the bottom (the character's ticket, whose stub is fixed) or from the top
+/// (`TicketCard`, whose face is).
 struct TicketShape: Shape {
-    /// How far above the bottom the notches' centers are.
-    let notchFromBottom: Double
+    private enum Tear {
+        case fromBottom(Double)
+        case fromTop(Double)
+    }
+
+    private let tear: Tear
     private let notch: Double = 11
+
+    init(notchFromBottom: Double) {
+        tear = .fromBottom(notchFromBottom)
+    }
+
+    init(tearFromTop: Double) {
+        tear = .fromTop(tearFromTop)
+    }
 
     func path(in rect: CGRect) -> Path {
         let ticket = Path(roundedRect: rect, cornerRadius: Radius.ticket, style: .continuous)
-        let y = rect.maxY - notchFromBottom
+        let y =
+            switch tear {
+            case .fromBottom(let distance): rect.maxY - distance
+            case .fromTop(let distance): rect.minY + distance
+            }
         var notches = Path()
         for side in [rect.minX, rect.maxX] {
             notches.addEllipse(in: CGRect(x: side - notch, y: y - notch, width: notch * 2, height: notch * 2))

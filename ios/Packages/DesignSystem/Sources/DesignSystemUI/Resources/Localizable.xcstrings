@@ -3424,6 +3424,38 @@
           }
         }
       }
+    },
+    "入场券：写字的卡，撕线上写，下面放照片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket: write above the tear, photos below"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入場券：寫字的卡，撕線上寫，下面放照片"
+          }
+        }
+      }
+    },
+    "昨天练腿，今天下楼都难": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leg day yesterday. Stairs are hard today."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨天練腿，今天下樓都難"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

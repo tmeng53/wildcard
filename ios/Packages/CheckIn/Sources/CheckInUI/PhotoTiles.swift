@@ -9,12 +9,13 @@ import SportsUI
 import SwiftUI
 import UIKit
 
-/// The post's photos as a row of square tiles, the cover first and marked 封面, then 「+ 照片」
-/// while there is room for another (up to three). A 训练 from Health has its map and chart among
-/// them, which don't count toward the three. + asks 拍照 or 从相册选 (straight to the album on
-/// a phone without a camera); × takes a tile off, the map too; a long press drags a tile to
-/// another place, and the first is the cover; tapping a photo shows the photos whole, full
-/// screen.
+/// The post's photos on the ticket's stub, the cover first and marked 封面, then 「+ 照片」
+/// while there is room for another (up to three). A 训练's are small 3:4 tiles in a row with the
+/// ticket's W at the end (the row slides sideways and the W makes way once it holds more than
+/// four); a meal's three fill the stub. A 训练 from Health has its map and chart among them,
+/// which don't count toward the three. + asks 拍照 or 从相册选 (straight to the album on a phone
+/// without a camera); × takes a tile off, the map too; a long press drags a tile to another
+/// place, and the first is the cover; tapping a photo shows the photos whole, full screen.
 struct PhotoTiles: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,38 +27,10 @@ struct PhotoTiles: View {
     @State private var page = 0
     @State private var isViewing = false
 
-    /// A tile's side: three photos and 「+」 fit across the smallest phone.
-    static let side: Double = 76
-
     var body: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: Space.xs) {
-                ForEach(Array(model.tiles.enumerated()), id: \.element.id) { index, tile in
-                    ComposeTile(
-                        tile: tile, number: index + 1, isCover: index == 0, model: model,
-                        view: {
-                            if case .photo(let photo) = tile, let page = model.photos.firstIndex(of: photo) {
-                                view(page)
-                            }
-                        },
-                        remove: { model.remove(tile) }
-                    )
-                    .draggable(tile.id)
-                    .dropDestination(for: String.self) { dropped, _ in
-                        guard let id = dropped.first else { return false }
-                        model.move(id, onto: tile.id)
-                        return true
-                    }
-                }
-                if model.canAddPhoto {
-                    addTile
-                }
-            }
-            // Room for the × badges and the cover's ring, which the scroll view would clip.
-            .padding(.vertical, Space.xxs)
+        Group {
+            if isWide { wide } else { strip }
         }
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.tiles)
         .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
         .photosPicker(
@@ -78,6 +51,70 @@ struct PhotoTiles: View {
         }
     }
 
+    /// A 训练's row: 60 × 80 tiles, the W at the end while it fits.
+    private var strip: some View {
+        HStack(alignment: .bottom, spacing: Space.xs) {
+            ScrollView(.horizontal) {
+                HStack(spacing: Space.xs) {
+                    tiles
+                }
+                // Room for the × badges and the cover's ring, which the scroll view would clip.
+                .padding(.vertical, Space.xxs)
+            }
+            .scrollIndicators(.hidden)
+            .scrollClipDisabled()
+            if slots <= Self.slotsBesideMark {
+                Spacer(minLength: 0)
+                TicketMark()
+                    .padding(.bottom, Space.xxs)
+            }
+        }
+    }
+
+    /// A meal's three tiles, side by side across the stub.
+    private var wide: some View {
+        HStack(spacing: Space.xs) {
+            tiles
+            ForEach(slots..<max(slots, Photos.maxCount), id: \.self) { _ in
+                Color.clear.modifier(TileFrame(isWide: true))
+            }
+        }
+        .padding(.vertical, Space.xxs)
+    }
+
+    /// The tiles, then 「+ 照片」 while there is room.
+    @ViewBuilder private var tiles: some View {
+        ForEach(Array(model.tiles.enumerated()), id: \.element.id) { index, tile in
+            ComposeTile(
+                tile: tile, number: index + 1, isCover: index == 0, model: model,
+                view: {
+                    if case .photo(let photo) = tile, let page = model.photos.firstIndex(of: photo) {
+                        view(page)
+                    }
+                },
+                remove: { model.remove(tile) }
+            )
+            .modifier(TileFrame(isWide: isWide))
+            .draggable(tile.id)
+            .dropDestination(for: String.self) { dropped, _ in
+                guard let id = dropped.first else { return false }
+                model.move(id, onto: tile.id)
+                return true
+            }
+        }
+        if model.canAddPhoto {
+            addTile.modifier(TileFrame(isWide: isWide))
+        }
+    }
+
+    private var isWide: Bool { model.kind != .trained }
+
+    /// The tiles 「+ 照片」 included.
+    private var slots: Int { model.tiles.count + (model.canAddPhoto ? 1 : 0) }
+
+    /// A 训练's row holds this many tiles before the W makes way.
+    private static let slotsBesideMark = 4
+
     private var addTile: some View {
         Button {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -97,9 +134,9 @@ struct PhotoTiles: View {
                 }
             }
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-            .frame(width: Self.side, height: Self.side)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
-                Color(role: .bgSubtle, in: theme),
+                Color(role: .bgCanvas, in: theme),
                 in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
         }
         .buttonStyle(PressableButtonStyle())
@@ -161,6 +198,22 @@ struct PhotoTiles: View {
     }
 }
 
+/// A tile's 3:4 frame: 60 × 80 in a 训练's row, a third of the stub for a meal.
+private struct TileFrame: ViewModifier {
+    let isWide: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isWide {
+            content.frame(maxWidth: .infinity).aspectRatio(3 / 4, contentMode: .fit)
+        } else {
+            content.frame(width: Self.width, height: Self.width * 4 / 3)
+        }
+    }
+
+    private static let width: Double = 60
+}
+
 /// One tile, a photo or the workout's map or chart: the cover ringed and labelled 封面, × at its
 /// corner to take it off.
 private struct ComposeTile: View {
@@ -174,8 +227,8 @@ private struct ComposeTile: View {
 
     var body: some View {
         Button(action: view) {
-            face
-                .frame(width: PhotoTiles.side, height: PhotoTiles.side)
+            Color.clear
+                .overlay { face }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
                 .overlay {
                     if isCover {
