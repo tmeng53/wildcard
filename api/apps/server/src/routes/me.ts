@@ -4,6 +4,7 @@ import {
   Birthday,
   Catchphrase,
   JerseyNumber,
+  latestBirthday,
   MemberId,
   TimeZone,
   type Members,
@@ -86,7 +87,9 @@ export const Me = z
 export const BirthdayBody = z
   .strictObject({
     version: bodyVersion(1),
-    birthday: Birthday.meta({
+    birthday: Birthday.refine((day) => day <= latestBirthday(new Date()), {
+      message: 'Must not be after today',
+    }).meta({
       description: 'The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.',
       example: '1996-04-18',
     }),

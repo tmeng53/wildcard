@@ -25,6 +25,7 @@ export {
   Swatch,
   TimeZone,
   type Squadmate,
+  latestBirthday,
 } from './domain/profile.js';
 export { ProfileMissingError, TimeZoneUnknownError } from './errors.js';
 export type { PastLocalHour, ProfileStore } from './ports.js';

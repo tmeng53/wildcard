@@ -102,13 +102,12 @@ export type JerseyNumber = z.infer<typeof JerseyNumber>;
 export const BIRTHDAY_EARLIEST = '1900-01-01';
 
 /**
- * The member's birthday, as a calendar date (`YYYY-MM-DD`): from 1900 to today, so a phone ahead
- * of UTC can give today's. Only the member gives it, and only if they choose to.
+ * The member's birthday, as a calendar date (`YYYY-MM-DD`), 1900 or later. Only the member gives
+ * it, and only if they choose to; the route that takes it also refuses one after today.
  */
 export const Birthday = z.iso
   .date()
   .refine((day) => day >= BIRTHDAY_EARLIEST, { message: `Must be ${BIRTHDAY_EARLIEST} or later` })
-  .refine((day) => day <= latestBirthday(new Date()), { message: 'Must not be after today' })
   .brand<'Birthday'>();
 export type Birthday = z.infer<typeof Birthday>;
 
