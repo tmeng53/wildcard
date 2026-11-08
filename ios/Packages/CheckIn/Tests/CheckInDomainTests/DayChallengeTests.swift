@@ -9,7 +9,7 @@ private func challenge(_ answer: CoachChallengeAnswer?, on day: LocalDay) -> Day
         challenge: CoachPageCard.Challenge(title: "拉伸", amount: 5, unit: "分钟", answer: answer))
 }
 
-@MainActor @Test func onlyAnAcceptedChallengeOfTodayShowsOnMyWeek() async throws {
+@MainActor @Test func onlyAnAcceptedChallengeTheServerCallsTodaysShowsOnMyWeek() async throws {
     let backend = ScriptedBackend(server: sampleHome())
     let today = store(backend)
     await today.load()
@@ -19,7 +19,12 @@ private func challenge(_ answer: CoachChallengeAnswer?, on day: LocalDay) -> Day
         await today.loadCoach()
         #expect((today.acceptedChallenge != nil) == shows)
     }
+    // The squad's day can be the member's yesterday: the server's word stands.
     await backend.set(challenge: challenge(.accepted, on: day.adding(days: -1)))
+    await today.loadCoach()
+    #expect(today.acceptedChallenge?.day == day.adding(days: -1))
+    // Gone on the server (a new day, or the coach switch off): gone here too.
+    await backend.set(challenge: nil)
     await today.loadCoach()
     #expect(today.acceptedChallenge == nil)
 }

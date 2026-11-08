@@ -28,21 +28,25 @@ extension TodayStore {
         await loadChallenge(in: home)
     }
 
+    /// The server says which challenge is today's, on the squad's clock (which may differ from the
+    /// member's), and none once it is gone; what was shown stays only while it can't be reached.
     private func loadChallenge(in home: Home) async {
-        guard let found = try? await backend.todayChallenge(in: home.squad.id) else { return }
-        loadedChallenge = (home.squad.id, found)
+        do {
+            loadedChallenge = (home.squad.id, try await backend.todayChallenge(in: home.squad.id))
+        } catch {}
     }
 
-    /// The day's challenge the member accepted, while its day lasts, for 我的一周 (Tracy,
+    /// The day's challenge the member accepted, as the server last said, for 我的一周 (Tracy,
     /// 2026-11-08): with 我完成了 until it is done. Nil for one declined or not yet answered.
     public var acceptedChallenge: DayChallenge? {
         guard let loadedChallenge, loadedChallenge.squad == savedHome?.squad.id,
-            let found = loadedChallenge.challenge, found.challenge.answer == .accepted, found.day == day
+            let found = loadedChallenge.challenge, found.challenge.answer == .accepted
         else { return nil }
         return found
     }
 
-    /// 我完成了: marks today's challenge done at once, and back as it was if the server refused.
+    /// 我完成了: marks today's challenge done at once; if the server refused (its day may be over on
+    /// the squad's clock), it is put back and read again.
     public func completeChallenge() async {
         guard let home = savedHome, let found = acceptedChallenge, found.challenge.completedBy == nil,
             !isCompletingChallenge
@@ -55,6 +59,7 @@ extension TodayStore {
             loadedChallenge = (home.squad.id, found.completed(by: standing))
         } catch {
             loadedChallenge = (home.squad.id, found)
+            await loadChallenge(in: home)
         }
     }
 
