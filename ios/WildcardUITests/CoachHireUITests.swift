@@ -112,6 +112,26 @@ final class CoachHireUITests: XCTestCase {
             "教练招聘会 doesn't count one coach in the singular")
     }
 
+    /// A squad without a coach has its empty spot on the home's sideline, 「招聘教练」, which opens
+    /// 教练招聘会 straight from 今天 (approved 2026-11-08).
+    func testTheHomesEmptySidelineOpensTheMarket() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+        let vacancy = app.buttons["today.coachVacancy"]
+        XCTAssertTrue(vacancy.waitForExistence(timeout: 30), "今天 has no empty spot for a coach")
+        assertInside(vacancy, app)
+        XCTAssertFalse(app.buttons["today.coach"].exists, "a coach stands on a squad that has none")
+        settle()
+        keepScreenshot(named: "81-coach-vacancy")
+
+        vacancy.tap()
+        let coach = app.buttons["coach.market.coach"].firstMatch
+        XCTAssertTrue(coach.waitForExistence(timeout: 30), "the empty spot didn't open 教练招聘会")
+    }
+
     /// Opens 我, then 设置, then 我的小队.
     private func launch(language: String = "zh-Hans", extra: [String] = []) -> XCUIApplication {
         continueAfterFailure = false

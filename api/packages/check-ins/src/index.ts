@@ -105,6 +105,7 @@ export {
   Language,
   WeekSummaryWords,
   WeekSummaryWordsChange,
+  inLanguage,
   winnerText,
 } from './domain/week-summary-words.js';
 export {

@@ -106,7 +106,8 @@ struct CommentComposer: View {
                 .lineLimit(1)
                 .padding(.horizontal, Space.s)
                 .frame(height: Sizing.compactControl)
-                .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+                .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                .overlay { Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("post.mentionCoach")
@@ -152,8 +153,13 @@ struct CommentComposer: View {
         .padding(.vertical, Space.xs)
         .frame(minHeight: Sizing.compactControl)
         .background(
-            Color(role: .bgSubtle, in: theme),
-            in: RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous))
+            Color(role: .bgCanvas, in: theme),
+            in: RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: Sizing.compactControl / 2, style: .continuous)
+                .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+        }
     }
 
     private var sendButton: some View {

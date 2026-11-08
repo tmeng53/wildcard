@@ -151,7 +151,7 @@ final class SignUpUITests: XCTestCase {
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(squadDone.waitForExistence(timeout: Self.wait), "the squad step never appeared")
         XCTAssertEqual(app.textFields["squad.name"].value as? String, "Sam's squad")
-        XCTAssertEqual(squadDone.label, "Start squad")
+        XCTAssertEqual(squadDone.label, "Start a squad")
         keepScreenshot(named: "49-signup-squad-en")
         waitFor(squadDone, "isEnabled == true", "Start squad stays off with a name")
         squadDone.tap()

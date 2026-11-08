@@ -111,10 +111,10 @@ struct DayRecapCard: View {
                 Button(action: close) {
                     Text("收起", bundle: .module)
                         .typeStyle(TypeRamp.footnoteEmphasis)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                         .padding(.horizontal, Space.s)
                         .frame(height: Sizing.tag)
-                        .background(Color(role: .bgSubtle, in: theme), in: Capsule())
+                        .background(Color(role: .bgBrand, in: theme), in: Capsule())
                         .frame(minHeight: Sizing.minimumTapTarget)
                         .contentShape(Rectangle())
                 }

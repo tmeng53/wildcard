@@ -1,4 +1,4 @@
-import type { Coach, CoachId } from '../domain/coach.js';
+import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   shownBody,
   shownPaths,
@@ -431,7 +431,8 @@ async function runWake(
     }
     const run = await deps.agent.run({
       model: settings.model,
-      instructions: instructionsOf(settings, coach),
+      // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
+      instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
       task,
       tools: toolbox({
         week,

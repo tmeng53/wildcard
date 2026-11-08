@@ -5,6 +5,7 @@ import {
   MemberId,
   SquadId,
   WeekStart,
+  inLanguage,
   winnerText,
   type CheckIns,
   type WeekSummaryWords,
@@ -77,7 +78,7 @@ export const WeekSummaryBody = z
     version: bodyVersion(1),
     language: z.string().min(1).meta({
       description:
-        'The language the words are in: today `zh-Hans` or `en`. More may come without an app release.',
+        'The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release.',
     }),
     squad: z.uuid(),
     week: z.strictObject({ from: WeekStart, to: LocalDay }),
@@ -171,7 +172,11 @@ export function weekSummary(deps: {
     });
     const words = await deps.words();
     const statsOf = (stats: typeof summary.me.stats) =>
-      stats.map(({ kind, value }) => ({ kind, label: words.stats[kind][language], value }));
+      stats.map(({ kind, value }) => ({
+        kind,
+        label: inLanguage(words.stats[kind], language),
+        value,
+      }));
     return c.json(
       {
         version: 1 as const,
@@ -181,7 +186,7 @@ export function weekSummary(deps: {
         final: summary.final,
         awards: summary.awards.map(({ kind, winners }) => ({
           kind,
-          title: words.awards[kind].title[language],
+          title: inLanguage(words.awards[kind].title, language),
           symbol: words.awards[kind].symbol,
           winners: winners.map(({ member, value, checkIn }) => ({
             member,

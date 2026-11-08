@@ -171,11 +171,8 @@ struct MainTabs: View {
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
         .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(today: today, squad: squad) { opensFeed in
-                showsCoachCard = false
-                if opensFeed { selection = .feed }
-            }
-            .environment(\.sceneTheme, today.scene)
+            CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
+                .environment(\.sceneTheme, today.scene)
         }
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
@@ -382,19 +379,7 @@ extension MainTabs {
         }
         // 小队 opens on what was read last.
         .task { if squad.load == .loading { await squad.reload() } }
-    }
-
-    /// The coach's pages on 今天's stack; taking them away goes back to 小队.
-    private var coachPages: Binding<[CoachRoute]> {
-        Binding(
-            get: {
-                todayPages.compactMap { page -> CoachRoute? in
-                    guard case .coach(let route) = page else { return nil }
-                    return route
-                }
-            },
-            set: { routes in
-                todayPages = todayPages.filter { $0 == .squad } + routes.map(TodayPage.coach)
-            })
+        // A coach hired, changed or fired, from 小队 or the sideline's empty spot, stands there.
+        .onChange(of: squad.coach?.coach.id) { Task { await today.reloadCoach() } }
     }
 }
