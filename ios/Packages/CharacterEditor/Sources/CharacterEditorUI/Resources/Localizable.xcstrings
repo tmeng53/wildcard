@@ -1586,18 +1586,18 @@
         }
       }
     },
-    "篮球 排球": {
+    "篮球 排球 足球": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Basketball, volleyball"
+            "value": "Basketball, volleyball, soccer"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "籃球 排球"
+            "value": "籃球 排球 足球"
           }
         }
       }
@@ -1618,34 +1618,34 @@
         }
       }
     },
-    "练什么都算": {
+    "什么运动都行": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Any sport counts"
+            "value": "Any sport"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "練什麼都算"
+            "value": "什麼運動都行"
           }
         }
       }
     },
-    "网球 匹克球 壁球": {
+    "网球 匹克球 羽毛球": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tennis, pickleball, squash"
+            "value": "Tennis, pickleball, badminton"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球 匹克球 壁球"
+            "value": "網球 匹克球 羽球"
           }
         }
       }
@@ -1794,34 +1794,18 @@
         }
       }
     },
-    "走路 跑步 力量训练": {
+    "跑步 快走 徒步": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Walking, running, strength"
+            "value": "Running, walking, hiking"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "走路 跑步 重訓"
-          }
-        }
-      }
-    },
-    "跑步 走路": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Running, walking"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步 走路"
+            "value": "跑步 快走 健行"
           }
         }
       }
@@ -2114,34 +2098,34 @@
         }
       }
     },
-    "跑步 3 次解锁": {
+    "跑步或快走 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 runs"
+            "value": "Unlock: 3 runs or walks"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步 3 次解鎖"
+            "value": "跑步或快走 3 次解鎖"
           }
         }
       }
     },
-    "篮球 3 次解锁": {
+    "球类 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 basketball"
+            "value": "Unlock: 3 ball games"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "籃球 3 次解鎖"
+            "value": "球類 3 次解鎖"
           }
         }
       }
@@ -2178,7 +2162,7 @@
         }
       }
     },
-    "网球类 3 次解锁": {
+    "拍类运动 3 次解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2189,7 +2173,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球類 3 次解鎖"
+            "value": "拍類運動 3 次解鎖"
           }
         }
       }
@@ -2334,6 +2318,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "再練 %lld 次"
+          }
+        }
+      }
+    },
+    "神秘款": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mystery piece"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "神秘款"
           }
         }
       }

@@ -30,7 +30,7 @@ private func files(under root: URL, as tree: String) -> [(path: String, data: Da
 @Test func everyHolidayPieceReadsAtThePathItIsUploadedTo() {
     let root = URL(filePath: #filePath).deletingLastPathComponent().appending(path: "../../HolidayArt/avatar")
     let pieces = files(under: root, as: "avatar")
-    #expect(pieces.count == 28)
+    #expect(pieces.count == 30)
     #expect(pieces.filter { !ArtTree.reads($0.data, at: $0.path) }.map(\.path) == [])
 }
 
@@ -39,6 +39,7 @@ private func files(under root: URL, as tree: String) -> [(path: String, data: Da
     #expect(!ArtTree.reads(version, at: "avatar/rig.json"))
     #expect(!ArtTree.reads(version, at: "avatar/editor.json"))
     #expect(!ArtTree.reads(version, at: "avatar/kits.json"))
+    #expect(!ArtTree.reads(version, at: "avatar/stores/lap.json"))
     #expect(!ArtTree.reads(version, at: "avatar/moves/ski.json"))
     #expect(!ArtTree.reads(version, at: "avatar/art/top/x/tones.json"))
     #expect(!ArtTree.reads(version, at: "avatar/art/top/x/notes.json"))
