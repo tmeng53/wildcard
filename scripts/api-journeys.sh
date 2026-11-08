@@ -751,8 +751,9 @@ if want weekly-awards; then
   expect 401 JOB_TOKEN_INVALID
   call POST /jobs/weekly-awards "$jobs_token"
   expect 200
-  [ "$(jq -c '[.version, (.weeks | length), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,2,true]' ] ||
-    fail "the run says which two weeks it gave and how many squads: $body"
+  # Two weeks, or three from Sunday 8pm in the earliest zone until it comes in the latest.
+  [ "$(jq -c '[.version, (.weeks | length | . == 2 or . == 3), ([.squads, .given, .failed, .told] | map(type == "number") | all)]' <<<"$body")" = '[1,true,true]' ] ||
+    fail "the run says which weeks it gave and how many squads: $body"
   echo "weekly-awards: a member's token refused (401); the scheduler's run answered for the last two awarded weeks"
 fi
 
