@@ -149,13 +149,9 @@ struct TicketArt: View {
             context.stroke(
                 tearLine, with: .color(light.opacity(0.28)), style: StrokeStyle(lineWidth: 2, dash: [4, 5]))
 
-            // The W mark in the top corner.
-            var mark = Path()
-            let strokes: [(Double, Double)] = [(0, 0), (5, 22), (10, 0), (15, 22), (20, 0)]
-            for (index, point) in strokes.enumerated() {
-                let corner = CGPoint(x: Self.edge + point.0 * 0.8, y: 18 + point.1 * 0.8)
-                if index == 0 { mark.move(to: corner) } else { mark.addLine(to: corner) }
-            }
+            // The W mark in the top corner, 16 × 17.6 from y 18 (`WMark` keeps 2 points clear above
+            // and below its points).
+            let mark = WMark().path(in: CGRect(x: Self.edge, y: 16, width: 16, height: 21.6))
             context.stroke(
                 mark, with: .color(light.opacity(0.85)),
                 style: StrokeStyle(lineWidth: 3.68, lineJoin: .miter, miterLimit: 4))

@@ -146,25 +146,16 @@ extension ScoreCell.Label {
 
 /// A 训练's 成绩条 (Tracy, 2026-11-06): its numbers side by side on the sport's scene colour,
 /// 时长 first. Under a post's cover with no seam: its top corners square against the cover's
-/// edge and its bottom ones rounded (Tracy, 2026-11-07); on the compose page each cell can be tapped
-/// to strike it out (dimmed, a line through), so it isn't posted, and tapped again to bring it
-/// back.
+/// edge and its bottom ones rounded (Tracy, 2026-11-07). Only read: the compose page strikes
+/// numbers out on cells of its own.
 public struct ScoreStrip: View {
     @Environment(\.locale) private var locale
     private let cells: [ScoreCell]
     private let colors: PostBlockColors
-    private let struck: Set<WorkoutCell>
-    private let toggle: ((WorkoutCell) -> Void)?
 
-    /// - Parameter toggle: strikes a cell out or back; nil where the strip is only read.
-    public init(
-        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell> = [],
-        toggle: ((WorkoutCell) -> Void)? = nil
-    ) {
+    public init(cells: [ScoreCell], activity: Activity) {
         self.cells = cells
         colors = PostBlockColors(kind: .trained, activity: activity)
-        self.struck = struck
-        self.toggle = toggle
     }
 
     /// The strip's height, the design's.
@@ -183,25 +174,8 @@ public struct ScoreStrip: View {
                         .frame(width: 1)
                         .padding(.vertical, Space.s)
                 }
-                if let toggle {
-                    Button {
-                        toggle(cell.cell)
-                    } label: {
-                        face(cell)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityValue(
-                        struck.contains(cell.cell) ? Text("不发", bundle: .module) : Text("发", bundle: .module)
-                    )
-                    .accessibilityHint(
-                        struck.contains(cell.cell) ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module)
-                    )
+                face(cell)
                     .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
-                } else {
-                    face(cell)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
-                }
             }
         }
         .frame(height: Self.height)
@@ -213,12 +187,10 @@ public struct ScoreStrip: View {
     }
 
     private func face(_ cell: ScoreCell) -> some View {
-        let isStruck = struck.contains(cell.cell)
-        return VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Text(verbatim: cell.value)
                     .typeStyle(TypeRamp.scoreInline)
-                    .strikethrough(isStruck, pattern: .solid)
                 if let unit = cell.unit {
                     unit.text.typeStyle(TypeRamp.label)
                 }
@@ -231,8 +203,6 @@ public struct ScoreStrip: View {
         .minimumScaleFactor(0.7)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.leading, Space.s)
-        .opacity(isStruck ? 0.45 : 1)
-        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
 }

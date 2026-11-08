@@ -153,38 +153,6 @@
         }
       }
     },
-    "不发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Left out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不發"
-          }
-        }
-      }
-    },
-    "发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Posted"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發"
-          }
-        }
-      }
-    },
     "公里": {
       "localizations": {
         "en": {
@@ -309,38 +277,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "每趟用時 · 最快第 %lld 趟"
-          }
-        }
-      }
-    },
-    "点一下划掉": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to leave it out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下劃掉"
-          }
-        }
-      }
-    },
-    "点一下恢复": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to bring it back"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下恢復"
           }
         }
       }
