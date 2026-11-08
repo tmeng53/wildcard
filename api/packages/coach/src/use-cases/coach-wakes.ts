@@ -35,7 +35,7 @@ import type {
   SquadWeekSource,
 } from '../ports.js';
 import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
-import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
+import { momentAt, NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 
 /**
  * How long a run keeps claiming wakes, so it ends well inside the scheduler's 5 minutes; the
@@ -303,6 +303,28 @@ async function wakeWeek(
 }
 
 /**
+ * Why the squad's coach is off duty now, if it is: the squad spent its day's cap (its own day, on
+ * its clock), or every squad together spent theirs (New York's day). The next day it is back.
+ */
+async function offDutyWhy(
+  deps: CoachWakesDependencies,
+  { squad, settings }: { readonly squad: SquadId; readonly settings: CoachSettings },
+): Promise<string | undefined> {
+  const now = deps.clock();
+  const dayStart = (zone: string) => momentAt({ day: wallClockAt(now, zone).day, hour: 0, zone });
+  const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
+  const squadSpent = await deps.stores.usage.spent({ squad, since: dayStart(zone) });
+  if (squadSpent >= settings.squadDailyCapMicros) {
+    return `off duty: the squad spent ${String(squadSpent)} of its ${String(settings.squadDailyCapMicros)} micros today`;
+  }
+  const allSpent = await deps.stores.usage.spent({ since: dayStart(NEW_YORK) });
+  if (allSpent >= settings.dailyCapMicros) {
+    return `off duty: every squad spent ${String(allSpent)} of the ${String(settings.dailyCapMicros)} micros today`;
+  }
+  return undefined;
+}
+
+/**
  * Runs one wake: the coach reads the squad's week and files and does what it decides. Its
  * tokens are recorded first, whatever happens next; then its changes and the wake's end are
  * saved together. Says whether it worked.
@@ -322,6 +344,11 @@ async function runWake(
   },
 ): Promise<boolean> {
   try {
+    const offDuty = await offDutyWhy(deps, { squad: wake.squad, settings });
+    if (offDuty !== undefined) {
+      await deps.stores.wakes.skip(wake.id, offDuty);
+      return true;
+    }
     const week = await wakeWeek(deps, { wake, now });
     // Nothing to wake for: the check-in went, is no longer shared, or its week is over.
     if (week === undefined) {
@@ -445,6 +472,7 @@ async function runWake(
       model: settings.model,
       usage: run.usage,
       costMicros: costMicros(run.usage, settings),
+      at: deps.clock(),
     });
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
