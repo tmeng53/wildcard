@@ -223,7 +223,10 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
 
 @MainActor @Test func aCommentThatFailedLeavesUnsentOnceALaterReadListsIt() async {
     let source = FakeSource([jaysRun])
-    let feed = store(source)
+    let ids = CommentIDs()
+    let feed = FeedStore(
+        source: source, squad: squad, viewer: coco, today: { thursday }, now: { at(500) },
+        newCommentID: { ids() })
     await feed.load()
     // Neither the answer nor the read after it arrived (the app was in the background)...
     await source.fail(with: .notSent)
@@ -237,4 +240,7 @@ private final class CommentIDs: @unchecked Sendable {  // Only the main-actor st
     await feed.loadPost(jaysRun.id)
     #expect(feed.unsentComment(on: jaysRun.id) == nil)
     #expect(feed.post(jaysRun.id)?.comments.map(\.id) == [commentID(1)])
+    // The same words again are a new comment, not the one the server already has.
+    #expect(await feed.comment(text("我下周怎么练"), replyingTo: nil, on: jaysRun.id))
+    #expect(await source.calls.last == .comment(commentID(2), "我下周怎么练", nil, jaysRun.id))
 }

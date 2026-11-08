@@ -337,7 +337,7 @@ extension FeedStore {
             return false
         }
         let comment =
-            unsentComments[id].flatMap { $0.text == text && $0.replyTo == target && $0.mentions == mentions ? $0 : nil }
+            unsentComment(on: id).flatMap { ($0.text, $0.replyTo, $0.mentions) == (text, target, mentions) ? $0 : nil }
             ?? Comment(
                 id: newCommentID(), member: viewer, text: text, replyTo: target, mentions: mentions,
                 commentedAt: now())
