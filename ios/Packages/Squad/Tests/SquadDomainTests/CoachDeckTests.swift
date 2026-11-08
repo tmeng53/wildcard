@@ -155,7 +155,8 @@ private let oldReply = card(.reply, "r0", minutes: -1440, text: "配速比上周
     #expect(deck.top?.challenge?.answer == .accepted)
 }
 
-@MainActor @Test(arguments: [
+@MainActor
+@Test(arguments: [
     (CoachChallengeAnswer.declined, "  我鸡蛋过敏 \n", "我鸡蛋过敏" as String?),
     (.declined, "   ", nil),
     (.accepted, "我鸡蛋过敏", nil),
