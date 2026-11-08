@@ -1,134 +1,101 @@
 #if os(iOS)
 import AvatarArt
+import AvatarDomain
+import AvatarUI
 import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-// The pieces a storefront on 商店街 is drawn from (`StoreStreet`'s `Storefront`).
+// The parts of a store's front on 商店街 (`StoreStreet`'s `Storefront`) that are the store's own:
+// its sign and the model in its window. The painted parts (awning, glass, door, shutter, street)
+// are DesignSystemUI's `Shop…` views.
 
-/// The awning: stripes of white on the store's colour, scalloped along its bottom edge.
-struct Awning: View {
-    let color: Color
-    @Environment(\.sceneTheme) private var theme
-    private let scallops = 7
-
-    var body: some View {
-        Canvas { context, size in
-            let shape = AwningShape(scallops: scallops).path(in: CGRect(origin: .zero, size: size))
-            context.fill(shape, with: .color(color))
-            context.clip(to: shape)
-            let step = size.width / Double(scallops)
-            let stripe = step * 0.22
-            for index in 0..<scallops {
-                let left = step * (Double(index) + 0.5) - stripe / 2
-                context.fill(
-                    Path(CGRect(x: left, y: 0, width: stripe, height: size.height)),
-                    with: .color(Color(role: .bgCanvas, in: theme)))
-            }
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-struct AwningShape: Shape {
-    let scallops: Int
-
-    func path(in rect: CGRect) -> Path {
-        let depth = rect.height * 0.3
-        let step = rect.width / Double(scallops)
-        var path = Path()
-        path.move(to: .zero)
-        path.addLine(to: CGPoint(x: rect.width, y: 0))
-        path.addLine(to: CGPoint(x: rect.width, y: rect.height - depth))
-        for index in (0..<scallops).reversed() {
-            let start = step * Double(index + 1)
-            let end = step * Double(index)
-            path.addQuadCurve(
-                to: CGPoint(x: end, y: rect.height - depth),
-                control: CGPoint(x: (start + end) / 2, y: rect.height + depth))
-        }
-        path.closeSubpath()
-        return path
-    }
-}
-
-/// Two slanted glints across a pane of glass.
-struct Glints: View {
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        Canvas { context, size in
-            context.rotate(by: .degrees(24))
-            let light = Color(role: .bgCanvas, in: theme).opacity(0.55)
-            context.fill(
-                Path(CGRect(x: size.width * 0.12, y: -size.height, width: 14, height: size.height * 3)),
-                with: .color(light))
-            context.fill(
-                Path(CGRect(x: size.width * 0.12 + 22, y: -size.height, width: 6, height: size.height * 3)),
-                with: .color(light))
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-/// The glass door: graphite, a darker pane with a faint glint, and its handle.
-struct DoorView: View {
-    let width: Double
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        UnevenRoundedRectangle(topLeadingRadius: Radius.pick, topTrailingRadius: Radius.pick)
-            .fill(Color(role: .bgBrand, in: theme))
-            .overlay {
-                RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous)
-                    .fill(Color(role: .fgOnBrand, in: theme).opacity(0.12))
-                    .padding([.top, .horizontal], Space.xs)
-                    .padding(.bottom, Space.l)
-            }
-            .overlay(alignment: .trailing) {
-                Capsule()
-                    .fill(Color(role: .fgOnBrand, in: theme))
-                    .frame(width: Space.xxs, height: Space.m)
-                    .padding(.trailing, Space.xxs + Space.xxs / 2)
-            }
-            .frame(width: width)
-            .accessibilityHidden(true)
-    }
-}
-
-/// A closed store's rolling shutter, with a lock and how it unlocks.
-struct Shutter: View {
+/// The sign over the awning: the store's colour, its badge on a white disc and its name, and a
+/// limited store's tag at the end. A closed store's sign is grey and says 「? ? ?」.
+struct StoreSign: View {
     let store: EditorChoices.Store
     @Environment(\.sceneTheme) private var theme
+    private let badge: Double = 32
 
     var body: some View {
-        Canvas { context, size in
-            var y = 0.0
-            while y < size.height {
-                context.fill(
-                    Path(CGRect(x: 0, y: y + 9, width: size.width, height: 2)),
-                    with: .color(Color(role: .borderDefault, in: theme)))
-                y += 11
-            }
-        }
-        .background(Color(role: .bgSubtle, in: theme))
-        .clipShape(UnevenRoundedRectangle(topLeadingRadius: Radius.pick, topTrailingRadius: Radius.pick))
-        .overlay {
-            VStack(spacing: Space.xs) {
-                Image(systemName: "lock")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .frame(width: Space.xl, height: Space.xl)
+        HStack(spacing: Space.xs) {
+            if store.isOpen {
+                StoreBadge(store: store.id)
+                    .padding(Space.xs - Space.xxs / 2)
+                    .frame(width: badge, height: badge)
                     .background(Color(role: .bgCanvas, in: theme), in: Circle())
+                StoreCopy.name(store.id)
+                    .typeStyle(TypeRamp.scoreCard)
+                    .foregroundStyle(StoreLook.signInk(store.id, in: theme))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                Spacer(minLength: 0)
+                if let tag = LimitedTag(store: store.id) {
+                    tag.background(
+                        Color(role: .bgCanvas, in: theme),
+                        in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
+                }
+            } else {
+                Text(verbatim: "? ? ?")
+                    .typeStyle(TypeRamp.scoreCard)
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                    .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
-                StoreCopy.opens(store)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .padding(.horizontal, Space.s)
-                    .padding(.vertical, Space.xxs)
-                    .background(Color(role: .bgCanvas, in: theme), in: Capsule())
             }
         }
+        .padding(.horizontal, Space.xs + Space.xxs / 2)
+        .frame(height: Sizing.control)
+        .background(
+            store.isOpen ? StoreLook.color(store.id, in: theme) : Color(role: .fgMuted, in: theme),
+            in: RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
+    }
+}
+
+/// The model in a store's window: a character in the store's clothes (`stores/<id>.json`),
+/// idling on a plinth in a tint of the store's colour. Built off the main actor, so the street
+/// doesn't drop a frame as it opens; a store without a model shows the empty plinth.
+struct WindowModel: View {
+    let store: String
+    let color: Color
+    @State private var player: CharacterPlayer?
+    private let plinth = CGSize(width: 104, height: 20)
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Ellipse()
+                .fill(color.opacity(0.45))
+                .overlay(alignment: .bottom) {
+                    Ellipse().fill(color.opacity(0.25)).frame(height: plinth.height * 0.7)
+                }
+                .frame(width: plinth.width, height: plinth.height)
+            if let player {
+                CharacterView(player: player)
+                    .padding(.bottom, plinth.height / 2 - Space.xxs)
+            }
+        }
+        .accessibilityHidden(true)
+        .task(id: store) {
+            let store = store
+            guard
+                let model = try? await Task.detached(operation: { try ModelFigure(store: store) }).value,
+                !Task.isCancelled
+            else { return }
+            player = try? CharacterPlayer(figure: model.figure, idle: model.idle)
+        }
+    }
+}
+
+/// A window model's figure and idle, parsed once.
+private struct ModelFigure: Sendable {
+    let figure: Figure
+    let idle: Clip
+
+    init(store: String) throws(AvatarError) {
+        guard let window = PlaceholderCharacter.storeWindow(store) else { throw .missingFile("stores/\(store).json") }
+        let outfit = try PlaceholderCharacter.drawable(window.outfit)
+        figure = try PlaceholderCharacter.figure(wearing: outfit)
+        idle = try PlaceholderCharacter.clip(
+            "idle", persona: window.persona, species: PlaceholderCharacter.species(of: outfit))
     }
 }
 #endif

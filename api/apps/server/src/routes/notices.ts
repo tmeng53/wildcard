@@ -40,7 +40,8 @@ export const NoticeEntry = z
         'What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is ' +
         'in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the ' +
         'squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the ' +
-        'caller its morning note, 便条), `unlocked` (a store, prop or piece opened), ' +
+        'caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that ' +
+        'left wrote the next a letter), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
         '`broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
@@ -78,14 +79,21 @@ export const NoticeEntry = z
           'The caller’s check-in the coach answered (`coachReply`), or the check-in commented ' +
           'on (`comment`).',
       }),
-    coach: z
-      .string()
-      .optional()
-      .meta({ description: 'The coach who answered (`coachReply`) or wrote (`coachNote`).' }),
+    coach: z.string().optional().meta({
+      description: 'The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`).',
+    }),
     coachName: z
       .string()
       .optional()
-      .meta({ description: 'Its name now (`coachReply`, `coachNote`).' }),
+      .meta({ description: 'Its name now (`coachReply`, `coachNote`, `coachLetter`).' }),
+    toCoach: z
+      .string()
+      .optional()
+      .meta({ description: 'The coach that took over, whom the letter is to (`coachLetter`).' }),
+    toCoachName: z.string().optional().meta({ description: 'Its name now (`coachLetter`).' }),
+    letter: WireNoticeId.optional().meta({
+      description: 'The letter’s id (`coachLetter`): the same as the coach activity’s.',
+    }),
     replied: z
       .boolean()
       .optional()
@@ -97,8 +105,15 @@ export const NoticeEntry = z
     day: z.iso
       .date()
       .optional()
-      .meta({ description: 'The New York day the morning note was written for (`coachNote`).' }),
-    text: z.string().optional().meta({ description: 'The morning note’s words (`coachNote`).' }),
+      .meta({
+        description:
+          'The day the morning note was written for (`coachNote`), or the letter is dated ' +
+          '(`coachLetter`), on the squad’s clock.',
+      }),
+    text: z
+      .string()
+      .optional()
+      .meta({ description: 'The morning note’s (`coachNote`) or letter’s (`coachLetter`) words.' }),
     unlockKind: z
       .string()
       .optional()
@@ -304,7 +319,7 @@ export function notices(deps: {
 
 /** The notices as the app reads them, with the names they show as they are now. */
 export async function noticeEntries(
-  deps: { readonly members: Members; readonly coachNames: CoachNames },
+  deps: { readonly members: Pick<Members, 'squadmates'>; readonly coachNames: CoachNames },
   { notices: told, broadcasts }: Pick<Page, 'notices' | 'broadcasts'>,
 ): Promise<z.infer<typeof NoticeEntry>[]> {
   const movers = [
@@ -317,7 +332,12 @@ export async function noticeEntries(
   const coachAsked = told.flatMap((notice) =>
     notice.kind === 'coachReply' || notice.kind === 'coachNote'
       ? [{ coach: notice.subject.coach, squad: notice.squad }]
-      : [],
+      : notice.kind === 'coachLetter'
+        ? [
+            { coach: notice.subject.from, squad: notice.squad },
+            { coach: notice.subject.to, squad: notice.squad },
+          ]
+        : [],
   );
   const [profiles, coaches] = await Promise.all([
     movers.length === 0
@@ -388,6 +408,21 @@ function wireNotice(
         day,
         text,
         ...(coachName === undefined ? {} : { coachName }),
+      };
+    }
+    case 'coachLetter': {
+      const { letter, from, to, day, text } = notice.subject;
+      const coachName = names.coach(from, notice.squad);
+      const toCoachName = names.coach(to, notice.squad);
+      return {
+        ...common,
+        letter,
+        coach: from,
+        toCoach: to,
+        day,
+        text,
+        ...(coachName === undefined ? {} : { coachName }),
+        ...(toCoachName === undefined ? {} : { toCoachName }),
       };
     }
     case 'unlocked':
