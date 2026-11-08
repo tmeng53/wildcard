@@ -20,6 +20,10 @@ struct SidelineCoachFigure: View {
     var lift: Double = 0
     /// Whether a morning note waits unread.
     var hasNote = false
+    /// How far right of its spot it is, in stage points, and how far it leans, in degrees, while
+    /// the coaches change places (换教练).
+    var shift: Double = 0
+    var tilt: Double = 0
 
     /// Members' canvas, which coaches share, and where its feet are on it.
     static let canvas = CGSize(width: 240, height: 320)
@@ -55,11 +59,12 @@ struct SidelineCoachFigure: View {
             }
             .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: hasNote)
             .rotationEffect(.degrees(buzzes ? PhoneBuzz.sway(at: seconds) : 0), anchor: .bottom)
+            .rotationEffect(.degrees(tilt))
             .offset(y: -lift * unit - (buzzes ? PhoneBuzz.hop(at: seconds) * scale : 0))
             .frame(width: Self.canvas.width * scale, height: Self.canvas.height * scale)
             .contentShape(Rectangle())
             .position(
-                x: coach.spot.x * unit,
+                x: (coach.spot.x + shift) * unit,
                 y: coach.spot.y * unit - (Self.feet.y - Self.canvas.height / 2) * scale)
     }
 
@@ -120,6 +125,27 @@ struct SidelineCoachButton: ViewModifier {
 }
 
 extension SquadSceneView {
+    /// The squad's coach on the sideline, or the two changing places there (换教练).
+    @ViewBuilder
+    func sidelineCoach(unit: Double, date: Date) -> some View {
+        if let handover = cast.handover, let incoming = cast.incoming {
+            CoachHandoverFigures(
+                handover: handover, outgoing: cast.coach, incoming: incoming, unit: unit, date: date,
+                moment: reduceMotion ? .distantFuture : clock(), reduceMotion: reduceMotion)
+        } else if let coach = cast.coach, case let fall = coachFall(at: date), fall >= 0 {
+            // The coach drops in last, after me; under Reduce Motion it is simply there.
+            SidelineCoachFigure(
+                coach: coach, unit: unit, date: date, reduceMotion: reduceMotion,
+                lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0), hasNote: coachHasNote
+            )
+            .modifier(
+                SidelineCoachButton(
+                    name: coach.speaker.name, hasNote: coachHasNote, tap: tapCoach, standsAt: coachAt)
+            )
+            .zIndex(coach.spot.y)
+        }
+    }
+
     /// How far into its drop the coach is at `date`, in seconds (below zero while it waits),
     /// or infinity once it stands, as it does whenever nobody is dropping in.
     func coachFall(at date: Date) -> Double {

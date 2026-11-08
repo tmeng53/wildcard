@@ -130,6 +130,12 @@ struct NoticeRow: View {
                     : Text("\(note.coach.name)：\(note.text)", bundle: .module),
                 detail: nil,
                 icon: AnyView(CoachIcon(coach: note.coach.id)))
+        case .coachLetter(let letter):
+            // 「毛头给帕帕留了一封交接信」, which opens it again on 今天.
+            return Words(
+                title: Text(
+                    "\(Self.coach(letter.from.name))给\(Self.coach(letter.recipient.name))留了一封交接信", bundle: .module),
+                detail: nil, icon: AnyView(CoachIcon(coach: letter.from.id)))
         case .unlocked(let kind, let item):
             let unlock = unlocked(kind, item)
             return Words(title: unlock.title, detail: unlock.detail, icon: unlock.icon)
@@ -173,6 +179,11 @@ struct NoticeRow: View {
             title: title,
             detail: line.map { line in Text("\(line.who)：\(line.text)", bundle: .module) },
             icon: AnyView(NoticeSymbol(systemImage: "bubble.left.and.bubble.right.fill")))
+    }
+
+    /// A coach's name now, or 教练 when it has none.
+    private static func coach(_ name: String) -> String {
+        name.isEmpty ? String(localized: "教练", bundle: .module.inAppLanguage) : name
     }
 
     /// A voice's name: a teammate's as the push gave it, the coach's, or 教练.

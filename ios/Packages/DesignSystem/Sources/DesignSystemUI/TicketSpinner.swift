@@ -48,6 +48,29 @@ public struct TicketSpinner: View {
     }
 }
 
+/// The logo's two tickets standing still: a mark, such as the seal on the coach's letter (交接信)
+/// and its letterhead. `ground` is what it stands on, the back ticket filled with it; `ink` draws
+/// the front ticket and the back one's outline.
+public struct TicketLogo: View {
+    private let ground: ColorRole
+    private let ink: ColorRole
+    @Environment(\.sceneTheme) private var theme
+
+    public init(on ground: ColorRole = .bgCanvas, ink: ColorRole = .bgBrand) {
+        self.ground = ground
+        self.ink = ink
+    }
+
+    public var body: some View {
+        Canvas { context, canvas in
+            TicketMark.draw(
+                in: &context, size: canvas, rock: 0, ground: Color(role: ground, in: theme),
+                ink: Color(role: ink, in: theme))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// The logo drawn on its 100 × 100 grid (brand-logo `b6-mark`): an outlined ticket behind, turned
 /// 12°, and a filled one in front, turned −10°, with notches, a perforation and a W, both turning
 /// about a point below them.

@@ -420,6 +420,9 @@ describe('when the coach wakes', () => {
     expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
     // The old rule had every note add something from memory, which made notes say "I remember".
     expect(instructions).not.toContain('再加上记性里记着他的');
+    // The 口头禅 is for its card only: told it, the model kept saying it.
+    expect(instructions).not.toContain('今天也辛苦啦');
+    expect(instructions).not.toContain('口头禅');
   });
 
   it('keeps what every wake begins with in the instructions, and only what changes in the task', () => {

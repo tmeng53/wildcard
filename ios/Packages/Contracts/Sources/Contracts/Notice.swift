@@ -27,6 +27,8 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case coachReply(checkIn: CheckInID, coach: CoachID, coachName: String?, replied: Bool, emoji: Emoji?)
         /// The squad's coach left the member its morning note (便条), only for them.
         case coachNote(CoachMemberNote)
+        /// The squad changed coach, and the coach that left wrote the one that took over a letter.
+        case coachLetter(CoachLetter)
         /// A store or prop opened by training: its id in the art.
         case unlocked(Unlock.Kind, item: String)
         /// A teammate commented on the member's check-in or replied to them there, in the words

@@ -464,6 +464,22 @@
           }
         }
       }
+    },
+    "%@给%@留了一封交接信": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ left %2$@ a handover letter"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@給%2$@留了一封交接信"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

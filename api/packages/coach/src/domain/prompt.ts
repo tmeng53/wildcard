@@ -43,7 +43,7 @@ export interface GiftOptions {
 export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Coach): string {
   return [
     settings.rules,
-    `你的人设：\n名字：${coach.name}\n口头禅：${coach.catchphrase}\n风格：${coach.style}`,
+    `你的人设：\n名字：${coach.name}\n风格：${coach.style}`,
     coach.soul,
     WAKES,
   ].join('\n\n');

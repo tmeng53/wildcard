@@ -24,4 +24,13 @@ extension URLSession {
         configuration.timeoutIntervalForRequest = 60
         return URLSession(configuration: configuration)
     }()
+
+    /// The session for a call the AI answers in its own time, the coach's letter (交接信), which
+    /// 今天 waits on however long it takes (Tracy, 2026-11-08): it outwaits the server's own limit
+    /// on the coach's run (two minutes).
+    static let writing: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 150
+        return URLSession(configuration: configuration)
+    }()
 }
