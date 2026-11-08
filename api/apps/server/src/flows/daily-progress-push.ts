@@ -220,7 +220,7 @@ async function compose(
   deps: DailyProgressDependencies,
   { member, day, since, until }: Due,
 ): Promise<PushNotification | undefined> {
-  // The squad the app shows: the one they joined first.
+  // The squad the app shows: a member is in one at a time.
   const [squad] = await deps.squads.listMine(SquadMember.parse(member));
   if (squad === undefined) return undefined;
   const window = { member, since, until };

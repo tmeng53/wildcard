@@ -51,7 +51,7 @@ export class CheckInDayMismatchError extends AppError {
 }
 
 /**
- * Thrown for a 请假条 on a day the member already trained on (练了). The app greys that day out:
+ * Thrown for a 请假条 on a day the member already trained on (训练). The app greys that day out:
  * read the member's check-ins again.
  */
 export class AlreadyTrainedError extends AppError {
@@ -65,7 +65,7 @@ export class AlreadyTrainedError extends AppError {
 }
 
 /**
- * Thrown for a 练了 or planned day naming a sport id that isn't in the sports list. The app's
+ * Thrown for a 训练 or planned day naming a sport id that isn't in the sports list. The app's
  * copy of the list is older or newer than the server's: read `GET /public/catalog` again.
  */
 export class SportNotListedError extends AppError {

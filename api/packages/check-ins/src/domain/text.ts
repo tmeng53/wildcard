@@ -2,7 +2,7 @@ import type { z } from 'zod';
 
 import { nameText, typedText } from '@wildcard/typed-text';
 
-/** The optional line under a 练了 or a meal: trimmed, 1 to 60 characters, one line. */
+/** The optional line under a 训练 or a meal: trimmed, 1 to 60 characters, one line. */
 export const Caption = typedText({
   max: 60,
   oneLine: true,

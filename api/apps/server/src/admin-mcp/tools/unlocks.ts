@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { adminTool } from '../admin-tool.js';
 
 // How the character editor's stores, props and clothing pieces unlock: each after a number of
-// 练了 check-ins in its sports. A change applies to the next read of each member's unlocks; what a member already
+// 训练 check-ins in its sports. A change applies to the next read of each member's unlocks; what a member already
 // unlocked stays. Rules are never deleted.
 
 interface UnlockToolDependencies {
@@ -53,7 +53,7 @@ export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
     description:
       'Shows how each store on the character editor’s 商店街, each prop and each clothing ' +
       'piece with a rule unlocks: kind (store, prop or piece), id, sports (empty = any sport), ' +
-      'after (练了 check-ins needed) and countsFrom (only check-ins made from then count). A rule ' +
+      'after (训练 check-ins needed) and countsFrom (only check-ins made from then count). A rule ' +
       'counts only check-ins made while its store’s and piece’s switches are on (get_stores, ' +
       'get_pieces). Starter pieces (get_pieces) and the tumbler and dumbbell need no rule.',
     changes: false,

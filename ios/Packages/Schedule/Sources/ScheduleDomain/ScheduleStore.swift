@@ -11,7 +11,7 @@ import Observation
 /// then, so the server ends on the last change. When a save fails that part of the week (its
 /// plan or its 饮食小目标) goes back to what the server has, and `failure` says why.
 ///
-/// Beside the weeks it shows the member's typical week (每周模板), which the weeks from next
+/// Beside the weeks it shows the member's typical week (我的每周计划), which the weeks from next
 /// week on follow until one is changed for itself. It is planned like a week and saved the
 /// same way; after a week's plan changes, the store offers to put it into the template too.
 @MainActor @Observable
@@ -35,7 +35,7 @@ public final class ScheduleStore {
     public private(set) var profile: ScheduleProfile?
     /// The Monday of the week shown.
     public private(set) var shownWeek: LocalDay?
-    /// Whether the 每周模板 shows instead of a week.
+    /// Whether the 我的每周计划 shows instead of a week.
     public private(set) var showsTemplate = false
     /// The shown week's plan, or the template, as it is being edited.
     public private(set) var board: WeekBoard?
@@ -323,7 +323,7 @@ public final class ScheduleStore {
 }
 
 extension ScheduleStore {
-    // MARK: - 每周模板
+    // MARK: - 我的每周计划
 
     /// Puts the plan of the week on offer into the template; the weeks from next week on
     /// follow it.

@@ -5,7 +5,7 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-// 出赛表's top bar, under the navigation bar's back button: the week chips with the 每周模板
+// 出赛表's top bar, under the navigation bar's back button: the week chips with the 我的每周计划
 // after them, and 存图.
 
 extension ScheduleView {
@@ -20,7 +20,7 @@ extension ScheduleView {
         HStack(spacing: Space.xs) {
             CategoryBar(pageChips, selection: pageSelection)
                 .frame(maxWidth: .infinity)
-            // The 每周模板 is no one week's poster to share.
+            // The 我的每周计划 is no one week's poster to share.
             if !store.showsTemplate {
                 saveButton
             }
@@ -43,7 +43,7 @@ extension ScheduleView {
         .accessibilityIdentifier("schedule.save")
     }
 
-    /// The weeks, then the 每周模板 after a hairline.
+    /// The weeks, then the 我的每周计划 after a hairline.
     private var pageChips: [CategoryBarItem<SchedulePage>] {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
