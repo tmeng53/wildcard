@@ -111,7 +111,7 @@ extension Home {
     }
 
     /// Whether the recap shows at `now`: from `DayRecap.hour` on the member's own clock until
-    /// their day ends, the 3am grace included.
+    /// their day ends at midnight.
     public func showsRecap(at now: Date) -> Bool {
         guard let day = mine?.day else { return false }
         var calendar = Calendar(identifier: .gregorian)

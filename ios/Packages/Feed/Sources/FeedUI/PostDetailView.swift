@@ -22,6 +22,7 @@ public struct PostDetailView: View {
     private let close: () -> Void
     @FocusState private var isTyping: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// The comment held, lifted under its glass menu.
     @State private var holding: Comment.ID?
 
@@ -57,6 +58,11 @@ public struct PostDetailView: View {
         .task(id: id) {
             model.opened = id
             await model.loadPage(id)
+        }
+        // Back in the app, read it again: what came meanwhile, and a comment whose answer was
+        // lost while away shows as saved.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.loadPage(id) } }
         }
         // However the page goes, the feed and tab bar stop treating the post as open.
         .onDisappear { if model.opened == id { model.opened = nil } }

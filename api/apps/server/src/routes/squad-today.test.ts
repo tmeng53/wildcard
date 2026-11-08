@@ -39,6 +39,7 @@ import {
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachLetters,
   ignoredNotices,
 } from '../test-kit/weekly-awards.js';
 
@@ -99,6 +100,7 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   log: createLog(() => undefined),
   jobs: noJobs,
@@ -141,8 +143,8 @@ async function call(
 const HOUR = 3_600_000;
 /** Any ISO 8601 time, as the API writes them. */
 const isoTime: unknown = expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-/** Today on a clock `offset` hours ahead of UTC: the date 3 hours earlier (the 3am grace). */
-const today = (offset = 0) => new Date(Date.now() + (offset - 3) * HOUR).toISOString().slice(0, 10);
+/** Today on a clock `offset` hours ahead of UTC. */
+const today = (offset = 0) => new Date(Date.now() + offset * HOUR).toISOString().slice(0, 10);
 
 async function member(
   timeZone = 'UTC',

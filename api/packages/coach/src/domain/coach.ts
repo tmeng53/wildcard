@@ -21,8 +21,13 @@ export const CoachLook = z.string().regex(/^[a-z][a-z0-9-]{0,39}$/);
 
 /** A coach, whole, as stored, logged and put by an admin. */
 export const Coach = z.strictObject({
-  version: z.literal(2),
+  version: z.literal(3),
   id: CoachId.describe('Its id, such as `xiaohun`. Never changes.'),
+  position: z
+    .int()
+    .min(1)
+    .max(1000)
+    .describe('Its place in 教练招聘会, from 1. Coaches sharing a place go by id.'),
   tier: CoachTier.describe('entry (入门), advanced (进阶) or pro (专业).'),
   name: z.string().trim().min(1).max(20).describe('Its name in the app, such as 小混.'),
   catchphrase: z.string().trim().min(1).max(60).describe('Its 口头禅, shown on its card.'),

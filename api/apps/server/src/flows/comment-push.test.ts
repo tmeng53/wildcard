@@ -113,7 +113,7 @@ describe('a coach’s line pushed', () => {
       member: author,
       coachName: '毛头',
       text: '腿还在吗',
-      answer: false,
+      news: 'comment',
       about: other,
     });
     await pushCoachLine(deps, {
@@ -121,7 +121,7 @@ describe('a coach’s line pushed', () => {
       member: author,
       coachName: '毛头',
       text: '那就再跑一圈',
-      answer: true,
+      news: 'reply',
       about: writer,
     });
     await pushCoachLine(deps, {
@@ -129,7 +129,7 @@ describe('a coach’s line pushed', () => {
       member: writer,
       coachName: '毛头',
       text: '你也来',
-      answer: true,
+      news: 'reply',
       about: writer,
     });
     expect(sent).toStrictEqual([
@@ -155,6 +155,31 @@ describe('a coach’s line pushed', () => {
           event: { kind: 'comment', checkIn: other },
         },
       },
+    ]);
+  });
+
+  it('@s a teammate as a teammate’s @ does', async () => {
+    const sent: PushNotification[] = [];
+    const deps = {
+      push: {
+        settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
+        notifyMembers: (input: { notification: PushNotification }) => {
+          sent.push(input.notification);
+          return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
+        },
+      },
+      log: createLog(() => undefined),
+    };
+    await pushCoachLine(deps, {
+      checkIn: other,
+      member: writer,
+      coachName: '毛头',
+      text: '@小美 你也来',
+      news: 'mention',
+      about: other,
+    });
+    expect(sent.map(({ alert }) => alert)).toStrictEqual([
+      { key: 'push.comment.mention', args: ['毛头', '@小美 你也来'] },
     ]);
   });
 });

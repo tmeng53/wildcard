@@ -11,6 +11,7 @@ import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { readerLanguageOf } from '../reader-language.js';
 
 export const DisclaimerDraftRequest = z
   .strictObject({
@@ -112,6 +113,7 @@ export function disclaimerDrafts(deps: {
       member: MemberId.parse(c.var.caller.userId),
       reason,
       style,
+      language: readerLanguageOf(c.req.header('accept-language')) ?? 'zh-Hans',
     });
     return c.json(wire(outcome), 200);
   });

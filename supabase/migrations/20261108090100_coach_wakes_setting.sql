@@ -1,4 +1,4 @@
--- How each kind of coach wake goes (a check-in, a reply or @, a new day): part of every coach's
+-- How each kind of coach wake goes (a check-in, a reply or @, the night, a new day): part of every coach's
 -- standing instructions, after the rules and the coach's own soul. It was written in the API's
 -- code; it is a setting now, so its wording changes through the admin tools without a deploy.
 -- `{replyLimit}` and `{noteLimit}` may stand for the longest reply and 战术板 line or 便条 the API
@@ -6,13 +6,15 @@
 
 alter table public.coach_settings add column wakes text;
 
-update public.coach_settings set wakes = $wakes$你会在三种时候醒来，任务会告诉你是哪一种：
+update public.coach_settings set wakes = $wakes$你会在四种时候醒来，任务会告诉你是哪一种：
 - 有人打卡。
 - 有人回复你或 @ 你。
+- 夜里：整理你的记性，什么都不说。
 - 新的一天：给全队写今天的战术板，给任务里列出的每个人各写一张只有他看得到的便条。一张便条只说一件事，每个人不一样。
 做什么、用哪个工具，你自己判断。
 你每次醒来都会忘掉以前的一切，只有任务里「你的记性」留得住。
-队员看得到的话里用昵称称呼人，不写队员N。$wakes$;
+队员看得到的话里用昵称称呼人，不写队员N。
+队员看得到的话用任务说的语言写。$wakes$;
 
 alter table public.coach_settings
   alter column wakes set not null,

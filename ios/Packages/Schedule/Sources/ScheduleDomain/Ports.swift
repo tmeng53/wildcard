@@ -7,14 +7,12 @@ import Foundation
 public protocol ScheduleBackend: Sendable {
     /// Who the poster is for and which weeks they can look back on.
     func profile() async throws(ScheduleError) -> ScheduleProfile
-    /// One week: its plan, how each day went, its titles and the squad's count.
+    /// One week: its plan, how each day went and its titles.
     func week(starting weekStart: LocalDay) async throws(ScheduleError) -> WeekSheet
     /// Replaces a week's plan and answers with the plan saved. Safe to repeat.
     func savePlan(_ days: [PlanDay], weekStart: LocalDay) async throws(ScheduleError) -> [PlanDay]
     /// Replaces a week's 饮食小目标. Safe to repeat.
     func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError)
-    /// Every day the member ever trained (一共练了 N 天).
-    func trainedDays() async throws(ScheduleError) -> Int
     /// The member's typical week (每周模板): seven days, Monday first, which every week not
     /// changed for itself follows.
     func template() async throws(ScheduleError) -> [PlanDay]

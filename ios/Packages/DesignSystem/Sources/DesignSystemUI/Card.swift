@@ -18,7 +18,7 @@ extension View {
 
     /// A graphite card with white words, like 我's `GlanceTile`s (小队's cards): 16 points of
     /// padding and 12-point corners. What sits on it takes `fgOnBrand` and `fgOnInkMuted`, and
-    /// its buttons `SecondaryButtonStyle(.inCard)`, which is white.
+    /// its buttons `SecondaryButtonStyle(.onInk)`, which is white.
     public func inkCard() -> some View {
         modifier(InkCardBackground())
     }

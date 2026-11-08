@@ -3,7 +3,8 @@ import DesignSystem
 import SwiftUI
 
 /// The squad's goal as one cell a day, as many cells as the goal and as many filled as the days
-/// trained, never past full. Ink on the bar's subtle track, never red.
+/// trained, never past full (the score's 「+N」 tag shows days past it). Ink on a light grey that
+/// reads on the card's glass, never red.
 struct DayCells: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -15,7 +16,7 @@ struct DayCells: View {
         HStack(spacing: spacing) {
             ForEach(0..<max(total, 1), id: \.self) { index in
                 RoundedRectangle(cornerRadius: Sizing.progress / 4, style: .continuous)
-                    .fill(Color(role: index < filled ? .fgDefault : .bgSubtle, in: theme))
+                    .fill(Color(role: index < filled ? .fgDefault : .fgSubtle, in: theme))
             }
         }
         .frame(height: Sizing.progress)

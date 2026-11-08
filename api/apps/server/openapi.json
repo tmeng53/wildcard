@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -120,11 +120,24 @@
           },
           "coach": {
             "type": "string",
-            "description": "The coach who answered (`coachReply`) or wrote (`coachNote`)."
+            "description": "The coach who answered (`coachReply`) or wrote (`coachNote`, `coachLetter`)."
           },
           "coachName": {
             "type": "string",
-            "description": "Its name now (`coachReply`, `coachNote`)."
+            "description": "Its name now (`coachReply`, `coachNote`, `coachLetter`)."
+          },
+          "toCoach": {
+            "type": "string",
+            "description": "The coach that took over, whom the letter is to (`coachLetter`)."
+          },
+          "toCoachName": {
+            "type": "string",
+            "description": "Its name now (`coachLetter`)."
+          },
+          "letter": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The letter’s id (`coachLetter`): the same as the coach activity’s."
           },
           "replied": {
             "type": "boolean",
@@ -142,11 +155,11 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The New York day the morning note was written for (`coachNote`)."
+            "description": "The day the morning note was written for (`coachNote`), or the letter is dated (`coachLetter`), on the squad’s clock."
           },
           "text": {
             "type": "string",
-            "description": "The morning note’s words (`coachNote`)."
+            "description": "The morning note’s (`coachNote`) or letter’s (`coachLetter`) words."
           },
           "unlockKind": {
             "type": "string",
@@ -1165,7 +1178,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1500,7 +1513,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1583,7 +1596,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -1647,7 +1660,7 @@
           "day": {
             "type": "string",
             "format": "date",
-            "description": "The member’s local day it counts for, in their profile’s time zone, where a day runs to 3am: `postedDay` or one of the 7 days before it (补打卡)."
+            "description": "The member’s local day it counts for, in their profile’s time zone: `postedDay` or one of the 7 days before it (补打卡)."
           },
           "postedDay": {
             "type": "string",
@@ -3212,7 +3225,7 @@
                 "day": {
                   "type": "string",
                   "format": "date",
-                  "description": "The member’s own today: their local date in their time zone, where anything before 3am still counts for the day before."
+                  "description": "The member’s own today: their local date in their time zone."
                 },
                 "training": {
                   "type": "string",
@@ -3631,6 +3644,103 @@
         ],
         "additionalProperties": false
       },
+      "CoachLetterWritten": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "letter": {
+            "$ref": "#/components/schemas/CoachLetter"
+          }
+        },
+        "required": [
+          "version",
+          "letter"
+        ],
+        "additionalProperties": false
+      },
+      "CoachLetter": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The letter’s id, which `coachLetter` notices name."
+          },
+          "from": {
+            "$ref": "#/components/schemas/CoachSpeaker"
+          },
+          "to": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachSpeaker"
+              },
+              {
+                "description": "The coach who took over: its 称呼."
+              }
+            ]
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "The day it is dated, on the squad’s clock."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its body, without the 称呼 or 落款; lines apart by `\\n`.",
+            "example": "这队交给你了，我先撤。"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was written."
+          }
+        },
+        "required": [
+          "id",
+          "from",
+          "to",
+          "day",
+          "text",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "The outgoing coach’s letter to the one that took over, or null when there is none: the squad didn’t just change coach, its coach is off duty for the day, or the coach couldn’t write it. The coach then leaves without one."
+      },
+      "CoachSpeaker": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The coach’s id. Never changes.",
+            "example": "xiaohun"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name, shown with the 教练 tag.",
+            "example": "毛头"
+          },
+          "look": {
+            "type": "string",
+            "description": "The character the app draws, by the art’s id."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "look"
+        ],
+        "additionalProperties": false,
+        "description": "The coach who wrote it as it left: its 落款."
+      },
       "CoachMarket": {
         "type": "object",
         "properties": {
@@ -3998,6 +4108,16 @@
           },
           "memberNote": {
             "$ref": "#/components/schemas/CoachMemberNote"
+          },
+          "letter": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CoachLetter"
+              },
+              {
+                "description": "The letter the squad’s coach now was left by the coach before it when the squad changed coach (换教练), for 今天 to open once on each phone and the coach’s 简历 to keep. Left out when it wasn’t left one."
+              }
+            ]
           }
         },
         "required": [
@@ -4048,31 +4168,6 @@
         ],
         "additionalProperties": false,
         "description": "The squad’s newest 战术板 line (the app shows it while its day is today), or null."
-      },
-      "CoachSpeaker": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The coach’s id. Never changes.",
-            "example": "xiaohun"
-          },
-          "name": {
-            "type": "string",
-            "description": "Its name, shown with the 教练 tag.",
-            "example": "毛头"
-          },
-          "look": {
-            "type": "string",
-            "description": "The character the app draws, by the art’s id."
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "look"
-        ],
-        "additionalProperties": false
       },
       "CoachReply": {
         "type": "object",
@@ -9272,6 +9367,81 @@
         }
       }
     },
+    "/squads/{squadId}/coach/letter": {
+      "post": {
+        "operationId": "writeCoachLetter",
+        "summary": "Have the outgoing coach write its letter (换教练)",
+        "description": "For the captain, right after changing coach: the coach that left writes the one that took over a letter from the squad’s memory, which every member then reads. Answers once it is written or failed. Written once a change, so a retry answers the same letter, or none.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The letter, or null",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachLetterWritten"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/coaches": {
       "get": {
         "operationId": "listCoaches",
@@ -10000,7 +10170,7 @@
       "get": {
         "operationId": "getSquadCoachActivity",
         "summary": "What the squad’s coach said (战术板, replies and reactions)",
-        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note. Only for the squad’s members. They stay after the squad fires its coach.",
+        "description": "The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.",
         "security": [
           {
             "bearer": []
@@ -10495,7 +10665,7 @@
       "get": {
         "operationId": "getSquadWeekSummary",
         "summary": "A squad’s week: its awards and counts (周日战报)",
-        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock, where a day lasts until 3am. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
+        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
         "security": [
           {
             "bearer": []
@@ -10848,7 +11018,7 @@
       "put": {
         "operationId": "saveMyWeeklyPlan",
         "summary": "Save the signed-in member’s plan for a week",
-        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone, and a day lasts until 3am.",
+        "description": "Replaces the week’s plan; repeating a save gives the same result. Past weeks are read-only, later weeks change freely, and a member plans up to 4 weeks ahead. In the current week, from the day the member joined: days before today stay as they were, and today and later days change freely. On the day a member joins, a week still on the default changes freely. Days are read in the member’s profile time zone.",
         "security": [
           {
             "bearer": []

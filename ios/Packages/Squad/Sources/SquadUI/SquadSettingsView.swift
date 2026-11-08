@@ -284,7 +284,7 @@ extension SquadSettingsView {
                         } label: {
                             Text(copy: "换场地", bundle: .module)
                         }
-                        .buttonStyle(SecondaryButtonStyle(.inCard))
+                        .buttonStyle(SecondaryButtonStyle(.onInk))
                         .fixedSize()
                         .accessibilityIdentifier("squad.changeScene")
                     }

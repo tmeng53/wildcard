@@ -306,6 +306,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/language-model':
+        specifier: workspace:*
+        version: link:../language-model
       '@wildcard/time-zones':
         specifier: workspace:*
         version: link:../time-zones
@@ -383,6 +386,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/language-model':
+        specifier: workspace:*
+        version: link:../language-model
       '@wildcard/time-zones':
         specifier: workspace:*
         version: link:../time-zones

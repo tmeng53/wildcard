@@ -25,16 +25,13 @@ public struct SquadWeek: Sendable, Hashable {
     public let name: String
     public let done: Int
     public let goal: Int
-    /// The goal its captain set, 人均 N 天.
-    public let daysPerMember: Int
     /// Up to 8, checked in first by time, then resting, then everyone else.
     public let members: [SquadMember]
 
-    public init(name: String, done: Int, goal: Int, daysPerMember: Int = 3, members: [SquadMember]) {
+    public init(name: String, done: Int, goal: Int, members: [SquadMember]) {
         self.name = name
         self.done = done
         self.goal = goal
-        self.daysPerMember = daysPerMember
         self.members = members
     }
 }
@@ -258,8 +255,8 @@ private struct PageHeader: View {
     let title: String?
     let count: Int
     let goal: Int
-    /// A word after the score (天).
-    var unit: Text?
+    var unit: Text?  // A word after the score (天).
+    var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
     var body: some View {
@@ -291,6 +288,11 @@ private struct PageHeader: View {
                         .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 }
+                if showsExtra, count > goal {
+                    InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
+                        .accessibilityLabel(Text(copy: "多练 \(count - goal) 天", bundle: .module))
+                        .accessibilityIdentifier("squadcard.extra")
+                }
             }
         }
     }
@@ -314,8 +316,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text(copy: "小队本周目标 · 人均 \(squad.daysPerMember) 天", bundle: .module), title: squad.name,
-                count: squad.done, goal: squad.goal, unit: Text(copy: "天", bundle: .module), open: openSquad)
+                label: Text(copy: "小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
+                unit: Text(copy: "天", bundle: .module), showsExtra: true, open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)

@@ -40,11 +40,14 @@ describe('checkCheckInTime', () => {
     expect(verdict('2026-10-18T04:00:00.000Z', '2026-10-10')).toBe('CHECK_IN_DAY_MISMATCH');
   });
 
-  it('with a time zone, posts on their day at that moment, by the 3am rule', () => {
-    // 11:31 UTC on the 18th is 00:31 on the 18th in Pago Pago (UTC-11): the 17th by the 3am rule.
+  it('with a time zone, posts on the date their wall clock shows at that moment', () => {
+    // 10:31 UTC on the 18th is 23:31 on the 17th in Pago Pago (UTC-11); 11:31 is 00:31 on the 18th.
     const pagoPago = verdictIn('Pacific/Pago_Pago');
-    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-17')).toBe('ok');
-    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-18')).toBe('CHECK_IN_DAY_MISMATCH');
+    expect(pagoPago('2026-10-18T10:31:00.000Z', '2026-10-17')).toBe('ok');
+    expect(pagoPago('2026-10-18T10:31:00.000Z', '2026-10-18')).toBe('CHECK_IN_DAY_MISMATCH');
+    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-18')).toBe('ok');
+    // Just after midnight, the day before is a 补打卡.
+    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-17')).toBe('ok, posted 2026-10-18');
     // The same moment is 19:31 on the 18th in Shanghai.
     const shanghai = verdictIn('Asia/Shanghai');
     expect(shanghai('2026-10-18T11:31:00.000Z', '2026-10-18')).toBe('ok');
@@ -57,7 +60,7 @@ describe('checkCheckInTime', () => {
     expect(shanghai('2026-10-18T11:31:00.000Z', '2026-10-11')).toBe('ok, posted 2026-10-18');
     expect(shanghai('2026-10-18T11:31:00.000Z', '2026-10-10')).toBe('CHECK_IN_DAY_MISMATCH');
     const pagoPago = verdictIn('Pacific/Pago_Pago');
-    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-10')).toBe('ok, posted 2026-10-17');
-    expect(pagoPago('2026-10-18T11:31:00.000Z', '2026-10-09')).toBe('CHECK_IN_DAY_MISMATCH');
+    expect(pagoPago('2026-10-18T10:31:00.000Z', '2026-10-10')).toBe('ok, posted 2026-10-17');
+    expect(pagoPago('2026-10-18T10:31:00.000Z', '2026-10-09')).toBe('CHECK_IN_DAY_MISMATCH');
   });
 });
