@@ -1,4 +1,5 @@
 import { isLeave, type CheckInRecord, type LocalDay } from './check-in.js';
+import type { SportKey } from './sports.js';
 import { addDays, weekStartOf } from './weekly-plan.js';
 
 /** A Monday-to-Sunday week (ISO 8601), as weekly plans have it. */
@@ -31,6 +32,26 @@ export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): T
   if (posts.some(({ kind }) => kind === 'trained')) return 'trained';
   if (posts.some(isLeave)) return 'disclaimer';
   return 'notCheckedIn';
+}
+
+/** How a day went for training, as the 出赛表 marks it: the sport of the day's latest 练了. */
+export type DayMark =
+  | { readonly status: 'trained'; readonly sport: SportKey; readonly customSport?: string }
+  | { readonly status: 'disclaimer' }
+  | { readonly status: 'none' };
+
+/** A 练了 wins over a 请假条, and the latest 练了 of the day names its sport. */
+export function markOn(checkIns: readonly CheckInRecord[], day: LocalDay): DayMark {
+  let latest: (CheckInRecord & { readonly kind: 'trained' }) | undefined;
+  for (const each of checkIns) {
+    if (each.day !== day || each.kind !== 'trained') continue;
+    if (latest === undefined || each.createdAt > latest.createdAt) latest = each;
+  }
+  if (latest !== undefined) {
+    const { sport, customSport } = latest.training;
+    return { status: 'trained', sport, ...(customSport === undefined ? {} : { customSport }) };
+  }
+  return trainingOn(checkIns, day) === 'disclaimer' ? { status: 'disclaimer' } : { status: 'none' };
 }
 
 /** The kind of the latest meal checked in on `day`, if any. */

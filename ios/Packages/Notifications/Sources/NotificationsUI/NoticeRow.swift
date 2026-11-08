@@ -132,7 +132,7 @@ struct NoticeRow: View {
         case .comment(let alert, _):
             return Words(
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
-                    ?? Text("队友评论了你的打卡", bundle: .module),
+                    ?? Text("队友评论了你的动态", bundle: .module),
                 detail: nil, icon: AnyView(NoticeSymbol(systemImage: "bubble.left.fill")))
         case .broadcast(let broadcast):
             return Words(
@@ -151,13 +151,13 @@ struct NoticeRow: View {
         }
     }
 
-    /// 教练 毛头 回复了你的打卡, or the emoji it left when it wrote no line.
+    /// 教练 毛头 回复了你的动态, or the emoji it left when it wrote no line.
     private static func coachTitle(name: String?, replied: Bool, emoji: Emoji?) -> Text {
         switch (name, replied ? nil : emoji) {
-        case (let name?, nil): Text("教练 \(name) 回复了你的打卡", bundle: .module)
-        case (let name?, let emoji?): Text("教练 \(name) 给你的打卡回了 \(emoji.text)", bundle: .module)
-        case (nil, nil): Text("教练回复了你的打卡", bundle: .module)
-        case (nil, let emoji?): Text("教练给你的打卡回了 \(emoji.text)", bundle: .module)
+        case (let name?, nil): Text("教练 \(name) 回复了你的动态", bundle: .module)
+        case (let name?, let emoji?): Text("教练 \(name) 给你的动态回了 \(emoji.text)", bundle: .module)
+        case (nil, nil): Text("教练回复了你的动态", bundle: .module)
+        case (nil, let emoji?): Text("教练给你的动态回了 \(emoji.text)", bundle: .module)
         }
     }
 

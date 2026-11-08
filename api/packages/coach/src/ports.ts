@@ -60,6 +60,16 @@ export type CoachMemberFacts = (input: {
   readonly weekStart: string;
 }) => Promise<readonly MemberFacts[]>;
 
+/** A meme in use now, from the meme library: what it means and where it came from. */
+export interface CoachMeme {
+  readonly phrase: string;
+  readonly meaning: string;
+  readonly background: string;
+}
+
+/** The memes in use now, which the coach may draw humour from. */
+export type CoachMemes = () => Promise<readonly CoachMeme[]>;
+
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
   | { readonly ok: true; readonly usage: TokenUsage }

@@ -39,7 +39,7 @@ struct PostRow: View {
                 Button {
                     model.pick(emoji, on: post.id, from: .zero)
                 } label: {
-                    Text("回应 \(emoji.text)", bundle: .module)
+                    Text("回应 \(emoji.text)", bundle: .module.inAppLanguage)
                 }
             }
         }
@@ -112,19 +112,19 @@ struct PostRow: View {
     @ViewBuilder private var kindTag: some View {
         switch post.entry {
         case .trained(let activity?, let minutes?):
-            Tag(Text("训练 · \(activity.name) · \(minutes.value) 分钟", bundle: .module))
+            Tag(Text("训练 · \(activity.name) · \(minutes.value) 分钟", bundle: .module.inAppLanguage))
         case .trained(let activity?, nil):
-            Tag(Text("训练 · \(activity.name)", bundle: .module))
+            Tag(Text("训练 · \(activity.name)", bundle: .module.inAppLanguage))
         case .trained(nil, let minutes?):
-            Tag(Text("训练 · \(minutes.value) 分钟", bundle: .module))
+            Tag(Text("训练 · \(minutes.value) 分钟", bundle: .module.inAppLanguage))
         case .trained(nil, nil):
-            Tag(Text("训练", bundle: .module))
+            Tag(Text("训练", bundle: .module.inAppLanguage))
         case .healthyMeal:
-            Tag(Text("健康餐", bundle: .module))
+            Tag(Text("健康餐", bundle: .module.inAppLanguage))
         case .cheatMeal:
-            Tag(Text("坦白放纵餐", bundle: .module))
+            Tag(Text("坦白放纵餐", bundle: .module.inAppLanguage))
         case .disclaimer:
-            Tag(Text("请假条", bundle: .module), systemImage: "moon.fill", style: .rest)
+            Tag(Text("请假条", bundle: .module.inAppLanguage), systemImage: "moon.fill", style: .rest)
         }
     }
 
@@ -165,7 +165,7 @@ struct PostRow: View {
     /// 「3 人回应：💪 2，😂 1」
     private var summary: Text {
         let groups = post.reactions.groups.map { "\($0.kind.text) \($0.members.count)" }.joined(separator: "，")
-        return Text("\(post.reactionCount) 人回应：\(groups)", bundle: .module)
+        return Text("\(post.reactionCount) 人回应：\(groups)", bundle: .module.inAppLanguage)
     }
 
     private func myButton(_ mine: Emoji?) -> some View {
@@ -198,7 +198,8 @@ struct PostRow: View {
             model.buttons[post.id] = frame
         }
         .accessibilityLabel(
-            mine.map { Text("我的回应 \($0.text)，换一个", bundle: .module) } ?? Text("回应", bundle: .module)
+            mine.map { Text("我的回应 \($0.text)，换一个", bundle: .module.inAppLanguage) }
+                ?? Text("回应", bundle: .module.inAppLanguage)
         )
         .accessibilityIdentifier("dailyPush.react")
     }

@@ -1,4 +1,4 @@
-import { DisclaimerWriterUnavailableError } from '@wildcard/disclaimer-drafts';
+import { LanguageModelUnavailableError } from '@wildcard/language-model';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -62,7 +62,7 @@ describe('createAnthropicLanguageModel', () => {
     'answers %s as unavailable: there is nothing to show',
     async (fixture) => {
       await expect(modelAnswering(fixture).answer()).rejects.toBeInstanceOf(
-        DisclaimerWriterUnavailableError,
+        LanguageModelUnavailableError,
       );
     },
   );
@@ -75,7 +75,7 @@ describe('createAnthropicLanguageModel', () => {
 
   it('answers unavailable when the API stays down, after one retry', async () => {
     const { answer, requests } = modelAnswering('overloaded');
-    await expect(answer()).rejects.toBeInstanceOf(DisclaimerWriterUnavailableError);
+    await expect(answer()).rejects.toBeInstanceOf(LanguageModelUnavailableError);
     expect(requests).toHaveLength(2);
   });
 });

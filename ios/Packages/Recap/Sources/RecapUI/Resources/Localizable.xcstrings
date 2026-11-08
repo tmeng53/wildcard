@@ -489,6 +489,12 @@
             "state": "translated",
             "value": "New"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新"
+          }
         }
       }
     },
@@ -562,6 +568,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weekly recap, %@, watched"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每週戰報，%@，已看完"
           }
         }
       }

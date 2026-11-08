@@ -1,9 +1,10 @@
+import type { LanguageModel } from '@wildcard/language-model';
 import {
   boardOf,
   titlesWonOf,
   type Awards,
   type AwardsState,
-  type BoardTitle,
+  type ShownBoardTitle,
   type Failures,
   type MemberId,
   type SquadId,
@@ -15,10 +16,11 @@ import type {
   AiConsented,
   AwardSettingsStore,
   AwardsStore,
-  LanguageModel,
   WeekStoryStore,
   MemesInUse,
+  SportGlyphs,
 } from '../ports.js';
+import { shownBadge } from '../domain/badges.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
 
 /** Each squad's weekly awards (本周颁奖). */
@@ -53,7 +55,7 @@ export interface WeeklyAwards {
    * These members' badge boards (徽章板), by member: every title they won in all their squads,
    * the latest first. A member who won nothing has an empty board.
    */
-  boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly BoardTitle[]>>;
+  boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly ShownBoardTitle[]>>;
   /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
   story(input: {
     readonly squad: SquadId;
@@ -75,6 +77,7 @@ export function createWeeklyAwards(deps: {
   readonly aiConsented: AiConsented;
   readonly stories: WeekStoryStore;
   readonly memes: MemesInUse;
+  readonly sportGlyphs: SportGlyphs;
 }): WeeklyAwards {
   return {
     give: (input) => giveAwards(deps, input),
@@ -84,8 +87,19 @@ export function createWeeklyAwards(deps: {
     titlesWon: async (member) =>
       titlesWonOf(boardOf((await deps.store.wins([member])).get(member) ?? [])),
     boards: async (members) => {
-      const wins = await deps.store.wins(members);
-      return new Map(members.map((member) => [member, boardOf(wins.get(member) ?? [])]));
+      const [wins, { badges }] = await Promise.all([
+        deps.store.wins(members),
+        deps.settings.current(),
+      ]);
+      return new Map(
+        members.map((member) => [
+          member,
+          boardOf(wins.get(member) ?? []).map((title) => ({
+            ...title,
+            badge: shownBadge(title.badge, badges),
+          })),
+        ]),
+      );
     },
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
     storiesWaiting: ({ weekStart }) => deps.stories.waitingForAwards(weekStart),

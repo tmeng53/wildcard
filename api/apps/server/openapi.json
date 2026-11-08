@@ -3347,8 +3347,14 @@
           },
           "colour": {
             "type": "string",
-            "description": "Its colour, by the scene whose colour it takes: `pool`, `track`, `gym`, `tennis` or `climbing` today. An app that doesn’t know one draws `gym`.",
+            "description": "Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it by the scene of that id, and the gym’s for any other.",
             "example": "track"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$",
+            "description": "Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left out by older servers and for a colour the catalog gives no tone, which the app then paints like `colour` for builds before `tone`.",
+            "example": "#E65345"
           },
           "glyph": {
             "type": "string",
@@ -5698,6 +5704,33 @@
                 "type": "integer",
                 "minimum": 0,
                 "description": "Days their plan trains this week, from the day they joined on."
+              },
+              "weekStart": {
+                "type": "string",
+                "format": "date",
+                "description": "This week’s Monday, in their time zone. Left out by older servers.",
+                "example": "2026-11-02"
+              },
+              "days": {
+                "$ref": "#/components/schemas/PlanDays"
+              },
+              "marks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DayMark"
+                },
+                "minItems": 7,
+                "maxItems": 7,
+                "description": "How each day of this week went, Monday first: `trained` with the sport of the day’s latest 练了 (a 练了 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers."
+              },
+              "fuelGoals": {
+                "$ref": "#/components/schemas/FuelGoals"
+              },
+              "firstWeek": {
+                "type": "string",
+                "format": "date",
+                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.",
+                "example": "2026-10-12"
               }
             },
             "required": [
@@ -5728,6 +5761,32 @@
           "cheatMeals",
           "disclaimers",
           "titles"
+        ],
+        "additionalProperties": false
+      },
+      "DayMark": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "disclaimer",
+              "none"
+            ]
+          },
+          "sport": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "The 练了’s sport; only for `trained`."
+          },
+          "customSport": {
+            "type": "string",
+            "description": "The custom sport’s name, for `sport: \"custom\"`."
+          }
+        },
+        "required": [
+          "status"
         ],
         "additionalProperties": false
       },

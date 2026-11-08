@@ -9,7 +9,14 @@ import {
   isLeave,
   type CheckInRecord,
 } from './check-in.js';
-import { latestMealOn, trainedDays, trainedDaysReachedAt, trainingOn, weekOf } from './days.js';
+import {
+  latestMealOn,
+  markOn,
+  trainedDays,
+  trainedDaysReachedAt,
+  trainingOn,
+  weekOf,
+} from './days.js';
 
 const at = (iso: string) => new Date(iso);
 const member = MemberId.parse('00000000-0000-4000-8000-000000000001');
@@ -141,5 +148,24 @@ describe('when a count of days trained was reached', () => {
     );
     expect(trainedDaysReachedAt(checkIns, { days, count: 3 })).toBeUndefined();
     expect(trainedDaysReachedAt(checkIns, { days, count: 0 })).toBeUndefined();
+  });
+});
+
+describe('a day’s mark on the 出赛表', () => {
+  it('names the latest 练了’s sport, wins over a 请假条, and is none without either', () => {
+    const swim = {
+      ...checkIn('trained', { day: '2026-11-03', createdAt: '2026-11-03T20:00:00.000Z' }),
+      training: Training.parse({ sport: 'swim' }),
+    };
+    const checkIns = [
+      checkIn('disclaimer', { day: '2026-11-03', createdAt: '2026-11-03T08:00:00.000Z' }),
+      checkIn('trained', { day: '2026-11-03', createdAt: '2026-11-03T12:00:00.000Z' }),
+      swim,
+      checkIn('disclaimer', { day: '2026-11-04' }),
+      checkIn('healthyMeal', { day: '2026-11-05' }),
+    ];
+    expect(markOn(checkIns, '2026-11-03')).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(markOn(checkIns, '2026-11-04')).toStrictEqual({ status: 'disclaimer' });
+    expect(markOn(checkIns, '2026-11-05')).toStrictEqual({ status: 'none' });
   });
 });
