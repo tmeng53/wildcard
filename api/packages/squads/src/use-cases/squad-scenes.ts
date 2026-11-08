@@ -77,11 +77,12 @@ async function squadScene(
   input: { readonly squad: SquadId; readonly viewer: MemberId },
 ): Promise<SquadScene> {
   const squad = await deps.squads.find({ squad: input.squad, viewer: input.viewer });
-  const week = deps.sceneWeekAt(deps.clock());
-  const [picks, crown, open] = await Promise.all([
+  const week = await deps.sceneWeekAt(deps.clock(), squad.id);
+  const [picks, crown, open, firstWeek] = await Promise.all([
     deps.squads.scenePicks(squad.id),
     deps.crownHolders({ squad: squad.id, week: weekBefore(week), viewer: input.viewer }),
     deps.openScenes(week),
+    deps.sceneWeekAt(squad.createdAt, squad.id),
   ]);
   const inSquad = crown.filter((member) => squad.members.some((each) => each.member === member));
   const pickers =
@@ -97,7 +98,7 @@ async function squadScene(
     canPick: picked === undefined && pickers.members.includes(input.viewer),
     open,
     lastTrained: lastTrained(picks, {
-      firstWeek: deps.sceneWeekAt(squad.createdAt),
+      firstWeek,
       current: week,
       scenes: open,
     }),
