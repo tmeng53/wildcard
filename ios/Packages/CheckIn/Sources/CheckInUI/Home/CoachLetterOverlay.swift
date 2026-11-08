@@ -19,6 +19,8 @@ public struct CoachLetterSheet: View {
     var button: Double = 1
     let putAway: () -> Void
     @State private var head: CharacterPlayer?
+    /// The room the letter's lines have; a letter longer than it scrolls (a long one at large type).
+    @State private var room: CGFloat = 0
 
     public init(letter: CoachLetter, putAway: @escaping () -> Void) {
         self.letter = letter
@@ -56,8 +58,16 @@ public struct CoachLetterSheet: View {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.s)
                 .padding(.bottom, Space.xs)
-            RuledLines(lines: letter.lines)
-                .accessibilityIdentifier("today.letter.text")
+            ScrollView {
+                RuledLines(lines: letter.lines, minHeight: room)
+                    .accessibilityIdentifier("today.letter.text")
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.height
+            } action: {
+                room = $0
+            }
             HStack(spacing: Space.xs) {
                 Spacer()
                 MemberHead(player: head, size: Self.face, figure: .coach)
@@ -97,6 +107,8 @@ public struct CoachLetterSheet: View {
 private struct RuledLines: View {
     @Environment(\.sceneTheme) private var theme
     let lines: [String]
+    /// The rules run on down to here at least: the sheet's foot.
+    let minHeight: CGFloat
     /// One line of text and the room around it: 1.6 times the body's 15 points.
     @ScaledMetric(relativeTo: .callout) private var rule = 24.0
 
@@ -110,7 +122,7 @@ private struct RuledLines: View {
             .lineSpacing(leading)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .padding(.top, leading / 2)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: minHeight, alignment: .topLeading)
             .background {
                 Canvas { context, size in
                     var line = rule

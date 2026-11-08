@@ -55,11 +55,12 @@ extension TodayStore {
     /// The letter the squad's coach was left when it took over, for its 简历 to open again.
     public var coachLetter: CoachLetter? { handover == nil ? coach?.letter : nil }
 
-    /// 收下: the letter goes, and this phone never opens it by itself again.
+    /// 收下: the letter goes, and this phone never opens it by itself again, however it was opened
+    /// (a new one read first from 通知 counts too).
     public func putAwayLetter() async {
         guard let shown = letter else { return }
         letterAgain = nil
-        guard shown.isSealed else { return }
+        guard !isOpened(shown.letter) else { return }
         openedLetterID = max(openedLetterID ?? 0, shown.letter.id)
         await backend.opened(shown.letter)
     }

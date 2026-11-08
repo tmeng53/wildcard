@@ -108,6 +108,21 @@ private func letter(_ id: Int = 4, to coach: CoachSpeaker = papa) throws -> Coac
     #expect(relaunched.letter == nil)
 }
 
+@MainActor @Test func aNewLetterReadFirstFromNoticesIsntSealedOnTodayAfter() async throws {
+    let backend = ScriptedBackend(server: sampleHome())
+    await backend.set(coach: SidelineCoach(coach: papa, note: nil, letter: try letter()))
+    let today = store(backend)
+    await today.load()
+    today.showAgain(try letter())
+    #expect(today.letter == ShownLetter(letter: try letter(), isSealed: false))
+    await today.putAwayLetter()
+    #expect(today.letter == nil)
+
+    let relaunched = store(backend)
+    await relaunched.load()
+    #expect(relaunched.letter == nil)
+}
+
 @Test func aLetterToAnotherCoachIsntTheSquadsCoachs() throws {
     #expect(SidelineCoach(coach: maotou, note: nil, letter: try letter(to: papa)).letter == nil)
     #expect(SidelineCoach(coach: papa, note: nil, letter: try letter(to: papa)).letter == (try letter()))

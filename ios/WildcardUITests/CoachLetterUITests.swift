@@ -83,6 +83,26 @@ final class CoachLetterUITests: XCTestCase {
         XCTAssertFalse(seal.exists, "the letter shows again after 收下")
     }
 
+    /// A long letter at the largest type scrolls inside the sheet, and 收下 stays on screen.
+    func testALongLetterAtTheLargestTypeScrollsAndKeepsItsButton() {
+        let app = launch([
+            "-uitest-coach-letter", "-UIPreferredContentSizeCategoryName",
+            "UICTContentSizeCategoryAccessibilityXXXL",
+        ])
+        let seal = app.buttons["today.letter.seal"]
+        XCTAssertTrue(seal.waitForExistence(timeout: 30), "the mate's 今天 shows no envelope")
+        seal.tap()
+        let putAway = app.buttons["today.letter.putAway"]
+        waitFor(putAway, "isHittable == true", "收下 is out of reach at the largest type")
+        settle()
+        assertInside(putAway, app)
+        let text = app.descendants(matching: .any)["today.letter.text"]
+        XCTAssertTrue(text.exists, "the letter's lines are gone")
+        app.scrollViews.containing(.any, identifier: "today.letter.text").firstMatch.swipeUp()
+        XCTAssertTrue(putAway.isHittable, "收下 went away when the letter scrolled")
+        keepScreenshot(named: "91g-coach-letter-largest-type")
+    }
+
     private func launch(_ extra: [String]) -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
