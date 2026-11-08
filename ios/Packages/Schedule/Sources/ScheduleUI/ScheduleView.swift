@@ -10,7 +10,7 @@ import SwiftUI
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
 /// joined, this week, next week) or the 每周模板, on a graphite poster of its own; 存图 saves a
 /// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
-/// 饮食小目标, or the counts. It is pushed over 我, whose tab bar stays: this screen keeps to the
+/// 饮食小目标, or what sits under a week. It is pushed over 我, whose tab bar stays: this screen keeps to the
 /// safe area the app gives it, and the system's back button and swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
@@ -213,13 +213,12 @@ public struct ScheduleView: View {
         .transition(.opacity)
     }
 
-    /// Under a week with nothing in hand: next week's countdown, this week's counts or a past
-    /// week's awards; nothing under the 每周模板, whose note says when it counts.
+    /// Under a week with nothing in hand: next week's countdown or a past week's awards; nothing
+    /// under this week, which is the poster alone, or the 每周模板, whose note says when it counts.
     @ViewBuilder
     private func counts(_ sheet: WeekSheet?) -> some View {
         switch (store.board?.tense, sheet) {
         case (.upcoming, _): CountdownCard(store: store)
-        case (.current, let sheet?): ScheduleCounts(store: store, sheet: sheet)
         case (.past, let sheet?), (nil, let sheet?): WeekAwards(titles: sheet.titles)
         default: EmptyView()
         }
