@@ -1,3 +1,5 @@
+import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
+
 import type { BadgeCatalog } from './badges.js';
 import { promptKey, type MemberId, type MemberWeek, type WeekCheckIn } from './awards.js';
 import { offeredMoves, type AwardSettings } from './settings.js';
@@ -43,6 +45,17 @@ function timeOfDay(moment: Date, timeZone: string): string {
   }).format(moment);
 }
 
+/**
+ * The languages the awards are written in. Their lengths (`TITLE_MAX` and the rest) count
+ * Chinese characters, so an English squad gets Simplified Chinese until they have English ones.
+ */
+export type AwardsLanguage = Exclude<ReaderLanguage, 'en'>;
+
+/** The language a squad that reads `language` gets its awards in. */
+export function awardsLanguageOf(language: ReaderLanguage): AwardsLanguage {
+  return language === 'en' ? 'zh-Hans' : language;
+}
+
 /** A meme from the meme library, as the prompt has it. */
 export interface PromptMeme {
   readonly phrase: string;
@@ -63,12 +76,17 @@ export function promptFor(week: {
   readonly moves: AwardSettings['moves'];
   readonly badges: BadgeCatalog;
   readonly memes: readonly PromptMeme[];
+  /** What the squad reads; Simplified Chinese, the instructions' own, when left out. */
+  readonly language?: AwardsLanguage | undefined;
 }): string {
   const keys = new Map(week.members.map(({ member }, index) => [member, promptKey(index)]));
   const keyOf = (member: MemberId) => keys.get(member) ?? TEAMMATE;
   return JSON.stringify({
     version: 1,
     week: week.weekStart,
+    ...(week.language === undefined || week.language === 'zh-Hans'
+      ? {}
+      : { writeIn: writeIn(week.language) }),
     ...(week.ending === undefined
       ? {}
       : { squad: { trainedDays: week.ending.done, plannedDays: week.ending.plan } }),

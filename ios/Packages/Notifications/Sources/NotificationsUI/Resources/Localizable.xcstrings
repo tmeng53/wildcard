@@ -384,6 +384,86 @@
           }
         }
       }
+    },
+    "%@ 和 %@ 评论了你的动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ and %2$@ commented on your post"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 和 %2$@ 評論了你的動態"
+          }
+        }
+      }
+    },
+    "%@、%@ 和另外 %lld 人评论了你的动态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@ and %3$lld more commented on your post"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、%2$@ 和另外 %3$lld 人評論了你的動態"
+          }
+        }
+      }
+    },
+    "%@ 和 %@ 回复了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ and %2$@ replied to you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 和 %2$@ 回覆了你"
+          }
+        }
+      }
+    },
+    "%@、%@ 和另外 %lld 人回复了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@ and %3$lld more replied to you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@、%2$@ 和另外 %3$lld 人回覆了你"
+          }
+        }
+      }
+    },
+    "教练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

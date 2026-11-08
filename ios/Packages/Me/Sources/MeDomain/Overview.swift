@@ -207,12 +207,23 @@ public struct MateSchedule: Hashable, Sendable {
     public let fuel: [FuelGoal]
     /// The Monday of the week they joined, in their time zone; nil before they saved a profile.
     public let firstWeek: LocalDay?
+    /// Their today, in their time zone; nil from older servers.
+    public let today: LocalDay?
 
     public init(
-        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay?
+        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay?,
+        today: LocalDay? = nil
     ) throws(MeError) {
         guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
-        (self.weekStart, self.days, self.marks, self.fuel, self.firstWeek) = (weekStart, days, marks, fuel, firstWeek)
+        (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
+        (self.firstWeek, self.today) = (firstWeek, today)
+    }
+
+    /// The row shaded as 今天, Monday 0: their today on their calendar, else `fallback` (the
+    /// viewer's, for older servers); nil when that day isn't in this week.
+    public func todayIndex(else fallback: LocalDay) -> Int? {
+        let day = today ?? fallback
+        return day.weekStart == weekStart ? day.weekday - 1 : nil
     }
 
     /// The week's number on the card (W6), the week they joined being W1, as their own 出赛表

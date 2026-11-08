@@ -19,7 +19,10 @@ import {
 } from './squads/preview-invite.js';
 import type { InviteCode } from '../domain/invite-code.js';
 import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
+import { setSquadTimeZone, squadTimeZone, type SquadTimeZone } from './squads/time-zone.js';
 import { setWeeklyGoal, weeklyGoal, type WeeklyGoal } from './squads/weekly-goal.js';
+import { zoneAt, zoneFor } from '../domain/time-zone.js';
+import type { TimeZone } from '@wildcard/time-zones';
 import type { GoalSuggestion } from '../domain/goal-suggestion.js';
 import { goalFor, type DaysPerMember, type WeeklyGoalSetting } from '../domain/weekly-goal.js';
 
@@ -32,8 +35,16 @@ export interface SquadAt {
 
 /** Squads: creating one, joining by invite code, leaving, and who is in each. */
 export interface Squads {
-  /** `week` is the creator's week now (its Monday, `YYYY-MM-DD`): the goal counts from it. */
-  create(input: Omit<CreateSquadInput, 'week'> & { week: string }): Promise<CreatedSquad>;
+  /**
+   * `week` is the creator's week now (its Monday, `YYYY-MM-DD`): the goal counts from it;
+   * `timeZoneWeek` the squad's week now on its zone's clock, which the zone counts from.
+   */
+  create(
+    input: Omit<CreateSquadInput, 'week' | 'timeZoneWeek'> & {
+      week: string;
+      timeZoneWeek?: string | undefined;
+    },
+  ): Promise<CreatedSquad>;
   join(input: JoinSquadInput): Promise<JoinedSquad>;
   previewInvite(input: { inviteCode: InviteCode; viewer: MemberId }): Promise<InvitePreview>;
   /** The squad as anyone holding its invite code may see it, signed in or not. */
@@ -100,6 +111,28 @@ export interface Squads {
    * what other modules ask to count a squad's week against.
    */
   daysPerMember(squad: SquadId, week: string): Promise<DaysPerMember>;
+  /**
+   * The squad's time zone (小队时区) in its week at `moment` (on its own clock) and the next.
+   */
+  timeZone(input: { squad: SquadId; viewer: MemberId; moment: Date }): Promise<SquadTimeZone>;
+  /**
+   * Sets the squad's time zone from the week after the squad's week at `moment` (on its own
+   * clock), for its captain.
+   */
+  setTimeZone(input: {
+    squad: SquadId;
+    member: MemberId;
+    timeZone: string;
+    moment: Date;
+  }): Promise<SquadTimeZone>;
+  /**
+   * Each squad's time zone for the week starting `week` (a Monday, `YYYY-MM-DD`): the clock its
+   * squad-wide moments keep that week, such as the 战报 freezing Sunday 8pm. New York for a squad
+   * that never set one.
+   */
+  timeZonesFor(squads: readonly SquadId[], week: string): Promise<ReadonlyMap<SquadId, TimeZone>>;
+  /** Each squad's time zone at a moment, as `timeZonesFor` for the week the squad is in then. */
+  timeZonesAt(squads: readonly SquadId[], moment: Date): Promise<ReadonlyMap<SquadId, TimeZone>>;
   /** The squad's captain now; `undefined` once everyone left, or for no such squad. */
   captainOf(squad: SquadId): Promise<MemberId | undefined>;
   /** The higher goals suggested to the squad's captains, the earliest week first. */
@@ -126,7 +159,13 @@ export function createSquads(deps: {
   readonly aiConsent: AiConsentCheck;
 }): Squads {
   return {
-    create: (input) => createSquad(deps, { ...input, week: SceneWeek.parse(input.week) }),
+    create: (input) =>
+      createSquad(deps, {
+        ...input,
+        week: SceneWeek.parse(input.week),
+        timeZoneWeek:
+          input.timeZoneWeek === undefined ? undefined : SceneWeek.parse(input.timeZoneWeek),
+      }),
     join: (input) => joinSquad(deps, input),
     previewInvite: (input) => previewInvite(deps, input),
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),
@@ -154,6 +193,17 @@ export function createSquads(deps: {
     weeklyGoals: (squad) => deps.store.weeklyGoals(squad),
     daysPerMember: async (squad, week) =>
       goalFor(await deps.store.weeklyGoals(squad), SceneWeek.parse(week)),
+    timeZone: (input) => squadTimeZone(deps, input),
+    setTimeZone: (input) => setSquadTimeZone(deps, input),
+    timeZonesFor: async (squads, week) => {
+      const settings = await deps.store.timeZones(squads);
+      const parsed = SceneWeek.parse(week);
+      return new Map(squads.map((squad) => [squad, zoneFor(settings.get(squad) ?? [], parsed)]));
+    },
+    timeZonesAt: async (squads, moment) => {
+      const settings = await deps.store.timeZones(squads);
+      return new Map(squads.map((squad) => [squad, zoneAt(settings.get(squad) ?? [], moment)]));
+    },
     captainOf: async (squad) => (await deps.store.find(squad))?.captain ?? undefined,
     goalSuggestions: (squad) => deps.store.goalSuggestions(squad),
     suggestGoal: (squad, suggestion) => deps.store.suggestGoal(squad, suggestion),

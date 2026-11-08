@@ -366,7 +366,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。\n- 队员2：这周已经练了 0 天。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。 用简体中文写。\n- 队员2：这周已经练了 0 天。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
@@ -924,6 +924,67 @@ describe('the coach', () => {
     });
   });
 
+  it('is off duty for the rest of the day once the squad spent its cap, and back the next', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      // One wake costs 12,000 input and 800 output tokens: 4,600 micros at the fixture's prices.
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { squadDailyCapMicros: 4_600 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 2, failed: 0 });
+      expect(runs).toHaveLength(1);
+      const tomorrow = new Date(now.getTime() + 86_400_000);
+      await wakes(fixture, { agent, at: tomorrow }).run();
+      expect(runs).toHaveLength(2);
+      const states = await sql<{ reason: string; state: string; last_error: string | null }>`
+        select reason, state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows).toStrictEqual([
+        { reason: 'checkIn', state: 'done', last_error: null },
+        {
+          reason: 'daily',
+          state: 'skipped',
+          last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
+        },
+        { reason: 'daily', state: 'done', last_error: null },
+      ]);
+    });
+  });
+
+  it('is off duty everywhere once every squad together spent the day’s cap', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const other = SquadId.parse(randomUUID());
+      await sql`insert into public.squads (id, name, invite_code) values (${other}, 'other', ${other})`.execute(
+        trx,
+      );
+      // Another squad spent the whole day's cap this morning.
+      await sql`insert into public.coach_usage
+          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros, at)
+        values (${other}, 'xiaohun', 'openai/gpt-6-luna', 1, 1, 1, 9000, ${new Date(now.getTime() - 3_600_000)})`.execute(
+        trx,
+      );
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { dailyCapMicros: 9_000 },
+        MemberId.parse(mia),
+      );
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).run();
+      expect(runs).toHaveLength(0);
+      const states = await sql<{ state: string; last_error: string }>`
+        select state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
+        trx,
+      );
+      expect(states.rows.map(({ state }) => state)).toStrictEqual(['skipped', 'skipped']);
+      expect(states.rows[0]?.last_error).toBe(
+        'off duty: every squad spent 9000 of the 9000 micros today',
+      );
+    });
+  });
+
   it('looks at a check-in at once, shows its recent emoji, and keeps every tool call', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, checkIn } = fixture;
@@ -1325,6 +1386,22 @@ describe('the coach', () => {
       expect(read).toContain('队员1');
       expect(read).not.toContain('米亚');
       expect(read).not.toContain('跑步');
+    });
+  });
+
+  it('writes the 战术板 in the squad’s language and a check-in’s reply in its author’s', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const week: SquadWeek = {
+        ...fixture.week,
+        members: fixture.week.members.map((member) => ({ ...member, language: 'en' })),
+        language: 'zh-Hant',
+      };
+      await wakes(fixture, { agent, weeks: { [week.weekStart]: week } }).run();
+      const daily = runs.find(({ task }) => task.includes('新的一天'))?.task;
+      const checkIn = runs.find(({ task }) => task.includes('有人打卡'))?.task;
+      expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
+      expect(checkIn?.split('\n\n')).toContain('Write in English.');
     });
   });
 

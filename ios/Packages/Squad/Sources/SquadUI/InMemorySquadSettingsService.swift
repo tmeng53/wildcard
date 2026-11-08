@@ -77,7 +77,9 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                 today: LocalDay(at: now, in: .current), timeZone: .current,
                 goal: SquadWeeklyGoal(
                     daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == ids[0],
-                    recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4))))
+                    recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4)),
+                matchTimeZone: SquadTimeZone(
+                    timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == ids[0])))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -139,6 +141,13 @@ extension InMemorySquadSettingsService {
         guard current.goal.canChange, SquadWeeklyGoal.choices.contains(daysPerMember) else { throw .outdated }
         current.goal.nextDaysPerMember = daysPerMember
         return current.goal
+    }
+
+    public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
+        if failsSaving { throw .unavailable }
+        guard current.matchTimeZone.canChange, TimeZone(identifier: timeZone) != nil else { throw .outdated }
+        current.matchTimeZone.nextTimeZone = timeZone
+        return current.matchTimeZone
     }
 
     public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {

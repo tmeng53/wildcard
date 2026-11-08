@@ -15,7 +15,7 @@ import { instructionsOf, taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, newYorkTime, wakesDue, weekStartOf, weeksAround } from './wake.js';
+import { costMicros, wakesDue, weekStartOf, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -184,16 +184,7 @@ describe('the memory files', () => {
 });
 
 describe('when the coach wakes', () => {
-  it('reads New York’s day and hour, and the Monday of a day’s week', () => {
-    // 2026-11-01 is the day daylight saving ends; 5:30 UTC is still 1:30 EDT.
-    expect(newYorkTime(new Date('2026-11-01T05:30:00Z'))).toStrictEqual({
-      day: '2026-11-01',
-      hour: 1,
-    });
-    expect(newYorkTime(new Date('2026-11-01T03:30:00Z'))).toStrictEqual({
-      day: '2026-10-31',
-      hour: 23,
-    });
+  it('finds the Monday of a day’s week', () => {
     expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
     expect(weekStartOf('2026-10-26')).toBe('2026-10-26');
   });
@@ -212,14 +203,32 @@ describe('when the coach wakes', () => {
     expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
   });
 
-  it('wakes for check-ins of the last hour, and once a day from 6am New York', () => {
+  it('wakes for check-ins of the last hour, and once a day from 6am on the squad’s clock', () => {
     // 10:00 EST: c2 was made 10 minutes ago, c1 days ago.
-    expect(wakesDue({ squad, week, now: new Date('2026-11-01T14:00:00Z') })).toStrictEqual([
+    expect(
+      wakesDue({
+        squad,
+        week,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
       { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
       { squad, reason: { kind: 'daily', day: '2026-11-01' } },
     ]);
+    // 6:00 in Taipei is 17:00 the day before in New York: the squad's own clock.
+    expect(
+      wakesDue({ squad, week, now: new Date('2026-10-31T22:00:00Z'), timeZone: 'Asia/Taipei' }),
+    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
     // 5:59 EST: no daily wake yet.
-    expect(wakesDue({ squad, week, now: new Date('2026-11-01T10:59:00Z') })).toStrictEqual([]);
+    expect(
+      wakesDue({
+        squad,
+        week,
+        now: new Date('2026-11-01T10:59:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([]);
   });
 
   it('wakes for replies to the coach of the last hour, even under an older check-in', () => {
@@ -246,17 +255,27 @@ describe('when the coach wakes', () => {
         c2,
       ],
     };
-    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T14:00:00Z') })).toStrictEqual(
-      [
-        { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
-        { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
-        { squad, reason: { kind: 'daily', day: '2026-11-01' } },
-      ],
-    );
+    expect(
+      wakesDue({
+        squad,
+        week: replied,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
+      { squad, reason: { kind: 'checkIn', checkIn: 'c2' } },
+      { squad, reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
     // Two hours on, it is the coach job's no more: it was answered when written, or never.
-    expect(wakesDue({ squad, week: replied, now: new Date('2026-11-01T16:00:00Z') })).toStrictEqual(
-      [{ squad, reason: { kind: 'daily', day: '2026-11-01' } }],
-    );
+    expect(
+      wakesDue({
+        squad,
+        week: replied,
+        now: new Date('2026-11-01T16:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([{ squad, reason: { kind: 'daily', day: '2026-11-01' } }]);
   });
 
   it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {
@@ -353,8 +372,9 @@ describe('when the coach wakes', () => {
 
   it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
     const coach = Coach.parse({
-      version: 2,
+      version: 3,
       id: 'nuannuan',
+      position: 2,
       tier: 'entry',
       name: '暖暖',
       title: '暖心教练',
@@ -393,6 +413,8 @@ describe('when the coach wakes', () => {
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
+        // The 战术板 in the squad's language: Simplified Chinese until the week says another.
+        '战术板：用简体中文写。',
         '今天没有要写便条的人。',
       ].join('\n\n'),
     );
@@ -490,7 +512,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -502,7 +524,45 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+    );
+  });
+
+  it('writes what one member reads in their language, and the 战术板 in the squad’s', () => {
+    const multilingual: SquadWeek = {
+      ...week,
+      members: [
+        { member: mia, nickname: '米亚', language: 'zh-Hant' },
+        { member: leo, language: 'en' },
+      ],
+      language: 'zh-Hant',
+    };
+    // A check-in's reply in its author's language (队员2 posted c2).
+    expect(
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c2' },
+        week: multilingual,
+        files: new Map(),
+        recentNotes: [],
+      })?.split('\n\n'),
+    ).toContain('Write in English.');
+    const daily = taskOf({
+      reason: { kind: 'daily', day: '2026-11-01' },
+      week: multilingual,
+      files: new Map(),
+      recentNotes: [],
+      noteTo: [
+        { name: '队员1', language: 'zh-Hant', trainedDays: 1 },
+        { name: '队员2', language: 'en', trainedDays: 0 },
+      ],
+    })?.split('\n\n');
+    expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
+    expect(daily?.at(-1)).toBe(
+      [
+        '今天给这些人各写一张便条：',
+        '- 队员1：这周已经练了 1 天。 用繁體中文寫，照台灣的說法。',
+        '- 队员2：这周已经练了 0 天。 Write in English.',
+      ].join('\n'),
     );
   });
 

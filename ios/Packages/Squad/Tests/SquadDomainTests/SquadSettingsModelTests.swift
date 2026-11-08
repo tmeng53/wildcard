@@ -8,14 +8,14 @@ private func member(_ last: Int) -> MemberID {
     MemberID(UUID(uuidString: String(format: "a0000000-0000-4000-8000-%012d", last)) ?? UUID())
 }
 
-private let (lin, coco, mia) = (member(1), member(2), member(3))
+let (lin, coco, mia) = (member(1), member(2), member(3))
 private let squadID = SquadID(UUID(uuidString: "5a000000-0000-4000-8000-000000000001") ?? UUID())
 
 private func character(_ name: String) throws -> MemberCharacter {
     MemberCharacter(nickname: try Nickname(name), look: CharacterLook(persona: "energetic", variants: [:]))
 }
 
-private func scene(
+func scene(
     pickers: SquadScene.Pickers, picked: SquadScene.Pick? = nil, canPick: Bool, current: SceneID = .track
 ) throws -> SquadScene {
     SquadScene(
@@ -38,7 +38,7 @@ private let tuesday = Date(timeIntervalSince1970: 1_793_106_000)
 private let toronto = TimeZone(identifier: "America/Toronto") ?? .gmt
 
 /// A squad kept in memory: 小林 captains Coco and Mia.
-private actor Squad3: SquadSettingsService {
+actor Squad3: SquadSettingsService {
     var current: SquadSettings
     var failing: SquadError?
     private(set) var picks: [SceneID] = []
@@ -53,7 +53,9 @@ private actor Squad3: SquadSettingsService {
             timeZone: toronto,
             goal: SquadWeeklyGoal(
                 daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == lin,
-                recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)))
+                recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)),
+            matchTimeZone: SquadTimeZone(
+                timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == lin))
     }
 
     func fail(with error: SquadError?) { failing = error }
@@ -117,6 +119,13 @@ private actor Squad3: SquadSettingsService {
         guard current.goal.canChange else { throw .outdated }
         current.goal.nextDaysPerMember = daysPerMember
         return current.goal
+    }
+
+    func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
+        if let failing { throw failing }
+        guard current.matchTimeZone.canChange else { throw .outdated }
+        current.matchTimeZone.nextTimeZone = timeZone
+        return current.matchTimeZone
     }
 
     func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
