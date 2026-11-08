@@ -242,7 +242,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Welcome. Your own pace"
+            "value": "Welcome. Go at your own pace"
           }
         },
         "zh-Hans": {
@@ -286,7 +286,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Here? That's nice"
+            "value": "Oh, you're here. Nice"
           }
         },
         "zh-Hans": {
@@ -352,7 +352,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A meeting of destiny"
+            "value": "Destiny brought us here"
           }
         },
         "zh-Hans": {
@@ -440,7 +440,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I wouldn't allow you not to come"
+            "value": "Not coming was never an option"
           }
         },
         "zh-Hans": {
@@ -1578,7 +1578,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skip Leg Day Wednesdays Club"
+            "value": "Skip Leg Day Club"
           }
         },
         "zh-Hans": {
@@ -1688,7 +1688,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Start squad"
+            "value": "Start a squad"
           }
         },
         "zh-Hans": {
@@ -1710,7 +1710,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Change this Wildcard athlete"
+            "value": "Try another Wildcard athlete"
           }
         },
         "zh-Hans": {
@@ -2062,7 +2062,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Where this week?"
+            "value": "Where to this week?"
           }
         },
         "zh-Hans": {

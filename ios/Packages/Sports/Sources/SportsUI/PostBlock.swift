@@ -76,7 +76,11 @@ public struct PostBlock: View {
             )
             .background {
                 Color(colors.fill)
-                if let photo { photo.resizable().scaledToFill() }
+                if let photo {
+                    photo.resizable().scaledToFill()
+                } else if layout == .strip, let activity {
+                    SportPattern(symbol: activity.symbol, color: Color(colors.shade))
+                }
             }
             .overlay(alignment: .topLeading) {
                 if let day, layout != .thumbnail {
@@ -128,8 +132,9 @@ public struct PostBlock: View {
         }
     }
 
-    /// A strip's least height, the design's: the words grow it from there.
-    static let stripHeight: Double = 150
+    /// A strip's least height, the design's (Tracy, 2026-11-08): short when there are no words,
+    /// which grow it from there.
+    static let stripHeight: Double = 96
 
     /// The sport for a 练了, else the kind.
     private var label: Text {
@@ -192,6 +197,46 @@ public struct PostBlock: View {
         case .strip: nil
         case .card: 6
         }
+    }
+}
+
+/// A 练了's sport icon, upright, in rows that run diagonally and stagger, filling a strip without
+/// a photo in a shade a step darker than the block (Tracy, 2026-11-08).
+private struct SportPattern: View {
+    let symbol: String
+    let color: Color
+
+    private static let icon: Double = 34
+    private static let step: Double = 62
+    private static let rowStep = step * 0.78
+    private static let angle = -25.0 * Double.pi / 180
+
+    var body: some View {
+        Canvas { context, size in
+            var glyph = context.resolve(Image(systemName: symbol))
+            glyph.shading = .color(color)
+            let natural = glyph.size
+            guard natural.width > 0, natural.height > 0 else { return }
+            let scale = Self.icon / max(natural.width, natural.height)
+            let drawn = CGSize(width: natural.width * scale, height: natural.height * scale)
+            let reach = Int((hypot(size.width, size.height) / Self.rowStep).rounded(.up)) / 2 + 1
+            let (cosine, sine) = (cos(Self.angle), sin(Self.angle))
+            for row in -reach...reach {
+                for column in -reach...reach {
+                    let along = Double(column) * Self.step + (row.isMultiple(of: 2) ? 0 : Self.step / 2)
+                    let across = Double(row) * Self.rowStep
+                    let center = CGPoint(
+                        x: size.width / 2 + along * cosine - across * sine,
+                        y: size.height / 2 + along * sine + across * cosine)
+                    context.draw(
+                        glyph,
+                        in: CGRect(
+                            x: center.x - drawn.width / 2, y: center.y - drawn.height / 2,
+                            width: drawn.width, height: drawn.height))
+                }
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 #endif

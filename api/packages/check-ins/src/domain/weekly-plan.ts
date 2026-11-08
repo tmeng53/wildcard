@@ -9,7 +9,7 @@ import { CustomSportName } from './text.js';
 
 // A member's weekly plan, as the app's contract has it (`WeeklyPlan` in ios/Packages/Contracts):
 // seven days, Monday first, each a training day (optionally naming the sport) or a rest day.
-// 本周 x/y counts 练了 days against the plan's training days.
+// 本周 x/y counts 训练 days against the plan's training days.
 
 const DAY = 86_400_000;
 
@@ -70,8 +70,8 @@ export const plannedTrainingDays = (
   }).length;
 
 /**
- * Which days of a week's plan a 练了 turned from rest into training, by the day's index (0 is
- * Monday) and that 练了's id, so a squadmate's card can tell them from days the member planned.
+ * Which days of a week's plan a 训练 turned from rest into training, by the day's index (0 is
+ * Monday) and that 训练's id, so a squadmate's card can tell them from days the member planned.
  */
 export const TrainedBy = z.record(z.string().regex(/^[0-6]$/), z.uuid());
 export type TrainedBy = Readonly<Record<string, string>>;
@@ -82,7 +82,7 @@ export const StoredPlan = z.discriminatedUnion('version', [
 ]);
 
 /**
- * The days a 练了 turned into training that `next` keeps as they were: a day the member changed
+ * The days a 训练 turned into training that `next` keeps as they were: a day the member changed
  * is theirs from then on.
  */
 export function trainedByKept({
@@ -201,7 +201,7 @@ export function dayIndex(weekStart: LocalDay, day: LocalDay): number {
 }
 
 /**
- * The plan with `day` a training day of `training`'s sport when it was a rest day: a 练了 on a
+ * The plan with `day` a training day of `training`'s sport when it was a rest day: a 训练 on a
  * planned rest day makes it a training day. Undefined when the day was already a training day.
  */
 export function trainedOnRestDay({

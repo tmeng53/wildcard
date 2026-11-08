@@ -19,7 +19,7 @@ struct PosterContent: Equatable {
         case trained(Int, planned: Int, isPast: Bool)
         /// Next week: 5 练 2 休.
         case planned(train: Int, rest: Int)
-        /// The 每周模板: 每周训练 4 天.
+        /// The 我的每周计划: 每周训练 4 天.
         case typical(train: Int)
     }
 
@@ -41,7 +41,7 @@ struct PosterContent: Equatable {
     }
 
     let nickname: String
-    /// The 每周模板 rather than a week: no number or dates, in the brand's graphite.
+    /// The 我的每周计划 rather than a week: no number or dates, in the brand's graphite.
     let isTemplate: Bool
     let weekStart: LocalDay
     /// W1 for the week the member joined.
@@ -88,7 +88,7 @@ struct PosterContent: Equatable {
         }
     }
 
-    /// The 每周模板 as the member plans it: every day open, nothing checked in, no 饮食小目标.
+    /// The 我的每周计划 as the member plans it: every day open, nothing checked in, no 饮食小目标.
     init(template board: WeekBoard, nickname: String) {
         self.nickname = nickname
         isTemplate = true

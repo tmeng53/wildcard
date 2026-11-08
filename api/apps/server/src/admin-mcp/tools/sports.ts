@@ -73,7 +73,7 @@ export function setSportPicks({ sports }: SportToolDependencies) {
     title: 'Set a short list of sports',
     description:
       'Replaces one short list, whole and in order: signUpCommon (sign-up’s most common ' +
-      'sports) or checkInQuick (练了’s quick picks). Each must be a sport the pickers offer. ' +
+      'sports) or checkInQuick (训练’s quick picks). Each must be a sport the pickers offer. ' +
       'Apps see it within a minute. Returns the list now.',
     changes: true,
     input: PicksEdit,

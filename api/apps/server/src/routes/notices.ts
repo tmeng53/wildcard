@@ -11,15 +11,13 @@ import {
 } from '@wildcard/notices';
 
 import { bodyVersion } from '../body-version.js';
+import type { CoachNames } from '../flows/coach-names.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
 /** Notices on a page when the app doesn't say. */
 const DEFAULT_PAGE = 30;
-
-/** The coaches' names now, by coach id, retired ones too. */
-export type CoachNames = () => Promise<ReadonlyMap<string, string>>;
 
 const WireNoticeId = z.int().positive();
 
@@ -151,7 +149,7 @@ export const NoticeEntry = z
         destination: z.string().meta({
           description:
             'Where it opens: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表), `squad` ' +
-            '(小队), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
+            '(小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. More may come: show ' +
             'no button for one you don’t know.',
         }),
       })
@@ -331,17 +329,25 @@ export async function noticeEntries(
       ),
     ),
   ];
+  const coachAsked = told.flatMap((notice) =>
+    notice.kind === 'coachReply' || notice.kind === 'coachNote'
+      ? [{ coach: notice.subject.coach, squad: notice.squad }]
+      : notice.kind === 'coachLetter'
+        ? [
+            { coach: notice.subject.from, squad: notice.squad },
+            { coach: notice.subject.to, squad: notice.squad },
+          ]
+        : [],
+  );
   const [profiles, coaches] = await Promise.all([
     movers.length === 0
       ? undefined
       : deps.members.squadmates(movers.map((each) => ProfileMember.parse(each))),
-    told.some(({ kind }) => kind === 'coachReply' || kind === 'coachNote' || kind === 'coachLetter')
-      ? deps.coachNames()
-      : undefined,
+    coachAsked.length === 0 ? undefined : deps.coachNames(coachAsked),
   ]);
   const names = {
     member: (id: string) => profiles?.get(ProfileMember.parse(id))?.character?.nickname,
-    coach: (id: string) => coaches?.get(id),
+    coach: (id: string, squad: string | undefined) => coaches?.(id, squad),
     broadcast: (id: Broadcast['id']) => broadcasts.get(id),
   };
   // A broadcast since lost has nothing to say, so it is left out.
@@ -355,7 +361,7 @@ function wireNotice(
   notice: Notice,
   names: {
     readonly member: (id: string) => string | undefined;
-    readonly coach: (id: string) => string | undefined;
+    readonly coach: (id: string, squad: string | undefined) => string | undefined;
     readonly broadcast: (id: Broadcast['id']) => Broadcast | undefined;
   },
 ): z.infer<typeof NoticeEntry> | undefined {
@@ -382,7 +388,7 @@ function wireNotice(
     }
     case 'coachReply': {
       const { checkIn, coach, replied, emoji } = notice.subject;
-      const coachName = names.coach(coach);
+      const coachName = names.coach(coach, notice.squad);
       return {
         ...common,
         checkIn,
@@ -394,7 +400,7 @@ function wireNotice(
     }
     case 'coachNote': {
       const { note, coach, day, text } = notice.subject;
-      const coachName = names.coach(coach);
+      const coachName = names.coach(coach, notice.squad);
       return {
         ...common,
         note,
@@ -406,8 +412,8 @@ function wireNotice(
     }
     case 'coachLetter': {
       const { letter, from, to, day, text } = notice.subject;
-      const coachName = names.coach(from);
-      const toCoachName = names.coach(to);
+      const coachName = names.coach(from, notice.squad);
+      const toCoachName = names.coach(to, notice.squad);
       return {
         ...common,
         letter,

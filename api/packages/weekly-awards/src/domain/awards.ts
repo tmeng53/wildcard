@@ -30,7 +30,7 @@ export interface WeekCheckIn {
   readonly day: string;
   readonly createdAt: Date;
   readonly kind: CheckInKind;
-  /** For a 练了: the listed sport's key, or the name the member gave their own. */
+  /** For a 训练: the listed sport's key, or the name the member gave their own. */
   readonly sport?: string | undefined;
   readonly caption?: string | undefined;
   /** For a 请假条: its text. */

@@ -29,7 +29,7 @@ public struct APISignUpService: SignUpService {
         try await signUp { () throws(APIError) in try await api.agreeToAI(copyVersion: Self.aiConsentCopyVersion) }
     }
 
-    static let aiConsentCopyVersion = 2
+    static let aiConsentCopyVersion = 3
 
     public func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad {
         try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
@@ -59,7 +59,7 @@ public struct APISignUpService: SignUpService {
         }
     }
 
-    /// Saves the week as the member's 每周模板, which this week and every later one follow.
+    /// Saves the week as the member's 我的每周计划, which this week and every later one follow.
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {
         try await signUp { () throws(APIError) in try await api.saveTemplate(days) }
     }

@@ -35,7 +35,7 @@ function appWith(timing: StreamTiming) {
     liveEvents,
     notices,
     members: createMembers({ store: createPostgresProfileStore(db) }),
-    coachNames: () => Promise.resolve(new Map()),
+    coachNames: () => Promise.resolve(() => undefined),
     log: createLog(() => undefined),
     timing,
   });

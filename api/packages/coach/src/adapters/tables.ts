@@ -59,6 +59,7 @@ export interface Coaches {
   tags: string[];
   tier: string;
   title: string;
+  translations: Generated<Json>;
   years_coaching: number;
 }
 

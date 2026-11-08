@@ -48,6 +48,21 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     #expect(today.coachLine == nil)
 }
 
+@MainActor @Test func theSidelineIsOpenForHireOnlyOnceTheSquadIsKnownToHaveNoCoach() async {
+    let backend = ScriptedBackend(server: sampleHome())
+    await backend.set(failure: .notSent)
+    let today = store(backend)
+    await today.load()
+    // Not known yet: no empty spot, as the squad may have a coach.
+    #expect(!today.isHiringCoach)
+    await backend.set(failure: nil)
+    await today.load()
+    #expect(today.isHiringCoach)
+    await backend.set(coach: SidelineCoach(coach: maotou, note: nil))
+    await today.loadCoach()
+    #expect(!today.isHiringCoach)
+}
+
 private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> CoachMemberNote {
     CoachMemberNote(id: id, squad: squad, day: try LocalDay("2026-11-03"), text: text, coach: maotou)
 }
