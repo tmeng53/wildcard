@@ -24,10 +24,14 @@ enum DefaultLanguage {
     static func apply() {
         let arguments = ProcessInfo.processInfo.arguments
         guard !arguments.contains("-\(key)"), let bundle = Bundle.main.bundleIdentifier else { return }
+        #if DEBUG
+        // `-uitest-first-launch`: forget the recorded language, as on a new install. Before the
+        // phone's languages are read, since those start with the app's own: read first, the last
+        // test's language would count as the phone's.
+        if arguments.contains("-uitest-first-launch") { UserDefaults.standard.removeObject(forKey: key) }
+        #endif
         var phone = Locale.preferredLanguages
         #if DEBUG
-        // `-uitest-first-launch`: forget the recorded language, as on a new install.
-        if arguments.contains("-uitest-first-launch") { UserDefaults.standard.removeObject(forKey: key) }
         // `-uitest-phone-language zh-Hant-TW`: a phone set to that language, as CI's simulator isn't.
         if let flag = arguments.firstIndex(of: "-uitest-phone-language"), arguments.indices.contains(flag + 1) {
             phone = [arguments[flag + 1]]
