@@ -172,8 +172,16 @@ const storyFields = {
         .optional()
         .meta({
           description:
-            'Present when finishing the weekly plan first decided a place on the podium (or the ' +
-            'last place just off it), so the page can say why.',
+            'No longer sent: ties now go to whoever reached the tied days first ' +
+            '(`tieBrokenByTime`). Kept so older builds still read the reply.',
+        }),
+      tieBrokenByTime: z
+        .literal(true)
+        .optional()
+        .meta({
+          description:
+            'Present when reaching the tied days trained first decided a place on the podium ' +
+            '(or the last place just off it), so the page can say why.',
         }),
     })
     .openapi('StoryPodium')
@@ -182,7 +190,7 @@ const storyFields = {
       description:
         '领奖台, every week: the top 3 by days trained. The champion (most days, the crown, who ' +
         'picks next week’s scene) in the middle, up to 2 next beside, left then right. A tie ' +
-        'goes to whoever finished their own weekly plan first, then to the earliest to join. ' +
+        'goes to whoever reached those days trained first, then to the earliest to join. ' +
         'Missing when nobody trained.',
     }),
   myWeek: z
@@ -466,7 +474,7 @@ export function weekStory(
                 champion: story.podium.champion,
                 sides: [...story.podium.sides],
                 planDone: [...story.podium.planDone],
-                ...(story.podium.tieBrokenByPlan ? { tieBrokenByPlan: true as const } : {}),
+                ...(story.podium.tieBrokenByTime ? { tieBrokenByTime: true as const } : {}),
               },
             }),
         ...(mine?.checkedIn !== true

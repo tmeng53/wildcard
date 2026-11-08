@@ -126,7 +126,7 @@ extension WeekStory {
             else { return nil }
             podium = Podium(
                 champion: champion, sides: sides, planDone: Set(planDone),
-                tieBrokenByPlan: wire.tieBrokenByPlan ?? false,
+                tieBrokenByTime: wire.tieBrokenByTime ?? false,
                 speech: first(champion)?.speech,
                 championMove: first(champion)?.move, sideMove: sides.first.flatMap(first)?.move)
         }

@@ -85,6 +85,26 @@ public struct SquadWeek: Hashable, Sendable {
     /// member by member in the order they joined.
     public var sports: [SportDays] { Self.ranked(members.flatMap(\.days)) }
 
+    /// Who trained any of these sports, most days of them first, then in the order they joined.
+    public func members(training sports: Set<Sport>) -> [MemberID] {
+        let counts = members.map { member in
+            member.days.prefix(7).count { day in
+                if case .trained(let sport?) = day { sports.contains(sport) } else { false }
+            }
+        }
+        return zip(members, counts).enumerated()
+            .filter { $0.element.1 > 0 }
+            .sorted { lhs, rhs in
+                lhs.element.1 != rhs.element.1 ? lhs.element.1 > rhs.element.1 : lhs.offset < rhs.offset
+            }
+            .map(\.element.0.member)
+    }
+
+    /// Who trained on a day of the week (0 for Monday), in the order they joined.
+    public func members(trainedOn weekday: Int) -> [MemberID] {
+        members.filter { weekday < $0.days.count && $0.days[weekday].isTrained }.map(\.member)
+    }
+
     /// The day the most members trained, the earliest on a tie; nil when nobody trained.
     public var bestDay: BestDay? {
         let counts = (0..<7).map { index in
