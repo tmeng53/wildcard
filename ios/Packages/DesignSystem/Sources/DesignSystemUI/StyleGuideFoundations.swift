@@ -228,6 +228,7 @@ struct MotionSection: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isAtEnd = false
+    @State private var checkPlays = 0
 
     private let names: [String: Text] = [
         "press": Text("按下：所有按钮", bundle: .module),
@@ -284,6 +285,17 @@ struct MotionSection: View {
                         .background(Color(role: .bgBrandPage, in: theme))
                 }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            }
+            GuideGroup(Text("完成：两张票打勾", bundle: .module)) {
+                TicketCheck(size: 96, label: Text("完成", bundle: .module)) {
+                    Text("完成", bundle: .module).typeStyle(TypeRamp.headline)
+                }
+                .id(checkPlays)
+                .frame(maxWidth: .infinity, minHeight: 180)
+                .background(Color(role: .bgCanvas, in: theme))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                .onTapGesture { checkPlays += 1 }
+                .accessibilityIdentifier("styleguide.ticketCheck")
             }
         }
     }

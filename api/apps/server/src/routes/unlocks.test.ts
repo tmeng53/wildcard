@@ -50,6 +50,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -118,6 +119,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   weather: weatherOn(db),

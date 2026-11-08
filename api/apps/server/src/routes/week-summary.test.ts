@@ -42,6 +42,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
   unusedUnlocks,
   unusedGifts,
 } from '../test-kit/weekly-awards.js';
@@ -106,6 +107,7 @@ const app = createApp({
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   log: createLog(() => undefined),
   admin: adminOn(),
   jobs: noJobs,

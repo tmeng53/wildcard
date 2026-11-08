@@ -99,4 +99,24 @@ extension WildcardAPI {
         }
         return SquadTimeZone(wire)
     }
+
+    /// The squad's language (小队语言): the captain's pick, else the captain's app language.
+    public func language(of squad: SquadID) async throws(APIError) -> SquadLanguage {
+        let wire = try await call {
+            try await client.getSquadLanguage(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return SquadLanguage(wire)
+    }
+
+    /// Sets the squad's language from now on; only its captain may. Safe to repeat.
+    public func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(APIError)
+        -> SquadLanguage
+    {
+        let wire = try await call {
+            try await client.setSquadLanguage(
+                path: .init(squadId: squad.description), body: .json(SquadLanguage.change(to: language))
+            ).ok.body.json
+        }
+        return SquadLanguage(wire)
+    }
 }

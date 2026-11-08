@@ -137,7 +137,7 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        .followsNotices(inbox)
+        .followsNotices(inbox) { refreshOpenPosts(about: $0) }
         // 商店街 read again when the server says it changed and on each return to the front (a
         // switch's day starting tells nothing), so a store that opened shows without a relaunch.
         .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
@@ -276,7 +276,8 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp, health: today.health, location: location),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    location: location),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }

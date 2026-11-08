@@ -6,6 +6,7 @@ import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
+import type { FeedbackTables } from '@wildcard/feedback';
 import type { MemberTables } from '@wildcard/members';
 import type { MemeTables } from '@wildcard/memes';
 import type { PushTables } from '@wildcard/push';
@@ -176,7 +177,42 @@ export type Tables = CheckInTables &
   CoachTables &
   NoticeTables &
   ArtTables &
-  CampaignTables;
+  CampaignTables &
+  FeedbackTables;
+
+/** One file to attach to an issue, such as a screenshot. */
+export interface IssueAttachment {
+  /** Its name in the issue's folder, such as `screenshot-1.jpg`. */
+  readonly name: string;
+  readonly bytes: Uint8Array;
+}
+
+/**
+ * Where members' feedback is filed for whoever fixes it: an issue tracker (a private GitHub
+ * repository today). Throws `IssueTrackerUnavailableError` when it can't be reached or refuses.
+ */
+export interface IssueTracker {
+  /**
+   * Opens an issue. Each attachment is kept in `folder` first; `body` names them with
+   * `{{attachment:<name>}}`, which becomes the attachment's image.
+   */
+  readonly open: (issue: {
+    readonly title: string;
+    readonly body: string;
+    readonly labels: readonly string[];
+    readonly folder: string;
+    readonly attachments: readonly IssueAttachment[];
+  }) => Promise<{ readonly number: number; readonly url: string }>;
+  /**
+   * The issue with `label` whose body holds `marker`, among those updated since `since`, so a
+   * retry finds the one an earlier try opened before it could be remembered.
+   */
+  readonly find: (issue: {
+    readonly label: string;
+    readonly marker: string;
+    readonly since: Date;
+  }) => Promise<{ readonly number: number; readonly url: string } | undefined>;
+}
 
 /** The database: any Postgres, through Kysely. */
 export type Database = Kysely<Tables>;

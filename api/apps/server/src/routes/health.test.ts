@@ -36,6 +36,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const config = readConfig(process.env);
@@ -99,6 +100,7 @@ async function getHealth(db: Database) {
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
+    ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     weather: weatherOn(db),
@@ -196,6 +198,7 @@ describe('an unknown route', () => {
       scenes: scenesOn(db),
       switches: switchesOn(db),
       ...ignoredNotices,
+      ...unusedFeedback,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
       weather: weatherOn(db),

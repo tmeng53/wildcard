@@ -20,6 +20,9 @@
       "path": "packages/weather"
     },
     {
+      "path": "packages/feedback"
+    },
+    {
       "path": "packages/typed-text"
     },
     {

@@ -52,6 +52,7 @@ import {
   unusedUnlocks,
   unusedGifts,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -132,6 +133,7 @@ const app = createApp({
     clock: () => new Date(),
   }),
   ...ignoredNotices,
+  ...unusedFeedback,
   coachNames: coachNamesIn({
     coaches: createPostgresCoachCatalog(db),
     members,

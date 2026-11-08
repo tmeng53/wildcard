@@ -72,18 +72,28 @@ public struct ScoreStrip: View {
     @Environment(\.locale) private var locale
     private let cells: [ScoreCell]
     private let colors: PostBlockColors
+    private let bottom: Bottom
 
-    public init(cells: [ScoreCell], activity: Activity) {
+    /// Under a card (rounded) or across a post's ticket, where the stub goes on under it (square).
+    public enum Bottom: Sendable {
+        case rounded
+        case square
+    }
+
+    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded) {
         self.cells = cells
+        self.bottom = bottom
         colors = PostBlockColors(kind: .trained, activity: activity)
     }
 
     /// The strip's height, the design's.
     public static let height: Double = 58
 
-    /// Square on top, where it meets the cover; rounded underneath.
-    private static let shape = UnevenRoundedRectangle(
-        bottomLeadingRadius: Radius.card, bottomTrailingRadius: Radius.card, style: .continuous)
+    /// Square on top, where it meets the cover; rounded underneath unless the stub goes on.
+    private var shape: UnevenRoundedRectangle {
+        let radius = bottom == .rounded ? Radius.card : 0
+        return UnevenRoundedRectangle(bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous)
+    }
 
     public var body: some View {
         HStack(spacing: 0) {
@@ -100,7 +110,7 @@ public struct ScoreStrip: View {
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
-        .background(Color(colors.fill), in: Self.shape)
+        .background(Color(colors.fill), in: shape)
         .foregroundStyle(Color(colors.ink))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("post.strip")

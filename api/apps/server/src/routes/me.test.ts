@@ -43,6 +43,7 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 async function send(
@@ -98,6 +99,7 @@ async function send(
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
+    ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
     weather: weatherOn(db),

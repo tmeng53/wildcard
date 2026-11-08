@@ -58,6 +58,7 @@ import {
   unusedUnlocks,
   unusedGifts,
   unusedWeekSummaryWords,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -117,6 +118,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   weather: weatherOn(db),
+  ...unusedFeedback,
   weeklyAwards: {
     awards: createWeeklyAwards({
       model: { answer: () => Promise.reject(new Error('unused')) },

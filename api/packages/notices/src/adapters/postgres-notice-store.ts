@@ -1,7 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
 import { BroadcastId } from '../domain/broadcast.js';
-import { NoticeId, parseNotice, type Notice } from '../domain/notice.js';
+import { MemberId, NoticeId, parseNotice, type Notice } from '../domain/notice.js';
 import type { NoticeStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -12,8 +12,9 @@ export type NoticeTables = DB;
 export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore {
   return {
     async add(notices) {
-      if (notices.length === 0) return;
-      await db
+      if (notices.length === 0) return [];
+      // notices_one_comment_each keeps a comment's notice to one a member.
+      const rows = await db
         .insertInto('notices')
         .values(
           notices.map(({ member, squad, kind, subject }) => ({
@@ -23,7 +24,10 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
             subject: JSON.stringify(subject),
           })),
         )
+        .onConflict((conflict) => conflict.doNothing())
+        .returning('member_id')
         .execute();
+      return rows.map(({ member_id }) => MemberId.parse(member_id));
     },
 
     async toldBroadcasts(member) {
