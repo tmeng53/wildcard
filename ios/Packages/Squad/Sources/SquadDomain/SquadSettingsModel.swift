@@ -181,6 +181,30 @@ public final class SquadSettingsModel {
         }
     }
 
+    // MARK: 小队语言
+
+    /// The squad's language, as last read or as the captain just set it.
+    public var language: SquadLanguage? { settings?.language }
+
+    /// The captain sets the language; everyone else reads it.
+    public var canChangeLanguage: Bool { isCaptain && settings?.language.canChange == true }
+
+    /// The captain picks the squad's language, which counts at once. The row says so at once and
+    /// goes back if the change doesn't go through. Picking the language shown is saved too: until
+    /// the captain picks, the squad only follows the captain's app language, which can change.
+    public func setLanguage(_ language: SquadLanguage.Language) async {
+        guard let settings, canChangeLanguage else { return }
+        let before = settings.language
+        update { $0.language.language = language }
+        await change { service throws(SquadError) in
+            let saved = try await service.setLanguage(of: settings.squad.id, to: language)
+            self.update { $0.language = saved }
+        }
+        if changeFailed, case .loaded(let now) = load, now.language.language == language {
+            update { $0.language = before }
+        }
+    }
+
     // MARK: 教练
 
     /// The squad's coach, once hired.

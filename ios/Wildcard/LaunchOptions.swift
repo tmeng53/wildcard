@@ -298,7 +298,7 @@ enum LaunchOptions {
     /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
     /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
     /// `-uitest-unlocked-piece`: WARM-UP's headphones have just come in instead, which 今天 tells as
-    /// 「热身社 到新货了」 and whose box opens in the store on a tap.
+    /// 「热身社 到新货了」 and whose tap opens the store, the headphones wearing NEW on its rack.
     static var unlocked: [Unlock] {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("-uitest-unlocked-piece") {

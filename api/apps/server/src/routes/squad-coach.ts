@@ -13,7 +13,7 @@ import { MemberId, NotSquadCaptainError, SquadId, type Squads } from '@wildcard/
 
 import { bodyVersion } from '../body-version.js';
 import type { CoachNames } from '../flows/coach-names.js';
-import { captainLanguage } from '../flows/squad-language.js';
+import { squadLanguages } from '../flows/squad-language.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { readerLanguageOf } from '../reader-language.js';
@@ -137,22 +137,17 @@ export function squadCoach(deps: {
   const squadFor = async (squadId: SquadId, userId: string) => {
     const viewer = MemberId.parse(userId);
     const squad = await deps.squads.find({ squad: squadId, viewer });
-    return { viewer, isCaptain: squad.captain === viewer, captain: squad.captain };
+    return { viewer, isCaptain: squad.captain === viewer };
   };
   const squadCoachOf = async (
     squadId: SquadId,
-    {
-      isCaptain,
-      captain,
-      reader,
-    }: {
-      isCaptain: boolean;
-      captain: string | null;
-      reader: ReaderLanguage;
-    },
+    { isCaptain, reader }: { isCaptain: boolean; reader: ReaderLanguage },
   ) => {
     const current = await deps.coachHiring.current(CoachSquadId.parse(squadId));
-    const squad = current === undefined ? reader : await captainLanguage(deps, captain);
+    const squad =
+      current === undefined
+        ? reader
+        : (await squadLanguages(deps, { squad: squadId, members: [] })).squad;
     return {
       version: 1 as const,
       coach: current === undefined ? null : card(current.coach, { reader, squad }),
@@ -316,9 +311,9 @@ export function squadCoach(deps: {
     })
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
-      const { isCaptain, captain } = await squadFor(squadId, c.var.caller.userId);
+      const { isCaptain } = await squadFor(squadId, c.var.caller.userId);
       const reader = readerOf(c.req.header('accept-language'));
-      return c.json(await squadCoachOf(squadId, { isCaptain, captain, reader }), 200);
+      return c.json(await squadCoachOf(squadId, { isCaptain, reader }), 200);
     })
     .openapi(hire, async (c) => {
       const { squadId } = c.req.valid('param');
@@ -330,7 +325,7 @@ export function squadCoach(deps: {
         by: CoachMemberId.parse(viewer),
       });
       const reader = readerOf(c.req.header('accept-language'));
-      const body = await squadCoachOf(squadId, { isCaptain: true, captain: viewer, reader });
+      const body = await squadCoachOf(squadId, { isCaptain: true, reader });
       return changed ? c.json(body, 201) : c.json(body, 200);
     })
     .openapi(fire, async (c) => {
@@ -347,6 +342,6 @@ export function squadCoach(deps: {
         );
       }
       const reader = readerOf(c.req.header('accept-language'));
-      return c.json(await squadCoachOf(squadId, { isCaptain: true, captain: viewer, reader }), 200);
+      return c.json(await squadCoachOf(squadId, { isCaptain: true, reader }), 200);
     });
 }

@@ -35,6 +35,8 @@ export interface WallClock {
   readonly day: string;
   /** 0 to 23. */
   readonly hour: number;
+  /** 0 to 59. */
+  readonly minute: number;
 }
 
 const formats = new Map<string, Intl.DateTimeFormat>();
@@ -72,10 +74,14 @@ function wallAsUtc(moment: Date, zone: string): number {
   );
 }
 
-/** The day and hour `moment` is in the zone. */
+/** The day, hour and minute `moment` is in the zone. */
 export function wallClockAt(moment: Date, zone: string): WallClock {
   const wall = new Date(wallAsUtc(moment, zone));
-  return { day: wall.toISOString().slice(0, 10), hour: wall.getUTCHours() };
+  return {
+    day: wall.toISOString().slice(0, 10),
+    hour: wall.getUTCHours(),
+    minute: wall.getUTCMinutes(),
+  };
 }
 
 /**

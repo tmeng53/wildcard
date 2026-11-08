@@ -178,7 +178,7 @@ export function toolbox({
       name: 'squad_week',
       reads: true,
       description:
-        '小队一周的情况：队员和外号，每个人的打卡、表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
+        '小队一周的情况：队员和外号，每个人的打卡（几点发的是发的人自己当地的时间）、谁点了表情和评论。默认这周，weeks_ago 填 1 到 4 看前几周。',
       parameters: z.object({
         weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
       }),

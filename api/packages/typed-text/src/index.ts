@@ -33,6 +33,12 @@ const VISIBLE = /[^\p{Cf}\p{White_Space}]/u;
 /** Bounds the raw string before the per-character checks, so a huge body costs nothing. */
 const RAW_LIMIT = 1000;
 
+/**
+ * UTF-16 units the longest characters people type take (an emoji with a skin tone, or a family
+ * joined by zero-width joiners), for a text whose raw bound must hold `max` of any of them.
+ */
+export const UNITS_PER_CHARACTER = 16;
+
 const graphemes = new Intl.Segmenter('und', { granularity: 'grapheme' });
 
 /** Characters as people see them (a Chinese character or an emoji is one), as Swift counts. */
@@ -65,14 +71,17 @@ export function typedText({
   max,
   oneLine,
   description,
+  rawUnits = RAW_LIMIT,
 }: {
   readonly max: number;
   readonly oneLine: boolean;
   readonly description: string;
+  /** The raw bound in UTF-16 units; 1000 unless a text needs room for `max` of any character. */
+  readonly rawUnits?: number;
 }) {
   return z
     .string()
-    .max(RAW_LIMIT)
+    .max(rawUnits)
     .transform(trimContractSpaces)
     .superRefine((text, context) => {
       if (isBlank(text)) {

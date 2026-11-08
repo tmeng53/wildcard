@@ -72,6 +72,14 @@ const Environment = z.object({
   // The service account Cloud Scheduler signs its OIDC tokens as, on the hosted server. When
   // set, only its tokens (for PUBLIC_URL) start jobs, and JOBS_TOKEN isn't used.
   JOBS_SCHEDULER_ACCOUNT: z.email().optional(),
+  // Where 意见反馈 is filed: a GitHub repository (`owner/name`, our private feedback one) and a
+  // fine-grained token that may write its issues and contents. Without the token, messages are
+  // only saved, and filed once it is set.
+  FEEDBACK_GITHUB_REPO: z
+    .string()
+    .regex(/^[\w.-]+\/[\w.-]+$/)
+    .default('tmeng53/wildcard-feedback'),
+  FEEDBACK_GITHUB_TOKEN: z.string().min(1).optional(),
   // Where error reports go: the API project's Sentry DSN. Without it nothing is reported, and
   // errors are only logged.
   SENTRY_DSN_API: z.url({ protocol: /^https$/ }).optional(),
@@ -143,6 +151,8 @@ export interface Config {
     | undefined;
   /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
   readonly traceProject: string | undefined;
+  /** Where 意见反馈 is filed; undefined until the token is set, and then messages wait. */
+  readonly feedbackIssues: { readonly repo: string; readonly token: string } | undefined;
 }
 
 /** Reads the server's settings from environment variables; throws naming each bad one. */
@@ -213,6 +223,10 @@ export function readConfig(environment: Record<string, string | undefined>): Con
         ? undefined
         : { dsn: result.data.SENTRY_DSN_API, release: result.data.K_REVISION },
     traceProject: result.data.GOOGLE_CLOUD_PROJECT,
+    feedbackIssues:
+      result.data.FEEDBACK_GITHUB_TOKEN === undefined
+        ? undefined
+        : { repo: result.data.FEEDBACK_GITHUB_REPO, token: result.data.FEEDBACK_GITHUB_TOKEN },
   };
 }
 

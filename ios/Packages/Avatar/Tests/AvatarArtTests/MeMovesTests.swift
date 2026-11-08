@@ -15,19 +15,31 @@ import Testing
     #expect(PlaceholderCharacter.atDesk(Looks.cat).variants["hat"] == "deuce-visor")
 }
 
-/// Typing and crying loop without a jump and stay on the canvas, on every look and persona.
+/// 意见反馈's desk holds the notebook, and the pencil stays in the right hand.
+@Test func theWritingDeskHoldsANotebookAndAPencil() throws {
+    let writing = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.atDeskWriting(Looks.cat))
+    let typing = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.atDesk(Looks.cat))
+    #expect(try writing.part("desk").art.count == 1)
+    #expect(try writing.part("desk").art != typing.part("desk").art)
+    #expect(try writing.part("propR").art.count == 1)
+    #expect(writing.parts.last?.id == "desk")
+}
+
+/// Typing, writing and crying loop without a jump and stay on the canvas, on every look and persona.
 @Test(arguments: Persona.allCases)
 func meMovesPlayOnEveryLook(persona: Persona) throws {
     for look in Looks.squad {
         let atDesk = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.atDesk(look))
         let standing = try PlaceholderCharacter.figure(wearing: look)
+        let writing = try PlaceholderCharacter.figure(wearing: PlaceholderCharacter.atDeskWriting(look))
         for (figure, clip) in [
             (atDesk, try PlaceholderCharacter.typing(persona: persona)),
+            (writing, try PlaceholderCharacter.writing(persona: persona)),
             (standing, try PlaceholderCharacter.teary(persona: persona)),
         ] {
             let bound = try figure.bind(clip)
             #expect(clip.loops)
-            #expect(abs(clip.duration * persona.accentTempo - (clip.name == "typing" ? 4 : 3.2)) < 1e-9)
+            #expect(abs(clip.duration * persona.accentTempo - (clip.name == "teary" ? 3.2 : 4)) < 1e-9)
             #expect(nearlyEqual(figure.pose(bound, at: clip.duration - 1e-9), figure.pose(bound, at: 0)))
             expectOnCanvas(figure, bound, for: clip.duration, "\(clip.name) \(persona.rawValue)")
         }

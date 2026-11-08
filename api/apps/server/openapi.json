@@ -422,6 +422,11 @@
                 "names": {
                   "$ref": "#/components/schemas/CatalogNames"
                 },
+                "color": {
+                  "type": "string",
+                  "description": "The colour its sports’ 成绩条, post blocks, routes and charts wear, with white on it: `#RRGGBB`. Always sent; optional so a copy an app kept from before colours still reads (its sports then wear the gym’s steel).",
+                  "example": "#E65345"
+                },
                 "sports": {
                   "type": "array",
                   "items": {
@@ -1377,10 +1382,35 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 100
+          },
+          "runs": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "descentM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100000
+          },
+          "topSpeedKmh": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 300
+          },
+          "elevationGainM": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
+          },
+          "paceSecPer100m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 86400
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
       },
       "WorkoutSeries": {
         "type": "object",
@@ -4019,7 +4049,7 @@
         ],
         "additionalProperties": false
       },
-      "CoachDayChallenge": {
+      "SquadLanguage": {
         "type": "object",
         "properties": {
           "version": {
@@ -4028,102 +4058,29 @@
               1
             ]
           },
-          "today": {
-            "type": [
-              "object",
-              "null"
+          "language": {
+            "type": "string",
+            "enum": [
+              "zh-Hans",
+              "zh-Hant",
+              "en"
             ],
-            "properties": {
-              "noteId": {
-                "type": "integer",
-                "exclusiveMinimum": 0,
-                "description": "The morning note that set it, which answering and completing it name."
-              },
-              "day": {
-                "type": "string",
-                "format": "date",
-                "description": "Its day, on the squad’s clock."
-              },
-              "challenge": {
-                "$ref": "#/components/schemas/CoachChallenge"
-              }
-            },
-            "required": [
-              "noteId",
-              "day",
-              "challenge"
-            ],
-            "additionalProperties": false,
-            "description": "The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off."
+            "description": "The squad’s language now: the captain’s pick, else the captain’s app language.",
+            "example": "zh-Hant"
+          },
+          "canChange": {
+            "type": "boolean",
+            "description": "True for the captain, the only one who sets it."
           }
         },
         "required": [
           "version",
-          "today"
+          "language",
+          "canChange"
         ],
         "additionalProperties": false
       },
-      "CoachChallenge": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "maxLength": 8,
-            "description": "What to do, in a few words.",
-            "example": "喝水"
-          },
-          "amount": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9999,
-            "description": "How much, when it has a number; always with `unit`.",
-            "example": 8
-          },
-          "unit": {
-            "type": "string",
-            "maxLength": 4,
-            "description": "The amount’s unit, the coach’s own word.",
-            "example": "杯"
-          },
-          "line": {
-            "type": "string",
-            "maxLength": 24,
-            "description": "The coach talking to the member under the title, about why; left out on older notes.",
-            "example": "泳池泡久了也会渴，别等口干。"
-          },
-          "answer": {
-            "type": "string",
-            "enum": [
-              "accepted",
-              "declined"
-            ],
-            "description": "What the member said to it; left out until they answer. The first stands."
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 60,
-            "description": "Why the member let it go, when they said; only the member sees it."
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When it was marked done (已完成); left out until it is. The first stands."
-          },
-          "completedBy": {
-            "type": "string",
-            "enum": [
-              "member",
-              "coach"
-            ],
-            "description": "Who marked it done, with `completedAt`."
-          }
-        },
-        "required": [
-          "title"
-        ],
-        "additionalProperties": false
-      },
-      "CoachChallengeCompleted": {
+      "SquadLanguageChange": {
         "type": "object",
         "properties": {
           "version": {
@@ -4132,43 +4089,20 @@
               1
             ]
           },
-          "noteId": {
-            "type": "integer",
-            "exclusiveMinimum": 0
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "completedBy": {
+          "language": {
             "type": "string",
             "enum": [
-              "member",
-              "coach"
+              "zh-Hans",
+              "zh-Hant",
+              "en"
             ],
-            "description": "`member` for the member’s own 我完成了, `coach` when the coach saw it in their check-ins."
+            "description": "The squad’s language (小队语言): what the AI writes everything the whole squad reads in, its coach’s 战术板 and name and the weekly awards. What one member reads keeps their own app’s language.",
+            "example": "zh-Hant"
           }
         },
         "required": [
           "version",
-          "noteId",
-          "completedAt",
-          "completedBy"
-        ],
-        "additionalProperties": false
-      },
-      "CoachChallengeCompletion": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          }
-        },
-        "required": [
-          "version"
+          "language"
         ],
         "additionalProperties": false
       },
@@ -4192,11 +4126,6 @@
               "declined"
             ],
             "description": "`accepted` for 接受挑战, `declined` for 算了."
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 60,
-            "description": "Why they let it go, when they said; the first answer’s."
           }
         },
         "required": [
@@ -4222,12 +4151,6 @@
               "declined"
             ],
             "description": "`accepted` for 接受挑战, `declined` for 算了."
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 1000,
-            "description": "Why they let it go, if they say; only with `declined`. Their coach remembers it.",
-            "x-max-characters": 60
           }
         },
         "required": [
@@ -4472,151 +4395,42 @@
         "additionalProperties": false,
         "description": "The caller’s own newest morning note (便条) from the squad’s coach, for 今天 to show when the caller opens it; only the caller sees it. Left out when there is none from the last day and a half, or while the caller’s `coach` push switch is off."
       },
-      "CoachCards": {
+      "CoachChallenge": {
         "type": "object",
         "properties": {
-          "version": {
+          "title": {
+            "type": "string",
+            "maxLength": 8,
+            "description": "What to do, in a few words.",
+            "example": "喝水"
+          },
+          "amount": {
             "type": "integer",
+            "minimum": 1,
+            "maximum": 9999,
+            "description": "How much, when it has a number; always with `unit`.",
+            "example": 8
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 4,
+            "description": "The amount’s unit, the coach’s own word.",
+            "example": "杯"
+          },
+          "answer": {
+            "type": "string",
             "enum": [
-              1
-            ]
-          },
-          "stack": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CoachPageCard"
-            },
-            "description": "The cards not seen yet from the last 72 hours, oldest first: the stack."
-          },
-          "earlier": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CoachPageCard"
-            },
-            "description": "Every other card from the last 30 days, newest first: 以前."
-          }
-        },
-        "required": [
-          "version",
-          "stack",
-          "earlier"
-        ],
-        "additionalProperties": false
-      },
-      "CoachPageCard": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
-            "example": "challenge"
-          },
-          "id": {
-            "type": "string",
-            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.",
-            "example": "42"
-          },
-          "coach": {
-            "$ref": "#/components/schemas/CoachSpeaker"
-          },
-          "at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When it came: a note when it was delivered, a `challengeDone` when marked."
-          },
-          "day": {
-            "type": "string",
-            "format": "date",
-            "description": "The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for."
-          },
-          "text": {
-            "type": "string",
-            "description": "What the coach said, on a `board`, `note`, `reply` or `answer`.",
-            "example": "配速比上周快了，不错。"
-          },
-          "challenge": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CoachChallenge"
-              },
-              {
-                "description": "A `challenge`’s or `challengeDone`’s challenge."
-              }
-            ]
-          },
-          "checkInId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s check-in a `reply` is on, or an `answer`’s post."
-          },
-          "commentId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s reply an `answer` answers."
-          },
-          "gift": {
-            "type": "object",
-            "properties": {
-              "pieceId": {
-                "type": "string",
-                "description": "The piece, by the art’s id."
-              },
-              "line": {
-                "type": "string",
-                "description": "What the coach said with it."
-              },
-              "openedAt": {
-                "type": "string",
-                "format": "date-time",
-                "description": "When the caller opened it (拆开); left out while it waits boxed."
-              },
-              "worn": {
-                "type": "boolean",
-                "description": "Whether they put it on when they opened it; only once opened."
-              }
-            },
-            "required": [
-              "pieceId"
+              "accepted",
+              "declined"
             ],
-            "additionalProperties": false,
-            "description": "A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`."
+            "description": "What the member said to it; left out until they answer. The first stands."
           }
         },
         "required": [
-          "kind",
-          "id",
-          "coach",
-          "at"
+          "title"
         ],
-        "additionalProperties": false
-      },
-      "CoachCardSeen": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "kind": {
-            "type": "string",
-            "description": "The card’s kind, as asked; more kinds may come.",
-            "example": "challenge"
-          },
-          "id": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
-            "description": "The card’s id within its kind.",
-            "example": "42"
-          }
-        },
-        "required": [
-          "version",
-          "kind",
-          "id"
-        ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": "The day’s challenge (今日挑战) the note sets, if any; only the member sees it."
       },
       "SquadNudges": {
         "type": "object",
@@ -4730,6 +4544,113 @@
           "version",
           "to",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "FeedbackSent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "version",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "FeedbackDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Made by the app, so sending again saves it once."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "problem",
+              "idea"
+            ],
+            "description": "出问题了 (`problem`) or 提个建议 (`idea`)."
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 16000,
+            "description": "What the member wrote: 1 to 1000 characters once trimmed.",
+            "x-max-characters": 1000
+          },
+          "screenshots": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            },
+            "maxItems": 3,
+            "description": "Up to 3 screenshots, uploaded first through `POST /photo-uploads` and listed by path."
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "appVersion": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "build": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              },
+              "os": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "device": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "language": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "appVersion",
+              "build",
+              "os",
+              "device",
+              "language"
+            ],
+            "additionalProperties": false,
+            "description": "Which app sent it (version, build, iOS version, device model, language), so whoever fixes it knows where to look."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "kind",
+          "body",
+          "screenshots",
+          "app"
         ],
         "additionalProperties": false
       },
@@ -10487,11 +10408,11 @@
         }
       }
     },
-    "/squads/{squadId}/coach/challenge": {
+    "/squads/{squadId}/language": {
       "get": {
-        "operationId": "getCoachChallenge",
-        "summary": "The caller’s challenge today (今日挑战)",
-        "description": "The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.",
+        "operationId": "getSquadLanguage",
+        "summary": "The squad’s language",
+        "description": "For its members.",
         "security": [
           {
             "bearer": []
@@ -10510,11 +10431,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Today’s challenge, or `null`",
+            "description": "The language",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoachDayChallenge"
+                  "$ref": "#/components/schemas/SquadLanguage"
                 }
               }
             }
@@ -10540,7 +10461,7 @@
             }
           },
           "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10560,13 +10481,11 @@
             }
           }
         }
-      }
-    },
-    "/squads/{squadId}/coach/notes/{noteId}/challenge/completion": {
+      },
       "put": {
-        "operationId": "completeCoachChallenge",
-        "summary": "Mark the challenge on the caller’s morning note done (我完成了)",
-        "description": "The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.",
+        "operationId": "setSquadLanguage",
+        "summary": "Set the squad’s language",
+        "description": "For the captain. It counts at once, for what the AI writes next. Safe to repeat.",
         "security": [
           {
             "bearer": []
@@ -10581,14 +10500,6 @@
             "required": true,
             "name": "squadId",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "required": true,
-            "name": "noteId",
-            "in": "path"
           }
         ],
         "requestBody": {
@@ -10596,24 +10507,24 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CoachChallengeCompletion"
+                "$ref": "#/components/schemas/SquadLanguageChange"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "The completion that stands",
+            "description": "The language, changed",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CoachChallengeCompleted"
+                  "$ref": "#/components/schemas/SquadLanguage"
                 }
               }
             }
           },
           "400": {
-            "description": "Not a valid squad or note id, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), one the caller let go (`COACH_CHALLENGE_DECLINED`), or another day’s (`COACH_CHALLENGE_DAY_OVER`)",
+            "description": "Not a valid squad id",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10633,17 +10544,7 @@
             }
           },
           "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10679,7 +10580,7 @@
       "put": {
         "operationId": "answerCoachChallenge",
         "summary": "Accept or decline the challenge on the caller’s morning note",
-        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
+        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
         "security": [
           {
             "bearer": []
@@ -10967,185 +10868,6 @@
         }
       }
     },
-    "/squads/{squadId}/coach/cards": {
-      "get": {
-        "operationId": "getCoachCards",
-        "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The stack and 以前",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CoachCards"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/squads/{squadId}/coach/cards/{kind}/{cardId}/seen": {
-      "put": {
-        "operationId": "markCoachCardSeen",
-        "summary": "Mark one of the coach’s cards seen (swiped into 以前)",
-        "description": "The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "board",
-                "note",
-                "challenge",
-                "challengeDone",
-                "gift",
-                "reply",
-                "answer"
-              ]
-            },
-            "required": true,
-            "name": "kind",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_.:-]{1,64}$",
-              "description": "The card’s id within its kind.",
-              "example": "42"
-            },
-            "required": true,
-            "description": "The card’s id within its kind.",
-            "name": "cardId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Seen",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CoachCardSeen"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad id or card kind, or not an id of that kind (`COACH_CARD_ID_INVALID`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/squads/{squadId}/nudges": {
       "get": {
         "operationId": "listSquadNudges",
@@ -11336,6 +11058,120 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "operationId": "sendFeedback",
+        "summary": "Send us feedback (意见反馈)",
+        "description": "Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sent already",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSent"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not valid feedback (`FEEDBACK_INVALID`), or a screenshot not uploaded (`PHOTO_NOT_UPLOADED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A screenshot in someone else’s folder (`PHOTO_NOT_YOURS`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another member’s message has this id (`FEEDBACK_ID_TAKEN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "As many messages as a day allows (`FEEDBACK_LIMIT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in or photo storage can’t be reached right now",
             "content": {
               "application/problem+json": {
                 "schema": {

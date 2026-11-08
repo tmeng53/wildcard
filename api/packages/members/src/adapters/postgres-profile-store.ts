@@ -156,6 +156,16 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
       );
     },
 
+    async timeZones(members) {
+      if (members.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('profiles')
+        .select(['member_id', 'time_zone'])
+        .where('member_id', 'in', members)
+        .execute();
+      return new Map(rows.map((row) => [MemberId.parse(row.member_id), row.time_zone]));
+    },
+
     async joinedAt(member) {
       const row = await db
         .selectFrom('profiles')

@@ -17,6 +17,9 @@
       "path": "packages/nudges"
     },
     {
+      "path": "packages/feedback"
+    },
+    {
       "path": "packages/typed-text"
     },
     {

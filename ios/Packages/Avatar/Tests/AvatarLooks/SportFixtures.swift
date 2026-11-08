@@ -5,18 +5,19 @@ extension Looks {
     /// names categories, and the list says which category a sport is in.
     public static let sports: SportCatalog = {
         let categories: [(String, [Sport])] = [
-            ("runWalk", ["run", "walk", "hike"]), ("strength", ["strength", "kettlebell"]), ("cardio", ["spin"]),
+            ("runWalk", ["run", "walk", "hike"]), ("strength", ["strength", "kettlebell"]),
+            ("cardio", ["spin", "roadCycling"]),
             ("mindBody", ["yoga", "matPilates"]), ("water", ["swim", "surf"]),
             ("racket", ["tennis", "squash", "badminton", "pickleball", "tableTennis"]),
-            ("ball", ["basketball", "soccer"]), ("outdoorWinter", ["climb", "ski", "snowboard"]),
-            ("combat", ["boxing"]), ("cycling", ["roadCycling"]),
+            ("ball", ["basketball", "soccer"]), ("outdoorWinter", ["climb"]),
+            ("winter", ["ski", "snowboard"]), ("combat", ["boxing"]),
             ("dance", ["dance"]), ("everyday", ["dogWalk"]),
         ]
         let names = CatalogNames(simplifiedChinese: "", english: "", traditionalChinese: "")
         return SportCatalog(
             categories: categories.map { id, sports in
                 SportCatalog.Category(
-                    id: id, names: names,
+                    id: id, names: names, color: "#4A6C8C",
                     entries: sports.map {
                         SportCatalog.Entry(sport: $0, names: names, icon: "figure.run", offered: true, category: id)
                     })
