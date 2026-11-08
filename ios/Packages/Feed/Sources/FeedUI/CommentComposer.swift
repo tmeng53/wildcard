@@ -38,7 +38,7 @@ struct CommentComposer: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             // Only while the box holds the very words the store still has as not gone out.
-            if let unsent = model.store.unsentComment(on: post.id), unsent.text.text == draft.text {
+            if let unsent = model.store.unsentComment(on: post.id), holds(unsent) {
                 InlineFailure(Text("网络开小差了，没发出去", bundle: .module))
                     .accessibilityIdentifier("post.sendFailed")
             }
@@ -62,8 +62,13 @@ struct CommentComposer: View {
         .padding(.bottom, Space.xs)
         // Saved after all (the answer was lost, a later read lists it): the words leave the box.
         .onChange(of: model.store.unsentComment(on: post.id)) { before, after in
-            if let before, after == nil, draft.text == before.text.text { draft.clear() }
+            if let before, after == nil, holds(before) { draft.clear() }
         }
+    }
+
+    /// Whether the box holds these words, as they were sent (trimmed, as `CommentText` keeps them).
+    private func holds(_ comment: Comment) -> Bool {
+        (try? CommentText(draft.text)) == comment.text
     }
 
     private func replying(to recipient: String) -> some View {
