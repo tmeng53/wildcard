@@ -12,7 +12,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "逛逛招聘會"
+            "value": "逛逛徵才會"
           }
         }
       }
@@ -262,7 +262,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Switch"
+            "value": "Change spot"
           }
         },
         "zh-Hant": {
@@ -636,7 +636,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "招聘"
+            "value": "徵才"
           }
         }
       }
@@ -716,7 +716,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "教練招聘會"
+            "value": "教練徵才會"
           }
         }
       }
