@@ -7,7 +7,7 @@ import OnboardingDomain
 import SportsUI
 import SwiftUI
 
-/// 我的每周计划, step 4: the member's typical week (the 我的每周计划 in code) as a poster, each day a
+/// 我的每周计划, step 4: the member's typical week (`template` in code) as a poster, each day a
 /// sport picked in the step before or 休息 (Tracy, 2026-11-06: no explaining line, and the name
 /// is 我的每周计划 wherever it shows). Tap a day,
 /// then what it is under the poster, and the next day is selected; every day can change, since
