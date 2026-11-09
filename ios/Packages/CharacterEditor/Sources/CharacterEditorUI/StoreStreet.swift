@@ -347,10 +347,10 @@ enum StoreLook {
     }
 
     /// The colour of a limited store's tag, so each kind of limit wears its own (冬季限定 blue,
-    /// 感恩节 orange, 圣诞 green): `names.json`'s, else the bundled one's, else nil for the
-    /// limited colour.
+    /// 感恩节 orange, 圣诞 green): `names.json`'s (the uploaded file's, else the bundled one's),
+    /// else nil for the limited colour.
     static func limited(_ store: String) -> RGBAColor? {
-        PlaceholderCharacter.names().stores[store]?.limitedColor ?? StoreCopy.limitColors[store]
+        PlaceholderCharacter.names().stores[store]?.limitedColor
     }
 
     private static func isLight(_ rgba: RGBAColor) -> Bool {

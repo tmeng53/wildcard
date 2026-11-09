@@ -5,8 +5,9 @@ import Testing
 
 @testable import AvatarArt
 
-// Art added by upload carries its own names (`avatar/names.json`), so a new store and its
-// pieces are named without an app release. Nothing is bundled.
+// Art carries its own names (`avatar/names.json`), so a store and its pieces are named and
+// renamed without an app release: the bundled file names every store this build ships with, and
+// an uploaded one stands in front of it word by word.
 
 private let trot = Data(
     #"""
@@ -56,6 +57,38 @@ private let trot = Data(
     #expect(try ArtNames.decode(file).stores["trot"]?.limitedColor == nil)
 }
 
-@Test func nothingUploadedNamesNothing() {
-    #expect(PlaceholderCharacter.names() == .none)
+@Test func theBundledNamesNameEveryStoreThisBuildShips() throws {
+    let names = PlaceholderCharacter.bundledNames
+    #expect(names.stores.keys.sorted() == ["deuce", "halfmoon", "lap", "moss", "nolook", "powder", "warmup"])
+    #expect(names.variants.isEmpty)
+    let powder = try #require(names.stores["powder"])
+    #expect(powder.name.english == "POWDER DAY")
+    #expect(powder.limited?.simplifiedChinese == "冬季限定")
+    #expect(powder.limitedColor == RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E))
+    #expect(names.stores["lap"]?.unlock?.simplifiedChinese == "跑步、快走或徒步 3 次解锁")
+    // Nothing downloaded in tests: the bundled names are all there is.
+    #expect(PlaceholderCharacter.names() == names)
+    let bundled = try Data(contentsOf: PlaceholderCharacter.folder.appending(path: "names.json"))
+    #expect(ArtTree.reads(bundled, at: "avatar/names.json"))
+}
+
+@Test func anUploadedStoreStandsInFrontWordByWord() throws {
+    let uploaded = try ArtNames.decode(
+        Data(
+            #"""
+            {"version": 1, "stores": {"lap": {
+              "name": {"zhHans": "LAP NINE", "en": "LAP NINE", "zhHant": "LAP NINE"},
+              "local": {"zhHans": "第九圈", "en": "Lap nine", "zhHant": "第九圈"},
+              "tagline": {"zhHans": "新的一句。", "en": "A new line.", "zhHant": "新的一句。"}}}}
+            """#.utf8)
+    ).overlaid(by: try ArtNames.decode(trot))
+    let names = PlaceholderCharacter.bundledNames.overlaid(by: uploaded)
+    let lap = try #require(names.stores["lap"])
+    #expect(lap.tagline?.english == "A new line.")
+    // Words the upload leaves out keep the bundled ones.
+    #expect(lap.unlock?.simplifiedChinese == "跑步、快走或徒步 3 次解锁")
+    #expect(lap.sports == PlaceholderCharacter.bundledNames.stores["lap"]?.sports)
+    // A store only the upload names is added, and its variants come with it.
+    #expect(names.stores["trot"]?.local.simplifiedChinese == "火鸡全开")
+    #expect(names.variant("trot-bib", in: Slot("acc"))?.english == "Turkey Bib")
 }
