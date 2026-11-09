@@ -72,16 +72,37 @@ public struct BoardTitle: Hashable, Sendable, Identifiable {
     public var latestSquadName: String? { weeks.first { $0.speech != nil }?.squadName }
 }
 
-/// Every title a member won, in all their squads, and the one they wear.
+/// A dedicated badge the Wildcard team gave the member (捉虫队 for a bug we confirmed, say): never
+/// a weekly title's badge, drawn as a ticket apart from them, held as many times as it was given.
+/// Its name, glyph and tone come from the server, so a new one needs no app release.
+public struct TeamBadge: Hashable, Sendable, Identifiable {
+    /// Its catalog id (`bug-hunter`).
+    public var id: String
+    public var name: CatalogNames
+    /// The SF Symbol's name; the drawing falls back to a star for one this iOS doesn't have.
+    public var glyph: String
+    /// Its colour as `#RRGGBB`.
+    public var tone: String
+    /// How many times it was given: ×N on the board.
+    public var times: Int
+
+    public init(id: String, name: CatalogNames, glyph: String, tone: String, times: Int) {
+        (self.id, self.name, self.glyph, self.tone, self.times) = (id, name, glyph, tone, times)
+    }
+}
+
+/// Every title a member won, in all their squads, the one they wear, and the team's badges.
 public struct TitleBoard: Hashable, Sendable {
     /// The latest won first.
     public var titles: [BoardTitle]
     /// The title worn on the card's front: the one equipped, else the latest won; nil before the
     /// first.
     public var worn: String?
+    /// The team's badges, the latest got first; never worn as a title.
+    public var teamBadges: [TeamBadge]
 
-    public init(titles: [BoardTitle], worn: String?) {
-        (self.titles, self.worn) = (titles, worn)
+    public init(titles: [BoardTitle], worn: String?, teamBadges: [TeamBadge] = []) {
+        (self.titles, self.worn, self.teamBadges) = (titles, worn, teamBadges)
     }
 
     public static let empty = TitleBoard(titles: [], worn: nil)
@@ -91,6 +112,7 @@ public struct TitleBoard: Hashable, Sendable {
         titles.first { $0.title == worn }.map { WornTitle(title: $0.title, badge: $0.badge) }
     }
 
-    /// Every title won, counting each repeat: 徽章 on the card's front.
-    public var count: Int { titles.reduce(0) { $0 + $1.times } }
+    /// Every badge held, each title's and the team's, counting each repeat: 徽章 on the card's
+    /// front.
+    public var count: Int { titles.reduce(0) { $0 + $1.times } + teamBadges.reduce(0) { $0 + $1.times } }
 }

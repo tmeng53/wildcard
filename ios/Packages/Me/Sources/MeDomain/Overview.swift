@@ -121,7 +121,8 @@ public struct MeOverview: Hashable, Sendable {
     public var stock: StreetStock?
     /// The unlocked pieces the member claimed (领取) into their wardrobe.
     public var claimed: Set<String>
-    /// The coach's gifts the member opened, in their wardrobe on no store's rack.
+    /// The coach's gifts the member opened and the team's pieces, in their wardrobe on no store's
+    /// rack.
     public var gifts: [String]
 
     public init(

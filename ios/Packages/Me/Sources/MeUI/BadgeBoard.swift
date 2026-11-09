@@ -2,6 +2,7 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import SportsUI
 import SwiftUI
 
 /// One badge on the board: the badge, ×N when won more than once, a tick on the one worn, and
@@ -53,6 +54,46 @@ struct BadgeCell: View {
         .accessibilityLabel(Text(verbatim: title.title))
         .accessibilityValue(
             isWorn ? Text("已装备", bundle: .module) : Text(verbatim: title.times > 1 ? "×\(title.times)" : ""))
+    }
+}
+
+/// A badge the Wildcard team gave (捉虫队, 点子王): a ticket in its own colour, ×N when given more
+/// than once, its name under it. Never worn as a title, so it carries no tick and opens nothing.
+struct TeamBadgeCell: View {
+    let badge: TeamBadge
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        VStack(spacing: Space.xxs) {
+            TitleBadgeView(
+                shape: TitleBadgeView.Shape.ticket.rawValue, colour: badge.id, tone: badge.tone, glyph: badge.glyph,
+                size: BoardMetrics.badge
+            )
+            .frame(width: BoardMetrics.slot, height: BoardMetrics.slot)
+            .overlay(alignment: .topTrailing) {
+                if badge.times > 1 {
+                    Text(verbatim: "×\(badge.times)")
+                        .typeStyle(TypeRamp.scoreCaption)
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .padding(.horizontal, Space.xxs)
+                        .frame(minWidth: BoardMetrics.chip, minHeight: BoardMetrics.chip - 2)
+                        .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+                        .offset(x: Space.xxs / 2, y: -Space.xxs / 2)
+                }
+            }
+            Text(verbatim: badge.name.localized)
+                .typeStyle(TypeRamp.caption)
+                .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: badge.name.localized))
+        .accessibilityValue(Text(verbatim: badge.times > 1 ? "×\(badge.times)" : ""))
+        .accessibilityIdentifier("me.teamBadge")
     }
 }
 
