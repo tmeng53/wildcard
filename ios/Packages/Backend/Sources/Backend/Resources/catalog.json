@@ -1198,6 +1198,14 @@
   "switches": {
     "switches": [
       {
+        "id": "betaFeedbackReward",
+        "mode": "on"
+      },
+      {
+        "id": "betaFreePlan",
+        "mode": "on"
+      },
+      {
         "id": "winter",
         "mode": "schedule",
         "window": {
