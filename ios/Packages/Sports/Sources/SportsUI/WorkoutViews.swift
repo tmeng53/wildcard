@@ -256,7 +256,7 @@ public struct WorkoutChart: View {
 
     private var lapChart: some View {
         let ink = Color(colors.ink)
-        Canvas { context, size in
+        return Canvas { context, size in
             let pad = size.width > 100 ? Space.s : Space.xxs + 2
             let top = showsLabel ? Space.xxl : pad
             let area = CGRect(x: pad, y: top, width: size.width - 2 * pad, height: size.height - top - pad)
