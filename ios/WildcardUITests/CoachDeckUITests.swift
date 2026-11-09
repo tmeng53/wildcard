@@ -4,7 +4,7 @@ import XCTest
 /// the phone in 毛头's hand shows a dot and the note never slides up over 今天 by itself; a tap on
 /// 毛头 opens its page, a stack of what it has for me, oldest on top. Each card is swiped right
 /// into 以前; a gift opens in place (拆开, then 立刻穿上) and a challenge is answered in place
-/// (接受挑战). Once all are seen, 看以前的 opens 以前, where every card is a row. Screenshots are
+/// (接受挑战). Under the stack a line says how many are left (Tracy, 2026-11-09). Once all are seen, 看以前的 opens 以前, where every card is a row. Screenshots are
 /// kept for review.
 @MainActor
 final class CoachDeckUITests: XCTestCase {
@@ -27,6 +27,12 @@ final class CoachDeckUITests: XCTestCase {
         let board = card("board", in: app)
         XCTAssertTrue(board.waitForExistence(timeout: Self.wait), "the page didn't open on the line to the squad")
         assertOnScreen(board, app.buttons["coachDeck.feed"], in: app)
+        // Under the stack: how many are left after this one, and that a swipe right puts it away.
+        let hint = element("coachDeck.hint", in: app)
+        XCTAssertTrue(hint.waitForExistence(timeout: Self.wait), "nothing says how many cards are left")
+        XCTAssertTrue(hint.label.hasPrefix("还有 3 张 · 右滑收起"), "the count under the stack is \(hint.label)")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(hint.frame), "the count runs off the screen: \(hint.frame)")
+        XCTAssertGreaterThanOrEqual(hint.frame.minY, board.frame.maxY, "the count is on the card")
         keepScreenshot(named: "106-coach-deck-board")
         putAway(board, in: app)
 
@@ -68,6 +74,8 @@ final class CoachDeckUITests: XCTestCase {
             putAway(next, in: app)
         }
         let challenge = card("challenge", in: app)
+        let hint = element("coachDeck.hint", in: app)
+        XCTAssertTrue(hint.label.hasPrefix("最后一张 · 右滑收起"), "the last card's line is \(hint.label)")
         let reason = element("coachDeck.reason", in: app)
         XCTAssertTrue(reason.waitForExistence(timeout: Self.wait), "the challenge has no field for why")
         XCTAssertEqual(reason.placeholderValue, "告诉毛头为什么（可选）")
