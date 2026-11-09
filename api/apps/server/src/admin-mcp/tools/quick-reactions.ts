@@ -17,8 +17,8 @@ export function getQuickReactions({ reactions }: QuickReactionToolDependencies) 
     name: 'get_quick_reactions',
     title: 'Read the quick reactions',
     description:
-      'Shows the emoji the reaction bar offers first (on 动态 and the 6pm push’s long-press ' +
-      'view), in order.',
+      'Shows the emoji the reaction bar on 动态 offers first, in order (the 6pm push’s long-press ' +
+      'view keeps the six the app shipped with).',
     changes: false,
     input: z.strictObject({}),
     run: async () => reactions.current(),
