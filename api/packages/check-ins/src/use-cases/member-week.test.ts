@@ -16,7 +16,7 @@ const deps = {
   plans: {
     savedFor: () => Promise.resolve(undefined),
     templateFor: () => Promise.resolve(undefined),
-    trainedBy: () => Promise.resolve(new Map()),
+    trainedBy: () => Promise.resolve({}),
     fuelGoals: () => Promise.resolve(undefined),
   },
   calendarOf: () =>

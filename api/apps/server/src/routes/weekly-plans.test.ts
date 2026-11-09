@@ -162,13 +162,6 @@ function joinedWeek() {
 const memberWeek = (weeks: number) =>
   new Date(Date.parse(joinedWeek()) + 7 * weeks * DAY).toISOString().slice(0, 10);
 
-/** A fresh invite code in the codes' own alphabet. */
-const inviteCode = () =>
-  Array.from(
-    { length: 8 },
-    () => '23456789ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 31)],
-  ).join('');
-
 const train = { kind: 'train' } as const;
 const rest = { kind: 'rest' } as const;
 const days = [{ kind: 'train', sport: 'tennis' }, rest, train, train, train, rest, train];
@@ -292,7 +285,7 @@ describe('/me/weekly-plans/{weekStart}', () => {
     // a squad that never set its own, so its W1 is the week of Monday 2026-10-05.
     const squad = randomUUID();
     await sql`insert into public.squads (id, name, invite_code, created_at)
-      values (${squad}, 'squad', ${inviteCode()}, '2026-10-07T03:00:00Z')`.execute(db);
+      values (${squad}, 'squad', ${randomInviteCodes()}, '2026-10-07T03:00:00Z')`.execute(db);
     await sql`insert into public.squad_members (squad_id, member_id, joined_at)
       values (${squad}, ${userId}, now())`.execute(db);
     const [status, body] = await call('GET', { path: `/me/weekly-plans/${monday(0)}`, token });
