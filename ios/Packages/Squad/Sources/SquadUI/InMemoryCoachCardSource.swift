@@ -50,7 +50,7 @@ public actor InMemoryCoachCardSource: CoachCardSource {
 
     /// A sample's words in the app's language.
     private static func word(_ key: String) -> String {
-        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
+        String(copyKey: key, bundle: Bundle.module)
     }
 
     public func cards(in squad: SquadID) async throws(SquadError) -> CoachPageCards {

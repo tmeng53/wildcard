@@ -18,13 +18,16 @@ public struct AppCatalog: Hashable, Sendable {
     public let scenes: [CatalogScene]
     /// The global switches, such as what only the public beta has (`BetaFeature`).
     public let switches: [CatalogSwitch]
+    /// Lines put over the app's String Catalog, which screens and pushes show from the next launch.
+    public let copy: AppCopy
 
     public init(
         sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
-        art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = []
+        art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = [],
+        copy: AppCopy = .none
     ) {
         (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
-        (self.scenes, self.switches) = (scenes, switches)
+        (self.scenes, self.switches, self.copy) = (scenes, switches, copy)
     }
 
     /// Nothing at all.

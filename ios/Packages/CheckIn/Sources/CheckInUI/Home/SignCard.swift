@@ -12,7 +12,7 @@ public struct SignCard: View {
     public init(scale: Double) { self.scale = scale }
 
     public var body: some View {
-        Text("请假条", bundle: .module)
+        Text(copy: "请假条", bundle: .module)
             .font(.system(size: 27 * scale, weight: .bold))
             .foregroundStyle(Color(role: .fgAccent, in: theme))
             .frame(width: 108 * scale, height: 58 * scale)

@@ -29,7 +29,7 @@ struct OutgoingPill: View {
                     .accessibilityHidden(true)
                 title
                 if case .sent = outgoing {
-                    Text("查看", bundle: .module)
+                    Text(copy: "查看", bundle: .module)
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .foregroundStyle(Color(role: tone.fill, in: theme))
                         .padding(.horizontal, Space.s)
@@ -53,9 +53,9 @@ struct OutgoingPill: View {
     @ViewBuilder
     private var title: some View {
         switch outgoing {
-        case .sending: Text("正在发送…", bundle: .module)
-        case .sent: Text("已发出", bundle: .module)
-        case .waiting: Text("没网，连上自动发", bundle: .module)
+        case .sending: Text(copy: "正在发送…", bundle: .module)
+        case .sent: Text(copy: "已发出", bundle: .module)
+        case .waiting: Text(copy: "没网，连上自动发", bundle: .module)
         }
     }
 

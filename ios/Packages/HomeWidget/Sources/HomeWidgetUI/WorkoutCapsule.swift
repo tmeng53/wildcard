@@ -68,7 +68,7 @@ public struct PostWorkoutLabel: View {
     public init() {}
 
     public var body: some View {
-        Text("打卡", bundle: .module)
+        Text(copy: "打卡", bundle: .module)
             .typeStyle(TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgOnInk, in: theme))
             .padding(.horizontal, Space.s)
@@ -85,7 +85,7 @@ public struct PostedWorkoutLabel: View {
     public init() {}
 
     public var body: some View {
-        Text("已打卡", bundle: .module)
+        Text(copy: "已打卡", bundle: .module)
             .typeStyle(TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             .padding(.horizontal, Space.s)

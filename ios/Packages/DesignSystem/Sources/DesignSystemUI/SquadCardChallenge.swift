@@ -78,7 +78,7 @@ struct ChallengeRow: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if challenge.isDone {
                     Label {
-                        Text("已完成", bundle: .module)
+                        Text(copy: "已完成", bundle: .module)
                     } icon: {
                         Image(systemName: "checkmark")
                     }
@@ -86,7 +86,7 @@ struct ChallengeRow: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityIdentifier("squadcard.challenge.done")
                 } else if let complete {
-                    Button(action: complete) { Text("我完成了", bundle: .module) }
+                    Button(action: complete) { Text(copy: "我完成了", bundle: .module) }
                         .buttonStyle(SecondaryButtonStyle())
                         .accessibilityIdentifier("squadcard.challenge.complete")
                 }

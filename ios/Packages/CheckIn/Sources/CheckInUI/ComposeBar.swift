@@ -19,7 +19,7 @@ struct ComposeBar: View {
 
     var body: some View {
         HStack {
-            HeaderTextButton(Text("取消", bundle: .module), action: cancel)
+            HeaderTextButton(Text(copy: "取消", bundle: .module), action: cancel)
                 .accessibilityIdentifier(cancelID)
             Spacer()
             HeaderTextButton(finish, prominent: true, isWorking: isWorking, action: done)

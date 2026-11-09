@@ -27,10 +27,10 @@ public struct CoachEarlierPage: View {
     public var body: some View {
         VStack(spacing: 0) {
             Picker(selection: filter) {
-                Text("全部", bundle: .module).tag(CoachDeck.EarlierFilter.all)
-                Text("未读", bundle: .module).tag(CoachDeck.EarlierFilter.unseen)
+                Text(copy: "全部", bundle: .module).tag(CoachDeck.EarlierFilter.all)
+                Text(copy: "未读", bundle: .module).tag(CoachDeck.EarlierFilter.unseen)
             } label: {
-                Text("以前", bundle: .module)
+                Text(copy: "以前", bundle: .module)
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, Space.pageMargin)
@@ -39,7 +39,7 @@ public struct CoachEarlierPage: View {
             if deck.earlier.isEmpty && !deck.isLoadingEarlier {
                 StateView(
                     deck.earlierFilter == .unseen
-                        ? Text("没有未读的", bundle: .module) : Text("还没有看过的", bundle: .module)
+                        ? Text(copy: "没有未读的", bundle: .module) : Text(copy: "还没有看过的", bundle: .module)
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -47,7 +47,7 @@ public struct CoachEarlierPage: View {
             }
         }
         .background(Color(role: .bgCanvas, in: theme))
-        .navigationTitle(Text("以前", bundle: .module))
+        .navigationTitle(Text(copy: "以前", bundle: .module))
         .pushedPage()
     }
 
@@ -119,7 +119,7 @@ public struct CoachEarlierPage: View {
                 Button {
                     show(card)
                 } label: {
-                    Text("拆开", bundle: .module)
+                    Text(copy: "拆开", bundle: .module)
                 }
                 .buttonStyle(PrimaryButtonStyle(.regular))
                 .accentTone(.ink)
@@ -175,7 +175,7 @@ public struct CoachEarlierPage: View {
                         .typeStyle(TypeRamp.calloutEmphasis)
                 }
             } else if let gift = card.gift {
-                (gift.isOpen ? places.giftName(gift.piece) : Text("送你一样东西", bundle: .module))
+                (gift.isOpen ? places.giftName(gift.piece) : Text(copy: "送你一样东西", bundle: .module))
                     .typeStyle(TypeRamp.calloutEmphasis)
             } else {
                 Text(verbatim: card.text ?? "").typeStyle(TypeRamp.callout)
@@ -187,7 +187,7 @@ public struct CoachEarlierPage: View {
     /// and how it went.
     private func detail(_ card: CoachPageCard) -> Text {
         let words = Bundle.module.inAppLanguage
-        let word = { (key: String) in words.localizedString(forKey: key, value: nil, table: nil) }
+        let word = { (key: String) in String(copyKey: key, bundle: words) }
         let time = card.time.formatted(.dateTime.hour().minute().locale(AppLanguage.current.locale))
         let parts = [card.coach.name, card.kind == .board ? word("对小队") : nil, time, Self.outcome(card).map(word)]
         return Text(verbatim: parts.compactMap(\.self).joined(separator: " · "))
@@ -232,8 +232,8 @@ public struct CoachEarlierPage: View {
     /// 今天, 昨天 or 11月7日.
     private static func title(of day: Date) -> Text {
         let calendar = Calendar.current
-        if calendar.isDateInToday(day) { return Text("今天", bundle: .module) }
-        if calendar.isDateInYesterday(day) { return Text("昨天", bundle: .module) }
+        if calendar.isDateInToday(day) { return Text(copy: "今天", bundle: .module) }
+        if calendar.isDateInYesterday(day) { return Text(copy: "昨天", bundle: .module) }
         let locale = AppLanguage.current.locale
         return Text(verbatim: day.formatted(.dateTime.month(.defaultDigits).day().locale(locale)))
     }

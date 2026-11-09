@@ -1,6 +1,7 @@
 import Backend
 import DailyPushDomain
 import DailyPushUI
+import DesignSystemUI
 import NotificationsDomain
 import NotificationsUI
 import UIKit
@@ -38,7 +39,7 @@ enum Push {
             let key = alert["loc-key"] as? String
         else { return }
         let content = UNMutableNotificationContent()
-        let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+        let format = String(copyKey: key, bundle: .main)
         content.body = String(format: format, arguments: alert["loc-args"] as? [String] ?? [])
         content.categoryIdentifier = aps["category"] as? String ?? ""
         content.threadIdentifier = aps["thread-id"] as? String ?? ""

@@ -77,11 +77,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
-        CrashReports.start()
-        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
-        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
-        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        AppModel.show(CatalogClient.bundled)
+        Self.startUp()
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
         _editor = State(initialValue: CharacterEditorDemo.model())
         LaunchOptions.forgetTodayStateIfAsked()
@@ -131,6 +127,18 @@ struct WildcardApp: App {
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
         _myPosts = State(initialValue: feedSource)
+    }
+
+    /// What every launch does first, before any model or screen is made.
+    private static func startUp() {
+        CrashReports.start()
+        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
+        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
+        // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
+        // the newest for the next one), before anything shows.
+        AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        AppModel.show(CatalogClient.bundled)
     }
 
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.

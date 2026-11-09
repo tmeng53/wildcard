@@ -75,7 +75,7 @@ public struct PersonPicker<Person: Identifiable, Head: View>: View {
         .overlay { Self.shape.strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: 1) }
         .shadow(color: Color(role: .fgDefault, in: theme).opacity(0.08), radius: 12, y: 8)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("提到谁", bundle: .module))
+        .accessibilityLabel(Text(copy: "提到谁", bundle: .module))
     }
 }
 #endif

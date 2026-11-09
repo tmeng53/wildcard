@@ -207,15 +207,6 @@ final class AppModel {
         await art.update(to: (fresh ?? catalog.kept()).art)
     }
 
-    /// Hands each part of the catalog to the screens; static, since `init` calls it first.
-    static func show(_ catalog: AppCatalog) {
-        SportList.shared.show(catalog.sports)
-        SceneTheme.list(catalog.scenes)
-        DiceLines.shared.show(catalog.diceLines)
-        StarterStock.shared.show(catalog.starterStock)
-        Switchboard.shared.show(catalog.switches)
-    }
-
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
     /// from their phone meanwhile.
     func refreshScene() async {

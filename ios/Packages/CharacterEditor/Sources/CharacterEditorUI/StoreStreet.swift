@@ -91,7 +91,7 @@ struct StreetCounter: View {
                 Button {
                     model.visit(store)
                 } label: {
-                    Text("进店", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "进店", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .accentTone(.brand)
@@ -129,7 +129,7 @@ struct StreetCounter: View {
         FlowRow(spacing: Space.xs, centred: true) {
             if let sports = model.sports(of: store) {
                 if sports.isEmpty {
-                    SportPill(word: Text("什么运动都行", bundle: .module))
+                    SportPill(word: Text(copy: "什么运动都行", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }
@@ -190,7 +190,7 @@ private struct Storefront: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(open ? Text("进店", bundle: .module) : Text("还没开门", bundle: .module))
+        .accessibilityHint(open ? Text(copy: "进店", bundle: .module) : Text(copy: "还没开门", bundle: .module))
         .accessibilityIdentifier("street.store.\(store.id)")
     }
 

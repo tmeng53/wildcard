@@ -18,7 +18,7 @@ public struct ContinueWithApple: View {
     public var body: some View {
         Button(action: action) {
             Label {
-                Text("通过 Apple 继续", bundle: .module)
+                Text(copy: "通过 Apple 继续", bundle: .module)
             } icon: {
                 Image(systemName: "apple.logo")
             }

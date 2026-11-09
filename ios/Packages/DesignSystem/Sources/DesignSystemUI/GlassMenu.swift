@@ -108,7 +108,7 @@ struct GlassMenu: View {
                 }
                 .accessibilityIdentifier(confirmation.id)
                 groupGap
-                GlassMenuRow(Text("取消", bundle: .module), action: close)
+                GlassMenuRow(Text(copy: "取消", bundle: .module), action: close)
                     .accessibilityIdentifier("glassMenu.cancel")
             } else {
                 if let title { header(title, message: nil) }

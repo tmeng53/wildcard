@@ -32,7 +32,7 @@ public struct RecapEntryTile: View {
             .buttonStyle(PressableButtonStyle())
             .environment(\.sceneTheme, theme)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("每周战报，\(story.week.label)，未读", bundle: .module))
+            .accessibilityLabel(Text(copy: "每周战报，\(story.week.label)，未读", bundle: .module))
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("recap.entry")
             .task(id: viewer) { figure = viewer.flatMap(StoryWardrobe.peeking) }
@@ -45,14 +45,14 @@ public struct RecapEntryTile: View {
                 HStack(spacing: Space.xs) {
                     Text(verbatim: story.week.label)
                         .typeStyle(TypeRamp.scoreInline)
-                    Text("新", bundle: .module)
+                    Text(copy: "新", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnAccent, in: theme))
                         .padding(.horizontal, Space.xs)
                         .frame(height: 20)
                         .background(Color(role: .bgAccent, in: theme), in: Capsule())
                 }
-                Text("每周战报", bundle: .module)
+                Text(copy: "每周战报", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                 Spacer(minLength: Space.s)
                 segments

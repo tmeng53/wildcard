@@ -30,7 +30,7 @@ public struct SavePictureSheet: View {
         VStack(spacing: Space.m) {
             HStack {
                 Spacer()
-                HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", action: close)
+                HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", action: close)
                     .accessibilityIdentifier("savePicture.close")
             }
             Image(uiImage: image)
@@ -50,7 +50,7 @@ public struct SavePictureSheet: View {
                 Button {
                     isSharing = true
                 } label: {
-                    Text("分享", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "分享", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .accessibilityIdentifier("savePicture.share")
@@ -68,9 +68,9 @@ public struct SavePictureSheet: View {
 
     private var label: Text {
         switch saving {
-        case .ready, .saving: Text("保存到相册", bundle: .module)
-        case .saved: Text("已存到相册", bundle: .module)
-        case .failed: Text("没存上，再试一次", bundle: .module)
+        case .ready, .saving: Text(copy: "保存到相册", bundle: .module)
+        case .saved: Text(copy: "已存到相册", bundle: .module)
+        case .failed: Text(copy: "没存上，再试一次", bundle: .module)
         }
     }
 

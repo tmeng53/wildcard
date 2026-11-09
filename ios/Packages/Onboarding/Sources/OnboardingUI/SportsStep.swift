@@ -19,7 +19,7 @@ struct SportsStep: View {
 
     var body: some View {
         StepPage(
-            step: .sports, title: Text("关于你", bundle: .module), character: model.myCharacter, onBack: model.back
+            step: .sports, title: Text(copy: "关于你", bundle: .module), character: model.myCharacter, onBack: model.back
         ) {
             VStack(alignment: .leading, spacing: Space.m) {
                 birthday
@@ -28,12 +28,12 @@ struct SportsStep: View {
             }
         } actions: {
             StepButton(
-                title: Text("下一步", bundle: .module), isWorking: false, isEnabled: model.canFinishSports,
+                title: Text(copy: "下一步", bundle: .module), isWorking: false, isEnabled: model.canFinishSports,
                 action: model.finishSports
             )
             .accessibilityIdentifier("sports.done")
             Button(action: model.skipSports) {
-                Text("以后再说", bundle: .module)
+                Text(copy: "以后再说", bundle: .module)
             }
             .buttonStyle(TextButtonStyle())
             .accessibilityIdentifier("sports.skip")
@@ -50,12 +50,12 @@ struct SportsStep: View {
     private var birthday: some View {
         @Bindable var model = model
         return VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("生日 · 可选", bundle: .module))
+            SectionLabel(Text(copy: "生日 · 可选", bundle: .module))
             VStack(spacing: Space.xs) {
                 FlipClockView.date(
                     values: $model.birthday.values, years: BirthdayDraft.years(through: model.today),
                     identifier: "sports.birthday")
-                Text("用来算心率区间", bundle: .module)
+                Text(copy: "用来算心率区间", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
@@ -65,7 +65,7 @@ struct SportsStep: View {
 
     private var common: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("最常见", bundle: .module))
+            SectionLabel(Text(copy: "最常见", bundle: .module))
             LazyVGrid(columns: columns, spacing: Space.xs) {
                 ForEach(catalog.signUpCommon, id: \.self) { sport in
                     row(.sport(sport))
@@ -76,13 +76,13 @@ struct SportsStep: View {
 
     private var more: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("更多", bundle: .module))
+            SectionLabel(Text(copy: "更多", bundle: .module))
             FlowRow {
                 // Sports picked from the full list show here, to take off.
                 ForEach(extraPicks, id: \.key) { activity in
                     PickPill(activity.name, isSelected: true, isRemovable: true) { model.toggle(activity) }
                 }
-                PickPill(Text("更多", bundle: .module), systemImage: "plus", isSelected: false) {
+                PickPill(Text(copy: "更多", bundle: .module), systemImage: "plus", isSelected: false) {
                     isChoosing = true
                 }
                 .accessibilityIdentifier("sports.other")

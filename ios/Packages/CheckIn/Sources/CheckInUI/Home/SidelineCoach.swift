@@ -103,7 +103,7 @@ struct SidelineCoachButton: ViewModifier {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: name))
-            .accessibilityValue(hasNews ? Text("有新消息", bundle: .module) : Text(verbatim: ""))
+            .accessibilityValue(hasNews ? Text(copy: "有新消息", bundle: .module) : Text(verbatim: ""))
             .accessibilityIdentifier("today.coach")
             .accessibilityAddTraits(.isButton)
     }

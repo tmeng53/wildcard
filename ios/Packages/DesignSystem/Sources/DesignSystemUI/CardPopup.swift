@@ -32,7 +32,7 @@ private struct CardPopup<Card: View>: ViewModifier {
                             .onTapGesture { isPresented = false }
                             .accessibilityElement()
                             .accessibilityAddTraits(.isButton)
-                            .accessibilityLabel(Text("关闭", bundle: .module))
+                            .accessibilityLabel(Text(copy: "关闭", bundle: .module))
                             .accessibilityIdentifier("cardPopup.close")
                             .transition(.opacity)
                         card()

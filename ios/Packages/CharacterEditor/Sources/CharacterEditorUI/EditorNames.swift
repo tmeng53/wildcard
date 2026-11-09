@@ -10,28 +10,28 @@ import SwiftUI
 enum EditorNames {
     static func tab(_ tab: EditorTab) -> Text {
         switch tab {
-        case .look: Text("长相", bundle: .module)
-        case .hair: Text("发型", bundle: .module)
-        case .face: Text("脸", bundle: .module)
-        case .outfit: Text("穿搭", bundle: .module)
-        case .prop: Text("道具", bundle: .module)
-        case .persona: Text("性格", bundle: .module)
+        case .look: Text(copy: "长相", bundle: .module)
+        case .hair: Text(copy: "发型", bundle: .module)
+        case .face: Text(copy: "脸", bundle: .module)
+        case .outfit: Text(copy: "穿搭", bundle: .module)
+        case .prop: Text(copy: "道具", bundle: .module)
+        case .persona: Text(copy: "性格", bundle: .module)
         }
     }
 
     static func persona(_ persona: Persona) -> Text {
         switch persona {
-        case .deadpan: Text("淡人", bundle: .module)
-        case .energetic: Text("高能量", bundle: .module)
-        case .showoff: Text("显眼包", bundle: .module)
-        case .drama: Text("戏精", bundle: .module)
-        case .shy: Text("社恐", bundle: .module)
+        case .deadpan: Text(copy: "淡人", bundle: .module)
+        case .energetic: Text(copy: "高能量", bundle: .module)
+        case .showoff: Text(copy: "显眼包", bundle: .module)
+        case .drama: Text(copy: "戏精", bundle: .module)
+        case .shy: Text(copy: "社恐", bundle: .module)
         }
     }
 
     static func species(_ id: String) -> Text {
         guard let key = species[id] else { return Text(verbatim: id) }
-        return Text(LocalizedStringKey(key), bundle: .module)
+        return Text(copyKey: key, bundle: .module)
     }
 
     /// A face part's name goes by its slot too, since a mouth and a body are both `cat`. An
@@ -41,17 +41,17 @@ enum EditorNames {
             return Text(verbatim: uploaded.localized)
         }
         guard let key = faces["\(slot)/\(variant)"] ?? variants[variant] else { return Text(verbatim: variant) }
-        return Text(LocalizedStringKey(key), bundle: .module)
+        return Text(copyKey: key, bundle: .module)
     }
 
     /// A clothing slot's name, over its pieces in 我的衣橱.
     static func slot(_ slot: Slot) -> Text {
         switch slot.rawValue {
-        case "top": Text("上衣", bundle: .module)
-        case "bottom": Text("下装", bundle: .module)
-        case "shoes": Text("鞋子", bundle: .module)
-        case "hat": Text("头饰", bundle: .module)
-        case "acc": Text("配饰", bundle: .module)
+        case "top": Text(copy: "上衣", bundle: .module)
+        case "bottom": Text(copy: "下装", bundle: .module)
+        case "shoes": Text(copy: "鞋子", bundle: .module)
+        case "hat": Text(copy: "头饰", bundle: .module)
+        case "acc": Text(copy: "配饰", bundle: .module)
         default: Text(verbatim: slot.rawValue)
         }
     }
@@ -59,11 +59,11 @@ enum EditorNames {
     /// The tile that takes a piece off, for VoiceOver: 不戴 for a hat, 不拿 for a prop.
     static func nothing(in slot: Slot) -> Text {
         switch slot.rawValue {
-        case "prop": Text("不拿", bundle: .module)
-        case "glasses": Text("不戴眼镜", bundle: .module)
-        case "brows": Text("没有眉毛", bundle: .module)
-        case "cheeks": Text("不加", bundle: .module)
-        default: Text("不戴", bundle: .module)
+        case "prop": Text(copy: "不拿", bundle: .module)
+        case "glasses": Text(copy: "不戴眼镜", bundle: .module)
+        case "brows": Text(copy: "没有眉毛", bundle: .module)
+        case "cheeks": Text(copy: "不加", bundle: .module)
+        default: Text(copy: "不戴", bundle: .module)
         }
     }
 

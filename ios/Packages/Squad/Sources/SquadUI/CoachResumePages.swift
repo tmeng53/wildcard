@@ -65,16 +65,16 @@ public struct CoachPage: View {
                 change: { push(.market) }, fire: { push(.fire(coach)) })
         case .fire(let coach):
             CoachLeavingPage(
-                leaving: coach, title: Text("解雇\(coach.name)", bundle: .module),
-                line: Text("小队的记忆会留给下一个教练", bundle: .module),
-                keep: Text("先不解雇", bundle: .module), confirm: Text("确认解雇", bundle: .module),
+                leaving: coach, title: Text(copy: "解雇\(coach.name)", bundle: .module),
+                line: Text(copy: "小队的记忆会留给下一个教练", bundle: .module),
+                keep: Text(copy: "先不解雇", bundle: .module), confirm: Text(copy: "确认解雇", bundle: .module),
                 identifier: "coach.fire", parting: .fired, isSaving: model.isSaving, failed: failed, back: back,
                 action: { Task { finish(await model.fireCoach()) } })
         case .swap(let leaving, let coming):
             CoachLeavingPage(
-                leaving: leaving, title: Text("换成\(coming.name)？", bundle: .module),
-                line: Text("\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
-                keep: Text("先不换", bundle: .module), confirm: Text("确认换教练", bundle: .module),
+                leaving: leaving, title: Text(copy: "换成\(coming.name)？", bundle: .module),
+                line: Text(copy: "\(leaving.name)会离开，\(coming.name)会来", bundle: .module),
+                keep: Text(copy: "先不换", bundle: .module), confirm: Text(copy: "确认换教练", bundle: .module),
                 identifier: "coach.swap", parting: .swapped, isSaving: model.isSaving, failed: failed, back: back,
                 action: {
                     Task {
@@ -178,7 +178,7 @@ struct CoachResumePage: View {
             CoachResumeFields(coach: coach, labelIdentifier: "coach.resume.label")
             if let letter {
                 ListRow(
-                    Text("\(letter.from.name)的交接信", bundle: .module), systemImage: "envelope", showsDivider: false
+                    Text(copy: "\(letter.from.name)的交接信", bundle: .module), systemImage: "envelope", showsDivider: false
                 ) {
                     reading = letter
                 }
@@ -201,7 +201,7 @@ struct CoachResumePage: View {
         ClipboardCard {
             VStack(alignment: .leading, spacing: Space.xs) {
                 HStack(spacing: Space.xxs) {
-                    Text("今天", bundle: .module)
+                    Text(copy: "今天", bundle: .module)
                     Text(verbatim: "·")
                     Text(note.writtenAt, format: .dateTime.hour().minute())
                 }
@@ -227,14 +227,14 @@ struct CoachResumePage: View {
                     .accessibilityIdentifier("coach.resume.failed")
             }
             if !canHire {
-                Text("只有队长能雇教练", bundle: .module)
+                Text(copy: "只有队长能雇教练", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .frame(minHeight: Sizing.control)
                     .accessibilityIdentifier("coach.resume.captainOnly")
             } else if !isCurrent {
                 Button(action: hire) {
-                    Text("招聘", bundle: .module).loadingLabel(isSaving).frame(maxWidth: .infinity)
+                    Text(copy: "招聘", bundle: .module).loadingLabel(isSaving).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle(.large))
                 .accentTone(.ink)
@@ -242,10 +242,10 @@ struct CoachResumePage: View {
                 .accessibilityIdentifier("coach.resume.hire")
             } else {
                 HStack(spacing: Space.l) {
-                    Button(action: change) { Text("换教练", bundle: .module) }
+                    Button(action: change) { Text(copy: "换教练", bundle: .module) }
                         .buttonStyle(TextButtonStyle(.muted))
                         .accessibilityIdentifier("coach.resume.change")
-                    Button(action: fire) { Text("解雇", bundle: .module) }
+                    Button(action: fire) { Text(copy: "解雇", bundle: .module) }
                         .buttonStyle(TextButtonStyle(.danger))
                         .accessibilityIdentifier("coach.resume.fire")
                 }
@@ -286,7 +286,7 @@ struct CoachLeavingPage: View {
                 CoachStage(
                     coach: leaving.id,
                     catchphrase: parting == .fired
-                        ? String(localized: "我才刚记住大家的外号……", bundle: .module.inAppLanguage) : leaving.catchphrase,
+                        ? String(copy: "我才刚记住大家的外号……", bundle: .module) : leaving.catchphrase,
                     figureHeight: CoachMetrics.resumeFigure, floor: CoachMetrics.fireFloor,
                     mood: parting == .fired ? .crying : .calm, surface: .page
                 )

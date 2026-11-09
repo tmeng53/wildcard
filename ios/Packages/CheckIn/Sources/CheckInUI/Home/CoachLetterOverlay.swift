@@ -53,7 +53,7 @@ public struct CoachLetterSheet: View {
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
             }
-            Text("各位和\(letter.recipient.name)：", bundle: .module)
+            Text(copy: "各位和\(letter.recipient.name)：", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.s)
@@ -78,7 +78,7 @@ public struct CoachLetterSheet: View {
             }
             .padding(.top, Space.xs)
             Button(action: putAway) {
-                Text("收下", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "收下", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .accentTone(.brand)
@@ -242,7 +242,7 @@ struct CoachLetterOverlay: View {
             .opacity(flown ? 1 : 0)
             .onTapGesture(perform: openSeal)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("开信", bundle: .module))
+            .accessibilityLabel(Text(copy: "开信", bundle: .module))
             .accessibilityAddTraits(.isButton)
             .accessibilityHidden(opening.opened != nil)
             .accessibilityIdentifier("today.letter.seal")
@@ -360,7 +360,7 @@ private struct EnvelopeFront: View {
                     path.addLine(to: CGPoint(x: size.width - 1, y: size.height - 1))
                 }
                 .stroke(Color(role: .bgBrandLamp, in: theme), lineWidth: Sizing.selectionStroke)
-                Text("给小队和 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
+                Text(copy: "给小队和 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme).opacity(0.9))
                     .lineLimit(1)

@@ -47,7 +47,7 @@ struct HealthHomeCard: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("today.health.summary")
             Button(action: post) {
-                Text("打卡", bundle: .module)
+                Text(copy: "打卡", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .padding(.horizontal, Space.s)
@@ -66,7 +66,7 @@ struct HealthHomeCard: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("收起", bundle: .module))
+            .accessibilityLabel(Text(copy: "收起", bundle: .module))
             .accessibilityIdentifier("today.health.dismiss")
         }
         .padding(.leading, Space.s)

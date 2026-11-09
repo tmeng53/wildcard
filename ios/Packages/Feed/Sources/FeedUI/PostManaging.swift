@@ -33,10 +33,10 @@ struct PostManaging: ViewModifier {
                     if await model.delete(post) { deleted(post) }
                 }
             }
-            .alert(Text("没删掉，再试一次", bundle: .module), isPresented: deleteFailed) {
+            .alert(Text(copy: "没删掉，再试一次", bundle: .module), isPresented: deleteFailed) {
                 Button(role: .cancel) {
                 } label: {
-                    Text("好", bundle: .module)
+                    Text(copy: "好", bundle: .module)
                 }
             }
     }
