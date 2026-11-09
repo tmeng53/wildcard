@@ -121,7 +121,8 @@ struct DayCircle: View {
         }
     }
 }
-/// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right.
+/// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right. A day
+/// with more than one session lists each on its own line under the first, so none is cut off.
 struct DayLine: View {
     @Environment(\.sceneTheme) private var theme
     let detail: WeekDayDetail
@@ -133,15 +134,17 @@ struct DayLine: View {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Group {
                     if isToday { Text("今天", bundle: .module) } else { DayCircle.fullName(weekday) }
+                    Text(verbatim: " · ")
                 }
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text(verbatim: " · ")
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text(verbatim: detail.line)
-                    .typeStyle(detail.isPlan ? TypeRamp.footnote : TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
+                VStack(alignment: .leading, spacing: Space.xxs) {
+                    ForEach(Array(detail.lines.enumerated()), id: \.offset) { _, line in
+                        Text(verbatim: line)
+                            .typeStyle(detail.isPlan ? TypeRamp.footnote : TypeRamp.footnoteEmphasis)
+                            .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
+                    }
+                }
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)

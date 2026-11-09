@@ -66,17 +66,23 @@ public struct WeekDayDetail: Sendable, Hashable {
         }
     }
 
-    /// What the day holds, as the app words it: 跑步 32 分钟, 休息日, 请假了, or the plan's sport.
-    public let line: String
+    /// What the day holds, as the app words it, one line each: every session trained (跑步 32 分钟),
+    /// or 休息日, 请假了, or the plan's sport.
+    public let lines: [String]
     /// The line is the plan's sport, not yet done: drawn light.
     public let isPlan: Bool
     /// Nil for a day still to come, which shows no meals.
     public let meals: Meals?
 
-    public init(line: String, isPlan: Bool, meals: Meals?) {
-        self.line = line
+    public init(lines: [String], isPlan: Bool, meals: Meals?) {
+        self.lines = lines
         self.isPlan = isPlan
         self.meals = meals
+    }
+
+    /// A day that holds one thing.
+    public init(line: String, isPlan: Bool, meals: Meals?) {
+        self.init(lines: [line], isPlan: isPlan, meals: meals)
     }
 }
 

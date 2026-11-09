@@ -673,6 +673,22 @@
         }
       }
     },
+    "力量训练 20 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength 20 min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重訓 20 分鐘"
+          }
+        }
+      }
+    },
     "动态": {
       "localizations": {
         "en": {
