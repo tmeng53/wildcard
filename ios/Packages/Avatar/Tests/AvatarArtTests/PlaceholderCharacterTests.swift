@@ -12,7 +12,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
         figure.parts.map(\.id.rawValue) == [
             "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "armLBack",
             "armRBack",
-            "torso", "medal", "acc", "armL", "muscleL", "armR", "muscleR", "earL", "earR", "head", "flapL", "flapR", "brows",
+            "torso", "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
@@ -71,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 63)
+    #expect(figure.parts.count == 61)
 }
 
 @Test(arguments: Persona.allCases)
@@ -370,18 +370,5 @@ func outline(_ path: [PathElement]) -> [Point] {
             Data(
                 #"{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
-    }
-}
-
-/// 秀肌肉's biceps are the same fur and outline as the arm they grow out of: a tuxedo's dark
-/// arm stays dark.
-@Test(arguments: PlaceholderCharacter.variants(for: "body"))
-func theBicepsKeepTheArmsColor(body: String) throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tank"]))
-    for (arm, muscle) in [("armL", "muscleL"), ("armR", "muscleR")] as [(PartID, PartID)] {
-        let shapes = try #require(figure.part(arm).art.first?.shapes)
-        let biceps = try #require(figure.part(muscle).art.first?.shapes)
-        #expect(biceps[0].fill == shapes[1].stroke?.color, "\(body) \(muscle)")
-        #expect(biceps[1].stroke?.color == shapes[0].stroke?.color, "\(body) \(muscle)")
     }
 }

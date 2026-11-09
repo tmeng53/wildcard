@@ -10,7 +10,7 @@ public struct PartPose: Hashable, Sendable {
     public var scaleY = 1.0
     public var opacity = 1.0
     public var bend = 0.0
-    /// 1 while an arm is drawn in front, 0 while behind, between while it crosses (`Channel.front`).
+    /// 1 while an arm is drawn in front, 0 while behind (`Channel.front`).
     public var front = 0.0
 
     public init(opacity: Double = 1) {
@@ -23,7 +23,7 @@ public struct PartPose: Hashable, Sendable {
         case .rotation, .x, .y, .bend: self[channel] += value * strength
         case .scaleX, .scaleY: self[channel] *= max(0, 1 + (value - 1) * strength)
         case .opacity: opacity = min(max(opacity + value, 0), 1)
-        case .front: if strength >= 0.5 { front = max(front, value) }
+        case .front: if value * strength >= 0.5 { front = 1 }
         }
     }
 

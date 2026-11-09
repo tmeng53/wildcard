@@ -45,7 +45,7 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     let rest = figure.layout(figure.restPose)
     for part in [
         "mouthGasp", "drool", "puff", "browsMad", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL",
-        "squirtR", "heart", "heartL", "heartR", "sparkle", "muscleL", "muscleR",
+        "squirtR", "heart", "heartL", "heartR", "sparkle",
     ] as [PartID] {
         #expect(rest[try figure.index(part)].opacity == 0, "\(part)")
     }
@@ -62,9 +62,10 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     #expect(try opacity("gloom", in: "shocked", at: 0.6) == 1)
     #expect(try opacity("squirtL", in: "laugh-bend", at: 1.0) == 1)
     #expect(try opacity("heart", in: "heart", at: 1.0) == 1)
-    #expect(try opacity("muscleR", in: "flex", at: 1.0) == 1)
-    // The flexing arm is the arm itself, never swapped for another drawing.
-    #expect(try opacity("armR", in: "flex", at: 1.0) == 1)
+    // The flexing arm is the arm itself, never swapped for another drawing, and it stays behind
+    // the body the whole time.
+    #expect(try opacity("armRBack", in: "flex", at: 1.0) == 1)
+    #expect(try opacity("armR", in: "flex", at: 1.0) == 0)
     #expect(try opacity("sparkle", in: "chin-up", at: 1.3) == 1)
     #expect(try opacity("puff", in: "pout", at: 1.0) == 1)
     #expect(try opacity("mouthSad", in: "pout", at: 1.0) == 1)

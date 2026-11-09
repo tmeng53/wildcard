@@ -131,9 +131,8 @@ private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
     }
 }
 
-/// An arm's front copy (the part a twin names) shows as much as its `front`: not at 0 (its rest),
-/// partly while it crosses the body, wholly at 1; the copy behind the body and every other part
-/// ignore `front`.
+/// An arm's front copy (the part a twin names) shows only while its `front` is 1, not at 0 (its
+/// rest); the copy behind the body and every other part ignore `front`.
 @Test func frontShowsOnlyTheArmsFrontCopy() throws {
     var twinned = rig
     twinned.parts.insert(Rig.Part(id: "armBack", parent: "body", pivot: Point(x: 60, y: 40), twin: "arm"), at: 1)
@@ -146,6 +145,6 @@ private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
         return figure.layout(pose).map(\.opacity)
     }
     #expect(shown(front: 0) == [1, 1, 0])
-    #expect(shown(front: 0.4) == [1, 1, 0.4])
+    #expect(shown(front: 0.4) == [1, 1, 0])
     #expect(shown(front: 1) == [1, 1, 1])
 }

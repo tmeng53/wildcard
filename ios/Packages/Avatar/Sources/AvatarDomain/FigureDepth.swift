@@ -16,11 +16,11 @@ extension Figure {
         }
     }
 
-    /// How much a part shows at its depth: an arm's front copy (the part a twin names) as much
-    /// as its `front` channel, so it fades in over the copy behind as the arm crosses the body;
-    /// every other part, the copy behind the body too, always shows.
+    /// 1 where a part shows at its depth, 0 where it doesn't: an arm's front copy (the part a
+    /// twin names) shows only while its `front` channel is 1; every other part, the copy behind
+    /// the body too, always shows.
     func depth(_ index: Int, _ pose: Pose) -> Double {
         guard parts[index].front else { return 1 }
-        return min(max(pose.parts[index].front, 0), 1)
+        return pose.parts[index].front < 0.5 ? 0 : 1
     }
 }

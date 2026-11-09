@@ -5,9 +5,8 @@ import Testing
 
 /// Each arm is drawn in two places: whole behind the torso (`armLBack`), and whole in front of the
 /// torso and what is worn over it but behind the head (`armL`). The front copy shows only while
-/// the move keys the arm in front (its `front` keys, held like Spine's draw-order keys, each
-/// played as a three-frame fade so the arm never pops over the body), never worked out from the
-/// angle. The head always covers both, so no arm or sleeve ever crosses the
+/// the move keys the arm in front (its `front` keys, held like Spine's draw-order keys), never
+/// worked out from the angle. The head always covers both, so no arm or sleeve ever crosses the
 /// face, and an arm at rest is behind, its sleeve root under the top.
 @Test func anArmIsBehindTheBodyUnlessTheMoveBringsItInFront() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "top": "warmup-tee"]))
