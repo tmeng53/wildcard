@@ -4,15 +4,21 @@ import Foundation
 import HealthDomain
 import HomeWidgetDomain
 
-/// The board the widget gallery and a build without a backend show: a squad of four, two of
+/// The board the widget gallery and a build without a backend show: a squad of four (or up to
+/// eight, the rest not checked in yet), two of
 /// them trained today, and I trained twice this week but not yet today; with `workout`, a 32
 /// minute run Health synced at noon, which the 打卡 capsule offers.
 public enum SampleBoard {
     /// - Parameters:
     ///   - workout: with a run Health synced today.
     ///   - posted: that run already posted from the capsule.
-    public static func board(on day: LocalDay, workout: Bool = false, posted: Bool = false) -> WidgetBoard {
-        let people = (1...4).map { MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID()) }
+    ///   - size: how many in the squad, 4 to 8.
+    public static func board(on day: LocalDay, workout: Bool = false, posted: Bool = false, size: Int = 4)
+        -> WidgetBoard
+    {
+        let people = (1...min(max(size, 4), 8)).map {
+            MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID())
+        }
         let viewer = people[0]
         let monday = day.weekStart
         func row(_ member: MemberID, _ training: TrainingStatus) -> SquadmateToday {
@@ -24,8 +30,7 @@ public enum SampleBoard {
             squad: SquadID(UUID()),
             members: [
                 row(people[1], .trained), row(people[2], .trained), row(viewer, .notCheckedIn),
-                row(people[3], .notCheckedIn),
-            ],
+            ] + people[3...].map { row($0, .notCheckedIn) },
             today: TodayCounts(trained: 2, disclaimer: 0, resting: 0, everyoneTrained: false),
             myWeek: MyWeek(
                 firstDay: monday, lastDay: monday.adding(days: 6), week: WeekCount(trainedDays: 2, plannedDays: 4)),

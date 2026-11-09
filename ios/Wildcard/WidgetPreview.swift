@@ -42,6 +42,10 @@ struct WidgetPreview: View {
                 face(
                     SquadWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.medium,
                     identifier: "widget.squadWorkout")
+                // A squad of eight: one row of heads over the capsule.
+                face(
+                    SquadWidget(board: SampleBoard.board(on: day, workout: true, size: 8)) { _ in PostWorkoutLabel() },
+                    width: Self.medium, identifier: "widget.squadWorkoutEight")
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)

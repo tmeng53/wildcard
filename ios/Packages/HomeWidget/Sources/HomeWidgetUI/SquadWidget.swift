@@ -133,9 +133,10 @@ public struct SquadWidget<Post: View>: View {
         return try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
     }
 
-    /// The squad, up to eight, four to a row.
+    /// The squad, up to eight, four to a row; one row, those who checked in first, while the
+    /// capsule takes the foot, so the widget keeps its height (今天 x/y still counts everyone).
     private var rows: [[WidgetBoard.Mate]] {
-        let shown = Array(board.mates.prefix(8))
+        let shown = Array(board.mates.prefix(hasCapsule ? 4 : 8))
         return stride(from: 0, to: shown.count, by: 4).map { Array(shown[$0..<min($0 + 4, shown.count)]) }
     }
 
