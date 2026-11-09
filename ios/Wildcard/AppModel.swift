@@ -325,8 +325,8 @@ final class AppModel {
             recap: recap)
         homeSquad = home.squad.id
         let member = try? await api.me()
-        isAdmin = member?.isAdmin ?? false
-        if let member { Self.health.birthday = member.birthday }
+        // A failed read keeps what 我 may have handed Health meanwhile.
+        (isAdmin, Self.health.birthday) = (member?.isAdmin ?? false, member.map(\.birthday) ?? Self.health.birthday)
     }
 
     /// The member's home, from what the phone kept for them alone.
