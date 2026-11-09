@@ -21,3 +21,8 @@ PUT /check-ins/{id} the `oneOf[#/components/schemas/TrainedCheckIn]/training/wor
 GET /me/check-ins the `checkIns/items/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
 GET /me/posts the `posts/items/checkIn/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
 GET /squads/{squadId}/check-ins the `posts/items/checkIn/oneOf[#/components/schemas/TrainedCheckIn]/training/workout/tilePosition` response property's max was increased from `4.00` to `5.00` for the response status `200`
+# The coach page no longer shows the coach's lines to check-ins and replies, which stay under the
+# posts in 动态 (Tracy, 2026-11-09). The server sends no `reply` or `answer` card any more, so no
+# installed build has one to mark seen; one read before the change only fails to stay seen.
+PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen removed the enum value `answer` from the `path` request parameter `kind`
+PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen removed the enum value `reply` from the `path` request parameter `kind`

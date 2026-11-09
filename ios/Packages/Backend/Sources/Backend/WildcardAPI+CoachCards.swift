@@ -12,6 +12,20 @@ extension WildcardAPI {
         return CoachPageCards(wire)
     }
 
+    /// A page of 以前 in `squad`, newest first, from `cursor` (the page before's `next`); only the
+    /// cards not seen yet when `unseenOnly`.
+    public func earlierCoachCards(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(APIError)
+        -> CoachEarlierCards
+    {
+        let wire = try await call {
+            try await client.getEarlierCoachCards(
+                path: .init(squadId: squad.description),
+                query: .init(cursor: cursor, unseen: unseenOnly ? ._true : nil)
+            ).ok.body.json
+        }
+        return CoachEarlierCards(wire)
+    }
+
     /// Marks a card seen on every phone; a seen note is also put away. Safe to repeat.
     public func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(APIError) {
         guard let kind = Operations.MarkCoachCardSeen.Input.Path.KindPayload(rawValue: card.kind.rawValue) else {

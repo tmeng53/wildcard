@@ -23,16 +23,16 @@ export function previewCoachDaily({ preview, squads }: CoachPreviewToolDependenc
       'Runs today’s daily wake of the member’s squad coach now, for that member alone, and ' +
       'returns what it would do: the 战术板 line, the morning note (便条) with its day’s challenge, ' +
       'the gift and line it would give, the memory files it would change and every tool call. ' +
-      'Nothing is saved or sent: no card, notice or push reaches anyone, and the one-note-a-day ' +
-      'and one-gift-a-week limits are untouched. It calls the model once, so it costs like a ' +
+      'Nothing is saved or sent: no card, notice or push reaches anyone, and the one-gift-a-week ' +
+      'limit is untouched. It calls the model once, so it costs like a ' +
       'wake (`costMicros`, millionths of a US dollar), counted against the squad’s daily cap; ' +
       '`ran: false` says why it didn’t run (no coach, off duty). Works while coaching is off. ' +
       'With `deliver: true`, only for yourself as the member, the note and its challenge are ' +
-      'saved as your real note for today: it is pushed and shows on your coach page at the next ' +
-      'run of the coach job (every 10 minutes) once your clock is past the morning note hour, and ' +
-      'it is your one note for the day, so that morning’s wake writes you none. `delivered` says ' +
-      'whether it was saved (false when you already have today’s). The 战术板 line and the gift ' +
-      'stay a preview.',
+      'saved as a real note of today, each time you ask: it is pushed and shows on your coach ' +
+      'page at the next run of the coach job (every 10 minutes) once your clock is past the ' +
+      'morning note hour, and the newest note is the day’s (its challenge is the one you answer). ' +
+      'The morning’s wake still writes you its own. `delivered` says whether it was saved (false ' +
+      'when the coach wrote no note). The 战术板 line and the gift stay a preview.',
     changes: true,
     input: z.strictObject({
       member: MemberId.describe('The member’s id.'),
