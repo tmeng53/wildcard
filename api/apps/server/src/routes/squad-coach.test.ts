@@ -867,6 +867,47 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(odd.status).toBe(400);
   });
 
+  it('keeps its place in 未读 when the card it ended on is seen, beside cards of the same moment', async () => {
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    // 21 lines of one moment, as a morning note and its challenge are.
+    for (let n = 0; n < 21; n += 1) {
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+        values (${squad}, 'xiaohun', current_date - ${n}::int, ${`第${String(n)}句`},
+          date_trunc('second', now()) + interval '5 seconds')`.execute(db);
+    }
+    const path = `/squads/${squad}/coach/cards/earlier?unseen=true`;
+    const Page = z.object({
+      cards: z.array(z.object({ id: z.string(), text: z.string() }).loose()),
+      next: z.string().optional(),
+    });
+    const first = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(first.cards).toHaveLength(20);
+    const ended = first.cards.at(-1)?.id ?? '';
+    // Opened from 以前 before the next page: it leaves 未读.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${squad}/coach/cards/board/${ended}/seen`,
+          token: mate.token,
+        })
+      ).status,
+    ).toBe(200);
+    const second = Page.parse(
+      (
+        await call({
+          method: 'GET',
+          path: `${path}&cursor=${encodeURIComponent(first.next ?? '')}`,
+          token: mate.token,
+        })
+      ).body,
+    );
+    const all = [...first.cards, ...second.cards].map((card) => card.text);
+    expect(new Set(all).size).toBe(21);
+    expect(second.next).toBeUndefined();
+  });
+
   it('refuses anyone outside the squad and a kind it doesn’t know', async () => {
     const [captain, stranger] = [await signUp(), await signUp()];
     const squad = await squadOf(captain);

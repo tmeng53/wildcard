@@ -358,23 +358,25 @@ export function coachCards(deps: {
     .openapi(earlierRoute, async (c) => {
       const { squadId } = c.req.valid('param');
       const { cursor, unseen } = c.req.valid('query');
-      const newestFirst = (await sorted(squadId, c.var.caller.userId))
-        .filter((card) => !card.stacked && (unseen !== 'true' || !card.seen))
+      const listed = (await sorted(squadId, c.var.caller.userId))
+        .filter((card) => !card.stacked)
         .reverse();
-      // The page starts after the card the cursor names, or, should it be gone, with the first
-      // card older than it.
+      const shown = (card: (typeof listed)[number]) => unseen !== 'true' || !card.seen;
+      // The page starts after the card the cursor names. Found in the whole list, so one seen since
+      // the last page (and so out of 未读) still marks the place; a card no longer listed at all
+      // places it by its time.
       const after = cursor === undefined ? undefined : parseCursor(cursor);
-      const named =
-        after === undefined ? -1 : newestFirst.findIndex((card) => card.key === after.key);
-      const from =
+      const named = after === undefined ? -1 : listed.findIndex((card) => card.key === after.key);
+      const start =
         after === undefined
           ? 0
           : named >= 0
             ? named + 1
-            : newestFirst.findIndex((card) => card.at.getTime() < after.at);
-      const page = from < 0 ? [] : newestFirst.slice(from, from + EARLIER_PAGE);
+            : listed.findIndex((card) => card.at.getTime() < after.at);
+      const newestFirst = start < 0 ? [] : listed.slice(start).filter(shown);
+      const page = newestFirst.slice(0, EARLIER_PAGE);
       const last = page.at(-1);
-      const more = from >= 0 && from + EARLIER_PAGE < newestFirst.length;
+      const more = newestFirst.length > EARLIER_PAGE;
       return c.json(
         {
           version: 1 as const,
