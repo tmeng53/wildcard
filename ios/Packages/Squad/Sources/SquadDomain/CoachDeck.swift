@@ -122,7 +122,8 @@ public final class CoachDeck {
     }
 
     private func readEarlier(from cursor: String?) async {
-        guard !isLoadingEarlier else { return }
+        // A first page always goes (a filter may change while one is on its way); a next one waits.
+        guard cursor == nil || !isLoadingEarlier else { return }
         isLoadingEarlier = true
         defer { isLoadingEarlier = false }
         let filter = earlierFilter

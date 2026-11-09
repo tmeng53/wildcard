@@ -111,9 +111,9 @@ public struct CoachEarlierPage: View {
                     }
                 }
                 .contentShape(Rectangle())
+                .accessibilityElement(children: .combine)
             }
             .buttonStyle(.plain)
-            .accessibilityElement(children: .combine)
             .accessibilityIdentifier("coachEarlier.row.\(card.kind.rawValue)")
             if isBoxed(card) {
                 Button {
@@ -210,15 +210,20 @@ public struct CoachEarlierPage: View {
     // MARK: Days
 
     /// The cards under their day on the reader's clock, in the order they come.
-    private static func days(of cards: [CoachPageCard]) -> [(day: Date, cards: [CoachPageCard])] {
+    private struct Day {
+        let day: Date
+        var cards: [CoachPageCard]
+    }
+
+    private static func days(of cards: [CoachPageCard]) -> [Day] {
         let calendar = Calendar.current
-        var days: [(day: Date, cards: [CoachPageCard])] = []
+        var days: [Day] = []
         for card in cards {
             let day = calendar.startOfDay(for: card.time)
             if days.last?.day == day {
                 days[days.count - 1].cards.append(card)
             } else {
-                days.append((day, [card]))
+                days.append(Day(day: day, cards: [card]))
             }
         }
         return days
