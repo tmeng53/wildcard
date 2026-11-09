@@ -18,13 +18,19 @@ public struct AppCatalog: Hashable, Sendable {
     public let scenes: [CatalogScene]
     /// The global switches, such as what only the public beta has (`BetaFeature`).
     public let switches: [CatalogSwitch]
+    /// The lowest build that may still run; nil while every build may.
+    public let minimumBuild: AppBuild?
+    /// The reaction bar's quick emoji, in order; empty for the ones this build shipped with.
+    public let quickReactions: [Emoji]
 
     public init(
         sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
-        art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = []
+        art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = [],
+        minimumBuild: AppBuild? = nil, quickReactions: [Emoji] = []
     ) {
         (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
         (self.scenes, self.switches) = (scenes, switches)
+        (self.minimumBuild, self.quickReactions) = (minimumBuild, quickReactions)
     }
 
     /// Nothing at all.

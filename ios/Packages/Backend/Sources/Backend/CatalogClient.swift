@@ -37,7 +37,8 @@ public actor CatalogClient {
         let same =
             catalog.sports == before.sports && catalog.diceLines == before.diceLines
             && catalog.starterStock == before.starterStock && catalog.scenes == before.scenes
-            && catalog.switches == before.switches
+            && catalog.switches == before.switches && catalog.minimumBuild == before.minimumBuild
+            && catalog.quickReactions == before.quickReactions
         return same ? nil : catalog
     }
 

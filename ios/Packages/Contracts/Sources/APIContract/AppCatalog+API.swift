@@ -13,7 +13,11 @@ extension AppCatalog {
             starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock,
             art: wire.art.map(ArtManifest.init) ?? fallback.art,
             scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes,
-            switches: wire.switches.map(Self.switches) ?? fallback.switches)
+            switches: wire.switches.map(Self.switches) ?? fallback.switches,
+            // A section that is there but names no minimum lets every build run; one the server
+            // didn't send keeps the fallback's.
+            minimumBuild: wire.appBuild.map { $0.minimumBuild.flatMap(AppBuild.init) } ?? fallback.minimumBuild,
+            quickReactions: wire.reactions.map { $0.quick.compactMap { try? Emoji($0) } } ?? fallback.quickReactions)
     }
 
     /// The switches; a mode this build doesn't know, or a schedule without a window it can read,

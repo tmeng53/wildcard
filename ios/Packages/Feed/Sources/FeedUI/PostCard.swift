@@ -155,8 +155,10 @@ struct PostCard: View {
     /// Let go on an emoji to pick it; anywhere else (or cancelled) leaves the bar open for a tap.
     private func letGo(at location: CGPoint?) {
         model.hovering = nil
-        guard let location, let index = model.slot(at: location), let from = model.slotCenter(index) else { return }
-        model.react(.pick(EmojiBar.common[index]), on: post, from: from)
+        guard let location, let index = model.slot(at: location), let from = model.slotCenter(index),
+            let emoji = Emoji.quick(at: index)
+        else { return }
+        model.react(.pick(emoji), on: post, from: from)
     }
 
     /// A post without a cover: the shared colour block in its place, with its words on it. A

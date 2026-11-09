@@ -2,10 +2,11 @@ import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import type { Art } from '@wildcard/art';
+import type { QuickReactionsAdmin } from '@wildcard/check-ins';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { Scenes } from '@wildcard/scenes';
 import type { SportCatalog, Sports } from '@wildcard/sports';
-import type { Switches } from '@wildcard/switches';
+import type { MinimumBuilds, Switches } from '@wildcard/switches';
 import type { UnlocksAdmin } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
@@ -295,6 +296,56 @@ export function switchesSection(
         ...(window === undefined ? {} : { window: { ...window } }),
       })),
     }),
+  };
+}
+
+export const AppBuildCatalog = z
+  .looseObject({
+    minimumBuild: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared ' +
+          'number by number; an older app shows only 有新版本 and a button to the App Store. ' +
+          'Left out while every build may run.',
+        example: '190',
+      }),
+  })
+  .openapi('AppBuildCatalog');
+
+/** The `appBuild` section: the lowest build of the app that may still run. */
+export function appBuildSection(
+  minimum: Pick<MinimumBuilds, 'current'>,
+): CatalogSection<typeof AppBuildCatalog> {
+  return {
+    name: 'appBuild',
+    schema: AppBuildCatalog,
+    load: async () => {
+      const { build } = await minimum.current();
+      return build === null ? {} : { minimumBuild: build };
+    },
+  };
+}
+
+export const ReactionsCatalog = z
+  .looseObject({
+    quick: z.array(z.string()).meta({
+      description:
+        'The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.',
+      example: ['❤️', '💪', '😂', '🤤', '😮', '😡'],
+    }),
+  })
+  .openapi('ReactionsCatalog');
+
+/** The `reactions` section: the reaction bar's quick emoji. */
+export function reactionsSection(
+  reactions: Pick<QuickReactionsAdmin, 'current'>,
+): CatalogSection<typeof ReactionsCatalog> {
+  return {
+    name: 'reactions',
+    schema: ReactionsCatalog,
+    load: async () => ({ quick: [...(await reactions.current()).emoji] }),
   };
 }
 

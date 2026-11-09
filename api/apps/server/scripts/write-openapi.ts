@@ -6,8 +6,10 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
+  createPostgresQuickReactions,
   createPostgresReactionStore,
   createPostgresWeeklyPlanStore,
+  createQuickReactions,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
@@ -21,7 +23,12 @@ import {
   createPush,
 } from '@wildcard/push';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  createMinimumBuilds,
+  createPostgresMinimumBuild,
+  createPostgresSwitchStore,
+  createSwitches,
+} from '@wildcard/switches';
 import { createPostgresUnlockStore } from '@wildcard/unlocks';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -32,7 +39,9 @@ import { createLog } from '../src/log.js';
 import { openApiJson } from '../src/openapi.js';
 import {
   artSection,
+  appBuildSection,
   disclaimerDiceSection,
+  reactionsSection,
   scenesSection,
   sportsSection,
   switchesSection,
@@ -70,6 +79,8 @@ const app = createApp({
       switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
       storesSection(createPostgresUnlockStore(db)),
       piecesSection(createPostgresUnlockStore(db)),
+      appBuildSection(createMinimumBuilds({ store: createPostgresMinimumBuild(db) })),
+      reactionsSection(createQuickReactions({ store: createPostgresQuickReactions(db) })),
       artSection({ manifest: unused }),
     ],
     clock: unused,

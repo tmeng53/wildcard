@@ -8,6 +8,7 @@ import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, TrainedBy, WeekStart } from './domain/weekly-plan.js';
+import type { QuickReactions } from './domain/quick-reactions.js';
 import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -283,4 +284,15 @@ export interface WeekSummaryWordsStore {
    * nothing is saved or logged. Says whether anything changed.
    */
   save(words: WeekSummaryWords, by: MemberId): Promise<boolean>;
+}
+
+/** Where the reaction bar's quick emoji are kept: one value, and a log of every change to it. */
+export interface QuickReactionsStore {
+  /** The emoji now. */
+  current(): Promise<QuickReactions>;
+  /**
+   * Saves `reactions` with `by` as who changed them, unless they are the emoji already: then
+   * nothing is saved or logged.
+   */
+  save(reactions: QuickReactions, by: MemberId): Promise<void>;
 }
