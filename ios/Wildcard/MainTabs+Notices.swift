@@ -25,6 +25,6 @@ struct TabNotices: ViewModifier {
             .todayNotices(today)
             .onChange(of: covered, initial: true) { today.isCovered = $1 }
             .onChange(of: inbox.toldLive) { tellToldLive() }
-            .onChange(of: pushesInFront) { Task { await inbox.catchUp() } }
+            .onChange(of: pushesInFront) { Task { await inbox.catchUp(at: LaunchOptions.now()) } }
     }
 }

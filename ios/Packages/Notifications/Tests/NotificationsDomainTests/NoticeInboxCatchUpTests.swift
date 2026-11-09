@@ -13,10 +13,10 @@ import Testing
     await inbox.load()
     await server.add(notice(3))
     await server.add(notice(4))
-    await inbox.catchUp()
+    await inbox.catchUp(at: monday)
     #expect(inbox.takeToldLive().map(\.id.rawValue) == [3, 4])
     // A second push finds nothing newer.
-    await inbox.catchUp()
+    await inbox.catchUp(at: monday)
     #expect(inbox.takeToldLive().isEmpty)
 }
 
@@ -30,18 +30,32 @@ import Testing
         await inbox.hear(.told(notice(2)))
         #expect(inbox.takeToldLive().map(\.id.rawValue) == [2])
     })
-    await inbox.catchUp()
+    await inbox.catchUp(at: monday)
     #expect(inbox.takeToldLive().isEmpty)
 }
 
-@Test @MainActor func aPushBeforeAnythingLoadedOrWith通知OpenHearsNothing() async {
+@Test @MainActor func aPushWithNothingHereBeforeHearsOnlyWhatWasJustTold() async {
+    // Notice 1 was told a day ago, 2 a minute before the push arrives on Tuesday.
+    let server = FakeNotices([notice(1), notice(2, hoursAfterMonday: 24 - 1.0 / 60)])
+    let inbox = NoticeInbox(source: server)
+    await inbox.catchUp(at: monday.addingTimeInterval(24 * 3600))
+    #expect(inbox.takeToldLive().map(\.id.rawValue) == [2])
+}
+
+@Test @MainActor func aPushForTheFirstNoticeEverIsHeard() async {
+    let server = FakeNotices([])
+    let inbox = NoticeInbox(source: server)
+    await inbox.load()
+    await server.add(notice(1))
+    await inbox.catchUp(at: monday)
+    #expect(inbox.takeToldLive().map(\.id.rawValue) == [1])
+}
+
+@Test @MainActor func aPushWith通知OpenHearsNothing() async {
     let server = FakeNotices([notice(1)])
     let inbox = NoticeInbox(source: server)
-    // Nothing was here to be newer than: every notice on the page would be heard at once.
-    await inbox.catchUp()
-    #expect(inbox.takeToldLive().isEmpty)
     await inbox.open()
     await server.add(notice(2))
-    await inbox.catchUp()
+    await inbox.catchUp(at: monday)
     #expect(inbox.takeToldLive().isEmpty)
 }

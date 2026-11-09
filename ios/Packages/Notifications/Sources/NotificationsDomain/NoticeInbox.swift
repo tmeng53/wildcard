@@ -155,14 +155,17 @@ public final class NoticeInbox {
         }
     }
 
-    /// A push arrived while the app was in front, which the app tells itself in place of iOS's
-    /// banner: reads the newest page, and what it finds newer than the newest already here is
-    /// heard as if it came live, in case the stream missed it.
-    public func catchUp() async {
+    /// A push arrived at `now` while the app was in front, which the app tells itself in place of
+    /// iOS's banner: reads the newest page, and what it finds newer than the newest already here
+    /// is heard as if it came live, in case the stream missed it. With nothing here before (not
+    /// loaded yet, or the member's first notice), what was told in the last `catchUpWindow` is.
+    public func catchUp(at now: Date) async {
         let newest = notices.first?.id
         await load()
-        guard !isOpen, let newest else { return }
-        for notice in notices.filter({ $0.id > newest }).reversed() { tellLive(notice) }
+        guard !isOpen else { return }
+        let isNew: (Notice) -> Bool =
+            if let newest { { $0.id > newest } } else { { now.timeIntervalSince($0.toldAt) <= Self.catchUpWindow } }
+        for notice in notices.filter(isNew).reversed() { tellLive(notice) }
     }
 
     /// The notices heard since the last call, the earliest first: each is given once.
@@ -211,6 +214,8 @@ public final class NoticeInbox {
     public static let firstWait = Duration.seconds(3)
     /// The longest wait between tries while the stream can't be heard.
     public static let longestWait = Duration.seconds(60)
+    /// How recent a notice must be for a push to tell it when nothing was loaded before it.
+    public static let catchUpWindow: TimeInterval = 120
 
     func hear(_ heard: LiveNotice) async {
         switch heard {
