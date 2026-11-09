@@ -44,7 +44,10 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     let catalog = try Catalog.placeholder(stock: try winterStart())
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
     #expect(
-        catalog.props == ["bottle", "dumbbell", "racket", "badminton", "pickleball", "pingpong", "kettlebell", "yogamat", "chalkbag", "goggles", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom"])
+        catalog.props == [
+            "bottle", "dumbbell", "racket", "badminton", "pickleball", "pingpong", "kettlebell", "yogamat", "chalkbag",
+            "goggles", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom",
+        ])
     #expect(
         catalog.variants["top"] == [
             "warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe",
