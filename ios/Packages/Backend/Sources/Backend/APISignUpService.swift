@@ -60,6 +60,10 @@ public struct APISignUpService: SignUpService {
     }
 
     /// Saves the week as the member's 我的每周计划, which this week and every later one follow.
+    public func save(birthday: Birthday) async throws(SignUpError) {
+        try await signUp { () throws(APIError) in try await api.save(birthday) }
+    }
+
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {
         try await signUp { () throws(APIError) in try await api.saveTemplate(days) }
     }

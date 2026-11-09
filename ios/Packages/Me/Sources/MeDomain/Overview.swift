@@ -110,6 +110,8 @@ public struct MeOverview: Hashable, Sendable {
     public var coachPushOn: Bool
     /// The number the member picked for their card; nil until they pick one.
     public var jerseyNumber: JerseyNumber?
+    /// The birthday the member chose to give, for the heart rate chart's zones; nil without one.
+    public var birthday: Birthday?
     /// Their place in their squad, the first to join being 1; nil before they are in one.
     public var squadPlace: Int?
     /// Every weekly title they won, and the one they wear (徽章板).
@@ -131,8 +133,9 @@ public struct MeOverview: Hashable, Sendable {
         dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
         board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
-        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil
+        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil
     ) {
+        self.birthday = birthday
         self.gifts = gifts
         self.weekGlance = weekGlance
         self.record = record

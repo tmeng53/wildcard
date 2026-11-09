@@ -12,6 +12,7 @@ private struct Unreachable: MeService {
     func records() async throws(MeError) -> WildcardRecords { throw .unavailable }
     func save(_ character: MeCharacter) async throws(MeError) { throw .unavailable }
     func save(jerseyNumber: JerseyNumber) async throws(MeError) { throw .unavailable }
+    func save(birthday: Birthday?) async throws(MeError) { throw .unavailable }
     func setDailyPush(_ isOn: Bool) async throws(MeError) { throw .unavailable }
     func setCoachPush(_ isOn: Bool) async throws(MeError) { throw .unavailable }
     func equip(_ title: String?) async throws(MeError) -> TitleBoard { throw .unavailable }

@@ -67,7 +67,22 @@ public struct WildcardAPI: Sendable {
         guard let id = UUID(uuidString: answer.userId) else { throw .unreadableResponse }
         return Member(
             id: MemberID(id), profile: try answer.profile.map(Profile.init),
-            joinedAt: answer.profile.map { Timestamp($0.joinedAt) }, isAdmin: answer.isAdmin)
+            joinedAt: answer.profile.map { Timestamp($0.joinedAt) }, isAdmin: answer.isAdmin,
+            birthday: try answer.profile?.birthday.map { text throws(APIError) in
+                try read { () throws(ContractsError) in Birthday(sent: try LocalDay(text)) }
+            })
+    }
+
+    /// Saves the birthday the member chose to give. Safe to repeat.
+    public func save(_ birthday: Birthday) async throws(APIError) {
+        _ = try await call {
+            try await client.putMyBirthday(body: .json(.init(version: ._1, birthday: birthday.description))).ok
+        }
+    }
+
+    /// Forgets the member's birthday. Safe to repeat.
+    public func forgetBirthday() async throws(APIError) {
+        try await call { _ = try await client.deleteMyBirthday().noContent }
     }
 
     /// Creates the profile, right after the first sign-in, or replaces it.

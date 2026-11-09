@@ -152,3 +152,24 @@ private actor Flag {
     #expect(records.squad?.cheersReceived.top?.mate.member == mate.id)
     #expect(records.squad?.cheersGiven.count == 0)
 }
+
+@Test func theBirthdayIsSavedAtSignUpKeptByProfileSavesAndForgotten() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let signUp = APISignUpService(api: member.api)
+    try await signUp.save(
+        NewCharacter(outfit: Outfit(["body": "shiba"]), persona: .drama, nickname: try Nickname("阿杰")))
+    let birthday = Birthday(sent: try LocalDay("1996-04-18"))
+    try await signUp.save(birthday: birthday)
+    #expect(try await member.api.me().birthday == birthday)
+
+    // 我's saves keep it: the profile is saved whole, the birthday apart.
+    let service = APIMeService(api: member.api)
+    try await service.save(jerseyNumber: try JerseyNumber(7))
+    #expect(try await service.overview().birthday == birthday)
+
+    try await service.save(birthday: nil)
+    #expect(try await member.api.me().birthday == nil)
+    try await service.save(birthday: nil)
+    #expect(try await service.overview().birthday == nil)
+}
