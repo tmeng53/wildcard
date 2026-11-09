@@ -49,8 +49,8 @@ const unlocked = (member: string, item: string) => ({
 
 /** Gives `member` a store, as an admin's `give_unlocks` would. */
 async function unlock(member: string, store: string) {
-  await sql`insert into public.member_unlocks (member_id, kind, item_id, sports, after, given_by, unlocked_at)
-    values (${member}, 'store', ${store}, '{}', 0, ${member}, now())`.execute(db);
+  await sql`insert into public.grants (member_id, reward_kind, reward_id, via, sports, after, admin_id, at)
+    values (${member}, 'store', ${store}, 'team', '{}', 0, ${member}, now())`.execute(db);
 }
 
 /** Reads the stream's events as they come, one at a time. */

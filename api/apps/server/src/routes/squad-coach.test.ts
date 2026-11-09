@@ -661,11 +661,15 @@ describe('/squads/{squadId}/coach/cards', () => {
     await sql`insert into public.coach_member_note_deliveries (note_id) values (${note})`.execute(
       db,
     );
-    await sql`insert into public.gift_pieces (piece_id) values ('cards-towel') on conflict do nothing`.execute(
+    await sql`insert into public.rewards (kind, id) values ('piece', 'cards-towel') on conflict do nothing`.execute(
       db,
     );
-    await sql`insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, line)
-      values (${mate.userId}, 'cards-towel', 'xiaohun', ${squad}, '练完擦汗')`.execute(db);
+    await sql`insert into public.reward_triggers (reward_kind, reward_id, kind)
+      values ('piece', 'cards-towel', 'coach') on conflict do nothing`.execute(db);
+    await sql`insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, line, given_by, at)
+      values (${mate.userId}, 'piece', 'cards-towel', 'coach', 'xiaohun', ${squad}, '练完擦汗', 'coach', now())`.execute(
+      db,
+    );
     const mine = await checkIn(mate.token, squad);
     const theirs = await checkIn(captain.token, squad);
     await coachSaid(squad, { checkIn: mine, text: '配速比上周快了', emoji: null });
