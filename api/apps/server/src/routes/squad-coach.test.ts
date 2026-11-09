@@ -941,9 +941,9 @@ describe('/squads/{squadId}/coach/cards', () => {
           now() - make_interval(days => ${daysAgo}))
         returning id`.execute(db);
       const id = String(written.rows[0]?.id);
-      await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(
-        db,
-      );
+      // A card is dated by its delivery, so it is delivered then too.
+      await sql`insert into public.coach_member_note_deliveries (note_id, at)
+        values (${id}, now() - make_interval(days => ${daysAgo}))`.execute(db);
       return id;
     };
     const old = await challenge(40, '拉伸');
@@ -971,6 +971,7 @@ describe('/squads/{squadId}/coach/cards', () => {
     // 以前 itself keeps to its 30 days and leaves the stack out.
     const all = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(all.cards.filter((card) => card.kind === 'challenge')).toStrictEqual([]);
+    await fire(captain, squad);
   });
 
   it('keeps its place in 未读 when the card it ended on is seen, beside cards of the same moment', async () => {
