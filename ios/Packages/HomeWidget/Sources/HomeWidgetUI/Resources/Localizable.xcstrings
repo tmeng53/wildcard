@@ -224,6 +224,22 @@
           }
         }
       }
+    },
+    "暂时连不上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't connect"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫時連不上"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

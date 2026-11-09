@@ -55,6 +55,7 @@ private struct WidgetFace<Board: View>: View {
             case .board(let shown): board(shown)
             case .noSquad: WidgetNotice(.noSquad).widgetURL(WidgetLink.today.url)
             case .signedOut: WidgetNotice(.signedOut).widgetURL(WidgetLink.today.url)
+            case .unavailable: WidgetNotice(.unavailable).widgetURL(WidgetLink.today.url)
             }
         }
         .environment(\.sceneTheme, .gym)

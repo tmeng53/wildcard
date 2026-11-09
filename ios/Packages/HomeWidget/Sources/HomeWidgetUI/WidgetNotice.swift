@@ -11,12 +11,14 @@ public enum WidgetCopy {
     public static var squadDescription: Text { Text("今天谁练了", bundle: .module) }
 }
 
-/// A widget with no board to show: who isn't signed in or isn't in a squad yet. A tap opens the
+/// A widget with no board to show: who isn't signed in or isn't in a squad yet, or a squad it
+/// can't read right now. A tap opens the
 /// app, where they do it.
 public struct WidgetNotice: View {
     public enum Reason: Sendable {
         case signedOut
         case noSquad
+        case unavailable
     }
 
     @Environment(\.sceneTheme) private var theme
@@ -35,6 +37,7 @@ public struct WidgetNotice: View {
                 switch reason {
                 case .signedOut: Text("还没登录", bundle: .module)
                 case .noSquad: Text("还没加入小队", bundle: .module)
+                case .unavailable: Text("暂时连不上", bundle: .module)
                 }
             }
             .typeStyle(TypeRamp.footnoteEmphasis)

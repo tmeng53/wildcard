@@ -66,6 +66,7 @@
 		A1C0DE000000000000000379 /* HomeWidgetUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000369 /* HomeWidgetUI */; };
 		A1C0DE00000000000000037A /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000036A /* SportsUI */; };
 		A1C0DE00000000000000037B /* HomeWidgetDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000036B /* HomeWidgetDomain */; };
+		A1C0DE00000000000000037C /* HomeWidgetUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000036C /* HomeWidgetUI */; };
 		A1C0DE00000000000000034F /* WildcardWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000340 /* WildcardWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -251,6 +252,7 @@
 				A1C0DE000000000000000220 /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000223 /* SportsUI in Frameworks */,
 				A1C0DE00000000000000037B /* HomeWidgetDomain in Frameworks */,
+				A1C0DE00000000000000037C /* HomeWidgetUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +369,7 @@
 				A1C0DE000000000000000333 /* LocationDomain */,
 				A1C0DE0000000000000000D1 /* Sentry */,
 				A1C0DE00000000000000036B /* HomeWidgetDomain */,
+				A1C0DE00000000000000036C /* HomeWidgetUI */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -1393,6 +1396,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */;
 			productName = HomeWidgetDomain;
+		};
+		A1C0DE00000000000000036C /* HomeWidgetUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */;
+			productName = HomeWidgetUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

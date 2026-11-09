@@ -95,4 +95,10 @@ public enum WidgetState: Hashable, Sendable {
     case noSquad
     /// Nobody signed in on this phone.
     case signedOut
+    /// Couldn't read the squad and has no copy of it: offline before its first read, or the
+    /// phone not yet unlocked since it restarted. Read again soon.
+    case unavailable
+
+    /// How long until the widget reads again when it has no board.
+    public static let retryInterval: TimeInterval = 15 * 60
 }
