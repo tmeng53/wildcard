@@ -9,7 +9,7 @@ import UIKit
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
 /// small group labels (偏好, 关于 with 意见反馈, 账号), with no icons, a chevron on each row that opens a page,
-/// and an ink switch; 偏好's Apple 健康 pushes its own page, and 位置 asks for approximate location
+/// and an ink switch; 偏好's Apple 健康 and 桌面小组件 push their own pages, and 位置 asks for approximate location
 /// once, then opens iOS Settings. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
 /// with the character editor (2026-11-03).
@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var isPickingLanguage = false
     @State private var isHealthOpen = false
     @State private var isBirthdayOpen = false
+    @State private var isWidgetGuideOpen = false
     /// 意见反馈 while it is open, a fresh page each time.
     @State private var feedback: FeedbackModel?
     @Environment(\.openURL) private var openURL
@@ -36,6 +37,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $isBirthdayOpen) {
                 BirthdayView(model: model)
+            }
+            .navigationDestination(isPresented: $isWidgetGuideOpen) {
+                if let guide = destinations.widgetGuide { guide }
             }
             .navigationDestination(isPresented: $isHealthOpen) {
                 if let health = destinations.health { HealthSettingsView(health: health) }
@@ -145,6 +149,12 @@ struct SettingsView: View {
                 }
                 .accessibilityIdentifier("me.location")
                 .task { await location.refresh() }
+            }
+            if destinations.widgetGuide != nil {
+                ListRow(Text("桌面小组件", bundle: .module)) {
+                    isWidgetGuideOpen = true
+                }
+                .accessibilityIdentifier("me.widgets")
             }
             ListRow(
                 Text(copy: "语言", bundle: .module), value: Text(verbatim: AppLanguage.current.name), showsDivider: false
