@@ -209,7 +209,10 @@ describe('a campaign', () => {
       // The street counts a store's switch as each member sees it.
       const shown = async (who: string) => {
         const { on } = await switches.statesFor(who);
-        return (await switches.list()).map(({ id }) => id).filter((id) => on(id, today));
+        // The seasonal ones only: the beta's switches are simply on.
+        return (await switches.list())
+          .map(({ id }) => id)
+          .filter((id) => !id.startsWith('beta') && on(id, today));
       };
       expect(await shown(admin)).toEqual(['tgDay', 'tgWeek', 'winter']);
       // Winter opens on 11-15: only the admin's pretend day is in it.
