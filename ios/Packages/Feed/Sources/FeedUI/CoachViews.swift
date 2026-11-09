@@ -63,6 +63,8 @@ struct CoachCommentLine: View {
     @Environment(\.sceneTheme) private var theme
     let coach: CoachSpeaker
     let text: String
+    /// The text with its @ tags.
+    let words: MentionedWords
     /// Whom it answers, when it answers a member's reply to it.
     var recipient: String?
 
@@ -70,7 +72,7 @@ struct CoachCommentLine: View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
             Text(verbatim: coach.name).fontWeight(.semibold)
             CoachTag(.small)
-            words
+            said
         }
         .typeStyle(TypeRamp.callout)
         .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -80,11 +82,12 @@ struct CoachCommentLine: View {
         .accessibilityIdentifier(recipient == nil ? "feed.coachComment" : "feed.coachAnswer")
     }
 
-    private var words: Text {
-        guard let recipient else { return Text(verbatim: text) }
+    private var said: Text {
+        let words = self.words.text(in: theme)
+        guard let recipient else { return words }
         let reply = Text("回复 \(recipient)", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)  \(text)", bundle: .module)
+        return Text("\(reply)  \(words)", bundle: .module)
     }
 }
 
@@ -102,6 +105,8 @@ struct CoachCommentRow: View {
     let model: FeedModel
     let coach: CoachSpeaker
     let text: String
+    /// Whom it @s, in the order written.
+    let mentions: [MemberID]
     let writtenAt: Date
     /// Whom it answers, when it answers a member's reply to it.
     var recipient: String?
@@ -122,7 +127,7 @@ struct CoachCommentRow: View {
                         .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 }
                 .lineLimit(1)
-                words
+                said
                     .typeStyle(TypeRamp.body)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .fixedSize(horizontal: false, vertical: true)
@@ -133,12 +138,13 @@ struct CoachCommentRow: View {
         .accessibilityLabel(coachSaid(coach, text, to: recipient))
     }
 
-    /// 回复 小美：the words, with 回复 and the name in grey, as a teammate's reply.
-    private var words: Text {
-        guard let recipient else { return Text(verbatim: text) }
+    /// 回复 小美：the words, with 回复 and the name in grey, as a teammate's reply, and its @ tags.
+    private var said: Text {
+        let words = model.words(of: text, mentioning: mentions).text(in: theme)
+        guard let recipient else { return words }
         let reply = Text("回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)\(text)", bundle: .module)
+        return Text("\(reply)\(words)", bundle: .module)
     }
 }
 #endif

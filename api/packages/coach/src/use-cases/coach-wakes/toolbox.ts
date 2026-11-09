@@ -105,6 +105,7 @@ export function mentioning(
 ): { readonly line: string; readonly mentions: readonly string[] } | string {
   const mentions: string[] = [];
   const prefix: string[] = [];
+  let said = line;
   for (const name of new Set(at.map((each) => each.trim()))) {
     const member = [...roster].find(([, shown]) => shown === name)?.[0];
     if (member !== undefined && member === to) continue;
@@ -118,9 +119,31 @@ export function mentioning(
         : `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
     }
     mentions.push(member);
-    if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
+    if (said.includes(`@${nickname}`)) {
+      // 「@Miao」 isn't an @ of Mia: what a longer teammate's name goes on with is left as is.
+      const longer = week.members.flatMap(({ nickname: other }) =>
+        other !== undefined && other !== nickname && other.startsWith(nickname)
+          ? [other.slice(nickname.length)]
+          : [],
+      );
+      said = spacedAfter(said, { tag: `@${nickname}`, longer });
+    } else prefix.push(`@${nickname} `);
   }
-  return { line: prefix.join('') + line, mentions };
+  return { line: prefix.join('') + said, mentions };
+}
+
+/**
+ * `line` with a space after each `tag` not already followed by one, so the app sees where the
+ * name ends; never inside a longer name, which goes on with one of `longer`.
+ */
+function spacedAfter(
+  line: string,
+  { tag, longer }: { readonly tag: string; readonly longer: readonly string[] },
+): string {
+  const [first = '', ...rest] = line.split(tag);
+  const spaced = (after: string): boolean =>
+    after === '' || /^\s/u.test(after) || longer.some((more) => after.startsWith(more));
+  return rest.reduce((said, after) => `${said}${tag}${spaced(after) ? '' : ' '}${after}`, first);
 }
 
 /** The `at` parameter of a line the coach says under a check-in. */
