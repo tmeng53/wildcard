@@ -4035,6 +4035,22 @@
         }
       }
     },
+    "扫帚": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broom"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掃帚"
+          }
+        }
+      }
+    },
     "单板": {
       "localizations": {
         "en": {

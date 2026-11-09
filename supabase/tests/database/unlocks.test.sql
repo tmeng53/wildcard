@@ -1,7 +1,7 @@
 -- What members can get: each reward's triggers are logged and never deleted, and a member's grants
 -- (by training, from a coach, from the team) are append-only until their account goes.
 begin;
-select plan(32);
+select plan(34);
 
 insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001', 'una@example.com');
 
@@ -9,12 +9,22 @@ insert into auth.users (id, email) values ('e0000000-0000-0000-0000-000000000001
 select ok(
   (select count(*) > 0 and bool_and(after >= 1) from public.reward_triggers
     where kind = 'training' and reward_kind <> 'piece'),
-  'a training trigger for each store and prop that is not a starter'
+  'a training trigger for each store and prop that is not a starter (the props'' retired)'
 );
 select ok(
   (select count(*) > 0 and bool_and(after >= 1) from public.reward_triggers
     where kind = 'training' and reward_kind = 'piece'),
   'a training trigger for each piece the second wardrobe, the store specials and POWDER DAY added'
+);
+select ok(
+  (select count(*) > 0 and bool_and(not offered) from public.reward_triggers
+    where kind = 'training' and reward_kind = 'prop'),
+  'every prop''s rule is retired: props are everyone''s'
+);
+select ok(
+  (select bool_and(offered) from public.reward_triggers
+    where kind = 'training' and reward_kind <> 'prop'),
+  'the stores'' and pieces'' rules still count'
 );
 select throws_ok(
   $$insert into public.rewards (kind, id) values ('piece', 'Lap Bib')$$,

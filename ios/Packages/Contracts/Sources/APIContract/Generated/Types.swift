@@ -595,7 +595,7 @@ public protocol APIProtocol: Sendable {
     func claimPiece(_ input: Operations.ClaimPiece.Input) async throws -> Operations.ClaimPiece.Output
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
@@ -1821,7 +1821,7 @@ extension APIProtocol {
     }
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
