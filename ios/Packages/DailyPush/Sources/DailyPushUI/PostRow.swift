@@ -37,7 +37,12 @@ struct PostRow: View {
         .accessibilityActions {
             ForEach(Emoji.quick, id: \.self) { emoji in
                 Button {
-                    model.pick(emoji, on: post.id, from: .zero)
+                    // From its smiley, as a tap on the bar sends it; VoiceOver hears it went.
+                    let from = model.buttons[post.id].map { CGPoint(x: $0.midX, y: $0.midY) } ?? .zero
+                    model.pick(emoji, on: post.id, from: from)
+                    AccessibilityNotification.Announcement(
+                        AttributedString(localized: "已回应 \(emoji.text)", bundle: .module.inAppLanguage)
+                    ).post()
                 } label: {
                     Text("回应 \(emoji.text)", bundle: .module.inAppLanguage)
                 }
