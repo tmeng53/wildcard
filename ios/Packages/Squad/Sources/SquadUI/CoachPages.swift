@@ -227,7 +227,7 @@ private struct MarketCard: View {
                     figureHeight: CoachMetrics.marketFigure,
                     floor: CoachMetrics.marketFloor
                 )
-                .frame(height: CoachMetrics.marketCardStage)
+                .frame(minHeight: CoachMetrics.marketCardStage)
                 .overlay(alignment: .topTrailing) {
                     StatusTag(isCurrent: isCurrent).padding(Space.s + 2)
                 }
