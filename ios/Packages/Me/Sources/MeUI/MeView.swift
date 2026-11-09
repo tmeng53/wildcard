@@ -6,6 +6,7 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import HealthUI
+import LocationDomain
 import MeDomain
 import SwiftUI
 
@@ -23,20 +24,25 @@ public struct MeDestinations {
     /// The published policy pages.
     public var privacyPolicy: URL
     public var terms: URL
+    /// The App Store's 撰写评论 sheet for the app, which 意见反馈's 写评价 opens.
+    public var writeReview: URL
     /// 预览注册, for admins only: sign-up from the open screen on a sample squad, saving nothing.
     /// Nil for everyone else, and 设置 shows no row for it.
     public var previewSignUp: (() -> Void)?
     /// Apple Health, for 设置 › Apple 健康; nil where the phone has none.
     public var health: HealthConnection?
+    /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
+    public var location: LocationSharing?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
-        openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil
+        openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil
     ) {
         self.previewSignUp = previewSignUp
         self.health = health
+        self.location = location
         self.editCharacter = editCharacter
         self.schedule = schedule
         self.street = street
@@ -44,6 +50,7 @@ public struct MeDestinations {
         self.openPost = openPost
         self.privacyPolicy = privacyPolicy
         self.terms = terms
+        self.writeReview = writeReview
     }
 }
 
@@ -58,6 +65,8 @@ public struct MeView<PostsTile: View>: View {
     private let postsTile: PostsTile
     /// 设置 is pushed; the app keeps it, so a notice that opens another place on 我 closes it.
     @Binding private var isSettingsOpen: Bool
+    /// 外卡记录, pushed from 训练记录's 全部数据; a new model each time it opens.
+    @State private var records: RecordsModel?
     @Environment(\.sceneTheme) private var theme
 
     /// `postsTile` is 我的动态's tile, which the feed draws (`GlanceTile` with the newest posts).
@@ -77,6 +86,14 @@ public struct MeView<PostsTile: View>: View {
             .navigationDestination(isPresented: $isSettingsOpen) {
                 SettingsView(model: model, destinations: destinations)
                     .accentTone(.ink)
+            }
+            .navigationDestination(
+                isPresented: Binding(get: { records != nil }, set: { if !$0 { records = nil } })
+            ) {
+                if let records {
+                    RecordsPage(model: records, character: model.overview?.character)
+                        .pushedPage()
+                }
             }
             .task { await model.reload() }
     }
@@ -129,7 +146,7 @@ public struct MeView<PostsTile: View>: View {
                     if let record = overview.record {
                         TrainingRecordView(
                             record: record, trainedDays: overview.counts.trainedDays,
-                            openPost: destinations.openPost
+                            openPost: destinations.openPost, openRecords: { records = model.recordsModel() }
                         )
                         .padding(.top, Space.s)
                     }
@@ -185,6 +202,8 @@ struct MeStage: View {
         case idle
         /// At a small desk behind a laptop, typing and peeking over the screen now and then.
         case typing
+        /// At the same desk writing in a notebook, stopping now and then to think (意见反馈).
+        case writing
         /// Worried brows, a wobbly frown and tears rolling down.
         case teary
     }
@@ -219,12 +238,18 @@ struct MeStage: View {
     private func dress() {
         guard let character else { return }
         do {
-            let look = mood == .typing ? PlaceholderCharacter.atDesk(character.outfit) : character.outfit
+            let look =
+                switch mood {
+                case .typing: PlaceholderCharacter.atDesk(character.outfit)
+                case .writing: PlaceholderCharacter.atDeskWriting(character.outfit)
+                case .idle, .teary: character.outfit
+                }
             let figure = try PlaceholderCharacter.figure(wearing: look)
             let idle: Clip
             switch mood {
             case .idle: idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
             case .typing: idle = try PlaceholderCharacter.typing(persona: character.persona)
+            case .writing: idle = try PlaceholderCharacter.writing(persona: character.persona)
             case .teary: idle = try PlaceholderCharacter.teary(persona: character.persona)
             }
             if let player {

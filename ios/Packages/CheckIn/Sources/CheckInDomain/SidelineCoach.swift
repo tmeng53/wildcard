@@ -7,10 +7,14 @@ public struct SidelineCoach: Hashable, Sendable {
     /// The squad's newest 战术板 line, kept only when this coach wrote it: a line from a coach the
     /// squad fired since isn't put in the new one's mouth.
     public let note: CoachNote?
+    /// The letter the coach before it left it when the squad changed coach (交接信), kept only when
+    /// it is to this coach.
+    public let letter: CoachLetter?
 
-    public init(coach: CoachSpeaker, note: CoachNote?) {
+    public init(coach: CoachSpeaker, note: CoachNote?, letter: CoachLetter? = nil) {
         self.coach = coach
         self.note = note?.coach.id == coach.id ? note : nil
+        self.letter = letter?.recipient.id == coach.id ? letter : nil
     }
 
     /// What the coach says on the home at `moment`: its line while the line's day lasts.

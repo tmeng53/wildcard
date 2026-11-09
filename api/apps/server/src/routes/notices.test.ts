@@ -42,6 +42,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   scenesOn,
   switchesOn,
@@ -55,6 +56,8 @@ import {
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
+  noRewards,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -133,14 +136,17 @@ const app = createApp({
   switches: switchesOn(db),
   unlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   notices,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -224,5 +230,22 @@ describe('GET /me/notices: goal suggestions', () => {
     expect(page.body).toMatchObject({
       notices: [{ kind: 'goalSuggestion', weeks: 3, daysPerMember: 4 }],
     });
+  });
+});
+
+describe('GET /me/notices: thanks', () => {
+  it('reads that we used a member’s feedback, and as what', async () => {
+    const me = await signUp();
+    const feedback = randomUUID();
+    await notices.tell([
+      {
+        member: NoticeMember.parse(me.userId),
+        kind: 'thanks',
+        subject: { version: 1, feedback, adopted: 'idea' },
+      },
+    ]);
+    const page = await get('/me/notices', me.token);
+    expect(page.status).toBe(200);
+    expect(page.body).toMatchObject({ notices: [{ kind: 'thanks', feedback, adopted: 'idea' }] });
   });
 });

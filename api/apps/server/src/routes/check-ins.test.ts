@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -37,11 +38,13 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -97,18 +100,22 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {
     ...noJobs,
     coach: {
       run: () => Promise.reject(new Error('unused')),
+      preview: () => Promise.reject(new Error('unused')),
       answer: () => Promise.reject(new Error('unused')),
       checkedIn: (asked) => {
         looked.push(asked);
@@ -698,6 +705,135 @@ describe('GET /me/trainings', () => {
   });
 });
 
+describe('GET /me/records', () => {
+  it('works out the member’s records and how they stand in their squad', async () => {
+    const [me, coco, loner] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(me, coco);
+    const today = new Date().toISOString().slice(0, 10);
+    // Rest days don't break a streak, and the default plan never rests two days running, so
+    // one of the two days between is a training day whatever the weekday.
+    const threeDaysAgo = new Date(Date.parse(today) - 3 * 24 * 60 * 60_000)
+      .toISOString()
+      .slice(0, 10);
+    const madeAt = new Date(Date.now() - 60_000);
+    const put = async (
+      who: { readonly token: string },
+      { day, ...fields }: { readonly day: string } & Readonly<Record<string, unknown>>,
+    ) => {
+      const id = randomUUID();
+      const body = {
+        version: 1,
+        day,
+        createdAt: madeAt.toISOString(),
+        audience: [squad],
+        ...fields,
+      };
+      expect(
+        (await call({ method: 'PUT', path: `/check-ins/${id}`, token: who.token, body })).status,
+      ).toBe(201);
+      return id;
+    };
+    const run = await put(me, {
+      day: today,
+      kind: 'trained',
+      training: { sport: 'run', minutes: 45 },
+    });
+    // A 补打卡: a day, but not on the clock. Without a time zone on the profile, a day three
+    // before the UTC date is one for sure.
+    await put(me, {
+      day: threeDaysAgo,
+      kind: 'trained',
+      training: { sport: 'run', minutes: 30 },
+    });
+    await put(me, { day: today, kind: 'healthyMeal', meal: {} });
+    const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
+    const react = async (who: { readonly token: string }, id: string) => {
+      expect(
+        (
+          await call({
+            method: 'PUT',
+            path: `/check-ins/${id}/reactions/mine`,
+            token: who.token,
+            body: { version: 1, emoji: '🔥' },
+          })
+        ).status,
+      ).toBe(201);
+    };
+    await react(coco, run);
+    await react(me, swim);
+
+    const { status, body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(status).toBe(200);
+    const hours = Array.from({ length: 24 }, () => 0);
+    hours[madeAt.getUTCHours()] = 1;
+    const weekday = (day: string) => (new Date(day).getUTCDay() + 6) % 7;
+    const weekdays = Array.from({ length: 7 }, () => 0);
+    for (const day of [today, threeDaysAgo])
+      weekdays[weekday(day)] = (weekdays[weekday(day)] ?? 0) + 1;
+    const cocoId = coco.userId;
+    expect(body).toStrictEqual({
+      version: 1,
+      trainedDays: 2,
+      minutes: 75,
+      longestMinutes: 45,
+      longestStreak: { days: 1, from: today, to: today },
+      mealStreak: { days: 1, from: today, to: today },
+      hours,
+      weekdays,
+      sports: [{ sport: 'run', days: 2 }],
+      sportCount: 1,
+      squad: {
+        id: squad,
+        partner: { memberId: cocoId, count: 1 },
+        cheersReceived: { count: 1, top: { memberId: cocoId, count: 1 } },
+        cheersGiven: { count: 1, top: { memberId: cocoId, count: 1 } },
+        firsts: ['topSport', 'mostDays'],
+      },
+    });
+
+    const alone = await call({ method: 'GET', path: '/me/records', token: loner.token });
+    expect(alone.body).toStrictEqual({
+      version: 1,
+      trainedDays: 0,
+      minutes: 0,
+      hours: Array(24).fill(0),
+      weekdays: Array(7).fill(0),
+      sports: [],
+      sportCount: 0,
+    });
+    expect((await call({ method: 'GET', path: '/me/records' })).status).toBe(401);
+  });
+
+  it('stands the member against squadmates only on what they shared with the squad', async () => {
+    const [me, coco] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, coco);
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    const put = async (
+      who: { readonly token: string },
+      { day, audience }: { readonly day: string; readonly audience: readonly string[] },
+    ) => {
+      const body = {
+        version: 1,
+        day,
+        createdAt: new Date(Date.now() - 60_000).toISOString(),
+        audience,
+        kind: 'trained',
+        training: { sport: 'run' },
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      expect((await call({ method: 'PUT', path, token: who.token, body })).status).toBe(201);
+    };
+    await put(me, { day: today, audience: [squad] });
+    // Kept to myself: mine, but not the squad's to compare.
+    await put(me, { day: yesterday, audience: [] });
+    await put(coco, { day: today, audience: [squad] });
+
+    const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(body).toMatchObject({ trainedDays: 2, squad: { firsts: [] } });
+  });
+});
+
 describe('GET /me/check-in-totals', () => {
   it('counts everything the member ever checked in by kind, 练了 by day', async () => {
     const [me, friend] = [await signUp(), await signUp()];
@@ -1229,6 +1365,48 @@ describe('a 训练 from Apple Health', () => {
     expect(posted.status).toBe(201);
   });
 
+  it('keeps a ski day’s runs, drop and top speed, a hike’s climb, a swim’s pace per 100 m and active calories', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const post = async (sport: string, summary: Record<string, unknown>) => {
+      const id = randomUUID();
+      const { status } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport, workout: workout(randomUUID(), { summary }) },
+        },
+      });
+      if (status !== 201) return status;
+      const read = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+      return z
+        .object({
+          checkIn: z.object({
+            training: z.object({ workout: z.object({ summary: z.unknown() }) }),
+          }),
+        })
+        .parse(read.body).checkIn.training.workout.summary;
+    };
+    const ski = { durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.4 };
+    expect(await post('ski', ski)).toStrictEqual(ski);
+    const hike = { durationSec: 12_600, distanceM: 12_600, elevationGainM: 840, avgHr: 118 };
+    expect(await post('hike', hike)).toStrictEqual(hike);
+    const swim = { durationSec: 2520, distanceM: 1800, paceSecPer100m: 140, avgHr: 136 };
+    expect(await post('swim', swim)).toStrictEqual(swim);
+    const strength = { durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 312 };
+    expect(await post('strength', strength)).toStrictEqual(strength);
+    expect(await post('strength', { activeEnergyKcal: -1 })).toBe(400);
+    expect(await post('ski', { runs: 0 })).toBe(400);
+    expect(await post('ski', { topSpeedKmh: 400 })).toBe(400);
+  });
+
   it('refuses a tile without its data, data without its tile, or a tile past the photos', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
@@ -1264,6 +1442,48 @@ describe('a 训练 from Apple Health', () => {
         },
       }),
     ).toStrictEqual([201, 'saved']);
+  });
+
+  it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = [
+      { t: 0, bpm: 90 },
+      { t: 60, bpm: 150 },
+    ];
+    const zones = { light: 107, moderate: 119, vigorous: 144, peak: 175 };
+    const put = async (series: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', workout: workout(randomUUID(), { route: undefined, series }) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    expect(await put({ laps: [50, 52], zones })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ hr, zones: { ...zones, moderate: 100 } })).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+
+    const id = randomUUID();
+    expect(await put({ hr, zones }, id)).toStrictEqual([201, 'saved']);
+    const { body } = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    const shown = z
+      .object({
+        checkIn: z.object({ training: z.object({ workout: z.object({ series: z.unknown() }) }) }),
+      })
+      .parse(body).checkIn.training.workout.series;
+    expect(shown).toStrictEqual({ hr, zones });
   });
 
   it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {

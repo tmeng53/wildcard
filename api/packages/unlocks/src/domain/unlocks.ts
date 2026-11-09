@@ -205,7 +205,10 @@ export interface Unlock {
   readonly id: string;
   readonly sports: readonly SportId[];
   readonly after: number;
-  /** How it opened: the check-in that reached `after`, or an admin who gave it. */
+  /**
+   * How it opened: the check-in that reached `after` (its `training` trigger), or the Wildcard
+   * team's admin who gave it (`team`).
+   */
   readonly by: { readonly checkIn: string } | { readonly admin: MemberId };
   /** When that check-in was made, or when it was given. */
   readonly unlockedAt: Date;

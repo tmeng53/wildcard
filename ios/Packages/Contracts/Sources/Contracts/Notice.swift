@@ -27,6 +27,8 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case coachReply(checkIn: CheckInID, coach: CoachID, coachName: String?, replied: Bool, emoji: Emoji?)
         /// The squad's coach left the member its morning note (便条), only for them.
         case coachNote(CoachMemberNote)
+        /// The squad changed coach, and the coach that left wrote the one that took over a letter.
+        case coachLetter(CoachLetter)
         /// A store or prop opened by training: its id in the art.
         case unlocked(Unlock.Kind, item: String)
         /// A teammate commented on the member's check-in or replied to them there, in the words
@@ -50,11 +52,11 @@ public struct Notice: Hashable, Sendable, Identifiable {
     }
 }
 
-/// A higher weekly goal suggested to a squad's captain (连续 3 周超过小队目标 · 改成人均 4 天？).
+/// A higher weekly goal suggested to a squad's captain (连续 3 周超过小队目标 · 改成人均 4 次？).
 public struct GoalSuggestion: Hashable, Sendable {
     /// How many weeks in a row the squad trained over its goal.
     public let weeks: Int
-    /// The goal suggested, 人均 N 天.
+    /// The goal suggested, 人均 N 次.
     public let daysPerMember: Int
 
     public init(weeks: Int, daysPerMember: Int) {

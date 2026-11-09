@@ -1,6 +1,8 @@
 import DesignSystem
 import DesignSystemUI
 import Foundation
+import HealthUI
+import LocationUI
 import OnboardingUI
 import SwiftUI
 
@@ -12,9 +14,20 @@ struct SignUpPreview: View {
     let model: SignUpModel
     let close: () -> Void
 
-    /// A new sign-up on the sample squad, as a newcomer meets it now.
+    /// A new sign-up on the sample squad, as a newcomer meets it now: 连上 Apple 健康 and the
+    /// location step included, each on its sample, so 连接 plays without asking the system.
     static func model() -> SignUpModel {
-        SignUpModel(service: InMemorySignUpService.sampleSquad(), nickname: "", now: Date())
+        SignUpModel(
+            service: InMemorySignUpService.sampleSquad(), nickname: "", now: Date(), health: sampleHealth(),
+            location: .sample())
+    }
+
+    /// Apple Health not yet connected, on a sample day, keeping nothing on this phone.
+    private static func sampleHealth() -> HealthConnection {
+        let suite = "signUpPreview.health"
+        let defaults = UserDefaults(suiteName: suite) ?? .standard
+        defaults.removePersistentDomain(forName: suite)
+        return HealthConnection(library: SampleHealthLibrary(connected: false), defaults: defaults)
     }
 
     var body: some View {

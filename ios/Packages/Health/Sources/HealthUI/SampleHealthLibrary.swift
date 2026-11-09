@@ -3,8 +3,8 @@ import Foundation
 import HealthDomain
 
 /// A day of workouts as Health would hand them over, for previews, the sample squad and UI tests
-/// (`-health-sample`): a run with its route, a strength session, a pool swim, yoga and a ride,
-/// as in the approved prototype. Connected from the start unless `connected` says otherwise.
+/// (`-health-sample`): a run with its route, a ski day, a strength session, a pool swim, yoga and
+/// a ride, as in the approved prototypes. Connected from the start unless `connected` says otherwise.
 public actor SampleHealthLibrary: HealthLibrary {
     private var connected: Bool
     private let workoutsEnding: Date
@@ -31,7 +31,7 @@ public actor SampleHealthLibrary: HealthLibrary {
         }
     }
 
-    /// Five workouts, the newest ending a minute before `end`, the oldest about four hours before.
+    /// Six workouts, the newest ending a minute before `end`, the oldest about four hours before.
     public static func day(endingNear end: Date) -> [ImportedWorkout] {
         let samples = [
             Sample(
@@ -49,6 +49,10 @@ public actor SampleHealthLibrary: HealthLibrary {
                 id: "sample-strength", sport: "strength", minutesAgo: 170,
                 summary: WorkoutSummary(durationSec: 2700, avgHr: 126, maxHr: 171, effort: 8), extra: .heartRate(7)),
             Sample(
+                id: "sample-ski", sport: "ski", minutesAgo: 200,
+                summary: WorkoutSummary(durationSec: 11_040, runs: 12, descentM: 1860, topSpeedKmh: 62.4),
+                extra: .route(2)),
+            Sample(
                 id: "sample-run", sport: "run", minutesAgo: 240,
                 summary: WorkoutSummary(durationSec: 1920, distanceM: 5200, paceSecPerKm: 369, avgHr: 148),
                 extra: .route(4)),
@@ -63,7 +67,8 @@ public actor SampleHealthLibrary: HealthLibrary {
             case .route(let seed):
                 route = Self.loop(seed: seed)
                 series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
-            case .heartRate(let seed): series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
+            case .heartRate(let seed):
+                series = WorkoutSeries(heartRate: Self.heartRate(seconds: seconds, seed: seed))
             case .laps: series = WorkoutSeries(laps: Self.laps)
             }
             return ImportedWorkout(
@@ -71,7 +76,7 @@ public actor SampleHealthLibrary: HealthLibrary {
                     source: WorkoutSource(provider: WorkoutSource.appleHealth, id: sample.id),
                     startedAt: Timestamp(started), endedAt: Timestamp(ended), summary: sample.summary,
                     series: series, route: route),
-                activity: .sport(sample.sport))
+                activity: .sport(sample.sport), restingBpm: series?.heartRate == nil ? nil : 60)
         }
     }
 

@@ -9,7 +9,7 @@ import PackageDescription
 //   Only adapters that talk to the API import it.
 let package = Package(
     name: "Contracts",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS("26.0"), .macOS("26.0")],
     products: [
         .library(name: "Contracts", targets: ["Contracts"]),
         .library(name: "APIContract", targets: ["APIContract"]),

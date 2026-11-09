@@ -11,12 +11,12 @@ import SwiftUI
 extension MainTabs {
     /// 今天 on screen with nothing over it: no other tab, the squad page, a card, the 战报 or the editor.
     var homeInFront: Bool {
-        selection == .today && todayPages.isEmpty && teammate == nil && !showsCoachCard && recap.open == nil
+        selection == .today && todayPages.isEmpty && teammate == nil && recap.open == nil
             && wardrobe.editor == nil
     }
 
-    /// A teammate's card in `squad`, read from the API or, on the sample squad, made from the
-    /// `characters` the page that opens it already shows.
+    /// A player's card in `squad`, read from the API or, on the sample squad, made from the
+    /// `characters` the page that opens it already shows. The member's own wears titles through 我.
     func cardModel(
         of member: MemberID, in squad: Squad, characters: [MemberID: MemberCharacter]
     ) -> SquadmateCardModel {
@@ -25,7 +25,8 @@ extension MainTabs {
                 nickname: character.nickname.text, outfit: Outfit(character.look), persona: Persona(character.look))
         }
         let cards = squadmateCards ?? InMemorySquadmateCards(characters: { looks[$0] })
-        return SquadmateCardModel(member: member, squad: squad.id, squadName: squad.name, cards: cards)
+        let own = member == today.home?.member ? profile : nil
+        return SquadmateCardModel(member: member, squad: squad.id, squadName: squad.name, cards: cards, own: own)
     }
 
     /// A teammate's card on 小队, from the squad and characters that page shows.

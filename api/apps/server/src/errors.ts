@@ -130,6 +130,13 @@ export class MediaTypeUnsupportedError extends AppError {
   }
 }
 
+/** Thrown when the issue tracker feedback is filed in can't be reached, or refuses. */
+export class IssueTrackerUnavailableError extends AppError {
+  override readonly name = 'IssueTrackerUnavailableError';
+  readonly reason = 'ISSUE_TRACKER_UNAVAILABLE';
+  readonly status = 'UNAVAILABLE';
+}
+
 /** Thrown when photo storage doesn't answer. Retry later. */
 export class PhotoStorageUnavailableError extends AppError {
   override readonly name = 'PhotoStorageUnavailableError';
@@ -260,5 +267,25 @@ export class TestPushNoSquadError extends AppError {
 
   constructor() {
     super('A test push is about your squad, and you are in none. Join or create one in the app.');
+  }
+}
+
+export class CoachPreviewDeliverNotSelfError extends AppError {
+  override readonly name = 'CoachPreviewDeliverNotSelfError';
+  readonly reason = 'COACH_PREVIEW_DELIVER_NOT_SELF';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('A preview is delivered only to the admin who asks for it.');
+  }
+}
+
+export class CoachPreviewNoSquadError extends AppError {
+  override readonly name = 'CoachPreviewNoSquadError';
+  readonly reason = 'COACH_PREVIEW_NO_SQUAD';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor() {
+    super('That member is in no squad, so no coach writes to them.');
   }
 }

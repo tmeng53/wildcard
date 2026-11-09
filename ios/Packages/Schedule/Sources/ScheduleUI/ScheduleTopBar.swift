@@ -5,22 +5,28 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-// 出赛表's top bar, under the navigation bar's back button: the week chips with the 我的每周计划
-// after them, and 存图.
+// 出赛表's top bar, under the navigation bar's back button: the page's title and the week chips
+// with the 我的每周计划 after them. 存图 sits in the navigation bar, across from the back button.
 
 extension ScheduleView {
     // MARK: Top bar
 
-    /// The week chips and 存图.
+    /// The title and the week chips.
     var topBar: some View {
-        chipRow
-    }
-
-    private var chipRow: some View {
-        HStack(spacing: Space.xs) {
+        VStack(alignment: .leading, spacing: Space.s) {
+            Text("出赛表", bundle: .module)
+                .typeStyle(TypeRamp.largeTitle)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .padding(.top, Space.xxs)
+                .accessibilityAddTraits(.isHeader)
             CategoryBar(pageChips, selection: pageSelection)
                 .frame(maxWidth: .infinity)
-            // The 我的每周计划 is no one week's poster to share.
+        }
+    }
+
+    /// 存图, in the navigation bar; the 我的每周计划 is no one week's poster to share.
+    var saveItem: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
             if !store.showsTemplate {
                 saveButton
             }
@@ -31,14 +37,10 @@ extension ScheduleView {
         Button {
             save()
         } label: {
-            Label {
-                Text("存图", bundle: .module)
-            } icon: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-            }
+            Image(systemName: "square.and.arrow.up")
         }
-        .buttonStyle(SecondaryButtonStyle())
+        // An icon only, in the bar's round glass like the back button across from it.
+        .accessibilityLabel(Text("存图", bundle: .module))
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")
     }
@@ -55,17 +57,26 @@ extension ScheduleView {
 
     private var weekChips: [CategoryBarItem<SchedulePage>] {
         let thisWeek = store.today?.weekStart
-        return store.weeks.map { week in
-            let title: Text =
-                if week == thisWeek {
-                    Text("本周", bundle: .module)
-                } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
-                } else {
-                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
-                }
-            return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
-        }
+        // The squad's weeks before the member joined: one greyed chip, never a page.
+        let notYetJoined =
+            store.profile?.startsWithNotYetJoined(store.weeks) == true
+            ? [
+                CategoryBarItem(
+                    id: SchedulePage.notYetJoined, title: Text("还未入队", bundle: .module),
+                    accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false)
+            ] : []
+        return notYetJoined
+            + store.weeks.map { week in
+                let title: Text =
+                    if week == thisWeek {
+                        Text("本周", bundle: .module)
+                    } else if let thisWeek, week > thisWeek {
+                        Text("下周", bundle: .module)
+                    } else {
+                        Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
+                    }
+                return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
+            }
     }
 
     private var pageSelection: Binding<SchedulePage> {
@@ -78,6 +89,7 @@ extension ScheduleView {
                 switch page {
                 case .week(let week): model.show(week)
                 case .template: model.showTemplate()
+                case .notYetJoined: break
                 }
             })
     }

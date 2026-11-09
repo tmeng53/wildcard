@@ -1,6 +1,13 @@
 import type { ReaderLanguage } from '@wildcard/language-model';
 
-import type { EquippedTitle, MemberId, Profile, ProfileSave, Squadmate } from './domain/profile.js';
+import type {
+  Birthday,
+  EquippedTitle,
+  MemberId,
+  Profile,
+  ProfileSave,
+  Squadmate,
+} from './domain/profile.js';
 
 /** Where members' profiles are kept. */
 export interface ProfileStore {
@@ -20,6 +27,12 @@ export interface ProfileStore {
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<boolean>;
   /**
+   * Saves the member's birthday (null removes it), logged with the rest of the profile; nothing is
+   * saved or logged when it is the one saved already. Returns `false` when the member has no
+   * profile.
+   */
+  saveBirthday(member: MemberId, birthday: Birthday | null): Promise<boolean>;
+  /**
    * Saves the language the member's app speaks, logged with the rest of the profile; nothing is
    * saved or logged when it is the one saved already. Returns `false` when the member has no
    * profile.
@@ -27,6 +40,8 @@ export interface ProfileStore {
   saveLanguage(member: MemberId, language: ReaderLanguage): Promise<boolean>;
   /** The language each of these members' app speaks, by member. Members without a profile are left out. */
   languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
+  /** The time zone each of these members' day follows, by member. Members without a profile are left out. */
+  timeZones(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
   /** When the member first saved their profile, right after signing up. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**

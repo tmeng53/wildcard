@@ -12,6 +12,7 @@ export const unusedWeeklyAwards = {
     titlesWon: unused,
     story: unused,
     freezeStory: unused,
+    storyWeeks: unused,
     storiesWaiting: unused,
     // The squad's today reads boards: nobody has won anything.
     boards: (members: readonly MemberId[]) =>
@@ -42,6 +43,10 @@ export const unusedCoachActivity = {
   squad: unused,
   putAway: unused,
   answerChallenge: unused,
+  challenge: unused,
+  completeChallenge: unused,
+  cards: unused,
+  markSeen: unused,
   spoke: unused,
 };
 
@@ -58,12 +63,24 @@ export const unusedUnlocks = {
 /** What coaches gave members, for an app whose test never reads it. */
 export const unusedGifts = { of: unused, open: unused };
 
+/** The team's rewards for an app whose test gives none: every member holds nothing of them. */
+export const noRewards = {
+  badgesOf: () => Promise.resolve([]),
+  teamPiecesOf: () => Promise.resolve([]),
+};
+
 /**
  * What members were told, and their live events, for an app whose test never reads them: notices
  * told are dropped, since keeping them never decides what a request answers.
  */
 export const ignoredNotices = {
-  notices: { tell: () => Promise.resolve(), page: unused, markSeen: unused },
+  notices: { tell: () => Promise.resolve([]), page: unused, markSeen: unused },
   coachNames: unused,
   liveEvents: { subscribe: unused, close: () => Promise.resolve() },
+};
+
+/** 意见反馈, for an app whose test never sends any; no tracker, so nothing is filed. */
+export const unusedFeedback = {
+  feedback: { send: unused, toFile: () => Promise.resolve([]), filed: unused },
+  issues: undefined,
 };

@@ -198,7 +198,7 @@ async function giveWeek(
               squad,
               weekStart: week,
               members,
-              ending: story.story.ending,
+              ending: await squadEnding(deps, story),
               language,
             });
             given += 1;
@@ -278,8 +278,8 @@ export interface SquadStory {
   /** The squad's meals; who ate more of what is in each member's part. */
   readonly meals?: { readonly healthy: number; readonly cheat: number };
   /**
-   * The squad's days trained against its plans, only when someone trained, with the model's
-   * headline and line for them once the awards are written.
+   * The squad's 训练 against its weekly goal (人均 N 次 times its members), only when
+   * someone trained, with the model's headline and line for them once the awards are written.
    */
   readonly ending?: {
     readonly done: number;
@@ -298,7 +298,23 @@ export interface SquadStory {
   readonly mine?: StoryMember;
 }
 
-/** The squad's days against its plans, with the model's words for them once they are written. */
+/**
+ * The squad's 训练 against its weekly goal that week (小队每周目标: 人均 N 次 times the
+ * members in its 战报), as the squad's ring on 今天 counts them, or none when nobody trained. The
+ * goal is read, not taken from the frozen story: weeks frozen before the goal came stored the
+ * members' plans added up, and a week's goal never changes once the week has begun.
+ */
+async function squadEnding(
+  deps: Pick<WeeklyAwardsDependencies, 'squads'>,
+  story: WeekStory,
+): Promise<{ readonly done: number; readonly plan: number } | undefined> {
+  const { ending } = story.story;
+  if (ending === undefined) return undefined;
+  const days = await deps.squads.daysPerMember(SquadsSquad.parse(story.squad), story.weekStart);
+  return { done: ending.done, plan: days * story.members.length };
+}
+
+/** The squad's 训练 against its goal, with the model's words for them once they are written. */
 function endingOf(
   ending: { readonly done: number; readonly plan: number },
   state: AwardsState | undefined,
@@ -352,10 +368,35 @@ export async function squadStory(
     titles,
     ...(podium === undefined ? {} : { podium }),
     ...(story.meals === undefined ? {} : { meals: story.meals }),
-    ...(story.ending === undefined ? {} : { ending: endingOf(story.ending, state) }),
+    ...(await squadEnding(deps, frozen).then((ending) =>
+      ending === undefined ? {} : { ending: endingOf(ending, state) },
+    )),
     ...(best === undefined ? {} : { bestDisclaimer: best }),
     ...(mine === undefined ? {} : { mine }),
   };
+}
+
+/**
+ * The weeks a squad has a 战报 for, the latest first, for one of its members (往期战报 on the
+ * squad's page). The latest week whose awards are due on the squad's clock is frozen first if no
+ * run has yet, so it is listed the moment it comes out. A week nobody checked in has none. Throws
+ * `SquadNotJoinedError` for anyone not in the squad now.
+ */
+export async function squadStoryWeeks(
+  deps: Pick<
+    WeeklyAwardsDependencies,
+    'checkIns' | 'squads' | 'scenes' | 'members' | 'awards' | 'clock'
+  >,
+  { viewer, squad }: { readonly viewer: string; readonly squad: SquadId },
+): Promise<WeekStart[]> {
+  await deps.squads.find({ squad: SquadsSquad.parse(squad), viewer: SquadsMember.parse(viewer) });
+  const now = deps.clock();
+  for (const week of weeksMaybeAwarded(now).reverse()) {
+    if ((await awardsTimeFor(deps, { squad, weekStart: week })) > now) continue;
+    await frozenStory(deps, { squad, weekStart: week });
+    break;
+  }
+  return deps.awards.storyWeeks({ squad });
 }
 
 /**

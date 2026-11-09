@@ -2,7 +2,7 @@
 # Compiles the app, its extensions and its UI tests for the iOS simulator, without running
 # anything: the packages' SwiftUI code and the app target compile only on a Mac, so this catches
 # what the Linux checks can't, in minutes rather than the UI tests' hour. macOS with Xcode only;
-# CI's `ios-build` job runs it on every ready PR that changes ios/.
+# Run it on a Mac before pushing app changes; CI runs the full `ios` job on main only.
 # Usage: scripts/ios-build.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -16,6 +16,7 @@ xcodebuild build-for-testing \
   -scheme Wildcard \
   -destination "generic/platform=iOS Simulator" \
   -derivedDataPath "$out/DerivedData" \
+  -clonedSourcePackagesDirPath "$PWD/build/spm" \
   CODE_SIGNING_ALLOWED=NO \
   >"$out/xcodebuild.log" 2>&1 || status=$?
 # The whole log is long; the errors and the result line are what a reader needs.

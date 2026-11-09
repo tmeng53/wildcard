@@ -13,19 +13,21 @@ extension CheckIn {
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience, entry: .trained(Training(checkIn.training)))
+                audience: checkIn.audience, entry: .trained(Training(checkIn.training, postedAt: checkIn.createdAt)))
         case .healthyMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
-                entry: .healthyMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
+                entry: .healthyMeal(
+                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .cheatMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience,
-                entry: .cheatMeal(Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos)))
+                entry: .cheatMeal(
+                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
@@ -34,7 +36,7 @@ extension CheckIn {
                 entry: .disclaimer(
                     Disclaimer(
                         checkIn.disclaimer.text, restDay: checkIn.disclaimer.restDay == true,
-                        photos: try Photos(wire: checkIn.disclaimer.photos))))
+                        photos: try Photos(wire: checkIn.disclaimer.photos, postedAt: checkIn.createdAt))))
         }
     }
 
@@ -110,10 +112,11 @@ extension Disclaimer {
 }
 
 extension Training {
-    init(_ wire: Components.Schemas.TrainingView) throws(ContractsError) {
+    init(_ wire: Components.Schemas.TrainingView, postedAt: Date) throws(ContractsError) {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
-            minutes: try wire.minutes.map(WorkoutMinutes.init), photos: try Photos(wire: wire.photos),
+            minutes: try wire.minutes.map(WorkoutMinutes.init),
+            photos: try Photos(wire: wire.photos, postedAt: postedAt),
             caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
     }
 }
@@ -134,7 +137,10 @@ extension Workout {
             series: series.map { series in
                 .init(
                     hr: series.heartRate?.map { Components.Schemas.HeartRatePoint(t: $0.seconds, bpm: $0.bpm) },
-                    laps: series.laps)
+                    laps: series.laps,
+                    zones: series.zones.map {
+                        .init(light: $0.light, moderate: $0.moderate, vigorous: $0.vigorous, peak: $0.peak)
+                    })
             },
             route: route?.map { Components.Schemas.RoutePoint(lat: $0.lat, lon: $0.lon) },
             tilePosition: tilePosition, chartPosition: chartPosition, startedAt: startedAt.date, endedAt: endedAt.date)
@@ -146,25 +152,35 @@ extension WorkoutSummary {
         self.init(
             durationSec: wire.durationSec, distanceM: wire.distanceM, paceSecPerKm: wire.paceSecPerKm,
             speedKmh: wire.speedKmh, avgHr: wire.avgHr, maxHr: wire.maxHr, effort: wire.effort, laps: wire.laps,
-            poolLengthM: wire.poolLengthM)
+            poolLengthM: wire.poolLengthM, runs: wire.runs, descentM: wire.descentM, topSpeedKmh: wire.topSpeedKmh,
+            elevationGainM: wire.elevationGainM, paceSecPer100m: wire.paceSecPer100m,
+            activeEnergyKcal: wire.activeEnergyKcal)
     }
 
     var wire: Components.Schemas.WorkoutSummary {
         .init(
             durationSec: durationSec, distanceM: distanceM, paceSecPerKm: paceSecPerKm, speedKmh: speedKmh,
-            avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM)
+            avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM, runs: runs,
+            descentM: descentM, topSpeedKmh: topSpeedKmh, elevationGainM: elevationGainM,
+            paceSecPer100m: paceSecPer100m,
+            activeEnergyKcal: activeEnergyKcal)
     }
 }
 
 extension WorkoutSeries {
     init(_ wire: Components.Schemas.WorkoutSeries) {
-        self.init(heartRate: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps)
+        self.init(
+            heartRate: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps,
+            // Zones that don't rise are dropped, not the post: the chart just leaves them off.
+            zones: wire.zones.flatMap {
+                HeartRateZones(light: $0.light, moderate: $0.moderate, vigorous: $0.vigorous, peak: $0.peak)
+            })
     }
 }
 
 extension Meal {
-    init(caption: String?, photos: [Components.Schemas.PhotoView]?) throws(ContractsError) {
-        self.init(photos: try Photos(wire: photos), caption: try caption.map(Caption.init))
+    init(caption: String?, photos: [Components.Schemas.PhotoView]?, postedAt: Date) throws(ContractsError) {
+        self.init(photos: try Photos(wire: photos, postedAt: postedAt), caption: try caption.map(Caption.init))
     }
 }
 
@@ -174,10 +190,21 @@ extension Activity {
         try self.init(sport: wire.sport, customSport: wire.customSport)
     }
 
-    /// The sport of a day's 练了 on a squadmate's 出赛表; nil for a day without one.
-    public init?(_ wire: Components.Schemas.DayMark) throws(ContractsError) {
+    /// The sports of a day's 练了 on a squadmate's 出赛表, the latest last; nil for a day without
+    /// one. An older server sends only the latest.
+    public static func trained(on wire: Components.Schemas.DayMark) throws(ContractsError) -> [Activity]? {
         guard wire.status == .trained, let sport = wire.sport else { return nil }
-        try self.init(sport: sport, customSport: wire.customSport)
+        guard let sports = wire.sports, !sports.isEmpty else {
+            return [try Activity(sport: sport, customSport: wire.customSport)]
+        }
+        return try sports.map { each throws(ContractsError) in
+            try Activity(sport: each.sport, customSport: each.customSport)
+        }
+    }
+
+    /// A sport on 外卡记录's 最常练.
+    public init(_ wire: Components.Schemas.RecordSport) throws(ContractsError) {
+        try self.init(sport: wire.sport, customSport: wire.customSport)
     }
 
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
@@ -204,8 +231,8 @@ extension Activity {
 }
 
 extension Photos {
-    /// Nil when the API listed none.
-    init?(wire: [Components.Schemas.PhotoView]?) throws(ContractsError) {
+    /// Nil when the API listed none. `postedAt` is when their check-in was posted.
+    init?(wire: [Components.Schemas.PhotoView]?, postedAt: Date) throws(ContractsError) {
         guard let wire else { return nil }
         var photos: [PhotoRef] = []
         for photo in wire {
@@ -213,7 +240,7 @@ extension Photos {
             let size = try photo.size.map { size throws(ContractsError) in
                 try PhotoSize(width: size.width, height: size.height)
             }
-            photos.append(try PhotoRef(path: photo.path, size: size, viewURL: url))
+            photos.append(try PhotoRef(path: photo.path, size: size, viewURL: url, postedAt: Timestamp(wire: postedAt)))
         }
         try self.init(photos)
     }

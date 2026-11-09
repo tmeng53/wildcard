@@ -136,7 +136,7 @@ public final class SquadSettingsModel {
     /// The captain sets the goal; everyone else reads it.
     public var canChangeGoal: Bool { isCaptain && settings?.goal.canChange == true }
 
-    /// The captain picks 人均 `daysPerMember` 天 for next week. The pill moves at once and moves
+    /// The captain picks 人均 `daysPerMember` 次 for next week. The pill moves at once and moves
     /// back if the change doesn't go through.
     public func setGoal(_ daysPerMember: Int) async {
         guard let settings, canChangeGoal, SquadWeeklyGoal.choices.contains(daysPerMember),
@@ -161,20 +161,44 @@ public final class SquadSettingsModel {
     /// The captain sets the zone; everyone else reads it.
     public var canChangeTimeZone: Bool { isCaptain && settings?.matchTimeZone.canChange == true }
 
-    /// The captain picks the squad's zone for next week. The row says so at once and goes back
-    /// if the change doesn't go through.
+    /// The captain picks the squad's zone, which counts at once (Tracy, 2026-11-08). The row shows
+    /// it at once and goes back if the change doesn't go through.
     public func setTimeZone(_ identifier: String) async {
         guard let settings, canChangeTimeZone, TimeZone(identifier: identifier) != nil,
-            identifier != settings.matchTimeZone.nextTimeZone
+            identifier != settings.matchTimeZone.timeZone
         else { return }
         let before = settings.matchTimeZone
-        update { $0.matchTimeZone.nextTimeZone = identifier }
+        update { $0.matchTimeZone.timeZone = identifier }
         await change { service throws(SquadError) in
             let zone = try await service.setTimeZone(of: settings.squad.id, to: identifier)
             self.update { $0.matchTimeZone = zone }
         }
-        if changeFailed, case .loaded(let now) = load, now.matchTimeZone.nextTimeZone == identifier {
+        if changeFailed, case .loaded(let now) = load, now.matchTimeZone.timeZone == identifier {
             update { $0.matchTimeZone = before }
+        }
+    }
+
+    // MARK: 小队语言
+
+    /// The squad's language, as last read or as the captain just set it.
+    public var language: SquadLanguage? { settings?.language }
+
+    /// The captain sets the language; everyone else reads it.
+    public var canChangeLanguage: Bool { isCaptain && settings?.language.canChange == true }
+
+    /// The captain picks the squad's language, which counts at once. The row says so at once and
+    /// goes back if the change doesn't go through. Picking the language shown is saved too: until
+    /// the captain picks, the squad only follows the captain's app language, which can change.
+    public func setLanguage(_ language: SquadLanguage.Language) async {
+        guard let settings, canChangeLanguage else { return }
+        let before = settings.language
+        update { $0.language.language = language }
+        await change { service throws(SquadError) in
+            let saved = try await service.setLanguage(of: settings.squad.id, to: language)
+            self.update { $0.language = saved }
+        }
+        if changeFailed, case .loaded(let now) = load, now.language.language == language {
+            update { $0.language = before }
         }
     }
 
@@ -189,28 +213,24 @@ public final class SquadSettingsModel {
     /// the squad is read again.
     public var canHireCoach: Bool { isCaptain && settings?.coach.canHire == true }
 
-    /// 「执教第 N 周」: the week the squad hired it counts 1, weeks starting Monday on the
-    /// member's clock.
-    public var coachWeek: Int? {
+    /// How long the coach has been with the squad, on the member's clock: the hire day counts 1.
+    public var coachTenure: CoachTenure? {
         guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
+        let days = settings.today.days(since: LocalDay(at: hire.since, in: settings.timeZone))
+        return CoachTenure(days: max(days, 0) + 1)
     }
 
-    /// 「带队 N 天」 on the coach's card: the day the squad hired it counts 1, days on the
-    /// member's clock.
-    public var coachDay: Int? {
-        guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.dayNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
-    }
-
-    /// Reads 教练招聘会's coaches, each time it opens.
+    /// Reads 教练招聘会's coaches, each time it opens, and again on coming back from a 简历. A list
+    /// already shown stays up while it is read again (and when that read fails), so the page keeps
+    /// its place instead of falling back to the spinner and the top.
     public func loadMarket() async {
-        market = .loading
+        if case .loaded = market {} else { market = .loading }
         do {
             market = .loaded(try await service.coaches())
         } catch {
             // Closed before the coaches came, it didn't fail.
             guard !Task.isCancelled else { return }
+            if case .loaded = market, error != .signedOut { return }
             market = .failed(error)
             if error == .signedOut { await signOut() }
         }

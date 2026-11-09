@@ -33,6 +33,16 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try SquadCoach(wire) }
     }
 
+    /// Has the coach the squad just let go for another write the one that took over its letter
+    /// (交接信); only the captain may, right after 换教练. Answers once it is written, or nil when it
+    /// couldn't be; a retry answers the same letter, or none.
+    public func writeLetter(in squad: SquadID) async throws(APIError) -> CoachLetter? {
+        let wire = try await call {
+            try await writing.writeCoachLetter(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return wire.letter.flatMap { try? CoachLetter($0, squad: squad) }
+    }
+
     /// Fires the squad's coach; only the captain may. Safe to repeat.
     public func fireCoach(of squad: SquadID) async throws(APIError) -> SquadCoach {
         let wire = try await call {
@@ -60,15 +70,5 @@ extension WildcardAPI {
                 .json
         }
         return try read { () throws(ContractsError) in try CoachActivity(wire, squad: squad) }
-    }
-
-    /// The member put their morning note away on 今天 (收下), so none of their phones shows it
-    /// again. Safe to repeat.
-    public func putAway(_ note: CoachMemberNote) async throws(APIError) {
-        _ = try await call {
-            try await client.putAwayCoachMemberNote(
-                path: .init(squadId: note.squad.description, noteId: note.id)
-            ).ok.body.json
-        }
     }
 }

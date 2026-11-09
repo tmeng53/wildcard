@@ -8,9 +8,9 @@ import DesignSystemUI
 import SwiftUI
 
 /// The squad's coach standing on the sideline, as big as me, idling; it has no ring, since it
-/// doesn't check in. It drops in after the squad onto a newly picked scene. While a morning note
-/// waits, the phone in its hand shows the unread dot and buzzes, and it glances down at it (the
-/// approved 毛头的手机来消息; under Reduce Motion, the dot only).
+/// doesn't check in. It drops in after the squad onto a newly picked scene. While its page has a
+/// card not seen yet, the phone in its hand shows the unread dot, and the home has it whistle
+/// again and again (Tracy, 2026-11-09; under Reduce Motion, the dot only).
 struct SidelineCoachFigure: View {
     let coach: SquadCast.Coach
     let unit: Double
@@ -18,8 +18,12 @@ struct SidelineCoachFigure: View {
     let reduceMotion: Bool
     /// How far above its spot it is, in stage points, while it drops in.
     var lift: Double = 0
-    /// Whether a morning note waits unread.
-    var hasNote = false
+    /// Whether its page has a card not seen yet.
+    var hasNews = false
+    /// How far right of its spot it is, in stage points, and how far it leans, in degrees, while
+    /// the coaches change places (换教练).
+    var shift: Double = 0
+    var tilt: Double = 0
 
     /// Members' canvas, which coaches share, and where its feet are on it.
     static let canvas = CGSize(width: 240, height: 320)
@@ -29,16 +33,13 @@ struct SidelineCoachFigure: View {
     /// The part holding the phone, and the phone's top corner on its art, where the dot sits.
     private static let phoneHand: PartID = "armR"
     private static let phoneCorner = Point(x: 160, y: 179)
-    /// The dot, and the ring around it, as on 动态's bell; the buzz lines, in points.
+    /// The dot, and the ring around it, as on 动态's bell, in points.
     private static let dot: Double = 8
     private static let dotRing: Double = 2
-    private static let buzzLine = CGSize(width: 2, height: 6)
 
     var body: some View {
         let scale = coach.scale * unit
         let frame = reduceMotion ? coach.player.restFrame : coach.player.frame(at: date)
-        let seconds = date.timeIntervalSinceReferenceDate
-        let buzzes = hasNote && !reduceMotion
         Color.clear
             .overlay {
                 CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.reach)
@@ -47,19 +48,19 @@ struct SidelineCoachFigure: View {
                     .allowsHitTesting(false)
             }
             .overlay(alignment: .topLeading) {
-                if hasNote, let corner = phoneCorner(frame.placements) {
-                    phone(lines: buzzes ? PhoneBuzz.lines(at: seconds) : 0)
+                if hasNews, let corner = phoneCorner(frame.placements) {
+                    unreadDot
                         .position(x: corner.x * scale, y: corner.y * scale)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: hasNote)
-            .rotationEffect(.degrees(buzzes ? PhoneBuzz.sway(at: seconds) : 0), anchor: .bottom)
-            .offset(y: -lift * unit - (buzzes ? PhoneBuzz.hop(at: seconds) * scale : 0))
+            .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: hasNews)
+            .rotationEffect(.degrees(tilt))
+            .offset(y: -lift * unit)
             .frame(width: Self.canvas.width * scale, height: Self.canvas.height * scale)
             .contentShape(Rectangle())
             .position(
-                x: coach.spot.x * unit,
+                x: (coach.spot.x + shift) * unit,
                 y: coach.spot.y * unit - (Self.feet.y - Self.canvas.height / 2) * scale)
     }
 
@@ -72,33 +73,22 @@ struct SidelineCoachFigure: View {
         return placements[hand].transform.apply(to: Self.phoneCorner)
     }
 
-    /// The unread dot on the phone, with two buzz lines beside it showing by `lines`.
-    private func phone(lines: Double) -> some View {
+    /// The unread dot on the phone.
+    private var unreadDot: some View {
         Circle()
             .fill(Color(role: .bgBrand, in: .gym))
             .frame(width: Self.dot, height: Self.dot)
             .padding(Self.dotRing)
             .background(Circle().fill(Color(role: .bgCanvas, in: .gym)))
-            .overlay(alignment: .topTrailing) {
-                ZStack(alignment: .topLeading) {
-                    Capsule().frame(width: Self.buzzLine.width, height: Self.buzzLine.height)
-                        .rotationEffect(.degrees(-30))
-                    Capsule().frame(width: Self.buzzLine.width, height: Self.buzzLine.height * 0.8)
-                        .offset(x: Self.buzzLine.height / 2, y: Self.buzzLine.height + 1)
-                }
-                .foregroundStyle(Color(role: .fgDefault, in: .gym))
-                .opacity(lines)
-                .offset(x: Self.buzzLine.height + 2, y: -Self.buzzLine.height / 2)
-            }
             .accessibilityHidden(true)
     }
 }
 
-/// The coach on the sideline as a button by its name, for VoiceOver and UI tests, saying whether a
-/// note waits; it tells where it stands on screen, for its note to open from.
+/// The coach on the sideline as a button by its name, for VoiceOver and UI tests, saying whether
+/// something waits; it tells where it stands on screen, for its letter to fly from.
 struct SidelineCoachButton: ViewModifier {
     let name: String
-    let hasNote: Bool
+    let hasNews: Bool
     let tap: () -> Void
     let standsAt: (CGPoint) -> Void
 
@@ -113,13 +103,34 @@ struct SidelineCoachButton: ViewModifier {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text(verbatim: name))
-            .accessibilityValue(hasNote ? Text("有新消息", bundle: .module) : Text(verbatim: ""))
+            .accessibilityValue(hasNews ? Text("有新消息", bundle: .module) : Text(verbatim: ""))
             .accessibilityIdentifier("today.coach")
             .accessibilityAddTraits(.isButton)
     }
 }
 
 extension SquadSceneView {
+    /// The squad's coach on the sideline, or the two changing places there (换教练).
+    @ViewBuilder
+    func sidelineCoach(unit: Double, date: Date) -> some View {
+        if let handover = cast.handover, let incoming = cast.incoming {
+            CoachHandoverFigures(
+                handover: handover, outgoing: cast.coach, incoming: incoming, unit: unit, date: date,
+                moment: reduceMotion ? .distantFuture : clock(), reduceMotion: reduceMotion)
+        } else if let coach = cast.coach, case let fall = coachFall(at: date), fall >= 0 {
+            // The coach drops in last, after me; under Reduce Motion it is simply there.
+            SidelineCoachFigure(
+                coach: coach, unit: unit, date: date, reduceMotion: reduceMotion,
+                lift: DropIn.lift(at: fall, spotY: coach.spot.y, clipLift: 0), hasNews: coachHasNews
+            )
+            .modifier(
+                SidelineCoachButton(
+                    name: coach.speaker.name, hasNews: coachHasNews, tap: tapCoach, standsAt: coachAt)
+            )
+            .zIndex(coach.spot.y)
+        }
+    }
+
     /// How far into its drop the coach is at `date`, in seconds (below zero while it waits),
     /// or infinity once it stands, as it does whenever nobody is dropping in.
     func coachFall(at date: Date) -> Double {

@@ -43,6 +43,8 @@ actor Squad3: SquadSettingsService {
     var failing: SquadError?
     private(set) var picks: [SceneID] = []
     private(set) var hires: [CoachID] = []
+    private(set) var languagePicks: [SquadLanguage.Language] = []
+    private var market: [Coach] = [maotou, nuannuan]
 
     init(viewer: MemberID, scene: SquadScene, coach: SquadCoach.Hire? = nil, today: String = "2026-10-27") throws {
         current = SquadSettings(
@@ -55,7 +57,8 @@ actor Squad3: SquadSettingsService {
                 daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == lin,
                 recent: SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4)),
             matchTimeZone: SquadTimeZone(
-                timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == lin))
+                timeZone: "Asia/Taipei", canChange: viewer == lin),
+            language: SquadLanguage(language: .traditionalChinese, canChange: viewer == lin))
     }
 
     func fail(with error: SquadError?) { failing = error }
@@ -101,8 +104,10 @@ actor Squad3: SquadSettingsService {
 
     func coaches() async throws(SquadError) -> [Coach] {
         if let failing { throw failing }
-        return [maotou, nuannuan]
+        return market
     }
+
+    func offer(_ coaches: [Coach]) { market = coaches }
 
     func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
         if let failing { throw failing }
@@ -124,8 +129,18 @@ actor Squad3: SquadSettingsService {
     func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         if let failing { throw failing }
         guard current.matchTimeZone.canChange else { throw .outdated }
-        current.matchTimeZone.nextTimeZone = timeZone
+        current.matchTimeZone.timeZone = timeZone
         return current.matchTimeZone
+    }
+
+    func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
+        -> SquadLanguage
+    {
+        if let failing { throw failing }
+        guard current.language.canChange else { throw .outdated }
+        languagePicks.append(language)
+        current.language.language = language
+        return current.language
     }
 
     func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
@@ -137,36 +152,6 @@ actor Squad3: SquadSettingsService {
 }
 
 @MainActor struct SquadSettingsModelTests {
-    @Test func theCaptainSetsTheGoalForNextWeekAndAMateOnlyReadsIt() async throws {
-        let captain = SquadSettingsModel(
-            service: try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false)))
-        await captain.reload()
-        #expect(captain.canChangeGoal)
-        await captain.setGoal(5)
-        #expect(captain.goal?.daysPerMember == 3)
-        #expect(captain.goal?.nextDaysPerMember == 5)
-        await captain.setGoal(8)
-        #expect(captain.goal?.nextDaysPerMember == 5)
-
-        let mate = SquadSettingsModel(
-            service: try Squad3(viewer: mia, scene: try scene(pickers: .captain(lin), canPick: false)))
-        await mate.reload()
-        #expect(!mate.canChangeGoal)
-        #expect(mate.goal?.recent == SquadWeeklyGoal.Recent(weeks: 2, daysPerMember: 3.4))
-        await mate.setGoal(5)
-        #expect(mate.goal?.nextDaysPerMember == 3)
-    }
-
-    @Test func aGoalThatDoesNotGoThroughMovesBack() async throws {
-        let service = try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: false))
-        let model = SquadSettingsModel(service: service)
-        await model.reload()
-        await service.fail(with: .unavailable)
-        await model.setGoal(6)
-        #expect(model.changeFailed)
-        #expect(model.goal?.nextDaysPerMember == 3)
-    }
-
     @Test func theCaptainSeesEveryoneElseAsManageable() async throws {
         let model = SquadSettingsModel(
             service: try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false)))
@@ -292,15 +277,14 @@ actor Squad3: SquadSettingsService {
         await model.reload()
         #expect(model.canHireCoach)
         #expect(model.coach == nil)
-        #expect(model.coachWeek == nil)
-        #expect(model.coachDay == nil)
+        #expect(model.coachTenure == nil)
 
         await model.loadMarket()
         #expect(model.market == .loaded([maotou, nuannuan]))
 
         #expect(await model.hire("xiaohun") == .done)
         #expect(model.coach?.coach == maotou)
-        #expect(model.coachWeek == 1)
+        #expect(model.coachTenure == .days(1))
 
         // 换教练 is one step.
         #expect(await model.hire("nuannuan") == .done)
@@ -359,26 +343,30 @@ actor Squad3: SquadSettingsService {
         #expect(await service.hires.isEmpty)
     }
 
-    /// The week it was hired counts 1; weeks start on Monday, on the member's clock.
-    @Test(arguments: [("2026-10-27", 1), ("2026-11-01", 1), ("2026-11-02", 2), ("2026-11-16", 4)])
-    func theCoachsWeekCountsFromTheHire(today: String, week: Int) async throws {
+    /// Days under a week, the hire day counting 1, then whole weeks, on the member's clock.
+    @Test(arguments: [
+        ("2026-10-27", CoachTenure.days(1)), ("2026-11-01", .days(6)), ("2026-11-02", .weeks(1)),
+        ("2026-11-08", .weeks(1)), ("2026-11-09", .weeks(2)), ("2026-11-16", .weeks(3)),
+    ])
+    func theCoachsTenureCountsFromTheHire(today: String, tenure: CoachTenure) async throws {
         let model = SquadSettingsModel(
             service: try Squad3(
                 viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false),
                 coach: .init(coach: maotou, since: tuesday), today: today))
         await model.reload()
-        #expect(model.coachWeek == week)
+        #expect(model.coachTenure == tenure)
     }
 
-    /// The day it was hired counts 1, on the member's clock.
-    @Test(arguments: [("2026-10-27", 1), ("2026-10-28", 2), ("2026-11-02", 7)])
-    func theCoachsDaysCountFromTheHire(today: String, day: Int) async throws {
+    /// Hired on a Sunday evening in Toronto (Monday in UTC), the coach has coached 2 days on Monday.
+    @Test(arguments: [("2026-11-08", CoachTenure.days(1)), ("2026-11-09", .days(2)), ("2026-11-14", .weeks(1))])
+    func aCoachHiredOnSundayCountsDaysOnMonday(today: String, tenure: CoachTenure) async throws {
+        let sundayEvening = Date(timeIntervalSince1970: 1_794_189_600)
         let model = SquadSettingsModel(
             service: try Squad3(
                 viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false),
-                coach: .init(coach: maotou, since: tuesday), today: today))
+                coach: .init(coach: maotou, since: sundayEvening), today: today))
         await model.reload()
-        #expect(model.coachDay == day)
+        #expect(model.coachTenure == tenure)
     }
 
     @Test func aMarketThatCantBeReadSaysSo() async throws {
@@ -388,5 +376,22 @@ actor Squad3: SquadSettingsService {
         await service.fail(with: .unavailable)
         await model.loadMarket()
         #expect(model.market == .failed(.unavailable))
+    }
+
+    @Test func comingBackToTheMarketKeepsTheListUp() async throws {
+        let service = try Squad3(viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false))
+        let model = SquadSettingsModel(service: service)
+        await model.loadMarket()
+        #expect(model.market == .loaded([maotou, nuannuan]))
+
+        // Back from a 简历, the list is read again in place.
+        await service.offer([nuannuan])
+        await model.loadMarket()
+        #expect(model.market == .loaded([nuannuan]))
+
+        // A read again that fails leaves the list the member was looking at.
+        await service.fail(with: .unavailable)
+        await model.loadMarket()
+        #expect(model.market == .loaded([nuannuan]))
     }
 }

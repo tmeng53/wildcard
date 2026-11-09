@@ -68,7 +68,7 @@
 		</dict>
 		<!-- Workout check-ins: kind, sport, minutes, the weekly plan; and, for a 训练 posted from
 		     Apple Health, the numbers the member keeps on it (distance, pace or speed, effort,
-		     laps). -->
+		     laps, active calories). -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeFitness</string>
@@ -100,6 +100,21 @@
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePreciseLocation</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<!-- The phone's approximate location, if the member allows it, kept as a cell about 11 km
+		     wide (the latest only) to look up the weather there for the squad's coach. Never
+		     shown to anyone; only the weather words go to the AI. -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeCoarseLocation</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>

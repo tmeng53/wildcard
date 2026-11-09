@@ -14,7 +14,7 @@ import SwiftUI
 /// safe area the app gives it, and the system's back button and swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
-    @Environment(\.sceneTheme) private var theme
+    @Environment(\.sceneTheme) var theme
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var picksAll = false
@@ -75,7 +75,7 @@ public struct ScheduleView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
-        // The weeks and 存图 stay put while the poster scrolls, so nothing slides under the
+        // The title and the weeks stay put while the poster scrolls, so nothing slides under the
         // status bar.
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: Space.xs) {
@@ -107,11 +107,14 @@ public struct ScheduleView: View {
             }
             store.dismissTemplateOffer()
         }
+        .toolbar { saveItem }
         .pushedPage()
         .task { await model.load() }
-        // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
-        .onChange(of: store.todaysActivity) { model.followToday() }
-        .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
+        // What the character plays changed (a 练了 read in, a day's sport picked, another week
+        // shown): it follows.
+        .onChange(of: model.play) { model.followPlay() }
+        // The character plays the sport of the scene the poster is drawn in.
+        .onChange(of: shownContent?.scene(now: theme) ?? theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
@@ -169,6 +172,7 @@ public struct ScheduleView: View {
                 onTapFuel: model.toggleFuelPanel
             )
             .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
+            .environment(\.sceneTheme, content.scene(now: theme))
         }
         .keyframeAnimator(initialValue: 0.0, trigger: flashes) { content, flash in
             content.overlay { Color(role: .bgCanvas, in: theme).opacity(flash).allowsHitTesting(false) }
@@ -184,7 +188,8 @@ public struct ScheduleView: View {
     @MainActor func save() {
         guard let sheet = store.sheet else { return }
         let still = SchedulePoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
-        model.sharePoster { SchedulePoster.picture(of: still, theme: theme, locale: locale) }
+        let scene = content(sheet).scene(now: theme)
+        model.sharePoster { SchedulePoster.picture(of: still, theme: scene, locale: locale) }
     }
 
     // MARK: Under the poster

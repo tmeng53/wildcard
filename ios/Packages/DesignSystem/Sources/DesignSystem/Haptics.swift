@@ -31,6 +31,11 @@ public enum Haptic: String, CaseIterable, Sendable {
     /// The pull cord clicking the lights on at night (开灯): short and hard, like a real switch.
     /// Switching them off has none.
     case lights
+    /// The seal popping on the coach's letter (交接信) as it is opened: a light tap, the letter's
+    /// one haptic.
+    case unseal
+    /// A finger scrubbing a heart-rate chart crossing into another zone: a selection tick.
+    case zone
 
     /// How many ticks a status ring plays while it draws itself closed.
     public static let ringTicks = 3

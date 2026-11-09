@@ -70,42 +70,78 @@ export const SPEECH_MAX = 24;
 export const TITLES_MAX = 3;
 /** The longest headline over the 战报's last page (这一周), such as 稳了 or 差一点. */
 export const ENDING_HEADLINE_MAX = 4;
-/** The longest line on the 战报's last page, under the squad's days against its plans. */
+/** The longest line on the 战报's last page, under the squad's days against its goal. */
 export const ENDING_LINE_MAX = 24;
 
 /**
- * The model's reply, held to this shape by structured output, its moves only those `moves`
- * offers (the settings') and its badges from `catalog` only. Members are named by key. The
- * limits go to the model in the schema, so the titles fit the screen.
+ * A field's description for a sentence of at most `max` characters. Structured output cuts a
+ * string off at its limit mid-word, so the model must hear the limit and finish inside it,
+ * whatever the prompt says.
  */
-export function modelReplyFor(catalog: BadgeCatalog, moves: readonly [AwardMove, ...AwardMove[]]) {
+function completeSentence(what: string, max: number): string {
+  return `${what}: one complete sentence of at most ${String(max)} characters, ending within them.`;
+}
+
+/**
+ * The model's reply for `members` members, held to this shape by structured output: each
+ * member's titles under their key (A, B, C…), or null for a member it gives none. No other key
+ * is allowed, so a reply can't name anyone twice or name someone who isn't there, whatever the
+ * prompt says. Its moves are only those `moves` offers (the settings') and its badges from
+ * `catalog` only. The limits go to the model in the schema, so the titles fit the screen.
+ */
+export function modelReplyFor(
+  catalog: BadgeCatalog,
+  {
+    moves,
+    members,
+  }: { readonly moves: readonly [AwardMove, ...AwardMove[]]; readonly members: number },
+) {
+  const titles = z
+    .array(
+      z.strictObject({
+        title: z
+          .string()
+          .min(1)
+          .max(TITLE_MAX)
+          .meta({ description: `The title (头衔): at most ${String(TITLE_MAX)} characters.` }),
+        speech: z
+          .string()
+          .min(1)
+          .max(SPEECH_MAX)
+          .meta({ description: completeSentence('Its award line (颁奖词)', SPEECH_MAX) }),
+        move: z.enum(moves),
+        badge: badgeReplyFor(catalog),
+      }),
+    )
+    .min(1)
+    .max(TITLES_MAX);
+  const titlesOrNone = titles.nullable();
+  const byKey: Record<string, typeof titlesOrNone> = Object.fromEntries(
+    Array.from({ length: members }, (_, index) => [promptKey(index), titlesOrNone]),
+  );
   return z.strictObject({
     version: z.literal(1),
-    awards: z.array(
-      z.strictObject({
-        member: z.string(),
-        titles: z
-          .array(
-            z.strictObject({
-              title: z.string().min(1).max(TITLE_MAX),
-              speech: z.string().min(1).max(SPEECH_MAX),
-              move: z.enum(moves),
-              badge: badgeReplyFor(catalog),
-            }),
-          )
-          .min(1)
-          .max(TITLES_MAX),
-      }),
-    ),
+    awards: z.strictObject(byKey).meta({
+      description:
+        'Each member’s titles, under their letter in the input; null for a member you give none.',
+    }),
     ending: z
       .strictObject({
-        headline: z.string().min(1).max(ENDING_HEADLINE_MAX),
-        line: z.string().min(1).max(ENDING_LINE_MAX),
+        headline: z
+          .string()
+          .min(1)
+          .max(ENDING_HEADLINE_MAX)
+          .meta({ description: `At most ${String(ENDING_HEADLINE_MAX)} characters.` }),
+        line: z
+          .string()
+          .min(1)
+          .max(ENDING_LINE_MAX)
+          .meta({ description: completeSentence('The line', ENDING_LINE_MAX) }),
       })
       .meta({
         description:
-          'The last page of the squad’s 战报: a headline and one line on squad.trainedDays ' +
-          'against squad.plannedDays.',
+          'The last page of the squad’s 战报: a headline and one line on squad.trainings (the ' +
+          '训练 the squad did this week) against squad.goal (its weekly goal, in 训练).',
       }),
   });
 }
@@ -150,7 +186,7 @@ export const StoredAward = z.discriminatedUnion('version', [
 export type StoredAward = z.infer<typeof StoredAward>;
 
 /**
- * The words on the 战报's last page (这一周), over the squad's days trained against its plans: a
+ * The words on the 战报's last page (这一周), over the squad's days trained against its goal: a
  * headline and a line. Stored JSON (`weekly_awards.ending`).
  */
 export const EndingWords = z.strictObject({
@@ -276,29 +312,24 @@ export interface Failures {
 export const promptKey = (index: number) => String.fromCodePoint(65 + index);
 
 /**
- * The awards a reply comes to for these members (those who checked in, in the prompt's order),
- * or `undefined` when it names a member missing, repeated or unknown, or leaves a title or line
- * blank. Each is trimmed and kept on one line, as the story and stickers lay it out. The words
- * themselves are the model's: what they may say is set in the prompt.
+ * The titles a reply gives these members (those who checked in, in the prompt's order, as many
+ * as the reply's schema was made for), each trimmed and kept on one line, as the story and
+ * stickers lay it out. A title or line blank once trimmed is dropped, never the whole reply, and
+ * a member left with none (or given none) is left out. The words themselves are the model's:
+ * what they may say is set in the prompt.
  */
-export function titlesOf(
-  reply: ModelReply,
-  members: readonly MemberId[],
-): Map<MemberId, Title[]> | undefined {
-  if (reply.awards.length !== members.length) return undefined;
-  const byKey = new Map(members.map((member, index) => [promptKey(index), member]));
+export function titlesOf(reply: ModelReply, members: readonly MemberId[]): Map<MemberId, Title[]> {
   const result = new Map<MemberId, Title[]>();
-  for (const award of reply.awards) {
-    const member = byKey.get(award.member.trim());
-    if (member === undefined || result.has(member)) return undefined;
-    const titles = award.titles.map(({ title, speech, move, badge }) => ({
-      title: oneLine(title),
-      speech: oneLine(speech),
-      move,
-      badge: Badge.parse(badge),
-    }));
-    if (titles.some(({ title, speech }) => title === '' || speech === '')) return undefined;
-    result.set(member, titles);
+  for (const [index, member] of members.entries()) {
+    const titles = (reply.awards[promptKey(index)] ?? [])
+      .map(({ title, speech, move, badge }) => ({
+        title: oneLine(title),
+        speech: oneLine(speech),
+        move,
+        badge: Badge.parse(badge),
+      }))
+      .filter(({ title, speech }) => title !== '' && speech !== '');
+    if (titles.length > 0) result.set(member, titles);
   }
   return result;
 }

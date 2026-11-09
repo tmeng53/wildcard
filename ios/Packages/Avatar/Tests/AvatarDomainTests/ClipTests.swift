@@ -58,6 +58,10 @@ import Testing
     #expect(throws: AvatarError.invalidKeyframes(clip: "wave", part: "arm", channel: .x)) {
         try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0), (1.5, 1)])])
     }
+    // An arm is in front or behind, never between.
+    #expect(throws: AvatarError.invalidKeyframes(clip: "wave", part: "arm", channel: .front)) {
+        try clip("wave", duration: 1, loops: true, [track("arm", .front, [(0, 0), (0.5, 0.5)])])
+    }
     #expect(throws: AvatarError.invalidDuration(clip: "wave")) { try clip("wave", duration: 0, loops: true, []) }
     #expect(throws: AvatarError.invalidEasing(clip: "wave", part: "arm", channel: .x)) {
         try Clip(

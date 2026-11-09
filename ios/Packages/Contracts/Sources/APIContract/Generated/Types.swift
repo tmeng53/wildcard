@@ -39,6 +39,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/profile`.
     /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
     func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    func putMyBirthday(_ input: Operations.PutMyBirthday.Input) async throws -> Operations.PutMyBirthday.Output
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    func deleteMyBirthday(_ input: Operations.DeleteMyBirthday.Input) async throws -> Operations.DeleteMyBirthday.Output
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -109,6 +123,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/check-in-totals`.
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     func getMyCheckInTotals(_ input: Operations.GetMyCheckInTotals.Input) async throws -> Operations.GetMyCheckInTotals.Output
+    /// The signed-in member’s records (外卡记录)
+    ///
+    /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
+    ///
+    /// - Remark: HTTP `GET /me/records`.
+    /// - Remark: Generated from `#/paths//me/records/get(getMyRecords)`.
+    func getMyRecords(_ input: Operations.GetMyRecords.Input) async throws -> Operations.GetMyRecords.Output
     /// The signed-in member’s 训练 for a range of days, for their training record
     ///
     /// 训练记录 on 我: each 训练 the member posted for a day in the range, wherever it went, with its sport and minutes only. At most 371 days at a time.
@@ -189,6 +210,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/push-settings`.
     /// - Remark: Generated from `#/paths//me/push-settings/put(saveMyPushSettings)`.
     func saveMyPushSettings(_ input: Operations.SaveMyPushSettings.Input) async throws -> Operations.SaveMyPushSettings.Output
+    /// Say roughly where the member is
+    ///
+    /// The app sends the approximate location iOS gives it when it opens, while the member allows it. Replaces the one before. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/put(saveMyLocation)`.
+    func saveMyLocation(_ input: Operations.SaveMyLocation.Input) async throws -> Operations.SaveMyLocation.Output
+    /// Forget where the member is
+    ///
+    /// For when the member stops allowing location. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/delete(forgetMyLocation)`.
+    func forgetMyLocation(_ input: Operations.ForgetMyLocation.Input) async throws -> Operations.ForgetMyLocation.Output
     /// The signed-in member’s squads
     ///
     /// - Remark: HTTP `GET /me/squads`.
@@ -329,14 +364,42 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
     func setSquadTimeZone(_ input: Operations.SetSquadTimeZone.Input) async throws -> Operations.SetSquadTimeZone.Output
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    func getSquadLanguage(_ input: Operations.GetSquadLanguage.Input) async throws -> Operations.GetSquadLanguage.Output
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    func setSquadLanguage(_ input: Operations.SetSquadLanguage.Input) async throws -> Operations.SetSquadLanguage.Output
+    /// The caller’s challenge today (今日挑战)
+    ///
+    /// The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/challenge/get(getCoachChallenge)`.
+    func getCoachChallenge(_ input: Operations.GetCoachChallenge.Input) async throws -> Operations.GetCoachChallenge.Output
+    /// Mark the challenge on the caller’s morning note done (我完成了)
+    ///
+    /// The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge/completion`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/completion/put(completeCoachChallenge)`.
+    func completeCoachChallenge(_ input: Operations.CompleteCoachChallenge.Input) async throws -> Operations.CompleteCoachChallenge.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -355,6 +418,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/coach/activity`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/activity/get(getSquadCoachActivity)`.
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
+    /// What the squad’s coach said to the caller, as cards (the coach page)
+    ///
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
+    func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
+    /// The coach page’s 以前, a page at a time
+    ///
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
+    func getEarlierCoachCards(_ input: Operations.GetEarlierCoachCards.Input) async throws -> Operations.GetEarlierCoachCards.Output
+    /// Mark one of the coach’s cards seen (swiped into 以前)
+    ///
+    /// The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
+    func markCoachCardSeen(_ input: Operations.MarkCoachCardSeen.Input) async throws -> Operations.MarkCoachCardSeen.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -369,6 +453,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// Send us feedback (意见反馈)
+    ///
+    /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
+    ///
+    /// - Remark: HTTP `POST /feedback`.
+    /// - Remark: Generated from `#/paths//feedback/post(sendFeedback)`.
+    func sendFeedback(_ input: Operations.SendFeedback.Input) async throws -> Operations.SendFeedback.Output
     /// The caller’s notices (通知)
     ///
     /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
@@ -439,6 +530,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/weekly-plans/{weekStart}/fuel-goals`.
     /// - Remark: Generated from `#/paths//me/weekly-plans/{weekStart}/fuel-goals/put(saveMyFuelGoals)`.
     func saveMyFuelGoals(_ input: Operations.SaveMyFuelGoals.Input) async throws -> Operations.SaveMyFuelGoals.Output
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    func listSquadWeekStories(_ input: Operations.ListSquadWeekStories.Input) async throws -> Operations.ListSquadWeekStories.Output
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)
     ///
     /// For the button on a `pending` story’s titles page. The first nudge since the last failed try tells the admins, with the failed tries and why; other nudges, and nudges once the titles are written, change nothing. Answers 204 either way.
@@ -560,6 +658,30 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    public func putMyBirthday(
+        headers: Operations.PutMyBirthday.Input.Headers = .init(),
+        body: Operations.PutMyBirthday.Input.Body
+    ) async throws -> Operations.PutMyBirthday.Output {
+        try await putMyBirthday(Operations.PutMyBirthday.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    public func deleteMyBirthday(headers: Operations.DeleteMyBirthday.Input.Headers = .init()) async throws -> Operations.DeleteMyBirthday.Output {
+        try await deleteMyBirthday(Operations.DeleteMyBirthday.Input(headers: headers))
     }
     /// The signed-in member’s AI consent
     ///
@@ -704,6 +826,15 @@ extension APIProtocol {
     /// - Remark: Generated from `#/paths//me/check-in-totals/get(getMyCheckInTotals)`.
     public func getMyCheckInTotals(headers: Operations.GetMyCheckInTotals.Input.Headers = .init()) async throws -> Operations.GetMyCheckInTotals.Output {
         try await getMyCheckInTotals(Operations.GetMyCheckInTotals.Input(headers: headers))
+    }
+    /// The signed-in member’s records (外卡记录)
+    ///
+    /// 外卡记录, opened from 我’s 训练记录: streaks, when and what they train, and how they stand in their squad, worked out from their check-ins and plans on every read.
+    ///
+    /// - Remark: HTTP `GET /me/records`.
+    /// - Remark: Generated from `#/paths//me/records/get(getMyRecords)`.
+    public func getMyRecords(headers: Operations.GetMyRecords.Input.Headers = .init()) async throws -> Operations.GetMyRecords.Output {
+        try await getMyRecords(Operations.GetMyRecords.Input(headers: headers))
     }
     /// The signed-in member’s 训练 for a range of days, for their training record
     ///
@@ -872,6 +1003,30 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Say roughly where the member is
+    ///
+    /// The app sends the approximate location iOS gives it when it opens, while the member allows it. Replaces the one before. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/put(saveMyLocation)`.
+    public func saveMyLocation(
+        headers: Operations.SaveMyLocation.Input.Headers = .init(),
+        body: Operations.SaveMyLocation.Input.Body
+    ) async throws -> Operations.SaveMyLocation.Output {
+        try await saveMyLocation(Operations.SaveMyLocation.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Forget where the member is
+    ///
+    /// For when the member stops allowing location. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/location`.
+    /// - Remark: Generated from `#/paths//me/location/delete(forgetMyLocation)`.
+    public func forgetMyLocation(headers: Operations.ForgetMyLocation.Input.Headers = .init()) async throws -> Operations.ForgetMyLocation.Output {
+        try await forgetMyLocation(Operations.ForgetMyLocation.Input(headers: headers))
     }
     /// The signed-in member’s squads
     ///
@@ -1173,7 +1328,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts from the squad’s next week on its own clock, so a week’s 战报 never moves while the squad plays it. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1188,9 +1343,73 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// The squad’s language
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/get(getSquadLanguage)`.
+    public func getSquadLanguage(
+        path: Operations.GetSquadLanguage.Input.Path,
+        headers: Operations.GetSquadLanguage.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadLanguage.Output {
+        try await getSquadLanguage(Operations.GetSquadLanguage.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Set the squad’s language
+    ///
+    /// For the captain. It counts at once, for what the AI writes next. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/language`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/language/put(setSquadLanguage)`.
+    public func setSquadLanguage(
+        path: Operations.SetSquadLanguage.Input.Path,
+        headers: Operations.SetSquadLanguage.Input.Headers = .init(),
+        body: Operations.SetSquadLanguage.Input.Body
+    ) async throws -> Operations.SetSquadLanguage.Output {
+        try await setSquadLanguage(Operations.SetSquadLanguage.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The caller’s challenge today (今日挑战)
+    ///
+    /// The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/challenge`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/challenge/get(getCoachChallenge)`.
+    public func getCoachChallenge(
+        path: Operations.GetCoachChallenge.Input.Path,
+        headers: Operations.GetCoachChallenge.Input.Headers = .init()
+    ) async throws -> Operations.GetCoachChallenge.Output {
+        try await getCoachChallenge(Operations.GetCoachChallenge.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Mark the challenge on the caller’s morning note done (我完成了)
+    ///
+    /// The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge/completion`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/completion/put(completeCoachChallenge)`.
+    public func completeCoachChallenge(
+        path: Operations.CompleteCoachChallenge.Input.Path,
+        headers: Operations.CompleteCoachChallenge.Input.Headers = .init(),
+        body: Operations.CompleteCoachChallenge.Input.Body
+    ) async throws -> Operations.CompleteCoachChallenge.Output {
+        try await completeCoachChallenge(Operations.CompleteCoachChallenge.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets. The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -1237,6 +1456,53 @@ extension APIProtocol {
             headers: headers
         ))
     }
+    /// What the squad’s coach said to the caller, as cards (the coach page)
+    ///
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
+    public func getCoachCards(
+        path: Operations.GetCoachCards.Input.Path,
+        headers: Operations.GetCoachCards.Input.Headers = .init()
+    ) async throws -> Operations.GetCoachCards.Output {
+        try await getCoachCards(Operations.GetCoachCards.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// The coach page’s 以前, a page at a time
+    ///
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
+    public func getEarlierCoachCards(
+        path: Operations.GetEarlierCoachCards.Input.Path,
+        query: Operations.GetEarlierCoachCards.Input.Query = .init(),
+        headers: Operations.GetEarlierCoachCards.Input.Headers = .init()
+    ) async throws -> Operations.GetEarlierCoachCards.Output {
+        try await getEarlierCoachCards(Operations.GetEarlierCoachCards.Input(
+            path: path,
+            query: query,
+            headers: headers
+        ))
+    }
+    /// Mark one of the coach’s cards seen (swiped into 以前)
+    ///
+    /// The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
+    public func markCoachCardSeen(
+        path: Operations.MarkCoachCardSeen.Input.Path,
+        headers: Operations.MarkCoachCardSeen.Input.Headers = .init()
+    ) async throws -> Operations.MarkCoachCardSeen.Output {
+        try await markCoachCardSeen(Operations.MarkCoachCardSeen.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -1267,6 +1533,21 @@ extension APIProtocol {
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
             path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Send us feedback (意见反馈)
+    ///
+    /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
+    ///
+    /// - Remark: HTTP `POST /feedback`.
+    /// - Remark: Generated from `#/paths//feedback/post(sendFeedback)`.
+    public func sendFeedback(
+        headers: Operations.SendFeedback.Input.Headers = .init(),
+        body: Operations.SendFeedback.Input.Body
+    ) async throws -> Operations.SendFeedback.Output {
+        try await sendFeedback(Operations.SendFeedback.Input(
             headers: headers,
             body: body
         ))
@@ -1411,6 +1692,21 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The weeks a squad has a 战报 for (往期战报)
+    ///
+    /// For the squad’s page: every week whose 战报 came out, the latest first, including the one that came out last Sunday at 8pm Eastern. Only for members of the squad now.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/stories`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/stories/get(listSquadWeekStories)`.
+    public func listSquadWeekStories(
+        path: Operations.ListSquadWeekStories.Input.Path,
+        headers: Operations.ListSquadWeekStories.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadWeekStories.Output {
+        try await listSquadWeekStories(Operations.ListSquadWeekStories.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// Nudges the organisers about a story whose titles haven’t come (催一下主办方)

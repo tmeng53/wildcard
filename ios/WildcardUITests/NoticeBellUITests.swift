@@ -30,7 +30,7 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertFalse(app.buttons["notices.row.6"].exists, "the coach's reply kept its own row")
         // The 6pm push: the squad's week on top, who patted under it, as the approved design shows.
         let daily = app.buttons["notices.row.5"].label
-        XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 天"), "the 6pm row says \(daily)")
+        XCTAssertTrue(daily.hasPrefix("本周小队已练 9/16 次"), "the 6pm row says \(daily)")
         XCTAssertTrue(daily.contains("Coco和另外 2 人拍了拍你"), "the 6pm row says \(daily)")
         waitFor(app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over 通知")
         for id in 1...9 {
@@ -64,10 +64,10 @@ final class NoticeBellUITests: XCTestCase {
         waitFor(tabButton("tab.today", in: app), "selected == true", "the scene row didn't open 今天")
     }
 
-    /// The coach's morning note's row opens it again on 今天, where 收下 puts it away.
-    func testTheNoteRowShowsTheNoteAgain() {
+    /// The coach's morning note's row opens the coach's page, where the note is one of its cards.
+    func testTheNoteRowOpensTheCoachsPage() {
         continueAfterFailure = false
-        let app = launch(language: "zh-Hans")
+        let app = launch(language: "zh-Hans", extra: ["-uitest-coach-note"])
         let bell = app.buttons["notices.bell"]
         XCTAssertTrue(bell.waitForExistence(timeout: Self.wait), "no bell on 动态")
         bell.tap()
@@ -75,11 +75,9 @@ final class NoticeBellUITests: XCTestCase {
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "通知 didn't open on its newest row")
         XCTAssertTrue(note.label.contains("毛头：今天出赛表写的是力量"), "the note row says \(note.label)")
         note.tap()
-        let putAway = app.buttons["today.coachNote.putAway"]
-        XCTAssertTrue(putAway.waitForExistence(timeout: Self.wait), "the note row didn't show the note on 今天")
-        assertOnScreen(putAway, in: app)
-        putAway.tap()
-        waitFor(putAway, "exists == false", "收下 didn't put the note away")
+        let page = app.buttons["coachDeck.history"]
+        XCTAssertTrue(page.waitForExistence(timeout: Self.wait), "the note row didn't open the coach's page")
+        waitFor(tabButton("tab.today", in: app), "selected == true", "the coach's page isn't on 小队")
     }
 
     func testNothingToldYet() {

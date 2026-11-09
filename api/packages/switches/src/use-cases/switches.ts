@@ -32,6 +32,11 @@ export interface Switches {
    * its log; for a previewer, as they see the switches now (one in preview on, on their day).
    */
   historyFor(member: string): Promise<SwitchWasOn>;
+  /**
+   * For a previewer, every switch as it really was set at any time, from its log, which is what
+   * what they keep counts under; undefined for a member who doesn't preview.
+   */
+  keptHistoryFor(member: string): Promise<SwitchWasOn | undefined>;
   /** Every switch as `member` sees it: a switch in preview is on for a previewer, on their day. */
   statesFor(member: string): Promise<MemberSwitches>;
 }
@@ -70,6 +75,10 @@ export function createSwitches({
       return view.previewer ? isOnForPreviewer(found, seen) : isOn(found, seen);
     };
   };
+  const history = async () => {
+    const [settings, current] = await Promise.all([store.history(), store.list()]);
+    return wasOn(settings, current);
+  };
   return {
     list: () => store.list(),
     states: () => lookup({ previewer: false, dayOffset: 0 }),
@@ -83,8 +92,11 @@ export function createSwitches({
         const on = await lookup(view);
         return (id, { day }) => on(id, day);
       }
-      const [settings, current] = await Promise.all([store.history(), store.list()]);
-      return wasOn(settings, current);
+      return history();
+    },
+    async keptHistoryFor(member) {
+      const view = await store.viewOf(member);
+      return view.previewer || view.dayOffset !== 0 ? history() : undefined;
     },
     async put({ window, ...fields }) {
       await store.put({ ...fields, ...(window === undefined ? {} : { window }) });

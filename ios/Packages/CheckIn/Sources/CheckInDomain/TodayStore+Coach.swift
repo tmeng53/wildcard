@@ -20,58 +20,62 @@ extension TodayStore {
     /// reached.
     public func loadCoach() async {
         guard let home = savedHome, phase == .current else { return }
+        await loadOpenedLetter()
         do {
             loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}
-        await loadCoachNotes(in: home)
+        await loadUnseenCoachCards(in: home)
+        await loadChallenge(in: home)
     }
 
-    /// The coach's morning notes waiting for the member, from their squad (one squad a member).
-    private func loadCoachNotes(in home: Home) async {
-        if openedNote == nil { openedNote = await backend.openedNote() }
-        guard let found = try? await backend.coachNotes(in: [home.squad.id]) else { return }
-        coachNotes = found.filter { !putAway.contains($0.id) }
-        // A push tapped for a note no longer waiting doesn't open a later one by itself.
-        if coachNotes.isEmpty { showsWaitingNote = false }
+    /// The server says which challenge is today's, on the squad's clock (which may differ from the
+    /// member's), and none once it is gone; what was shown stays only while it can't be reached.
+    func loadChallenge(in home: Home) async {
+        do {
+            loadedChallenge = (home.squad.id, try await backend.todayChallenge(in: home.squad.id))
+        } catch {}
     }
 
-    /// The note on 今天 now, if any: one shown again from 通知, else the first waiting once the
-    /// member opened it. None shows by itself.
-    public var coachNote: CoachMemberNote? { noteAgain ?? (showsWaitingNote ? coachNotes.first : nil) }
-
-    /// 收下: the note on 今天 goes, the next (if any) follows, and the server remembers it so no
-    /// phone shows it again. When the server can't be reached, it stays put away on this phone
-    /// until the app is next launched.
-    public func putAwayNote() async {
-        guard let note = coachNote else { return }
-        noteAgain = nil
-        showsWaitingNote = false
-        coachNotes.removeAll { $0.id == note.id }
-        putAway.insert(note.id)
-        openedNote = note
-        try? await backend.putAway(note)
-    }
-
-    /// Shows a note again from 通知, before any other waiting.
-    public func showAgain(_ note: CoachMemberNote) {
-        noteAgain = note
-    }
-
-    /// Today's note the member already put away, which the coach's card opens again (今天给你的消息);
-    /// nil while none is, or one is open or waiting, which a tap on the coach opens instead.
-    public var todaysNote: CoachMemberNote? {
-        guard let note = openedNote, coachNote == nil, coachNotes.isEmpty, note.squad == savedHome?.squad.id,
-            note.day == LocalDay(at: now(), in: CoachNote.timeZone)
+    /// The day's challenge the member accepted, as the server last said, for 我的一周 (Tracy,
+    /// 2026-11-08): with 我完成了 until it is done. Nil for one declined or not yet answered.
+    public var acceptedChallenge: DayChallenge? {
+        guard let loadedChallenge, loadedChallenge.squad == savedHome?.squad.id,
+            let found = loadedChallenge.challenge, found.challenge.answer == .accepted
         else { return nil }
-        return note
+        return found
     }
 
-    /// Whether a note waits unread while none is open, for the dot on the coach's phone.
-    public var hasWaitingNote: Bool { coachNote == nil && !coachNotes.isEmpty }
+    /// 我完成了: marks today's challenge done at once; if the server refused (its day may be over on
+    /// the squad's clock), it is put back and read again.
+    public func completeChallenge() async {
+        guard let home = savedHome, let found = acceptedChallenge, found.challenge.completedBy == nil,
+            !isCompletingChallenge
+        else { return }
+        isCompletingChallenge = true
+        defer { isCompletingChallenge = false }
+        loadedChallenge = (home.squad.id, found.completed(by: .member))
+        do {
+            let standing = try await backend.completeChallenge(found.note, in: home.squad.id)
+            loadedChallenge = (home.squad.id, found.completed(by: standing))
+        } catch {
+            loadedChallenge = (home.squad.id, found)
+            await loadChallenge(in: home)
+        }
+    }
 
-    /// Shows the newest waiting note, as soon as it is loaded: a tap on the coach or on its push.
-    public func showWaitingNote() {
-        showsWaitingNote = true
+    /// Whether the coach's page has anything unseen; what was shown stays while the server can't
+    /// be reached.
+    private func loadUnseenCoachCards(in home: Home) async {
+        guard let unseen = try? await backend.hasUnseenCoachCards(in: home.squad.id) else { return }
+        loadedUnseenCoachCards = (home.squad.id, unseen)
+    }
+
+    /// Whether the coach's page has a card the member hasn't seen, for the dot on its phone (Tracy,
+    /// 2026-11-09); swiping them away there marks them seen on the server, and the next load clears
+    /// the dot.
+    public var hasUnseenCoachCards: Bool {
+        guard let loadedUnseenCoachCards, loadedUnseenCoachCards.squad == savedHome?.squad.id else { return false }
+        return loadedUnseenCoachCards.unseen
     }
 
     /// The 战术板 line the coach says on the home now, while its day lasts.

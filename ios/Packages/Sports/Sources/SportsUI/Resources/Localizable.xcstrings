@@ -1,6 +1,102 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "千卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kcal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大卡"
+          }
+        }
+      }
+    },
+    "卡路里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calories"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡路里"
+          }
+        }
+      }
+    },
+    "发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posted"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發"
+          }
+        }
+      }
+    },
+    "不发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不發"
+          }
+        }
+      }
+    },
+    "点一下恢复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to bring it back"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下恢復"
+          }
+        }
+      }
+    },
+    "点一下划掉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to leave it out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下劃掉"
+          }
+        }
+      }
+    },
     "sport.unknown": {
       "comment": "A sport the app's list doesn't have yet, before it reads the newer list.",
       "extractionState": "manual",
@@ -153,38 +249,6 @@
         }
       }
     },
-    "不发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Left out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不發"
-          }
-        }
-      }
-    },
-    "发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Posted"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發"
-          }
-        }
-      }
-    },
     "公里": {
       "localizations": {
         "en": {
@@ -313,38 +377,6 @@
         }
       }
     },
-    "点一下划掉": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to leave it out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下劃掉"
-          }
-        }
-      }
-    },
-    "点一下恢复": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to bring it back"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下恢復"
-          }
-        }
-      }
-    },
     "米": {
       "localizations": {
         "en": {
@@ -361,7 +393,7 @@
         }
       }
     },
-    "费力": {
+    "强度": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -372,7 +404,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "費力"
+            "value": "強度"
           }
         }
       }
@@ -469,6 +501,207 @@
           "stringUnit": {
             "state": "translated",
             "value": "休息"
+          }
+        }
+      }
+    },
+    "/100 米": {
+      "comment": "After an open-water swim’s pace: per 100 metres.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/100m"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/100 米"
+          }
+        }
+      }
+    },
+    "score.runs": {
+      "comment": "A ski or snowboard day’s runs down the slope, on the 成绩条.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟数"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟數"
+          }
+        }
+      }
+    },
+    "score.runs.unit": {
+      "comment": "The unit after a ski day’s number of runs.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "runs"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "趟"
+          }
+        }
+      }
+    },
+    "最高速": {
+      "comment": "The fastest moment on a ski day, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top speed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最高速"
+          }
+        }
+      }
+    },
+    "爬升": {
+      "comment": "Metres climbed on a hike, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elevation"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "爬升"
+          }
+        }
+      }
+    },
+    "落差": {
+      "comment": "Metres skied down on a ski day, on the 成绩条.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vertical"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "落差"
+          }
+        }
+      }
+    },
+    "轻松": {
+      "comment": "A heart-rate zone: the lowest of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輕鬆"
+          }
+        }
+      }
+    },
+    "适中": {
+      "comment": "A heart-rate zone: the second of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moderate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適中"
+          }
+        }
+      }
+    },
+    "剧烈": {
+      "comment": "A heart-rate zone: the third of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vigorous"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劇烈"
+          }
+        }
+      }
+    },
+    "峰值": {
+      "comment": "A heart-rate zone: the highest of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peak"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "峰值"
+          }
+        }
+      }
+    },
+    "%lld 分": {
+      "comment": "Minutes spent in a heart-rate zone, under the chart.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分"
           }
         }
       }

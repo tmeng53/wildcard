@@ -72,7 +72,7 @@ private struct TodayNotices: ViewModifier {
         case .goalSuggestion(let suggestion):
             NoticeBanner(
                 Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
-                detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
+                detail: Text("改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 action: Text("去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
         case .sendFailed(let canResend):

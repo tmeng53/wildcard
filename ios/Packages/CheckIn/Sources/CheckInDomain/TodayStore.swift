@@ -55,18 +55,20 @@ public final class TodayStore {
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
     /// Set only by `loadCoach()`.
     var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
-    /// The coaches' morning notes (便条) waiting for the member, as last loaded, newest first;
-    /// one shows only when the member opens it (`showWaitingNote()`), never by itself
-    /// (Tracy, 2026-11-07), each until it is put away (`putAwayNote()`).
-    public internal(set) var coachNotes: [CoachMemberNote] = []
-    /// A note shown again from 通知, before any waiting.
-    var noteAgain: CoachMemberNote?
-    /// Whether the member opened the waiting note (a tap on its push).
-    var showsWaitingNote = false
-    /// The newest note put away, from this launch or kept on the phone, for the coach's card.
-    var openedNote: CoachMemberNote?
-    /// Notes put away on this phone since launch, kept out of a load that crossed the put-away.
-    var putAway: Set<Int> = []
+    /// Whether the coach's page has a card the member hasn't seen, as last loaded, for the squad it
+    /// was loaded for: the dot on the coach's phone until they swipe them all away there.
+    var loadedUnseenCoachCards: (squad: SquadID, unseen: Bool)?
+    /// The challenge in today's morning note, as last loaded, for the squad it was loaded for.
+    var loadedChallenge: (squad: SquadID, challenge: DayChallenge?)?
+    /// 我完成了 is on its way.
+    public internal(set) var isCompletingChallenge = false
+    /// The coaches changing on the sideline (换教练), from the captain's confirm until the coach
+    /// that took over stands there.
+    public internal(set) var handover: CoachHandover?
+    /// A letter opened again from 通知 or the coach's 简历.
+    var letterAgain: CoachLetter?
+    /// The newest letter opened on this phone; nil before it is read from the device, or before any.
+    var openedLetterID: Int?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
     /// The squad the member was in when the server last said they are in none: they left it, or
@@ -167,6 +169,9 @@ public final class TodayStore {
                     fold(saved)
                 }
                 phase = .current
+                // An accepted challenge follows the server each reread: done by the coach meanwhile,
+                // or gone once the squad's day is over.
+                if acceptedChallenge != nil, let home = savedHome { await loadChallenge(in: home) }
             } else {
                 if let squad = savedHome?.squad { lostSquad = squad }
                 savedHome = nil

@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import LocationDomain
 import MeDomain
 import MeUI
 import NotificationsDomain
@@ -41,13 +42,14 @@ struct MainTabs: View {
     @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
-    /// 通知 was told a teammate moved the squad: the app reads the squad's scene again, and the
-    /// home drops onto it and says who moved it.
+    /// 通知 was told a teammate moved the squad: the app reads the squad's scene again.
     var sceneMoved: () -> Void = {}
     /// Bumped each time a push arrives while the app is in front, which the app tells itself.
     var pushesInFront = 0
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
+    /// 设置 › 位置: the phone's approximate location for the coach's weather.
+    let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
     @State var inbox: NoticeInbox
     /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
@@ -59,10 +61,12 @@ struct MainTabs: View {
     @State var wardrobe: Wardrobe
     /// 出赛表, pushed over 我.
     @State var showsSchedule = LaunchOptions.opensSchedule
+    @State var plansOpened = 0
     /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it.
     @State var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
-    /// The coach's card, opened from a tap on the coach on the home, popped up like a player's.
-    @State var showsCoachCard = false
+    /// The coach's cards for the member, on its page; made for the squad the page opens on.
+    let coachCards: any CoachCardSource
+    @State var coachDeck: CoachDeck?
     /// 小队's scene pick is playing its reveal, which fills the screen.
     @State var squadRevealing = false
     /// 我的动态, pushed over 我.
@@ -80,16 +84,18 @@ struct MainTabs: View {
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
-        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource,
+        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {}, leftSquad: @escaping () -> Void = {}
+        location: LocationSharing? = nil, pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {},
+        leftSquad: @escaping () -> Void = {}
     ) {
         (self.pushesInFront, self.sceneMoved) = (pushesInFront, sceneMoved)
         self.previewSignUp = previewSignUp
+        self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
-        self.squadmateCards = squadmateCards
+        (self.squadmateCards, self.coachCards) = (squadmateCards, coachCards)
         _selection = selection
         _destination = destination
         self.leftSquad = leftSquad
@@ -109,19 +115,13 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) }  // @ tag → card
             today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
                     banner: { UnlockBanner(unlock: $0) }, open: { open(.unlock($0.kind, item: $0.id)) },
                     badge: { WardrobeBadge($0, item: $1) }, picture: { WardrobePicture($0, item: $1) })
             )
-        }
-        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
-        // home says whose it is; its button opens what its 通知 row opens.
-        // So does a higher squad goal suggested to the captain, whose button opens 小队.
-        .onChange(of: bannerNotices, initial: true) {
-            tellBroadcasts()
-            tellGoalSuggestions()
         }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
@@ -139,14 +139,14 @@ struct MainTabs: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
-        .followsNotices(inbox)
+        .followsNotices(inbox) { refreshOpenPosts(about: $0) }
         // 商店街 read again when the server says it changed and on each return to the front (a
         // switch's day starting tells nothing), so a store that opened shows without a relaunch.
         .onChange(of: inbox.shelfChanges) { Task { await profile.reload() } }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await profile.reload() } }
         }
-        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+        .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
@@ -176,17 +176,13 @@ struct MainTabs: View {
         // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
-        .cardPopup(isPresented: $showsCoachCard) {
-            CoachCardPopup(today: today, squad: squad, close: closeCoachCard, browse: browseCoaches)
-                .environment(\.sceneTheme, today.scene)
-        }
-        // Every banner drops in over whatever page is open (2026-11-08), above the cards, but not
-        // under a screen that covers the tabs, where nobody would see it.
-        .todayNotices(today)
-        .onChange(of: tabsCovered, initial: true) { today.isCovered = $1 }
-        // What 通知 is told while the app is open, in place of iOS's banner.
-        .onChange(of: inbox.toldLive) { tellToldLive() }
-        .onChange(of: pushesInFront) { Task { await inbox.catchUp() } }
+        // Every notice told while the app is open, as a banner over any page (`TabNotices`).
+        .modifier(
+            TabNotices(
+                today: today, inbox: inbox, covered: tabsCovered, pushesInFront: pushesInFront,
+                waiting: bannerNotices, tellWaiting: tellWaiting,
+                tellToldLive: tellToldLive)
+        )
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()
@@ -205,13 +201,6 @@ struct MainTabs: View {
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
-    }
-
-    /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
-    func openWardrobe(_ kind: Unlock.Kind, item: String) {
-        selection = .profile
-        closeProfilePages()
-        Task { await wardrobe.open(kind, item: item) }
     }
 
     /// A tab's full-screen step (writing a check-in, a scene pick's reveal), 通知, and a page pushed
@@ -285,7 +274,8 @@ struct MainTabs: View {
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    previewSignUp: previewSignUp, health: today.health),
+                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    location: location),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
@@ -369,24 +359,35 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = { showsCoachCard = true }
+                today.openCoach = { openCoachDeck() }
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {
                 case .squad:
                     SquadSettingsView(
-                        model: squad, picked: land(on:coveredAt:),
-                        openCoach: { todayPages.append(.coach($0)) },
+                        model: squad, picked: land(on:coveredAt:), openCoach: { todayPages.append(.coach($0)) },
                         revealing: $squadRevealing,
-                        openTeammate: {
-                            teammateOnHome = false
-                            teammate = squadCard(of: $0)
+                        openTeammate: { (teammateOnHome, teammate) = (false, squadCard(of: $0)) },
+                        pastRecaps: { PastRecaps(shelf: recap) }
+                    )
+                    .environment(\.sceneTheme, squad.scene)
+                    .task { await recap.refreshPast() }
+                case .coach(let route):
+                    CoachPage(
+                        route: route, model: squad, pages: coachPages, note: today.coachLine,
+                        letter: today.coachLetter,
+                        swapped: { leaving, coming in
+                            // Back on 今天, where they change places while the letter is written.
+                            todayPages = []
+                            today.handOver(
+                                from: CoachSpeaker(id: leaving.id, name: leaving.name),
+                                to: CoachSpeaker(id: coming.id, name: coming.name))
                         }
                     )
                     .environment(\.sceneTheme, squad.scene)
-                case .coach(let route):
-                    CoachPage(route: route, model: squad, pages: coachPages, note: today.coachLine)
-                        .environment(\.sceneTheme, squad.scene)
+                case .coachDeck, .coachEarlier, .coachCard:
+                    coachDeckPage(page)
+                        .environment(\.sceneTheme, today.scene)
                 }
             }
         }

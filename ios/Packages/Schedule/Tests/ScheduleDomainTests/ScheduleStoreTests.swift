@@ -21,7 +21,7 @@ struct ScheduleStoreTests {
         await backend.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("run")), .none, .none, .none]))
+                marks: [.trained([.sport("run")]), .disclaimer, .none, .trained([.sport("run")]), .none, .none, .none]))
         let store = store(backend)
         await store.load()
         #expect(store.phase == .ready)
@@ -43,6 +43,41 @@ struct ScheduleStoreTests {
         #expect(store.weeks.count == ScheduleStore.maxPastWeeks + 2)
         #expect(store.weeks.first == Fixtures.day("2026-08-24"))
         #expect(store.weeks.last == Fixtures.day("2026-10-26"))
+    }
+
+    @Test func weeksAreNumberedFromTheSquadsFirstWeek() async throws {
+        // The squad began the week of 10-05; the member joined two weeks later.
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2026-10-21"), squadFirstWeek: Fixtures.day("2026-10-07")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [3, 4])
+        #expect(profile.startsWithNotYetJoined(store.weeks), "W1 and W2 are the squad's, not theirs: 还未入队")
+    }
+
+    @Test func aFoundingMemberHasNoNotYetJoinedChip() async throws {
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2026-10-08"), squadFirstWeek: Fixtures.day("2026-10-05")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [1, 2, 3, 4])
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
+    }
+
+    @Test func outsideASquadWeeksCountFromTheirOwnFirst() async throws {
+        let store = store(FakeBackend(firstWeek: Fixtures.day("2026-10-12")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [1, 2, 3])
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
+    }
+
+    @Test func noNotYetJoinedChipOnceTheWeeksNoLongerReachTheJoinedWeek() async throws {
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2025-02-03"), squadFirstWeek: Fixtures.day("2025-01-06")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
     }
 
     @Test func signedOutAndOfflineSayWhere() async {
@@ -86,8 +121,9 @@ struct ScheduleStoreTests {
         #expect(saved.last?.first == .rest)
     }
 
-    /// The poster's character trains at today's 练了, else today's plan, as the board has it.
-    @Test func todaysActivityIsTodaysCheckInElseTodaysPlan() async throws {
+    /// The poster's character trains at the sport today's row shows: the plan, as the board has
+    /// it, else the latest 练了 on a day without a planned sport.
+    @Test func todaysActivityIsTodaysPlanElseTodaysCheckIn() async throws {
         let backend = FakeBackend()
         let store = store(backend)
         #expect(store.todaysActivity == nil)
@@ -105,15 +141,42 @@ struct ScheduleStoreTests {
         await trained.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.none, .none, .none, .trained(.sport("climb")), .none, .none, .none]))
+                marks: [.none, .none, .none, .trained([.sport("climb")]), .none, .none, .none]))
         let climbed = self.store(trained)
         await climbed.load()
-        #expect(climbed.todaysActivity == .sport("climb"))
+        #expect(climbed.todaysActivity == .sport("strength"), "the plan stays what the member made it")
 
         // Saturday is a rest day.
         let resting = self.store(FakeBackend(), at: Fixtures.noon("2026-10-24"))
         await resting.load()
         #expect(resting.todaysActivity == nil)
+    }
+
+    /// A tapped day's character trains at the sport its lane shows, in any week or the
+    /// 我的每周计划, past days included; a rest day has none.
+    @Test func shownActivityIsTheTappedLanesSport() async throws {
+        let trained = FakeBackend()
+        await trained.set(
+            try WeekSheet(
+                weekStart: thisWeek.adding(days: -7), plan: Fixtures.plan,
+                marks: [.none, .none, .trained([.sport("climb")]), .none, .none, .none, .none]))
+        let store = store(trained)
+        #expect(store.shownActivity(on: 0) == nil, "nothing before the week loads")
+        await store.load()
+        #expect(store.shownActivity(on: 1) == .sport("tennis"))
+        #expect(store.shownActivity(on: 2) == nil, "a rest day")
+        #expect(store.shownActivity(on: 9) == nil)
+        await store.tap(5)
+        await store.pick(.sport("swim"))
+        #expect(store.shownActivity(on: 5) == .sport("swim"), "a pick plays at once")
+
+        await store.show(thisWeek.adding(days: -7))
+        #expect(store.shownActivity(on: 0) == .sport("run"), "a past day plays though it can't change")
+        #expect(store.shownActivity(on: 2) == .sport("climb"), "a rest day trained anyway plays what was trained")
+
+        await store.showTemplate()
+        #expect(store.shownActivity(on: 3) == .sport("strength"))
+        #expect(store.shownActivity(on: 5) == nil)
     }
 
     @Test func aPastWeekCantChange() async {

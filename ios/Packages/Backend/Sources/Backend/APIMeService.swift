@@ -57,8 +57,30 @@ public struct APIMeService: MeService {
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
                 board: board,
                 unlocks: standing.unlocks,
-                stock: standing.stock, claimed: standing.claimed, weekGlance: glance,
+                stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
                 record: record)
+        }
+    }
+
+    /// 外卡记录, its squadmates named and drawn from the squad's today. A today that doesn't load
+    /// leaves them as members without a character.
+    public func records() async throws(MeError) -> WildcardRecords {
+        try await me { () throws(APIError) in
+            var characters: [MemberID: MemberCharacter] = [:]
+            if let squad = try await api.mySquad(), let today = try? await api.today(of: squad.id) {
+                for member in today.members {
+                    characters[member.member] = member.character
+                }
+            }
+            return try await api.records { member in
+                RecordMate(
+                    member: member,
+                    character: characters[member].map { character in
+                        MeCharacter(
+                            nickname: character.nickname.text, outfit: Outfit(character.look),
+                            persona: Persona(character.look))
+                    })
+            }
         }
     }
 
@@ -68,7 +90,8 @@ public struct APIMeService: MeService {
         let monday = today.weekStart
         let wire = try await api.weeklyPlanWire(weekStart: monday)
         let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
-        let firstWeek = try wire.firstWeek.map { text throws(APIError) in
+        // The squad's W1 when there is one, so the tile shows the squad's week number.
+        let firstWeek = try (wire.squadFirstWeek ?? wire.firstWeek).map { text throws(APIError) in
             try api.read { () throws(ContractsError) in try LocalDay(text) }
         }
         let checkIns = try await api.myCheckIns(from: monday, through: monday.adding(days: 6))

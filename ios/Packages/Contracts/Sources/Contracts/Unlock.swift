@@ -29,8 +29,12 @@ public struct UnlockStanding: Hashable, Sendable {
     /// The unlocked pieces the member claimed (领取) into their wardrobe.
     public let claimed: Set<String>
     public let stock: StreetStock
+    /// What was given the member, in their wardrobe on no store's rack and worn without 领取: the
+    /// coach's gifts they opened (拆开), then the pieces the team gave, each the earliest given
+    /// first. An unopened gift waits in its box on the coach page.
+    public let gifts: [String]
 
-    public init(unlocks: [Unlock], claimed: Set<String> = [], stock: StreetStock) {
-        (self.unlocks, self.claimed, self.stock) = (unlocks, claimed, stock)
+    public init(unlocks: [Unlock], claimed: Set<String> = [], stock: StreetStock, gifts: [String] = []) {
+        (self.unlocks, self.claimed, self.stock, self.gifts) = (unlocks, claimed, stock, gifts)
     }
 }

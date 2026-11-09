@@ -1,0 +1,125 @@
+import { setTimeout as wait } from 'node:timers/promises';
+
+import { z } from 'zod';
+
+import type { Log } from './log.js';
+
+/**
+ * What happened, for the work that follows it after the request has answered: a request saves,
+ * publishes an event and answers; each subscriber (a coach looking at a post, the pushes a
+ * comment sends) runs on its own. Hosted, each kind is a Pub/Sub topic and each subscriber a push
+ * subscription to `/jobs/events/<subscriber>` (`scripts/gcp-setup.sh`); elsewhere they run in
+ * the request (`inProcessEvents`). Delivery is at least once, so every subscriber is safe to run
+ * twice.
+ */
+
+const Id = z.uuid();
+
+/** A check-in just made and shared to these squads. */
+export const CheckInCreated = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('check-in.created'),
+  checkIn: Id,
+  squads: z.array(Id).min(1).max(8),
+});
+export type CheckInCreated = z.infer<typeof CheckInCreated>;
+
+/** A comment just written, with whom it concerns. */
+export const CommentCreated = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('comment.created'),
+  checkIn: Id,
+  comment: Id,
+  /** Who wrote it. */
+  commenter: Id,
+  /** Who posted the check-in. */
+  author: Id,
+  text: z.string().min(1).max(1000),
+  replyTo: Id.optional(),
+  mentions: z.array(Id).max(8),
+  /** The coach it replies to or @s, which answers it. */
+  coach: z.string().max(40).optional(),
+  /** The squads the writer sees the check-in through. */
+  squads: z.array(Id).max(8),
+});
+export type CommentCreated = z.infer<typeof CommentCreated>;
+
+export const ServerEvent = z.discriminatedUnion('kind', [CheckInCreated, CommentCreated]);
+export type ServerEvent = z.infer<typeof ServerEvent>;
+
+/**
+ * Publishes an event once what it tells of is saved, for the work that follows it. Never throws:
+ * an event that can't go out is logged.
+ */
+export type PublishEvent = (event: ServerEvent) => Promise<void>;
+
+/** Who reacts to events: each a Pub/Sub subscription on the topic of its kind. */
+export const Subscriber = z.enum(['coach-look', 'comment-push', 'coach-answer']);
+export type Subscriber = z.infer<typeof Subscriber>;
+
+/** The kind of event each subscriber takes. */
+export const SUBSCRIBERS = {
+  'coach-look': 'check-in.created',
+  'comment-push': 'comment.created',
+  'coach-answer': 'comment.created',
+} as const satisfies Record<Subscriber, ServerEvent['kind']>;
+
+/** What each subscriber does with its kind of event. Throwing has Pub/Sub deliver it again. */
+export type EventHandlers = {
+  readonly [S in Subscriber]: (
+    event: Extract<ServerEvent, { kind: (typeof SUBSCRIBERS)[S] }>,
+  ) => Promise<void>;
+};
+
+/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`. */
+export const topicOf = (kind: ServerEvent['kind']): string => kind.replace('.', '-');
+
+/** Runs one subscriber on an event; false when the event isn't of its kind. */
+export async function deliver(
+  handlers: EventHandlers,
+  { subscriber, event }: { readonly subscriber: Subscriber; readonly event: ServerEvent },
+): Promise<boolean> {
+  if (SUBSCRIBERS[subscriber] !== event.kind) return false;
+  switch (event.kind) {
+    case 'check-in.created':
+      await handlers['coach-look'](event);
+      return true;
+    case 'comment.created':
+      await (subscriber === 'coach-answer'
+        ? handlers['coach-answer'](event)
+        : handlers['comment-push'](event));
+      return true;
+  }
+}
+
+/**
+ * How long a request waits for the work an event starts when it runs in the request, inside the
+ * app's 15-second request timeout; the rest is the coach job's to finish.
+ */
+const IN_REQUEST_WAIT_MS = 8_000;
+
+/**
+ * Events without Pub/Sub (local stacks, tests, and the hosted server when Pub/Sub can't be
+ * reached): every subscriber of the event runs in the request, side by side, which waits at most
+ * `IN_REQUEST_WAIT_MS`, since Cloud Run gives the server CPU only while a request runs. A failure
+ * is logged; what the request saved stays saved.
+ */
+export function inProcessEvents(handlers: EventHandlers, log: Log): PublishEvent {
+  return async (event) => {
+    const subscribers = Subscriber.options.filter((each) => SUBSCRIBERS[each] === event.kind);
+    const stop = new AbortController();
+    const late = wait(IN_REQUEST_WAIT_MS, 'late' as const, { signal: stop.signal }).catch(
+      () => undefined,
+    );
+    const working = Promise.all(
+      subscribers.map((subscriber) =>
+        deliver(handlers, { subscriber, event }).catch((error: unknown) => {
+          log.error('event subscriber failed', { kind: event.kind, subscriber, error });
+        }),
+      ),
+    );
+    const outcome = await Promise.race([working, late]);
+    stop.abort();
+    if (outcome === 'late') log.warn('event subscribers still running', { kind: event.kind });
+  };
+}

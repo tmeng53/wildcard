@@ -45,10 +45,11 @@ func theDayTurnsAtMidnightOnTheWallClock(moment: String, zone: String, day: Stri
     #expect(try LocalDay("2026-10-12").weekNumber(since: joined) == 1)
 }
 
-@Test func numbersTheDayFromTheFirstOne() throws {
-    let hired = try LocalDay("2026-11-03")
-    #expect(hired.dayNumber(since: hired) == 1)
-    #expect(try LocalDay("2026-11-05").dayNumber(since: hired) == 3)
-    #expect(try LocalDay("2027-01-01").dayNumber(since: hired) == 60)
-    #expect(try LocalDay("2026-11-01").dayNumber(since: hired) == 1)
+@Test func countsTheDaysBetweenTwoDays() throws {
+    let hired = try LocalDay("2026-11-08")
+    #expect(hired.days(since: hired) == 0)
+    #expect(try LocalDay("2026-11-09").days(since: hired) == 1)
+    #expect(try LocalDay("2026-11-15").days(since: hired) == 7)
+    #expect(try LocalDay("2027-01-01").days(since: hired) == 54)
+    #expect(try LocalDay("2026-11-01").days(since: hired) == -7)
 }

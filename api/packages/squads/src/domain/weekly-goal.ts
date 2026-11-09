@@ -4,9 +4,9 @@ import { SceneWeek } from './scene.js';
 import type { MemberId } from './squad.js';
 
 /**
- * A squad's weekly goal (小队每周目标), as its captain sets it: how many days each member trains
- * on average (人均 N 天). The squad's goal for a week is that times its members, and anyone's
- * trained days count towards it.
+ * A squad's weekly goal (小队每周目标), as its captain sets it: how many times each member trains
+ * on average (人均 N 次). The squad's goal for a week is that times its members, and anyone's
+ * 训练 count towards it, several on one day each counting.
  */
 export const DaysPerMember = z.int().min(1).max(7);
 export type DaysPerMember = z.infer<typeof DaysPerMember>;

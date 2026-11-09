@@ -19,7 +19,7 @@ public struct SquadMember: Identifiable, Sendable, Hashable {
     }
 }
 
-/// The squad's week: its name, the days anyone trained against its goal (人均 N 天 times its
+/// The squad's week: its name, the 练了 anyone sent against its goal (人均 N 次 times its
 /// members), and everyone's today.
 public struct SquadWeek: Sendable, Hashable {
     public let name: String
@@ -66,41 +66,23 @@ public struct WeekDayDetail: Sendable, Hashable {
         }
     }
 
-    /// What the day holds, as the app words it: 跑步 32 分钟, 休息日, 请假了, or the plan's sport.
-    public let line: String
+    /// What the day holds, as the app words it, one line each: every session trained (跑步 32 分钟),
+    /// or 休息日, 请假了, or the plan's sport.
+    public let lines: [String]
     /// The line is the plan's sport, not yet done: drawn light.
     public let isPlan: Bool
     /// Nil for a day still to come, which shows no meals.
     public let meals: Meals?
 
-    public init(line: String, isPlan: Bool, meals: Meals?) {
-        self.line = line
+    public init(lines: [String], isPlan: Bool, meals: Meals?) {
+        self.lines = lines
         self.isPlan = isPlan
         self.meals = meals
     }
-}
 
-/// My week: what I trained, my count against my plan, and Monday to Sunday, each day with what it
-/// holds. No calories or body numbers.
-public struct MyWeek: Sendable, Hashable {
-    public let done: Int
-    public let planned: Int
-    /// Monday first, seven days.
-    public let days: [WeekDayStatus]
-    /// Today's index in `days`, if this is the current week.
-    public let today: Int?
-    /// Monday first, seven days: what each day shows once picked; empty for a week whose days
-    /// can't be picked.
-    public let details: [WeekDayDetail]
-
-    public init(
-        done: Int, planned: Int, days: [WeekDayStatus], today: Int?, details: [WeekDayDetail]
-    ) {
-        self.done = done
-        self.planned = planned
-        self.days = days
-        self.today = today
-        self.details = details
+    /// A day that holds one thing.
+    public init(line: String, isPlan: Bool, meals: Meals?) {
+        self.init(lines: [line], isPlan: isPlan, meals: meals)
     }
 }
 
@@ -131,6 +113,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private var openSquad: (() -> Void)?
     private var collapse: (() -> Void)?
     private var morph: GlassMorph?
+    private var completeChallenge: (() -> Void)?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -154,7 +137,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                     SquadPage(squad: squad, avatar: avatar, footer: footer, openSquad: openSquad)
                         .squadCardPage()
                         .id(SquadCardPage.squad)
-                    MyWeekPage(mine: mine, pickedDay: $pickedDay)
+                    MyWeekPage(mine: mine, pickedDay: $pickedDay, completeChallenge: completeChallenge)
                         .squadCardPage()
                         .id(SquadCardPage.mine)
                 }
@@ -215,6 +198,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         return card
     }
 
+    /// 我完成了 on today's challenge, under my week's today (`MyWeek.challenge`).
+    public func completesChallenge(_ action: @escaping () -> Void) -> Self {
+        var card = self
+        card.completeChallenge = action
+        return card
+    }
+
     /// The card's glass morphs into the glass with the same id, its folded capsule.
     public func morphs(_ morph: GlassMorph) -> Self {
         var card = self
@@ -255,8 +245,8 @@ private struct PageHeader: View {
     let title: String?
     let count: Int
     let goal: Int
-    var unit: Text?  // A word after the score (天).
-    var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
+    var unit: Text?  // A word after the score (次).
+    var showsExtra = false  // 训练 past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
     var body: some View {
@@ -290,7 +280,7 @@ private struct PageHeader: View {
                 }
                 if showsExtra, count > goal {
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
-                        .accessibilityLabel(Text("多练 \(count - goal) 天", bundle: .module))
+                        .accessibilityLabel(Text("多练 \(count - goal) 次", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
                 }
             }
@@ -317,7 +307,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
                 label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                unit: Text("天", bundle: .module), showsExtra: true, open: openSquad)
+                unit: Text("次", bundle: .module), showsExtra: true, open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -357,6 +347,7 @@ private struct MyWeekPage: View {
     @Environment(\.sceneTheme) private var theme
     let mine: MyWeek
     @Binding var pickedDay: Int?
+    let completeChallenge: (() -> Void)?
 
     var body: some View {
         let picked = shownDay
@@ -388,6 +379,9 @@ private struct MyWeekPage: View {
             Spacer(minLength: Space.s)
             if mine.details.indices.contains(picked) {
                 DayLine(detail: mine.details[picked], weekday: picked, isToday: picked == mine.today)
+            }
+            if let challenge = mine.challenge, picked == mine.today {
+                ChallengeRow(challenge: challenge, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)

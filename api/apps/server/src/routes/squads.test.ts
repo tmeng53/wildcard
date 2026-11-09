@@ -35,6 +35,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -42,11 +43,13 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -110,11 +113,14 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
+  ...unusedFeedback,
   scenes: scenesOn(db),
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -136,14 +142,18 @@ async function call({
   path,
   token,
   body,
+  language,
 }: {
   readonly method: string;
   readonly path: string;
   readonly token?: string | undefined;
   readonly body?: unknown;
+  /** The app's language, as `Accept-Language`. */
+  readonly language?: string | undefined;
 }) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  if (language !== undefined) headers['accept-language'] = language;
   const response = await app.request(path, {
     method,
     headers,
@@ -762,7 +772,7 @@ describe('the squad’s weekly goal', () => {
     expect(today.body).toMatchObject({ squadWeek: { plannedDays: 10, daysPerMember: 5 } });
   });
 
-  it('averages the days trained per member over up to 4 finished weeks', async () => {
+  it('averages the 训练 per member over up to 4 finished weeks', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const DAY = 86_400_000;
     // This week's Monday, as a member with no time zone (UTC) has it.
@@ -798,7 +808,7 @@ describe('the squad’s weekly goal', () => {
       await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
         values (${checkIn}, ${id}, 1)`.execute(db);
     };
-    // The first week (me alone): 1 day. Last week: me 3 days (one twice), my friend 2.
+    // The first week (me alone): 1. Last week: me 4 (twice on one day), my friend 2.
     await trained(me.userId, dayOf(-8));
     for (const offset of [-7, -7, -6, -5]) await trained(me.userId, dayOf(offset));
     for (const offset of [-4, -3]) await trained(friend.userId, dayOf(offset));
@@ -806,8 +816,46 @@ describe('the squad’s weekly goal', () => {
     await trained(friend.userId, dayOf(0));
 
     const goal = await goalOf(me.token, id);
-    // (1 / 1 + 5 / 2) / 2 = 1.75, to one decimal.
-    expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 1.8 } });
+    // (1 / 1 + 6 / 2) / 2 = 2.
+    expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 2 } });
+  });
+
+  it('keeps the recent average at 7 a member, the highest goal, however often they trained', async () => {
+    const me = await signUp();
+    const DAY = 86_400_000;
+    const today = new Date();
+    const monday = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
+        ((today.getUTCDay() + 6) % 7) * DAY,
+    );
+    const lastWeek = (offset: number) =>
+      new Date(monday.getTime() + (offset - 7) * DAY).toISOString().slice(0, 10);
+    // Made 8 days ago: only last week finished.
+    const id = randomUUID();
+    const made = new Date(monday.getTime() - 7 * DAY).toISOString();
+    await sql`insert into public.squads (id, name, invite_code, created_by, captain_id, created_at)
+      values (${id}, '双练队', ${inviteCodeFor(id)}, ${me.userId}, ${me.userId}, ${made})`.execute(
+      db,
+    );
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${id}, ${me.userId}, ${made})`.execute(db);
+    await sql`insert into public.squad_membership_events (squad_id, member_id, kind, actor_id, at)
+      values (${id}, ${me.userId}, 'joined', ${me.userId}, ${made})`.execute(db);
+    // Twice a day, every day of last week: 14.
+    for (let day = 0; day < 7; day += 1) {
+      for (const hour of ['08', '18']) {
+        const checkIn = randomUUID();
+        const on = lastWeek(day);
+        await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+          values (${checkIn}, ${me.userId}, ${on}, ${`${on}T${hour}:00:00.000Z`}, 'trained',
+            '{"version":1,"sport":"run"}')`.execute(db);
+        await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
+          values (${checkIn}, ${id}, 1)`.execute(db);
+      }
+    }
+
+    const goal = await goalOf(me.token, id);
+    expect(goal.body).toMatchObject({ recent: { weeks: 1, daysPerMember: 7 } });
   });
 });
 
@@ -822,7 +870,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, timeZone: change.timeZone },
     });
 
-  it('takes the creator’s pick, and lets only the captain change it from next week', async () => {
+  it('takes the creator’s pick, and lets only the captain change it, at once', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const id = randomUUID();
     const created = await call({
@@ -861,12 +909,14 @@ describe('the squad’s time zone', () => {
       'TIME_ZONE_UNKNOWN',
     ]);
     const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+    // At once, whatever the day on either clock.
     expect(changed.body).toStrictEqual({
       version: 1,
-      timeZone: 'Asia/Taipei',
+      timeZone: 'America/Los_Angeles',
       nextTimeZone: 'America/Los_Angeles',
       canChange: true,
     });
+    expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
   });
 
   it('keeps the creator’s own zone when an older build sends none', async () => {
@@ -888,5 +938,65 @@ describe('the squad’s time zone', () => {
     expect((await zoneOf(other.token, plain.id)).body).toMatchObject({
       timeZone: 'America/New_York',
     });
+  });
+});
+
+describe('the squad’s language', () => {
+  const languageOf = (token: string, { squad, language }: { squad: string; language?: string }) =>
+    call({ method: 'GET', path: `/squads/${squad}/language`, token, language });
+  const setLanguage = (token: string, change: { squad: string; language: unknown }) =>
+    call({
+      method: 'PUT',
+      path: `/squads/${change.squad}/language`,
+      token,
+      body: { version: 1, language: change.language },
+    });
+
+  it('reads the captain’s app language until the captain picks one, which only the captain may', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await newSquad(me.token);
+    await call({
+      method: 'POST',
+      path: `/squad-invites/${squad.inviteCode}/accept`,
+      token: friend.token,
+    });
+    // No app language heard yet: Simplified Chinese.
+    expect((await languageOf(friend.token, { squad: squad.id })).body).toStrictEqual({
+      version: 1,
+      language: 'zh-Hans',
+      canChange: false,
+    });
+    // The captain's app speaks 繁體 (kept with their profile); a member's own doesn't count.
+    const saved = await call({
+      method: 'PUT',
+      path: '/me/profile',
+      token: me.token,
+      body: { version: 1, timeZone: 'Asia/Taipei' },
+      language: 'zh-Hant',
+    });
+    expect(saved.status).toBe(200);
+    // Heard before the profile existed, so heard again.
+    await languageOf(me.token, { squad: squad.id, language: 'zh-Hant' });
+    expect(
+      (await languageOf(friend.token, { squad: squad.id, language: 'en' })).body,
+    ).toMatchObject({
+      language: 'zh-Hant',
+    });
+
+    const refused = await setLanguage(friend.token, { squad: squad.id, language: 'en' });
+    expect([refused.status, reason(refused)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const unknown = await setLanguage(me.token, { squad: squad.id, language: 'fr' });
+    expect(unknown.status).toBe(400);
+    const changed = await setLanguage(me.token, { squad: squad.id, language: 'en' });
+    expect(changed.body).toStrictEqual({ version: 1, language: 'en', canChange: true });
+    // Picked, it no longer follows the captain's app.
+    expect(
+      (await languageOf(me.token, { squad: squad.id, language: 'zh-Hans' })).body,
+    ).toMatchObject({
+      language: 'en',
+    });
+    const outsider = await signUp();
+    const notJoined = await languageOf(outsider.token, { squad: squad.id });
+    expect([notJoined.status, reason(notJoined)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 });

@@ -10,6 +10,7 @@ import DesignSystemUI
 import FeedDomain
 import FeedUI
 import Foundation
+import LocationDomain
 import MeDomain
 import NotificationsDomain
 import Observation
@@ -102,7 +103,10 @@ final class AppModel {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
             store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
-        api = WildcardAPI(url: config.apiURL, account: account, language: { AppLanguage.current.rawValue })
+        // Check-in photos seen once are kept, so 动态 doesn't download them again.
+        api = WildcardAPI(
+            url: config.apiURL, account: account, language: { AppLanguage.current.rawValue },
+            photos: PhotoCache(directory: URL.cachesDirectory.appending(path: "Photos", directoryHint: .isDirectory)))
         memberAPI = { [account] member in
             WildcardAPI(
                 url: config.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue })
@@ -137,7 +141,7 @@ final class AppModel {
             switch state {
             case .signedOut: await signedOut()
             case .signedIn:
-                await registerForPush()
+                await registerDevice()
                 if case .starting = screen, !openingUnderCover { await openHome() }
             }
         }
@@ -209,6 +213,7 @@ final class AppModel {
         SceneTheme.list(catalog.scenes)
         DiceLines.shared.show(catalog.diceLines)
         StarterStock.shared.show(catalog.starterStock)
+        Switchboard.shared.show(catalog.switches)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
@@ -286,7 +291,8 @@ final class AppModel {
             noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
-            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() })
+            confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() },
+            feedback: APIFeedbackService(api: api))
         let squad = SquadSettingsModel(
             service: APISquadSettingsService(api: api),
             changed: { [weak self] in Task { await self?.squadChanged() } },
@@ -343,16 +349,14 @@ final class AppModel {
     /// 通知 over our API.
     var notices: any NoticeSource { APINoticeSource(api: api) }
 
-    private func registerForPush() async {
-        try? await Push.registration.signedIn(APIDeviceRegistry(api: api))
-    }
-
     private func signedOut() async {
         // The next account on this phone reads its own; until then it is no admin.
         isAdmin = false
+        Self.location.signedOut()
         SignUpProgress.clear()
         KeptScene.forgetAll()
         folders.forgetAll()
+        await api.forgetPhotos()
         shared?.forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
@@ -389,7 +393,4 @@ extension AppModel {
             options: SceneOption.options(from: scene.history),
             service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
-
-    /// How long the loading screen waits for the squad's scene before opening on the kept one.
-    static let sceneWait = Duration.seconds(3)
 }

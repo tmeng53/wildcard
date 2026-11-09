@@ -1,6 +1,6 @@
 import type { ReaderLanguage } from '@wildcard/language-model';
 
-import type { EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
+import type { Birthday, EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
 import { ProfileMissingError } from '../errors.js';
 import type { PastLocalHour, ProfileStore } from '../ports.js';
 import { findProfile } from './members/find-profile.js';
@@ -21,6 +21,11 @@ export interface Members {
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<void>;
   /**
+   * Saves the member's birthday, or removes it for null. Throws `ProfileMissingError` before they
+   * have a profile.
+   */
+  saveBirthday(member: MemberId, birthday: Birthday | null): Promise<void>;
+  /**
    * Keeps the language the member's app speaks, for the AI to write to them in. Says whether it
    * was kept: not before they have a profile.
    */
@@ -30,6 +35,11 @@ export interface Members {
    * app says another. Members without a profile are left out.
    */
   languages(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, ReaderLanguage>>;
+  /**
+   * The time zone each of these members' day follows (their profile's), by member. Members
+   * without a profile are left out.
+   */
+  timeZones(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, string>>;
   /** When the member joined (first saved their profile), or `undefined` before that. */
   joinedAt(member: MemberId): Promise<Date | undefined>;
   /**
@@ -48,8 +58,12 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     equipTitle: async (member, title) => {
       if (!(await deps.store.equipTitle(member, title))) throw new ProfileMissingError();
     },
+    saveBirthday: async (member, birthday) => {
+      if (!(await deps.store.saveBirthday(member, birthday))) throw new ProfileMissingError();
+    },
     saveLanguage: (member, language) => deps.store.saveLanguage(member, language),
     languages: (members) => deps.store.languages(members),
+    timeZones: (members) => deps.store.timeZones(members),
     joinedAt: (member) => deps.store.joinedAt(member),
     pastLocalHour: (input) => deps.store.pastLocalHour(input),
   };

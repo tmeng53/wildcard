@@ -59,7 +59,7 @@ public final class TodayModel {
     /// anywhere outside its capsules closes it), a check-in is being written (the compose and
     /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        guard !holdsTabBar, opening == nil else { return false }
+        guard !holdsTabBar, opening == nil, shownLetter == nil else { return false }
         return switch step {
         case .scene: !isBurstOpen
         case .composing, .disclaimer: false
@@ -149,7 +149,7 @@ public final class TodayModel {
     var holdsTabBar = false
     /// A takeover scene's opening, over the whole screen until 进场 (`TodayModel+Opening.swift`).
     var opening: OpeningArt.Loaded?
-    /// The squad posed for the opening's group photo, apart from the home's figures.
+    /// The squad for the opening's group photo, apart from the home's figures (`+Opening`).
     var openingFigures: [OpeningFigure] = []
     /// The banner on top, over any page, or a celebration's card (on 今天 only), and those waiting.
     var notice: Notice?
@@ -228,7 +228,9 @@ public final class TodayModel {
             }
         }
         if !holdsDress || player == nil { dressMe(hop: false) }
-        cast.update(home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach)
+        cast.update(
+            home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach,
+            handover: store.handover)
         if opening != nil { standOpeningSquad() }
     }
 
@@ -248,16 +250,14 @@ public final class TodayModel {
     /// writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
-    /// Loads the home, on opening 今天, on coming back to the app, and when a tapped
-    /// notification brings the member back to it.
+    /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
     public func load() async {
         await store.load()
         showLoaded()
         await health?.refresh()
     }
 
-    /// How often the home is read again while 今天 is on screen, so teammates' check-ins show
-    /// without leaving the app.
+    /// How often the home is read again while 今天 is on screen, so teammates' posts show up.
     static let rereadEvery = Duration.seconds(60)
 
     /// Reads the home again while the scene shows nothing in hand: not while a check-in is being

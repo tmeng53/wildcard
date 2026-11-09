@@ -34,17 +34,31 @@ extension MainTabs {
         }
     }
 
-    /// 今天 itself, with today's pats on me again or the coach's note shown again.
+    /// 今天 itself, with today's pats on me again; a morning note opens the coach's page, where
+    /// it is one of its cards.
     private func openToday(_ destination: AppDestination) {
         selection = .today
         todayPages = []
         switch destination {
         case .pats: today.replayPatsOnMe()
-        // On the home itself, where the coach stands.
-        case .coachNote(let note): today.showAgain(note)
-        case .waitingCoachNote: today.showWaitingNote()
+        case .coachNote, .waitingCoachNote: openCoachDeck()
+        case .coachLetter(let letter): today.showAgain(letter)
         default: break
         }
+    }
+
+    /// Whether a 战报 is open over the app.
+    var showsStory: Binding<Bool> {
+        Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })
+    }
+
+    /// A 战报 closed. After its 排下周, 出赛表 opens on the week after the story's, only now: a
+    /// push asked for while the story's cover is still going down is dropped.
+    func storyClosed() {
+        guard recap.plans != plansOpened, let week = recap.planWeek else { return }
+        plansOpened = recap.plans
+        schedule.plan(week)
+        open(.schedule)
     }
 
     /// A place that is a tab, or on one: 通知 closes, unless it is the place.
@@ -52,13 +66,15 @@ extension MainTabs {
         switch destination {
         case .feed:
             selection = .feed
-        case .recap(_, let week):
-            selection = .feed
+        case .recap(let squad, let week):
+            // Over 小队, where the story stays in 往期战报 once it closes.
+            selection = .today
+            todayPages = [.squad]
             Task {
                 await recap.refresh()
-                if recap.latest?.week.monday == week { recap.openLatest() }
+                await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .waitingCoachNote:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote:
             openToday(destination)
         case .schedule:
             selection = .profile
@@ -108,6 +124,19 @@ extension MainTabs {
         (wall, post) = (nil, nil)
     }
 
+    /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
+    func openWardrobe(_ kind: Unlock.Kind, item: String) {
+        selection = .profile
+        closeProfilePages()
+        Task { await wardrobe.open(kind, item: item) }
+    }
+
+    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队.
+    func tellWaiting() {
+        tellBroadcasts()
+        tellGoalSuggestions()
+    }
+
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
     func tellBroadcasts() {
         // Whose phone this is shows once the home is in: until then, nothing is told.
@@ -132,7 +161,7 @@ extension MainTabs {
                 sceneMoved()
             case .comment(_, let post), .coachReply(let post, _, _, _, _):
                 if !isOnScreen(post) { tell(notice) }
-            case .dailyProgress, .weeklyAwards, .coachNote:
+            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter:
                 tell(notice)
             }
         }

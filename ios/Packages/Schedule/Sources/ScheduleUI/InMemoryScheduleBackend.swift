@@ -22,7 +22,8 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         for sheet in sheets { self.sheets[sheet.weekStart] = sheet }
     }
 
-    /// Tracy, who joined five weeks ago: most planned days trained, now and then a 请假条 or a
+    /// Tracy, who joined five weeks ago, two weeks after her squad began (so the chips start with
+    /// 还未入队 and number her first week W3): most planned days trained, now and then a 请假条 or a
     /// day missed, today trained, and a title or more for each week that is over.
     public static func sample(now: Date, timeZone: TimeZone = .current) -> InMemoryScheduleBackend {
         let today = LocalDay(at: now, in: timeZone)
@@ -34,7 +35,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
             let marks = (0..<WeeklyPlan.dayCount).map { index -> DayMark in
                 let day = weekStart.adding(days: index)
                 guard day <= today, case .train(let planned) = plan[index] else { return .none }
-                let trained = DayMark.trained(planned ?? .sport("run"))
+                let trained = DayMark.trained([planned ?? .sport("run")])
                 if day == today { return trained }
                 // Most planned days trained; now and then a 请假条 or a day missed.
                 switch (index + offset * 3 + 21) % 7 {
@@ -49,7 +50,10 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
                 weekStart: weekStart, plan: plan, marks: marks, titles: titles, fuel: fuel)
         }
         return InMemoryScheduleBackend(
-            profile: ScheduleProfile(nickname: "Tracy", timeZone: timeZone, firstWeek: firstWeek), today: today,
+            profile: ScheduleProfile(
+                nickname: "Tracy", timeZone: timeZone, firstWeek: firstWeek,
+                squadFirstWeek: firstWeek.adding(days: -7 * 2)),
+            today: today,
             sheets: sheets)
     }
 

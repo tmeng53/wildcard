@@ -42,15 +42,25 @@ public final class ScheduleModel {
     }
 
     public let store: ScheduleStore
-    /// The member's character in the poster's corner, training at today's sport (today's 练了,
-    /// else today's plan) in its kit, or at the squad's scene's sport on a day with neither.
+    /// What the poster's character does.
+    enum Play: Equatable {
+        case training(Activity)
+        /// Sitting down, as on the home on a rest day.
+        case resting
+    }
+
+    /// The member's character in the poster's corner, doing `play` in its kit.
     private(set) var player: CharacterPlayer?
+    /// The day of the shown week (Monday 0) the member last tapped, whose sport the character
+    /// plays, past days too; nil plays today's. Another week or the 我的每周计划 starts again from
+    /// today.
+    private(set) var watchedDay: Int?
     /// The look `player` wears: the stand-in until the profile brings the member's own.
     private var look: CharacterLook?
     /// The squad's scene, whose sport `player` trains at when today has none.
     private var scene = SceneTheme.gym
-    /// Today's sport `player` trains at, as last made.
-    private var training: Activity?
+    /// What `player` was made to do.
+    private var played: Play?
     /// What `player` was made from, for drawing its key pose when the poster is saved.
     private var loop: (figure: Figure, clip: Clip)?
     private(set) var fuelOpen = false
@@ -69,15 +79,33 @@ public final class ScheduleModel {
         makePlayer()
     }
 
-    /// The look in today's sport's kit (else the scene's), looping its move; cheering as worn if
-    /// the kit can't be read.
+    /// What the character does now: the tapped day's sport, sitting down on a tapped rest day;
+    /// with no day tapped, today's sport (today's 练了, else today's plan), or the squad's scene's
+    /// on a day with neither.
+    var play: Play {
+        if let watchedDay {
+            return store.shownActivity(on: watchedDay).map(Play.training) ?? .resting
+        }
+        return .training(store.todaysActivity ?? .sport(scene.sport))
+    }
+
+    /// The look doing `play`: in the sport's kit looping its move, or sitting as worn; cheering as
+    /// worn if neither can be read.
     private func makePlayer() {
         let outfit = look.map { Outfit($0) } ?? PlaceholderCharacter.lifter
         let persona = look.map { Persona($0) } ?? .energetic
-        training = store.todaysActivity
-        let activity = training ?? .sport(scene.sport)
-        if let kitLoop = try? PlaceholderCharacter.trainingLoop(
-            for: activity, look: outfit, persona: persona, in: SportList.shared.catalog),
+        let play = play
+        played = play
+        if case .resting = play, let sitting = try? PlaceholderCharacter.sitting(persona: persona),
+            let figure = try? PlaceholderCharacter.figure(wearing: outfit),
+            let player = try? CharacterPlayer(figure: figure, idle: sitting)
+        {
+            (self.player, loop) = (player, (figure, sitting))
+            return
+        }
+        if case .training(let activity) = play,
+            let kitLoop = try? PlaceholderCharacter.trainingLoop(
+                for: activity, look: outfit, persona: persona, in: SportList.shared.catalog),
             let figure = try? PlaceholderCharacter.figure(wearing: kitLoop.outfit),
             let player = try? CharacterPlayer(figure: figure, idle: kitLoop.clip)
         {
@@ -92,16 +120,17 @@ public final class ScheduleModel {
     }
 
     /// Dresses the poster's character in the member's own look once the profile has one, and
-    /// puts it to today's sport when that changed.
+    /// puts it to what it plays when that changed.
     private func dressPlayer() {
         let mine = store.profile?.look
-        guard (mine != nil && mine != look) || store.todaysActivity != training else { return }
+        guard (mine != nil && mine != look) || play != played else { return }
         if let mine { look = mine }
         makePlayer()
     }
 
-    /// Puts the character to today's sport, when it changed.
-    func followToday() {
+    /// Puts the character to what it plays, when that changed (a 练了 read in, a day's sport
+    /// picked).
+    func followPlay() {
         dressPlayer()
     }
 
@@ -109,7 +138,7 @@ public final class ScheduleModel {
     func train(on scene: SceneTheme) {
         guard scene != self.scene else { return }
         self.scene = scene
-        makePlayer()
+        dressPlayer()
     }
 
     /// The character as the saved poster shows it: holding its sport's signature pose, never
@@ -136,13 +165,21 @@ public final class ScheduleModel {
     }
 
     func show(_ week: LocalDay) {
+        watchedDay = nil
         fuelOpen = false
         writingFuel = false
         Task { await store.show(week) }
     }
 
+    /// Shows the week to plan after a 战报 of the week before `week` (its 排下周): that week, or
+    /// this week once it has begun, as a 战报 read late is planning the week it is in.
+    public func plan(_ week: LocalDay) {
+        show(store.today.map { max(week, $0.weekStart) } ?? week)
+    }
+
     /// Shows the 我的每周计划 instead of a week, from its chip.
     func showTemplate() {
+        watchedDay = nil
         fuelOpen = false
         writingFuel = false
         Task { await store.showTemplate() }
@@ -155,9 +192,16 @@ public final class ScheduleModel {
 
     // MARK: The board
 
+    /// Puts the character to the day's sport, any day, and picks the day up where it can change;
+    /// a day that can't change lets go of the one held, so the picks never change a day the
+    /// character isn't playing.
     func tap(_ day: Int) {
         fuelOpen = false
-        Task { await store.tap(day) }
+        watchedDay = day
+        dressPlayer()
+        Task {
+            if await store.tap(day) == .locked { store.release() }
+        }
     }
 
     func pick(_ activity: Activity) {

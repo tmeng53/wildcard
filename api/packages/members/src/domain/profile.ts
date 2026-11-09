@@ -98,6 +98,24 @@ export const JERSEY_NUMBER_MAX = 99;
 export const JerseyNumber = z.int().min(0).max(JERSEY_NUMBER_MAX);
 export type JerseyNumber = z.infer<typeof JerseyNumber>;
 
+/** The earliest birthday a member may give. */
+export const BIRTHDAY_EARLIEST = '1900-01-01';
+
+/**
+ * The member's birthday, as a calendar date (`YYYY-MM-DD`), 1900 or later. Only the member gives
+ * it, and only if they choose to; the route that takes it also refuses one after today.
+ */
+export const Birthday = z.iso
+  .date()
+  .refine((day) => day >= BIRTHDAY_EARLIEST, { message: `Must be ${BIRTHDAY_EARLIEST} or later` })
+  .brand<'Birthday'>();
+export type Birthday = z.infer<typeof Birthday>;
+
+/** The latest birthday anyone can give at `now`: today where the day has begun first (UTC+14). */
+export function latestBirthday(now: Date): string {
+  return new Date(now.getTime() + 14 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 /** A member's own settings. */
 export const Profile = z.strictObject({
   timeZone: TimeZone,
@@ -107,11 +125,13 @@ export const Profile = z.strictObject({
   character: Character.nullable(),
   /** Null until the member picks one; the app then shows their place in their squad. */
   jerseyNumber: JerseyNumber.nullable(),
+  /** Null unless the member chose to give it; saved apart from the rest (`saveBirthday`). */
+  birthday: Birthday.nullable(),
 });
 export type Profile = z.infer<typeof Profile>;
 
 /** A save of the profile. A number left out keeps the one saved, so builds that don't send one keep it. */
-export type ProfileSave = Omit<Profile, 'jerseyNumber'> & {
+export type ProfileSave = Omit<Profile, 'jerseyNumber' | 'birthday'> & {
   readonly jerseyNumber?: JerseyNumber | null | undefined;
 };
 

@@ -129,6 +129,29 @@ describe('coach gifts', () => {
     expect(next).toMatchObject({ piece: second, givenBy: 'admin' });
   });
 
+  it('refuses a piece the member already holds another way, as already theirs', async () => {
+    const gifts = giftsWith();
+    const [member, coach, piece] = [await newMember(), await aCoach(), newPiece()];
+    await gifts.putPiece({ id: piece, offered: true });
+    // Earned by training, as a piece both a rule and the pool name would be.
+    await sql`insert into public.grants (member_id, reward_kind, reward_id, via, sports, after, check_in_id, at)
+      values (${member}, 'piece', ${piece}, 'training', '{}', 1, ${randomUUID()}, now())`.execute(
+      db,
+    );
+    await expect(
+      gifts.give({
+        member,
+        coach,
+        squad: randomUUID(),
+        line: '给你',
+        givenBy: 'coach',
+        piece,
+        weekStart,
+      }),
+    ).rejects.toThrow(GiftAlreadyOwnedError);
+    expect(await gifts.of(member)).toStrictEqual([]);
+  });
+
   it('gives only one of two gifts made at once in the same week', async () => {
     const gifts = giftsWith();
     const [member, coach, first, second] = [

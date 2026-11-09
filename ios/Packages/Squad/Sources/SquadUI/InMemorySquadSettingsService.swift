@@ -79,7 +79,8 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                     daysPerMember: 3, nextDaysPerMember: 3, canChange: viewer == ids[0],
                     recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4)),
                 matchTimeZone: SquadTimeZone(
-                    timeZone: "Asia/Taipei", nextTimeZone: "Asia/Taipei", canChange: viewer == ids[0])))
+                    timeZone: "Asia/Taipei", canChange: viewer == ids[0]),
+                language: SquadLanguage(language: .simplifiedChinese, canChange: viewer == ids[0])))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -124,14 +125,16 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
 
 extension InMemorySquadSettingsService {
     public func coaches() async throws(SquadError) -> [Coach] {
-        [sampleCoach]
+        sampleCoaches
     }
 
     public func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach {
         if failsSaving { throw .unavailable }
-        guard current.coach.canHire, coach == sampleCoach.id else { throw .outdated }
+        guard current.coach.canHire, let hired = sampleCoaches.first(where: { $0.id == coach }) else {
+            throw .outdated
+        }
         if current.coach.hire?.coach.id != coach {
-            current.coach = SquadCoach(hire: .init(coach: sampleCoach, since: .now), canHire: true)
+            current.coach = SquadCoach(hire: .init(coach: hired, since: .now), canHire: true)
         }
         return current.coach
     }
@@ -146,8 +149,17 @@ extension InMemorySquadSettingsService {
     public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         if failsSaving { throw .unavailable }
         guard current.matchTimeZone.canChange, TimeZone(identifier: timeZone) != nil else { throw .outdated }
-        current.matchTimeZone.nextTimeZone = timeZone
+        current.matchTimeZone.timeZone = timeZone
         return current.matchTimeZone
+    }
+
+    public func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
+        -> SquadLanguage
+    {
+        if failsSaving { throw .unavailable }
+        guard current.language.canChange else { throw .outdated }
+        current.language.language = language
+        return current.language
     }
 
     public func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach {
@@ -164,6 +176,16 @@ private let sampleCoach = Coach(
     id: "xiaohun", name: "毛头", title: "混混教练", catchphrase: "先动起来，证书以后再说",
     background: "体育学院刚毕业，该学的都学了，就是证还没考下来", yearsCoaching: 0, experience: "热情满格",
     style: "懂行、松弛、风趣", tags: ["体院应届", "懂行", "松弛", "风趣"], pay: "管饭就行")
+
+/// The second coach, 帕帕, a smiling follow-along coach whose 「最后八个」 never ends (Tracy, 2026-11-08).
+private let sampleCoaches = [
+    sampleCoach,
+    Coach(
+        id: "papa", name: "帕帕", title: "跟练教练", catchphrase: "马了等于做了，收藏等于瘦了",
+        background: "跟练视频收藏的人比练的人多，评论区一半在打卡第一天", yearsCoaching: 5,
+        experience: "个人纪录：一组「最后八个」做了 64 个", style: "全程微笑，一口气不歇，像个人形 AI",
+        tags: ["持证上岗", "跟练", "高强度", "爱笑"], pay: "先把你收藏夹里的练完"),
+]
 
 extension Squad {
     fileprivate func with(name: String? = nil, members: [MemberID]? = nil) -> Squad {

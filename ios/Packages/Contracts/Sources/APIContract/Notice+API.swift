@@ -50,6 +50,8 @@ extension Notice {
         switch wire.kind {
         case "coachNote":
             return coachNote(wire)
+        case "coachLetter":
+            return coachLetter(wire).map(Subject.coachLetter)
         case "unlocked":
             return unlocked(wire)
         case "broadcast":
@@ -90,6 +92,18 @@ extension Notice {
             CoachMemberNote(
                 id: note, squad: squad, day: day, text: text,
                 coach: CoachSpeaker(id: coach, name: wire.coachName ?? "")))
+    }
+
+    /// The letter as 今天 opens it again from 通知; the coaches' names are as they are now.
+    fileprivate static func coachLetter(_ wire: Components.Schemas.NoticeEntry) -> CoachLetter? {
+        guard let id = wire.letter, let from = wire.coach.flatMap(CoachID.init(rawValue:)),
+            let recipient = wire.toCoach.flatMap(CoachID.init(rawValue:)),
+            let day = wire.day.flatMap({ try? LocalDay($0) }), let text = wire.text,
+            let squad = wire.squadId.flatMap({ try? SquadID(wire: $0) })
+        else { return nil }
+        return CoachLetter(
+            id: id, squad: squad, from: CoachSpeaker(id: from, name: wire.coachName ?? ""),
+            to: CoachSpeaker(id: recipient, name: wire.toCoachName ?? ""), day: day, text: text)
     }
 
     fileprivate static func broadcast(_ wire: Components.Schemas.NoticeEntry) -> Broadcast? {

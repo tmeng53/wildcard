@@ -20,7 +20,7 @@ public struct WeekDraft: Hashable, Sendable {
         [2], [1, 3], [0, 2, 4], [0, 1, 3, 4], [0, 1, 3, 4, 5], [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6],
     ]
 
-    /// `days` training days, the squad's 人均 N 天 (1 to 7), going through the sports picked in
+    /// `days` training days, the squad's 人均 N 次 (1 to 7), going through the sports picked in
     /// the order picked; with no sport picked, training days with no sport named. Monday starts
     /// selected.
     public init(sports: [Activity], days count: Int) {

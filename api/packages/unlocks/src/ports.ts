@@ -2,6 +2,17 @@ import type { SportId } from '@wildcard/sport-ids';
 
 import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
 import type {
+  Badge,
+  EventName,
+  Given,
+  HeldBadge,
+  Occurrence,
+  Reward,
+  RewardTriggerEdit,
+  TeamPiece,
+  Voucher,
+} from './domain/rewards.js';
+import type {
   Claim,
   MemberId,
   Piece,
@@ -17,6 +28,9 @@ import type {
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
+  /** Every reward with every trigger it has, by kind and id. */
+  rewards(): Promise<Reward[]>;
+  /** The `training` triggers, as rules. */
   rules(): Promise<UnlockRule[]>;
   /** Adds a rule counting from now, or changes one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;
@@ -67,6 +81,8 @@ export interface GiftStore {
   putPiece(edit: GiftPieceEdit): Promise<void>;
   /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
+  /** Whether `member` holds `piece` by any way (training, a coach, the team). */
+  holds(member: MemberId, piece: PieceId): Promise<boolean>;
   /**
    * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
    * when they already have that piece or a gift for that week.
@@ -87,4 +103,40 @@ export interface GiftStore {
     readonly piece: PieceId;
     readonly worn: boolean;
   }): Promise<boolean>;
+}
+
+/** Where the badges, vouchers, `event` and `team` triggers and what they gave are kept. */
+export interface RewardStore {
+  /** Every dedicated badge, offered or not, by id. */
+  badges(): Promise<Badge[]>;
+  /** Adds a badge (and its reward) or changes it. */
+  putBadge(badge: Badge): Promise<void>;
+  /** Every voucher, offered or not, by id. */
+  vouchers(): Promise<Voucher[]>;
+  /** Adds a voucher (and its reward) or changes it. */
+  putVoucher(voucher: Voucher): Promise<void>;
+  /** Whether a reward by that kind and id exists. */
+  exists(reward: Given): Promise<boolean>;
+  /** Adds an `event` or `team` trigger (with its reward, for a piece) or changes one. */
+  putTrigger(edit: RewardTriggerEdit): Promise<void>;
+  /** The rewards an offered `event` trigger gives for `event`. */
+  givenBy(event: EventName): Promise<Given[]>;
+  /** Whether the team may give `reward`: it has an offered `team` trigger. */
+  teamGives(reward: Given): Promise<boolean>;
+  /**
+   * Keeps what `occurrence` gave its member; a piece they hold already, or a reward this
+   * occurrence gave before, stays as it was. Answers with what this call kept.
+   */
+  grantFor(occurrence: Occurrence, rewards: readonly Given[]): Promise<Given[]>;
+  /** Keeps that `admin` gave `member` `reward` now; false for a piece they hold already. */
+  grantByTeam(grant: {
+    readonly member: MemberId;
+    readonly reward: Given;
+    readonly admin: MemberId;
+    readonly at: Date;
+  }): Promise<boolean>;
+  /** The dedicated badges `member` holds, with how many times, the latest got first. */
+  badgesOf(member: MemberId): Promise<HeldBadge[]>;
+  /** The pieces no store sells that the team or an event gave `member`, the earliest first. */
+  teamPiecesOf(member: MemberId): Promise<TeamPiece[]>;
 }

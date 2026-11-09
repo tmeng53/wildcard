@@ -138,7 +138,7 @@ enum LaunchOptions {
     /// `-squad-seat winner`: who the member is on the in-memory squad's 小队设置 (`captain`,
     /// `winner`, `member`, `noWinner`, `coached` for the captain of a squad with a coach,
     /// `coachedMember` for a mate in it); the captain by default, of a squad with a coach under
-    /// `-uitest-coach` or `-uitest-coach-note`, so the coach on the home opens its card.
+    /// `-uitest-coach` or `-uitest-coach-note`, so the coach on the home opens its page.
     static var squadSeat: InMemorySquadSettingsService.Seat {
         let arguments = ProcessInfo.processInfo.arguments
         let fallback: InMemorySquadSettingsService.Seat = sidelineCoach || coachNote ? .coached : .captain
@@ -234,18 +234,6 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
     }
 
-    /// `-uitest-coach`: the sample squad has hired 毛头, who wrote today's 战术板 line, over its card
-    /// opened from the home and pinned on 动态, and replied to three of its posts.
-    static var sidelineCoach: Bool {
-        ProcessInfo.processInfo.arguments.contains("-uitest-coach")
-    }
-
-    /// `-uitest-coach-note`: 毛头 also left me today's morning note (便条), waiting for me to open
-    /// it from 毛头's phone, 通知 or its push.
-    static var coachNote: Bool {
-        ProcessInfo.processInfo.arguments.contains("-uitest-coach-note")
-    }
-
     /// `-uitest-together wave|stack|bump`: the sample squad's home opens on that celebration
     /// (人浪, 叠罗汉, 撞头). Without it the sample squad never celebrates together, so other UI
     /// tests meet a home that holds still.
@@ -300,7 +288,7 @@ enum LaunchOptions {
     /// `-uitest-unlocked`: the sample member's training has just opened DEUCE CLUB, which 今天
     /// tells once it is up and 我's editor has open, so UI tests see the notice and its tap.
     /// `-uitest-unlocked-piece`: WARM-UP's headphones have just come in instead, which 今天 tells as
-    /// 「热身社 到新货了」 and whose box opens in the store on a tap.
+    /// 「热身社 到新货了」 and whose tap opens the store, the headphones wearing NEW on its rack.
     static var unlocked: [Unlock] {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("-uitest-unlocked-piece") {

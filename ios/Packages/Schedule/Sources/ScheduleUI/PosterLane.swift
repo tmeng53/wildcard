@@ -6,7 +6,8 @@ import ScheduleDomain
 import SwiftUI
 
 /// One day's swim lane on the poster: its `ScheduleDayRow` (weekday, the sport's disc, plan and
-/// mark), shaded by how it is held. A button, so the member picks the day by tapping it.
+/// mark), shaded by how it is held. A button: a tap puts the poster's character to the day's sport
+/// and picks the day up where it can change.
 struct PosterLane: View {
     static let height: Double = 40
 
@@ -42,11 +43,9 @@ struct PosterLane: View {
                 }
                 .contentShape(Rectangle())
         }
-        // Pressable, not plain: a plain button fades while disabled, and a locked day reads as
-        // clearly as one still to come.
+        // Every day takes a tap, a locked one too: the character plays that day's sport.
         .buttonStyle(PressableButtonStyle())
         .zIndex(isHeld ? 1 : 0)
-        .disabled(!lane.isEditable)
         .accessibilityLabel(row.accessibilityText)
         .accessibilityAddTraits(isHeld ? .isSelected : [])
         .accessibilityIdentifier("schedule.lane.\(lane.index)")
@@ -55,7 +54,7 @@ struct PosterLane: View {
     private var row: ScheduleDayRow {
         let glyph = Color(role: colors.onInk, in: theme)
         return ScheduleDayRow(
-            day: lane.day, isToday: lane.isToday, shown: lane.shown, mark: lane.mark,
+            day: lane.day, isToday: lane.isToday, shown: lane.face.shown, mark: lane.face.mark,
             colors: isHeld
                 ? .init(ink: glyph, onInk: ink, markDisc: Color(role: colors.heldDisc, in: theme), markGlyph: glyph)
                 : .init(ink: ink, onInk: glyph, markDisc: ink, markGlyph: glyph),

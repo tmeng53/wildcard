@@ -11,17 +11,20 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var reactionsByCheckIn: [CheckInID: [Reaction]] = [:]
     private var photoCount = 0
     private var squadPokes: SquadPokes
-    private let sidelineCoach: SidelineCoach?
-    private var memberNotes: [CoachMemberNote]
-    private var opened: CoachMemberNote?
+    private var sidelineCoach: SidelineCoach?
+    private var unseenCoachCards: Bool
+    private var dayChallenge: DayChallenge?
+    private var openedLetterID: Int?
 
     public init(
-        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = []
+        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, unseenCoachCards: Bool = false,
+        challenge: DayChallenge? = nil
     ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
-        memberNotes = notes
+        self.unseenCoachCards = unseenCoachCards
+        dayChallenge = challenge
     }
 
     /// The squad the screens are reviewed against: 本周小队 14/22, eight members on the scene in
@@ -33,11 +36,12 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// runner (小米) and the 请假条 (阿杰) patted me an hour ago, so the home plays it. With `coach`,
     /// the squad has hired 毛头, who wrote today's 战术板 line. With `together`, the home opens on
     /// that celebration: `.wave` reaches the squad's week (22/22), `.stack` has the yoga teammate
-    /// run like 小米, and `.bump` has me trained too.
+    /// run like 小米, and `.bump` has me trained too. With `challenge`, I accepted 毛头's
+    /// challenge for today (拉伸 5 分钟), not yet done.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
-        patted: Bool = false, coach: Bool = false, coachNote: Bool = false,
-        together: SquadCelebration.Kind? = nil, meals: Bool = false
+        patted: Bool = false, coach: Bool = false, coachNote: Bool = false, coachLetter: Bool = false,
+        together: SquadCelebration.Kind? = nil, meals: Bool = false, challenge: Bool = false
     ) -> InMemoryCheckInBackend {
         let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
@@ -69,9 +73,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             }.filter { kept.contains($0.member) }
             + (meals ? sampleMeals(by: everyone, on: day, in: squadID) { at($0) } : [])
             + myEarlierCheckIns(by: member, on: earlier, in: squadID) { at($0) }
-        let plan = try? WeeklyPlan(
-            member: member, weekStart: day.weekStart,
-            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
+        let plan = samplePlan(of: member, on: day)
         return InMemoryCheckInBackend(
             home: plan.map { plan in
                 Home(
@@ -90,36 +92,15 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: coach || coachNote ? sampleCoach(now: now) : nil, notes: sampleNotes(coachNote, now, squadID))
+            coach: sideline(coach || coachNote || challenge, coachLetter, now, squadID),
+            unseenCoachCards: coachNote,
+            challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
-    /// The squad's week at 人均 3 天, the default goal: 14 days so far, or the whole goal once
+    /// The squad's week at 人均 3 次, the default goal: 14 训练 so far, or the whole goal once
     /// everyone `reached` it together.
     private static func squadWeek(of members: Int, reached: Bool) -> WeekCount {
         WeekCount(trainedDays: reached ? 3 * members : 14, plannedDays: 3 * members)
-    }
-
-    /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.
-    private static func sampleNotes(_ shown: Bool, _ now: Date, _ squad: SquadID) -> [CoachMemberNote] {
-        guard shown else { return [] }
-        let words = Bundle.module.inAppLanguage
-        return [
-            CoachMemberNote(
-                id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
-                text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
-                coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
-        ]
-    }
-
-    /// 毛头 with today's line, as the approved home shows it.
-    private static func sampleCoach(now: Date) -> SidelineCoach {
-        let words = Bundle.module.inAppLanguage
-        let coach = CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil))
-        let line = words.localizedString(forKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", value: nil, table: nil)
-        let note = CoachNote(
-            day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
-            writtenAt: now.addingTimeInterval(-3600))
-        return SidelineCoach(coach: coach, note: note)
     }
 
     /// A sample title, its words from the catalog.
@@ -296,16 +277,49 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? { sidelineCoach }
 
-    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
-        squads.compactMap { squad in memberNotes.first { $0.squad == squad } }
+    public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool { unseenCoachCards }
+}
+
+extension InMemoryCheckInBackend {
+    /// My week's plan: running Monday and Thursday, rest Wednesday and Sunday.
+    fileprivate static func samplePlan(of member: MemberID, on day: LocalDay) -> WeeklyPlan? {
+        try? WeeklyPlan(
+            member: member, weekStart: day.weekStart,
+            days: [.train(.sport("run")), .train(nil), .rest, .train(.sport("run")), .train(nil), .train(nil), .rest])
     }
 
-    public func putAway(_ note: CoachMemberNote) async throws(CheckInError) {
-        memberNotes.removeAll { $0.id == note.id }
-        opened = note
+    /// 毛头's challenge for today, accepted, as the approved 我的一周 shows it.
+    fileprivate static func sampleChallenge(on day: LocalDay) -> DayChallenge {
+        let words = Bundle.module.inAppLanguage
+        return DayChallenge(
+            note: "41", day: day,
+            challenge: CoachPageCard.Challenge(
+                title: words.localizedString(forKey: "拉伸", value: nil, table: nil), amount: 5,
+                unit: words.localizedString(forKey: "分钟", value: nil, table: nil), answer: .accepted))
     }
 
-    public func openedNote() async -> CoachMemberNote? { opened }
+    public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? { dayChallenge }
+
+    public func completeChallenge(_ note: String, in squad: SquadID) async throws(CheckInError)
+        -> CoachChallengeCompleter
+    {
+        guard let found = dayChallenge, found.note == note else { throw .refused }
+        dayChallenge = found.completed(by: .member)
+        return dayChallenge?.challenge.completedBy ?? .member
+    }
+
+    /// 毛头 takes a few seconds over its letter to 帕帕, as the model would, so 「交接中」 shows long
+    /// enough for a UI test to find it after the pages pop back to 今天.
+    public func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter? {
+        try? await Task.sleep(for: .seconds(8))
+        let letter = Self.sampleLetter(in: squad, now: .now)
+        sidelineCoach = SidelineCoach(coach: letter.recipient, note: nil, letter: letter)
+        return letter
+    }
+
+    public func openedLetter() async -> Int? { openedLetterID }
+
+    public func opened(_ letter: CoachLetter) async { openedLetterID = letter.id }
 }
 
 /// Posts waiting to go out, kept in memory: for previews, UI tests and tests.

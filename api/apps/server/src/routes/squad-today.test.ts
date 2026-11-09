@@ -28,6 +28,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  weatherOn,
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
@@ -36,11 +37,13 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
   ignoredNotices,
+  unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -92,16 +95,19 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  weather: weatherOn(db),
   scenes: scenesOn(db),
   switches: switchesOn(db),
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
+  ...unusedFeedback,
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -110,7 +116,7 @@ const app = createApp({
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */
 async function squadOf(...joined: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${randomInviteCodes()})`.execute(
     db,
   );
   for (const [index, member] of joined.entries()) {

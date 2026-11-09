@@ -6,12 +6,15 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 今日请假条 (spec rev 186, section 1, made calmer 2026-11-06): the excuse is the page's one
-/// line, in the middle of the page, and tapping it edits it. Above the button, one row: the four
-/// styles (a segmented control) and 编一句, which puts a line from the member's own words in the picked style in its
-/// place; then 换一句 shows the next. The writer answers three lines at a time, so only every
-/// third 换一句 (or a new style or new words) asks it again, and typing and picking a style cost
-/// nothing. Up to `Disclaimer.maxLength` characters.
+/// 今日请假条 (spec rev 186, section 1; on the 入场券 since 2026-11-08), the same page as 发动态:
+/// 取消 / title / 发布, then 请假｜休息, then the ticket: the excuse above its tear (up to
+/// `Disclaimer.maxLength` characters, its count always showing) and, below it, 帮我编一句: the
+/// four styles (a segmented control) and 编一句, which puts a line from the member's own words
+/// in the picked style in its place; then 换一句 shows the next. The writer answers three lines at
+/// a time, so only every third 换一句 (or a new style or new words) asks it again, and typing and
+/// picking a style cost nothing. Under the ticket the 日期 strip (补打卡), whose days with a 练了
+/// can't be picked; the title follows the day picked: 今日请假条 or 今日休息 for today, 请假条 or
+/// 休息 before.
 struct DisclaimerComposer: View {
 
     @Environment(\.sceneTheme) private var theme
@@ -47,40 +50,63 @@ struct DisclaimerComposer: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            DisclaimerHeader(model: model, day: $day, restDay: $restDay)
-                .padding(.bottom, Space.l)
-            // The excuse sits in the middle of the room the choices leave.
-            Spacer(minLength: 0)
-            hero
-            Spacer(minLength: Space.l)
-            if entry.isBlocked {
-                CareLine()
-                    .padding(.bottom, Space.m)
-            } else {
-                choices
+        VStack(spacing: 0) {
+            ComposeBar(
+                title: title, finish: Text("发布", bundle: .module), isWorking: model.isSending,
+                canFinish: !model.isSending && disclaimer != nil,
+                cancelID: "disclaimer.close", finishID: "disclaimer.post",
+                cancel: { model.cancel() }, done: post)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Space.m) {
+                    Picker(selection: $restDay) {
+                        Text("请假", bundle: .module).tag(false)
+                        Text("休息", bundle: .module).tag(true)
+                    } label: {
+                        Text("请假还是休息", bundle: .module)
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("disclaimer.kind")
+                    TicketCard {
+                        face
+                    } stub: {
+                        if entry.isBlocked {
+                            CareLine()
+                        } else {
+                            stub
+                        }
+                    }
+                    if let today = model.disclaimerDays.last, model.disclaimerDays.count > 1 {
+                        VStack(alignment: .leading, spacing: Space.xxs) {
+                            SectionLabel(Text("日期", bundle: .module))
+                            DayPick(
+                                days: model.disclaimerDays, blocked: model.blockedForDisclaimer,
+                                picked: Binding {
+                                    day ?? today
+                                } set: {
+                                    day = $0 == today ? nil : $0
+                                })
+                        }
+                        .padding(.top, Space.xs)
+                    }
+                    if model.sendFailed {
+                        Text("没发出去，再点一次发布", bundle: .module)
+                            .typeStyle(TypeRamp.footnote)
+                            .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    }
+                }
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.vertical, Space.m)
             }
-            if model.sendFailed {
-                Text("没发出去，再点一次打卡", bundle: .module)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .padding(.bottom, Space.xs)
-            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .actionBar(isShown: model.shareSquad != nil) {
             if let squad = model.shareSquad {
                 ShareRow(squad: squad, isShared: $isShared)
-                    .padding(.bottom, Space.xs)
             }
-            // The page's last line, over nothing else: it floats, in glass.
-            PostButton(model: model, disclaimer: entry.disclaimer(restDay: restDay), isShared: isShared, day: day)
-                .controlPlacement(.floating)
         }
-        .padding(.horizontal, Space.l)
-        .padding(.top, Space.xs)
-        .padding(.bottom, Space.xs)
-        .background(Color(role: .bgSubtle, in: theme).ignoresSafeArea())
+        .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: drafts)
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isEditing)
         .haptic(.pick, trigger: style)
         .haptic(.appear, trigger: landed)
         .task {
@@ -91,8 +117,27 @@ struct DisclaimerComposer: View {
         }
     }
 
-    /// The excuse: the field itself, so tapping it edits it.
-    private var hero: some View {
+    private var title: Text {
+        switch (day == nil, restDay) {
+        case (true, false): Text("今日请假条", bundle: .module)
+        case (false, false): Text("请假条", bundle: .module)
+        case (true, true): Text("今日休息", bundle: .module)
+        case (false, true): Text("休息", bundle: .module)
+        }
+    }
+
+    /// The excuse to post, or nil while it can't be.
+    private var disclaimer: Disclaimer? { entry.disclaimer(restDay: restDay) }
+
+    private func post() {
+        guard let disclaimer, !model.isSending else { return }
+        Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
+    }
+
+    /// The excuse, on the ticket's face: room for its four lines from the start, so the ticket
+    /// doesn't jump while typing; under it 用回我写的 once a line replaced the member's words, and
+    /// the count.
+    private var face: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
             TextField(text: $text, axis: .vertical) {
                 if restDay {
@@ -101,9 +146,9 @@ struct DisclaimerComposer: View {
                     Text("为什么没练？", bundle: .module)
                 }
             }
-            .typeStyle(TypeRamp.title)
+            .typeStyle(TypeRamp.field)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .lineLimit(1...4)
+            .lineLimit(Self.lines, reservesSpace: true)
             .focused($isEditing)
             .submitLabel(.done)
             .opacity(isWriting ? Loading.waitingOpacity : 1)
@@ -121,15 +166,8 @@ struct DisclaimerComposer: View {
                 drafts = []
                 next = 0
             }
-            // The count while typing; otherwise 用回我写的 once a line replaced the member's words.
-            Group {
-                if isEditing {
-                    Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                        .monospacedDigit()
-                        .accessibilityIdentifier("disclaimer.count")
-                } else if entry.canRestore {
+            HStack {
+                if entry.canRestore {
                     Button {
                         entry.restore()
                         text = entry.text
@@ -141,37 +179,52 @@ struct DisclaimerComposer: View {
                         }
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .frame(minHeight: Sizing.minimumTapTarget)
                     }
                     .accessibilityIdentifier("disclaimer.restore")
                 }
+                Spacer(minLength: Space.xs)
+                Text(verbatim: "\(entry.text.count)/\(Disclaimer.maxLength)")
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .monospacedDigit()
+                    .accessibilityIdentifier("disclaimer.count")
             }
-            .frame(minHeight: Sizing.minimumTapTarget, alignment: .leading)
         }
     }
 
-    /// The styles and the button that puts a line up, on one row where it fits (else, at large
-    /// text sizes, the button goes under the styles). Hidden while the member types, so the keyboard leaves room.
-    @ViewBuilder private var choices: some View {
-        if !isEditing {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: Space.xs) {
-                    styles
-                    Spacer(minLength: 0)
-                    write
-                }
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    styles
-                    write
-                }
+    /// The excuse's room on the ticket, in lines.
+    private static let lines = 4
+
+    /// Below the tear: 帮我编一句 over the styles and the button that puts a line up, and the W.
+    private var stub: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            SectionLabel(Text("帮我编一句", bundle: .module))
+            choices
+            HStack {
+                Spacer()
+                TicketStamp()
             }
-            .padding(.bottom, Space.s)
-            .transition(.opacity)
         }
     }
 
-    /// The four styles as the system's segmented control, which stays narrow enough to share
-    /// the row with 编一句. Picking only picks: it asks nothing.
+    /// The styles and the button that puts a line up, one height on one row where it fits, the
+    /// styles taking the room the button leaves (else, at large text sizes, the button goes under
+    /// the styles).
+    private var choices: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Space.xs) {
+                styles.frame(maxWidth: .infinity)
+                write
+            }
+            VStack(alignment: .leading, spacing: Space.xxs) {
+                styles
+                write
+            }
+        }
+    }
+
+    /// The four styles as the system's segmented control, as tall as 编一句 beside it. Picking
+    /// only picks: it asks nothing.
     private var styles: some View {
         Picker(selection: $style) {
             ForEach(DisclaimerStyle.allCases, id: \.self) { option in
@@ -181,7 +234,6 @@ struct DisclaimerComposer: View {
             Text("风格", bundle: .module)
         }
         .pickerStyle(.segmented)
-        .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.style")
     }
@@ -276,41 +328,10 @@ private struct WriteButton: View {
                 }
             }
         }
-        .buttonStyle(SecondaryButtonStyle())
+        .buttonStyle(SecondaryButtonStyle(size: .compact))
         .fixedSize()
         .disabled(isWriting)
         .accessibilityIdentifier("disclaimer.write")
-    }
-}
-
-/// The page's one primary button.
-private struct PostButton: View {
-    let model: TodayModel
-    /// The excuse to post, or nil while it can't be.
-    let disclaimer: Disclaimer?
-    let isShared: Bool
-    let day: LocalDay?
-
-    var body: some View {
-        Button {
-            guard let disclaimer, !model.isSending else { return }
-            Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
-        } label: {
-            Group {
-                if disclaimer?.restDay == true {
-                    Text("发布休息", bundle: .module)
-                } else {
-                    Text("发布请假条", bundle: .module)
-                }
-            }
-            .loadingLabel(model.isSending)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(PrimaryButtonStyle())
-        // Still enabled while sending, so it stays the brand color under its dots; the action
-        // ignores taps until the post is done.
-        .disabled(disclaimer == nil)
-        .accessibilityIdentifier("disclaimer.post")
     }
 }
 

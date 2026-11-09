@@ -1,6 +1,22 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "出赛表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lineup"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "出賽表"
+          }
+        }
+      }
+    },
     "%@ %@%@": {
       "localizations": {
         "en": {
@@ -807,6 +823,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "每週訓練"
+          }
+        }
+      }
+    },
+    "还未入队": {
+      "comment": "出赛表's greyed chip before the week the member joined their squad.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not joined yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還未入隊"
           }
         }
       }

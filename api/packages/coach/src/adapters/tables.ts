@@ -25,6 +25,12 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface CoachAnswerMentions {
+  answer_id: Int8;
+  member_id: string;
+  position: number;
+}
+
 export interface CoachAnswers {
   at: Generated<Timestamp>;
   check_in_id: string;
@@ -34,6 +40,14 @@ export interface CoachAnswers {
   squad_id: string;
   text: string;
   wake_id: Int8 | null;
+}
+
+export interface CoachCardSeen {
+  at: Generated<Timestamp>;
+  card_id: string;
+  kind: string;
+  member_id: string;
+  squad_id: string;
 }
 
 export interface CoachCatalogEvents {
@@ -47,6 +61,13 @@ export interface CoachCatalogEvents {
 export interface CoachChallengeAnswers {
   answer: string;
   at: Generated<Timestamp>;
+  note_id: Int8;
+  reason: string | null;
+}
+
+export interface CoachChallengeCompletions {
+  at: Generated<Timestamp>;
+  by: string;
   note_id: Int8;
 }
 
@@ -109,6 +130,7 @@ export interface CoachMemberNoteReads {
 export interface CoachMemberNotes {
   at: Generated<Timestamp>;
   challenge_amount: number | null;
+  challenge_line: string | null;
   challenge_title: string | null;
   challenge_unit: string | null;
   coach_id: string;
@@ -139,6 +161,12 @@ export interface CoachReplies {
   squad_id: string;
   text: string | null;
   wake_id: Int8 | null;
+}
+
+export interface CoachReplyMentions {
+  member_id: string;
+  position: number;
+  reply_id: Int8;
 }
 
 export interface CoachSettingEvents {
@@ -218,9 +246,12 @@ export interface SquadCoachEvents {
 }
 
 export interface DB {
+  coach_answer_mentions: CoachAnswerMentions;
   coach_answers: CoachAnswers;
+  coach_card_seen: CoachCardSeen;
   coach_catalog_events: CoachCatalogEvents;
   coach_challenge_answers: CoachChallengeAnswers;
+  coach_challenge_completions: CoachChallengeCompletions;
   coach_files: CoachFiles;
   coach_letter_tries: CoachLetterTries;
   coach_letters: CoachLetters;
@@ -229,6 +260,7 @@ export interface DB {
   coach_member_notes: CoachMemberNotes;
   coach_notes: CoachNotes;
   coach_replies: CoachReplies;
+  coach_reply_mentions: CoachReplyMentions;
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
   coach_usage: CoachUsage;

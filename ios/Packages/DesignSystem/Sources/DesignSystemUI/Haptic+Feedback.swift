@@ -19,6 +19,8 @@ extension Haptic {
         case .poke: .impact(flexibility: .rigid, intensity: 0.5)
         case .unbox: .impact(weight: .heavy)
         case .lights: .impact(flexibility: .rigid, intensity: 1)
+        case .unseal: .impact(weight: .light)
+        case .zone: .selection
         }
     }
 }

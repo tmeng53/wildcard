@@ -6,9 +6,9 @@ import SwiftUI
 import UIKit
 
 /// 设置 › Apple 健康 (Tracy, 2026-11-06): 连接 until it is connected, the Fitbit, WHOOP and Oura
-/// guide under it, then which numbers a post
-/// from Health carries unless struck (时长 always), the line on striking and the route's trimmed
-/// ends, and where iOS keeps the reading permission. Ink and white only, like the rest of 设置.
+/// guide under it, then which numbers a post from Health shows unless struck (时长 always starts kept; 强度 is
+/// the Fitness app's Effort), the line on striking and the route's trimmed ends, and where iOS
+/// keeps the reading permission. Ink and white only, like the rest of 设置.
 public struct HealthSettingsView: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.openURL) private var openURL
@@ -71,24 +71,24 @@ public struct HealthSettingsView: View {
 
     private var sharing: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("发到小队时默认带上", bundle: .module))
+            SectionLabel(Text("发动态时显示", bundle: .module))
             VStack(spacing: 0) {
-                ListRow(Text("时长", bundle: .module), value: Text("总是带", bundle: .module), showsChevron: false) {}
-                    .disabled(true)
                 SwitchRow(Text("距离", bundle: .module), isOn: $health.sharing.distance)
                     .accessibilityIdentifier("health.share.distance")
-                SwitchRow(Text("配速 / 均速", bundle: .module), isOn: $health.sharing.pace)
+                SwitchRow(Text("配速 / 速度", bundle: .module), isOn: $health.sharing.pace)
                     .accessibilityIdentifier("health.share.pace")
                 SwitchRow(Text("心率", bundle: .module), isOn: $health.sharing.heartRate)
                     .accessibilityIdentifier("health.share.heartRate")
-                SwitchRow(Text("费力", bundle: .module), isOn: $health.sharing.effort)
+                SwitchRow(Text("强度", bundle: .module), isOn: $health.sharing.effort)
                     .accessibilityIdentifier("health.share.effort")
-                SwitchRow(Text("趟数", bundle: .module), isOn: $health.sharing.laps)
+                SwitchRow(Text("趟数（游泳、滑雪）", bundle: .module), isOn: $health.sharing.laps)
                     .accessibilityIdentifier("health.share.laps")
-                SwitchRow(Text("路线地图", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
+                SwitchRow(Text("卡路里", bundle: .module), isOn: $health.sharing.calories)
+                    .accessibilityIdentifier("health.share.calories")
+                SwitchRow(Text("路线", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
                     .accessibilityIdentifier("health.share.route")
             }
-            Text("每次发的时候还可以在成绩条上点掉。路线会自动去掉起点和终点各 200 米。", bundle: .module)
+            Text("发之前还能逐项关掉。路线的起点和终点各 200 米不显示。", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
@@ -100,14 +100,15 @@ public struct HealthSettingsView: View {
     /// Health never says whether reading was allowed, so the way to change it is always here.
     private var permissions: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            ListRow(Text("在 iOS 设置里管理读取权限", bundle: .module), showsDivider: false) {
+            ListRow(Text("在“设置”中管理权限", bundle: .module), showsDivider: false) {
                 if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
             }
             .accessibilityIdentifier("health.permissions")
-            Text("没看到运动？在 设置 › 健康 › 数据访问与设备 › 外卡 里打开读取。", bundle: .module)
+            Text("没看到运动记录？前往 设置 › App › 健康 › 数据访问与设备 › 外卡，打开读取。", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("health.permissions.hint")
         }
         .padding(.top, Space.l)
     }

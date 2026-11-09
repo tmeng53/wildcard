@@ -34,23 +34,40 @@ export function trainingOn(checkIns: readonly CheckInRecord[], day: LocalDay): T
   return 'notCheckedIn';
 }
 
-/** How a day went for training, as the 出赛表 marks it: the sport of the day's latest 训练. */
+/**
+ * How a day went for training, as the 出赛表 marks it: the sport of the day's latest 训练, and
+ * every sport the day's 训练 logged, oldest first, so a day planned as one of them is ticked.
+ */
 export type DayMark =
-  | { readonly status: 'trained'; readonly sport: SportKey; readonly customSport?: string }
+  | {
+      readonly status: 'trained';
+      readonly sport: SportKey;
+      readonly customSport?: string;
+      readonly sports: readonly TrainedSport[];
+    }
   | { readonly status: 'disclaimer' }
   | { readonly status: 'none' };
 
+/** A sport a 训练 logged: its key, and the custom sport's name for `custom`. */
+export interface TrainedSport {
+  readonly sport: SportKey;
+  readonly customSport?: string;
+}
+
 /** A 训练 wins over a 请假条, and the latest 训练 of the day names its sport. */
 export function markOn(checkIns: readonly CheckInRecord[], day: LocalDay): DayMark {
-  let latest: (CheckInRecord & { readonly kind: 'trained' }) | undefined;
-  for (const each of checkIns) {
-    if (each.day !== day || each.kind !== 'trained') continue;
-    if (latest === undefined || each.createdAt > latest.createdAt) latest = each;
-  }
-  if (latest !== undefined) {
-    const { sport, customSport } = latest.training;
-    return { status: 'trained', sport, ...(customSport === undefined ? {} : { customSport }) };
-  }
+  const trained = checkIns
+    .filter(
+      (each): each is CheckInRecord & { readonly kind: 'trained' } =>
+        each.day === day && each.kind === 'trained',
+    )
+    .sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
+  const sports = trained.map(({ training: { sport, customSport } }) => ({
+    sport,
+    ...(customSport === undefined ? {} : { customSport }),
+  }));
+  const latest = sports.at(-1);
+  if (latest !== undefined) return { status: 'trained', ...latest, sports };
   return trainingOn(checkIns, day) === 'disclaimer' ? { status: 'disclaimer' } : { status: 'none' };
 }
 
@@ -70,6 +87,15 @@ export function latestMealOn(
 /** Days among `days` with a 训练. Several 训练 on one day count once. */
 export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
   return days.filter((day) => trainingOn(checkIns, day) === 'trained').length;
+}
+
+/**
+ * The 训练 checked in on `days`, each counting once, several on one day too: what a squad's weekly
+ * goal (小队每周目标, 人均 N 次) counts.
+ */
+export function trainings(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
+  const week = new Set(days);
+  return checkIns.filter((each) => each.kind === 'trained' && week.has(each.day)).length;
 }
 
 /**

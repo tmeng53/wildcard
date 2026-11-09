@@ -1,6 +1,134 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "下雨天也有安排": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rain or shine, you have a plan"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下雨天也有安排"
+          }
+        }
+      }
+    },
+    "今天下午 小雨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light rain this afternoon"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天下午 小雨"
+          }
+        }
+      }
+    },
+    "8–13°C · 降水 80%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "46–55°F · 80% chance of rain"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8–13°C · 降水 80%"
+          }
+        }
+      }
+    },
+    "原计划": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planned"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原計畫"
+          }
+        }
+      }
+    },
+    "跑步 5 公里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 km run"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跑步 5 公里"
+          }
+        }
+      }
+    },
+    "可以改成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could be"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可以改成"
+          }
+        }
+      }
+    },
+    "早上跑，或者室内练": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A morning run, or train indoors"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "早上跑，或者室內練"
+          }
+        }
+      }
+    },
+    "只用到大概在哪个城市，队友看不到。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only your rough city is used. Teammates can’t see it."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只用到大概在哪個城市，隊友看不到。"
+          }
+        }
+      }
+    },
     "语言": {
       "localizations": {
         "en": {
@@ -2079,90 +2207,90 @@
         }
       }
     },
-    "%lld 人 · 人均每周 %lld 天": {
+    "%lld 人 · 人均每周 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld members · %2$lld days a week each"
+            "value": "%1$lld members · %2$lld workouts a week each"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 人 · 人均每周 %2$lld 天"
+            "value": "%1$lld 人 · 人均每周 %2$lld 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$lld 人 · 人均每週 %2$lld 天"
+            "value": "%1$lld 人 · 人均每週 %2$lld 次"
           }
         }
       }
     },
-    "小队目标 · 每人每周练几天": {
+    "小队目标 · 每人每周练几次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad goal · days a week each"
+            "value": "Squad goal · workouts a week each"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "小队目标 · 每人每周练几天"
+            "value": "小队目标 · 每人每周练几次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小隊目標 · 每人每週練幾天"
+            "value": "小隊目標 · 每人每週練幾次"
           }
         }
       }
     },
-    "人均 %lld 天": {
+    "人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days each"
+            "value": "%lld workouts each"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "人均 %lld 天"
+            "value": "人均 %lld 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "人均 %lld 天"
+            "value": "人均 %lld 次"
           }
         }
       }
     },
-    "小队目标 · 人均 %lld 天": {
+    "小队目标 · 人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad goal · %lld days each"
+            "value": "Squad goal · %lld workouts each"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "小队目标 · 人均 %lld 天"
+            "value": "小队目标 · 人均 %lld 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "小隊目標 · 人均 %lld 天"
+            "value": "小隊目標 · 人均 %lld 次"
           }
         }
       }
@@ -2271,6 +2399,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "用於全隊都能看到的內容，比如週日晚 8 點的戰報"
+          }
+        }
+      }
+    },
+    "允许": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許"
+          }
+        }
+      }
+    },
+    "已打开大概位置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rough location on"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打開大概位置"
           }
         }
       }

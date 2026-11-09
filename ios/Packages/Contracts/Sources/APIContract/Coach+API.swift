@@ -49,7 +49,8 @@ extension CoachReply {
     public init(_ wire: Components.Schemas.CoachReply) throws(ContractsError) {
         self.init(
             checkIn: try CheckInID(wire: wire.checkInId), coach: try CoachSpeaker(wire.coach.value1),
-            text: wire.text, emoji: wire.emoji.flatMap { try? Emoji($0) }, writtenAt: wire.at)
+            text: wire.text, emoji: wire.emoji.flatMap { try? Emoji($0) },
+            mentions: try Mentions(members: wire.mentions, coach: nil).members, writtenAt: wire.at)
     }
 }
 
@@ -57,7 +58,8 @@ extension CoachAnswer {
     public init(_ wire: Components.Schemas.CoachAnswer) throws(ContractsError) {
         self.init(
             checkIn: try CheckInID(wire: wire.checkInId), comment: try CommentID(wire: wire.commentId),
-            coach: try CoachSpeaker(wire.coach.value1), text: wire.text, writtenAt: wire.at)
+            coach: try CoachSpeaker(wire.coach.value1), text: wire.text,
+            mentions: try Mentions(members: wire.mentions, coach: nil).members, writtenAt: wire.at)
     }
 }
 
@@ -69,6 +71,15 @@ extension CoachMemberNote {
     }
 }
 
+extension CoachLetter {
+    /// - Parameter squad: the squad whose coaches changed.
+    public init(_ wire: Components.Schemas.CoachLetter, squad: SquadID) throws(ContractsError) {
+        self.init(
+            id: wire.id, squad: squad, from: try CoachSpeaker(wire.from), to: try CoachSpeaker(wire.to.value1),
+            day: try LocalDay(wire.day), text: wire.text)
+    }
+}
+
 extension CoachActivity {
     /// - Parameter squad: the squad it is of, which the reader's morning note names.
     public init(_ wire: Components.Schemas.CoachActivity, squad: SquadID) throws(ContractsError) {
@@ -77,6 +88,8 @@ extension CoachActivity {
             replies: try wire.replies.map { reply throws(ContractsError) in try CoachReply(reply) },
             answers: try wire.answers.map { answer throws(ContractsError) in try CoachAnswer(answer) },
             // A note this build can't read is left out, not the coach's other words.
-            memberNote: wire.memberNote.flatMap { try? CoachMemberNote($0, squad: squad) })
+            memberNote: wire.memberNote.flatMap { try? CoachMemberNote($0, squad: squad) },
+            // So is a letter.
+            letter: wire.letter.flatMap { try? CoachLetter($0.value1, squad: squad) })
     }
 }

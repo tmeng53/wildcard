@@ -10,11 +10,13 @@ public struct SquadSettings: Hashable, Sendable {
     public var characters: [MemberID: MemberCharacter]
     public var scene: SquadScene
     public var coach: SquadCoach
-    /// The squad's weekly goal (人均 N 天) and its recent average.
+    /// The squad's weekly goal (人均 N 次) and its recent average.
     public var goal: SquadWeeklyGoal
     /// The squad's time zone (比赛时区), the clock of its Sunday 8pm 战报.
     public var matchTimeZone: SquadTimeZone
-    /// The member's day and clock when the page was read, for 「执教第 N 周」 and 「带队 N 天」.
+    /// The squad's language (小队语言), what its coach and 战报 are written in.
+    public var language: SquadLanguage
+    /// The member's day and clock when the page was read, for 「执教 N 天」 and 「执教 N 周」.
     public let today: LocalDay
     public let timeZone: TimeZone
 
@@ -23,7 +25,8 @@ public struct SquadSettings: Hashable, Sendable {
         coach: SquadCoach, today: LocalDay, timeZone: TimeZone,
         goal: SquadWeeklyGoal = SquadWeeklyGoal(daysPerMember: 3, nextDaysPerMember: 3, canChange: false, recent: nil),
         matchTimeZone: SquadTimeZone = SquadTimeZone(
-            timeZone: SquadTimeZone.newYork, nextTimeZone: SquadTimeZone.newYork, canChange: false)
+            timeZone: SquadTimeZone.newYork, canChange: false),
+        language: SquadLanguage = SquadLanguage(language: .simplifiedChinese, canChange: false)
     ) {
         self.squad = squad
         self.viewer = viewer
@@ -32,6 +35,7 @@ public struct SquadSettings: Hashable, Sendable {
         self.coach = coach
         self.goal = goal
         self.matchTimeZone = matchTimeZone
+        self.language = language
         self.today = today
         self.timeZone = timeZone
     }
@@ -55,12 +59,15 @@ public protocol SquadSettingsService: Sendable {
     func hire(_ coach: CoachID, for squad: SquadID) async throws(SquadError) -> SquadCoach
     /// Fires the squad's coach; only the captain may. Its memory stays with the squad.
     func fireCoach(of squad: SquadID) async throws(SquadError) -> SquadCoach
-    /// Sets the squad's weekly goal (人均 N 天) from next week; only the captain may. Safe to
+    /// Sets the squad's weekly goal (人均 N 次) from next week; only the captain may. Safe to
     /// repeat.
     func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal
-    /// Sets the squad's time zone (比赛时区, an IANA name) from the squad's next week; only the
-    /// captain may. Safe to repeat.
+    /// Sets the squad's time zone (比赛时区, an IANA name), counting at once; only the captain may.
+    /// Safe to repeat.
     func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone
+    /// Sets the squad's language (小队语言) from now on; only the captain may. Safe to repeat.
+    func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
+        -> SquadLanguage
 }
 
 /// What can go wrong on 小队设置, by what the member can do about it.

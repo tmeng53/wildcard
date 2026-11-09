@@ -40,3 +40,29 @@ import Testing
     #expect(two.map(\.start) == [0, 32])
     #expect(two.allSatisfy { abs($0.width - 22.4) < 0.000_001 })
 }
+
+@Test func aSkiDayShowsItsRunsDropAndTopSpeed() {
+    let cells = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.44))
+    #expect(cells.map(\.value) == ["184", "12", "1,860", "62.4"])
+    #expect(cells.map(\.unit) == [.minutes, .runs, .meters, .kilometresPerHour])
+    #expect(cells.map(\.label) == [.duration, .runs, .descent, .topSpeed])
+}
+
+@Test func aHikeShowsItsClimbAndAnOpenWaterSwimItsPacePer100Metres() {
+    let hike = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 12_600, distanceM: 12_600, avgHr: 118, elevationGainM: 840))
+    #expect(hike.map(\.value) == ["210", "12.6", "840", "118"])
+    #expect(hike[2].label == .elevationGain)
+    let swim = ScoreCell.cells(of: WorkoutSummary(durationSec: 2520, distanceM: 1800, avgHr: 136, paceSecPer100m: 140))
+    #expect(swim.map(\.value) == ["42", "1.8", "2′20″", "136"])
+    #expect(swim[2].unit == .per100Meters)
+}
+
+@Test func caloriesComeLastInWholeKilocalories() {
+    let cells = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 1312.6))
+    #expect(cells.map(\.value) == ["59", "124", "156", "1,313"])
+    #expect(cells.last?.unit == .kilocalories)
+    #expect(cells.last?.label == .calories)
+}

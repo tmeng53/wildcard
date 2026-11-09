@@ -118,10 +118,16 @@ public struct CoachReply: Hashable, Sendable {
     public let text: String?
     /// Nil when it only spoke. Not one of the post's reactions.
     public let emoji: Emoji?
+    /// Whom its line @s, in the order written: each 「@昵称」 at its start.
+    public let mentions: [MemberID]
     public let writtenAt: Date
 
-    public init(checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, writtenAt: Date) {
-        (self.checkIn, self.coach, self.text, self.emoji, self.writtenAt) = (checkIn, coach, text, emoji, writtenAt)
+    public init(
+        checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, mentions: [MemberID] = [],
+        writtenAt: Date
+    ) {
+        (self.checkIn, self.coach, self.text, self.emoji) = (checkIn, coach, text, emoji)
+        (self.mentions, self.writtenAt) = (mentions, writtenAt)
     }
 }
 
@@ -133,12 +139,18 @@ public struct CoachAnswer: Hashable, Sendable, Identifiable {
     public let comment: CommentID
     public let coach: CoachSpeaker
     public let text: String
+    /// Whom it @s, in the order written: each 「@昵称」 at its start.
+    public let mentions: [MemberID]
     public let writtenAt: Date
 
     public var id: CommentID { comment }
 
-    public init(checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, writtenAt: Date) {
-        (self.checkIn, self.comment, self.coach, self.text, self.writtenAt) = (checkIn, comment, coach, text, writtenAt)
+    public init(
+        checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, mentions: [MemberID] = [],
+        writtenAt: Date
+    ) {
+        (self.checkIn, self.comment, self.coach, self.text) = (checkIn, comment, coach, text)
+        (self.mentions, self.writtenAt) = (mentions, writtenAt)
     }
 }
 
@@ -158,8 +170,35 @@ public struct CoachMemberNote: Hashable, Sendable, Identifiable {
     }
 }
 
+/// The letter a coach the squad let go for another (换教练) left the one that took over (交接信):
+/// written once, in the old coach's voice, which every member opens once on 今天 and the new
+/// coach's 简历 and 通知 keep.
+public struct CoachLetter: Hashable, Sendable, Identifiable {
+    public let id: Int
+    /// The squad whose coaches changed.
+    public let squad: SquadID
+    /// The coach that left and wrote it: its 落款.
+    public let from: CoachSpeaker
+    /// The coach that took over, whom it is to: its 称呼.
+    public let recipient: CoachSpeaker
+    /// The day it is dated, on the squad's clock.
+    public let day: LocalDay
+    /// Its body, without the 称呼 or 落款; lines apart by `\n`.
+    public let text: String
+
+    public init(id: Int, squad: SquadID, from: CoachSpeaker, to recipient: CoachSpeaker, day: LocalDay, text: String) {
+        (self.id, self.squad, self.from, self.recipient, self.day, self.text) = (id, squad, from, recipient, day, text)
+    }
+
+    /// Its body's lines, blank ones left out.
+    public var lines: [String] {
+        text.split(separator: "\n", omittingEmptySubsequences: true).map(String.init)
+    }
+}
+
 /// What the squad's coach said: its newest 战术板 line, its replies to the check-ins asked
-/// about, its answers to members' replies to it there, and the reader's own morning note.
+/// about, its answers to members' replies to it there, the reader's own morning note, and the
+/// letter it was left when it took over.
 public struct CoachActivity: Hashable, Sendable {
     public let note: CoachNote?
     public let replies: [CoachReply]
@@ -167,13 +206,17 @@ public struct CoachActivity: Hashable, Sendable {
     public let answers: [CoachAnswer]
     /// The reader's morning note waiting on 今天, if any.
     public let memberNote: CoachMemberNote?
+    /// The letter the squad's coach now was left by the one before it, if any.
+    public let letter: CoachLetter?
 
     public init(
-        note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = [], memberNote: CoachMemberNote? = nil
+        note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = [], memberNote: CoachMemberNote? = nil,
+        letter: CoachLetter? = nil
     ) {
         self.note = note
         self.replies = replies
         self.answers = answers
         self.memberNote = memberNote
+        self.letter = letter
     }
 }

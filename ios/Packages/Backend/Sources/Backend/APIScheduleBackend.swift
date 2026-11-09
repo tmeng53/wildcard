@@ -21,9 +21,10 @@ public struct APIScheduleBackend: ScheduleBackend {
             let thisWeek = LocalDay(at: now(), in: timeZone).weekStart
             let plan = try await api.weeklyPlanWire(weekStart: thisWeek)
             let firstWeek = try plan.firstWeek.map { text throws(APIError) in try day(text) } ?? thisWeek
+            let squadFirstWeek = try plan.squadFirstWeek.map { text throws(APIError) in try day(text) }
             return ScheduleProfile(
                 nickname: profile?.character?.nickname.text ?? "", timeZone: timeZone, firstWeek: firstWeek,
-                look: profile?.character?.look)
+                squadFirstWeek: squadFirstWeek, look: profile?.character?.look)
         }
     }
 
@@ -35,18 +36,18 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
             let squad = try await api.mySquad()
-            // The titles show on a week that is over.
-            let titles =
+            // The titles and the week's scene show on a week that is over.
+            let story =
                 if let squad, weekStart < thisWeek {
-                    try await self.titles(of: member.id, in: squad.id, weekStart: weekStart)
+                    try await self.story(of: member.id, in: squad.id, weekStart: weekStart)
                 } else {
-                    [AwardTitle]()
+                    (titles: [AwardTitle](), scene: SceneID?.none)
                 }
             do {
                 return try WeekSheet(
                     weekStart: weekStart, plan: plan.days, marks: Self.marks(of: checkIns, weekStart: weekStart),
-                    titles: titles,
-                    fuel: try wire.fuelGoals.map(FuelGoal.init))
+                    titles: story.titles,
+                    fuel: try wire.fuelGoals.map(FuelGoal.init), scene: story.scene)
             } catch {
                 throw .unreadableResponse
             }
@@ -73,11 +74,11 @@ public struct APIScheduleBackend: ScheduleBackend {
 
     // MARK: - Private
 
-    /// The member's titles in the squad's story of a week; none until they are written. The
-    /// titles only decorate the poster, so a story that can't be read leaves them off rather
-    /// than the week; a signed-out member still fails.
-    private func titles(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
-        -> [AwardTitle]
+    /// The member's titles in the squad's story of a week, none until they are written, and the
+    /// scene the squad trained on. The story only decorates the poster, so one that can't be
+    /// read leaves them off rather than the week; a signed-out member still fails.
+    private func story(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
+        -> (titles: [AwardTitle], scene: SceneID?)
     {
         let story: Components.Schemas.WeekStory
         do {
@@ -85,22 +86,29 @@ public struct APIScheduleBackend: ScheduleBackend {
         } catch .account(let error) {
             throw .account(error)
         } catch {
-            return []
+            return ([], nil)
         }
-        guard case .case1(let ready) = story else { return [] }
-        let mine = ready.titles.first { UUID(uuidString: $0.member).map(MemberID.init) == member }
-        return mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? []
+        switch story {
+        case .case1(let ready):
+            let mine = ready.titles.first { UUID(uuidString: $0.member).map(MemberID.init) == member }
+            return (
+                mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? [],
+                SceneID(rawValue: ready.sceneId)
+            )
+        case .case2(let pending):
+            return ([], SceneID(rawValue: pending.sceneId))
+        }
     }
 
-    /// How each day of the week went: a 练了 over a 请假条, Monday first. A day with more than
-    /// one 练了 shows the latest one's sport.
+    /// How each day of the week went: a 练了 over a 请假条, Monday first, with every sport a
+    /// day's 练了 logged, the latest last.
     static func marks(of checkIns: [CheckIn], weekStart: LocalDay) -> [DayMark] {
         (0..<WeeklyPlan.dayCount).map { offset in
             let day = checkIns.filter { $0.day == weekStart.adding(days: offset) }
             let trained = day.compactMap { checkIn -> (Timestamp, Activity)? in
                 if case .trained(let training) = checkIn.entry { (checkIn.createdAt, training.activity) } else { nil }
             }
-            if let latest = trained.max(by: { $0.0 < $1.0 }) { return .trained(latest.1) }
+            if !trained.isEmpty { return .trained(trained.sorted { $0.0 < $1.0 }.map(\.1)) }
             if day.contains(where: { if case .disclaimer = $0.entry { true } else { false } }) { return .disclaimer }
             return .none
         }

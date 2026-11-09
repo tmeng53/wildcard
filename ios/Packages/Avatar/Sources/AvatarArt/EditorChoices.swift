@@ -153,6 +153,20 @@ extension PlaceholderCharacter {
         try EditorChoices.decode(file("editor.json"))
     }
 
+    /// The slots a piece of clothing or a prop may be worn in, in the order `slot(holding:)` looks.
+    public static let wornSlots: [Slot] = ["top", "bottom", "shoes", "hat", "acc", "prop"]
+
+    /// The slot `piece` is worn in: as `editor.json` lists it, else the slot whose art folder holds
+    /// it, as a coach's gift's does (`avatar/art/<slot>/<piece>/`, put by an admin and on no rack).
+    /// Nil for a piece this build has no art for yet.
+    public static func slot(holding piece: String) -> Slot? {
+        if let listed = (try? editorChoices())?.slot(of: piece) { return listed }
+        return wornSlots.first { slot in
+            FileManager.default.fileExists(
+                atPath: ArtTree.url("art/\(slot)/\(piece)", in: tree, bundled: folder).path(percentEncoded: false))
+        }
+    }
+
     /// A store's badge, `stores/<id>.svg`.
     public static func storeBadge(_ store: String) throws(AvatarError) -> Artwork {
         let path = "stores/\(store).svg"

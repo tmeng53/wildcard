@@ -82,6 +82,7 @@ xcodebuild test \
   -scheme Wildcard \
   -destination "id=$udid" \
   -derivedDataPath "$out/DerivedData" \
+  -clonedSourcePackagesDirPath "$PWD/build/spm" \
   -resultBundlePath "$out/Wildcard.xcresult" \
   -retry-tests-on-failure -test-iterations 2 \
   CODE_SIGNING_ALLOWED=NO \

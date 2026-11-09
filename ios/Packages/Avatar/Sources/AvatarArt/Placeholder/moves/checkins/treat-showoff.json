@@ -34,7 +34,7 @@
     },
     {
      "t": 1.7,
-     "v": 120,
+     "v": 117,
      "ease": "easeOut"
     },
     {
@@ -129,7 +129,7 @@
     },
     {
      "t": 1.7,
-     "v": -120,
+     "v": -117,
      "ease": "easeOut"
     },
     {
@@ -224,7 +224,7 @@
     },
     {
      "t": 1.7,
-     "v": -120,
+     "v": -117,
      "ease": "easeOut"
     },
     {
@@ -948,6 +948,8 @@
      "ease": "easeInOut"
     }
    ]
-  }
+  },
+  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.25, "v": 1, "ease": "hold"}, {"t": 3.7, "v": 0, "ease": "hold"}]},
+  {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 1.25, "v": 1, "ease": "hold"}, {"t": 3.7, "v": 0, "ease": "hold"}]}
  ]
 }

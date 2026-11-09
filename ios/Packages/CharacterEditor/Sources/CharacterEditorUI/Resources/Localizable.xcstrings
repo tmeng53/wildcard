@@ -3683,22 +3683,6 @@
         }
       }
     },
-    "先不了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not now"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先不了"
-          }
-        }
-      }
-    },
     "法棍发带": {
       "localizations": {
         "en": {
@@ -3775,22 +3759,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "網球毛線帽"
-          }
-        }
-      }
-    },
-    "一键全开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open them all"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "一鍵全開"
           }
         }
       }

@@ -4,6 +4,8 @@ import Contracts
 /// one in memory.
 public protocol MeService: Sendable {
     func overview() async throws(MeError) -> MeOverview
+    /// 外卡记录: the member's records since they joined, and how they stand in their squad.
+    func records() async throws(MeError) -> WildcardRecords
     /// Saves the character after the member edits it in the character editor.
     func save(_ character: MeCharacter) async throws(MeError)
     /// Saves the number the member picked for their player card.

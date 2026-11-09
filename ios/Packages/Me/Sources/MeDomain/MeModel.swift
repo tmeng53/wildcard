@@ -26,17 +26,27 @@ public final class MeModel {
     @ObservationIgnored private var claimedHere: Set<String> = []
     @ObservationIgnored private let confirm: @MainActor () async throws(MeError) -> DeletionConfirmation
     @ObservationIgnored private let signOutHere: @MainActor () async -> Void
+    /// Where 意见反馈 sends what the member writes us.
+    @ObservationIgnored public let feedback: any FeedbackService
 
     /// `confirm` asks the member to confirm deleting with Apple and hands back how they did;
-    /// `signOut` signs out on this phone and takes the app back to its open screen.
+    /// `signOut` signs out on this phone and takes the app back to its open screen; `feedback`
+    /// sends 意见反馈 (in memory unless one is given).
     public init(
         service: any MeService,
         confirm: @escaping @MainActor () async throws(MeError) -> DeletionConfirmation,
-        signOut: @escaping @MainActor () async -> Void
+        signOut: @escaping @MainActor () async -> Void,
+        feedback: any FeedbackService = KeptFeedback()
     ) {
         self.service = service
+        self.feedback = feedback
         self.confirm = confirm
         self.signOutHere = signOut
+    }
+
+    /// 外卡记录's model, reading through the same service.
+    public func recordsModel() -> RecordsModel {
+        RecordsModel(service: service)
     }
 
     public var overview: MeOverview? {
@@ -168,26 +178,31 @@ public final class MeModel {
     }
 
     /// Wears `title` on the card's front at once (nil: the latest won again) and saves it; puts
-    /// the one worn before back if saving fails.
-    public func equip(_ title: String?) async {
-        guard case .loaded(var overview) = load else { return }
-        let before = overview.board
+    /// the one worn before back if saving fails. Answers the board as saved, or nil when it
+    /// wasn't. Saves even before 我 has read its overview, so the home's own card can wear one.
+    @discardableResult
+    public func equip(_ title: String?) async -> TitleBoard? {
+        let before = overview?.board
         saveFailed = false
-        overview.board.worn = title ?? overview.board.titles.first?.title
-        load = .loaded(overview)
+        if var overview {
+            overview.board.worn = title ?? overview.board.titles.first?.title
+            load = .loaded(overview)
+        }
         do {
             let board = try await service.equip(title)
-            if case .loaded(var latest) = load {
+            if var latest = overview {
                 latest.board = board
                 load = .loaded(latest)
             }
+            return board
         } catch {
-            if case .loaded(var latest) = load {
+            if let before, var latest = overview {
                 latest.board = before
                 load = .loaded(latest)
             }
             saveFailed = true
             await signOutIfEnded(error)
+            return nil
         }
     }
 
