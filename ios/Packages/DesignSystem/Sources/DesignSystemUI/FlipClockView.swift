@@ -113,9 +113,11 @@ private struct FlipColumn: View {
     var body: some View {
         VStack(spacing: Space.xxs) {
             chevron("chevron.up", by: 1)
+            // High priority: on a page that scrolls (关于你, 设置 › 生日) a vertical drag that starts
+            // on the card turns it, and the page scrolls only from elsewhere.
             FlipCard(label: label, width: width, size: size)
                 .contentShape(Rectangle())
-                .gesture(drag)
+                .highPriorityGesture(drag)
             chevron("chevron.down", by: -1)
         }
         .accessibilityElement(children: .ignore)
