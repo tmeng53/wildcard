@@ -4,9 +4,11 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import FeedUI
+import HomeWidgetDomain
 import LocationDomain
 import OnboardingUI
 import SwiftUI
+import WidgetKit
 
 /// The app on the real backend: the screen its account is on.
 struct AppRoot: View {
@@ -15,6 +17,8 @@ struct AppRoot: View {
     let delegate: AppDelegate
     /// Where a tapped push goes (its notice's place), kept until the tabs open it.
     @State private var pushDestination: AppDestination?
+    /// Where a tapped home screen widget asked to go, kept until the tabs open it.
+    @State private var widgetLink: WidgetLink?
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
     @Environment(\.scenePhase) private var scenePhase
@@ -63,6 +67,10 @@ struct AppRoot: View {
                     if let destination = delegate.takeDestination() {
                         WildcardApp.open(destination, today: today, tab: $tab)
                     }
+                    if let link = widgetLink {
+                        widgetLink = nil
+                        WildcardApp.open(link, today: today, tab: $tab)
+                    }
                 }
             }
         }
@@ -95,12 +103,23 @@ struct AppRoot: View {
         // An invite link: universal links come here in a SwiftUI app.
         .onOpenURL { url in
             if let code = InviteLink.code(in: url) { app.open(invite: code) }
+            // A home screen widget: open its place now, or once the tabs are up.
+            if let link = WidgetLink(url: url) {
+                if case .tabs(let today, _, _, _, _, _) = app.screen {
+                    WildcardApp.open(link, today: today, tab: $tab)
+                } else {
+                    widgetLink = link
+                }
+            }
         }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in
             if !shows { tab = .today }
         }
         .onChange(of: scenePhase) { _, phase in
+            // Leaving the app: the home screen widgets read the squad again, with what was just
+            // posted.
+            if phase == .background { WidgetCenter.shared.reloadAllTimelines() }
             if phase == .active {
                 Task { await app.refreshCatalog() }
                 Task { await app.refreshScene() }

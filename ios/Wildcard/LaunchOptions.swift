@@ -97,6 +97,11 @@ enum LaunchOptions {
         return arguments[flag + 1] == "schedule"
     }
 
+    /// `-widgets`: the home screen widgets on the sample squad, instead of the app.
+    static var showsWidgets: Bool {
+        ProcessInfo.processInfo.arguments.contains("-widgets")
+    }
+
     /// `-daily-push full` (or `empty`): the 6pm push's long-press view on the sample squad, as
     /// its notification shows it, instead of the app.
     static var dailyPush: DailyPushPreview.Day? {

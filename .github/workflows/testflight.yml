@@ -124,10 +124,11 @@ jobs:
       # the sign-in stays in the app's own Keychain (KeychainSessionStore keeps it outside the
       # group when the build isn't in it), and the 6pm push's long-press view, which needs the
       # shared sign-in and looks, is switched off, so that push shows as a plain notification.
+      # The home screen widgets then find no sign-in and say so.
       - name: Leave the app group out
         if: inputs.without_app_group
         run: |
-          for file in ios/Config/Wildcard.entitlements ios/WildcardPush*/*.entitlements; do
+          for file in ios/Config/Wildcard.entitlements ios/WildcardPush*/*.entitlements ios/WildcardWidgets/*.entitlements; do
             /usr/libexec/PlistBuddy -c 'Delete :com.apple.security.application-groups' "$file"
           done
           /usr/libexec/PlistBuddy -c 'Set :NSExtension:NSExtensionAttributes:UNNotificationExtensionCategory none' \

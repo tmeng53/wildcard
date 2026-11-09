@@ -82,14 +82,7 @@ public struct SquadCapsule<Heads: View>: View {
 
     /// My week, Monday to Sunday, spread across what is left of the capsule.
     private var week: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in
-                DayCircle(status: status, isToday: index == mine.today, isPicked: false, weekday: index, compact: true)
-                    .fixedSize()
-                if index < mine.days.count - 1 { Spacer(minLength: 0) }
-            }
-        }
-        .frame(maxWidth: .infinity)
+        WeekDayRow(days: mine.days, today: mine.today)
     }
 
     /// A swipe down stretches the capsule after the finger and, past `SquadCardMetrics.fold`,

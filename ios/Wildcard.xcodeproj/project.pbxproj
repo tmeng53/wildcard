@@ -55,6 +55,18 @@
 		A1C0DE000000000000000322 /* HealthUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000321 /* HealthUI */; };
 		A1C0DE000000000000000332 /* LocationUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000331 /* LocationUI */; };
 		A1C0DE000000000000000334 /* LocationDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000333 /* LocationDomain */; };
+		A1C0DE000000000000000371 /* Backend in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000361 /* Backend */; };
+		A1C0DE000000000000000372 /* AccountDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000362 /* AccountDomain */; };
+		A1C0DE000000000000000373 /* AccountUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000363 /* AccountUI */; };
+		A1C0DE000000000000000374 /* CheckInDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000364 /* CheckInDomain */; };
+		A1C0DE000000000000000375 /* Contracts in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000365 /* Contracts */; };
+		A1C0DE000000000000000376 /* DesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000366 /* DesignSystem */; };
+		A1C0DE000000000000000377 /* DesignSystemUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000367 /* DesignSystemUI */; };
+		A1C0DE000000000000000378 /* HomeWidgetDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000368 /* HomeWidgetDomain */; };
+		A1C0DE000000000000000379 /* HomeWidgetUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000369 /* HomeWidgetUI */; };
+		A1C0DE00000000000000037A /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000036A /* SportsUI */; };
+		A1C0DE00000000000000037B /* HomeWidgetDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE00000000000000036B /* HomeWidgetDomain */; };
+		A1C0DE00000000000000034F /* WildcardWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000340 /* WildcardWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +91,13 @@
 			remoteGlobalIDString = A1C0DE000000000000000305;
 			remoteInfo = WildcardPushService;
 		};
+		A1C0DE000000000000000350 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1C0DE000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1C0DE000000000000000345;
+			remoteInfo = WildcardWidgets;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -90,6 +109,7 @@
 			files = (
 				A1C0DE000000000000000217 /* WildcardPushReact.appex in Embed Foundation Extensions */,
 				A1C0DE00000000000000030F /* WildcardPushService.appex in Embed Foundation Extensions */,
+				A1C0DE00000000000000034F /* WildcardWidgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -101,6 +121,7 @@
 		A1C0DE000000000000000005 /* WildcardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WildcardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1C0DE000000000000000200 /* WildcardPushReact.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildcardPushReact.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1C0DE000000000000000300 /* WildcardPushService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildcardPushService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1C0DE000000000000000340 /* WildcardWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WildcardWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -119,6 +140,14 @@
 				WildcardPushService.entitlements,
 			);
 			target = A1C0DE000000000000000305 /* WildcardPushService */;
+		};
+		A1C0DE000000000000000352 /* Exceptions for "WildcardWidgets" folder in "WildcardWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				WildcardWidgets.entitlements,
+			);
+			target = A1C0DE000000000000000345 /* WildcardWidgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -147,6 +176,14 @@
 				A1C0DE000000000000000312 /* Exceptions for "WildcardPushService" folder in "WildcardPushService" target */,
 			);
 			path = WildcardPushService;
+			sourceTree = "<group>";
+		};
+		A1C0DE000000000000000341 /* WildcardWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A1C0DE000000000000000352 /* Exceptions for "WildcardWidgets" folder in "WildcardWidgets" target */,
+			);
+			path = WildcardWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -213,6 +250,7 @@
 				A1C0DE00000000000000021F /* DesignSystem in Frameworks */,
 				A1C0DE000000000000000220 /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000223 /* SportsUI in Frameworks */,
+				A1C0DE00000000000000037B /* HomeWidgetDomain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -226,6 +264,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1C0DE000000000000000342 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1C0DE000000000000000371 /* Backend in Frameworks */,
+				A1C0DE000000000000000372 /* AccountDomain in Frameworks */,
+				A1C0DE000000000000000373 /* AccountUI in Frameworks */,
+				A1C0DE000000000000000374 /* CheckInDomain in Frameworks */,
+				A1C0DE000000000000000375 /* Contracts in Frameworks */,
+				A1C0DE000000000000000376 /* DesignSystem in Frameworks */,
+				A1C0DE000000000000000377 /* DesignSystemUI in Frameworks */,
+				A1C0DE000000000000000378 /* HomeWidgetDomain in Frameworks */,
+				A1C0DE000000000000000379 /* HomeWidgetUI in Frameworks */,
+				A1C0DE00000000000000037A /* SportsUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -236,6 +291,7 @@
 				A1C0DE000000000000000007 /* WildcardUITests */,
 				A1C0DE000000000000000201 /* WildcardPushReact */,
 				A1C0DE000000000000000301 /* WildcardPushService */,
+				A1C0DE000000000000000341 /* WildcardWidgets */,
 				A1C0DE000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -247,6 +303,7 @@
 				A1C0DE000000000000000005 /* WildcardUITests.xctest */,
 				A1C0DE000000000000000200 /* WildcardPushReact.appex */,
 				A1C0DE000000000000000300 /* WildcardPushService.appex */,
+				A1C0DE000000000000000340 /* WildcardWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -268,6 +325,7 @@
 			dependencies = (
 				A1C0DE000000000000000219 /* PBXTargetDependency */,
 				A1C0DE000000000000000311 /* PBXTargetDependency */,
+				A1C0DE000000000000000351 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A1C0DE000000000000000006 /* Wildcard */,
@@ -308,6 +366,7 @@
 				A1C0DE000000000000000331 /* LocationUI */,
 				A1C0DE000000000000000333 /* LocationDomain */,
 				A1C0DE0000000000000000D1 /* Sentry */,
+				A1C0DE00000000000000036B /* HomeWidgetDomain */,
 			);
 			productName = Wildcard;
 			productReference = A1C0DE000000000000000004 /* Wildcard.app */;
@@ -390,6 +449,38 @@
 			productReference = A1C0DE000000000000000300 /* WildcardPushService.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A1C0DE000000000000000345 /* WildcardWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1C0DE000000000000000346 /* Build configuration list for PBXNativeTarget "WildcardWidgets" */;
+			buildPhases = (
+				A1C0DE000000000000000343 /* Sources */,
+				A1C0DE000000000000000342 /* Frameworks */,
+				A1C0DE000000000000000344 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A1C0DE000000000000000341 /* WildcardWidgets */,
+			);
+			name = WildcardWidgets;
+			packageProductDependencies = (
+				A1C0DE000000000000000361 /* Backend */,
+				A1C0DE000000000000000362 /* AccountDomain */,
+				A1C0DE000000000000000363 /* AccountUI */,
+				A1C0DE000000000000000364 /* CheckInDomain */,
+				A1C0DE000000000000000365 /* Contracts */,
+				A1C0DE000000000000000366 /* DesignSystem */,
+				A1C0DE000000000000000367 /* DesignSystemUI */,
+				A1C0DE000000000000000368 /* HomeWidgetDomain */,
+				A1C0DE000000000000000369 /* HomeWidgetUI */,
+				A1C0DE00000000000000036A /* SportsUI */,
+			);
+			productName = WildcardWidgets;
+			productReference = A1C0DE000000000000000340 /* WildcardWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -411,6 +502,9 @@
 						CreatedOnToolsVersion = 26.0;
 					};
 					A1C0DE000000000000000305 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					A1C0DE000000000000000345 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -446,6 +540,7 @@
 				A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */,
 				A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */,
 				A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */,
+				A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */,
 				A1C0DE0000000000000000D0 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -457,6 +552,7 @@
 				A1C0DE000000000000000009 /* WildcardUITests */,
 				A1C0DE000000000000000205 /* WildcardPushReact */,
 				A1C0DE000000000000000305 /* WildcardPushService */,
+				A1C0DE000000000000000345 /* WildcardWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -484,6 +580,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A1C0DE000000000000000304 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1C0DE000000000000000344 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -521,6 +624,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A1C0DE000000000000000343 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -538,6 +648,11 @@
 			isa = PBXTargetDependency;
 			target = A1C0DE000000000000000305 /* WildcardPushService */;
 			targetProxy = A1C0DE000000000000000310 /* PBXContainerItemProxy */;
+		};
+		A1C0DE000000000000000351 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1C0DE000000000000000345 /* WildcardWidgets */;
+			targetProxy = A1C0DE000000000000000350 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -794,6 +909,52 @@
 			};
 			name = Release;
 		};
+		A1C0DE000000000000000347 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WildcardWidgets/WildcardWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WildcardWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wildcardsquad.wildcard.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+			};
+			name = Debug;
+		};
+		A1C0DE000000000000000348 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = WildcardWidgets/WildcardWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WildcardWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wildcardsquad.wildcard.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -838,6 +999,15 @@
 			buildConfigurations = (
 				A1C0DE000000000000000307 /* Debug */,
 				A1C0DE000000000000000308 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1C0DE000000000000000346 /* Build configuration list for PBXNativeTarget "WildcardWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1C0DE000000000000000347 /* Debug */,
+				A1C0DE000000000000000348 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -920,6 +1090,10 @@
 		A1C0DE000000000000000330 /* XCLocalSwiftPackageReference "Packages/Location" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Packages/Location;
+		};
+		A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/HomeWidget;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -1164,6 +1338,61 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000040 /* XCLocalSwiftPackageReference "Packages/Notifications" */;
 			productName = NotificationsDomain;
+		};
+		A1C0DE000000000000000361 /* Backend */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000071 /* XCLocalSwiftPackageReference "Packages/Backend" */;
+			productName = Backend;
+		};
+		A1C0DE000000000000000362 /* AccountDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountDomain;
+		};
+		A1C0DE000000000000000363 /* AccountUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000070 /* XCLocalSwiftPackageReference "Packages/Account" */;
+			productName = AccountUI;
+		};
+		A1C0DE000000000000000364 /* CheckInDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001E /* XCLocalSwiftPackageReference "Packages/CheckIn" */;
+			productName = CheckInDomain;
+		};
+		A1C0DE000000000000000365 /* Contracts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000072 /* XCLocalSwiftPackageReference "Packages/Contracts" */;
+			productName = Contracts;
+		};
+		A1C0DE000000000000000366 /* DesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystem;
+		};
+		A1C0DE000000000000000367 /* DesignSystemUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE00000000000000001B /* XCLocalSwiftPackageReference "Packages/DesignSystem" */;
+			productName = DesignSystemUI;
+		};
+		A1C0DE000000000000000368 /* HomeWidgetDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */;
+			productName = HomeWidgetDomain;
+		};
+		A1C0DE000000000000000369 /* HomeWidgetUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */;
+			productName = HomeWidgetUI;
+		};
+		A1C0DE00000000000000036A /* SportsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE0000000000000000D3 /* XCLocalSwiftPackageReference "Packages/Sports" */;
+			productName = SportsUI;
+		};
+		A1C0DE00000000000000036B /* HomeWidgetDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000360 /* XCLocalSwiftPackageReference "Packages/HomeWidget" */;
+			productName = HomeWidgetDomain;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

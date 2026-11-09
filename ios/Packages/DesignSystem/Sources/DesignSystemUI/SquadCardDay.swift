@@ -3,23 +3,33 @@ import DesignSystem
 import SwiftUI
 
 /// One day: its circle over its name. Today's name is ink and heavier; the picked day's sits in
-/// an ink capsule. `compact`, in the folded squad capsule, draws it smaller and names today 今天.
+/// an ink capsule. `.compact`, in the folded squad capsule, draws it smaller and names today 今天;
+/// `.tiny`, in the small home screen widget, smaller still, with today's weekday in ink.
 struct DayCircle: View {
+    enum Size {
+        case regular
+        case compact
+        case tiny
+    }
+
     @Environment(\.sceneTheme) private var theme
     let status: WeekDayStatus
     let isToday: Bool
     let isPicked: Bool
     let weekday: Int
-    var compact = false
+    var size = Size.regular
 
     var body: some View {
-        VStack(spacing: compact ? SquadCardMetrics.compactDayGap : Space.xxs) {
+        VStack(spacing: size == .regular ? Space.xxs : SquadCardMetrics.compactDayGap) {
             circle
                 .frame(width: diameter, height: diameter)
             label
                 .typeStyle(isToday || isPicked ? TypeRamp.tabSelected : TypeRamp.tab)
                 .foregroundStyle(Color(role: isPicked ? .bgCanvas : isToday ? .fgDefault : .fgMuted, in: theme))
-                .frame(minWidth: SquadCardMetrics.pick, minHeight: SquadCardMetrics.pick - 2)
+                .frame(
+                    minWidth: size == .tiny ? nil : SquadCardMetrics.pick,
+                    minHeight: size == .tiny ? nil : SquadCardMetrics.pick - 2
+                )
                 .background {
                     if isPicked { Capsule().fill(Color(role: .fgDefault, in: theme)) }
                 }
@@ -29,13 +39,19 @@ struct DayCircle: View {
         .accessibilityValue(value)
     }
 
-    private var diameter: Double { compact ? SquadCardMetrics.compactDay : SquadCardMetrics.day }
+    private var diameter: Double {
+        switch size {
+        case .regular: SquadCardMetrics.day
+        case .compact: SquadCardMetrics.compactDay
+        case .tiny: SquadCardMetrics.tinyDay
+        }
+    }
 
     /// How much smaller a compact day draws its glyphs.
     private var scale: Double { diameter / SquadCardMetrics.day }
 
     private var label: Text {
-        compact && isToday ? Text("今天", bundle: .module) : Self.name(weekday)
+        size == .compact && isToday ? Text("今天", bundle: .module) : Self.name(weekday)
     }
 
     @ViewBuilder private var circle: some View {
@@ -49,7 +65,7 @@ struct DayCircle: View {
                 .overlay(alignment: .bottomTrailing) { if symbol != nil { checkBadge } }
         case .excused:
             Text("假", bundle: .module)
-                .typeStyle(compact ? TypeRamp.tabSelected : TypeRamp.footnoteEmphasis)
+                .typeStyle(size == .regular ? TypeRamp.footnoteEmphasis : TypeRamp.tabSelected)
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())

@@ -14,6 +14,7 @@ import FeedDomain
 import FeedUI
 import Foundation
 import HealthUI
+import HomeWidgetDomain
 import LocationDomain
 import LocationUI
 import MeDomain
@@ -212,6 +213,11 @@ struct WildcardApp: App {
         }
     }
 
+    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
+    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
+    }
+
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
     private static func askForNotifications() {
         guard LaunchOptions.asksForNotifications else { return }
@@ -272,6 +278,8 @@ struct WildcardApp: App {
             LaunchCover()
         } else if LaunchOptions.showsRecap {
             RecapDemo()
+        } else if LaunchOptions.showsWidgets {
+            WidgetPreview(now: LaunchOptions.now())
         } else if let day = LaunchOptions.dailyPush {
             DailyPushPreview(day: day, now: LaunchOptions.now())
         } else if let app {
