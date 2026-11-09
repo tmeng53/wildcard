@@ -1,4 +1,11 @@
-import type { Feedback, FeedbackId, FiledIssue, MemberId } from './domain/feedback.js';
+import type {
+  Adoption,
+  AdoptionKind,
+  Feedback,
+  FeedbackId,
+  FiledIssue,
+  MemberId,
+} from './domain/feedback.js';
 
 /** Where messages and their issues are kept. A message is never changed once sent. */
 export interface FeedbackStore {
@@ -23,6 +30,16 @@ export interface FeedbackStore {
     readonly issue: FiledIssue;
     readonly at: Date;
   }): Promise<void>;
+  /**
+   * Keeps that `admin` adopted the message as `kind`, unless it was adopted before: then the
+   * first adoption stands and `fresh` is false. `undefined` when there is no such message.
+   */
+  adopt(adoption: {
+    readonly feedback: FeedbackId;
+    readonly kind: AdoptionKind;
+    readonly admin: MemberId;
+    readonly at: Date;
+  }): Promise<{ readonly adoption: Adoption; readonly fresh: boolean } | undefined>;
 }
 
 /** The current time. */

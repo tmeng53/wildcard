@@ -53,6 +53,7 @@ import {
   unusedUnlocks,
   ignoredNotices,
   unusedFeedback,
+  noRewards,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -115,6 +116,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
