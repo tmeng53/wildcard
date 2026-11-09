@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import FeedDomain
 import FeedUI
+import HomeWidgetUI
 import LocationDomain
 import MeDomain
 import MeUI
@@ -270,13 +271,12 @@ struct MainTabs: View {
             MeView(
                 model: profile,
                 destinations: MeDestinations(
-                    editCharacter: wardrobe.editCharacter,
-                    schedule: { showsSchedule = true },
+                    editCharacter: wardrobe.editCharacter, schedule: { showsSchedule = true },
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
                     writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
-                    location: location),
+                    location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now()))),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }

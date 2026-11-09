@@ -138,5 +138,9 @@ enum WidgetMetrics {
     static let capsule: Double = 36
     static let capsuleButton: Double = 28
     static let heart: Double = 10
+    /// An iPhone's small widget is 170 points square on a 6.1" to 6.3" phone, a medium one 364
+    /// by 170, with 16 points of margin inside.
+    static let small: Double = 170
+    static let medium: Double = 364
 }
 #endif

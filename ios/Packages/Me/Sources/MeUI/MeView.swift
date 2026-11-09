@@ -33,14 +33,18 @@ public struct MeDestinations {
     public var health: HealthConnection?
     /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
     public var location: LocationSharing?
+    /// 设置 › 桌面小组件, how to put the home screen widgets on; nil shows no row.
+    public var widgetGuide: AnyView?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
+        widgetGuide: AnyView? = nil
     ) {
         self.previewSignUp = previewSignUp
+        self.widgetGuide = widgetGuide
         self.health = health
         self.location = location
         self.editCharacter = editCharacter
