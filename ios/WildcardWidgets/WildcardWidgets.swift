@@ -1,5 +1,6 @@
 import DesignSystem
 import DesignSystemUI
+import HealthDomain
 import HomeWidgetDomain
 import HomeWidgetUI
 import SwiftUI
@@ -14,12 +15,13 @@ struct WildcardWidgets: WidgetBundle {
     }
 }
 
-/// 我的一周: a tap opens 打卡 until I check in today, then 今天.
+/// 我的一周: a tap opens 打卡 until I check in today, then 今天; its capsule's 打卡 posts the
+/// workout Health synced.
 struct WeekHomeWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: "week", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
-                WeekWidget(board: board)
+                WeekWidget(board: board) { workout in PostWorkoutButton(workout: workout) }
                     .widgetURL(board.weekLink.url)
             }
         }
@@ -29,18 +31,31 @@ struct WeekHomeWidget: Widget {
     }
 }
 
-/// 小队今天: a tap opens 今天, and its 打卡 opens 打卡.
+/// 小队今天: a tap opens 今天, and its 打卡 opens 打卡, or, while Health has a workout to post,
+/// its capsule's 打卡 posts it.
 struct SquadHomeWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: "squad", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
-                SquadWidget(board: board)
+                SquadWidget(board: board) { workout in PostWorkoutButton(workout: workout) }
                     .widgetURL(WidgetLink.today.url)
             }
         }
         .configurationDisplayName(WidgetCopy.squadName)
         .description(WidgetCopy.squadDescription)
         .supportedFamilies([.systemMedium])
+    }
+}
+
+/// The capsule's 打卡: posts the workout in place, through `PostWorkoutIntent`.
+private struct PostWorkoutButton: View {
+    let workout: ImportedWorkout
+
+    var body: some View {
+        Button(intent: PostWorkoutIntent(workout: workout.id)) {
+            PostWorkoutLabel()
+        }
+        .buttonStyle(.plain)
     }
 }
 
