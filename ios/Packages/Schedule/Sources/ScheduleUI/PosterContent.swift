@@ -39,7 +39,6 @@ struct PosterContent: Equatable {
         let plan: PlanDay
         let mark: DayMark
         let look: Look
-        let isEditable: Bool
         var id: Int { index }
 
         /// What the lane says and how it is marked (`DayMark.face(of:)`). A day being changed
@@ -99,7 +98,7 @@ struct PosterContent: Equatable {
             let look: Look = if held { .held } else if isToday { .today } else { .plain }
             return Lane(
                 index: index, day: sheet.weekStart.adding(days: index), isToday: isToday, plan: days[index],
-                mark: sheet.marks[index], look: look, isEditable: board?.isEditable(index) ?? false)
+                mark: sheet.marks[index], look: look)
         }
         titles = tense == .past ? sheet.titles : []
         // A goal being typed shows on the poster as it is written.
@@ -125,8 +124,7 @@ struct PosterContent: Equatable {
         lanes = board.days.indices.map { index in
             Lane(
                 index: index, day: board.weekStart.adding(days: index), isToday: false, plan: board.days[index],
-                mark: .none, look: board.focus == .selected(index) ? .held : .plain,
-                isEditable: board.isEditable(index))
+                mark: .none, look: board.focus == .selected(index) ? .held : .plain)
         }
         titles = []
         fuel = []
@@ -142,7 +140,7 @@ struct PosterContent: Equatable {
             lanes: lanes.map {
                 Lane(
                     index: $0.index, day: $0.day, isToday: $0.isToday, plan: $0.plan, mark: $0.mark,
-                    look: $0.isToday ? .today : .plain, isEditable: false)
+                    look: $0.isToday ? .today : .plain)
             },
             titles: titles, fuel: fuel, fuelOpen: false, fuelEditable: false, tally: tally)
     }

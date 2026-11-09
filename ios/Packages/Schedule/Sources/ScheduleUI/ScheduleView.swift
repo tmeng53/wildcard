@@ -110,8 +110,9 @@ public struct ScheduleView: View {
         .toolbar { saveItem }
         .pushedPage()
         .task { await model.load() }
-        // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
-        .onChange(of: store.todaysActivity) { model.followToday() }
+        // What the character plays changed (a 练了 read in, a day's sport picked, another week
+        // shown): it follows.
+        .onChange(of: model.play) { model.followPlay() }
         // The character plays the sport of the scene the poster is drawn in.
         .onChange(of: shownContent?.scene(now: theme) ?? theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
