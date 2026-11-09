@@ -130,7 +130,8 @@ public final class FeedModel {
 
     // MARK: - Loading
 
-    public func load() async {
+    /// One read of the feed, then what the coach said (`load()`).
+    fileprivate func reload() async {
         hasNews = false
         await store.load()
         answerArrivals()
@@ -377,6 +378,16 @@ public final class FeedModel {
         try? player.play(clip, now: start)
         played[post.id] = Played(
             count: (played[post.id]?.count ?? 0) + 1, until: start.addingTimeInterval(clip.duration))
+    }
+}
+
+extension FeedModel {
+    /// Reads the feed and what the coach said again. Pull to refresh waits for it, but it runs on
+    /// its own task: SwiftUI cancels a refresh's task when the view updates under it (here, as the
+    /// posts arrive), which cut off the coach's read, the last step, so a new reply showed only
+    /// after a relaunch.
+    public func load() async {
+        await Task { await reload() }.value
     }
 }
 #endif
