@@ -1,7 +1,7 @@
 import Foundation
 
 /// A squad's weekly goal (小队每周目标) as its members see it: how many days each member trains
-/// on average (人均 N 天), which its captain sets, and how the squad did lately. The squad's goal
+/// on average (人均 N 次), which its captain sets, and how the squad did lately. The squad's goal
 /// for a week is that times its members.
 public struct SquadWeeklyGoal: Hashable, Sendable {
     /// How the squad trained over its latest finished weeks.

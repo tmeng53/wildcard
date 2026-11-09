@@ -76,13 +76,13 @@ private struct PushHeader: View {
                     }
                     .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
                     .monospacedDigit()
-                    Text("天", bundle: .module.inAppLanguage)
+                    Text("次", bundle: .module.inAppLanguage)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgSubtle, in: .gym))
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(
-                    Text("本周小队已练 \(week.trainedDays)/\(week.plannedDays) 天", bundle: .module.inAppLanguage))
+                    Text("本周小队已练 \(week.trainedDays)/\(week.plannedDays) 次", bundle: .module.inAppLanguage))
                 Capsule()
                     .fill(Color(role: .fgOnBrand, in: .gym).opacity(0.2))
                     .overlay(alignment: .leading) {

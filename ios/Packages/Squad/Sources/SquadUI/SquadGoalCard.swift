@@ -6,7 +6,7 @@ import SquadDomain
 import SwiftUI
 
 /// 小队's 每周目标 (approved 2026-11-06): the goal and how the squad did lately as two
-/// scoreboard numbers on graphite, 「目标 · 人均 3 天」 and 「最近 4 周 · 人均 3.4 天」 (left out
+/// scoreboard numbers on graphite, 「目标 · 人均 3 次」 and 「最近 4 周 · 人均 3.4 天」 (left out
 /// until a week has finished). The captain picks 1 to 7 under them; a change counts from next
 /// week, which the line under the card says. Everyone else reads it only.
 struct SquadGoalCard: View {
@@ -46,7 +46,7 @@ struct SquadGoalCard: View {
                             ) {
                                 pick(days)
                             }
-                            .accessibilityLabel(Text("人均 \(days) 天", bundle: .module))
+                            .accessibilityLabel(Text("人均 \(days) 次", bundle: .module))
                             .accessibilityIdentifier("squad.goal.pick.\(days)")
                         }
                     }
@@ -57,7 +57,7 @@ struct SquadGoalCard: View {
             if canChange {
                 Group {
                     if goal.nextDaysPerMember != goal.daysPerMember {
-                        Text("下周起人均 \(goal.nextDaysPerMember) 天", bundle: .module)
+                        Text("下周起人均 \(goal.nextDaysPerMember) 次", bundle: .module)
                     } else {
                         Text("改动下周生效", bundle: .module)
                     }
@@ -89,7 +89,7 @@ private struct Figure: View {
                     .typeStyle(TypeRamp.scoreCard)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .monospacedDigit()
-                Text("天", bundle: .module)
+                Text("次", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
             }

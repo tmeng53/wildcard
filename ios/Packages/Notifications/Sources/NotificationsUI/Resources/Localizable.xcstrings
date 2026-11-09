@@ -369,18 +369,18 @@
         }
       }
     },
-    "改成人均 %lld 天？": {
+    "改成人均 %lld 次？": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make it %lld days each?"
+            "value": "Make it %lld workouts each?"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "改成人均 %lld 天？"
+            "value": "改成人均 %lld 次？"
           }
         }
       }

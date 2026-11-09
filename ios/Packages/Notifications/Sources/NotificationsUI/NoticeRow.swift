@@ -156,7 +156,7 @@ struct NoticeRow: View {
             // The row opens 小队, whose first card is the weekly goal.
             return Words(
                 title: Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
-                detail: Text("改成人均 \(suggestion.daysPerMember) 天？", bundle: .module),
+                detail: Text("改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 icon: AnyView(NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis")))
         }
     }

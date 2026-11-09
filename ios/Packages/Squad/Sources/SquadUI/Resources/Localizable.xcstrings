@@ -1133,50 +1133,50 @@
         }
       }
     },
-    "人均 %lld 天": {
+    "人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days each"
+            "value": "%lld workouts each"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "人均 %lld 天"
+            "value": "人均 %lld 次"
           }
         }
       }
     },
-    "天": {
+    "次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "days"
+            "value": "workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天"
+            "value": "次"
           }
         }
       }
     },
-    "下周起人均 %lld 天": {
+    "下周起人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days each from next week"
+            "value": "%lld workouts each from next week"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "下週起人均 %lld 天"
+            "value": "下週起人均 %lld 次"
           }
         }
       }

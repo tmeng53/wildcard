@@ -73,6 +73,15 @@ export function trainedDays(checkIns: readonly CheckInRecord[], days: readonly L
 }
 
 /**
+ * The 训练 checked in on `days`, each counting once, several on one day too: what a squad's weekly
+ * goal (小队每周目标, 人均 N 次) counts.
+ */
+export function trainings(checkIns: readonly CheckInRecord[], days: readonly LocalDay[]): number {
+  const week = new Set(days);
+  return checkIns.filter((each) => each.kind === 'trained' && week.has(each.day)).length;
+}
+
+/**
  * When a member reached their `count`-th day trained: the moment the 训练 that made it was
  * checked in (the first 训练 of each day counts, the count-th earliest of them). `undefined`
  * for a count under 1, or while they have trained fewer days.

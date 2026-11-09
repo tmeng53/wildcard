@@ -770,7 +770,7 @@ describe('the squad’s weekly goal', () => {
     expect(today.body).toMatchObject({ squadWeek: { plannedDays: 10, daysPerMember: 5 } });
   });
 
-  it('averages the days trained per member over up to 4 finished weeks', async () => {
+  it('averages the 训练 per member over up to 4 finished weeks', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const DAY = 86_400_000;
     // This week's Monday, as a member with no time zone (UTC) has it.
@@ -806,7 +806,7 @@ describe('the squad’s weekly goal', () => {
       await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
         values (${checkIn}, ${id}, 1)`.execute(db);
     };
-    // The first week (me alone): 1 day. Last week: me 3 days (one twice), my friend 2.
+    // The first week (me alone): 1. Last week: me 4 (twice on one day), my friend 2.
     await trained(me.userId, dayOf(-8));
     for (const offset of [-7, -7, -6, -5]) await trained(me.userId, dayOf(offset));
     for (const offset of [-4, -3]) await trained(friend.userId, dayOf(offset));
@@ -814,8 +814,8 @@ describe('the squad’s weekly goal', () => {
     await trained(friend.userId, dayOf(0));
 
     const goal = await goalOf(me.token, id);
-    // (1 / 1 + 5 / 2) / 2 = 1.75, to one decimal.
-    expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 1.8 } });
+    // (1 / 1 + 6 / 2) / 2 = 2.
+    expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 2 } });
   });
 });
 

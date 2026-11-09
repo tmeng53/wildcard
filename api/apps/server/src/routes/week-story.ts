@@ -267,8 +267,11 @@ const storyFields = {
     }),
   ending: z
     .strictObject({
-      done: count,
-      plan: count,
+      done: count.meta({
+        description:
+          'The 训练 the squad’s members sent to it that week, several on one day each counting.',
+      }),
+      plan: count.meta({ description: 'The squad’s weekly goal that week, in 训练 (人均 N 次).' }),
       headline: z
         .string()
         .min(1)
@@ -284,16 +287,16 @@ const storyFields = {
         .optional()
         .meta({
           description:
-            'The line under the days against the plans, written with the awards. Missing until ' +
+            'The line under the 训练 against the goal, written with the awards. Missing until ' +
             'they are, when the model didn’t write one, and for older weeks: the app then says ' +
-            'how many days are missing, or that the squad made it.',
+            'how many 训练 are missing, or that the squad made it.',
         }),
     })
     .openapi('StoryEnding')
     .optional()
     .meta({
       description:
-        '这一周: the squad’s days trained against its plans. Missing when nobody trained, so a ' +
+        '这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a ' +
         'quiet week isn’t told how short it fell.',
     }),
 };

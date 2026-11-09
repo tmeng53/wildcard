@@ -3,6 +3,7 @@ import {
   latestMealOn,
   trainedDays,
   trainingOn,
+  trainings,
   weekOf,
   type TrainingStatus,
   type Week,
@@ -49,9 +50,9 @@ export interface SquadToday {
   readonly myWeek: Week & { readonly trainedDays: number; readonly plannedDays: number };
   readonly myLifetimeTrainedDays: number;
   /**
-   * The squad's week against its weekly goal (小队每周目标): `trainedDays` adds up the days each
-   * member trained in their own week, from check-ins sent to this squad, a day counting once
-   * however many times they trained; `plannedDays` is the goal, `daysPerMember` (人均 N 天, the
+   * The squad's week against its weekly goal (小队每周目标): `trainedDays` adds up the 训练 each
+   * member sent to this squad in their own week, several on one day each counting (the name is
+   * the wire's, from when it counted days); `plannedDays` is the goal, `daysPerMember` (人均 N 次, the
    * captain's, in the viewer's week) times the members now. Anyone's days count towards it, and
    * nobody's share is shown.
    */
@@ -140,7 +141,7 @@ export async function squadToday(
       plannedRest: plan[week.days.indexOf(day)]?.kind === 'rest',
       firstCheckInAt: firstCheckInOn(theirs, day),
     };
-    return { today, trained: trainedDays(theirs, week.days) };
+    return { today, trained: trainings(theirs, week.days) };
   });
   const todays = rows.map(({ today }) => today);
   const resting = ({ plannedRest, training }: SquadMemberToday) =>

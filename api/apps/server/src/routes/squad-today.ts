@@ -88,12 +88,12 @@ export const SquadToday = z
     }),
     squadWeek: z.strictObject({
       trainedDays: count(
-        'Days trained this week, added up over the members, each in their own week and from ' +
-          'check-ins sent to this squad; a day counts once however many times they trained.',
+        'The 训练 sent to this squad this week, added up over the members, each in their own ' +
+          'week; several on one day each count (named before the goal counted 训练, not days).',
       ),
       plannedDays: count(
-        'The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. ' +
-          'Anyone’s trained days count towards it.',
+        'The squad’s weekly goal (小队每周目标) in 训练: `daysPerMember` times the members now. ' +
+          'Anyone’s 训练 count towards it.',
       ),
       daysPerMember: z
         .int()
@@ -101,7 +101,7 @@ export const SquadToday = z
         .max(7)
         .meta({
           description:
-            'The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each ' +
+            'The weekly goal its captain set (人均 N 次), in the caller’s week: how many times each ' +
             'member trains on average.',
           example: 3,
         }),

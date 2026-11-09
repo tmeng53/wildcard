@@ -12,10 +12,11 @@ public struct SquadToday: Hashable, Sendable {
     public var today: TodayCounts
     /// The signed-in member's week.
     public var myWeek: MyWeek
-    /// 小队本周目标 x/y: days anyone trained (one a member a day, sent to the squad) over the
-    /// squad's goal, its 人均 N 天 times its members.
+    /// 小队本周目标 x/y: the 练了 anyone sent to the squad (several on one day each counting) over
+    /// the squad's goal, its 人均 N 次 times its members. `WeekCount`'s names are the member's
+    /// week's; here they count 练了, not days.
     public var squadWeek: WeekCount
-    /// The squad's goal this week, 人均 N 天 (1 to 7), as its captain set it.
+    /// The squad's goal this week, 人均 N 次 (1 to 7), as its captain set it.
     public var squadDaysPerMember: Int
 
     public init(

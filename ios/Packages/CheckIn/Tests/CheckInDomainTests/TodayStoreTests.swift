@@ -35,7 +35,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(other.phase == .signedOut)
 }
 
-@MainActor @Test func aFirstTrainingCountsOnceForTheSquadAndTheMember() async throws {
+@MainActor @Test func eachTrainingCountsForTheSquadAndTheFirstForTheMember() async throws {
     let backend = ScriptedBackend()
     let today = store(backend)
     await today.load()
@@ -55,8 +55,10 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.home?.today.today.trained == 2)
     #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
 
+    // A second 练了 the same day counts again for the squad (人均 N 次), not for today or my week.
     try await today.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
-    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
+    #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 16, plannedDays: 22))
+    #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
     #expect(today.home?.today.today.trained == 2)
     #expect(await backend.saves.count == 2)
 }
