@@ -26,3 +26,35 @@ public struct Birthday: Hashable, Sendable, CustomStringConvertible {
         return today.year - day.year - (hadBirthday ? 0 : 1)
     }
 }
+
+/// A birthday being picked on the flip clock (关于你, 设置 › 生日): year, month and day, which open
+/// on 2000-01-01 (Tracy, 2026-11-08: never from Apple Health), or on the saved one. Sign-up saves
+/// it only once the member turned a card, so the opening day is never saved by itself.
+public struct BirthdayDraft: Hashable, Sendable {
+    /// Where the clock opens when the member has no birthday yet.
+    public static let opening = [2000, 1, 1]
+
+    /// The years the clock turns through: from `Birthday.earliest`'s to today's.
+    public static func years(through today: LocalDay) -> ClosedRange<Int> {
+        Birthday.earliest.year...today.year
+    }
+
+    /// Year, month and day, as the clock holds them.
+    public var values: [Int] {
+        didSet { if values != oldValue { isTouched = true } }
+    }
+    /// Whether the member turned a card since it opened.
+    public private(set) var isTouched = false
+
+    public init(saved: Birthday? = nil) {
+        values = saved.map { [$0.day.year, $0.day.month, $0.day.day] } ?? Self.opening
+    }
+
+    /// The picked day as a birthday, or nil when it isn't a day or comes after `today`.
+    public func birthday(today: LocalDay) -> Birthday? {
+        guard values.count == 3,
+            let day = try? LocalDay(year: values[0], month: values[1], day: values[2])
+        else { return nil }
+        return try? Birthday(day, today: today)
+    }
+}

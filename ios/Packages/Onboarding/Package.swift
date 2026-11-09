@@ -1,7 +1,7 @@
 // swift-tools-version: 6.0
 import PackageDescription
 
-// Sign-up: the open screen, then 角色和昵称, 小队, 平时练什么？, 连上 Apple 健康, 打开大概位置, 本周目标
+// Sign-up: the open screen, then 角色和昵称, 小队, 关于你, 连上 Apple 健康, 打开大概位置, 本周目标
 // and 上场, the
 // entrance into the squad joined; whoever made theirs picks its scene on 这周在哪练？ instead
 // (`ScenePick`'s cartons and reveal) and drops onto it at home. `OnboardingDomain` holds the flow and each step's draft (the squad

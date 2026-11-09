@@ -73,18 +73,6 @@ public struct WildcardAPI: Sendable {
             })
     }
 
-    /// Saves the birthday the member chose to give. Safe to repeat.
-    public func save(_ birthday: Birthday) async throws(APIError) {
-        _ = try await call {
-            try await client.putMyBirthday(body: .json(.init(version: ._1, birthday: birthday.description))).ok
-        }
-    }
-
-    /// Forgets the member's birthday. Safe to repeat.
-    public func forgetBirthday() async throws(APIError) {
-        try await call { _ = try await client.deleteMyBirthday().noContent }
-    }
-
     /// Creates the profile, right after the first sign-in, or replaces it.
     public func save(_ profile: Profile) async throws(APIError) -> Profile {
         let saved = try await call {

@@ -2,7 +2,7 @@ import Contracts
 import Foundation
 
 /// The squad a sign-up joined or made, kept on this phone from 你的小队 until 上场. Joining saves
-/// the squad on the server before the last steps, so without it an app closed on 平时练什么？
+/// the squad on the server before the last steps, so without it an app closed on 关于你
 /// opened home on the next launch, as for a member who had finished signing up.
 enum SignUpProgress {
     private struct Saved: Codable {

@@ -42,7 +42,9 @@ public final class SignUpModel {
     /// The teammates who welcome the member at 上场, the earliest to join first.
     private(set) var teammates: [CastMember] = []
 
-    private(set) var sports = SportPicks()
+    var sports = SportPicks()
+    /// 关于你's birthday on the flip clock, saved only once the member turned a card.
+    var birthday = BirthdayDraft()
     private(set) var week: WeekDraft?
 
     /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
@@ -63,7 +65,7 @@ public final class SignUpModel {
     /// This week's days, Monday first, for the poster's weekday names.
     let weekDays: [LocalDay]
 
-    @ObservationIgnored private let service: any SignUpService
+    @ObservationIgnored let service: any SignUpService
     /// Apple Health, which 连上 Apple 健康 connects; nil or unavailable skips that step.
     let health: HealthConnection?
     /// Whether 连上 Apple 健康 is asking the system now.
@@ -73,6 +75,8 @@ public final class SignUpModel {
     /// How many of this week's days are over: 0 on its first day. Home's first week counts only
     /// from today.
     @ObservationIgnored let daysGone: Int
+    /// The member's today, the last day a birthday can be.
+    @ObservationIgnored let today: LocalDay
 
     /// `nickname`: the name Sign in with Apple shared,
     /// to start the nickname from. `now` in `timeZone` says which week the plan is for and which
@@ -93,6 +97,7 @@ public final class SignUpModel {
         let today = LocalDay(at: now, in: timeZone)
         weekDays = (0..<WeeklyPlan.dayCount).map { today.weekStart.adding(days: $0) }
         daysGone = today.weekday - 1
+        self.today = today
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
@@ -108,7 +113,7 @@ public final class SignUpModel {
         Task { await readStock() }
     }
 
-    /// Carries on a sign-up closed after 你的小队, at 平时练什么？ with its saved character; false if not.
+    /// Carries on a sign-up closed after 你的小队, at 关于你 with its saved character; false if not.
     public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
         (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
@@ -268,7 +273,7 @@ public final class SignUpModel {
         }
     }
 
-    // MARK: 平时练什么？
+    // MARK: 关于你
 
     /// Picks or takes off a sport. A pick changes the character into its kit; taking off the
     /// one it wears changes it into the one picked before, or back into its own clothes.
@@ -280,13 +285,6 @@ public final class SignUpModel {
         }
     }
 
-    /// 以后再说: on with no sports, so training days name none.
-    func skipSports() {
-        if sports.wearing != nil { myCharacter?.dress(for: nil) }
-        sports = SportPicks()
-        show(SignUpStep.sports.next(hasHealth: hasHealth, hasLocation: hasLocation) ?? .week)
-    }
-
     // MARK: 本周目标
 
     func selectDay(_ index: Int) {
@@ -294,7 +292,7 @@ public final class SignUpModel {
     }
 
     /// Sets the selected day. A sport puts the character into its kit and plays its move, as
-    /// picking it in 平时练什么 does; plain 训练 on a rest day makes it hop.
+    /// picking it on 关于你 does; plain 训练 on a rest day makes it hop.
     func setDay(_ day: PlanDay) {
         let becameTraining = week?.set(day) == true
         if case .train(let activity?) = day { myCharacter?.dress(for: activity) } else if becameTraining { hops += 1 }
@@ -362,7 +360,7 @@ public final class SignUpModel {
     // MARK: Calls
 
     /// Runs one call at a time; a failure stays on the step for the member to try again.
-    private func perform(_ work: @escaping @MainActor () async throws(SignUpError) -> Void) {
+    func perform(_ work: @escaping @MainActor () async throws(SignUpError) -> Void) {
         guard !isWorking else { return }
         isWorking = true
         failure = nil

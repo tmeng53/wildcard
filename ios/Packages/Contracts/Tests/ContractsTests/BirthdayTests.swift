@@ -17,3 +17,31 @@ import Testing
     #expect(Birthday(sent: try LocalDay("2000-02-29")).age(on: try LocalDay("2025-02-28")) == 24)
     #expect(Birthday(sent: try LocalDay("2000-02-29")).age(on: try LocalDay("2025-03-01")) == 25)
 }
+
+@Test func aDraftOpensOn2000OrTheSavedDayAndKnowsWhenItWasTurned() throws {
+    let today = try LocalDay("2026-11-09")
+    var draft = BirthdayDraft()
+    #expect(draft.values == [2000, 1, 1])
+    #expect(!draft.isTouched)
+    draft.values = [2000, 1, 1]
+    #expect(!draft.isTouched)
+    draft.values = [1996, 4, 18]
+    #expect(draft.isTouched)
+    #expect(draft.birthday(today: today)?.description == "1996-04-18")
+
+    let saved = BirthdayDraft(saved: Birthday(sent: try LocalDay("1988-12-03")))
+    #expect(saved.values == [1988, 12, 3])
+    #expect(!saved.isTouched)
+}
+
+@Test func aDraftAfterTodayIsNoBirthday() throws {
+    var draft = BirthdayDraft()
+    draft.values = [2026, 11, 10]
+    #expect(draft.birthday(today: try LocalDay("2026-11-09")) == nil)
+    draft.values = [2026, 2, 30]
+    #expect(draft.birthday(today: try LocalDay("2026-11-09")) == nil)
+}
+
+@Test func theClockTurnsFrom1900ToThisYear() throws {
+    #expect(BirthdayDraft.years(through: try LocalDay("2026-11-09")) == 1900...2026)
+}
