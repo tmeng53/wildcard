@@ -34,8 +34,12 @@ extension LocalDay {
     /// This day's week counted from the week of `first` as 1, as in 「第 1 周」 for the week
     /// someone joined. A week before `first`'s counts 1 too.
     public func weekNumber(since first: LocalDay) -> Int {
-        let days = Self.utc.dateComponents([.day], from: first.weekStart.midnight, to: weekStart.midnight).day ?? 0
-        return max(days / 7, 0) + 1
+        max(weekStart.days(since: first.weekStart) / 7, 0) + 1
+    }
+
+    /// The days from `first` to this day: 0 on the day itself, negative before it.
+    public func days(since first: LocalDay) -> Int {
+        Self.utc.dateComponents([.day], from: first.midnight, to: midnight).day ?? 0
     }
 
     /// The day's start in UTC, where the calendar arithmetic above runs.
