@@ -124,7 +124,7 @@ struct PostCard: View {
     private var manageMenu: some View {
         HeaderMenu(
             Text("编辑或删除", bundle: .module), on: .ink,
-            items: [
+            items: scoreCardItem + [
                 GlassMenuItem(Text("编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
                     model.edit(post)
                 },
@@ -140,6 +140,16 @@ struct PostCard: View {
             ]
         )
         .accessibilityIdentifier("post.manage")
+    }
+
+    /// 存成绩卡, first, on one of the member's own 训练.
+    private var scoreCardItem: [GlassMenuItem] {
+        guard model.canSaveScoreCard(post) else { return [] }
+        return [
+            GlassMenuItem(Text("存成绩卡", bundle: .module), systemImage: "square.and.arrow.down", id: "post.scoreCard") {
+                model.openScoreCard(post)
+            }
+        ]
     }
 
     /// Held on the card: the bar opens over it, and the finger's place picks the slot under it.

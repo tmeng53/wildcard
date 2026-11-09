@@ -129,7 +129,7 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime, health: Self.sampleHealth(), location: Self.sampleLocation))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
-        _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
+        _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
     }
 
@@ -194,15 +194,20 @@ struct WildcardApp: App {
     }
 
     /// 动态 on the sample squad.
-    private static func feed(viewer: MemberID, squad: SquadID, source: InMemoryFeedSource) -> FeedModel {
+    private static func feed(viewer: MemberID, squad: SquadID, source: InMemoryFeedSource, today: TodayModel)
+        -> FeedModel
+    {
         let zone = TimeZone.current
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
-        return FeedModel(
+        let feed = FeedModel(
             store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
             now: LaunchOptions.now)
+        // 成绩卡's 小队名: the squad's name as 今天 has it.
+        feed.squadName = { [weak today] in today?.home?.squad.name }
+        return feed
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with

@@ -305,9 +305,12 @@ private struct StageArt: Sendable {
         switch key.mood {
         case .idle:
             // A held prop plays its move, looped at the persona's tempo.
-            idle =
-                try PlaceholderCharacter.heldMove(wearing: key.outfit, persona: key.persona)
-                ?? PlaceholderCharacter.clip("idle", persona: key.persona)
+            // `??` takes an untyped throwing closure, so it can't be used under typed throws.
+            if let held = try PlaceholderCharacter.heldMove(wearing: key.outfit, persona: key.persona) {
+                idle = held
+            } else {
+                idle = try PlaceholderCharacter.clip("idle", persona: key.persona)
+            }
         case .typing: idle = try PlaceholderCharacter.typing(persona: key.persona)
         case .writing: idle = try PlaceholderCharacter.writing(persona: key.persona)
         case .teary: idle = try PlaceholderCharacter.teary(persona: key.persona)

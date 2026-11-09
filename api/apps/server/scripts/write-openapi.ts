@@ -12,6 +12,7 @@ import {
   createQuickReactions,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import {
@@ -40,6 +41,7 @@ import { openApiJson } from '../src/openapi.js';
 import {
   artSection,
   appBuildSection,
+  appCopySection,
   disclaimerDiceSection,
   reactionsSection,
   scenesSection,
@@ -70,6 +72,7 @@ const app = createApp({
     sections: [
       sportsSection(createSports({ store: createPostgresSportStore(db) })),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
       scenesSection(
         createScenes({
           store: createPostgresSceneStore(db),

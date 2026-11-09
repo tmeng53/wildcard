@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { AppCopyAdmin } from '@wildcard/app-copy';
 import type { Art } from '@wildcard/art';
 import type { QuickReactionsAdmin } from '@wildcard/check-ins';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
@@ -132,6 +133,40 @@ export function disclaimerDiceSection(
     name: 'disclaimerDice',
     schema: DisclaimerDiceCatalog,
     load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
+
+export const AppCopyCatalog = z
+  .looseObject({
+    entries: z
+      .record(
+        z.string(),
+        z
+          .looseObject({
+            zhHans: z.string().optional().meta({ description: 'Simplified Chinese.' }),
+            en: z.string().optional().meta({ description: 'English.' }),
+            zhHant: z.string().optional().meta({ description: 'Traditional Chinese (Taiwan).' }),
+          })
+          .openapi('AppCopyWords'),
+      )
+      .meta({
+        description:
+          'Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). ' +
+          'A language left out, or a key not here, keeps the build’s own words. Each keeps its ' +
+          'key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).',
+        example: { '还有 %lld 次开门': { zhHans: '再练 %lld 次就开门' } },
+      }),
+  })
+  .openapi('AppCopyCatalog');
+
+/** The `appCopy` section: lines put over the app's own words, for screens and pushes alike. */
+export function appCopySection(
+  copy: Pick<AppCopyAdmin, 'current'>,
+): CatalogSection<typeof AppCopyCatalog> {
+  return {
+    name: 'appCopy',
+    schema: AppCopyCatalog,
+    load: async () => ({ entries: structuredClone((await copy.current()).entries) }),
   };
 }
 

@@ -1,4 +1,5 @@
 import { createPostgresArtStore } from '@wildcard/art';
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -15,6 +16,7 @@ import type { Database } from '../ports.js';
 import {
   artSection,
   appBuildSection,
+  appCopySection,
   disclaimerDiceSection,
   reactionsSection,
   scenesSection,
@@ -42,6 +44,7 @@ export const catalogOn = (
   sections: [
     sportsSection(createSports({ store: createPostgresSportStore(db) })),
     disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+    appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
     scenesSection(
       createScenes({
         store: createPostgresSceneStore(db),

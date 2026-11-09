@@ -2049,18 +2049,18 @@
         }
       }
     },
-    "仅自己可见": {
+    "仅自己可见，不计入小队数据": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only you can see this"
+            "value": "Only you can see this. It won't count for your squad."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "僅自己可見"
+            "value": "僅自己可見，不計入小隊資料"
           }
         }
       }

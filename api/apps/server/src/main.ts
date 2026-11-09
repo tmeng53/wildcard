@@ -43,6 +43,7 @@ import {
   postgresCoachTransaction,
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
@@ -146,6 +147,7 @@ import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -179,6 +181,7 @@ import { createApp } from './app.js';
 import {
   appBuildSection,
   artSection,
+  appCopySection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
@@ -723,6 +726,7 @@ const app = createApp({
       storesSection(unlocksOn(db)),
       piecesSection(unlocksOn(db)),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
       artSection(artOn(db)),
       appBuildSection(minimumBuildsOn(db)),
       reactionsSection(quickReactionsOn(db)),
@@ -858,6 +862,7 @@ const app = createApp({
       ...disclaimerDiceTools({
         dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
       }),
+      ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
       }),
