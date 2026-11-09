@@ -49,7 +49,7 @@ public struct ScoreCard: Hashable, Sendable {
     public var showsSquad = true
 
     /// - Parameters:
-    ///   - hasKit: the character has a move of its own for the post's sport.
+    ///   - hasKit: the sports kits loaded, so the character can play the post's sport move.
     ///   - holdsProp: the member's look holds a prop.
     public init(training: Training, hasKit: Bool, holdsProp: Bool) {
         var backdrops: [Backdrop] = training.photos?.all.map(Backdrop.photo) ?? []

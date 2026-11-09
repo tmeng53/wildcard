@@ -18,7 +18,9 @@ struct ScoreCardSheet: View {
     let close: () -> Void
 
     var body: some View {
-        SavePictureSheet(choices: AnyHashable(model.changes), picture: picture, close: close) {
+        // A picture saved while the card still loaded is offered again once it is in.
+        SavePictureSheet(choices: AnyHashable([model.changes, model.isLoaded ? 1 : 0]), picture: picture, close: close)
+        {
             ScaledCard(model: model)
         } options: {
             VStack(alignment: .leading, spacing: Space.s) {

@@ -62,10 +62,10 @@ final class PostManageUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         openMenuOnMyPost(in: app)
         app.buttons["post.scoreCard"].tap()
-        let preview = app.descendants(matching: .any).matching(identifier: "savePicture.preview").firstMatch
+        let preview = app.descendants(matching: .any).matching(identifier: "scoreCard").firstMatch
         XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存成绩卡 didn't open the card")
+        // Only until the phone's first tap on a card, so a rerun on the same simulator has none.
         let hint = app.staticTexts["scoreCard.hint"]
-        XCTAssertTrue(hint.exists, "the first card doesn't say 点数字和人物可以换")
         XCTAssertTrue(app.staticTexts["scoreCard.weekCount"].waitForExistence(timeout: Self.wait), "no 本周第 N 次")
         XCTAssertTrue(app.buttons["scoreCard.backdrop.photo.0"].isSelected, "the post's photo isn't the backdrop")
         XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].exists, "the post's chart isn't a backdrop")
@@ -76,7 +76,7 @@ final class PostManageUITests: XCTestCase {
         keepScreenshot(named: "57-score-card")
 
         app.buttons["scoreCard.hero"].tap()
-        waitFor(hint, "exists == false", "the hint is still there after a tap")
+        waitFor(hint, "exists == false", "点数字和人物可以换 is still there after a tap")
         // The card's strip, not the post's behind the sheet.
         preview.buttons["strip.maxHeartRate"].tap()
         app.buttons["scoreCard.character"].tap()

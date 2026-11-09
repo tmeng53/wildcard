@@ -31,6 +31,8 @@ final class ScoreCardModel: Identifiable {
     private(set) var photos: [PhotoRef: CGImage] = [:]
     /// The route as a still map, once drawn.
     private(set) var map: UIImage?
+    /// Whether the photos, the route and the week count are in: a picture saved before shows less.
+    private(set) var isLoaded = false
     /// Bumps on each tap on the character, which hops.
     private(set) var hops = 0
     /// Bumps on each tap that changes the card, for its haptic.
@@ -122,6 +124,7 @@ final class ScoreCardModel: Identifiable {
         }
         map = await route
         weekCount = await count
+        isLoaded = true
     }
 
     private func drawRoute() async -> UIImage? {
