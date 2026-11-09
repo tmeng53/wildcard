@@ -440,6 +440,7 @@ describe('the admin MCP server', () => {
       ['put_sport', false],
       ['put_sport_category', false],
       ['set_sport_picks', false],
+      ['get_rewards', true],
       ['get_unlock_rules', true],
       ['put_unlock_rule', false],
       ['give_unlocks', false],
@@ -1330,10 +1331,10 @@ describe('the admin MCP server', () => {
     });
     expect(refusedGiftMemberNotInSquad.isError).toBe(true);
     expect(refusedGiftMemberNotInSquad.text).toContain('GIFT_MEMBER_NOT_IN_SQUAD');
-    const kept = await sql<{ given_by: string; admin_id: string | null }>`
-      select given_by, admin_id from public.coach_gifts where member_id = ${friend.userId}
+    const kept = await sql<{ via: string; admin_id: string | null }>`
+      select via, admin_id from public.grants where member_id = ${friend.userId} and via = 'coach'
     `.execute(db);
-    expect(kept.rows).toStrictEqual([{ given_by: 'admin', admin_id: admin.userId }]);
+    expect(kept.rows).toStrictEqual([{ via: 'coach', admin_id: admin.userId }]);
     const logged = await sql<{ action: { tool: string } }>`
       select action from public.admin_actions where admin_id = ${admin.userId} order by at
     `.execute(db);

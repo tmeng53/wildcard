@@ -152,6 +152,7 @@ struct MainTabs: View {
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
+        .onChange(of: recap.plans) { planNextWeek() }
         .fullScreenCover(
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {

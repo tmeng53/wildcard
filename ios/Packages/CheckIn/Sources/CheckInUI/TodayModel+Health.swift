@@ -13,8 +13,14 @@ extension TodayModel {
         return health.today(day, in: timeZone, posted: store.postedWorkouts)
     }
 
-    /// The workout the home's card offers: today's newest not posted or put away yet.
-    var workoutToPost: ImportedWorkout? { todaysWorkouts.newestToPost(skipping: health?.putAway ?? []) }
+    /// The workout the home's card offers: today's newest not posted or put away yet. None until
+    /// the server's home is in hand, since the copy kept on the phone may be from before a post.
+    var workoutToPost: ImportedWorkout? {
+        guard let health, health.isConnected, let day = store.day, let posted = store.postedWorkoutsKnown else {
+            return nil
+        }
+        return health.today(day, in: timeZone, posted: posted).newestToPost(skipping: health.putAway)
+    }
 
     /// Takes the home card's workout off it; 打卡 › 训练 still offers it.
     func putAway(_ workout: ImportedWorkout) { health?.putAway(workout.id) }

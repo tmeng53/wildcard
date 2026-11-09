@@ -180,10 +180,16 @@ extension Activity {
         try self.init(sport: wire.sport, customSport: wire.customSport)
     }
 
-    /// The sport of a day's 练了 on a squadmate's 出赛表; nil for a day without one.
-    public init?(_ wire: Components.Schemas.DayMark) throws(ContractsError) {
+    /// The sports of a day's 练了 on a squadmate's 出赛表, the latest last; nil for a day without
+    /// one. An older server sends only the latest.
+    public static func trained(on wire: Components.Schemas.DayMark) throws(ContractsError) -> [Activity]? {
         guard wire.status == .trained, let sport = wire.sport else { return nil }
-        try self.init(sport: sport, customSport: wire.customSport)
+        guard let sports = wire.sports, !sports.isEmpty else {
+            return [try Activity(sport: sport, customSport: wire.customSport)]
+        }
+        return try sports.map { each throws(ContractsError) in
+            try Activity(sport: each.sport, customSport: each.customSport)
+        }
     }
 
     /// A sport on 外卡记录's 最常练.

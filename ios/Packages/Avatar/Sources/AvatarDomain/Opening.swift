@@ -97,7 +97,7 @@ public struct Opening: Hashable, Sendable {
             case .scaleX: multiply(&scaleX)
             case .scaleY: multiply(&scaleY)
             case .opacity: multiply(&opacity)
-            case .bend: break
+            case .bend, .front: break
             }
         }
     }

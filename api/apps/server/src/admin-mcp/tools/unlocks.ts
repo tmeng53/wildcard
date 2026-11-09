@@ -45,6 +45,34 @@ const shown = (rules: readonly UnlockRule[]) => ({
   })),
 });
 
+/** `get_rewards`: every reward and every way it is got. */
+export function getRewards({ unlocks }: UnlockToolDependencies) {
+  return adminTool({
+    name: 'get_rewards',
+    title: 'Read the rewards and their triggers',
+    description:
+      'Shows everything a member can get (a store, a prop or a piece) and every way they get it, ' +
+      'one trigger per way: training (sports, empty = any; after 训练 check-ins, counted from ' +
+      'countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may give it, one a ' +
+      'member a week; offered and the description its model reads; change with put_gift_piece) ' +
+      'or team (only the Wildcard team gives it; no coach or rule ever does). give_unlocks gives ' +
+      'what has a training trigger. Starter pieces and the tumbler and dumbbell need none.',
+    changes: false,
+    input: z.strictObject({}),
+    run: async () => ({
+      version: 1,
+      rewards: (await unlocks.rewards()).map((reward) => ({
+        ...reward,
+        triggers: reward.triggers.map((trigger) =>
+          trigger.kind === 'training'
+            ? { ...trigger, countsFrom: trigger.countsFrom.toISOString() }
+            : trigger,
+        ),
+      })),
+    }),
+  });
+}
+
 /** `get_unlock_rules`: every rule now. */
 export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
   return adminTool({
@@ -236,6 +264,7 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
 }
 
 export const unlockTools = (deps: UnlockToolDependencies) => [
+  getRewards(deps),
   getUnlockRules(deps),
   putUnlockRule(deps),
   giveUnlocks(deps),

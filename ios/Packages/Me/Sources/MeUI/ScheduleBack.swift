@@ -96,10 +96,10 @@ struct ScheduleBack: View {
 
     private func row(_ index: Int) -> some View {
         let isToday = index == todayIndex
-        let mark = schedule.marks[index]
+        let face = schedule.marks[index].face(of: schedule.days[index])
         let dayRow = ScheduleDayRow(
             day: schedule.weekStart.adding(days: index), isToday: isToday,
-            shown: ScheduleDayRow.shown(plan: schedule.days[index], mark: mark), mark: mark,
+            shown: face.shown, mark: face.mark,
             colors: .init(
                 ink: ink, onInk: Color(role: .bgInk, in: theme), markDisc: ink,
                 markGlyph: Color(role: .bgInk, in: theme)),

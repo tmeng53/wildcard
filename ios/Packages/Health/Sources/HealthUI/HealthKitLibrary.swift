@@ -55,7 +55,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         let kind = WorkoutKind(type, openWater: Self.isOpenWater(workout))
         let seconds = workout.duration
         var summary = WorkoutSummary(durationSec: seconds >= 1 ? Int(seconds.rounded()) : nil)
-        Self.addHeartRate(of: workout, kind: kind, to: &summary)
+        await addHeartRate(of: workout, kind: kind, to: &summary)
         Self.addDistance(of: workout, kind: kind, to: &summary)
         var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
@@ -74,14 +74,30 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             activity: WorkoutKind.sport(for: type).map(Activity.sport))
     }
 
-    /// Its average heart rate, and its highest where its kind shows that.
-    private static func addHeartRate(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) {
-        let heart = workout.statistics(for: HKQuantityType(.heartRate))
-        let beats = HKUnit.count().unitDivided(by: .minute())
-        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = bpm(average) }
-        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
-            summary.maxHr = bpm(max)
+    /// Its average heart rate, and its highest where its kind shows that: the workout's own
+    /// statistics, else Health's statistics of the heart-rate readings while it ran, since a
+    /// workout another app saved may come without its own.
+    private func addHeartRate(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) async {
+        let heart: HKStatistics?
+        if let own = workout.statistics(for: HKQuantityType(.heartRate)), own.averageQuantity() != nil {
+            heart = own
+        } else {
+            heart = await heartRateStatistics(during: workout)
         }
+        let beats = HKUnit.count().unitDivided(by: .minute())
+        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = Self.bpm(average) }
+        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
+            summary.maxHr = Self.bpm(max)
+        }
+    }
+
+    /// Health's average and highest of the heart-rate readings from the workout's start to its end.
+    private func heartRateStatistics(during workout: HKWorkout) async -> HKStatistics? {
+        let during = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        let query = HKStatisticsQueryDescriptor(
+            predicate: .quantitySample(type: HKQuantityType(.heartRate), predicate: during),
+            options: [.discreteAverage, .discreteMax])
+        return try? await query.result(for: store)
     }
 
     /// A pool swim's laps with the pool's length, and each lap's time for its chart; nil without.

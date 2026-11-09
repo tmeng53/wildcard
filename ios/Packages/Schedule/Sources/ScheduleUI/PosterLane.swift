@@ -55,7 +55,7 @@ struct PosterLane: View {
     private var row: ScheduleDayRow {
         let glyph = Color(role: colors.onInk, in: theme)
         return ScheduleDayRow(
-            day: lane.day, isToday: lane.isToday, shown: lane.shown, mark: lane.mark,
+            day: lane.day, isToday: lane.isToday, shown: lane.face.shown, mark: lane.face.mark,
             colors: isHeld
                 ? .init(ink: glyph, onInk: ink, markDisc: Color(role: colors.heldDisc, in: theme), markGlyph: glyph)
                 : .init(ink: ink, onInk: glyph, markDisc: ink, markGlyph: glyph),

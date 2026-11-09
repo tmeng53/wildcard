@@ -245,8 +245,8 @@ extension MateSchedule {
         let read = try marks.map { mark throws(ContractsError) -> DayMark in
             switch mark.status {
             case .trained:
-                guard let activity = try Activity(mark) else { throw .strayCustomSport }
-                return .trained(activity)
+                guard let sports = try Activity.trained(on: mark) else { throw .strayCustomSport }
+                return .trained(sports)
             case .disclaimer: return .disclaimer
             case .none: return .none
             }

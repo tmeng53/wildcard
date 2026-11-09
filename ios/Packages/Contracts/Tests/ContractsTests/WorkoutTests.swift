@@ -14,9 +14,11 @@ private let run = Workout(
     #expect(WorkoutSummary(avgHr: 98, effort: 4).cells == [.averageHeartRate, .effort])
 }
 
-@Test func postingDropsStruckCellsButNeverTheDuration() {
+@Test func postingDropsStruckCellsTheDurationToo() {
     let posted = run.posting(struck: [.averageHeartRate, .duration, .pace], positions: [.map: 1])
-    #expect(posted.summary == WorkoutSummary(durationSec: 1920, distanceM: 5200))
+    #expect(posted.summary == WorkoutSummary(distanceM: 5200))
+    #expect(posted.summary.cells == [.distance])
+    #expect(run.posting(struck: Set(WorkoutCell.allCases), positions: [:]).summary.cells.isEmpty)
     #expect(posted.route == run.route)
     #expect(posted.tilePosition == 1)
 }

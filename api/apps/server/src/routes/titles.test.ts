@@ -532,7 +532,11 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     const { marks, days } = z
       .object({ week: z.object({ marks: z.array(z.unknown()), days: z.array(z.unknown()) }) })
       .parse(again.body).week;
-    expect(marks[weekday]).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(marks[weekday]).toStrictEqual({
+      status: 'trained',
+      sport: 'swim',
+      sports: [{ sport: 'swim' }],
+    });
     expect(days[weekday]).toStrictEqual({ kind: 'train', sport: 'swim' });
     expect(marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(6);
     // With the swim deleted, and then the run that made the day a training day, it reads as

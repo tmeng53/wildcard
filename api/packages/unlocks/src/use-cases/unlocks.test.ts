@@ -308,8 +308,24 @@ describe('unlocks', () => {
     expect(await unlocks.of(me)).toStrictEqual(all);
     expect(told).toHaveLength(4);
     await expect(
-      sql`delete from public.member_unlocks where member_id = ${me}`.execute(db),
+      sql`delete from public.grants where member_id = ${me}`.execute(db),
     ).rejects.toThrow('append-only');
+  });
+
+  it('lists every reward with each way it is got, a rule being its training trigger', async () => {
+    const unlocks = unlocksWith(new Map());
+    const rewards = await unlocks.rewards();
+    expect(rewards.find(({ kind, id }) => kind === 'store' && id === 'lap')).toMatchObject({
+      triggers: [{ kind: 'training', sports: ['run', 'walk'], after: 3 }],
+    });
+    const rules = await unlocks.rules();
+    expect(
+      rewards
+        .flatMap(({ kind, id, triggers }) =>
+          triggers.filter((each) => each.kind === 'training').map(() => `${kind}:${id}`),
+        )
+        .sort(),
+    ).toStrictEqual(rules.map(({ kind, id }) => `${kind}:${id}`).sort());
   });
 
   it('logs each rule change, keeps its start, and refuses a sport the list lacks', async () => {
@@ -329,7 +345,7 @@ describe('unlocks', () => {
     // The same again changes nothing, so it logs nothing.
     await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
     const events = await sql<{ op: string; value: { after: number } }>`
-      select op, value from public.unlock_rule_events where value ->> 'item_id' = ${id} order by id
+      select op, value from public.reward_trigger_events where value ->> 'reward_id' = ${id} order by id
     `.execute(db);
     expect(events.rows.map(({ op, value }) => [op, value.after])).toStrictEqual([
       ['INSERT', 2],
@@ -339,7 +355,7 @@ describe('unlocks', () => {
       unlocks.putRule({ kind: 'store', id: 'deuce', sports: ['quidditch'], after: 3 }),
     ).rejects.toBeInstanceOf(UnlockSportNotListedError);
     await expect(
-      sql`delete from public.unlock_rules where item_id = ${id}`.execute(db),
+      sql`delete from public.reward_triggers where reward_id = ${id}`.execute(db),
     ).rejects.toThrow('never deleted');
     expect(before.length + 1).toBe(changed.length);
   });

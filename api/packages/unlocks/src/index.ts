@@ -32,6 +32,7 @@ export {
   type Unlock,
   type UnlockRule,
 } from './domain/unlocks.js';
+export { TRIGGER_KINDS, type Reward, type Trigger, type TriggerKind } from './domain/rewards.js';
 export {
   CoachId,
   GiftPieceEdit,

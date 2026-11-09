@@ -1,4 +1,5 @@
 import Contracts
+import DesignSystem
 import ScheduleDomain
 
 /// What the poster shows for a week, worked out from the store: plain values the view draws,
@@ -23,6 +24,14 @@ struct PosterContent: Equatable {
         case typical(train: Int)
     }
 
+    enum Paint: Equatable {
+        /// The squad's scene this week.
+        case thisWeek
+        /// A week that is over, in its own scene; the gym's for a week the squad has no 战报 of.
+        case scene(SceneTheme)
+        case graphite
+    }
+
     struct Lane: Equatable, Identifiable {
         let index: Int
         let day: LocalDay
@@ -33,16 +42,22 @@ struct PosterContent: Equatable {
         let isEditable: Bool
         var id: Int { index }
 
-        /// What the lane says: the sport logged on a day trained, else the plan. A day being
-        /// changed shows the plan, so the pick reads as made.
-        var shown: PlanDay {
-            if case .trained(let activity) = mark, look != .held { .train(activity) } else { plan }
+        /// What the lane says and how it is marked (`DayMark.face(of:)`). A day being changed
+        /// shows the plan, so the pick reads as made.
+        var face: (shown: PlanDay, mark: DayMark) {
+            let face = mark.face(of: plan)
+            guard look == .held, face.shown != plan else { return face }
+            return (plan, .none)
         }
     }
 
     let nickname: String
     /// The 我的每周计划 rather than a week: no number or dates, in the brand's graphite.
     let isTemplate: Bool
+    /// What the poster wears (Tracy, 2026-11-08): a week that is over wears the scene the squad
+    /// trained on that week, this week the squad's scene now, and next week and the 我的每周计划,
+    /// whose scene isn't picked yet, the brand's graphite.
+    let paint: Paint
     let weekStart: LocalDay
     /// W1 for the week the member joined.
     let weekNumber: Int
@@ -56,6 +71,12 @@ struct PosterContent: Equatable {
 
     var weekEnd: LocalDay { weekStart.adding(days: WeeklyPlan.dayCount - 1) }
 
+    /// The scene the poster is drawn in, `now` being the squad's this week; graphite draws
+    /// nothing of a scene.
+    func scene(now: SceneTheme) -> SceneTheme {
+        if case .scene(let scene) = paint { scene } else { now }
+    }
+
     /// The week as the member sees it now, with what they have hold of.
     init(
         sheet: WeekSheet, board: WeekBoard?, nickname: String, weekNumber: Int, fuelOpen: Bool, typingFuel: String = ""
@@ -66,6 +87,12 @@ struct PosterContent: Equatable {
         self.weekNumber = weekNumber
         let days = board?.days ?? sheet.plan
         let tense = board?.tense ?? .past
+        paint =
+            switch tense {
+            case .current: .thisWeek
+            case .upcoming, .template: .graphite
+            case .past: .scene(sheet.scene.flatMap { SceneTheme(rawValue: $0.rawValue) } ?? .gym)
+            }
         lanes = days.indices.map { index in
             let held = board?.focus == .selected(index)
             let isToday = board?.today == index
@@ -92,6 +119,7 @@ struct PosterContent: Equatable {
     init(template board: WeekBoard, nickname: String) {
         self.nickname = nickname
         isTemplate = true
+        paint = .graphite
         weekStart = board.weekStart
         weekNumber = 0
         lanes = board.days.indices.map { index in
@@ -110,7 +138,7 @@ struct PosterContent: Equatable {
     /// The same week to save as a picture: nothing held, the goals shut.
     var forSaving: PosterContent {
         PosterContent(
-            nickname: nickname, isTemplate: isTemplate, weekStart: weekStart, weekNumber: weekNumber,
+            nickname: nickname, isTemplate: isTemplate, paint: paint, weekStart: weekStart, weekNumber: weekNumber,
             lanes: lanes.map {
                 Lane(
                     index: $0.index, day: $0.day, isToday: $0.isToday, plan: $0.plan, mark: $0.mark,
@@ -120,13 +148,15 @@ struct PosterContent: Equatable {
     }
 
     private init(
-        nickname: String, isTemplate: Bool, weekStart: LocalDay, weekNumber: Int, lanes: [Lane], titles: [AwardTitle],
+        nickname: String, isTemplate: Bool, paint: Paint, weekStart: LocalDay, weekNumber: Int, lanes: [Lane],
+        titles: [AwardTitle],
         fuel: [FuelGoal],
         fuelOpen: Bool,
         fuelEditable: Bool, tally: Tally
     ) {
         self.nickname = nickname
         self.isTemplate = isTemplate
+        self.paint = paint
         self.weekStart = weekStart
         self.weekNumber = weekNumber
         self.lanes = lanes

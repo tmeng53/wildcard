@@ -1,6 +1,7 @@
 import type { SportId } from '@wildcard/sport-ids';
 
 import type { CoachGift, GiftPiece, GiftPieceEdit } from './domain/gifts.js';
+import type { Reward } from './domain/rewards.js';
 import type {
   Claim,
   MemberId,
@@ -17,6 +18,9 @@ import type {
 
 /** Where the rules and members' unlocks are kept. */
 export interface UnlockStore {
+  /** Every reward with every trigger it has, by kind and id. */
+  rewards(): Promise<Reward[]>;
+  /** The `training` triggers, as rules. */
   rules(): Promise<UnlockRule[]>;
   /** Adds a rule counting from now, or changes one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;
@@ -67,6 +71,8 @@ export interface GiftStore {
   putPiece(edit: GiftPieceEdit): Promise<void>;
   /** What `member` was given, the earliest first, each with when they opened it. */
   giftsOf(member: MemberId): Promise<CoachGift[]>;
+  /** Whether `member` holds `piece` by any way (training, a coach, the team). */
+  holds(member: MemberId, piece: PieceId): Promise<boolean>;
   /**
    * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
    * when they already have that piece or a gift for that week.

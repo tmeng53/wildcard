@@ -46,13 +46,22 @@ extension MainTabs {
         }
     }
 
+    /// 排下周 on a story's last page: 出赛表 on the week after the story's.
+    func planNextWeek() {
+        guard let week = recap.planWeek else { return }
+        schedule.plan(week)
+        open(.schedule)
+    }
+
     /// A place that is a tab, or on one: 通知 closes, unless it is the place.
     private func openTab(for destination: AppDestination) {
         switch destination {
         case .feed:
             selection = .feed
         case .recap(let squad, let week):
-            selection = .feed
+            // Over 小队, where the story stays in 往期战报 once it closes.
+            selection = .today
+            todayPages = [.squad]
             Task {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
