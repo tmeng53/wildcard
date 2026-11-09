@@ -121,7 +121,9 @@ struct DayCircle: View {
         }
     }
 }
-/// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right.
+/// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right. A day
+/// with more than one session shows the first and how many more (「玩耍 60 分钟 +2 项」, Tracy
+/// 2026-11-09), so the line never runs into the meals.
 struct DayLine: View {
     @Environment(\.sceneTheme) private var theme
     let detail: WeekDayDetail
@@ -133,15 +135,21 @@ struct DayLine: View {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Group {
                     if isToday { Text("今天", bundle: .module) } else { DayCircle.fullName(weekday) }
+                    Text(verbatim: " · ")
                 }
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text(verbatim: " · ")
-                    .typeStyle(TypeRamp.footnoteEmphasis)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text(verbatim: detail.line)
+                .layoutPriority(1)
+                Text(verbatim: detail.lines.first ?? "")
                     .typeStyle(detail.isPlan ? TypeRamp.footnote : TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
+                    .accessibilityLabel(Text(verbatim: detail.lines.joined(separator: " · ")))
+                if detail.lines.count > 1 {
+                    InkTag(Text("+\(detail.lines.count - 1) 项", bundle: .module))
+                        .padding(.leading, Space.xs)
+                        .accessibilityHidden(true)
+                        .accessibilityIdentifier("squadcard.dayLine.more")
+                }
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
