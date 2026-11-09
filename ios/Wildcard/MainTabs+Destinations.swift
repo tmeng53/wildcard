@@ -46,9 +46,16 @@ extension MainTabs {
         }
     }
 
-    /// 排下周 on a story's last page: 出赛表 on the week after the story's.
-    func planNextWeek() {
-        guard let week = recap.planWeek else { return }
+    /// Whether a 战报 is open over the app.
+    var showsStory: Binding<Bool> {
+        Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })
+    }
+
+    /// A 战报 closed. After its 排下周, 出赛表 opens on the week after the story's, only now: a
+    /// push asked for while the story's cover is still going down is dropped.
+    func storyClosed() {
+        guard recap.plans != plansOpened, let week = recap.planWeek else { return }
+        plansOpened = recap.plans
         schedule.plan(week)
         open(.schedule)
     }

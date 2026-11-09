@@ -28,9 +28,9 @@ final class CoachHireUITests: XCTestCase {
         keepScreenshot(named: "84-coach-resume")
 
         hireCoach.tap()
-        let week = app.staticTexts["squad.coach.week"]
-        XCTAssertTrue(week.waitForExistence(timeout: 30), "招聘 didn't end on 小队设置 with the coach")
-        XCTAssertEqual(week.label, "执教第 1 周")
+        let tenure = app.staticTexts["squad.coach.tenure"]
+        XCTAssertTrue(tenure.waitForExistence(timeout: 30), "招聘 didn't end on 小队设置 with the coach")
+        XCTAssertEqual(tenure.label, "执教 1 天")
         XCTAssertFalse(app.buttons["squad.coach.change"].exists, "换教练 is still on the card")
         XCTAssertFalse(app.buttons["squad.coach.fire"].exists, "解雇 is still on the card")
         settle()

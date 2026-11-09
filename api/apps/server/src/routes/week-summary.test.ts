@@ -118,7 +118,7 @@ const app = createApp({
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */
 async function squadOf(...joined: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${randomInviteCodes()})`.execute(
     db,
   );
   for (const [index, member] of joined.entries()) {

@@ -90,7 +90,8 @@ public struct APIMeService: MeService {
         let monday = today.weekStart
         let wire = try await api.weeklyPlanWire(weekStart: monday)
         let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
-        let firstWeek = try wire.firstWeek.map { text throws(APIError) in
+        // The squad's W1 when there is one, so the tile shows the squad's week number.
+        let firstWeek = try (wire.squadFirstWeek ?? wire.firstWeek).map { text throws(APIError) in
             try api.read { () throws(ContractsError) in try LocalDay(text) }
         }
         let checkIns = try await api.myCheckIns(from: monday, through: monday.adding(days: 6))

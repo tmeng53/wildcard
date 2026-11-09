@@ -44,8 +44,9 @@ struct SquadSceneView: View {
     var arrival: TodayModel.Arrival?
     /// I tapped the coach on the sideline: its page opens.
     var tapCoach: () -> Void = {}
-    /// Whether the coach's note waits unseen (its phone shows it), and where it stands on screen.
-    var coachHasNote = false
+    /// Whether the coach's page has a card not seen yet (its phone shows it), and where it stands
+    /// on screen.
+    var coachHasNews = false
     var coachAt: (CGPoint) -> Void = { _ in }
     /// I tapped the coach's empty spot, there while the squad has no coach: 教练招聘会 opens.
     var tapVacancy: () -> Void = {}

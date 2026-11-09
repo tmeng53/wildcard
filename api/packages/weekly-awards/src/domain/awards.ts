@@ -140,8 +140,8 @@ export function modelReplyFor(
       })
       .meta({
         description:
-          'The last page of the squad’s 战报: a headline and one line on squad.trainedDays ' +
-          'against squad.plannedDays.',
+          'The last page of the squad’s 战报: a headline and one line on squad.trainings (the ' +
+          '训练 the squad did this week) against squad.goal (its weekly goal, in 训练).',
       }),
   });
 }

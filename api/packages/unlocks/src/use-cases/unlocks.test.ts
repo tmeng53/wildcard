@@ -219,6 +219,66 @@ describe('unlocks', () => {
     expect(seen.shelf.pieces.some(({ id }) => id === starter)).toBe(false);
   });
 
+  it('lets a previewer see and claim what their preview opens, keeping none of it', async () => {
+    const unlocks = unlocksWith(new Map());
+    const store = `testp${randomUUID().slice(0, 8)}`;
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: true });
+    const starter = `${store}-hat`;
+    const sweater = `${store}-sweater`;
+    for (const [id, isStarter] of [
+      [starter, true],
+      [sweater, false],
+    ] as const) {
+      await unlocks.putPiece({
+        id,
+        storeId: store,
+        slot: isStarter ? 'hat' : 'top',
+        starter: isStarter,
+        switchId: null,
+        offered: true,
+      });
+    }
+    await unlocks.putRule({ kind: 'piece', id: sweater, sports: [], after: 1 });
+    const me = await newMember();
+    const trained = new Map<MemberId, Trained[]>([
+      [me, [{ id: randomUUID(), sport: 'run', madeAt: new Date('2099-12-01T12:00:00Z') }]],
+    ]);
+    // In the preview the store's switch is on; as really set, it is off.
+    const pieceStore = createPostgresUnlockStore(db);
+    const previewing = createUnlocks({
+      store: pieceStore,
+      trainedSince: ({ member }) => Promise.resolve(trained.get(member) ?? []),
+      sportListed: () => Promise.resolve(true),
+      switches: () => Promise.resolve(() => true),
+      keptSwitches: () => Promise.resolve(() => false),
+      switchListed: () => Promise.resolve(true),
+    });
+    const preview = await previewing.standing(me);
+    expect(
+      preview.shelf.pieces
+        .filter(({ storeId }) => storeId === store)
+        .map(({ id, state }) => [id, state]),
+    ).toStrictEqual([
+      [starter, 'owned'],
+      [sweater, 'owned'],
+    ]);
+    expect((await previewing.claim(me, PieceId.parse(starter))).piece).toBe(starter);
+    await previewing.keepWorn(me, [starter, sweater]);
+
+    // Once the preview ends, nothing of it is theirs: no grant, no claim, no rack.
+    expect((await pieceStore.unlocksOf(me)).some(({ id }) => id === sweater)).toBe(false);
+    expect(await previewing.claimsOf(me)).toStrictEqual([]);
+    const after = await createUnlocks({
+      store: pieceStore,
+      trainedSince: ({ member }) => Promise.resolve(trained.get(member) ?? []),
+      sportListed: () => Promise.resolve(true),
+      switches: () => Promise.resolve(() => false),
+      switchListed: () => Promise.resolve(true),
+    }).standing(me);
+    expect(after.shelf.pieces.some(({ storeId }) => storeId === store)).toBe(false);
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: false });
+  });
+
   it('refuses a store or piece that follows a switch nobody made', async () => {
     const unlocks = unlocksWith(new Map());
     const store = `testx${randomUUID().slice(0, 8)}`;

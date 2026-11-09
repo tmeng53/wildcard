@@ -69,7 +69,6 @@ extension MainTabs {
     private var deckPlaces: CoachDeckPlaces {
         CoachDeckPlaces(
             feed: { selection = .feed },
-            post: { open(.post($0)) },
             wardrobe: { piece in
                 selection = .profile
                 closeProfilePages()

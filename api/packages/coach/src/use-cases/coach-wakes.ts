@@ -122,9 +122,10 @@ export interface CoachWakes {
    * for that member alone, and says what the coach would write and give, saving and sending
    * nothing; only its tokens are recorded, against the squad's caps, which it keeps to like any
    * wake. Works while coaching is off too. With `deliver` (Tracy, 2026-11-09: 要让他真的发给我自己)
-   * the member's note, with its challenge, is saved as their note for today, so it reaches their
-   * phone and coach page like the morning one; the 战术板 line and the gift stay a preview, since
-   * the board is the squad's and a gift is one a week.
+   * the member's note, with its challenge, is saved as a real note of today, every time it is
+   * asked, so it reaches their phone and coach page like the morning one, and the newest is the
+   * day's; the 战术板 line and the gift stay a preview, since the board is the squad's and a gift
+   * is one a week.
    */
   preview(input: {
     readonly squad: SquadId;
@@ -146,8 +147,8 @@ export type CoachPreview =
       /** Why no note: the member hasn't agreed to AI use, or turned the coach's messages off. */
       readonly noNote?: string;
       /**
-       * Asked to deliver: whether the note was saved for the member today. False when they
-       * already have one for today, or the coach wrote none.
+       * Asked to deliver: whether the note was saved for the member. False when the coach wrote
+       * none, or the run failed.
        */
       readonly delivered?: boolean;
       /** The gift it would give the member, and why none when the member can't get one. */
@@ -537,8 +538,8 @@ async function think(
       )
     : [];
   const files = new Map(
-    shownPaths(roster).map((path) => {
-      const at = storedPathOf(path, roster);
+    shownPaths({ roster, coach: coach.id }).map((path) => {
+      const at = storedPathOf(path, { roster, coach: coach.id });
       return [path, at === undefined ? undefined : draft.files.get(at)];
     }),
   );
@@ -576,7 +577,9 @@ async function think(
       ...new Set([...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])]),
     ],
     backAgain: await deps.hiring.backAgain(wake.squad),
-    recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
+    recentNotes: daily
+      ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
+      : [],
     ...(thread === undefined ? {} : { thread: thread.thread }),
     canSeePhotos: deps.photoUrls !== undefined,
     ...(challenge === undefined
@@ -592,7 +595,11 @@ async function think(
     ...(gifting === undefined ? {} : { gifting }),
     recentEmoji:
       wake.reason.kind === 'checkIn'
-        ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
+        ? await deps.stores.replies.recent({
+            squad: wake.squad,
+            coach: coach.id,
+            limit: RECENT_EMOJI,
+          })
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     ...(wake.reason.kind === 'daily'
@@ -609,6 +616,7 @@ async function think(
     tools: toolbox({
       week,
       roster,
+      coach: coach.id,
       draft,
       kind: wake.reason.kind,
       to: author,
@@ -1015,10 +1023,15 @@ async function threadOf(
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;
-  // A reply to the coach needs something it said; an @ doesn't.
-  if (answering.toCoach !== undefined && reply === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
   if (answers.some(({ comment }) => comment === reason.comment)) return undefined;
+  // A reply to the coach needs something it said here, its reply to the check-in or an answer
+  // to someone who wrote to it; an @ doesn't.
+  const toThisCoach = new Set(
+    comments.filter((each) => saidTo(each) === coach.id).map(({ id }) => id),
+  );
+  const answered = answers.some(({ comment }) => toThisCoach.has(comment));
+  if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
   // Each answer right after the reply it answers.
   const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
   const said = comments

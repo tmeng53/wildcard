@@ -50,6 +50,8 @@ public struct CoachDeckPage: View {
                 }
             }
             .pushedPage()
+            // A swipe right on a card puts it away; going back is the edge swipe or the button.
+            .backSwipeFromEdgeOnly()
             .haptic(.tick, trigger: deck.putAway)
             .task { await deck.reload() }
     }
@@ -99,7 +101,7 @@ public struct CoachDeckPage: View {
     private func swipe(_ card: CoachPageCard, width: Double) -> some Gesture {
         DragGesture(minimumDistance: 12)
             .onChanged { value in
-                // Only to the right: left is the system's back swipe from the edge, and nothing else.
+                // Only to the right; the page leaves iOS only its back swipe from the edge.
                 drag = CGSize(width: max(0, value.translation.width), height: value.translation.height * 0.2)
             }
             .onEnded { value in

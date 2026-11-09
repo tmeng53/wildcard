@@ -57,17 +57,26 @@ extension ScheduleView {
 
     private var weekChips: [CategoryBarItem<SchedulePage>] {
         let thisWeek = store.today?.weekStart
-        return store.weeks.map { week in
-            let title: Text =
-                if week == thisWeek {
-                    Text("本周", bundle: .module)
-                } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
-                } else {
-                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
-                }
-            return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
-        }
+        // The squad's weeks before the member joined: one greyed chip, never a page.
+        let notYetJoined =
+            store.profile?.startsWithNotYetJoined(store.weeks) == true
+            ? [
+                CategoryBarItem(
+                    id: SchedulePage.notYetJoined, title: Text("还未入队", bundle: .module),
+                    accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false)
+            ] : []
+        return notYetJoined
+            + store.weeks.map { week in
+                let title: Text =
+                    if week == thisWeek {
+                        Text("本周", bundle: .module)
+                    } else if let thisWeek, week > thisWeek {
+                        Text("下周", bundle: .module)
+                    } else {
+                        Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
+                    }
+                return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
+            }
     }
 
     private var pageSelection: Binding<SchedulePage> {
@@ -80,6 +89,7 @@ extension ScheduleView {
                 switch page {
                 case .week(let week): model.show(week)
                 case .template: model.showTemplate()
+                case .notYetJoined: break
                 }
             })
     }

@@ -4,7 +4,7 @@ import Foundation
 import SquadDomain
 
 /// The coach's cards kept in memory, for previews, UI tests and the sample squad: 毛头's line to
-/// the squad, a morning note, a gift, a challenge and a reply, as the approved deck shows them.
+/// the squad, a morning note, a gift and a challenge, as the approved deck shows them.
 public actor InMemoryCoachCardSource: CoachCardSource {
     private var stack: [CoachPageCard]
     private var earlier: [CoachPageCard]
@@ -23,7 +23,6 @@ public actor InMemoryCoachCardSource: CoachCardSource {
         let morning = calendar.date(bySettingHour: 8, minute: 0, second: 0, of: now) ?? now
         let board = calendar.date(bySettingHour: 6, minute: 0, second: 0, of: now) ?? now
         let day = LocalDay(at: now, in: .current)
-        let post = CheckInID(UUID(uuidString: "c0000000-0000-4000-8000-000000000001") ?? UUID())
         let cards = [
             CoachPageCard(
                 kind: .board, id: "board-1", coach: coach, look: coach.id.rawValue, time: board, day: day,
@@ -43,13 +42,9 @@ public actor InMemoryCoachCardSource: CoachCardSource {
                     title: word("拉伸"), amount: 5,
                     unit: word("分钟"),
                     line: word("昨天跑完腿还紧，睡前拉一拉。"))),
-            CoachPageCard(
-                kind: .reply, id: "reply-1", coach: coach, look: coach.id.rawValue,
-                time: morning.addingTimeInterval(4 * 3600 + 40 * 60),
-                text: word("配速比上周快了，不错。"), checkIn: post),
         ]
         return empty
-            ? InMemoryCoachCardSource(stack: [], earlier: cards.reversed())
+            ? InMemoryCoachCardSource(stack: [], earlier: cards.reversed().map { $0.with(isSeen: true) })
             : InMemoryCoachCardSource(stack: cards)
     }
 
@@ -62,9 +57,28 @@ public actor InMemoryCoachCardSource: CoachCardSource {
         CoachPageCards(stack: stack, earlier: earlier)
     }
 
+    /// 以前 as the API pages it, newest first, a page of 20.
+    public func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
+        -> CoachEarlierCards
+    {
+        let listed = earlier.filter { !unseenOnly || !$0.isSeen }
+        let start =
+            cursor.flatMap { after in listed.firstIndex { "\($0.kind.rawValue):\($0.id)" == after } }
+            .map { $0 + 1 } ?? 0
+        let page = Array(listed.dropFirst(start).prefix(Self.page))
+        let more = start + Self.page < listed.count
+        return CoachEarlierCards(
+            cards: page, next: more ? page.last.map { "\($0.kind.rawValue):\($0.id)" } : nil)
+    }
+
+    private static let page = 20
+
     public func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(SquadError) {
+        if let index = earlier.firstIndex(where: { $0.key == card }) {
+            earlier[index] = earlier[index].with(isSeen: true)
+        }
         guard let index = stack.firstIndex(where: { $0.key == card }) else { return }
-        earlier.insert(stack.remove(at: index), at: 0)
+        earlier.insert(stack.remove(at: index).with(isSeen: true), at: 0)
     }
 
     public func openGift(_ piece: String, worn: Bool) async throws(SquadError) -> CoachPageCard.Gift {

@@ -141,7 +141,7 @@ export const NoticeEntry = z
       .min(1)
       .max(7)
       .optional()
-      .meta({ description: 'The goal suggested, 人均 N 天 (`goalSuggestion`).' }),
+      .meta({ description: 'The goal suggested, 人均 N 次 (`goalSuggestion`).' }),
     feedback: z.uuid().optional().meta({
       description: 'The feedback we used (`thanks`): the id the app sent it with.',
     }),

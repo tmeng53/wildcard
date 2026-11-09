@@ -92,6 +92,16 @@ public struct TodayView: View {
             if model.showsTabBar { barRoom = room }
         }
         .task { await model.load() }
+        // While its page has news, the coach whistles again and again; under Reduce Motion only
+        // the dot on its phone says so.
+        .task(id: model.coachHasNews && !reduceMotion) {
+            guard model.coachHasNews, !reduceMotion else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(CoachCue.newsWhistlePeriod))
+                guard !Task.isCancelled else { return }
+                model.coachWhistlesForNews()
+            }
+        }
         .rereadsEachMinute(model)
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
@@ -110,7 +120,7 @@ public struct TodayView: View {
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
                 pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
                 tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNote: model.coachHasNote, coachAt: { coachCenter = $0 },
+                coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
                 tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model, openPost: openPost) }

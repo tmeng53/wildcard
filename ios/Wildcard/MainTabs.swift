@@ -57,6 +57,7 @@ struct MainTabs: View {
     @State var wardrobe: Wardrobe
     /// 出赛表, pushed over 我.
     @State var showsSchedule = LaunchOptions.opensSchedule
+    @State var plansOpened = 0
     /// The pages pushed over 今天: 小队, from the home's squad card, and the coach's pages over it.
     @State var todayPages: [TodayPage] = LaunchOptions.opensSquad ? [.squad] : []
     /// The coach's cards for the member, on its page; made for the squad the page opens on.
@@ -146,14 +147,13 @@ struct MainTabs: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await profile.reload() } }
         }
-        .fullScreenCover(isPresented: Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })) {
+        .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
-        .onChange(of: recap.plans) { planNextWeek() }
         .fullScreenCover(
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {

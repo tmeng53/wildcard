@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <path d="M 66 112 Q 68 74.8 120 73.6 Q 172 74.8 174 112 Z" fill="#7D8B6A" stroke="#5E6A4E" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M 38.4 128.8 Q 54 106 120 104.8 Q 186 106 201.6 128.8 Q 203 134.8 196.8 134.8 Q 160 120.4 120 120.4 Q 80 120.4 43.2 134.8 Q 37 134.8 38.4 128.8 Z" fill="#6E7B5C" stroke="#5E6A4E" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M 46 127.6 Q 80 113.2 120 112.8 Q 160 113.2 194 127.6" fill="none" stroke="#A9B497" stroke-width="1.6" stroke-dasharray="3.2 2.6"/>
-  <path d="M 68 104.8 Q 120 95.2 172 104.8" fill="none" stroke="#5E6A4E" stroke-width="1.8"/>
-  <rect x="151.2" y="90.4" width="12" height="8.4" rx="1.4" fill="#F6B92B" stroke="#B9851A" stroke-width="1.2"/>
-  <path d="M 153.4 96.4 L 155.6 93 L 157.2 95.2 L 158.8 92.6 L 161 96.4" fill="none" stroke="#22252E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 80.4 92.8 Q 92.4 82 108 80.8" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-opacity="0.3"/>
+  <path d="M 55.2 111.9 Q 57.6 70.98 120 69.66 Q 182.4 70.98 184.8 111.9 Z" fill="#7D8B6A" stroke="#5E6A4E" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M 38.4 128.8 Q 40.8 105.3 120 103.98 Q 199.2 105.3 201.6 128.8 Q 203 134.8 196.8 134.8 Q 160 120.4 120 120.4 Q 80 120.4 43.2 134.8 Q 37 134.8 38.4 128.8 Z" fill="#6E7B5C" stroke="#5E6A4E" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M 46 127.6 Q 80 113.2 120 112.78 Q 160 113.2 194 127.6" fill="none" stroke="#A9B497" stroke-width="1.6" stroke-dasharray="3.2 2.6"/>
+  <path d="M 57.6 103.98 Q 120 93.42 182.4 103.98" fill="none" stroke="#5E6A4E" stroke-width="1.8"/>
+  <rect x="158.64" y="88.56" width="12" height="8.4" rx="1.4" fill="#F6B92B" stroke="#B9851A" stroke-width="1.2"/>
+  <path d="M 160.08 94.74 L 162.72 91 L 164.64 93.42 L 166.56 90.56 L 169.2 94.74" fill="none" stroke="#22252E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 72.48 90.78 Q 86.88 78.9 105.6 77.58" fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-opacity="0.3"/>
 </svg>

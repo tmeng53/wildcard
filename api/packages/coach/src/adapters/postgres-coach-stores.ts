@@ -252,11 +252,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         return saved.length > 0;
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         return db
           .selectFrom('coach_notes')
           .select([sql<string>`to_char(day, 'YYYY-MM-DD')`.as('day'), 'text'])
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .orderBy('coach_notes.day', 'desc')
           .limit(limit)
           .execute();
@@ -275,7 +276,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             ${challenge?.unit ?? null}, ${challenge?.line ?? null},
             ${wake === undefined ? null : String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
-          on conflict (squad_id, member_id, day) do nothing
+          on conflict (wake_id, member_id) where wake_id is not null do nothing
           returning id`.execute(db);
         return saved.rows.length > 0;
       },
@@ -300,8 +301,11 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       },
 
       async challengesOn({ squad, day }) {
+        // A member's newest challenge of the day stands for the day (an admin may have sent
+        // themselves a note besides the morning's); a note without one hides none.
         const rows = await dayChallenges(db, { squad, day }).execute();
-        return rows.flatMap((row) => {
+        const newest = new Map(rows.map((row) => [row.member_id, row]));
+        return [...newest.values()].flatMap((row) => {
           const challenge = dayChallengeOfRow(row, day);
           return challenge === undefined ? [] : [{ ...challenge, member: row.member_id }];
         });
@@ -339,11 +343,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           : { coach: CoachId.parse(row.coach_id), text: row.text ?? undefined };
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         const rows = await db
           .selectFrom('coach_replies')
           .select('emoji')
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .where('emoji', 'is not', null)
           .orderBy('id', 'desc')
           .limit(limit)
@@ -633,11 +638,11 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
     },
 
     async cards({ squad, member, since }) {
-      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines,
-      // the member's notes (and their challenges) once delivered, the coach's lines to the
-      // member's check-ins, and its answers to the member's replies.
+      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines and
+      // the member's notes (and their challenges) once delivered. The coach's lines to their
+      // check-ins and replies show only under the posts in 动态 (Tracy, 2026-11-09).
       const rows = await sql<{
-        kind: 'board' | 'note' | 'challenge' | 'challengeDone' | 'reply' | 'answer';
+        kind: 'board' | 'note' | 'challenge' | 'challengeDone';
         id: string;
         day: string | null;
         text: string | null;
@@ -690,24 +695,11 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           join public.coach_challenge_completions done on done.note_id = m.id
           where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
             and done.by = 'coach' and done.at >= ${since}
-          union all
-          select 'reply', r.id::text, null, r.text, r.check_in_id, null, null, null, null, null,
-            null, null, null, null, r.at, r.coach_id
-          from public.coach_replies r
-          join public.check_ins c on c.id = r.check_in_id
-          where r.squad_id = ${squad}::uuid and c.member_id = ${member}::uuid
-            and r.text is not null and r.at >= ${since}
-          union all
-          select 'answer', a.id::text, null, a.text, a.check_in_id, a.comment_id, null, null,
-            null, null, null, null, null, null, a.at, a.coach_id
-          from public.coach_answers a
-          join public.check_in_comments cc on cc.id = a.comment_id
-          where a.squad_id = ${squad}::uuid and cc.member_id = ${member}::uuid and a.at >= ${since}
         )
         select mine.*, coaches.name, coaches.look
         from mine join public.coaches on coaches.id = mine.coach_id
         order by mine.at,
-          array_position(array['board', 'note', 'challenge', 'challengeDone', 'reply', 'answer'], mine.kind),
+          array_position(array['board', 'note', 'challenge', 'challengeDone'], mine.kind),
           mine.id`.execute(db);
       return rows.rows.map((row) => {
         const base = {
@@ -736,21 +728,6 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
               day: row.day ?? '',
               challenge: challengeOfRow(row) ?? { title: '' },
             };
-          case 'reply':
-            return {
-              ...base,
-              kind: row.kind,
-              checkIn: row.check_in_id ?? '',
-              text: row.text ?? '',
-            };
-          case 'answer':
-            return {
-              ...base,
-              kind: row.kind,
-              checkIn: row.check_in_id ?? '',
-              comment: row.comment_id ?? '',
-              text: row.text ?? '',
-            };
         }
       });
     },
@@ -762,7 +739,14 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('squad_id', '=', squad)
         .where('member_id', '=', member)
         .execute();
-      return new Set(rows.map((row) => cardKey(CoachCardKind.parse(row.kind), row.card_id)));
+      // A kind no longer a card (the coach's `reply` and `answer`, which show only under the posts
+      // since 2026-11-09) stays in the log, marking nothing.
+      return new Set(
+        rows.flatMap((row) => {
+          const kind = CoachCardKind.safeParse(row.kind);
+          return kind.success ? [cardKey(kind.data, row.card_id)] : [];
+        }),
+      );
     },
 
     async markSeen({ squad, member, kind, id }) {
@@ -1090,7 +1074,10 @@ async function completionOf(db: Kysely<DB>, note: number) {
   return row === undefined ? undefined : completionOfRow(row);
 }
 
-/** The squad's notes of a day that reached their members, with their challenges' answers. */
+/**
+ * The squad's notes of a day that reached their members and set a challenge, with their answers,
+ * oldest first.
+ */
 function dayChallenges(
   db: Kysely<DB>,
   { squad, day }: { readonly squad: SquadId; readonly day: string },
@@ -1122,6 +1109,7 @@ function dayChallenges(
     ])
     .where('coach_member_notes.squad_id', '=', squad)
     .where('coach_member_notes.day', '=', day)
+    .where('coach_member_notes.challenge_title', 'is not', null)
     .orderBy('coach_member_notes.id');
 }
 
@@ -1159,8 +1147,10 @@ async function dayChallenge(
     day,
   }: { readonly squad: SquadId; readonly member: string; readonly day: string },
 ): Promise<DayChallenge | undefined> {
-  const row = await dayChallenges(db, { squad, day })
+  const rows = await dayChallenges(db, { squad, day })
     .where('coach_member_notes.member_id', '=', member)
-    .executeTakeFirst();
+    .execute();
+  // The newest challenge of the day stands, as in `challengesOn`.
+  const row = rows.at(-1);
   return row === undefined ? undefined : dayChallengeOfRow(row, day);
 }

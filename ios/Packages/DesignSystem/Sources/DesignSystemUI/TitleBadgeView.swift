@@ -15,6 +15,9 @@ public struct TitleBadgeView: View {
     /// The shapes this build draws, by the names the API sends.
     public enum Shape: String, Sendable, CaseIterable {
         case shield, hexagon, circle, scallop
+        /// The Wildcard team's dedicated badges (捉虫队, 点子王), never a weekly title's: a ticket
+        /// with a notch in each side, so they read apart from the titles on the board.
+        case ticket
     }
 
     private let shape: Shape
@@ -123,6 +126,17 @@ private struct BadgeOutline: Shape {
             path.closeSubpath()
         case .circle:
             path.addEllipse(in: CGRect(origin: point(2, 2), size: CGSize(width: 44 * unit, height: 44 * unit)))
+        case .ticket:
+            // A ticket lying across the square, a half-round notch punched in each side.
+            let ticket = CGRect(origin: point(2, 9), size: CGSize(width: 44 * unit, height: 30 * unit))
+            path.addRoundedRect(
+                in: ticket, cornerSize: CGSize(width: 6 * unit, height: 6 * unit), style: .continuous)
+            var notches = Path()
+            for side in [ticket.minX, ticket.maxX] {
+                notches.addEllipse(
+                    in: CGRect(x: side - 5 * unit, y: ticket.midY - 5 * unit, width: 10 * unit, height: 10 * unit))
+            }
+            path = path.subtracting(notches)
         case .scallop:
             // Twelve round bumps around the edge, like a rosette.
             let bumps = 12

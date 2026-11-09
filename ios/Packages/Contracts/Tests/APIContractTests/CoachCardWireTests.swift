@@ -30,14 +30,28 @@ private func cards(_ stack: String, earlier: String = "") throws -> CoachPageCar
 }
 
 @Test func aKindThisBuildDoesntKnowIsLeftOut() throws {
+    // `reply` was a card once; the coach's lines to check-ins now show only under the posts.
     let read = try cards(
-        #"{"kind": "poem", "id": "1", \#(coach), "at": "2026-11-08T13:00:00Z", "text": "…"}"#,
-        earlier:
-            #"{"kind": "reply", "id": "7", \#(coach), "at": "2026-11-08T12:00:00Z", "text": "不错。", "checkInId": "c0000000-0000-4000-8000-000000000001"}"#
+        #"{"kind": "reply", "id": "1", \#(coach), "at": "2026-11-08T13:00:00Z", "text": "…"}"#,
+        earlier: #"{"kind": "note", "id": "7", \#(coach), "at": "2026-11-08T12:00:00Z", "text": "不错。"}"#
     )
     #expect(read.stack.isEmpty)
-    #expect(read.earlier.map(\.kind) == [.reply])
-    #expect(read.earlier.first?.checkIn != nil)
+    #expect(read.earlier.map(\.kind) == [.note])
+    #expect(read.earlier.first?.isSeen == false)
+}
+
+@Test func aPageOfEarlierReadsWhatWasSeenAndWhereTheNextStarts() throws {
+    let json = #"""
+        {"version": 1, "next": "1794150000000~note:7",
+         "cards": [{"kind": "note", "id": "7", \#(coach), "at": "2026-11-08T12:00:00Z", "text": "不错。", "seen": true},
+                   {"kind": "poem", "id": "8", \#(coach), "at": "2026-11-08T11:00:00Z", "seen": false}]}
+        """#
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let page = CoachEarlierCards(try decoder.decode(Components.Schemas.EarlierCoachCards.self, from: Data(json.utf8)))
+    #expect(page.cards.map(\.id) == ["7"])
+    #expect(page.cards.first?.isSeen == true)
+    #expect(page.next == "1794150000000~note:7")
 }
 
 @Test func todaysChallengeReadsWithWhoCompletedIt() throws {

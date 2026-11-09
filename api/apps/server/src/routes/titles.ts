@@ -13,6 +13,7 @@ import {
 import { MemberId as RewardMember, type HeldBadge, type Rewards } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
+import { squadFirstWeek } from '../flows/squad-weeks.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -210,7 +211,9 @@ const PlayerCardBody = z
         }),
         // The card's back, their 出赛表: this week only, never another week's.
         weekStart: WeekStart.optional().meta({
-          description: 'This week’s Monday, in their time zone. Left out by older servers.',
+          description:
+            'This week’s Monday on the squad’s clock (小队时区), the same week for every ' +
+            'squadmate. Left out by older servers.',
           example: '2026-11-02',
         }),
         days: planDays.optional(),
@@ -230,13 +233,21 @@ const PlayerCardBody = z
         firstWeek: WeekStart.optional().meta({
           description:
             'The Monday of the week they joined, in their time zone, which their 出赛表 counts ' +
-            'as W1. Missing before they save a profile, and from older servers.',
+            'as W1 before servers send `squadFirstWeek`. Missing before they save a profile, ' +
+            'and from older servers.',
           example: '2026-10-12',
+        }),
+        squadFirstWeek: WeekStart.optional().meta({
+          description:
+            'The Monday of the week this squad was made, on its clock: the week every 出赛表 in ' +
+            'the squad counts as W1, so every card shows the same week number. Left out by older ' +
+            'servers.',
+          example: '2026-10-05',
         }),
         today: LocalDay.optional().meta({
           description:
-            'Their today, in their time zone, which their 出赛表 shades as 今天. Left out by ' +
-            'older servers.',
+            'Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older ' +
+            'servers.',
           example: '2026-10-29',
         }),
       })
@@ -411,7 +422,8 @@ export function titles(deps: {
       });
       const place = squad.members.findIndex(({ member }) => member === memberId);
       if (place < 0) throw new SquadMemberUnknownError(memberId);
-      const [boards, profiles, totals, week, teamBadges] = await Promise.all([
+      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date())).get(squad.id);
+      const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         deps.checkIns.totals(memberId),
@@ -419,8 +431,10 @@ export function titles(deps: {
           member: memberId,
           viewer: MemberId.parse(c.var.caller.userId),
           squad: squadId,
+          ...(squadZone === undefined ? {} : { squadZone }),
         }),
         deps.rewards.badgesOf(RewardMember.parse(memberId)),
+        squadFirstWeek(deps.squads, squad),
       ]);
       const profile = profiles.get(memberId);
       return c.json(
@@ -434,6 +448,7 @@ export function titles(deps: {
           ...totals,
           week: {
             ...week,
+            squadFirstWeek: squadWeek,
             days: [...week.days],
             marks: week.marks.map((mark) =>
               mark.status === 'trained' ? { ...mark, sports: [...mark.sports] } : mark,
