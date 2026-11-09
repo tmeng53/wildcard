@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "+%lld 项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld more"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld 項"
+          }
+        }
+      }
+    },
+    "品牌色上的次要字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Secondary text on brand"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "品牌色上的次要字"
+          }
+        }
+      }
+    },
     "轻点翻面": {
       "localizations": {
         "en": {
@@ -653,6 +685,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "重訓"
+          }
+        }
+      }
+    },
+    "力量训练 20 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strength 20 min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重訓 20 分鐘"
           }
         }
       }
@@ -3345,34 +3393,34 @@
         }
       }
     },
-    "多练 %lld 天": {
+    "多练 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days over"
+            "value": "%lld workouts over"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "多練 %lld 天"
+            "value": "多練 %lld 次"
           }
         }
       }
     },
-    "天": {
+    "次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "days"
+            "value": "workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天"
+            "value": "次"
           }
         }
       }
@@ -3409,18 +3457,18 @@
         }
       }
     },
-    "%@，本周 %lld/%lld 天；我这周 %lld/%lld": {
+    "%@，本周 %lld/%lld 次；我这周 %lld/%lld": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@, %2$lld/%3$lld days this week; my week %4$lld/%5$lld"
+            "value": "%1$@, %2$lld/%3$lld workouts this week; my week %4$lld/%5$lld"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@，本週 %lld/%lld 天；我這週 %lld/%lld"
+            "value": "%@，本週 %lld/%lld 次；我這週 %lld/%lld"
           }
         }
       }

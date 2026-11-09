@@ -222,9 +222,9 @@ public final class ComposeModel {
         startTime = nil
     }
 
-    /// Strikes a number out of the post, or brings it back. 时长 always goes.
+    /// Strikes a number out of the post, or brings it back. 时长 too (Tracy, 2026-11-08): struck,
+    /// the post goes without its minutes, and with no number left it shows no 成绩条.
     func toggle(_ cell: WorkoutCell) {
-        guard cell != .duration else { return }
         if struck.contains(cell) { struck.remove(cell) } else { struck.insert(cell) }
         guard cell == workout?.chartCell else { return }
         // The chart shows the number struck, so it goes with it, and comes back where it was.
@@ -240,6 +240,11 @@ public final class ComposeModel {
     /// The workout as it is to be posted: the numbers not struck, the tiles where the row has them.
     private var postedWorkout: Workout? {
         workout?.posting(struck: struck, positions: tiles.workoutTilePositions)
+    }
+
+    /// The minutes as they are to be posted: none when the workout's 时长 is struck.
+    private var postedMinutes: WorkoutMinutes? {
+        workout != nil && struck.contains(.duration) ? nil : minutes
     }
 
     /// Starts this new post again from one the server refused: its photos with the workout's
@@ -289,7 +294,7 @@ public final class ComposeModel {
             photos: picked, caption: line, workout: trained ? postedWorkout : nil,
             startTime: trained && workout == nil ? startTime : nil)
         return switch kind {
-        case .trained: .trained(currentActivity, minutes, body)
+        case .trained: .trained(currentActivity, postedMinutes, body)
         case .healthyMeal: .healthyMeal(body)
         case .cheatMeal, .disclaimer: .cheatMeal(body)
         }
@@ -299,7 +304,7 @@ public final class ComposeModel {
     var edit: PostEdit? {
         guard case .edit(let checkIn) = purpose else { return nil }
         return PostEdit(
-            original: checkIn, activity: currentActivity, minutes: minutes, line: line, photos: photos,
+            original: checkIn, activity: currentActivity, minutes: postedMinutes, line: line, photos: photos,
             workout: postedWorkout, startTime: workout == nil ? startTime : nil)
     }
 

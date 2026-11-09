@@ -49,7 +49,8 @@ extension CoachReply {
     public init(_ wire: Components.Schemas.CoachReply) throws(ContractsError) {
         self.init(
             checkIn: try CheckInID(wire: wire.checkInId), coach: try CoachSpeaker(wire.coach.value1),
-            text: wire.text, emoji: wire.emoji.flatMap { try? Emoji($0) }, writtenAt: wire.at)
+            text: wire.text, emoji: wire.emoji.flatMap { try? Emoji($0) },
+            mentions: try Mentions(members: wire.mentions, coach: nil).members, writtenAt: wire.at)
     }
 }
 
@@ -57,7 +58,8 @@ extension CoachAnswer {
     public init(_ wire: Components.Schemas.CoachAnswer) throws(ContractsError) {
         self.init(
             checkIn: try CheckInID(wire: wire.checkInId), comment: try CommentID(wire: wire.commentId),
-            coach: try CoachSpeaker(wire.coach.value1), text: wire.text, writtenAt: wire.at)
+            coach: try CoachSpeaker(wire.coach.value1), text: wire.text,
+            mentions: try Mentions(members: wire.mentions, coach: nil).members, writtenAt: wire.at)
     }
 }
 

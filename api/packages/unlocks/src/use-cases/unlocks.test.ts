@@ -233,6 +233,66 @@ describe('unlocks', () => {
     expect(seen.shelf.pieces.some(({ id }) => id === starter)).toBe(false);
   });
 
+  it('lets a previewer see and claim what their preview opens, keeping none of it', async () => {
+    const unlocks = unlocksWith(new Map());
+    const store = `testp${randomUUID().slice(0, 8)}`;
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: true });
+    const starter = `${store}-hat`;
+    const sweater = `${store}-sweater`;
+    for (const [id, isStarter] of [
+      [starter, true],
+      [sweater, false],
+    ] as const) {
+      await unlocks.putPiece({
+        id,
+        storeId: store,
+        slot: isStarter ? 'hat' : 'top',
+        starter: isStarter,
+        switchId: null,
+        offered: true,
+      });
+    }
+    await unlocks.putRule({ kind: 'piece', id: sweater, sports: [], after: 1 });
+    const me = await newMember();
+    const trained = new Map<MemberId, Trained[]>([
+      [me, [{ id: randomUUID(), sport: 'run', madeAt: new Date('2099-12-01T12:00:00Z') }]],
+    ]);
+    // In the preview the store's switch is on; as really set, it is off.
+    const pieceStore = createPostgresUnlockStore(db);
+    const previewing = createUnlocks({
+      store: pieceStore,
+      trainedSince: ({ member }) => Promise.resolve(trained.get(member) ?? []),
+      sportListed: () => Promise.resolve(true),
+      switches: () => Promise.resolve(() => true),
+      keptSwitches: () => Promise.resolve(() => false),
+      switchListed: () => Promise.resolve(true),
+    });
+    const preview = await previewing.standing(me);
+    expect(
+      preview.shelf.pieces
+        .filter(({ storeId }) => storeId === store)
+        .map(({ id, state }) => [id, state]),
+    ).toStrictEqual([
+      [starter, 'owned'],
+      [sweater, 'owned'],
+    ]);
+    expect((await previewing.claim(me, PieceId.parse(starter))).piece).toBe(starter);
+    await previewing.keepWorn(me, [starter, sweater]);
+
+    // Once the preview ends, nothing of it is theirs: no grant, no claim, no rack.
+    expect((await pieceStore.unlocksOf(me)).some(({ id }) => id === sweater)).toBe(false);
+    expect(await previewing.claimsOf(me)).toStrictEqual([]);
+    const after = await createUnlocks({
+      store: pieceStore,
+      trainedSince: ({ member }) => Promise.resolve(trained.get(member) ?? []),
+      sportListed: () => Promise.resolve(true),
+      switches: () => Promise.resolve(() => false),
+      switchListed: () => Promise.resolve(true),
+    }).standing(me);
+    expect(after.shelf.pieces.some(({ storeId }) => storeId === store)).toBe(false);
+    await unlocks.putStore({ id: store, position: 99, switchId: 'winter', offered: false });
+  });
+
   it('refuses a store or piece that follows a switch nobody made', async () => {
     const unlocks = unlocksWith(new Map());
     const store = `testx${randomUUID().slice(0, 8)}`;
@@ -308,8 +368,24 @@ describe('unlocks', () => {
     expect(await unlocks.of(me)).toStrictEqual(all);
     expect(told).toHaveLength(4);
     await expect(
-      sql`delete from public.member_unlocks where member_id = ${me}`.execute(db),
+      sql`delete from public.grants where member_id = ${me}`.execute(db),
     ).rejects.toThrow('append-only');
+  });
+
+  it('lists every reward with each way it is got, a rule being its training trigger', async () => {
+    const unlocks = unlocksWith(new Map());
+    const rewards = await unlocks.rewards();
+    expect(rewards.find(({ kind, id }) => kind === 'store' && id === 'lap')).toMatchObject({
+      triggers: [{ kind: 'training', sports: ['run', 'walk'], after: 3 }],
+    });
+    const rules = await unlocks.rules();
+    expect(
+      rewards
+        .flatMap(({ kind, id, triggers }) =>
+          triggers.filter((each) => each.kind === 'training').map(() => `${kind}:${id}`),
+        )
+        .sort(),
+    ).toStrictEqual(rules.map(({ kind, id }) => `${kind}:${id}`).sort());
   });
 
   it('logs each rule change, keeps its start, and refuses a sport the list lacks', async () => {
@@ -329,7 +405,7 @@ describe('unlocks', () => {
     // The same again changes nothing, so it logs nothing.
     await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
     const events = await sql<{ op: string; value: { after: number } }>`
-      select op, value from public.unlock_rule_events where value ->> 'item_id' = ${id} order by id
+      select op, value from public.reward_trigger_events where value ->> 'reward_id' = ${id} order by id
     `.execute(db);
     expect(events.rows.map(({ op, value }) => [op, value.after])).toStrictEqual([
       ['INSERT', 2],
@@ -339,7 +415,7 @@ describe('unlocks', () => {
       unlocks.putRule({ kind: 'store', id: 'deuce', sports: ['quidditch'], after: 3 }),
     ).rejects.toBeInstanceOf(UnlockSportNotListedError);
     await expect(
-      sql`delete from public.unlock_rules where item_id = ${id}`.execute(db),
+      sql`delete from public.reward_triggers where reward_id = ${id}`.execute(db),
     ).rejects.toThrow('never deleted');
     expect(before.length + 1).toBe(changed.length);
   });

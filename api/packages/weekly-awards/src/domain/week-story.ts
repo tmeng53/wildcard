@@ -38,7 +38,12 @@ export const StoredStory = z.discriminatedUnion('version', [
     podium: z.unknown().optional(),
     /** 吃了: the squad's meals; who ate more of what is each member's own. */
     meals: z.strictObject({ healthy: Count, cheat: Count }).optional(),
-    /** 这一周: the squad's days trained against its plans; only when someone trained. */
+    /**
+     * 这一周: the 训练 the squad's members sent to it that week (several on one day each
+     * counting; days trained in stories frozen before 2026-11-09, counted again by a migration)
+     * and its members' plans added up, as it froze; only when someone trained. The 战报 shows
+     * the 训练 against the squad's weekly goal instead of the plans.
+     */
     ending: z.strictObject({ done: Count, plan: Count }).optional(),
   }),
 ]);

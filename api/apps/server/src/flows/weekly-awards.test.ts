@@ -65,6 +65,7 @@ import {
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   ignoredNotices,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
@@ -126,17 +127,19 @@ const lettersIn = (prompt: string) =>
 /** The model's answer for a squad's members by letter, one title each. */
 const titlesFor = (letters: readonly string[]) => ({
   version: 1,
-  awards: letters.map((letter, index) => ({
-    member: letter,
-    titles: [
-      {
-        title: `狠人${String(index)}号`,
-        speech: '周三下着雨还去跑了。',
-        move: 'pump',
-        badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
-      },
-    ],
-  })),
+  awards: Object.fromEntries(
+    letters.map((letter, index) => [
+      letter,
+      [
+        {
+          title: `狠人${String(index)}号`,
+          speech: '周三下着雨还去跑了。',
+          move: 'pump',
+          badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
+        },
+      ],
+    ]),
+  ),
   ending: { headline: '稳了', line: '三天全拿下，计划都不够用。' },
 });
 
@@ -196,6 +199,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
+    rewards: noRewards,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
@@ -672,7 +676,7 @@ describe('weekly awards', () => {
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
     expect(pending.stuck).toBe(true);
     // The page's words wait with the titles: the app says how far the squad got meanwhile.
-    expect(pending.ending).toStrictEqual({ done: 1, plan: 0 });
+    expect(pending.ending).toStrictEqual({ done: 1, plan: 6 });
     expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([
       'pending',
       undefined,
@@ -802,14 +806,15 @@ describe('weekly awards', () => {
     expect(first.scene).toBe('gym');
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
+    // 3 训练 against the squad's weekly goal: 人均 3 次 (the default) times its 2 members.
     expect(first.ending).toStrictEqual({
       done: 3,
-      plan: 0,
+      plan: 6,
       headline: '稳了',
       line: '三天全拿下，计划都不够用。',
     });
-    // The run reads every squad that checked in that week; this one's prompt brings its days.
-    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainedDays":3,'))).toBe(true);
+    // The run reads every squad that checked in that week; this one's prompt brings its 训练.
+    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainings":3,'))).toBe(true);
     // Ana trained the most days, so she stands in the middle; neither planned a day this week,
     // so both carry the plan-done mark.
     expect(first.podium).toStrictEqual({

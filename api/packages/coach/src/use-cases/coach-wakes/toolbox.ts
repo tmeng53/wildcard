@@ -105,6 +105,7 @@ export function mentioning(
 ): { readonly line: string; readonly mentions: readonly string[] } | string {
   const mentions: string[] = [];
   const prefix: string[] = [];
+  let said = line;
   for (const name of new Set(at.map((each) => each.trim()))) {
     const member = [...roster].find(([, shown]) => shown === name)?.[0];
     if (member !== undefined && member === to) continue;
@@ -118,9 +119,31 @@ export function mentioning(
         : `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
     }
     mentions.push(member);
-    if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
+    if (said.includes(`@${nickname}`)) {
+      // 「@Miao」 isn't an @ of Mia: what a longer teammate's name goes on with is left as is.
+      const longer = week.members.flatMap(({ nickname: other }) =>
+        other !== undefined && other !== nickname && other.startsWith(nickname)
+          ? [other.slice(nickname.length)]
+          : [],
+      );
+      said = spacedAfter(said, { tag: `@${nickname}`, longer });
+    } else prefix.push(`@${nickname} `);
   }
-  return { line: prefix.join('') + line, mentions };
+  return { line: prefix.join('') + said, mentions };
+}
+
+/**
+ * `line` with a space after each `tag` not already followed by one, so the app sees where the
+ * name ends; never inside a longer name, which goes on with one of `longer`.
+ */
+function spacedAfter(
+  line: string,
+  { tag, longer }: { readonly tag: string; readonly longer: readonly string[] },
+): string {
+  const [first = '', ...rest] = line.split(tag);
+  const spaced = (after: string): boolean =>
+    after === '' || /^\s/u.test(after) || longer.some((more) => after.startsWith(more));
+  return rest.reduce((said, after) => `${said}${tag}${spaced(after) ? '' : ' '}${after}`, first);
 }
 
 /** The `at` parameter of a line the coach says under a check-in. */
@@ -140,6 +163,7 @@ const atParameter = z
 export function toolbox({
   week,
   roster,
+  coach,
   draft,
   kind,
   photos,
@@ -153,6 +177,8 @@ export function toolbox({
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
+  /** The coach at work, by id: its own page is `me.md`. */
+  readonly coach: string;
   readonly draft: WakeDraft;
   readonly kind: WakeReason['kind'];
   /** The URLs of the photos of the check-in this wake is about, when it has any to look at. */
@@ -193,13 +219,13 @@ export function toolbox({
         path: z
           .string()
           .describe(
-            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事',
+            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事，me.md 记你自己（只有你读得到）',
           ),
         fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
       kept: ({ path, fact }) => ({ path, fact: `（${String(fact.length)} 字）` }),
       run: ({ path, fact }) => {
-        const stored = storedPathOf(path, roster);
+        const stored = storedPathOf(path, { roster, coach });
         if (stored === undefined) return unknownPath(path);
         const line = fact.trim();
         if (line === '') return 'fact 是空的，写上要记的事。';
@@ -215,7 +241,7 @@ export function toolbox({
       description:
         '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+        path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
@@ -226,7 +252,7 @@ export function toolbox({
         replace: `（${String(replace.length)} 字）`,
       }),
       run: ({ path, find, replace }) => {
-        const stored = storedPathOf(path, roster);
+        const stored = storedPathOf(path, { roster, coach });
         if (stored === undefined) return unknownPath(path);
         const edited = editBody(draft.files.get(stored) ?? '', { find, replace });
         if (!edited.ok) return edited.why;
@@ -380,12 +406,12 @@ export function toolbox({
         name: 'rewrite_file',
         description: `把记性里的一个文件整个换成新写的内容：留下的照写，删掉的不写。body 为空就是清空。不超过 ${String(FILE_LIMIT)} 字。`,
         parameters: z.object({
-          path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+          path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
           body: z.string().describe('这个文件的全部新内容，用队员N称呼人'),
         }),
         kept: ({ path, body }) => ({ path, body: `（${String(body.length)} 字）` }),
         run: ({ path, body }) => {
-          const stored = storedPathOf(path, roster);
+          const stored = storedPathOf(path, { roster, coach });
           if (stored === undefined) return unknownPath(path);
           const next = body.trim();
           if (next.length > FILE_LIMIT) {
@@ -519,7 +545,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),

@@ -12,7 +12,7 @@ import Testing
 }
 
 // The squad the UI tests and screenshots run on: 14/24, 3 trained, as the UI tests expect.
-@MainActor @Test func theSampleSquadTicksOnceForTheFirstTraining() async throws {
+@MainActor @Test func theSampleSquadCountsEachTraining() async throws {
     let store = sampleStore()
     await store.load()
     #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 14, plannedDays: 24))
@@ -21,7 +21,8 @@ import Testing
     try await store.post(.trained(.sport("yoga"), nil, PostBody(photos: [], caption: "")))
     try await store.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
     await store.load()
-    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 24))
+    // Two 练了 count twice for the squad, today counts me once.
+    #expect(store.home?.today.squadWeek == WeekCount(trainedDays: 16, plannedDays: 24))
     #expect(store.home?.today.today.trained == 4)
     #expect(store.myStatus == .trained)
 }

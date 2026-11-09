@@ -1,4 +1,4 @@
-import { challengeOpen } from '../domain/challenge.js';
+import { challengeOpen, type Challenge } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   shownBody,
@@ -26,7 +26,15 @@ import {
   weekText,
   type SquadWeek,
 } from '../domain/squad-week.js';
-import { costMicros, wakesDue, weekStartOf, weeksAround, type Wake } from '../domain/wake.js';
+import {
+  costMicros,
+  wakesDue,
+  weekStartOf,
+  weeksAround,
+  type NewWake,
+  type Wake,
+  type WakeStep,
+} from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -109,7 +117,50 @@ export interface CoachWakes {
     readonly checkIn: string;
     readonly squads: readonly SquadId[];
   }): Promise<void>;
+  /**
+   * For testing a prompt (Tracy, 2026-11-08): runs today's daily wake of the member's squad now,
+   * for that member alone, and says what the coach would write and give, saving and sending
+   * nothing; only its tokens are recorded, against the squad's caps, which it keeps to like any
+   * wake. Works while coaching is off too. With `deliver` (Tracy, 2026-11-09: 要让他真的发给我自己)
+   * the member's note, with its challenge, is saved as a real note of today, every time it is
+   * asked, so it reaches their phone and coach page like the morning one, and the newest is the
+   * day's; the 战术板 line and the gift stay a preview, since the board is the squad's and a gift
+   * is one a week.
+   */
+  preview(input: {
+    readonly squad: SquadId;
+    readonly member: string;
+    readonly deliver?: boolean;
+  }): Promise<CoachPreview>;
 }
+
+/** What a daily wake would do for one member, from `CoachWakes.preview`. */
+export type CoachPreview =
+  | { readonly ran: false; readonly why: string }
+  | {
+      readonly ran: true;
+      readonly day: string;
+      /** The 战术板 line it would post for the squad. */
+      readonly board?: string;
+      /** The morning note (便条) to the member, with its challenge, if any. */
+      readonly note?: { readonly text: string; readonly challenge?: Challenge };
+      /** Why no note: the member hasn't agreed to AI use, or turned the coach's messages off. */
+      readonly noNote?: string;
+      /**
+       * Asked to deliver: whether the note was saved for the member. False when the coach wrote
+       * none, or the run failed.
+       */
+      readonly delivered?: boolean;
+      /** The gift it would give the member, and why none when the member can't get one. */
+      readonly gift?: { readonly piece: string; readonly line: string };
+      readonly noGift?: string;
+      /** The memory files it would change, with their new bodies as the model wrote them. */
+      readonly files: readonly { readonly path: string; readonly body: string }[];
+      readonly steps: readonly WakeStep[];
+      readonly costMicros: number;
+      /** Set when the model's run failed; the rest is what it got to before. */
+      readonly error?: string;
+    };
 
 export interface CoachWakesDependencies {
   readonly settings: CoachSettingsStore;
@@ -242,6 +293,81 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
       await drain(deps, { squads, hired, coaches, settings, now });
     },
+
+    preview: async (input) => previewDaily(deps, input),
+  };
+}
+
+async function previewDaily(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    member,
+    deliver = false,
+  }: { readonly squad: SquadId; readonly member: string; readonly deliver?: boolean },
+): Promise<CoachPreview> {
+  const now = deps.clock();
+  const settings = await deps.settings.current();
+  const hiredCoach = (await deps.hiring.hired()).get(squad);
+  const coach = (await deps.catalog.list()).find(({ id }) => id === hiredCoach);
+  if (coach === undefined) return { ran: false, why: 'the squad has no coach' };
+  const offDuty = await offDutyWhy(
+    { usage: deps.stores.usage, clock: deps.clock, timeZonesAt: deps.timeZonesAt },
+    { squad, settings },
+  );
+  if (offDuty !== undefined) return { ran: false, why: `off duty today: ${offDuty}` };
+  const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
+  const day = wallClockAt(now, zone).day;
+  const week = await weekOf(deps, { squad, weekStart: weekStartOf(day) });
+  if (!week.members.some((each) => each.member === member)) {
+    return { ran: false, why: 'the member is not in the squad' };
+  }
+  const thought = await think(deps, {
+    wake: { squad, reason: { kind: 'daily', day } },
+    settings,
+    coach,
+    now,
+    only: member,
+  });
+  if (thought === undefined) return { ran: false, why: 'nothing to wake for' };
+  const { run, draft, roster } = thought;
+  const note = draft.memberNotes.get(member);
+  const gift = draft.gifts.get(member);
+  const reads = await noteReaders(deps, [member]);
+  const delivered = deliver
+    ? note !== undefined &&
+      reads.length > 0 &&
+      run.ok &&
+      (await deps.stores.memberNotes.save({ squad, member, coach: coach.id, day, ...note }))
+    : undefined;
+  const giftable =
+    deps.gifting === undefined
+      ? false
+      : (await deps.gifting.options({ squad, members: await deps.aiConsented([member]) })).open.has(
+          member,
+        );
+  return {
+    ran: true,
+    day,
+    ...(draft.note === undefined ? {} : { board: draft.note }),
+    ...(note === undefined
+      ? reads.length === 0
+        ? { noNote: 'the member has not agreed to AI use, or turned the coach’s messages off' }
+        : {}
+      : { note }),
+    ...(gift === undefined
+      ? giftable
+        ? {}
+        : { noGift: 'no gift can go to the member now (one a week, or no AI consent)' }
+      : { gift }),
+    ...(delivered === undefined ? {} : { delivered }),
+    files: [...draft.changed].map((path) => ({
+      path,
+      body: shownBody(draft.files.get(path) ?? '', roster),
+    })),
+    steps: draft.steps,
+    costMicros: costMicros(run.usage, settings),
+    ...(run.ok ? {} : { error: run.error }),
   };
 }
 
@@ -306,7 +432,7 @@ async function weekOf(
 /** The week a wake is about: its day's, or the one its check-in is in, if it still is. */
 async function wakeWeek(
   deps: CoachWakesDependencies,
-  { wake, now }: { readonly wake: Wake; readonly now: Date },
+  { wake, now }: { readonly wake: NewWake; readonly now: Date },
 ): Promise<SquadWeek | undefined> {
   const { reason } = wake;
   if (reason.kind === 'daily' || reason.kind === 'dream') {
@@ -322,10 +448,217 @@ async function wakeWeek(
   return undefined;
 }
 
+/** A wake as `think` runs it: one from the queue, or a preview's, which has no id. */
+type Thought = NewWake & { readonly id?: number };
+
+/** What the coach did on a run, before any of it is saved. */
+interface Thinking {
+  readonly run: Awaited<ReturnType<CoachAgent['run']>>;
+  readonly draft: WakeDraft;
+  readonly stored: ReadonlyMap<StoredPath, string>;
+  readonly roster: ReturnType<typeof rosterOf>;
+  readonly thread: Awaited<ReturnType<typeof threadOf>>;
+  readonly author: string | undefined;
+  readonly challenge: Awaited<ReturnType<CoachStores['memberNotes']['challengeOf']>>;
+  readonly day: string;
+}
+
+/** These members, or only `only` of them when it is given. */
+function onlyFor(members: readonly string[], only: string | undefined): readonly string[] {
+  return only === undefined ? members : members.filter((member) => member === only);
+}
+
 /**
- * Runs one wake: the coach reads the squad's week and files and does what it decides. Its
- * tokens are recorded first, whatever happens next; then its changes and the wake's end are
- * saved together. Says whether it worked.
+ * The coach reads the squad's week and files and decides what to do, into a draft nothing has
+ * saved yet; its tokens are recorded, whatever comes next. Undefined when there is nothing to
+ * wake for. With `only`, a daily wake writes a note to and may give a gift to that member alone.
+ */
+async function think(
+  deps: CoachWakesDependencies,
+  {
+    wake,
+    settings,
+    coach,
+    now,
+    only,
+  }: {
+    readonly wake: Thought;
+    readonly settings: CoachSettings;
+    readonly coach: Coach;
+    readonly now: Date;
+    readonly only?: string;
+  },
+): Promise<Thinking | undefined> {
+  const week = await wakeWeek(deps, { wake, now });
+  // Nothing to wake for: the check-in went, is no longer shared, or its week is over.
+  if (week === undefined) return undefined;
+  const roster = rosterOf(week);
+  // The files as the model reads them, by stored path, with members by their names now.
+  const stored = new Map(
+    [...(await deps.stores.memory.files(wake.squad))].map(([path, body]) => [
+      path,
+      shownBody(body, roster),
+    ]),
+  );
+  const thread = await threadOf(deps, { wake, week, coach });
+  // A reply's wake with nothing to answer: the reply went, or isn't to this squad's coach.
+  if (wake.reason.kind === 'comment' && thread === undefined) return undefined;
+  const draft: WakeDraft = {
+    files: new Map(stored),
+    changed: new Set(),
+    note: undefined,
+    memberNotes: new Map(),
+    gifts: new Map(),
+    reply: undefined,
+    replyMentions: [],
+    reaction: undefined,
+    answer: undefined,
+    answerMentions: [],
+    challengeDone: false,
+    steps: [],
+  };
+  // A squad whose coach hasn't written its file yet starts from its name and who is in it,
+  // saved with the run's other changes.
+  if ((stored.get(SEEDED) ?? '') === '') {
+    draft.files.set(SEEDED, squadSeed(week, roster));
+    draft.changed.add(SEEDED);
+  }
+  const daily = wake.reason.kind === 'daily';
+  // The daily wake and the night's dream both look back at the day before.
+  const looksBack = daily || wake.reason.kind === 'dream';
+  // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
+  // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
+  const noteTo = daily
+    ? await noteReaders(
+        deps,
+        onlyFor(
+          week.members.map(({ member }) => member),
+          only,
+        ),
+      )
+    : [];
+  const files = new Map(
+    shownPaths({ roster, coach: coach.id }).map((path) => {
+      const at = storedPathOf(path, { roster, coach: coach.id });
+      return [path, at === undefined ? undefined : draft.files.get(at)];
+    }),
+  );
+  // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
+  const zone = (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK;
+  const day =
+    wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
+      ? wake.reason.day
+      : wallClockAt(now, zone).day;
+  // Who may get a gift today: members who agreed to AI use and got none this week.
+  const gifting =
+    daily && deps.gifting !== undefined
+      ? await deps.gifting.options({
+          squad: wake.squad,
+          members: await deps.aiConsented(
+            onlyFor(
+              week.members.map(({ member }) => member),
+              only,
+            ),
+          ),
+        })
+      : undefined;
+  // On a check-in's wake, the challenge its author got on today's note and what they said.
+  const author = addresseeOf(week, wake.reason);
+  const challenge =
+    wake.reason.kind === 'checkIn' && author !== undefined
+      ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
+      : undefined;
+  const task = taskOf({
+    reason: wake.reason,
+    week,
+    files,
+    // The holidays from the coach's calendar, then the app's own moments (a store open).
+    occasions: [
+      ...new Set([...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])]),
+    ],
+    backAgain: await deps.hiring.backAgain(wake.squad),
+    recentNotes: daily
+      ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
+      : [],
+    ...(thread === undefined ? {} : { thread: thread.thread }),
+    canSeePhotos: deps.photoUrls !== undefined,
+    ...(challenge === undefined
+      ? {}
+      : {
+          challenge: {
+            challenge: challenge.challenge,
+            ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
+            ...(challenge.reason === undefined ? {} : { reason: challenge.reason }),
+            ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
+          },
+        }),
+    ...(gifting === undefined ? {} : { gifting }),
+    recentEmoji:
+      wake.reason.kind === 'checkIn'
+        ? await deps.stores.replies.recent({
+            squad: wake.squad,
+            coach: coach.id,
+            limit: RECENT_EMOJI,
+          })
+        : [],
+    talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
+    ...(wake.reason.kind === 'daily'
+      ? { noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }) }
+      : {}),
+    ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
+  });
+  if (task === undefined) return undefined;
+  const run = await deps.agent.run({
+    model: settings.model,
+    // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
+    instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
+    task,
+    tools: toolbox({
+      week,
+      roster,
+      coach: coach.id,
+      draft,
+      kind: wake.reason.kind,
+      to: author,
+      // Only for a post made today: one from before midnight didn't do today's challenge.
+      openChallenge:
+        challenge !== undefined &&
+        challengeOpen(challenge) &&
+        postedOn({ week, reason: wake.reason, day, zone }),
+      ...photosOf(deps.photoUrls, { week, wake }),
+      ...factsFor(deps, { week, roster }),
+      ...(deps.memes === undefined ? {} : { memes: deps.memes }),
+      noteTo,
+      ...(gifting === undefined ? {} : { gifting }),
+      pastWeek: async (weeksAgo) =>
+        weekText(
+          await weekOf(deps, {
+            squad: wake.squad,
+            weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
+          }),
+        ),
+    }),
+    // Every wake of a coach begins with its same instructions, then its tools (each kind's own
+    // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
+    // every kind shares the rest.
+    cacheKey: `coach:${coach.id}`,
+  });
+  // The tokens were spent whatever comes next, so they are counted first, on their own.
+  await deps.stores.usage.record({
+    squad: wake.squad,
+    ...(wake.id === undefined ? {} : { wake: wake.id }),
+    coach: coach.id,
+    model: settings.model,
+    usage: run.usage,
+    costMicros: costMicros(run.usage, settings),
+    at: deps.clock(),
+  });
+  return { run, draft, stored, roster, thread, author, challenge, day };
+}
+
+/**
+ * Runs one wake: the coach thinks (its tokens recorded first, whatever happens next), then its
+ * changes and the wake's end are saved together. Says whether it worked.
  */
 async function runWake(
   deps: CoachWakesDependencies,
@@ -350,169 +683,12 @@ async function runWake(
       await deps.stores.wakes.skip(wake.id, offDuty);
       return true;
     }
-    const week = await wakeWeek(deps, { wake, now });
-    // Nothing to wake for: the check-in went, is no longer shared, or its week is over.
-    if (week === undefined) {
+    const thought = await think(deps, { wake, settings, coach, now });
+    if (thought === undefined) {
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    const roster = rosterOf(week);
-    // The files as the model reads them, by stored path, with members by their names now.
-    const stored = new Map(
-      [...(await deps.stores.memory.files(wake.squad))].map(([path, body]) => [
-        path,
-        shownBody(body, roster),
-      ]),
-    );
-    const thread = await threadOf(deps, { wake, week, coach });
-    // A reply's wake with nothing to answer: the reply went, or isn't to this squad's coach.
-    if (wake.reason.kind === 'comment' && thread === undefined) {
-      await deps.stores.wakes.finish(wake.id);
-      return true;
-    }
-    const draft: WakeDraft = {
-      files: new Map(stored),
-      changed: new Set(),
-      note: undefined,
-      memberNotes: new Map(),
-      gifts: new Map(),
-      reply: undefined,
-      replyMentions: [],
-      reaction: undefined,
-      answer: undefined,
-      answerMentions: [],
-      challengeDone: false,
-      steps: [],
-    };
-    // A squad whose coach hasn't written its file yet starts from its name and who is in it,
-    // saved with the run's other changes.
-    if ((stored.get(SEEDED) ?? '') === '') {
-      draft.files.set(SEEDED, squadSeed(week, roster));
-      draft.changed.add(SEEDED);
-    }
-    const daily = wake.reason.kind === 'daily';
-    // The daily wake and the night's dream both look back at the day before.
-    const looksBack = daily || wake.reason.kind === 'dream';
-    // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
-    // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
-    const noteTo = daily
-      ? await noteReaders(
-          deps,
-          week.members.map(({ member }) => member),
-        )
-      : [];
-    const files = new Map(
-      shownPaths(roster).map((path) => {
-        const at = storedPathOf(path, roster);
-        return [path, at === undefined ? undefined : draft.files.get(at)];
-      }),
-    );
-    // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
-    const zone = (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK;
-    const day =
-      wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
-        ? wake.reason.day
-        : wallClockAt(now, zone).day;
-    // Who may get a gift today: members who agreed to AI use and got none this week.
-    const gifting =
-      daily && deps.gifting !== undefined
-        ? await deps.gifting.options({
-            squad: wake.squad,
-            members: await deps.aiConsented(week.members.map(({ member }) => member)),
-          })
-        : undefined;
-    // On a check-in's wake, the challenge its author got on today's note and what they said.
-    const author = addresseeOf(week, wake.reason);
-    const challenge =
-      wake.reason.kind === 'checkIn' && author !== undefined
-        ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
-        : undefined;
-    const task = taskOf({
-      reason: wake.reason,
-      week,
-      files,
-      // The holidays from the coach's calendar, then the app's own moments (a store open).
-      occasions: [
-        ...new Set([
-          ...holidaysOn(settings.holidays, day),
-          ...((await deps.occasions?.(day)) ?? []),
-        ]),
-      ],
-      backAgain: await deps.hiring.backAgain(wake.squad),
-      recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
-      ...(thread === undefined ? {} : { thread: thread.thread }),
-      canSeePhotos: deps.photoUrls !== undefined,
-      ...(challenge === undefined
-        ? {}
-        : {
-            challenge: {
-              challenge: challenge.challenge,
-              ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
-              ...(challenge.reason === undefined ? {} : { reason: challenge.reason }),
-              ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
-            },
-          }),
-      ...(gifting === undefined ? {} : { gifting }),
-      recentEmoji:
-        wake.reason.kind === 'checkIn'
-          ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
-          : [],
-      talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
-      ...(wake.reason.kind === 'daily'
-        ? { noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }) }
-        : {}),
-      ...(looksBack
-        ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) }
-        : {}),
-    });
-    if (task === undefined) {
-      await deps.stores.wakes.finish(wake.id);
-      return true;
-    }
-    const run = await deps.agent.run({
-      model: settings.model,
-      // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
-      instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
-      task,
-      tools: toolbox({
-        week,
-        roster,
-        draft,
-        kind: wake.reason.kind,
-        to: author,
-        // Only for a post made today: one from before midnight didn't do today's challenge.
-        openChallenge:
-          challenge !== undefined &&
-          challengeOpen(challenge) &&
-          postedOn({ week, reason: wake.reason, day, zone }),
-        ...photosOf(deps.photoUrls, { week, wake }),
-        ...factsFor(deps, { week, roster }),
-        ...(deps.memes === undefined ? {} : { memes: deps.memes }),
-        noteTo,
-        ...(gifting === undefined ? {} : { gifting }),
-        pastWeek: async (weeksAgo) =>
-          weekText(
-            await weekOf(deps, {
-              squad: wake.squad,
-              weekStart: weekStartOf(dayBefore(week.weekStart, weeksAgo * 7)),
-            }),
-          ),
-      }),
-      // Every wake of a coach begins with its same instructions, then its tools (each kind's own
-      // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
-      // every kind shares the rest.
-      cacheKey: `coach:${coach.id}`,
-    });
-    // The tokens were spent whatever comes next, so they are counted first, on their own.
-    await deps.stores.usage.record({
-      squad: wake.squad,
-      wake: wake.id,
-      coach: coach.id,
-      model: settings.model,
-      usage: run.usage,
-      costMicros: costMicros(run.usage, settings),
-      at: deps.clock(),
-    });
+    const { run, draft, stored, roster, thread, author, challenge, day } = thought;
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
       await deps.stores.wakes.fail(wake.id, run.error);
@@ -673,7 +849,7 @@ function dayBefore(day: string, days: number): string {
 /** The photos of the check-in a wake is about, to look at on demand, when it has any. */
 function photosOf(
   photoUrls: CoachPhotoUrls | undefined,
-  { week, wake }: { readonly week: SquadWeek; readonly wake: Wake },
+  { week, wake }: { readonly week: SquadWeek; readonly wake: NewWake },
 ): { readonly photos?: () => Promise<readonly string[]> } {
   if (photoUrls === undefined || wake.reason.kind === 'daily' || wake.reason.kind === 'dream') {
     return {};
@@ -753,10 +929,9 @@ async function saveDraft(
       coach: coach.id,
       text: draft.reply,
       emoji: draft.reaction,
+      mentions: draft.replyMentions,
     };
-    if (await stores.replies.save({ ...reply, wake: wake.id })) {
-      return { reply: { ...reply, mentions: draft.replyMentions } };
-    }
+    if (await stores.replies.save({ ...reply, wake: wake.id })) return { reply };
   }
   if (wake.reason.kind === 'comment' && draft.answer !== undefined) {
     const answer = {
@@ -765,10 +940,9 @@ async function saveDraft(
       comment: wake.reason.comment,
       coach: coach.id,
       text: draft.answer,
+      mentions: draft.answerMentions,
     };
-    if (await stores.answers.save({ ...answer, wake: wake.id })) {
-      return { answer: { ...answer, mentions: draft.answerMentions } };
-    }
+    if (await stores.answers.save({ ...answer, wake: wake.id })) return { answer };
   }
   return {};
 }
@@ -834,7 +1008,11 @@ async function talksOf(
  */
 async function threadOf(
   deps: CoachWakesDependencies,
-  { wake, week, coach }: { readonly wake: Wake; readonly week: SquadWeek; readonly coach: Coach },
+  {
+    wake,
+    week,
+    coach,
+  }: { readonly wake: NewWake; readonly week: SquadWeek; readonly coach: Coach },
 ): Promise<{ readonly thread: CoachThread; readonly commenter: string } | undefined> {
   const { reason } = wake;
   if (reason.kind !== 'comment') return undefined;
@@ -845,10 +1023,15 @@ async function threadOf(
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;
-  // A reply to the coach needs something it said; an @ doesn't.
-  if (answering.toCoach !== undefined && reply === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
   if (answers.some(({ comment }) => comment === reason.comment)) return undefined;
+  // A reply to the coach needs something it said here, its reply to the check-in or an answer
+  // to someone who wrote to it; an @ doesn't.
+  const toThisCoach = new Set(
+    comments.filter((each) => saidTo(each) === coach.id).map(({ id }) => id),
+  );
+  const answered = answers.some(({ comment }) => toThisCoach.has(comment));
+  if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
   // Each answer right after the reply it answers.
   const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
   const said = comments

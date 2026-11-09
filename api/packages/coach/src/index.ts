@@ -119,6 +119,7 @@ export { createCoachSettings, type CoachSettingsAdmin } from './use-cases/coach-
 export {
   createCoachWakes,
   type CoachAnswered,
+  type CoachPreview,
   type CoachReplied,
   type CoachRun,
   type CoachWakes,

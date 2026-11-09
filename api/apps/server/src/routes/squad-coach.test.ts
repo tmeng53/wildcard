@@ -53,6 +53,7 @@ import {
   unusedUnlocks,
   ignoredNotices,
   unusedFeedback,
+  noRewards,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -115,6 +116,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
@@ -351,8 +353,13 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     const asked = randomUUID();
     await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
       values (${asked}, ${run}, ${mate.userId}, '在呢', 'xiaohun', now())`.execute(db);
-    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
-      values (${squad}, ${run}, ${asked}, 'xiaohun', '那就再跑一圈')`.execute(db);
+    // Its answer @s the captain, so the app shows the tag that opens their card.
+    await sql`with answer as (
+        insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+        values (${squad}, ${run}, ${asked}, 'xiaohun', '@队长 那就再跑一圈') returning id
+      )
+      insert into public.coach_answer_mentions (answer_id, member_id, position)
+      select id, ${captain.userId}, 0 from answer`.execute(db);
 
     const read = await call({
       method: 'GET',
@@ -389,7 +396,14 @@ describe('GET /squads/{squadId}/coach/activity', () => {
         { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },
       ],
       answers: [
-        { checkInId: run, commentId: asked, coach: speaker, text: '那就再跑一圈', at: 'at' },
+        {
+          checkInId: run,
+          commentId: asked,
+          coach: speaker,
+          text: '@队长 那就再跑一圈',
+          mentions: [captain.userId],
+          at: 'at',
+        },
       ],
     });
 
@@ -634,10 +648,23 @@ describe('/squads/{squadId}/coach/cards', () => {
   });
   const ids = (cards: readonly { kind: string; id: string }[]) =>
     cards.map(({ kind, id }) => `${kind}:${id}`);
+  // The stack is the squad's coach now; a coach that left is 以前 whole.
+  const hire = async (captain: { token: string }, squad: string) => {
+    const hired = await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    expect(hired.status).toBe(201);
+  };
+  const fire = (captain: { token: string }, squad: string) =>
+    call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
 
-  it('stacks what the coach said to the caller, oldest first, and moves a seen card to 以前', async () => {
+  it('stacks what the coach has for the caller, oldest first, and moves a seen card to 以前', async () => {
     const [captain, mate] = [await signUp(), await signUp()];
     const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
     const path = `/squads/${squad}/coach/cards`;
     expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
       status: 200,
@@ -661,28 +688,29 @@ describe('/squads/{squadId}/coach/cards', () => {
     await sql`insert into public.coach_member_note_deliveries (note_id) values (${note})`.execute(
       db,
     );
-    await sql`insert into public.gift_pieces (piece_id) values ('cards-towel') on conflict do nothing`.execute(
+    await sql`insert into public.rewards (kind, id) values ('piece', 'cards-towel') on conflict do nothing`.execute(
       db,
     );
-    await sql`insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, line)
-      values (${mate.userId}, 'cards-towel', 'xiaohun', ${squad}, '练完擦汗')`.execute(db);
+    await sql`insert into public.reward_triggers (reward_kind, reward_id, kind)
+      values ('piece', 'cards-towel', 'coach') on conflict do nothing`.execute(db);
+    await sql`insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, line, given_by, at)
+      values (${mate.userId}, 'piece', 'cards-towel', 'coach', 'xiaohun', ${squad}, '练完擦汗', 'coach', now())`.execute(
+      db,
+    );
     const mine = await checkIn(mate.token, squad);
     const theirs = await checkIn(captain.token, squad);
     await coachSaid(squad, { checkIn: mine, text: '配速比上周快了', emoji: null });
     await coachSaid(squad, { checkIn: theirs, text: '腿还在吗', emoji: null });
-    const reply = await sql<{ id: string }>`select id from public.coach_replies
-      where check_in_id = ${mine}`.execute(db);
 
     const read = await call({ method: 'GET', path, token: mate.token });
     expect(read.status).toBe(200);
     const cards = CardsBody.parse(read.body);
-    // The captain's post's reply is the captain's, not the mate's.
+    // The coach's lines to check-ins stay under the posts in 动态 (Tracy, 2026-11-09).
     expect(ids(cards.stack)).toStrictEqual([
       `board:${today}`,
       `note:${note}`,
       `challenge:${note}`,
       'gift:cards-towel',
-      `reply:${String(reply.rows[0]?.id)}`,
     ]);
     expect(cards.stack[2]).toMatchObject({
       coach: speaker,
@@ -693,7 +721,6 @@ describe('/squads/{squadId}/coach/cards', () => {
       gift: { pieceId: 'cards-towel', line: '练完擦汗' },
       coach: speaker,
     });
-    expect(cards.stack[4]).toMatchObject({ checkInId: mine, text: '配速比上周快了' });
 
     const seen = (kind: string, id: string) =>
       call({ method: 'PUT', path: `${path}/${kind}/${id}/seen`, token: mate.token });
@@ -705,11 +732,7 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect((await seen('note', note)).status).toBe(200);
     expect((await seen('gift', 'cards-towel')).status).toBe(200);
     const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
-    expect(ids(after.stack)).toStrictEqual([
-      `board:${today}`,
-      `challenge:${note}`,
-      `reply:${String(reply.rows[0]?.id)}`,
-    ]);
+    expect(ids(after.stack)).toStrictEqual([`board:${today}`, `challenge:${note}`]);
     // 以前 is newest first.
     expect(ids(after.earlier)).toStrictEqual(['gift:cards-towel', `note:${note}`]);
     // Seeing the note also put it away on 今天.
@@ -750,17 +773,25 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(off.status).toBe(200);
     const quiet = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect([...ids(quiet.stack), ...ids(quiet.earlier)].toSorted()).toStrictEqual(
-      [`board:${today}`, 'gift:cards-towel', `reply:${String(reply.rows[0]?.id)}`].toSorted(),
+      [`board:${today}`, 'gift:cards-towel'].toSorted(),
     );
-    // The captain's own stack is theirs: the board line and the reply to their post.
+    // The captain's stack is the board line alone, with no reply to their post.
     expect(
       ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),
-    ).toHaveLength(2);
+    ).toStrictEqual([`board:${today}`]);
+    // Fired, its cards go to 以前, unseen ones and the boxed gift too.
+    await fire(captain, squad);
+    const gone = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(gone.stack).toStrictEqual([]);
+    expect(ids(gone.earlier).toSorted()).toStrictEqual(
+      [`board:${today}`, 'gift:cards-towel'].toSorted(),
+    );
   });
 
   it('shows the coach marking a challenge done as its own card', async () => {
     const mate = await signUp();
     const squad = await squadOf(mate);
+    await hire(mate, squad);
     const path = `/squads/${squad}/coach/cards`;
     const written = await sql<{ id: string }>`
       insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
@@ -792,6 +823,120 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(seen.status).toBe(200);
     const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(ids(after.earlier)).toStrictEqual([`challengeDone:${note}`]);
+    await fire(mate, squad);
+  });
+
+  it('still reads once the caller swiped cards of a kind that is no longer one', async () => {
+    // Before 2026-11-09 the coach's replies and answers were cards too; their seen marks stay.
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    await hire(mate, squad);
+    await sql`insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+      values (${mate.userId}, ${squad}, 'reply', '7'), (${mate.userId}, ${squad}, 'answer', '8')`.execute(
+      db,
+    );
+    const path = `/squads/${squad}/coach/cards`;
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({ status: 200 });
+    expect(await call({ method: 'GET', path: `${path}/earlier`, token: mate.token })).toMatchObject(
+      { status: 200 },
+    );
+    await fire(mate, squad);
+  });
+
+  it('pages 以前 newest first, and keeps only the unseen ones when asked', async () => {
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    // No coach now, so every card is 以前: 25 lines on 25 days, a second apart.
+    for (let n = 0; n < 25; n += 1) {
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+        values (${squad}, 'xiaohun', current_date - ${n}::int, ${`第${String(n)}句`},
+          now() + make_interval(secs => ${25 - n}))`.execute(db);
+    }
+    const path = `/squads/${squad}/coach/cards/earlier`;
+    const Page = z.object({
+      cards: z.array(z.object({ text: z.string(), seen: z.boolean() }).loose()),
+      next: z.string().optional(),
+    });
+    const first = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(first.cards).toHaveLength(20);
+    expect(first.cards[0]).toMatchObject({ text: '第0句', seen: false });
+    expect(first.next).toMatch(/^\d+~board:\d{4}-\d{2}-\d{2}$/u);
+    const second = Page.parse(
+      (
+        await call({
+          method: 'GET',
+          path: `${path}?cursor=${encodeURIComponent(first.next ?? '')}`,
+          token: mate.token,
+        })
+      ).body,
+    );
+    expect(second.cards.map((card) => card.text)).toStrictEqual([
+      '第20句',
+      '第21句',
+      '第22句',
+      '第23句',
+      '第24句',
+    ]);
+    expect(second.next).toBeUndefined();
+
+    const day = new Date(Date.now()).toISOString().slice(0, 10);
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${squad}/coach/cards/board/${day}/seen`,
+          token: mate.token,
+        })
+      ).status,
+    ).toBe(200);
+    const unseen = Page.parse(
+      (await call({ method: 'GET', path: `${path}?unseen=true`, token: mate.token })).body,
+    );
+    expect(unseen.cards.map((card) => card.text)).not.toContain('第0句');
+    expect(unseen.cards.every((card) => !card.seen)).toBe(true);
+    const odd = await call({ method: 'GET', path: `${path}?cursor=nope`, token: mate.token });
+    expect(odd.status).toBe(400);
+  });
+
+  it('keeps its place in 未读 when the card it ended on is seen, beside cards of the same moment', async () => {
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    // 21 lines of one moment, as a morning note and its challenge are.
+    for (let n = 0; n < 21; n += 1) {
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+        values (${squad}, 'xiaohun', current_date - ${n}::int, ${`第${String(n)}句`},
+          date_trunc('second', now()) + interval '5 seconds')`.execute(db);
+    }
+    const path = `/squads/${squad}/coach/cards/earlier?unseen=true`;
+    const Page = z.object({
+      cards: z.array(z.object({ id: z.string(), text: z.string() }).loose()),
+      next: z.string().optional(),
+    });
+    const first = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(first.cards).toHaveLength(20);
+    const ended = first.cards.at(-1)?.id ?? '';
+    // Opened from 以前 before the next page: it leaves 未读.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${squad}/coach/cards/board/${ended}/seen`,
+          token: mate.token,
+        })
+      ).status,
+    ).toBe(200);
+    const second = Page.parse(
+      (
+        await call({
+          method: 'GET',
+          path: `${path}&cursor=${encodeURIComponent(first.next ?? '')}`,
+          token: mate.token,
+        })
+      ).body,
+    );
+    const all = [...first.cards, ...second.cards].map((card) => card.text);
+    expect(new Set(all).size).toBe(21);
+    expect(second.next).toBeUndefined();
   });
 
   it('refuses anyone outside the squad and a kind it doesn’t know', async () => {

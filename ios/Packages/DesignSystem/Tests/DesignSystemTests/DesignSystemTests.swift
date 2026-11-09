@@ -325,7 +325,7 @@ struct HapticTests {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
                 "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
-                "lights", "unseal",
+                "lights", "unseal", "zone",
             ])
         #expect(Haptic.ringTicks == 3)
     }
@@ -389,8 +389,8 @@ struct BrandTests {
     }
 
     /// A brand button's label can be small regular text, not only the 19-point action.
-    @Test func labelsOnTheBrandAreReadable() {
-        #expect(ColorRole.fgOnBrand.color(in: .pool).contrastRatio(with: ColorRole.bgBrand.color(in: .pool)) >= 4.5)
+    @Test(arguments: [ColorRole.fgOnBrand, .fgOnBrandMuted]) func labelsOnTheBrandAreReadable(role: ColorRole) {
+        #expect(role.color(in: .pool).contrastRatio(with: ColorRole.bgBrand.color(in: .pool)) >= 4.5)
     }
 
     @Test func eachToneUsesItsOwnPair() {

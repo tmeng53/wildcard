@@ -8,8 +8,8 @@ import HealthKit
 /// Apple Health through HealthKit, read only: the only code that knows HealthKit. Each workout
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
-/// thinned, and its heart rate or lap times for the chart. Calories, weight and sleep are never
-/// read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+/// thinned, its heart rate or lap times for the chart, and its active calories. Weight and sleep
+/// are never read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
@@ -36,8 +36,17 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
     }
 
+    /// A member who connected before this build added a read type (active calories) was never
+    /// asked for it; Health shows its sheet again for just the new types, once.
+    private func askForTypesAddedSinceConnecting() async {
+        let status = try? await store.statusForAuthorizationRequest(toShare: [], read: Self.readTypes)
+        guard status == .shouldRequest else { return }
+        try? await store.requestAuthorization(toShare: [], read: Self.readTypes)
+    }
+
     public func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout] {
         guard await isConnected() else { return [] }
+        await askForTypesAddedSinceConnecting()
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictEndDate)
         let query = HKSampleQueryDescriptor(
             predicates: [.workout(window)], sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
@@ -55,8 +64,9 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         let kind = WorkoutKind(type, openWater: Self.isOpenWater(workout))
         let seconds = workout.duration
         var summary = WorkoutSummary(durationSec: seconds >= 1 ? Int(seconds.rounded()) : nil)
-        Self.addHeartRate(of: workout, kind: kind, to: &summary)
+        await addHeartRate(of: workout, kind: kind, to: &summary)
         Self.addDistance(of: workout, kind: kind, to: &summary)
+        Self.addCalories(of: workout, to: &summary)
         var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
@@ -74,14 +84,36 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             activity: WorkoutKind.sport(for: type).map(Activity.sport))
     }
 
-    /// Its average heart rate, and its highest where its kind shows that.
-    private static func addHeartRate(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) {
-        let heart = workout.statistics(for: HKQuantityType(.heartRate))
-        let beats = HKUnit.count().unitDivided(by: .minute())
-        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = bpm(average) }
-        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
-            summary.maxHr = bpm(max)
+    /// Its average heart rate, and its highest where its kind shows that: the workout's own
+    /// statistics, else Health's statistics of the heart-rate readings while it ran, since a
+    /// workout another app saved may come without its own.
+    private func addHeartRate(of workout: HKWorkout, kind: WorkoutKind, to summary: inout WorkoutSummary) async {
+        let heart: HKStatistics?
+        if let own = workout.statistics(for: HKQuantityType(.heartRate)), own.averageQuantity() != nil {
+            heart = own
+        } else {
+            heart = await heartRateStatistics(during: workout)
         }
+        let beats = HKUnit.count().unitDivided(by: .minute())
+        if let average = heart?.averageQuantity()?.doubleValue(for: beats) { summary.avgHr = Self.bpm(average) }
+        if kind.showsMaxHeartRate, let max = heart?.maximumQuantity()?.doubleValue(for: beats) {
+            summary.maxHr = Self.bpm(max)
+        }
+    }
+
+    /// Health's average and highest of the heart-rate readings from the workout's start to its end.
+    private func heartRateStatistics(during workout: HKWorkout) async -> HKStatistics? {
+        let during = HKQuery.predicateForSamples(withStart: workout.startDate, end: workout.endDate)
+        let query = HKStatisticsQueryDescriptor(
+            predicate: .quantitySample(type: HKQuantityType(.heartRate), predicate: during),
+            options: [.discreteAverage, .discreteMax])
+        return try? await query.result(for: store)
+    }
+
+    /// The active energy Health has for it, in kilocalories, as the Fitness app shows it.
+    private static func addCalories(of workout: HKWorkout, to summary: inout WorkoutSummary) {
+        let burned = workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()
+        if let kcal = burned?.doubleValue(for: .kilocalorie()), kcal >= 1 { summary.activeEnergyKcal = kcal.rounded() }
     }
 
     /// A pool swim's laps with the pool's length, and each lap's time for its chart; nil without.
@@ -191,7 +223,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         HKQuantityType(.distanceCrossCountrySkiing), HKQuantityType(.distanceRowing),
         HKQuantityType(.distancePaddleSports), HKQuantityType(.distanceSkatingSports),
         HKQuantityType(.distanceWheelchair), HKQuantityType(.workoutEffortScore),
-        HKQuantityType(.estimatedWorkoutEffortScore),
+        HKQuantityType(.estimatedWorkoutEffortScore), HKQuantityType(.activeEnergyBurned),
     ]
     private static let connectedKey = "health.connected"
     private static let workoutsMax = 20

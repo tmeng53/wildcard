@@ -15,7 +15,7 @@ import type { Switches } from '@wildcard/switches';
 import type { Squads } from '@wildcard/squads';
 import type { Weather } from '@wildcard/weather';
 import type { WeeklyAwards } from '@wildcard/weekly-awards';
-import type { CoachGifts, Unlocks } from '@wildcard/unlocks';
+import type { CoachGifts, Rewards, Unlocks } from '@wildcard/unlocks';
 import { HTTPException } from 'hono/http-exception';
 import { routePath } from 'hono/route';
 import { z } from 'zod';
@@ -129,6 +129,8 @@ export interface AppDependencies {
   readonly unlocks: Unlocks;
   /** What squads' coaches gave members, for `/me/unlocks`. */
   readonly gifts: Pick<CoachGifts, 'of' | 'open'>;
+  /** What the team and events gave members, for `/me/unlocks` and the badge boards. */
+  readonly rewards: Pick<Rewards, 'badgesOf' | 'teamPiecesOf'>;
   readonly log: Log;
   /** The daily progress push and other work a scheduler starts. */
   readonly jobs: {

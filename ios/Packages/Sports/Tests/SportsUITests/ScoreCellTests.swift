@@ -58,3 +58,11 @@ import Testing
     #expect(swim.map(\.value) == ["42", "1.8", "2′20″", "136"])
     #expect(swim[2].unit == .per100Meters)
 }
+
+@Test func caloriesComeLastInWholeKilocalories() {
+    let cells = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 1312.6))
+    #expect(cells.map(\.value) == ["59", "124", "156", "1,313"])
+    #expect(cells.last?.unit == .kilocalories)
+    #expect(cells.last?.label == .calories)
+}

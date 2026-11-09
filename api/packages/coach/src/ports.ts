@@ -157,11 +157,15 @@ export interface CoachNoteStore {
     readonly text: string;
     readonly wake: number;
   }): Promise<boolean>;
-  /** The squad's last lines, newest first. */
-  recent(
-    squad: SquadId,
-    limit: number,
-  ): Promise<readonly { readonly day: string; readonly text: string }[]>;
+  /**
+   * The last lines this coach wrote for the squad, newest first: never another coach's, so a new
+   * coach doesn't take the last one's voice for its own.
+   */
+  recent(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly { readonly day: string; readonly text: string }[]>;
 }
 
 /** A coach's morning note (便条) to one member, as written. */
@@ -178,9 +182,9 @@ export interface MemberNote {
   readonly at: Date;
 }
 
-/** The coach's morning notes to each member: one a member a squad a day. */
+/** The coach's notes to each member: one a member a wake; a day's newest challenge stands. */
 export interface CoachMemberNoteStore {
-  /** Saves the member's note for the day unless they have one; says whether this one was saved. */
+  /** Saves the member's note unless its wake wrote them one; says whether this one was saved. */
   save(note: {
     readonly squad: SquadId;
     readonly member: string;
@@ -188,10 +192,11 @@ export interface CoachMemberNoteStore {
     readonly day: string;
     readonly text: string;
     readonly challenge?: Challenge;
-    readonly wake: number;
+    /** The wake that wrote it; none for a preview an admin sent to themselves. */
+    readonly wake?: number;
   }): Promise<boolean>;
   /**
-   * The challenge the member's note of `day` (the squad's day) set, and what they said to it;
+   * The newest challenge the member's notes of `day` (the squad's day) set, and their answer;
    * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
    */
   challengeOf(input: {
@@ -243,6 +248,8 @@ export interface CoachReplyStore {
     readonly coach: CoachId;
     readonly text: string | undefined;
     readonly emoji: CoachEmoji | undefined;
+    /** Whom its line @s, in the order written. */
+    readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
   /** What the squad's coach said to a check-in, if it said anything: its coach and line. */
@@ -250,8 +257,12 @@ export interface CoachReplyStore {
     squad: SquadId,
     checkIn: string,
   ): Promise<{ readonly coach: CoachId; readonly text: string | undefined } | undefined>;
-  /** The emoji the squad's coaches reacted with lately, newest first. */
-  recent(squad: SquadId, limit: number): Promise<readonly CoachEmoji[]>;
+  /** The emoji this coach reacted with lately in the squad, newest first: never another coach's. */
+  recent(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly CoachEmoji[]>;
 }
 
 /** What coaches answered members' replies to them, one a squad a reply. */
@@ -266,6 +277,8 @@ export interface CoachAnswerStore {
     readonly comment: string;
     readonly coach: CoachId;
     readonly text: string;
+    /** Whom it @s, in the order written. */
+    readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
   /** The squad's answers under a check-in, oldest first. */

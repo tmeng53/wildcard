@@ -28,16 +28,32 @@ public struct ScheduleProfile: Hashable, Sendable {
     public let timeZone: TimeZone
     /// The Monday of the week they joined: the earliest week to look back on.
     public let firstWeek: LocalDay
+    /// The Monday of the week their squad was made, its W1; nil outside a squad and from older
+    /// servers.
+    public let squadFirstWeek: LocalDay?
     /// Their character's look, cheering in the poster's corner; nil until they have one.
     public let look: CharacterLook?
 
-    public init(nickname: String, timeZone: TimeZone, firstWeek: LocalDay, look: CharacterLook? = nil) {
+    public init(
+        nickname: String, timeZone: TimeZone, firstWeek: LocalDay, squadFirstWeek: LocalDay? = nil,
+        look: CharacterLook? = nil
+    ) {
         (self.nickname, self.timeZone, self.firstWeek, self.look) = (nickname, timeZone, firstWeek.weekStart, look)
+        self.squadFirstWeek = squadFirstWeek?.weekStart
     }
 
-    /// The week's number on the poster and its chip, the week they joined being W1.
+    /// The week's number on the poster and its chip: the squad's week, its first being W1, so
+    /// the whole squad shows the same number (Tracy, 2026-11-09); the member's own count
+    /// outside a squad.
     public func weekNumber(of weekStart: LocalDay) -> Int {
-        weekStart.weekNumber(since: firstWeek)
+        weekStart.weekNumber(since: squadFirstWeek ?? firstWeek)
+    }
+
+    /// Whether chips for `weeks` (oldest first) start with 还未入队, greyed: they joined after
+    /// their squad's W1 and the chips reach back to the week they joined.
+    public func startsWithNotYetJoined(_ weeks: [LocalDay]) -> Bool {
+        guard let squadFirstWeek, squadFirstWeek < firstWeek else { return false }
+        return weeks.first == firstWeek
     }
 }
 

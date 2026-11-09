@@ -46,13 +46,29 @@ extension MainTabs {
         }
     }
 
+    /// Whether a 战报 is open over the app.
+    var showsStory: Binding<Bool> {
+        Binding(get: { recap.open != nil }, set: { if !$0 { recap.open = nil } })
+    }
+
+    /// A 战报 closed. After its 排下周, 出赛表 opens on the week after the story's, only now: a
+    /// push asked for while the story's cover is still going down is dropped.
+    func storyClosed() {
+        guard recap.plans != plansOpened, let week = recap.planWeek else { return }
+        plansOpened = recap.plans
+        schedule.plan(week)
+        open(.schedule)
+    }
+
     /// A place that is a tab, or on one: 通知 closes, unless it is the place.
     private func openTab(for destination: AppDestination) {
         switch destination {
         case .feed:
             selection = .feed
         case .recap(let squad, let week):
-            selection = .feed
+            // Over 小队, where the story stays in 往期战报 once it closes.
+            selection = .today
+            todayPages = [.squad]
             Task {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)

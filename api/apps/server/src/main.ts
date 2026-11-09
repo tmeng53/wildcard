@@ -75,7 +75,11 @@ import {
   MemberId as WeatherMember,
   weatherWords,
 } from '@wildcard/weather';
-import { createFeedbackInbox, createPostgresFeedbackStore } from '@wildcard/feedback';
+import {
+  createFeedbackAdoptions,
+  createFeedbackInbox,
+  createPostgresFeedbackStore,
+} from '@wildcard/feedback';
 import {
   createApnsSender,
   createOffSender,
@@ -110,7 +114,9 @@ import {
   MemberId as UnlockMember,
   createCoachGifts,
   createPostgresGiftStore,
+  createPostgresRewardStore,
   createPostgresUnlockStore,
+  createRewards,
   createUnlocks,
 } from '@wildcard/unlocks';
 
@@ -133,12 +139,14 @@ import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
+import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
+import { adoptFeedback } from './flows/feedback-adoption.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
@@ -148,6 +156,7 @@ import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
 import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
+import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { artTools } from './admin-mcp/tools/art.js';
@@ -362,6 +371,13 @@ const unlockSources = (scope: Database) => ({
     const was = await switchesOn(scope).historyFor(member);
     return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
   },
+  // A previewer keeps only what the switches as really set give them, so a preview ends clean.
+  keptSwitches: async (member: string) => {
+    const was = await switchesOn(scope).keptHistoryFor(member);
+    return was === undefined
+      ? undefined
+      : (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+  },
 });
 /**
  * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`
@@ -425,6 +441,13 @@ const unlocksOn = (scope: Database) =>
         })),
         what: 'an unlock',
       }),
+  });
+// What the team and events give (badges, 高级券, pieces no store sells), from their triggers.
+const rewardsOn = (scope: Database) =>
+  createRewards({
+    store: createPostgresRewardStore(scope),
+    unlocks: createPostgresUnlockStore(scope),
+    clock: () => new Date(),
   });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
@@ -766,6 +789,7 @@ const app = createApp({
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: rewardsOn(db),
   log,
   jobs: {
     isScheduler,
@@ -835,6 +859,18 @@ const app = createApp({
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
         giveGift: giveGiftAsAdmin(scope, giftWeekStart),
       }),
+      ...rewardTools({
+        rewards: rewardsOn(scope),
+        // The adoption, what it gives and its notice commit with the call's log, or none does.
+        adopt: adoptFeedback({
+          feedback: createFeedbackAdoptions({
+            store: createPostgresFeedbackStore(scope),
+            clock: () => new Date(),
+          }),
+          rewards: rewardsOn(scope),
+          notices: noticesOn(scope),
+        }),
+      }),
       ...broadcastTools({
         broadcasts: noticesOn(scope),
         unlocks: unlocksOn(scope),
@@ -864,6 +900,10 @@ const app = createApp({
         clock: () => new Date(),
       }),
       ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),
+      // Only with OpenAI's key, as the coach itself.
+      ...(coachWakes === undefined
+        ? []
+        : [previewCoachDaily({ preview: (input) => coachWakes.preview(input), squads })]),
     ],
     publicUrl: config.publicUrl,
     authorizationServer: supabaseAuthIssuer(config.supabaseUrl),

@@ -7,8 +7,8 @@ import DesignSystemUI
 import ScheduleDomain
 import SwiftUI
 
-/// The poster's colours: the scene's on a week, the brand's graphite on the 我的每周计划, which is
-/// the member's own and never follows the squad's scene.
+/// The poster's colours: the scene's on this week and a week that is over, the brand's graphite
+/// on next week and the 我的每周计划, whose scene isn't picked.
 struct PosterColors: Equatable {
     /// The card.
     let fill: ColorRole
@@ -55,7 +55,7 @@ struct SchedulePoster: View {
     private let stickerTilts: [Double] = [3, -2, 2]
     private let stickerHeight: Double = 28
 
-    private var colors: PosterColors { content.isTemplate ? .brand : .scene }
+    private var colors: PosterColors { content.paint == .graphite ? .brand : .scene }
 
     var body: some View {
         WeekPoster(
@@ -67,8 +67,8 @@ struct SchedulePoster: View {
                 : .week(content.weekNumber),
             layout: Self.layout, fill: colors.fill, ink: colors.ink
         ) {
-            // The scene's props stand on a week; the 我的每周计划 is the member's own.
-            if !content.isTemplate {
+            // The scene's props stand on a week in a scene; graphite has none.
+            if content.paint != .graphite {
                 PosterArt(theme: theme)
             }
         } rows: {

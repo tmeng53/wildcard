@@ -61,7 +61,7 @@ struct CoachDeckStage: View {
                     .frame(width: size.width, height: size.height, alignment: .bottom)
                     .clipped()
                 if card?.kind == .board {
-                    squadLine(figure: figure)
+                    squadLine(figure: min(figure, size.width / squadLineWidth))
                 } else {
                     pair(figure: figure, width: size.width)
                 }
@@ -70,6 +70,13 @@ struct CoachDeckStage: View {
         }
         .clipped()
         .accessibilityHidden(true)
+    }
+
+    /// How wide the line to everyone is, in figure heights: the coach, then each of the squad on
+    /// stage, overlapping; on the smallest phone it is wider than the card, so the figures shrink.
+    private var squadLineWidth: Double {
+        let onStage = Double(min(1 + cast.mates.count, StageMetrics.squadOnStage))
+        return 0.75 + onStage * (0.48 - 0.14) + StageMetrics.squadLineMargin
     }
 
     /// The coach and the member side by side, a gift's box between them.
@@ -108,6 +115,8 @@ enum StageMetrics {
     static let designWidth: Double = 390
     /// The most of the squad on a card's stage beside the coach: more don't fit the smallest phone.
     static let squadOnStage = 5
+    /// Room left at the line's two ends, in figure heights.
+    static let squadLineMargin: Double = 0.15
 }
 
 /// The coach standing, idling; on a challenge, blowing its whistle now and then. A coach this
@@ -277,10 +286,11 @@ private struct BoxBody: View {
     var body: some View {
         Canvas { context, size in
             let unit = size.width / 40
+            let corner = 3 * unit
             context.fill(
                 Path(
                     roundedRect: CGRect(x: 6 * unit, y: 16 * unit, width: 28 * unit, height: 20 * unit),
-                    cornerRadius: 3 * unit),
+                    cornerRadius: corner),
                 with: .color(ink))
             context.fill(
                 Path(CGRect(x: 18 * unit, y: 16 * unit, width: 4 * unit, height: 20 * unit)), with: .color(ribbon))
@@ -296,10 +306,11 @@ private struct BoxLid: View {
     var body: some View {
         Canvas { context, size in
             let unit = size.width / 40
+            let corner = 2 * unit
             context.fill(
                 Path(
                     roundedRect: CGRect(x: 4 * unit, y: 10 * unit, width: 32 * unit, height: 8 * unit),
-                    cornerRadius: 2 * unit),
+                    cornerRadius: corner),
                 with: .color(ink))
             context.fill(
                 Path(CGRect(x: 18 * unit, y: 10 * unit, width: 4 * unit, height: 8 * unit)), with: .color(ribbon))

@@ -37,6 +37,7 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -100,6 +101,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -114,7 +116,7 @@ const app = createApp({
 /** A squad with these members. Squads have no routes yet, so the test writes it directly. */
 async function squadOf(...joined: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${randomInviteCodes()})`.execute(
     db,
   );
   for (const [index, member] of joined.entries()) {

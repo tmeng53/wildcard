@@ -24,7 +24,7 @@ extension TodayStore {
         do {
             loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}
-        await loadCoachNotes(in: home)
+        await loadUnseenCoachCards(in: home)
         await loadChallenge(in: home)
     }
 
@@ -63,15 +63,20 @@ extension TodayStore {
         }
     }
 
-    /// The coach's morning notes waiting for the member, from their squad (one squad a member).
-    private func loadCoachNotes(in home: Home) async {
-        guard let found = try? await backend.coachNotes(in: [home.squad.id]) else { return }
-        coachNotes = found
+    /// Whether the coach's page has anything unseen; what was shown stays while the server can't
+    /// be reached.
+    private func loadUnseenCoachCards(in home: Home) async {
+        guard let unseen = try? await backend.hasUnseenCoachCards(in: home.squad.id) else { return }
+        loadedUnseenCoachCards = (home.squad.id, unseen)
     }
 
-    /// Whether a note waits unseen, for the dot on the coach's phone; seeing it on the coach's
-    /// page puts it away on the server, and the next load clears the dot.
-    public var hasWaitingNote: Bool { !coachNotes.isEmpty }
+    /// Whether the coach's page has a card the member hasn't seen, for the dot on its phone (Tracy,
+    /// 2026-11-09); swiping them away there marks them seen on the server, and the next load clears
+    /// the dot.
+    public var hasUnseenCoachCards: Bool {
+        guard let loadedUnseenCoachCards, loadedUnseenCoachCards.squad == savedHome?.squad.id else { return false }
+        return loadedUnseenCoachCards.unseen
+    }
 
     /// The 战术板 line the coach says on the home now, while its day lasts.
     public var coachLine: CoachNote? { coach?.line(at: now()) }

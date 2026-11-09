@@ -40,6 +40,7 @@ extension ScoreCell.Unit {
         case .kilometresPerHour: Text("km/h", bundle: .module)
         case .per100Meters: Text("/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
+        case .kilocalories: Text("千卡", bundle: .module)
         }
     }
 }
@@ -58,6 +59,7 @@ extension ScoreCell.Label {
         case .descent: Text("落差", bundle: .module)
         case .topSpeed: Text("最高速", bundle: .module)
         case .elevationGain: Text("爬升", bundle: .module)
+        case .calories: Text("卡路里", bundle: .module)
         case .laps(let pool?): Text("\(pool) 米泳池", bundle: .module)
         case .laps(nil): Text("趟数", bundle: .module)
         }
@@ -66,13 +68,16 @@ extension ScoreCell.Label {
 
 /// A 训练's 成绩条 (Tracy, 2026-11-06): its numbers side by side on the sport category's colour,
 /// 时长 first. Under a post's cover with no seam: its top corners square against the cover's
-/// edge and its bottom ones rounded (Tracy, 2026-11-07). Only read: the compose page strikes
-/// numbers out on cells of its own.
+/// edge and its bottom ones rounded (Tracy, 2026-11-07). On the compose page and wherever a post
+/// is being made, the same bar with every corner rounded, each cell a button that strikes its
+/// number out of the post (faded and crossed through) or brings it back.
 public struct ScoreStrip: View {
     @Environment(\.locale) private var locale
     private let cells: [ScoreCell]
     private let colors: PostBlockColors
     private let bottom: Bottom
+    private let struck: Set<WorkoutCell>
+    private let onToggle: ((WorkoutCell) -> Void)?
 
     /// Under a card (rounded) or across a post's ticket, where the stub goes on under it (square).
     public enum Bottom: Sendable {
@@ -80,17 +85,38 @@ public struct ScoreStrip: View {
         case square
     }
 
+    /// Read only, under a post's cover.
     public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded) {
         self.cells = cells
         self.bottom = bottom
         colors = PostBlockColors(kind: .trained, activity: activity)
+        struck = []
+        onToggle = nil
+    }
+
+    /// While a post is made: every corner rounded, and a tap on a cell calls `onToggle` with it.
+    public init(
+        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell>,
+        onToggle: @escaping (WorkoutCell) -> Void
+    ) {
+        self.cells = cells
+        bottom = .rounded
+        colors = PostBlockColors(kind: .trained, activity: activity)
+        self.struck = struck
+        self.onToggle = onToggle
     }
 
     /// The strip's height, the design's.
     public static let height: Double = 58
 
-    /// Square on top, where it meets the cover; rounded underneath unless the stub goes on.
+    /// Square on top where it meets the cover, rounded underneath unless the stub goes on; all
+    /// round on its own.
     private var shape: UnevenRoundedRectangle {
+        if onToggle != nil {
+            return UnevenRoundedRectangle(
+                topLeadingRadius: Radius.pick, bottomLeadingRadius: Radius.pick, bottomTrailingRadius: Radius.pick,
+                topTrailingRadius: Radius.pick, style: .continuous)
+        }
         let radius = bottom == .rounded ? Radius.card : 0
         return UnevenRoundedRectangle(bottomLeadingRadius: radius, bottomTrailingRadius: radius, style: .continuous)
     }
@@ -104,8 +130,22 @@ public struct ScoreStrip: View {
                         .frame(width: 1)
                         .padding(.vertical, Space.s)
                 }
-                face(cell)
+                if let onToggle {
+                    let isStruck = struck.contains(cell.cell)
+                    Button {
+                        onToggle(cell.cell)
+                    } label: {
+                        face(cell, isStruck: isStruck)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .haptic(.pick, trigger: isStruck)
+                    .accessibilityValue(isStruck ? Text("不发", bundle: .module) : Text("发", bundle: .module))
+                    .accessibilityHint(isStruck ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
                     .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
+                } else {
+                    face(cell, isStruck: false)
+                        .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
+                }
             }
         }
         .frame(height: Self.height)
@@ -113,14 +153,15 @@ public struct ScoreStrip: View {
         .background(Color(colors.fill), in: shape)
         .foregroundStyle(Color(colors.ink))
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("post.strip")
+        .accessibilityIdentifier(onToggle == nil ? "post.strip" : "compose.score")
     }
 
-    private func face(_ cell: ScoreCell) -> some View {
+    private func face(_ cell: ScoreCell, isStruck: Bool) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Text(verbatim: cell.value)
                     .typeStyle(TypeRamp.scoreInline)
+                    .strikethrough(isStruck)
                 if let unit = cell.unit {
                     unit.text.typeStyle(TypeRamp.label)
                 }
@@ -133,8 +174,13 @@ public struct ScoreStrip: View {
         .minimumScaleFactor(0.7)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .padding(.leading, Space.s)
+        .opacity(isStruck ? Self.struckOpacity : 1)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
     }
+
+    /// A struck number fades on the bar, as the design's do.
+    private static let struckOpacity = 0.45
 }
 
 /// A workout's route on a map, drawn live from the stored points as a lane in the sport category's
@@ -185,29 +231,39 @@ public struct WorkoutMap: View {
     }
 }
 
-/// A workout's chart on the sport category's colour: heart rate as a line, or for a swim each lap's
-/// time as a bar, the fastest in white and the rest dimmed. With `label`, its name top left.
+/// A workout's chart. Heart rate is `HeartRateChart` on graphite, detailed with `label` (a post's
+/// cover: zones, minutes per zone, scrubbing), the curve alone without. A swim's laps stay on the
+/// sport category's colour, each lap's time as a bar, the fastest in white and the rest dimmed, with
+/// `label` its name top left.
 public struct WorkoutChart: View {
     private let series: WorkoutSeries
     private let colors: PostBlockColors
     private let showsLabel: Bool
+    private let startedAt: Date?
 
-    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false) {
+    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil) {
         self.series = series
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.showsLabel = showsLabel
+        self.startedAt = startedAt
     }
 
     public var body: some View {
+        if series.laps?.isEmpty ?? true, let curve = series.heartRate, curve.count >= 2 {
+            HeartRateChart(points: curve, zones: series.zones, startedAt: startedAt, isDetailed: showsLabel)
+        } else {
+            lapChart
+        }
+    }
+
+    private var lapChart: some View {
         let ink = Color(colors.ink)
-        Canvas { context, size in
+        return Canvas { context, size in
             let pad = size.width > 100 ? Space.s : Space.xxs + 2
             let top = showsLabel ? Space.xxl : pad
             let area = CGRect(x: pad, y: top, width: size.width - 2 * pad, height: size.height - top - pad)
             if let laps = series.laps, !laps.isEmpty {
                 Self.drawLaps(laps, fastest: series.fastestLap, in: area, ink: ink, context: context)
-            } else if let curve = series.heartRate, curve.count >= 2 {
-                Self.drawHeartRate(curve, in: area, ink: ink, lineWidth: size.width > 100 ? 2.5 : 2, context: context)
             }
         }
         .background(Color(colors.fill))
@@ -245,23 +301,6 @@ public struct WorkoutChart: View {
                 Path(roundedRect: bar, cornerRadius: min(2, slot.width / 2)),
                 with: .color(index == fastest ? ink : ink.opacity(0.55)))
         }
-    }
-
-    private static func drawHeartRate(
-        _ points: [HeartRatePoint], in area: CGRect, ink: Color, lineWidth: Double, context: GraphicsContext
-    ) {
-        let lowest = Double(points.map(\.bpm).min() ?? 0)
-        let highest = Double(points.map(\.bpm).max() ?? 1)
-        let start = points.first?.seconds ?? 0
-        let span = max((points.last?.seconds ?? 1) - start, 1)
-        var path = Path()
-        for (index, point) in points.enumerated() {
-            let across = area.minX + (point.seconds - start) / span * area.width
-            let share = highest == lowest ? 0.5 : (Double(point.bpm) - lowest) / (highest - lowest)
-            let location = CGPoint(x: across, y: area.maxY - share * area.height)
-            if index == 0 { path.move(to: location) } else { path.addLine(to: location) }
-        }
-        context.stroke(path, with: .color(ink), style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round))
     }
 }
 #endif

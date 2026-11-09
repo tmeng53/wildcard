@@ -64,8 +64,9 @@ extension Catalog {
             stores: stores, storeOf: storeOf, locked: stillLocked, gifts: given)
     }
 
-    /// Hangs the coach's gifts the member opened in the slot whose art holds each, and gives back
-    /// the ones hung; one this build has no art for yet is left out.
+    /// Hangs what was given the member (the coach's gifts they opened, the team's pieces) in the
+    /// slot whose art holds each, and gives back the ones hung; one this build has no art for yet
+    /// is left out.
     private static func hang(_ gifts: [String], variants: inout [Slot: [String]], props: inout [String]) -> [String] {
         var given: [String] = []
         for gift in gifts {

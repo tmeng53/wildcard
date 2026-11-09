@@ -136,7 +136,7 @@ public final class SquadSettingsModel {
     /// The captain sets the goal; everyone else reads it.
     public var canChangeGoal: Bool { isCaptain && settings?.goal.canChange == true }
 
-    /// The captain picks 人均 `daysPerMember` 天 for next week. The pill moves at once and moves
+    /// The captain picks 人均 `daysPerMember` 次 for next week. The pill moves at once and moves
     /// back if the change doesn't go through.
     public func setGoal(_ daysPerMember: Int) async {
         guard let settings, canChangeGoal, SquadWeeklyGoal.choices.contains(daysPerMember),
@@ -213,11 +213,11 @@ public final class SquadSettingsModel {
     /// the squad is read again.
     public var canHireCoach: Bool { isCaptain && settings?.coach.canHire == true }
 
-    /// 「执教第 N 周」: the week the squad hired it counts 1, weeks starting Monday on the
-    /// member's clock.
-    public var coachWeek: Int? {
+    /// How long the coach has been with the squad, on the member's clock: the hire day counts 1.
+    public var coachTenure: CoachTenure? {
         guard let settings, let hire = settings.coach.hire else { return nil }
-        return settings.today.weekNumber(since: LocalDay(at: hire.since, in: settings.timeZone))
+        let days = settings.today.days(since: LocalDay(at: hire.since, in: settings.timeZone))
+        return CoachTenure(days: max(days, 0) + 1)
     }
 
     /// Reads 教练招聘会's coaches, each time it opens, and again on coming back from a 简历. A list

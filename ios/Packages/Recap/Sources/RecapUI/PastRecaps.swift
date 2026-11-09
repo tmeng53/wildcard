@@ -110,7 +110,7 @@ struct RecapCover: View {
                     if ending.done >= ending.plan {
                         Image(systemName: "checkmark.circle.fill").accessibilityHidden(true)
                     }
-                    Text("全队 \(ending.done)/\(ending.plan) 天", bundle: .module)
+                    Text("全队 \(ending.done)/\(ending.plan) 次", bundle: .module)
                 }
                 .typeStyle(TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgAccent, in: theme))

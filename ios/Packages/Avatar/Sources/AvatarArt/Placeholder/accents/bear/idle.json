@@ -13,6 +13,7 @@
       { "t": 4.4, "v": 1, "ease": "easeInOut" }, { "t": 7, "v": 1 } ] },
     { "part": "head", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 2.6, "v": 0 }, { "t": 3.0, "v": 5, "ease": "easeInOut" }, { "t": 4.0, "v": 5 },
-      { "t": 4.5, "v": 0, "ease": "easeInOut" }, { "t": 7, "v": 0 } ] }
+      { "t": 4.5, "v": 0, "ease": "easeInOut" }, { "t": 7, "v": 0 } ] },
+      {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 2.617, "v": 1, "ease": "hold"}, {"t": 4.35, "v": 0, "ease": "hold"}, {"t": 7, "v": 0, "ease": "hold"}]}
   ]
 }

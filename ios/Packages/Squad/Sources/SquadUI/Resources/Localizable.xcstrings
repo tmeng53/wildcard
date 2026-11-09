@@ -625,18 +625,58 @@
         }
       }
     },
-    "执教第 %lld 周": {
+    "执教 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Week %lld coaching"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Coaching %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Coaching %lld days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "執教第 %lld 週"
+            "value": "執教 %lld 天"
+          }
+        }
+      }
+    },
+    "执教 %lld 周": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Coaching %lld week"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Coaching %lld weeks"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "執教 %lld 週"
           }
         }
       }
@@ -1133,50 +1173,50 @@
         }
       }
     },
-    "人均 %lld 天": {
+    "人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days each"
+            "value": "%lld workouts each"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "人均 %lld 天"
+            "value": "人均 %lld 次"
           }
         }
       }
     },
-    "天": {
+    "次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "days"
+            "value": "workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天"
+            "value": "次"
           }
         }
       }
     },
-    "下周起人均 %lld 天": {
+    "下周起人均 %lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld days each from next week"
+            "value": "%lld workouts each from next week"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "下週起人均 %lld 天"
+            "value": "下週起人均 %lld 次"
           }
         }
       }
@@ -1437,18 +1477,18 @@
         }
       }
     },
-    "今天的都看过了。": {
+    "暂时没有新消息": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All caught up for today."
+            "value": "No new messages"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天的都看過了。"
+            "value": "暫時沒有新消息"
           }
         }
       }
@@ -1529,54 +1569,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "去衣櫥看看"
-          }
-        }
-      }
-    },
-    "回他": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reply"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回他"
-          }
-        }
-      }
-    },
-    "回复了你": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replied to you"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回覆了你"
-          }
-        }
-      }
-    },
-    "回复了你的训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replied to your workout"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回覆了你的訓練"
           }
         }
       }
@@ -1869,22 +1861,6 @@
         }
       }
     },
-    "配速比上周快了，不错。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Faster pace than last week. Nice."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "配速比上週快了，不錯。"
-          }
-        }
-      }
-    },
     "已接受": {
       "localizations": {
         "en": {
@@ -1929,6 +1905,150 @@
           "stringUnit": {
             "state": "translated",
             "value": "已完成"
+          }
+        }
+      }
+    },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部"
+          }
+        }
+      }
+    },
+    "未读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unread"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未讀"
+          }
+        }
+      }
+    },
+    "昨天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yesterday"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "昨天"
+          }
+        }
+      }
+    },
+    "没接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passed"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒接"
+          }
+        }
+      }
+    },
+    "已穿上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wearing it"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已穿上"
+          }
+        }
+      }
+    },
+    "在衣橱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In your wardrobe"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在衣櫥"
+          }
+        }
+      }
+    },
+    "对小队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To the squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "對小隊"
+          }
+        }
+      }
+    },
+    "送你一样东西": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got you something"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送你一樣東西"
+          }
+        }
+      }
+    },
+    "没有未读的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing unread"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有未讀的"
           }
         }
       }

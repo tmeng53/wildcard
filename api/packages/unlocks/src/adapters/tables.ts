@@ -9,44 +9,57 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
-export interface CoachGiftOpens {
+export interface Badges {
+  added_at: Generated<Timestamp>;
+  glyph: string;
+  id: string;
+  kind: Generated<string>;
+  names: Json;
+  offered: Generated<boolean>;
+  tone: string;
+}
+
+export interface GrantOpens {
   at: Generated<Timestamp>;
-  member_id: string;
-  piece_id: string;
+  grant_id: Int8;
   worn: boolean;
 }
 
-export interface CoachGifts {
+export interface Grants {
   admin_id: string | null;
-  coach_id: string;
-  given_at: Generated<Timestamp>;
-  given_by: Generated<string>;
-  line: string | null;
-  member_id: string;
-  piece_id: string;
-  squad_id: string;
-  week_from: Timestamp | null;
-}
-
-export interface GiftPieces {
-  added_at: Generated<Timestamp>;
-  description: string | null;
-  offered: Generated<boolean>;
-  piece_id: string;
-}
-
-export interface MemberUnlocks {
-  after: number;
+  after: number | null;
+  at: Timestamp;
   check_in_id: string | null;
+  coach_id: string | null;
+  event: string | null;
+  event_id: string | null;
   given_by: string | null;
   granted_at: Generated<Timestamp>;
-  item_id: string;
-  kind: string;
+  id: Generated<Int8>;
+  line: string | null;
   member_id: string;
-  sports: string[];
-  unlocked_at: Timestamp;
+  reward_id: string;
+  reward_kind: string;
+  sports: string[] | null;
+  squad_id: string | null;
+  via: string;
+  week_from: Timestamp | null;
 }
 
 export interface PieceClaims {
@@ -65,6 +78,25 @@ export interface Pieces {
   switch_id: string | null;
 }
 
+export interface Rewards {
+  added_at: Generated<Timestamp>;
+  id: string;
+  kind: string;
+}
+
+export interface RewardTriggers {
+  added_at: Generated<Timestamp>;
+  after: number | null;
+  counts_from: Timestamp | null;
+  description: string | null;
+  events: string[] | null;
+  kind: string;
+  offered: Generated<boolean>;
+  reward_id: string;
+  reward_kind: string;
+  sports: string[] | null;
+}
+
 export interface Stores {
   id: string;
   offered: Generated<boolean>;
@@ -72,21 +104,22 @@ export interface Stores {
   switch_id: string | null;
 }
 
-export interface UnlockRules {
-  after: number;
-  counts_from: Generated<Timestamp>;
-  item_id: string;
-  kind: string;
-  sports: Generated<string[]>;
+export interface Vouchers {
+  added_at: Generated<Timestamp>;
+  id: string;
+  kind: Generated<string>;
+  offered: Generated<boolean>;
+  premium_days: number;
 }
 
 export interface DB {
-  coach_gift_opens: CoachGiftOpens;
-  coach_gifts: CoachGifts;
-  gift_pieces: GiftPieces;
-  member_unlocks: MemberUnlocks;
+  badges: Badges;
+  grant_opens: GrantOpens;
+  grants: Grants;
   piece_claims: PieceClaims;
   pieces: Pieces;
+  reward_triggers: RewardTriggers;
+  rewards: Rewards;
   stores: Stores;
-  unlock_rules: UnlockRules;
+  vouchers: Vouchers;
 }

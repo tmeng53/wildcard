@@ -10,7 +10,16 @@ import SwiftUI
 extension MainTabs {
     /// Opens the coach's page on 今天, made for the squad 今天 is on.
     func openCoachDeck() {
-        guard let squadID = today.squadID else { return }
+        // A note's 通知 row or push can come before 今天 was ever shown (the app opened on 动态,
+        // or from the push itself), so its home isn't read yet: read it, then open the page.
+        guard let squadID = today.squadID else {
+            selection = .today
+            Task {
+                await today.load()
+                if today.squadID != nil { openCoachDeck() }
+            }
+            return
+        }
         if coachDeck?.squad != squadID {
             coachDeck = CoachDeck(
                 squad: squadID, source: coachCards,
@@ -60,7 +69,6 @@ extension MainTabs {
     private var deckPlaces: CoachDeckPlaces {
         CoachDeckPlaces(
             feed: { selection = .feed },
-            post: { open(.post($0)) },
             wardrobe: { piece in
                 selection = .profile
                 closeProfilePages()

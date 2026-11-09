@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "卡路里" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calories"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "卡路里"
+          }
+        }
+      }
+    },
     "App 设置 › 集成" : {
       "localizations" : {
         "en" : {
@@ -109,22 +125,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在「設定」中管理權限"
-          }
-        }
-      }
-    },
-    "始终显示" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Always"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一律顯示"
           }
         }
       }
@@ -301,22 +301,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "資料分享 › Apple 健康"
-          }
-        }
-      }
-    },
-    "时长" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時長"
           }
         }
       }

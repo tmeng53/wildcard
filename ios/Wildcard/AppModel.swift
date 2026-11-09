@@ -213,6 +213,7 @@ final class AppModel {
         SceneTheme.list(catalog.scenes)
         DiceLines.shared.show(catalog.diceLines)
         StarterStock.shared.show(catalog.starterStock)
+        Switchboard.shared.show(catalog.switches)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked

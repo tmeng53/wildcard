@@ -6,7 +6,7 @@ import SwiftUI
 import UIKit
 
 /// 设置 › Apple 健康 (Tracy, 2026-11-06): 连接 until it is connected, the Fitbit, WHOOP and Oura
-/// guide under it, then which numbers a post from Health shows unless struck (时长 always; 强度 is
+/// guide under it, then which numbers a post from Health shows unless struck (时长 always starts kept; 强度 is
 /// the Fitness app's Effort), the line on striking and the route's trimmed ends, and where iOS
 /// keeps the reading permission. Ink and white only, like the rest of 设置.
 public struct HealthSettingsView: View {
@@ -73,8 +73,6 @@ public struct HealthSettingsView: View {
         VStack(alignment: .leading, spacing: Space.xxs) {
             SectionLabel(Text("发动态时显示", bundle: .module))
             VStack(spacing: 0) {
-                ListRow(Text("时长", bundle: .module), value: Text("始终显示", bundle: .module), showsChevron: false) {}
-                    .disabled(true)
                 SwitchRow(Text("距离", bundle: .module), isOn: $health.sharing.distance)
                     .accessibilityIdentifier("health.share.distance")
                 SwitchRow(Text("配速 / 速度", bundle: .module), isOn: $health.sharing.pace)
@@ -85,6 +83,8 @@ public struct HealthSettingsView: View {
                     .accessibilityIdentifier("health.share.effort")
                 SwitchRow(Text("趟数（游泳、滑雪）", bundle: .module), isOn: $health.sharing.laps)
                     .accessibilityIdentifier("health.share.laps")
+                SwitchRow(Text("卡路里", bundle: .module), isOn: $health.sharing.calories)
+                    .accessibilityIdentifier("health.share.calories")
                 SwitchRow(Text("路线", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
                     .accessibilityIdentifier("health.share.route")
             }

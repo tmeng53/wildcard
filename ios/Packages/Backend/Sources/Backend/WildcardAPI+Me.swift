@@ -29,6 +29,43 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try record.trainings.map(TrainingDay.init) }
     }
 
+    /// 外卡记录: the member's records, and how they stand in their squad, its squadmates named by
+    /// `mates` (nil for one who left or made no character).
+    public func records(
+        mates: (MemberID) -> RecordMate
+    ) async throws(APIError) -> WildcardRecords {
+        let wire = try await call { try await client.getMyRecords().ok.body.json }
+        return try read { () throws(ContractsError) in
+            func streak(_ streak: Components.Schemas.RecordStreak?) throws(ContractsError) -> WildcardRecords.Streak? {
+                try streak.map { streak throws(ContractsError) in
+                    .init(days: streak.days, first: try LocalDay(streak.from), last: try LocalDay(streak.to))
+                }
+            }
+            func count(_ wire: Components.Schemas.RecordMateCount?) throws(ContractsError) -> SquadStanding.MateCount? {
+                try wire.map { wire throws(ContractsError) in
+                    guard let id = UUID(uuidString: wire.memberId) else { throw .invalidID(wire.memberId) }
+                    return .init(mate: mates(MemberID(id)), count: wire.count)
+                }
+            }
+            let squad = try wire.squad.map { squad throws(ContractsError) in
+                SquadStanding(
+                    partner: try count(squad.partner),
+                    cheersReceived: .init(count: squad.cheersReceived.count, top: try count(squad.cheersReceived.top)),
+                    cheersGiven: .init(count: squad.cheersGiven.count, top: try count(squad.cheersGiven.top)),
+                    // A kind this build doesn't know is left out, as the API asks.
+                    firsts: squad.firsts.compactMap(SquadStanding.First.init(rawValue:)))
+            }
+            return WildcardRecords(
+                trainedDays: wire.trainedDays, minutes: wire.minutes, longestMinutes: wire.longestMinutes,
+                longestStreak: try streak(wire.longestStreak), mealStreak: try streak(wire.mealStreak),
+                hours: wire.hours, weekdays: wire.weekdays,
+                sports: try wire.sports.map { sport throws(ContractsError) in
+                    .init(activity: try Activity(sport), days: sport.days)
+                },
+                sportCount: wire.sportCount, squad: squad)
+        }
+    }
+
     /// The member's badge board (徽章板): every weekly title they won, with its badge, and the one
     /// they wear.
     public func titleBoard() async throws(APIError) -> TitleBoard {
@@ -108,7 +145,9 @@ extension WildcardAPI {
                         id: piece.id, store: piece.storeId, state: state,
                         sports: piece.sports.compactMap(Sport.init(rawValue:)))
                 }),
-            gifts: body.gifts.sorted { $0.givenAt < $1.givenAt }.filter { $0.openedAt != nil }.map(\.id))
+            // What was given, worn without 领取: the coach's gifts once opened, then the team's pieces.
+            gifts: body.gifts.sorted { $0.givenAt < $1.givenAt }.filter { $0.openedAt != nil }.map(\.id)
+                + body.teamPieces.sorted { $0.givenAt < $1.givenAt }.map(\.id))
     }
 
     /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.
@@ -208,8 +247,8 @@ extension MateSchedule {
         let read = try marks.map { mark throws(ContractsError) -> DayMark in
             switch mark.status {
             case .trained:
-                guard let activity = try Activity(mark) else { throw .strayCustomSport }
-                return .trained(activity)
+                guard let sports = try Activity.trained(on: mark) else { throw .strayCustomSport }
+                return .trained(sports)
             case .disclaimer: return .disclaimer
             case .none: return .none
             }
@@ -217,7 +256,8 @@ extension MateSchedule {
         // A goal this build can't read is left out rather than the whole week.
         let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
         let weekStart = try LocalDay(start)
-        let first = try wire.firstWeek.map { day throws(ContractsError) in try LocalDay(day) }
+        // The squad's W1 when the server sends it, so every card shows the squad's week number.
+        let first = try (wire.squadFirstWeek ?? wire.firstWeek).map { day throws(ContractsError) in try LocalDay(day) }
         let today = try wire.today.map { day throws(ContractsError) in try LocalDay(day) }
         // Seven of each, checked above, is all it refuses.
         guard

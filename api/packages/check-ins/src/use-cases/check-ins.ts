@@ -33,6 +33,7 @@ import {
   type SquadPost,
 } from './check-ins/list-squad-check-ins.js';
 import { memberWeek, type MemberWeek } from './check-ins/member-week.js';
+import { records, type Records } from './check-ins/records.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
   reactToCheckIn,
@@ -48,7 +49,7 @@ import {
   type Commented,
 } from './check-ins/comments.js';
 import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
-import { squadTrainedDays, weekStartNow } from './check-ins/squad-goal-weeks.js';
+import { squadTrainings, weekStartNow } from './check-ins/squad-goal-weeks.js';
 import {
   squadWeekCheckIns,
   squadsCheckedInto,
@@ -97,6 +98,8 @@ export interface CheckIns {
     readonly from: string;
     readonly to: string;
   }): Promise<TrainingDay[]>;
+  /** 外卡记录: the member's records since they joined, and how they stand in their squad. */
+  records(member: MemberId): Promise<Records>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   listReactions(input: {
@@ -127,19 +130,24 @@ export interface CheckIns {
   }): Promise<Comment[]>;
   /** The home screen's squad: each member's today and the week's counts, for one of them. */
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
-  /** A member's own 本周 x/y, for a squadmate's view of their card, in the member's time zone. */
+  /**
+   * A member's own 本周 x/y, for a squadmate's view of their card: the week and today on
+   * `squadZone`, the squad's clock, so every squadmate sees the same week; without it, on the
+   * member's own.
+   */
   memberWeek(input: {
     readonly member: MemberId;
     readonly viewer: MemberId;
     readonly squad: SquadId;
+    readonly squadZone?: string;
   }): Promise<MemberWeek>;
   /** The Monday of the member's week now, in their time zone. */
   weekStartNow(member: MemberId): Promise<WeekStart>;
   /**
-   * The days these members trained in a week, added up, from check-ins sent to the squad, a day
-   * counting once: what the squad's weekly goal (小队每周目标) counts.
+   * The 训练 these members sent to the squad in a week, several on one day each counting: what the
+   * squad's weekly goal (小队每周目标, 人均 N 次) counts.
    */
-  squadTrainedDays(input: {
+  squadTrainings(input: {
     readonly squad: SquadId;
     readonly members: readonly MemberId[];
     readonly weekStart: WeekStart;
@@ -195,6 +203,7 @@ export function createCheckIns(deps: {
     totals: (member) => deps.store.totals(member),
     trainedSince: (query) => deps.store.trainedSince(query),
     trainings: (query) => deps.store.trainingsForMember(query),
+    records: (member) => records(deps, member),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),
@@ -214,7 +223,7 @@ export function createCheckIns(deps: {
     squadToday: (input) => squadToday(deps, input),
     memberWeek: (input) => memberWeek(deps, input),
     weekStartNow: (member) => weekStartNow(deps, member),
-    squadTrainedDays: (input) => squadTrainedDays(deps, input),
+    squadTrainings: (input) => squadTrainings(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),
     squadsCheckedInto: (input) => squadsCheckedInto(deps, input),
     squadWeekCheckIns: (input) => squadWeekCheckIns(deps, input),

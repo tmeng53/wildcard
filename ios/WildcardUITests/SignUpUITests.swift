@@ -38,7 +38,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
         XCTAssertTrue(app.staticTexts["创建你的外卡运动员"].exists, "step 1 has no title")
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 5 步")
+            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 6 步")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))
@@ -64,7 +64,7 @@ final class SignUpUITests: XCTestCase {
         // The found squad is one combined element, which reads as text rather than a group.
         let found = app.descendants(matching: .any)["squad.found"]
         XCTAssertTrue(found.waitForExistence(timeout: Self.wait), "the squad wasn't found")
-        XCTAssertTrue(found.label.contains("人均每周 3 天"), "the squad found doesn't say its goal: \(found.label)")
+        XCTAssertTrue(found.label.contains("人均每周 3 次"), "the squad found doesn't say its goal: \(found.label)")
         settle()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(
@@ -132,7 +132,7 @@ final class SignUpUITests: XCTestCase {
     }
 
     /// Making a squad, skipping sports and the week, in English. With no sport picked the 我的每周计划
-    /// trains the squad's 人均 3 天 with no sport named: 3/7.
+    /// trains the squad's 人均 3 次 with no sport named: 3/7.
     func testStartingASquadInEnglish() {
         let app = launch(language: "en")
         let signIn = app.buttons["signup.signIn"]
@@ -193,7 +193,7 @@ final class SignUpUITests: XCTestCase {
         let skipWeek = app.buttons["week.skip"]
         XCTAssertTrue(skipWeek.waitForExistence(timeout: Self.wait), "我的每周计划 never appeared")
         let goal = app.descendants(matching: .any)["week.squadGoal"]
-        XCTAssertTrue(goal.label.contains("人均 4 天"), "step 4 doesn't show the goal picked: \(goal.label)")
+        XCTAssertTrue(goal.label.contains("人均 4 次"), "step 4 doesn't show the goal picked: \(goal.label)")
         XCTAssertEqual(app.buttons["week.done"].label, "下一步", "whoever made the squad goes on to pick its scene")
         skipWeek.tap()
 

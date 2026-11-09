@@ -1633,18 +1633,18 @@
         }
       }
     },
-    "改成人均 %lld 天？": {
+    "改成人均 %lld 次？": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make it %lld days each?"
+            "value": "Make it %lld workouts each?"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "改成人均 %lld 天？"
+            "value": "改成人均 %lld 次？"
           }
         }
       }
@@ -1729,7 +1729,7 @@
         }
       }
     },
-    "成绩": {
+    "数据": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1740,7 +1740,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "成績"
+            "value": "數據"
           }
         }
       }
@@ -2097,70 +2097,6 @@
         }
       }
     },
-    "发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Posted"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發"
-          }
-        }
-      }
-    },
-    "不发": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Left out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不發"
-          }
-        }
-      }
-    },
-    "点一下恢复": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to bring it back"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下恢復"
-          }
-        }
-      }
-    },
-    "点一下划掉": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tap to leave it out"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "點一下劃掉"
-          }
-        }
-      }
-    },
     "正在发送…": {
       "localizations": {
         "en": {
@@ -2241,34 +2177,34 @@
         }
       }
     },
-    "%@：": {
+    "各位和%@：": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@,"
+            "value": "Everyone and %@,"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@："
+            "value": "各位和%@："
           }
         }
       }
     },
-    "给 %@ · %@": {
+    "给小队和 %@ · %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "To %1$@ · from %2$@"
+            "value": "To the squad and %1$@ · from %2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "給 %1$@ · %2$@"
+            "value": "給小隊和 %1$@ · %2$@"
           }
         }
       }

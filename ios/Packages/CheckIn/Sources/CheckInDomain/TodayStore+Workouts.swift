@@ -11,3 +11,12 @@ extension TodayStore {
         return Set(saved + pending.compactMap { $0.draft.workout?.source })
     }
 }
+
+extension TodayStore {
+    /// `postedWorkouts` once the server's home is in hand; nil before (or while it can't be
+    /// reached). The copy kept on the phone is from the last load, which may be from before a
+    /// post, so it can't say a workout is still to post: the home's card waits for this.
+    public var postedWorkoutsKnown: Set<WorkoutSource>? {
+        phase == .current ? postedWorkouts : nil
+    }
+}

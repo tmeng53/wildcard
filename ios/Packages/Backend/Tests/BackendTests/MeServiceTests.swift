@@ -120,3 +120,35 @@ private actor Flag {
     private(set) var isSet = false
     func set() { isSet = true }
 }
+
+@Test func recordsNameTheSquadmateWhoTrainedTheSameDayAndCheeredTheMost() async throws {
+    let stack = try LocalStack()
+    let member = try await stack.signedInMember()
+    let mate = try await stack.signedInMember()
+    let utc = try #require(TimeZone(identifier: "UTC"))
+    let coco = MemberCharacter(
+        nickname: try Nickname("Coco"), look: CharacterLook(persona: "shy", variants: ["body": "lop"], colors: [:]))
+    _ = try await mate.api.save(Profile(timeZone: utc, character: coco))
+    _ = try await member.api.save(Profile(timeZone: utc))
+    let squad = try await stack.squad(of: member, mate)
+    let mine = try checkIn(
+        by: member, to: squad, .trained(Training(activity: .sport("run"), minutes: try WorkoutMinutes(40))))
+    _ = try await member.api.save(mine)
+    _ = try await mate.api.save(try checkIn(by: mate, to: squad, .trained(Training(activity: .sport("yoga")))))
+    try await mate.api.react(try Emoji("🔥"), to: mine.id)
+
+    let records = try await APIMeService(api: member.api).records()
+    #expect(records.trainedDays == 1)
+    #expect(records.minutes == 40)
+    #expect(records.longestMinutes == 40)
+    #expect(records.longestStreak?.days == 1)
+    #expect(records.sports == [.init(activity: .sport("run"), days: 1)])
+    #expect(records.hours.reduce(0, +) == 1)
+    let partner = try #require(records.squad?.partner)
+    #expect(partner.count == 1)
+    #expect(partner.mate.member == mate.id)
+    #expect(partner.mate.character?.nickname == "Coco")
+    #expect(records.squad?.cheersReceived.count == 1)
+    #expect(records.squad?.cheersReceived.top?.mate.member == mate.id)
+    #expect(records.squad?.cheersGiven.count == 0)
+}

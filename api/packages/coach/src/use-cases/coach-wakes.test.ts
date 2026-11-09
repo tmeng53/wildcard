@@ -479,6 +479,7 @@ describe('the coach', () => {
             coach: xiaohun,
             text: '周日也跑，腿还在吗',
             emoji: '🔥',
+            mentions: [],
             at: 'at',
           },
         ],
@@ -649,6 +650,58 @@ describe('the coach', () => {
     });
   });
 
+  it('keeps each coach’s own page for that coach alone, and gives it back when it returns', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const hiring = createCoachHiring({ hiring: createPostgresCoachHiring(trx), catalog });
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      const nuannuan = CoachId.parse('nuannuan');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+      let says = '我最会偷懒';
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'remember', input: { path: 'me.md', fact: says } },
+      ]);
+      await wakes(fixture, { agent }).run();
+      expect(runs[0]?.answers).toStrictEqual(['记下了，在 me.md。']);
+
+      // 小混's 战术板 lines, which 暖暖 must not take for its own voice.
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text)
+        values (${squad}, 'xiaohun', '2026-10-30', '我先把沙发热好')`.execute(trx);
+
+      // 暖暖 takes over: it never reads 小混's page or lines, and starts its own.
+      await hiring.change({ squad, coach: nuannuan, by });
+      says = '我说话慢';
+      const seen = runs.length;
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
+      const hers = runs.slice(seen);
+      // Its daily wake, which is told the lines it wrote lately, is among them.
+      expect(hers.some(({ task }) => task.includes('新的一天'))).toBe(true);
+      for (const run of hers) {
+        expect(run.task).not.toContain('我最会偷懒');
+        expect(run.task).not.toContain('我先把沙发热好');
+      }
+
+      // 小混 comes back to his own page, never hers.
+      await hiring.change({ squad, coach: CoachId.parse('xiaohun'), by });
+      const back = runs.length;
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 2 * 86_400_000) }).run();
+      const his = runs[back];
+      expect(his?.task).toContain('【me.md】\n- 我最会偷懒');
+      expect(his?.task).not.toContain('我说话慢');
+
+      const pages = await sql<{ path: string; member_id: string | null }>`
+        select distinct path, member_id from public.coach_files
+        where squad_id = ${squad} and path like 'coaches/%' order by path`.execute(trx);
+      expect(pages.rows).toStrictEqual([
+        { path: 'coaches/nuannuan.md', member_id: null },
+        { path: 'coaches/xiaohun.md', member_id: null },
+      ]);
+    });
+  });
+
   it('knows a coach hired back until it first runs for the squad', async () => {
     await rolledBack(async ({ trx, squad, mia }) => {
       const by = MemberId.parse(mia);
@@ -792,6 +845,25 @@ describe('the coach', () => {
           mentions: [],
         },
       ]);
+
+      // Its answer is something it said here, so a reply to that is answered too, though it
+      // never replied to the check-in itself.
+      const { mia } = fixture;
+      const back = await commentOn(fixture, {
+        member: mia,
+        text: '那她呢',
+        at: new Date(now.getTime() + 3 * 60_000),
+        toCoach: 'xiaohun',
+      });
+      const withBack: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [asked, back] })),
+      };
+      await wakes(
+        { ...fixture, week: withBack },
+        { agent, answered, at: new Date(now.getTime() + 4 * 60_000) },
+      ).answer({ checkIn, comment: back.id, coach: 'xiaohun', squads: [squad] });
+      expect(told.map(({ comment }) => comment)).toStrictEqual([asked.id, back.id]);
     });
   });
 
@@ -1710,6 +1782,10 @@ describe('the coach', () => {
         '已回复。',
       ]);
       expect(told).toMatchObject([{ author: fixture.mia, text: '@小乐 一起跑', mentions: [leo] }]);
+      // Kept with the line, so the app can show the @ as a tag that opens 小乐's card.
+      const checkIn = told[0]?.checkIn ?? '';
+      const read = await createPostgresCoachActivity(fixture.trx).replies(fixture.squad, [checkIn]);
+      expect(read).toMatchObject([{ checkIn, text: '@小乐 一起跑', mentions: [leo] }]);
     });
   });
 
@@ -1987,6 +2063,136 @@ describe('the coach', () => {
       expect((await stores.memory.files(squad)).get('memory.md')).toBe('a');
       await sql`delete from public.squads where id = ${squad}`.execute(trx);
       expect((await stores.memory.files(squad)).size).toBe(0);
+    });
+  });
+  it('previews a member’s day without saving or sending anything but its tokens', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const given: unknown[] = [];
+      const gifting: CoachGifting = {
+        options: ({ members }) =>
+          Promise.resolve({
+            pool: [{ id: 'gift-scarf', description: '红围巾' }],
+            open: new Map(members.map((each) => [each, []])),
+          }),
+        give: (input) => {
+          given.push(input);
+          return Promise.resolve(undefined);
+        },
+      };
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'post_note', input: { text: '周日歇好' } },
+        {
+          tool: 'note_to',
+          input: {
+            member: '队员1',
+            text: '今天多喝水',
+            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+          },
+        },
+        // Only the member previewed gets a note or a gift.
+        { tool: 'note_to', input: { member: '队员2', text: '走走' } },
+        { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
+        { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
+      ]);
+      const preview = await wakes(fixture, { agent, gifting }).preview({ squad, member: mia });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.answers).toStrictEqual([
+        '已写上战术板。',
+        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+        '不能给 队员2 写便条；能写的是：队员1。',
+        'gift-scarf 送给 队员1 了。',
+        '记下了，在 people/队员1.md。',
+      ]);
+      expect(runs[0]?.task).toContain('今天给这些人各写一张便条');
+      expect(preview).toMatchObject({
+        ran: true,
+        day: '2026-11-01',
+        board: '周日歇好',
+        note: {
+          text: '今天多喝水',
+          challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+        },
+        gift: { piece: 'gift-scarf', line: '天冷了' },
+        costMicros: 4600,
+      });
+      expect(preview.ran && preview.files.map(({ path }) => path)).toContain(`people/${mia}.md`);
+      expect(given).toStrictEqual([]);
+      const saved = await sql<{ notes: string; board: string; wakes: string; usage: string }>`
+        select
+          (select count(*) from public.coach_member_notes where squad_id = ${squad}) as notes,
+          (select count(*) from public.coach_notes where squad_id = ${squad}) as board,
+          (select count(*) from public.coach_wakes where squad_id = ${squad}) as wakes,
+          (select count(*) from public.coach_usage where squad_id = ${squad} and wake_id is null) as usage
+      `.execute(trx);
+      expect(saved.rows).toStrictEqual([{ notes: '0', board: '0', wakes: '0', usage: '1' }]);
+      expect(
+        await wakes(fixture, { agent, gifting }).preview({ squad, member: randomUUID() }),
+      ).toStrictEqual({
+        ran: false,
+        why: 'the member is not in the squad',
+      });
+    });
+  });
+  it('delivers a previewed note to the member alone each time asked, the newest the day’s', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const { agent } = scriptedAgent(() => [
+        { tool: 'post_note', input: { text: '周日歇好' } },
+        {
+          tool: 'note_to',
+          input: {
+            member: '队员1',
+            text: '今天多喝水',
+            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+          },
+        },
+      ]);
+      const first = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
+      expect(first).toMatchObject({ ran: true, delivered: true, note: { text: '今天多喝水' } });
+      const saved = await sql<{ member: string; text: string; title: string; board: string }>`
+        select m.member_id as member, m.text, m.challenge_title as title,
+          (select count(*) from public.coach_notes where squad_id = ${squad}) as board
+        from public.coach_member_notes m where m.squad_id = ${squad}
+      `.execute(trx);
+      expect(saved.rows).toStrictEqual([
+        { member: mia, text: '今天多喝水', title: '喝水', board: '0' },
+      ]);
+      const again = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
+      expect(again).toMatchObject({ ran: true, delivered: true });
+      const notes = await sql<{ id: string }>`
+        select id from public.coach_member_notes where squad_id = ${squad} and member_id = ${mia}
+        order by id
+      `.execute(trx);
+      expect(notes.rows).toHaveLength(2);
+      // Once both reached her, the newest note's challenge is the day's.
+      const delivery = createPostgresCoachNoteDelivery(trx);
+      for (const { id } of notes.rows) await delivery.delivered(Number(id));
+      const stores = createPostgresCoachStores(trx);
+      const day = first.ran ? first.day : '';
+      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
+        note: Number(notes.rows[1]?.id),
+      });
+      expect(await stores.memberNotes.challengesOn({ squad, day })).toMatchObject([
+        { member: mia, note: Number(notes.rows[1]?.id) },
+      ]);
+      // A later note without a challenge hides none.
+      await stores.memberNotes.save({
+        squad,
+        member: mia,
+        coach: CoachId.parse('xiaohun'),
+        day,
+        text: '早点睡',
+      });
+      const plainNote = await sql<{ id: string }>`
+        select max(id) as id from public.coach_member_notes where member_id = ${mia}
+      `.execute(trx);
+      await delivery.delivered(Number(plainNote.rows[0]?.id));
+      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
+        note: Number(notes.rows[1]?.id),
+      });
+      const plain = await wakes(fixture, { agent }).preview({ squad, member: mia });
+      expect(plain.ran && 'delivered' in plain).toBe(false);
     });
   });
 });
