@@ -67,11 +67,19 @@ final class HealthUITests: XCTestCase {
         XCTAssertEqual(heart.value as? String, "不发", "tapping didn't strike 平均心率 out")
         XCTAssertTrue(chart.waitForNonExistence(timeout: Self.wait), "the run's heart rate stayed when struck")
         XCTAssertTrue(map.exists, "striking 平均心率 took the run's map off")
+        strikeTheDuration(in: app)
         settle()
         keepScreenshot(named: "73-health-compose-struck")
         app.buttons["compose.post"].tap()
         XCTAssertTrue(score.waitForNonExistence(timeout: Self.wait), "the post didn't go out")
         putAwayFromTheCard(in: app)
+    }
+
+    /// 时长 is struck like any other number (Tracy, 2026-11-08).
+    private func strikeTheDuration(in app: XCUIApplication) {
+        let duration = app.buttons["strip.duration"]
+        duration.tap()
+        XCTAssertEqual(duration.value as? String, "不发", "tapping didn't strike 时长 out")
     }
 
     /// 设置 › Apple 健康: connected, the switches for what a post carries, and where iOS keeps

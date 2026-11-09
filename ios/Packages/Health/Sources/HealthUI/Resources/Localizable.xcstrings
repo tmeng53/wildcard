@@ -113,22 +113,6 @@
         }
       }
     },
-    "始终显示" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Always"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一律顯示"
-          }
-        }
-      }
-    },
     "已连接" : {
       "localizations" : {
         "en" : {
@@ -301,22 +285,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "資料分享 › Apple 健康"
-          }
-        }
-      }
-    },
-    "时长" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Time"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "時長"
           }
         }
       }
