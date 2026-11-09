@@ -89,6 +89,8 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${checkIn}, ${mia}, '2026-11-01', ${new Date(now.getTime() - 10 * 60_000)}, 'trained',
           '{"version": 1, "sport": "run"}')`.execute(trx);
+      // Route tests that ran before may have left squads with a coach; this run wakes only its own.
+      await sql`delete from public.squad_coaches`.execute(trx);
       const squad = SquadId.parse(squadId);
       await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
         { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
@@ -408,6 +410,10 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
       expect(runs[1]?.instructions).toContain('你会在四种时候醒来');
+      // The seeded wakes let the coach pick its tools and say one thing per note, never "I remember".
+      expect(runs[1]?.instructions).toContain('一张便条只说一件事');
+      expect(runs[1]?.instructions).toContain('做什么、用哪个工具，你自己判断。');
+      expect(runs[1]?.instructions).not.toContain('再加上记性里记着他的');
       // The 简历 is for the app only: the model never reads the coach's missing license.
       expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
