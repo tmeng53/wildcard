@@ -5,7 +5,7 @@ import {
   type LocalDay,
   type MemberId,
 } from './check-in.js';
-import { byTrainedThenReached, trainedDaysReachedAt } from './days.js';
+import { byTrainedThenReached, trainedDaysReachedAt, trainings } from './days.js';
 import {
   statsOf,
   weekAwards,
@@ -17,7 +17,7 @@ import {
 import type { PlanDay } from './weekly-plan.js';
 
 // The Sunday 战报's pages without AI: each member's days (the podium is read from them), the
-// squad's meals, the best 请假条 and the squad's days against its plans. The same rules as the
+// squad's meals, the best 请假条 and the squad's 训练 against its plans. The same rules as the
 // week summary's awards and counts, read from the week as the awards saw it. A page with
 // nothing to show is left out, so a quiet week isn't told how short it fell.
 
@@ -64,7 +64,7 @@ export interface WeekPages {
     readonly text: string;
     readonly reactions: number;
   };
-  /** 这一周: the squad's days trained against its plans; only when someone trained. */
+  /** 这一周: the squad's 训练 (several on one day each counting) against its plans; only when someone trained. */
   readonly ending?: { readonly done: number; readonly plan: number };
 }
 
@@ -165,7 +165,11 @@ export function weekPagesOf(
     .flatMap(({ checkIns }) => checkIns)
     .find(({ id }) => id === best?.checkIn);
 
-  const done = count(squad, 'trainedDays');
+  // The squad's goal counts 训练, several on one day each (人均 N 次), not days.
+  const done = facts.members.reduce(
+    (sum, { checkIns }) => sum + trainings(checkIns, facts.week.days),
+    0,
+  );
   return {
     members,
     ...(eaters.length === 0

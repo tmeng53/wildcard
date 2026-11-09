@@ -4,9 +4,9 @@ import DesignSystemUI
 import MeDomain
 import SwiftUI
 
-/// A squadmate's player card, opened from their name on the home or in 小队设置 and shown with
-/// `cardPopup` in the middle of the screen: the same card as 我's, turning over to their badge
-/// board, whose badges open with no 装备. While it is read, or if it can't be, a solid card of the
+/// A player's card, opened from their name on the home or in 小队 and shown with `cardPopup` in
+/// the middle of the screen: the same card as 我's, turning over to their badge board, whose
+/// badges open with 装备 only on the member's own card. While it is read, or if it can't be, a solid card of the
 /// same size stands in.
 public struct SquadmateCardPopup: View {
     @Bindable private var model: SquadmateCardModel
@@ -28,10 +28,16 @@ public struct SquadmateCardPopup: View {
                 standIn { MeFailed { Task { await model.reload() } } }
             case .loaded(let face):
                 // The hint sits on the dim, so it is in the ink's own type colour.
-                PlayerCard(face: face, equip: nil, hint: .fgOnInk)
+                PlayerCard(face: face, equip: equip, hint: .fgOnInk)
             }
         }
         .task { await model.reload() }
+    }
+
+    /// The member's own card wears a title from a badge's card; a squadmate's shows no 装备.
+    private var equip: ((String) -> Void)? {
+        guard model.canEquip else { return nil }
+        return { title in Task { await model.equip(title) } }
     }
 
     private func standIn<Content: View>(_ content: () -> Content) -> some View {

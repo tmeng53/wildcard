@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <path d="M 45.6 133.2 C 43.2 74.4 196.8 74.4 194.4 133.2 Z" fill="#F4F6FA" stroke="#AFAEB9" stroke-width="2.4"/>
-  <path d="M 120 82 L 120 133.2 M 84 92 Q 92 112 93 133 M 156 92 Q 148 112 147 133" fill="none" stroke="#DDE1E7" stroke-width="2"/>
-  <circle cx="70" cy="108" r="1.5" fill="#D5D9E0"/>
-  <circle cx="76" cy="101" r="1.5" fill="#D5D9E0"/>
-  <circle cx="70" cy="116" r="1.5" fill="#D5D9E0"/>
-  <circle cx="170" cy="108" r="1.5" fill="#D5D9E0"/>
-  <circle cx="164" cy="101" r="1.5" fill="#D5D9E0"/>
-  <circle cx="170" cy="116" r="1.5" fill="#D5D9E0"/>
-  <circle cx="120" cy="82" r="4.6" fill="#DDE1E7"/>
-  <path d="M 50 130.4 Q 120 118.4 190 130.4 Q 197 139 180 141 Q 120 131.2 60 141 Q 43 139 50 130.4 Z" fill="#2D5BA0" stroke="#28467E" stroke-width="2"/>
-  <path d="M 111.4 98.4 L 115.6 102.6 L 111.4 106.8 M 117.4 98.4 L 121.6 102.6 L 117.4 106.8" fill="none" stroke="#2D5BA0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M 122.6 98.6 L 127.8 98.6" fill="none" stroke="#E65345" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M 45.6 133.2 C 43.2 56.76 196.8 56.76 194.4 133.2 Z" fill="#F4F6FA" stroke="#AFAEB9" stroke-width="2.4"/>
+  <path d="M 120 66.64 L 120 133.2 M 84 79.64 Q 92 105.64 93 132.94 M 156 79.64 Q 148 105.64 147 132.94" fill="none" stroke="#DDE1E7" stroke-width="2"/>
+  <circle cx="70" cy="100.44" r="1.5" fill="#D5D9E0"/>
+  <circle cx="76" cy="91.34" r="1.5" fill="#D5D9E0"/>
+  <circle cx="70" cy="110.84" r="1.5" fill="#D5D9E0"/>
+  <circle cx="170" cy="100.44" r="1.5" fill="#D5D9E0"/>
+  <circle cx="164" cy="91.34" r="1.5" fill="#D5D9E0"/>
+  <circle cx="170" cy="110.84" r="1.5" fill="#D5D9E0"/>
+  <circle cx="120" cy="66.64" r="4.6" fill="#DDE1E7"/>
+  <path d="M 50 129.56 Q 120 113.96 190 129.56 Q 197 139 180 141 Q 120 130.6 60 141 Q 43 139 50 129.56 Z" fill="#2D5BA0" stroke="#28467E" stroke-width="2"/>
+  <path d="M 111.4 87.96 L 115.6 93.42 L 111.4 98.88 M 117.4 87.96 L 121.6 93.42 L 117.4 98.88" fill="none" stroke="#2D5BA0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 122.6 88.22 L 127.8 88.22" fill="none" stroke="#E65345" stroke-width="2.2" stroke-linecap="round"/>
 </svg>

@@ -21,9 +21,10 @@ public struct APIScheduleBackend: ScheduleBackend {
             let thisWeek = LocalDay(at: now(), in: timeZone).weekStart
             let plan = try await api.weeklyPlanWire(weekStart: thisWeek)
             let firstWeek = try plan.firstWeek.map { text throws(APIError) in try day(text) } ?? thisWeek
+            let squadFirstWeek = try plan.squadFirstWeek.map { text throws(APIError) in try day(text) }
             return ScheduleProfile(
                 nickname: profile?.character?.nickname.text ?? "", timeZone: timeZone, firstWeek: firstWeek,
-                look: profile?.character?.look)
+                squadFirstWeek: squadFirstWeek, look: profile?.character?.look)
         }
     }
 

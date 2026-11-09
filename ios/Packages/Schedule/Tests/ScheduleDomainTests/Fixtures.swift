@@ -51,9 +51,11 @@ actor FakeBackend: ScheduleBackend {
     /// What the server keeps of a saved plan; the plan as sent when nil.
     var keeps: (@Sendable ([PlanDay]) -> [PlanDay])?
 
-    init(firstWeek: LocalDay = Fixtures.day("2026-09-07")) {
+    init(firstWeek: LocalDay = Fixtures.day("2026-09-07"), squadFirstWeek: LocalDay? = nil) {
         profileResult = .success(
-            ScheduleProfile(nickname: "Tracy", timeZone: Fixtures.losAngeles, firstWeek: firstWeek))
+            ScheduleProfile(
+                nickname: "Tracy", timeZone: Fixtures.losAngeles, firstWeek: firstWeek,
+                squadFirstWeek: squadFirstWeek))
     }
 
     func set(_ sheet: WeekSheet) { sheets[sheet.weekStart] = sheet }

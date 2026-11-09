@@ -53,7 +53,8 @@ public struct WeekGlance: Hashable, Sendable {
         }
     }
 
-    /// The week's number on the 出赛表, the week the member joined being 1 (W45).
+    /// The week's number on the 出赛表: the squad's week, its first being 1 (W3); the member's own
+    /// count outside a squad.
     public var number: Int
     /// Seven days, Monday first.
     public var days: [Day]
@@ -121,7 +122,8 @@ public struct MeOverview: Hashable, Sendable {
     public var stock: StreetStock?
     /// The unlocked pieces the member claimed (领取) into their wardrobe.
     public var claimed: Set<String>
-    /// The coach's gifts the member opened, in their wardrobe on no store's rack.
+    /// The coach's gifts the member opened and the team's pieces, in their wardrobe on no store's
+    /// rack.
     public var gifts: [String]
 
     public init(
@@ -200,7 +202,7 @@ public struct PlayerCardFace: Hashable, Sendable {
 /// A squadmate's 出赛表 for this week only, as the back of their card shows it: the plan's seven
 /// days, how each went, and the week's 饮食小目标.
 public struct MateSchedule: Hashable, Sendable {
-    /// The week's Monday, in their time zone.
+    /// The week's Monday on the squad's clock, the same week for every squadmate.
     public let weekStart: LocalDay
     /// Seven, Monday first.
     public let days: [PlanDay]
@@ -208,9 +210,10 @@ public struct MateSchedule: Hashable, Sendable {
     public let marks: [DayMark]
     /// Empty when they set none, and then the card says nothing about them.
     public let fuel: [FuelGoal]
-    /// The Monday of the week they joined, in their time zone; nil before they saved a profile.
+    /// The week the card counts as W1: their squad's first week (else, from older servers, the
+    /// week they joined); nil before they saved a profile.
     public let firstWeek: LocalDay?
-    /// Their today, in their time zone; nil from older servers.
+    /// Today on the squad's clock (on theirs from older servers); nil from older servers.
     public let today: LocalDay?
 
     public init(
@@ -229,8 +232,8 @@ public struct MateSchedule: Hashable, Sendable {
         return day.weekStart == weekStart ? day.weekday - 1 : nil
     }
 
-    /// The week's number on the card (W6), the week they joined being W1, as their own 出赛表
-    /// counts it on their calendar; W1 without it.
+    /// The week's number on the card (W3): the squad's week, the same on every squadmate's card
+    /// and 出赛表; W1 without it.
     public var weekNumber: Int {
         firstWeek.map { weekStart.weekNumber(since: $0) } ?? 1
     }

@@ -29,7 +29,7 @@ enum ScheduleLabels {
         "\(day.month)/\(day.day)"
     }
 
-    /// W3, the week the member joined being W1.
+    /// W3, the week the squad began being W1.
     static func week(_ number: Int) -> String {
         "W\(number)"
     }

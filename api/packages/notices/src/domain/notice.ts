@@ -87,7 +87,7 @@ export const NoticeSubjects = {
   }),
   /**
    * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
-   * suggested a higher goal, 人均 `daysPerMember` 天, which they may set on 小队.
+   * suggested a higher goal, 人均 `daysPerMember` 次, which they may set on 小队.
    */
   goalSuggestion: z.strictObject({
     version: z.literal(1),

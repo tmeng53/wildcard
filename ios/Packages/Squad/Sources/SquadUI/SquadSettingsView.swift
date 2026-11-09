@@ -281,7 +281,7 @@ extension SquadSettingsView {
     // MARK: 教练
 
     private var coachCard: some View {
-        CoachCard(hire: model.coach, week: model.coachWeek, canHire: model.canHireCoach, open: openCoach)
+        CoachCard(hire: model.coach, tenure: model.coachTenure, canHire: model.canHireCoach, open: openCoach)
     }
 
     /// Whether `change` is the one saving now.

@@ -34,9 +34,10 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
     }
 
-    /// 排下周 on the last page closes the story and opens 出赛表 in 我.
+    /// 排下周 on the last page closes the story and opens 出赛表 in 我: in the app on the sample
+    /// squad, from 动态's tile, since `-recap`'s plain page has no 出赛表 to open.
     func testPlanNextWeekOpensSchedule() {
-        let app = launch(language: "zh-Hans")
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
         tile.tap()

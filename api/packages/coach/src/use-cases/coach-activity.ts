@@ -185,11 +185,23 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
         });
       }
     },
+    // A line of the coach's under the post: its reply to the check-in, or an answer it gave
+    // there to a member's reply or @ (a member may reply to either).
     spoke: async ({ squads, checkIn, coach }) => {
-      const replies = await Promise.all(
-        squads.map((squad) => deps.store.replies(squad, [checkIn.toLowerCase()])),
+      const asked = [checkIn.toLowerCase()];
+      const said = await Promise.all(
+        squads.map(async (squad) => {
+          const [replies, answers] = await Promise.all([
+            deps.store.replies(squad, asked),
+            deps.store.answers(squad, asked),
+          ]);
+          return (
+            replies.some((reply) => reply.coach.id === coach && reply.text !== undefined) ||
+            answers.some((answer) => answer.coach.id === coach)
+          );
+        }),
       );
-      return replies.flat().some((reply) => reply.coach.id === coach && reply.text !== undefined);
+      return said.includes(true);
     },
   };
 }

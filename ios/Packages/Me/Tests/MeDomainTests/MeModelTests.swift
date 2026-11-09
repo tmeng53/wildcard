@@ -93,11 +93,11 @@ let sample = MeOverview(
     week: WeekCount(trainedDays: 3, plannedDays: 5), squadName: "周三不练腿俱乐部", dailyPushOn: true,
     squadPlace: 2)
 
-private let shield = TitleBadge(shape: "shield", colour: "track", glyph: "sun.max.fill")
-private let hexagon = TitleBadge(shape: "hexagon", colour: "gym", glyph: "snowflake")
+let shield = TitleBadge(shape: "shield", colour: "track", glyph: "sun.max.fill")
+let hexagon = TitleBadge(shape: "hexagon", colour: "gym", glyph: "snowflake")
 
 /// Two titles: 早八战神 won last week, 冷面杀手 twice before.
-private func board() throws -> TitleBoard {
+func board() throws -> TitleBoard {
     TitleBoard(
         titles: [
             BoardTitle(
@@ -113,7 +113,7 @@ private func board() throws -> TitleBoard {
 }
 
 /// A squadmate's card, read through the port.
-private struct FakeCards: SquadmateCards {
+struct FakeCards: SquadmateCards {
     let result: Result<PlayerCardFace, MeError>
 
     func card(of member: MemberID, in squad: SquadID) async throws(MeError) -> PlayerCardFace {
@@ -360,24 +360,5 @@ struct MeModelTests {
         #expect(card.squadName == "周三不练腿俱乐部")
         #expect(card.counts.trainedDays == 128)
         #expect(card.board.count == 3)
-    }
-
-    @Test func aSquadmatesCardLoadsWithTheirSquadsName() async throws {
-        let face = PlayerCardFace(
-            character: sample.character, number: try JerseyNumber(7), squadName: nil, joinedAt: nil,
-            counts: .zero, week: nil, board: try board())
-        let member = MemberID(UUID())
-        let squad = SquadID(UUID())
-        let loaded = SquadmateCardModel(
-            member: member, squad: squad, squadName: "毛头教队", cards: FakeCards(result: .success(face)))
-        await loaded.reload()
-        var named = face
-        named.squadName = "毛头教队"
-        #expect(loaded.load == .loaded(named))
-
-        let failed = SquadmateCardModel(
-            member: member, squad: squad, squadName: nil, cards: FakeCards(result: .failure(.unavailable)))
-        await failed.reload()
-        #expect(failed.load == .failed(.unavailable))
     }
 }

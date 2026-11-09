@@ -26,6 +26,13 @@ extension View {
             .toolbarVisibility(hidesTabBar ? .hidden : .automatic, for: .tabBar)
     }
 
+    /// On a pushed page whose content takes a swipe right of its own (the coach page's cards fly
+    /// into 以前): going back is the back button and the swipe from the screen's left edge only, so
+    /// a swipe across the page is the page's, never the system's back (Tracy, 2026-11-09).
+    public func backSwipeFromEdgeOnly() -> some View {
+        background { EdgeOnlyBackSwipe().frame(width: 0, height: 0).accessibilityHidden(true) }
+    }
+
     /// On a pushed page's scroll view: once its own heading has scrolled up under the bar, the
     /// heading shows small in the bar, as iOS's large titles do.
     public func barTitleOnScroll(_ title: Text) -> some View {
@@ -61,6 +68,24 @@ private struct BarTitleOnScroll: ViewModifier {
                         .accessibilityHidden(true)
                 }
             }
+    }
+}
+/// Turns off iOS 26's back swipe from anywhere on the page while the page is in view, leaving the
+/// edge swipe (`interactivePopGestureRecognizer`) as it is, and turns it on again as the page goes.
+private struct EdgeOnlyBackSwipe: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+    func updateUIViewController(_ controller: Controller, context: Context) {}
+
+    final class Controller: UIViewController {
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            navigationController?.interactiveContentPopGestureRecognizer?.isEnabled = false
+        }
+
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            navigationController?.interactiveContentPopGestureRecognizer?.isEnabled = true
+        }
     }
 }
 #endif

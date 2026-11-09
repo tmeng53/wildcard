@@ -88,7 +88,6 @@ private struct WardrobePiece: View {
     let model: CharacterEditorModel
     let slot: Slot
     let variant: String
-    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         VStack(spacing: Space.xxs) {
@@ -110,12 +109,7 @@ private struct WardrobePiece: View {
                         .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant).new")
                 }
             }
-            EditorNames.variant(variant, in: slot)
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .accessibilityHidden(true)
+            TileName(EditorNames.variant(variant, in: slot))
         }
     }
 

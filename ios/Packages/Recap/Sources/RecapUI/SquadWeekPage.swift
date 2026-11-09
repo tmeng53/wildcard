@@ -7,7 +7,7 @@ import RecapDomain
 import SportsUI
 import SwiftUI
 
-/// 全队运动总结: the squad's days trained, the week's fun numbers on up to six cards (训练最多的一天,
+/// 全队运动总结: the squad's 训练, the week's fun numbers on up to six cards (训练最多的一天,
 /// 坚持运动最久, 互相加油, 一共训练了, 吃得健康, 请假条) and the mix of sports it trained. Nothing staged
 /// but a quick pop-in.
 struct SquadWeekPage: View {
@@ -34,9 +34,10 @@ struct SquadWeekPage: View {
         VStack(alignment: .leading, spacing: Space.l) {
             PageTitle(label: Text("全队", bundle: .module), title: Text("运动总结", bundle: .module))
             HStack(alignment: .lastTextBaseline, spacing: Space.s) {
-                Score(count: week.trainedDays, size: .hero)
+                // The squad's 训练, several on one day each counting, as its goal counts them.
+                Score(count: page.story.ending?.done ?? 0, size: .hero)
                 VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text("天训练", bundle: .module).typeStyle(TypeRamp.headline)
+                    Text("次训练", bundle: .module).typeStyle(TypeRamp.headline)
                     Text("\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
