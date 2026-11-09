@@ -178,12 +178,12 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
         }
     }
 
-    /// Without the `struck` cells. 时长 always stays. Laps take the pool length with them.
+    /// Without the `struck` cells. Laps take the pool length with them.
     public func without(_ struck: Set<WorkoutCell>) -> WorkoutSummary {  // swiftlint:disable:this cyclomatic_complexity
         var kept = self
         for cell in struck {
             switch cell {
-            case .duration: break
+            case .duration: kept.durationSec = nil
             case .laps:
                 kept.laps = nil
                 kept.poolLengthM = nil
@@ -216,15 +216,19 @@ public struct WorkoutSeries: Hashable, Sendable, Codable {
     public let heartRate: [HeartRatePoint]?
     /// Each lap's time in seconds, in order, for a swim.
     public let laps: [Double]?
+    /// Where the poster's heart-rate zones start, which the chart marks; nil when their phone
+    /// didn't know their age, and with no heart rate.
+    public let zones: HeartRateZones?
 
-    public init(heartRate: [HeartRatePoint]? = nil, laps: [Double]? = nil) {
+    public init(heartRate: [HeartRatePoint]? = nil, laps: [Double]? = nil, zones: HeartRateZones? = nil) {
         self.heartRate = heartRate
         self.laps = laps
+        self.zones = heartRate == nil ? nil : zones
     }
 
     private enum CodingKeys: String, CodingKey {
         case heartRate = "hr"
-        case laps
+        case laps, zones
     }
 
     /// Laps make the chart when there are any; else heart rate, with two points at least.

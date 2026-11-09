@@ -105,6 +105,7 @@ export function mentioning(
 ): { readonly line: string; readonly mentions: readonly string[] } | string {
   const mentions: string[] = [];
   const prefix: string[] = [];
+  let said = line;
   for (const name of new Set(at.map((each) => each.trim()))) {
     const member = [...roster].find(([, shown]) => shown === name)?.[0];
     if (member !== undefined && member === to) continue;
@@ -118,9 +119,31 @@ export function mentioning(
         : `不能 @ ${name}；能 @ 的是：${known.join('、')}。`;
     }
     mentions.push(member);
-    if (!line.includes(`@${nickname}`)) prefix.push(`@${nickname} `);
+    if (said.includes(`@${nickname}`)) {
+      // 「@Miao」 isn't an @ of Mia: what a longer teammate's name goes on with is left as is.
+      const longer = week.members.flatMap(({ nickname: other }) =>
+        other !== undefined && other !== nickname && other.startsWith(nickname)
+          ? [other.slice(nickname.length)]
+          : [],
+      );
+      said = spacedAfter(said, { tag: `@${nickname}`, longer });
+    } else prefix.push(`@${nickname} `);
   }
-  return { line: prefix.join('') + line, mentions };
+  return { line: prefix.join('') + said, mentions };
+}
+
+/**
+ * `line` with a space after each `tag` not already followed by one, so the app sees where the
+ * name ends; never inside a longer name, which goes on with one of `longer`.
+ */
+function spacedAfter(
+  line: string,
+  { tag, longer }: { readonly tag: string; readonly longer: readonly string[] },
+): string {
+  const [first = '', ...rest] = line.split(tag);
+  const spaced = (after: string): boolean =>
+    after === '' || /^\s/u.test(after) || longer.some((more) => after.startsWith(more));
+  return rest.reduce((said, after) => `${said}${tag}${spaced(after) ? '' : ' '}${after}`, first);
 }
 
 /** The `at` parameter of a line the coach says under a check-in. */
@@ -519,7 +542,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),

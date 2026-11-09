@@ -82,69 +82,18 @@ struct HealthChips: View {
     private static let heart: Double = 11
 }
 
-/// A workout's numbers in place of the minutes, a cell each: a tap strikes one out of the post
-/// (dashed and crossed through) and another brings it back.
+/// A workout's numbers in place of the minutes, on the 成绩条 its post will wear: a tap strikes
+/// one out of the post and another brings it back.
 struct ScoreRow: View {
-    @Environment(\.sceneTheme) private var theme
     let model: ComposeModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("成绩", bundle: .module))
-            ScrollView(.horizontal) {
-                HStack(spacing: Space.xs) {
-                    ForEach(model.scoreCells) { cell in
-                        scoreCell(cell)
-                    }
-                }
-                .padding(.vertical, Space.xxs / 4)
+            SectionLabel(Text("数据", bundle: .module))
+            ScoreStrip(cells: model.scoreCells, activity: model.currentActivity, struck: model.struck) { cell in
+                model.toggle(cell)
             }
-            .scrollIndicators(.hidden)
-            .horizontalScrollFade()
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("compose.score")
     }
-
-    private func scoreCell(_ cell: ScoreCell) -> some View {
-        let isStruck = model.struck.contains(cell.cell)
-        let shape = RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous)
-        return Button {
-            model.toggle(cell.cell)
-        } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
-                    Text(verbatim: cell.value)
-                        .typeStyle(TypeRamp.scoreInline)
-                        .strikethrough(isStruck)
-                    if let unit = cell.unit {
-                        unit.text.typeStyle(TypeRamp.label)
-                    }
-                }
-                .foregroundStyle(Color(role: isStruck ? .fgSubtle : .fgDefault, in: theme))
-                cell.label.text
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: isStruck ? .fgSubtle : .fgMuted, in: theme))
-            }
-            .lineLimit(1)
-            .padding(.horizontal, Space.s)
-            .frame(height: Self.height)
-            .background(Color(role: .bgCanvas, in: theme), in: shape)
-            .overlay {
-                shape.strokeBorder(
-                    Color(role: .borderDefault, in: theme),
-                    style: StrokeStyle(lineWidth: 1, dash: isStruck ? [4, 3] : []))
-            }
-            .contentShape(shape)
-        }
-        .buttonStyle(PressableButtonStyle())
-        .haptic(.pick, trigger: isStruck)
-        .accessibilityElement(children: .combine)
-        .accessibilityValue(isStruck ? Text("不发", bundle: .module) : Text("发", bundle: .module))
-        .accessibilityHint(isStruck ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
-        .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
-    }
-
-    private static let height: Double = 56
 }
 #endif

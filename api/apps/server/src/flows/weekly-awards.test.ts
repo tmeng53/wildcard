@@ -65,6 +65,7 @@ import {
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   ignoredNotices,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
@@ -198,6 +199,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     weeklyAwards: { awards, clock },
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
+    rewards: noRewards,
     weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,

@@ -8,10 +8,29 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
     /// Its numbers, series and route; no tile position yet: the compose page places the tile.
     public let workout: Workout
     public let activity: Activity?
+    /// The member's latest resting heart rate in Health when the workout has a heart-rate curve;
+    /// it stays on the phone and only places the chart's zones.
+    public let restingBpm: Int?
 
-    public init(workout: Workout, activity: Activity?) {
+    public init(workout: Workout, activity: Activity?, restingBpm: Int? = nil) {
         self.workout = workout
         self.activity = activity
+        self.restingBpm = restingBpm
+    }
+
+    /// The workout with its heart-rate zones placed for a member born on `birthday`, as of the
+    /// day it started; unchanged without a birthday or a heart-rate curve. Only the zones are
+    /// posted, never the birthday or the resting heart rate.
+    public func withZones(birthday: DateComponents?, calendar: Calendar) -> Workout {
+        guard let series = workout.series, let curve = series.heartRate, let birthday,
+            let born = calendar.date(from: birthday),
+            let age = calendar.dateComponents([.year], from: born, to: workout.startedAt.date).year,
+            let zones = HeartRateZones(age: age, restingBpm: restingBpm)
+        else { return workout }
+        return Workout(
+            source: workout.source, startedAt: workout.startedAt, endedAt: workout.endedAt, summary: workout.summary,
+            series: WorkoutSeries(heartRate: curve, laps: series.laps, zones: zones), route: workout.route,
+            tilePosition: workout.tilePosition, chartPosition: workout.chartPosition)
     }
 
     public var id: WorkoutSource { workout.source }
@@ -26,7 +45,7 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
 }
 
 /// Which numbers a post from Health carries unless the member strikes them (设置 › Apple 健康,
-/// 「发动态时显示」): all on until switched off. 时长 always goes. Kept on the phone, with a
+/// 「发动态时显示」): all on until switched off. 时长 starts kept, and is struck per post. Kept on the phone, with a
 /// `version` as stored JSON.
 public struct HealthSharing: Hashable, Sendable, Codable {
     public var version = 1

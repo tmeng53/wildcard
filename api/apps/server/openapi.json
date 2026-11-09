@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -183,6 +183,15 @@
             "minimum": 1,
             "maximum": 7,
             "description": "The goal suggested, 人均 N 次 (`goalSuggestion`)."
+          },
+          "feedback": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The feedback we used (`thanks`): the id the app sent it with."
+          },
+          "adopted": {
+            "type": "string",
+            "description": "What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -875,6 +884,12 @@
                 "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
                 "example": 22
               },
+              "birthday": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.",
+                "example": "1996-04-18"
+              },
               "joinedAt": {
                 "type": "string",
                 "format": "date-time",
@@ -1000,6 +1015,28 @@
         "required": [
           "version",
           "timeZone"
+        ],
+        "additionalProperties": false
+      },
+      "Birthday": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.",
+            "example": "1996-04-18"
+          }
+        },
+        "required": [
+          "version",
+          "birthday"
         ],
         "additionalProperties": false
       },
@@ -1434,6 +1471,9 @@
             "minItems": 1,
             "maxItems": 1000,
             "description": "Each lap’s time in seconds, in order."
+          },
+          "zones": {
+            "$ref": "#/components/schemas/HeartRateZones"
           }
         },
         "additionalProperties": false,
@@ -1459,6 +1499,39 @@
           "bpm"
         ],
         "additionalProperties": false
+      },
+      "HeartRateZones": {
+        "type": "object",
+        "properties": {
+          "light": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "moderate": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "vigorous": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "peak": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          }
+        },
+        "required": [
+          "light",
+          "moderate",
+          "vigorous",
+          "peak"
+        ],
+        "additionalProperties": false,
+        "description": "Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`."
       },
       "RoutePoint": {
         "type": "object",
@@ -4693,6 +4766,14 @@
             ],
             "description": "Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone."
+          },
           "at": {
             "type": "string",
             "format": "date-time"
@@ -4733,6 +4814,14 @@
             "type": "string",
             "maxLength": 100,
             "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone."
           },
           "at": {
             "type": "string",
@@ -6538,6 +6627,13 @@
               1
             ]
           },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -6556,7 +6652,52 @@
         },
         "required": [
           "version",
+          "teamBadges",
           "titles"
+        ],
+        "additionalProperties": false
+      },
+      "TeamBadge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The badge’s id.",
+            "example": "bug-hunter"
+          },
+          "name": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "glyph": {
+            "type": "string",
+            "description": "The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.",
+            "example": "ladybug.fill"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$",
+            "description": "Its colour, as #RRGGBB.",
+            "example": "#E65345"
+          },
+          "times": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many times the member got it: ×N."
+          },
+          "latestAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they got it the last time.",
+            "example": "2026-11-09T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "glyph",
+          "tone",
+          "times",
+          "latestAt"
         ],
         "additionalProperties": false
       },
@@ -6741,6 +6882,13 @@
             "additionalProperties": false,
             "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
           },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -6761,6 +6909,7 @@
           "healthyMeals",
           "cheatMeals",
           "disclaimers",
+          "teamBadges",
           "titles"
         ],
         "additionalProperties": false
@@ -6784,6 +6933,26 @@
           "customSport": {
             "type": "string",
             "description": "The custom sport’s name, for `sport: \"custom\"`."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string",
+                  "description": "The custom sport’s name, for `sport: \"custom\"`."
+                }
+              },
+              "required": [
+                "sport"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers."
           }
         },
         "required": [
@@ -6962,6 +7131,13 @@
             },
             "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
           },
+          "teamPieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamPiece"
+            },
+            "description": "Every piece the Wildcard team gave the member (for feedback we used, say), the earliest first. No store sells these, and no coach gives them: they belong in the member’s wardrobe, worn without 领取."
+          },
           "shelf": {
             "$ref": "#/components/schemas/Shelf"
           }
@@ -6973,6 +7149,7 @@
           "lockedPieces",
           "claimed",
           "gifts",
+          "teamPieces",
           "shelf"
         ],
         "additionalProperties": false
@@ -7103,6 +7280,34 @@
           "id",
           "sports",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "TeamPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "thanks-bulb"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the team gave it.",
+            "example": "2026-11-09T18:30:00.000Z"
+          },
+          "event": {
+            "type": "string",
+            "description": "What gave it: `bug-adopted` (a bug the member reported that we confirmed) or `idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the team gave by hand.",
+            "example": "bug-adopted"
+          }
+        },
+        "required": [
+          "id",
+          "givenAt"
         ],
         "additionalProperties": false
       },
@@ -7479,6 +7684,125 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/birthday": {
+      "put": {
+        "operationId": "putMyBirthday",
+        "summary": "Save the signed-in member’s birthday",
+        "description": "Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Birthday"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Birthday"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid date, one before 1900 or after today, or no profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMyBirthday",
+        "summary": "Remove the signed-in member’s birthday",
+        "description": "Forgets the birthday on the profile, logged with it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "No profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

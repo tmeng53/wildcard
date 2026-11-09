@@ -112,7 +112,8 @@ public struct ScheduleView: View {
         .task { await model.load() }
         // Today's sport changed (a 练了 read in, today's plan saved): the character follows it.
         .onChange(of: store.todaysActivity) { model.followToday() }
-        .onChange(of: theme, initial: true) { _, scene in model.train(on: scene) }
+        // The character plays the sport of the scene the poster is drawn in.
+        .onChange(of: shownContent?.scene(now: theme) ?? theme, initial: true) { _, scene in model.train(on: scene) }
         .sheet(isPresented: $picksAll) {
             SportPicker(selected: selectedActivity, recent: recentActivities) { activity in
                 picksAll = false
@@ -170,6 +171,7 @@ public struct ScheduleView: View {
                 onTapFuel: model.toggleFuelPanel
             )
             .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
+            .environment(\.sceneTheme, content.scene(now: theme))
         }
         .keyframeAnimator(initialValue: 0.0, trigger: flashes) { content, flash in
             content.overlay { Color(role: .bgCanvas, in: theme).opacity(flash).allowsHitTesting(false) }
@@ -185,7 +187,8 @@ public struct ScheduleView: View {
     @MainActor func save() {
         guard let sheet = store.sheet else { return }
         let still = SchedulePoster(content: content(sheet).forSaving, player: model.player, still: model.keyPose)
-        model.sharePoster { SchedulePoster.picture(of: still, theme: theme, locale: locale) }
+        let scene = content(sheet).scene(now: theme)
+        model.sharePoster { SchedulePoster.picture(of: still, theme: scene, locale: locale) }
     }
 
     // MARK: Under the poster

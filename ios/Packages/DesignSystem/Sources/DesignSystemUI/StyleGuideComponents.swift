@@ -321,8 +321,10 @@ struct StatusSection: View {
             today: 4,
             details: [
                 WeekDayDetail(
-                    line: String(localized: "跑步 32 分钟", bundle: .module.inAppLanguage), isPlan: false,
-                    meals: .init(healthy: 1, cheat: 0)),
+                    lines: [
+                        String(localized: "跑步 32 分钟", bundle: .module.inAppLanguage),
+                        String(localized: "力量训练 20 分钟", bundle: .module.inAppLanguage),
+                    ], isPlan: false, meals: .init(healthy: 1, cheat: 0)),
                 WeekDayDetail(
                     line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false,
                     meals: .init(healthy: 2, cheat: 1)),

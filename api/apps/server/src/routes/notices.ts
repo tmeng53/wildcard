@@ -22,7 +22,7 @@ const DEFAULT_PAGE = 30;
 const WireNoticeId = z.int().positive();
 
 /** Words in each language the app speaks; the app shows the one picked in the app. */
-const LocalizedWords = z
+export const LocalizedWords = z
   .strictObject({
     zhHans: z.string(),
     en: z.string(),
@@ -43,9 +43,10 @@ export const NoticeEntry = z
         'caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that ' +
         'left wrote the next a letter), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
-        '`broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad ' +
+        '`broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
-        'one). ' +
+        'one) or `thanks` (we used feedback the caller sent, so they got its thank-you ' +
+        'rewards). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -141,6 +142,17 @@ export const NoticeEntry = z
       .max(7)
       .optional()
       .meta({ description: 'The goal suggested, 人均 N 次 (`goalSuggestion`).' }),
+    feedback: z.uuid().optional().meta({
+      description: 'The feedback we used (`thanks`): the id the app sent it with.',
+    }),
+    adopted: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that ' +
+          'shipped). Skip another.',
+      }),
     title: LocalizedWords.optional(),
     body: LocalizedWords.optional(),
     action: z
@@ -429,6 +441,8 @@ function wireNotice(
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
     case 'comment':
       return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
+    case 'thanks':
+      return { ...common, feedback: notice.subject.feedback, adopted: notice.subject.adopted };
     case 'goalSuggestion':
       return {
         ...common,

@@ -74,6 +74,15 @@ export const ENDING_HEADLINE_MAX = 4;
 export const ENDING_LINE_MAX = 24;
 
 /**
+ * A field's description for a sentence of at most `max` characters. Structured output cuts a
+ * string off at its limit mid-word, so the model must hear the limit and finish inside it,
+ * whatever the prompt says.
+ */
+function completeSentence(what: string, max: number): string {
+  return `${what}: one complete sentence of at most ${String(max)} characters, ending within them.`;
+}
+
+/**
  * The model's reply for `members` members, held to this shape by structured output: each
  * member's titles under their key (A, B, C…), or null for a member it gives none. No other key
  * is allowed, so a reply can't name anyone twice or name someone who isn't there, whatever the
@@ -90,8 +99,16 @@ export function modelReplyFor(
   const titles = z
     .array(
       z.strictObject({
-        title: z.string().min(1).max(TITLE_MAX),
-        speech: z.string().min(1).max(SPEECH_MAX),
+        title: z
+          .string()
+          .min(1)
+          .max(TITLE_MAX)
+          .meta({ description: `The title (头衔): at most ${String(TITLE_MAX)} characters.` }),
+        speech: z
+          .string()
+          .min(1)
+          .max(SPEECH_MAX)
+          .meta({ description: completeSentence('Its award line (颁奖词)', SPEECH_MAX) }),
         move: z.enum(moves),
         badge: badgeReplyFor(catalog),
       }),
@@ -110,8 +127,16 @@ export function modelReplyFor(
     }),
     ending: z
       .strictObject({
-        headline: z.string().min(1).max(ENDING_HEADLINE_MAX),
-        line: z.string().min(1).max(ENDING_LINE_MAX),
+        headline: z
+          .string()
+          .min(1)
+          .max(ENDING_HEADLINE_MAX)
+          .meta({ description: `At most ${String(ENDING_HEADLINE_MAX)} characters.` }),
+        line: z
+          .string()
+          .min(1)
+          .max(ENDING_LINE_MAX)
+          .meta({ description: completeSentence('The line', ENDING_LINE_MAX) }),
       })
       .meta({
         description:

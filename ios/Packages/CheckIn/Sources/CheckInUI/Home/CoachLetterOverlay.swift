@@ -53,7 +53,7 @@ public struct CoachLetterSheet: View {
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
             }
-            Text("\(letter.recipient.name)：", bundle: .module)
+            Text("各位和\(letter.recipient.name)：", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.s)
@@ -355,7 +355,7 @@ private struct EnvelopeFront: View {
                     path.addLine(to: CGPoint(x: size.width - 1, y: size.height - 1))
                 }
                 .stroke(Color(role: .bgBrandLamp, in: theme), lineWidth: Sizing.selectionStroke)
-                Text("给 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
+                Text("给小队和 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme).opacity(0.9))
                     .lineLimit(1)

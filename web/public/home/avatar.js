@@ -10,7 +10,7 @@
     easeInOut: [0.42, 0, 0.58, 1],
     backOut: [0.34, 1.56, 0.64, 1],
   };
-  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity', 'bend'];
+  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity', 'bend', 'front'];
   // An arm the clip swings without bending trails it a moment behind (Figure's FollowThrough).
   const LAG = 0.09;
   const GIVE = 0.9;
@@ -63,6 +63,7 @@
       scaleY: 1,
       opacity: p.opacity,
       bend: 0,
+      front: 0,
     }));
 
   function pose(clip, time) {
@@ -128,25 +129,22 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
-  // How much of a part that gives way to an arm shows with the arm turned by `degrees`.
-  function gives({ start, end }, degrees) {
-    const turned = Math.abs(degrees);
-    if (end <= start) return turned < end ? 1 : 0;
-    const f = Math.max(0, Math.min(1, (turned - start) / (end - start)));
-    return 1 - f * f * (3 - 2 * f);
-  }
+  // An arm's front copy (the part a twin names) shows only while its `front` is 1; every other part,
+  // the copy behind the body too, always shows (Figure.depth). The head covers both.
+  const FRONT = new Set(PARTS.filter((part) => part.twin).map((part) => part.twin));
+  const depth = (part, q) => (FRONT.has(part.id) && !(q.front >= 0.5) ? 0 : 1);
 
   function layout(poses) {
     const matrices = new Array(PARTS.length);
     const opacities = new Array(PARTS.length);
+    // How opaque each part's children are drawn: its own opacity and its parents'.
+    const carried = new Array(PARTS.length);
     // What each part's children move with: past the elbow for a bent arm.
     const carriers = new Array(PARTS.length);
     const place = (i) => {
       if (matrices[i]) return;
       const part = PARTS[i];
       const q = poses[i];
-      // A part that gives way to an arm (a bichon's chin fluff) fades as the arm rises.
-      const shown = part.hides ? gives(part.hides, poses[INDEX[part.hides.part]].rotation) : 1;
       const [px, py] = part.pivot;
       const r = (q.rotation * Math.PI) / 180;
       let m = [1, 0, 0, 1, -px, -py];
@@ -157,11 +155,12 @@
         const j = INDEX[part.parent];
         place(j);
         matrices[i] = multiply(carriers[j], m);
-        opacities[i] = q.opacity * shown * opacities[j];
+        carried[i] = q.opacity * carried[j];
       } else {
         matrices[i] = m;
-        opacities[i] = q.opacity * shown;
+        carried[i] = q.opacity;
       }
+      opacities[i] = carried[i] * depth(part, q);
       carriers[i] =
         part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];
     };
@@ -313,7 +312,9 @@
 
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    const posed = leveled(poses, member.level);
+    // A twin (an arm drawn again behind the body) moves as its twin does.
+    const twinned = poses.map((q, i) => (PARTS[i].twin ? poses[INDEX[PARTS[i].twin]] : q));
+    const posed = leveled(twinned, member.level);
     const { matrices, opacities } = layout(posed);
     let svg = '';
     PARTS.forEach((part, i) => {
@@ -327,5 +328,5 @@
     return svg;
   }
 
-  window.WildcardAvatar = { pose, perform, figure, bent };
+  window.WildcardAvatar = { pose, perform, figure, bent, layout };
 })();

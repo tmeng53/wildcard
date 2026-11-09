@@ -108,6 +108,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
+            feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) }  // @ tag → card
             today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
@@ -152,6 +153,7 @@ struct MainTabs: View {
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
+        .onChange(of: recap.plans) { planNextWeek() }
         .fullScreenCover(
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {

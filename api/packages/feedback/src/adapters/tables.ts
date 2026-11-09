@@ -33,6 +33,13 @@ export interface Feedback {
   screenshots: Generated<string[]>;
 }
 
+export interface FeedbackAdoptions {
+  admin_id: string;
+  at: Generated<Timestamp>;
+  feedback_id: string;
+  kind: string;
+}
+
 export interface FeedbackIssues {
   at: Timestamp;
   feedback_id: string;
@@ -42,5 +49,6 @@ export interface FeedbackIssues {
 
 export interface DB {
   feedback: Feedback;
+  feedback_adoptions: FeedbackAdoptions;
   feedback_issues: FeedbackIssues;
 }

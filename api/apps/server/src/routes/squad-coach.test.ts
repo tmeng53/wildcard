@@ -53,6 +53,7 @@ import {
   unusedUnlocks,
   ignoredNotices,
   unusedFeedback,
+  noRewards,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
 
@@ -115,6 +116,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
@@ -351,8 +353,13 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     const asked = randomUUID();
     await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
       values (${asked}, ${run}, ${mate.userId}, '在呢', 'xiaohun', now())`.execute(db);
-    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
-      values (${squad}, ${run}, ${asked}, 'xiaohun', '那就再跑一圈')`.execute(db);
+    // Its answer @s the captain, so the app shows the tag that opens their card.
+    await sql`with answer as (
+        insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+        values (${squad}, ${run}, ${asked}, 'xiaohun', '@队长 那就再跑一圈') returning id
+      )
+      insert into public.coach_answer_mentions (answer_id, member_id, position)
+      select id, ${captain.userId}, 0 from answer`.execute(db);
 
     const read = await call({
       method: 'GET',
@@ -389,7 +396,14 @@ describe('GET /squads/{squadId}/coach/activity', () => {
         { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },
       ],
       answers: [
-        { checkInId: run, commentId: asked, coach: speaker, text: '那就再跑一圈', at: 'at' },
+        {
+          checkInId: run,
+          commentId: asked,
+          coach: speaker,
+          text: '@队长 那就再跑一圈',
+          mentions: [captain.userId],
+          at: 'at',
+        },
       ],
     });
 
@@ -661,11 +675,15 @@ describe('/squads/{squadId}/coach/cards', () => {
     await sql`insert into public.coach_member_note_deliveries (note_id) values (${note})`.execute(
       db,
     );
-    await sql`insert into public.gift_pieces (piece_id) values ('cards-towel') on conflict do nothing`.execute(
+    await sql`insert into public.rewards (kind, id) values ('piece', 'cards-towel') on conflict do nothing`.execute(
       db,
     );
-    await sql`insert into public.coach_gifts (member_id, piece_id, coach_id, squad_id, line)
-      values (${mate.userId}, 'cards-towel', 'xiaohun', ${squad}, '练完擦汗')`.execute(db);
+    await sql`insert into public.reward_triggers (reward_kind, reward_id, kind)
+      values ('piece', 'cards-towel', 'coach') on conflict do nothing`.execute(db);
+    await sql`insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, line, given_by, at)
+      values (${mate.userId}, 'piece', 'cards-towel', 'coach', 'xiaohun', ${squad}, '练完擦汗', 'coach', now())`.execute(
+      db,
+    );
     const mine = await checkIn(mate.token, squad);
     const theirs = await checkIn(captain.token, squad);
     await coachSaid(squad, { checkIn: mine, text: '配速比上周快了', emoji: null });

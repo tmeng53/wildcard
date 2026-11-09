@@ -41,6 +41,9 @@ let package = Package(
         // The in-memory squad and the String Catalog read as a file; the screen needs a simulator.
         .testTarget(
             name: "ScheduleUITests",
-            dependencies: ["ScheduleUI", "ScheduleDomain", .product(name: "Contracts", package: "Contracts")]),
+            dependencies: [
+                "ScheduleUI", "ScheduleDomain", .product(name: "Contracts", package: "Contracts"),
+                .product(name: "DesignSystem", package: "DesignSystem"),
+            ]),
     ]
 )
