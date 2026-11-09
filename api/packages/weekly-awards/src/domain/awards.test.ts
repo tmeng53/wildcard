@@ -61,6 +61,16 @@ describe('modelReply', () => {
     expect(schema).toContain('"maxLength":6');
     expect(schema).toContain('"maxLength":24');
     expect(schema).toContain('"maxItems":3');
+    // Structured output cuts a string at its limit mid-word, so the limits are also in words
+    // the model reads, whatever the prompt in the settings says.
+    expect(schema).toContain('at most 6 characters');
+    expect(schema).toContain(
+      'Its award line (颁奖词): one complete sentence of at most 24 characters, ending within them.',
+    );
+    expect(schema).toContain(
+      'The line: one complete sentence of at most 24 characters, ending within them.',
+    );
+    expect(schema).toContain('At most 4 characters.');
     const ending = { headline: '稳了', line: '全队超额完成。' };
     const titled = (title: string, speech = '周三下着雨还去跑了。') => ({
       version: 1,

@@ -23,7 +23,7 @@ public struct FlippingCard<Front: View, Back: View>: View {
     /// - Parameters:
     ///   - hint: the colour of the 轻点翻面 line under the card: muted on a page, on-ink over a
     ///     dim; nil leaves the line out.
-    ///   - fillsWidth: spans the width it is given at the card's proportions, instead of its own.
+    ///   - fillsWidth: spans the width it is given at the page proportions, instead of its own size.
     ///   - identifier: the front's accessibility identifier; the back's is it with `Back`.
     public init(
         hint: ColorRole? = .fgMuted, fillsWidth: Bool = false, identifier: String,

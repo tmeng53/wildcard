@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -190,6 +190,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/daysPerMember`.
             public var daysPerMember: Swift.Int?
+            /// The feedback we used (`thanks`): the id the app sent it with.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/feedback`.
+            public var feedback: Swift.String?
+            /// What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/adopted`.
+            public var adopted: Swift.String?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -301,7 +309,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -325,6 +333,8 @@ extension Components {
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
             ///   - weeks: How many weeks in a row the squad trained over its goal (`goalSuggestion`).
             ///   - daysPerMember: The goal suggested, 人均 N 天 (`goalSuggestion`).
+            ///   - feedback: The feedback we used (`thanks`): the id the app sent it with.
+            ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -357,6 +367,8 @@ extension Components {
                 broadcast: Swift.String? = nil,
                 weeks: Swift.Int? = nil,
                 daysPerMember: Swift.Int? = nil,
+                feedback: Swift.String? = nil,
+                adopted: Swift.String? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -389,6 +401,8 @@ extension Components {
                 self.broadcast = broadcast
                 self.weeks = weeks
                 self.daysPerMember = daysPerMember
+                self.feedback = feedback
+                self.adopted = adopted
                 self.title = title
                 self.body = body
                 self.action = action
@@ -422,6 +436,8 @@ extension Components {
                 case broadcast
                 case weeks
                 case daysPerMember
+                case feedback
+                case adopted
                 case title
                 case body
                 case action
@@ -2084,6 +2100,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/jerseyNumber`.
                 public var jerseyNumber: Swift.Int?
+                /// The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/birthday`.
+                public var birthday: Swift.String?
                 /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
@@ -2095,18 +2115,21 @@ extension Components {
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
                 ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///   - birthday: The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.
                 ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
                     character: Components.Schemas.Character? = nil,
                     jerseyNumber: Swift.Int? = nil,
+                    birthday: Swift.String? = nil,
                     joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
                     self.jerseyNumber = jerseyNumber
+                    self.birthday = birthday
                     self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
@@ -2114,6 +2137,7 @@ extension Components {
                     case catchphrase
                     case character
                     case jerseyNumber
+                    case birthday
                     case joinedAt
                 }
             }
@@ -2303,6 +2327,35 @@ extension Components {
                 case catchphrase
                 case character
                 case jerseyNumber
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Birthday`.
+        public struct Birthday: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Birthday/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Birthday/version`.
+            public var version: Components.Schemas.Birthday.VersionPayload
+            /// The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Birthday/birthday`.
+            public var birthday: Swift.String
+            /// Creates a new `Birthday`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - birthday: The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.
+            public init(
+                version: Components.Schemas.Birthday.VersionPayload,
+                birthday: Swift.String
+            ) {
+                self.version = version
+                self.birthday = birthday
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case birthday
             }
         }
         /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
@@ -2876,21 +2929,27 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutSeries/laps`.
             public var laps: [Swift.Double]?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSeries/zones`.
+            public var zones: Components.Schemas.HeartRateZones?
             /// Creates a new `WorkoutSeries`.
             ///
             /// - Parameters:
             ///   - hr: Heart rate, earliest first, thinned on the phone to about 120 points.
             ///   - laps: Each lap’s time in seconds, in order.
+            ///   - zones:
             public init(
                 hr: [Components.Schemas.HeartRatePoint]? = nil,
-                laps: [Swift.Double]? = nil
+                laps: [Swift.Double]? = nil,
+                zones: Components.Schemas.HeartRateZones? = nil
             ) {
                 self.hr = hr
                 self.laps = laps
+                self.zones = zones
             }
             public enum CodingKeys: String, CodingKey {
                 case hr
                 case laps
+                case zones
             }
         }
         /// - Remark: Generated from `#/components/schemas/HeartRatePoint`.
@@ -2916,6 +2975,43 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case t
                 case bpm
+            }
+        }
+        /// Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/HeartRateZones`.
+        public struct HeartRateZones: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/light`.
+            public var light: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/moderate`.
+            public var moderate: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/vigorous`.
+            public var vigorous: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/peak`.
+            public var peak: Swift.Int
+            /// Creates a new `HeartRateZones`.
+            ///
+            /// - Parameters:
+            ///   - light:
+            ///   - moderate:
+            ///   - vigorous:
+            ///   - peak:
+            public init(
+                light: Swift.Int,
+                moderate: Swift.Int,
+                vigorous: Swift.Int,
+                peak: Swift.Int
+            ) {
+                self.light = light
+                self.moderate = moderate
+                self.vigorous = vigorous
+                self.peak = peak
+            }
+            public enum CodingKeys: String, CodingKey {
+                case light
+                case moderate
+                case vigorous
+                case peak
             }
         }
         /// - Remark: Generated from `#/components/schemas/RoutePoint`.
@@ -7341,6 +7437,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
             public var emoji: Swift.String?
+            /// Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachReply/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachReply`.
@@ -7350,18 +7450,21 @@ extension Components {
             ///   - coach:
             ///   - text: Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///   - mentions: Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 coach: Components.Schemas.CoachReply.CoachPayload,
                 text: Swift.String? = nil,
                 emoji: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.coach = coach
                 self.text = text
                 self.emoji = emoji
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7369,6 +7472,7 @@ extension Components {
                 case coach
                 case text
                 case emoji
+                case mentions
                 case at
             }
         }
@@ -7415,6 +7519,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/text`.
             public var text: Swift.String
+            /// Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachAnswer`.
@@ -7424,18 +7532,21 @@ extension Components {
             ///   - commentId: The member’s reply to the coach (`replyToCoach`) this answers.
             ///   - coach:
             ///   - text: Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 commentId: Swift.String,
                 coach: Components.Schemas.CoachAnswer.CoachPayload,
                 text: Swift.String,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.commentId = commentId
                 self.coach = coach
                 self.text = text
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7443,6 +7554,7 @@ extension Components {
                 case commentId
                 case coach
                 case text
+                case mentions
                 case at
             }
         }
@@ -10085,6 +10197,10 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/TitleBoard/version`.
             public var version: Components.Schemas.TitleBoard.VersionPayload
+            /// The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/teamBadges`.
+            public var teamBadges: [Components.Schemas.TeamBadge]
             /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBoard/titles`.
@@ -10101,25 +10217,86 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
+            ///   - teamBadges: The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
             ///   - equipped: The title the member chose to wear. Left out until they choose one.
             public init(
                 version: Components.Schemas.TitleBoard.VersionPayload,
+                teamBadges: [Components.Schemas.TeamBadge],
                 titles: [Components.Schemas.BoardTitle],
                 worn: Swift.String? = nil,
                 equipped: Swift.String? = nil
             ) {
                 self.version = version
+                self.teamBadges = teamBadges
                 self.titles = titles
                 self.worn = worn
                 self.equipped = equipped
             }
             public enum CodingKeys: String, CodingKey {
                 case version
+                case teamBadges
                 case titles
                 case worn
                 case equipped
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TeamBadge`.
+        public struct TeamBadge: Codable, Hashable, Sendable {
+            /// The badge’s id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/name`.
+            public var name: Components.Schemas.LocalizedWords
+            /// The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/glyph`.
+            public var glyph: Swift.String
+            /// Its colour, as #RRGGBB.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/tone`.
+            public var tone: Swift.String
+            /// How many times the member got it: ×N.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/times`.
+            public var times: Swift.Int
+            /// When they got it the last time.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/latestAt`.
+            public var latestAt: Foundation.Date
+            /// Creates a new `TeamBadge`.
+            ///
+            /// - Parameters:
+            ///   - id: The badge’s id.
+            ///   - name:
+            ///   - glyph: The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
+            ///   - tone: Its colour, as #RRGGBB.
+            ///   - times: How many times the member got it: ×N.
+            ///   - latestAt: When they got it the last time.
+            public init(
+                id: Swift.String,
+                name: Components.Schemas.LocalizedWords,
+                glyph: Swift.String,
+                tone: Swift.String,
+                times: Swift.Int,
+                latestAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.glyph = glyph
+                self.tone = tone
+                self.times = times
+                self.latestAt = latestAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case glyph
+                case tone
+                case times
+                case latestAt
             }
         }
         /// - Remark: Generated from `#/components/schemas/BoardTitle`.
@@ -10342,6 +10519,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/week`.
             public var week: Components.Schemas.PlayerCard.WeekPayload?
+            /// The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/teamBadges`.
+            public var teamBadges: [Components.Schemas.TeamBadge]
             /// Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/titles`.
@@ -10365,6 +10546,7 @@ extension Components {
             ///   - disclaimers: 今日请假条 check-ins taken as leave; a 休息 (`restDay`) is not one.
             ///   - topSport:
             ///   - week: Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week.
+            ///   - teamBadges: The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
             ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
             public init(
@@ -10380,6 +10562,7 @@ extension Components {
                 disclaimers: Swift.Int,
                 topSport: Components.Schemas.TopSport? = nil,
                 week: Components.Schemas.PlayerCard.WeekPayload? = nil,
+                teamBadges: [Components.Schemas.TeamBadge],
                 titles: [Components.Schemas.BoardTitle],
                 worn: Swift.String? = nil
             ) {
@@ -10395,6 +10578,7 @@ extension Components {
                 self.disclaimers = disclaimers
                 self.topSport = topSport
                 self.week = week
+                self.teamBadges = teamBadges
                 self.titles = titles
                 self.worn = worn
             }
@@ -10411,6 +10595,7 @@ extension Components {
                 case disclaimers
                 case topSport
                 case week
+                case teamBadges
                 case titles
                 case worn
             }
@@ -10688,6 +10873,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/gifts`.
             public var gifts: [Components.Schemas.GiftedPiece]
+            /// Every piece the Wildcard team gave the member (for feedback we used, say), the earliest first. No store sells these, and no coach gives them: they belong in the member’s wardrobe, worn without 领取.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MyUnlocks/teamPieces`.
+            public var teamPieces: [Components.Schemas.TeamPiece]
             /// - Remark: Generated from `#/components/schemas/MyUnlocks/shelf`.
             public var shelf: Components.Schemas.Shelf
             /// Creates a new `MyUnlocks`.
@@ -10699,6 +10888,7 @@ extension Components {
             ///   - lockedPieces: Every piece with a rule the member hasn’t unlocked yet, and how far it is.
             ///   - claimed: Every piece the member claimed (领取) into their wardrobe, the earliest first. An unlocked piece waits in its store, marked new, until claimed.
             ///   - gifts: Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe.
+            ///   - teamPieces: Every piece the Wildcard team gave the member (for feedback we used, say), the earliest first. No store sells these, and no coach gives them: they belong in the member’s wardrobe, worn without 领取.
             ///   - shelf:
             public init(
                 version: Components.Schemas.MyUnlocks.VersionPayload,
@@ -10707,6 +10897,7 @@ extension Components {
                 lockedPieces: [Components.Schemas.LockedPiece],
                 claimed: [Components.Schemas.PieceClaim],
                 gifts: [Components.Schemas.GiftedPiece],
+                teamPieces: [Components.Schemas.TeamPiece],
                 shelf: Components.Schemas.Shelf
             ) {
                 self.version = version
@@ -10715,6 +10906,7 @@ extension Components {
                 self.lockedPieces = lockedPieces
                 self.claimed = claimed
                 self.gifts = gifts
+                self.teamPieces = teamPieces
                 self.shelf = shelf
             }
             public enum CodingKeys: String, CodingKey {
@@ -10724,6 +10916,7 @@ extension Components {
                 case lockedPieces
                 case claimed
                 case gifts
+                case teamPieces
                 case shelf
             }
         }
@@ -10868,6 +11061,41 @@ extension Components {
                 case id
                 case sports
                 case checkInsToGo
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/TeamPiece`.
+        public struct TeamPiece: Codable, Hashable, Sendable {
+            /// The piece’s id in the app’s art.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamPiece/id`.
+            public var id: Swift.String
+            /// When the team gave it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamPiece/givenAt`.
+            public var givenAt: Foundation.Date
+            /// What gave it: `bug-adopted` (a bug the member reported that we confirmed) or `idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the team gave by hand.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TeamPiece/event`.
+            public var event: Swift.String?
+            /// Creates a new `TeamPiece`.
+            ///
+            /// - Parameters:
+            ///   - id: The piece’s id in the app’s art.
+            ///   - givenAt: When the team gave it.
+            ///   - event: What gave it: `bug-adopted` (a bug the member reported that we confirmed) or `idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the team gave by hand.
+            public init(
+                id: Swift.String,
+                givenAt: Foundation.Date,
+                event: Swift.String? = nil
+            ) {
+                self.id = id
+                self.givenAt = givenAt
+                self.event = event
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case givenAt
+                case event
             }
         }
         /// The 商店街 as it stands for the member now, worked out by the server from the stores’, pieces’ and switches’ rows: the app draws it as it is.

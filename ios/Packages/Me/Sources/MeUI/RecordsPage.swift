@@ -49,7 +49,6 @@ struct RecordsPage: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         saveButton(records)
                     }
-                    .sharedBackgroundVisibility(.hidden)
                 }
             }
         }
@@ -71,16 +70,10 @@ struct RecordsPage: View {
         Button {
             picture = SavedRecords(image: render(records))
         } label: {
-            Label {
-                Text("存图", bundle: .module)
-            } icon: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-            }
+            Image(systemName: "square.and.arrow.up")
         }
-        // The navigation bar shows a label's icon alone unless told otherwise.
-        .labelStyle(.titleAndIcon)
-        .buttonStyle(SecondaryButtonStyle())
+        // An icon only, in the bar's round glass like the back button across from it.
+        .accessibilityLabel(Text("存图", bundle: .module))
         .accessibilityIdentifier("records.save")
     }
 

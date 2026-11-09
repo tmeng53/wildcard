@@ -68,30 +68,32 @@ private struct CardFront: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            MeStage(character: face.character, floor: .borderDefault)
-                .padding(.bottom, -Space.xxs)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .overlay(alignment: .topLeading) { numberAndTitle }
-                .overlay(alignment: .topTrailing) {
-                    if let worn = face.board.wornTitle {
-                        TitleBadgeView(
-                            shape: worn.badge.shape, colour: worn.badge.colour, tone: worn.badge.tone,
-                            glyph: worn.badge.glyph,
-                            size: Self.badgeSize
-                        )
-                        .padding(Space.s)
-                        .accessibilityIdentifier("me.wornBadge")
+            GeometryReader { window in
+                MeStage(character: face.character, size: Self.figure(in: window.size.width), floor: .borderDefault)
+                    .padding(.bottom, -Space.xxs)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            }
+            .overlay(alignment: .topLeading) { numberAndTitle }
+            .overlay(alignment: .topTrailing) {
+                if let worn = face.board.wornTitle {
+                    TitleBadgeView(
+                        shape: worn.badge.shape, colour: worn.badge.colour, tone: worn.badge.tone,
+                        glyph: worn.badge.glyph,
+                        size: Self.badgeSize
+                    )
+                    .padding(Space.s)
+                    .accessibilityIdentifier("me.wornBadge")
+                }
+            }
+            .background {
+                Color(role: .bgSubtle, in: theme)
+                    .overlay {
+                        CourtLines()
+                            .stroke(Color(role: .borderBrandFloor, in: theme), lineWidth: Self.courtLine)
+                            .accessibilityHidden(true)
                     }
-                }
-                .background {
-                    Color(role: .bgSubtle, in: theme)
-                        .overlay {
-                            CourtLines()
-                                .stroke(Color(role: .borderBrandFloor, in: theme), lineWidth: Sizing.selectionStroke)
-                                .accessibilityHidden(true)
-                        }
-                }
-                .clipShape(TradingCard.window)
+            }
+            .clipShape(TradingCard.window)
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 nameAndSquad
                 if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
@@ -109,6 +111,13 @@ private struct CardFront: View {
 
     /// 60 points, as the approved front has it.
     private static let badgeSize: Double = 60
+    /// The court's lines, 2 points as the approved front has them.
+    private static let courtLine: Double = 2
+
+    /// The character, 46% of the window's width at its own 4:5, as the approved front has it.
+    private static func figure(in width: Double) -> CGSize {
+        CGSize(width: width * 0.46, height: width * 0.46 * 1.25)
+    }
     /// The bar under the number: short and thin, in the worn badge's colour.
     private static let bar = CGSize(width: 28, height: 3)
 
@@ -293,18 +302,19 @@ private struct CardBack: View {
     private static let columns = Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 3)
 }
 
-/// The card window's faint court: a boundary inset from the window's edge, a half line behind
-/// the character's middle and a centre circle on it. The card's only backdrop for now; more can
-/// come later as backdrops a member unlocks.
+/// The card window's faint court, as the approved front draws it on a 354 × 324 window: a
+/// boundary inset from the window's edge, a half line at 196 behind the character and a centre
+/// circle of 70 on it, whole inside the court. The card's only backdrop for now; more can come
+/// later as backdrops a member unlocks.
 private struct CourtLines: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let court = rect.insetBy(dx: Space.s, dy: Space.s)
         path.addRoundedRect(in: court, cornerSize: CGSize(width: Space.xxs, height: Space.xxs))
-        let halfLine = rect.minY + rect.height * 0.7
+        let halfLine = rect.minY + rect.height * 196 / 324
         path.move(to: CGPoint(x: court.minX, y: halfLine))
         path.addLine(to: CGPoint(x: court.maxX, y: halfLine))
-        let radius = rect.width * 0.22
+        let radius = rect.width * 70 / 354
         path.addEllipse(
             in: CGRect(x: rect.midX - radius, y: halfLine - radius, width: radius * 2, height: radius * 2)
         )

@@ -43,11 +43,14 @@ import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { createArt, createPostgresArtStore } from '@wildcard/art';
+import { createFeedbackAdoptions, createPostgresFeedbackStore } from '@wildcard/feedback';
 import {
   createCoachGifts,
   createPostgresGiftStore,
   createPostgresUnlockStore,
   createUnlocks,
+  createPostgresRewardStore,
+  createRewards,
 } from '@wildcard/unlocks';
 import {
   createNotices,
@@ -60,6 +63,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createDatabase } from '../adapters/postgres.js';
+import type { Database } from '../ports.js';
 import { createSupabaseOAuthConsent } from '../adapters/supabase-oauth-consent.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createApp } from '../app.js';
@@ -86,15 +90,18 @@ import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
+import { rewardTools } from './tools/rewards.js';
 import { unlockTools } from './tools/unlocks.js';
 import { broadcastTools } from './tools/broadcasts.js';
 import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { giveGiftAsAdmin } from '../flows/coach-gifts.js';
+import { adoptFeedback } from '../flows/feedback-adoption.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -181,6 +188,7 @@ beforeAll(async () => {
           weeklyAwards: unusedWeeklyAwards,
           unlocks: unusedUnlocks,
           gifts: unusedGifts,
+          rewards: noRewards,
           weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
@@ -240,6 +248,21 @@ beforeAll(async () => {
                 }),
                 gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
                 giveGift: giveGiftAsAdmin(scope, () => Promise.resolve(weekStartNow)),
+              }),
+              ...rewardTools({
+                rewards: rewardsOn(scope),
+                adopt: adoptFeedback({
+                  feedback: createFeedbackAdoptions({
+                    store: createPostgresFeedbackStore(scope),
+                    clock: () => new Date(),
+                  }),
+                  rewards: rewardsOn(scope),
+                  notices: createNotices({
+                    store: createPostgresNoticeStore(scope),
+                    broadcasts: createPostgresBroadcastStore(scope),
+                    clock: () => new Date(),
+                  }),
+                }),
               }),
               ...broadcastTools({
                 broadcasts: createNotices({
@@ -400,6 +423,13 @@ function clientSignedInAs(
 }
 
 /** Connects an MCP client, signing in through OAuth the first time, as Claude Code does. */
+const rewardsOn = (scope: Database) =>
+  createRewards({
+    store: createPostgresRewardStore(scope),
+    unlocks: createPostgresUnlockStore(scope),
+    clock: () => new Date(),
+  });
+
 async function connect(provider: ReturnType<typeof clientSignedInAs>) {
   const client = new Client({ name: 'admin-mcp-test', version: '1.0.0' });
   const first = new StreamableHTTPClientTransport(mcpUrl, { authProvider: provider });
@@ -451,6 +481,12 @@ describe('the admin MCP server', () => {
       ['get_gift_pieces', true],
       ['put_gift_piece', false],
       ['give_gift', false],
+      ['get_badges', true],
+      ['put_badge', false],
+      ['put_voucher', false],
+      ['put_reward_trigger', false],
+      ['give_reward', false],
+      ['adopt_feedback', false],
       ['list_broadcasts', true],
       ['put_broadcast', false],
       ['get_art', true],
@@ -1341,6 +1377,133 @@ describe('the admin MCP server', () => {
     expect(logged.rows.map(({ action }) => action.tool)).toContain('give_gift');
     // Fired again, so no other test's coach run finds this squad hired.
     await call('fire_coach', { squad });
+    await client.close();
+  });
+
+  it('adopts feedback once, thanks its sender with what the event gives, and logs it', async () => {
+    const admin = await member({ admin: true });
+    const friend = await member({ admin: false });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const tag = randomUUID().slice(0, 8);
+    const [badge, voucher, piece] = [`bug-${tag}`, `week-${tag}`, `thanks-${tag}`];
+    const names = { 'zh-Hans': '捉虫队', 'zh-Hant': '捉蟲隊', en: 'Bug Hunter' };
+    expect(
+      (
+        await call('put_badge', {
+          id: badge,
+          names,
+          glyph: 'ladybug.fill',
+          tone: '#E65345',
+          offered: true,
+        })
+      ).isError,
+    ).toBe(false);
+    expect(
+      (await call('put_voucher', { id: voucher, premiumDays: 7, offered: true })).isError,
+    ).toBe(false);
+    // A badge or voucher is in its catalog before a trigger names it.
+    const missing = await call('put_reward_trigger', {
+      kind: 'badge',
+      id: `nope-${tag}`,
+      way: 'event',
+      events: ['bug-adopted'],
+      offered: true,
+    });
+    expect([missing.isError, missing.text]).toStrictEqual([
+      true,
+      expect.stringContaining('REWARD_MISSING'),
+    ]);
+    for (const [kind, id] of [
+      ['badge', badge],
+      ['voucher', voucher],
+      ['piece', piece],
+    ] as const) {
+      const put = await call('put_reward_trigger', {
+        kind,
+        id,
+        way: 'event',
+        events: ['bug-adopted'],
+        offered: true,
+      });
+      expect(put.isError).toBe(false);
+    }
+    const feedback = randomUUID();
+    // A message as the app sends it, already filed, so the filing job leaves it be.
+    const app = {
+      version: 1,
+      appVersion: '1.0',
+      build: '1',
+      os: 'iOS 26.1',
+      device: 'iPhone',
+      language: 'zh-Hans',
+    };
+    await sql`insert into public.feedback (id, member_id, kind, body, app, at)
+      values (${feedback}, ${friend.userId}, 'problem', '打卡按钮没反应', ${JSON.stringify(app)}::jsonb, now())`.execute(
+      db,
+    );
+    await sql`insert into public.feedback_issues (feedback_id, number, url, at)
+      values (${feedback}, 1, 'https://example.com/1', now())`.execute(db);
+    const adopted = await call('adopt_feedback', { feedback, kind: 'bug' });
+    expect(adopted.isError).toBe(false);
+    const first = z
+      .object({
+        adoption: z.object({ member: z.string(), kind: z.string(), admin: z.string() }),
+        fresh: z.boolean(),
+        given: z.array(z.object({ kind: z.string(), id: z.string() })),
+      })
+      .parse(JSON.parse(adopted.text));
+    expect(first.adoption).toMatchObject({
+      member: friend.userId,
+      kind: 'bug',
+      admin: admin.userId,
+    });
+    expect(first.fresh).toBe(true);
+    // Other tests' triggers for the same event may give more; ours are among them.
+    expect(first.given).toEqual(
+      expect.arrayContaining([
+        { kind: 'badge', id: badge },
+        { kind: 'voucher', id: voucher },
+        { kind: 'piece', id: piece },
+      ]),
+    );
+    const again: unknown = JSON.parse(
+      (await call('adopt_feedback', { feedback, kind: 'idea' })).text,
+    );
+    expect(again).toMatchObject({ adoption: { kind: 'bug' }, fresh: false, given: [] });
+    const told = await sql<{ kind: string; subject: unknown }>`
+      select kind, subject from public.notices where member_id = ${friend.userId}
+    `.execute(db);
+    expect(told.rows).toStrictEqual([
+      { kind: 'thanks', subject: { version: 1, feedback, adopted: 'bug' } },
+    ]);
+    const held = await sql<{ reward_id: string; event_id: string }>`
+      select reward_id, event_id from public.grants
+      where member_id = ${friend.userId} and reward_id in (${badge}, ${voucher}, ${piece})
+      order by reward_id
+    `.execute(db);
+    expect(held.rows).toStrictEqual(
+      [badge, piece, voucher].sort().map((id) => ({ reward_id: id, event_id: feedback })),
+    );
+    // The team gives only what has a team trigger.
+    const refused = await call('give_reward', { member: friend.userId, kind: 'badge', id: badge });
+    expect([refused.isError, refused.text]).toStrictEqual([
+      true,
+      expect.stringContaining('REWARD_NOT_TEAM_GIVEN'),
+    ]);
+    const nowhere = await call('adopt_feedback', { feedback: randomUUID(), kind: 'idea' });
+    expect([nowhere.isError, nowhere.text]).toStrictEqual([
+      true,
+      expect.stringContaining('FEEDBACK_MISSING'),
+    ]);
+    const logged = await sql<{ tool: string }>`
+      select action ->> 'tool' as tool from public.admin_actions
+      where admin_id = ${admin.userId} and action ->> 'tool' = 'adopt_feedback'
+    `.execute(db);
+    expect(logged.rows).toHaveLength(2);
     await client.close();
   });
 

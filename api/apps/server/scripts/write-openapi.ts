@@ -159,6 +159,7 @@ const app = createApp({
   },
   unlocks: { of: unused, standing: unused, claimsOf: unused, claim: unused, keepWorn: unused },
   gifts: { of: unused, open: unused },
+  rewards: { badgesOf: unused, teamPiecesOf: unused },
   log: createLog(unused),
   jobs: {
     isScheduler: undefined,

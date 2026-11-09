@@ -45,6 +45,7 @@ import {
   unusedFeedback,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
 } from '../test-kit/weekly-awards.js';
 
 const db = createDatabase(config.databaseUrl);
@@ -102,6 +103,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
