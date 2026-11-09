@@ -7685,6 +7685,87 @@ extension Components {
                 case gift
             }
         }
+        /// - Remark: Generated from `#/components/schemas/EarlierCoachCards`.
+        public struct EarlierCoachCards: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/version`.
+            public var version: Components.Schemas.EarlierCoachCards.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/CardsPayload`.
+            public struct CardsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/CardsPayload/value1`.
+                public var value1: Components.Schemas.CoachPageCard
+                /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/CardsPayload/value2`.
+                public struct Value2Payload: Codable, Hashable, Sendable {
+                    /// Whether the caller has seen it.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/CardsPayload/value2/seen`.
+                    public var seen: Swift.Bool
+                    /// Creates a new `Value2Payload`.
+                    ///
+                    /// - Parameters:
+                    ///   - seen: Whether the caller has seen it.
+                    public init(seen: Swift.Bool) {
+                        self.seen = seen
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case seen
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/CardsPayload/value2`.
+                public var value2: Components.Schemas.EarlierCoachCards.CardsPayloadPayload.Value2Payload
+                /// Creates a new `CardsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2:
+                public init(
+                    value1: Components.Schemas.CoachPageCard,
+                    value2: Components.Schemas.EarlierCoachCards.CardsPayloadPayload.Value2Payload
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/cards`.
+            public typealias CardsPayload = [Components.Schemas.EarlierCoachCards.CardsPayloadPayload]
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/cards`.
+            public var cards: Components.Schemas.EarlierCoachCards.CardsPayload
+            /// The cursor for the page after this one; left out on the last page.
+            ///
+            /// - Remark: Generated from `#/components/schemas/EarlierCoachCards/next`.
+            public var next: Swift.String?
+            /// Creates a new `EarlierCoachCards`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - cards:
+            ///   - next: The cursor for the page after this one; left out on the last page.
+            public init(
+                version: Components.Schemas.EarlierCoachCards.VersionPayload,
+                cards: Components.Schemas.EarlierCoachCards.CardsPayload,
+                next: Swift.String? = nil
+            ) {
+                self.version = version
+                self.cards = cards
+                self.next = next
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case cards
+                case next
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/CoachCardSeen`.
         public struct CoachCardSeen: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/CoachCardSeen/version`.

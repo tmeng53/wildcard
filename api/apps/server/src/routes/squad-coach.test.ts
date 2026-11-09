@@ -634,10 +634,23 @@ describe('/squads/{squadId}/coach/cards', () => {
   });
   const ids = (cards: readonly { kind: string; id: string }[]) =>
     cards.map(({ kind, id }) => `${kind}:${id}`);
+  // The stack is the squad's coach now; a coach that left is 以前 whole.
+  const hire = async (captain: { token: string }, squad: string) => {
+    const hired = await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach`,
+      token: captain.token,
+      body: { version: 1, coach: 'xiaohun' },
+    });
+    expect(hired.status).toBe(201);
+  };
+  const fire = (captain: { token: string }, squad: string) =>
+    call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
 
   it('stacks what the coach has for the caller, oldest first, and moves a seen card to 以前', async () => {
     const [captain, mate] = [await signUp(), await signUp()];
     const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
     const path = `/squads/${squad}/coach/cards`;
     expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
       status: 200,
@@ -752,11 +765,19 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(
       ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),
     ).toStrictEqual([`board:${today}`]);
+    // Fired, its cards go to 以前, unseen ones and the boxed gift too.
+    await fire(captain, squad);
+    const gone = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(gone.stack).toStrictEqual([]);
+    expect(ids(gone.earlier).toSorted()).toStrictEqual(
+      [`board:${today}`, 'gift:cards-towel'].toSorted(),
+    );
   });
 
   it('shows the coach marking a challenge done as its own card', async () => {
     const mate = await signUp();
     const squad = await squadOf(mate);
+    await hire(mate, squad);
     const path = `/squads/${squad}/coach/cards`;
     const written = await sql<{ id: string }>`
       insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
@@ -788,6 +809,62 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(seen.status).toBe(200);
     const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(ids(after.earlier)).toStrictEqual([`challengeDone:${note}`]);
+    await fire(mate, squad);
+  });
+
+  it('pages 以前 newest first, and keeps only the unseen ones when asked', async () => {
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    // No coach now, so every card is 以前: 25 lines on 25 days, a second apart.
+    for (let n = 0; n < 25; n += 1) {
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+        values (${squad}, 'xiaohun', current_date - ${n}::int, ${`第${String(n)}句`},
+          now() + make_interval(secs => ${25 - n}))`.execute(db);
+    }
+    const path = `/squads/${squad}/coach/cards/earlier`;
+    const Page = z.object({
+      cards: z.array(z.object({ text: z.string(), seen: z.boolean() }).loose()),
+      next: z.string().optional(),
+    });
+    const first = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(first.cards).toHaveLength(20);
+    expect(first.cards[0]).toMatchObject({ text: '第0句', seen: false });
+    expect(first.next).toBeDefined();
+    const second = Page.parse(
+      (
+        await call({
+          method: 'GET',
+          path: `${path}?cursor=${encodeURIComponent(first.next ?? '')}`,
+          token: mate.token,
+        })
+      ).body,
+    );
+    expect(second.cards.map((card) => card.text)).toStrictEqual([
+      '第20句',
+      '第21句',
+      '第22句',
+      '第23句',
+      '第24句',
+    ]);
+    expect(second.next).toBeUndefined();
+
+    const day = new Date(Date.now()).toISOString().slice(0, 10);
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${squad}/coach/cards/board/${day}/seen`,
+          token: mate.token,
+        })
+      ).status,
+    ).toBe(200);
+    const unseen = Page.parse(
+      (await call({ method: 'GET', path: `${path}?unseen=true`, token: mate.token })).body,
+    );
+    expect(unseen.cards.map((card) => card.text)).not.toContain('第0句');
+    expect(unseen.cards.every((card) => !card.seen)).toBe(true);
+    const odd = await call({ method: 'GET', path: `${path}?cursor=nope`, token: mate.token });
+    expect(odd.status).toBe(400);
   });
 
   it('refuses anyone outside the squad and a kind it doesn’t know', async () => {

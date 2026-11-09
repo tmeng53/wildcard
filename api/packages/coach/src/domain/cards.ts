@@ -11,13 +11,7 @@ import type { CoachReply } from './reply.js';
  * The kinds of card; the gift is the unlocks module's, the rest the coach's own. `challengeDone`
  * is the coach marking the member's challenge done, from their check-ins.
  */
-export const CoachCardKind = z.enum([
-  'board',
-  'note',
-  'challenge',
-  'challengeDone',
-  'gift',
-]);
+export const CoachCardKind = z.enum(['board', 'note', 'challenge', 'challengeDone', 'gift']);
 export type CoachCardKind = z.infer<typeof CoachCardKind>;
 
 /** A card's id within its kind: a 战术板 line's day, a note's (its challenge's) id, a gift's piece. */

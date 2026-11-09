@@ -8,6 +8,7 @@ import {
   cardKey,
   type Coach,
   type CoachActivity,
+  type CoachHiring,
   type CoachOwnCard,
 } from '@wildcard/coach';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
@@ -101,6 +102,38 @@ const CoachCardSeen = z
   })
   .openapi('CoachCardSeen');
 
+/** How many cards a page of 以前 holds. */
+const EARLIER_PAGE = 20;
+
+const EarlierCursor = z
+  .string()
+  .regex(/^\d{1,15}~[A-Za-z]{1,16}:[A-Za-z0-9_.:-]{1,64}$/)
+  .meta({ description: 'The `next` of the page before.', example: '1794193129000~note:42' });
+
+const EarlierCardsBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    cards: z.array(
+      CoachCardBody.extend({
+        seen: z.boolean().meta({ description: 'Whether the caller has seen it.' }),
+      }),
+    ),
+    next: EarlierCursor.optional().meta({
+      description: 'The cursor for the page after this one; left out on the last page.',
+    }),
+  })
+  .openapi('EarlierCoachCards');
+
+/** The cursor after a card: when it came, and its key to tell apart cards of one moment. */
+function cursorOf(card: { readonly at: Date; readonly key: string }): string {
+  return `${String(card.at.getTime())}~${card.key}`;
+}
+
+function parseCursor(cursor: string): { readonly at: number; readonly key: string } {
+  const [at = '0', key = ''] = cursor.split('~');
+  return { at: Number(at), key };
+}
+
 type Speaker = ReturnType<typeof speakerIn>;
 
 /** A card as the app reads it. */
@@ -149,8 +182,11 @@ export function coachCards(deps: {
   readonly squads: Squads;
   readonly coachActivity: CoachActivity;
   readonly gifts: Pick<CoachGifts, 'of'>;
-  /** The coaches on offer, for a gift's coach's look (a retired one's stands in as a silhouette). */
-  readonly coachHiring: { offered(): Promise<readonly Coach[]> };
+  /**
+   * The coaches on offer, for a gift's coach's look (a retired one's stands in as a silhouette),
+   * and the squad's coach now, whose cards alone are the stack.
+   */
+  readonly coachHiring: Pick<CoachHiring, 'offered' | 'current'>;
   readonly coachNames: CoachNames;
   /** The caller's `coach` switch: switched off, no morning note or challenge shows (Tracy, 2026-11-07). */
   readonly push: Pick<Push, 'settingsOf'>;
@@ -165,7 +201,8 @@ export function coachCards(deps: {
       `${String(CARDS_DAYS)} days back: its 战术板 lines, their morning notes and challenges once ` +
       'delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins ' +
       'and replies show only under the posts. The unseen ones from ' +
-      `the last ${String(STACK_HOURS)} hours are the stack; the rest are 以前.`,
+      `the last ${String(STACK_HOURS)} hours from the coach the squad has now are the stack; ` +
+      'the rest, a coach’s that left too, are 以前.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: z.strictObject({ squadId: SquadId }) },
@@ -208,59 +245,141 @@ export function coachCards(deps: {
     },
   });
 
+  const earlierRoute = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/coach/cards/earlier',
+    operationId: 'getEarlierCoachCards',
+    summary: 'The coach page’s 以前, a page at a time',
+    description:
+      'The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, ' +
+      `${String(EARLIER_PAGE)} at a time: pass the reply’s \`next\` as \`cursor\` for the page after ` +
+      'it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older ' +
+      `than ${String(STACK_HOURS)} hours); each card says whether it was seen.`,
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ squadId: SquadId }),
+      query: z.strictObject({
+        cursor: EarlierCursor.optional(),
+        unseen: z.enum(['true', 'false']).optional().meta({
+          description: '`true` keeps only the cards not seen yet.',
+        }),
+      }),
+    },
+    responses: {
+      200: {
+        description: 'A page of 以前',
+        content: { 'application/json': { schema: EarlierCardsBody } },
+      },
+      400: problem('Not a valid squad id or cursor'),
+      401: problem('No bearer token, or not a valid one'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      503: problem('Sign-in can’t be checked right now'),
+    },
+  });
+
+  /** Every card for the caller in the squad, oldest first, each knowing whether it is stacked. */
+  async function sorted(squadId: z.infer<typeof SquadId>, member: string) {
+    // Throws `SquadNotJoinedError` for anyone not in the squad.
+    const squad = await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
+    const now = new Date();
+    const joined = squad.members.find((each) => String(each.member) === member)?.joinedAt;
+    const back = new Date(now.getTime() - CARDS_DAYS * 24 * 60 * 60_000);
+    const since = joined !== undefined && joined > back ? joined : back;
+    const [{ cards: all, seen: seenKeys }, allGifts, coaches, notesOn, hired] = await Promise.all([
+      deps.coachActivity.cards({ squad: CoachSquadId.parse(squadId), member, since }),
+      deps.gifts.of(UnlockMember.parse(member)),
+      deps.coachHiring.offered().catch(() => []),
+      // A switch that can't be read counts as off, so the rest of the cards still show.
+      deps.push
+        .settingsOf(PushMember.parse(member))
+        .then((settings) => settings.coach)
+        .catch(() => false),
+      deps.coachHiring.current(CoachSquadId.parse(squadId)),
+    ]);
+    const cards = notesOn
+      ? all
+      : all.filter(
+          (card) =>
+            card.kind !== 'note' && card.kind !== 'challenge' && card.kind !== 'challengeDone',
+        );
+    const gifts = allGifts.filter((gift) => gift.squad === squadId && gift.givenAt >= since);
+    const named = await deps.coachNames(
+      [...cards.map((card) => card.coach.id), ...gifts.map((gift) => gift.coach)].map((coach) => ({
+        coach,
+        squad: squadId,
+      })),
+    );
+    const speaker = speakerIn((coach) => named(coach, squadId));
+    const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
+    const fresh = now.getTime() - STACK_HOURS * 60 * 60_000;
+    return (
+      [
+        ...cards.map((card) => ({
+          at: card.at,
+          coach: card.coach.id,
+          wire: wireCard(card, speaker),
+        })),
+        ...gifts.map((gift) => ({
+          at: gift.givenAt,
+          coach: gift.coach,
+          wire: wireGift(gift, { coach: byId.get(gift.coach), speaker }),
+        })),
+      ]
+        .map((card) => {
+          const key = cardKey(CoachCardKind.parse(card.wire.kind), card.wire.id);
+          const seen = seenKeys.has(key);
+          // A coach that left goes to 以前 whole, its boxed gifts still opening there (Tracy,
+          // 2026-11-09): the stack is the coach the squad has now.
+          const stacked = card.coach === hired?.coach.id && card.at.getTime() >= fresh && !seen;
+          return { ...card, key, seen, stacked };
+        })
+        // Stable, so cards of one moment keep the store's order (a note before its challenge).
+        .sort((a, b) => a.at.getTime() - b.at.getTime())
+    );
+  }
+
   return new OpenAPIHono<SignedIn>()
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
-      const member = c.var.caller.userId;
-      // Throws `SquadNotJoinedError` for anyone not in the squad.
-      const squad = await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
-      const now = new Date();
-      const joined = squad.members.find((each) => String(each.member) === member)?.joinedAt;
-      const back = new Date(now.getTime() - CARDS_DAYS * 24 * 60 * 60_000);
-      const since = joined !== undefined && joined > back ? joined : back;
-      const [{ cards: all, seen: seenKeys }, allGifts, coaches, notesOn] = await Promise.all([
-        deps.coachActivity.cards({ squad: CoachSquadId.parse(squadId), member, since }),
-        deps.gifts.of(UnlockMember.parse(member)),
-        deps.coachHiring.offered().catch(() => []),
-        // A switch that can't be read counts as off, so the rest of the cards still show.
-        deps.push
-          .settingsOf(PushMember.parse(member))
-          .then((settings) => settings.coach)
-          .catch(() => false),
-      ]);
-      const cards = notesOn
-        ? all
-        : all.filter(
-            (card) =>
-              card.kind !== 'note' && card.kind !== 'challenge' && card.kind !== 'challengeDone',
-          );
-      const gifts = allGifts.filter((gift) => gift.squad === squadId && gift.givenAt >= since);
-      const named = await deps.coachNames(
-        [...cards.map((card) => card.coach.id), ...gifts.map((gift) => gift.coach)].map(
-          (coach) => ({ coach, squad: squadId }),
-        ),
-      );
-      const speaker = speakerIn((coach) => named(coach, squadId));
-      const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
-      const merged = [
-        ...cards.map((card) => ({ at: card.at, wire: wireCard(card, speaker) })),
-        ...gifts.map((gift) => ({
-          at: gift.givenAt,
-          wire: wireGift(gift, { coach: byId.get(gift.coach), speaker }),
-        })),
-      ].sort((a, b) => a.at.getTime() - b.at.getTime());
-      const fresh = now.getTime() - STACK_HOURS * 60 * 60_000;
-      const stacked = (card: (typeof merged)[number]) =>
-        card.at.getTime() >= fresh &&
-        !seenKeys.has(cardKey(CoachCardKind.parse(card.wire.kind), card.wire.id));
+      const cards = await sorted(squadId, c.var.caller.userId);
       return c.json(
         {
           version: 1 as const,
-          stack: merged.filter(stacked).map(({ wire }) => wire),
-          earlier: merged
-            .filter((card) => !stacked(card))
+          stack: cards.filter((card) => card.stacked).map(({ wire }) => wire),
+          earlier: cards
+            .filter((card) => !card.stacked)
             .reverse()
             .map(({ wire }) => wire),
+        },
+        200,
+      );
+    })
+    .openapi(earlierRoute, async (c) => {
+      const { squadId } = c.req.valid('param');
+      const { cursor, unseen } = c.req.valid('query');
+      const newestFirst = (await sorted(squadId, c.var.caller.userId))
+        .filter((card) => !card.stacked && (unseen !== 'true' || !card.seen))
+        .reverse();
+      // The page starts after the card the cursor names, or, should it be gone, with the first
+      // card older than it.
+      const after = cursor === undefined ? undefined : parseCursor(cursor);
+      const named =
+        after === undefined ? -1 : newestFirst.findIndex((card) => card.key === after.key);
+      const from =
+        after === undefined
+          ? 0
+          : named >= 0
+            ? named + 1
+            : newestFirst.findIndex((card) => card.at.getTime() < after.at);
+      const page = from < 0 ? [] : newestFirst.slice(from, from + EARLIER_PAGE);
+      const last = page.at(-1);
+      const more = from >= 0 && from + EARLIER_PAGE < newestFirst.length;
+      return c.json(
+        {
+          version: 1 as const,
+          cards: page.map(({ wire, seen }) => ({ ...wire, seen })),
+          ...(more && last !== undefined ? { next: cursorOf(last) } : {}),
         },
         200,
       );

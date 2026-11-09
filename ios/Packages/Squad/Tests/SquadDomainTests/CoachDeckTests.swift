@@ -39,6 +39,18 @@ private final class CardsInMemory: CoachCardSource {
         }
     }
 
+    func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
+        -> CoachEarlierCards
+    {
+        try state.withLock { state throws(SquadError) in
+            if state.down { throw .unavailable }
+            let listed = state.cards.earlier.filter { !unseenOnly || !$0.isSeen }
+            let start = cursor.flatMap { after in listed.firstIndex { $0.id == after } }.map { $0 + 1 } ?? 0
+            let page = Array(listed.dropFirst(start).prefix(2))
+            return CoachEarlierCards(cards: page, next: start + 2 < listed.count ? page.last?.id : nil)
+        }
+    }
+
     func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(SquadError) {
         try state.withLock { state throws(SquadError) in
             if state.down { throw .unavailable }
@@ -90,14 +102,14 @@ private let oldNote = card(.note, "40", minutes: -1440, text: "昨天跑完 5 �
     await deck.reload()
     deck.seen(board)
     #expect(deck.top == gift)
-    #expect(deck.earlier.map(\.id) == ["b1", "r0"])
+    #expect(deck.earlier.map(\.id) == ["b1", "40"])
     #expect(deck.putAway == 1)
     try await Task.sleep(for: .milliseconds(50))
     #expect(source.state.withLock(\.seen) == [board.key])
     // A read that was on its way before the swipe doesn't bring it back.
     await deck.reload()
     #expect(deck.top == gift)
-    #expect(deck.earlier.map(\.id) == ["b1", "r0"])
+    #expect(deck.earlier.map(\.id) == ["b1", "40"])
     deck.seen(gift)
     #expect(deck.top == nil)
 }
@@ -202,4 +214,30 @@ func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, 
     #expect(deck.top == gift)
     await deck.reload()
     #expect(source.state.withLock(\.seen) == [board.key])
+}
+
+@MainActor @Test func earlierComesAPageAtATimeAndFiltersToUnseen() async throws {
+    let seenNote = card(.note, "39", minutes: -2880, text: "前天的话。").with(isSeen: true)
+    let older = card(.board, "b0", minutes: -4320, text: "大前天的话。")
+    let source = CardsInMemory(CoachPageCards(stack: [board], earlier: [oldNote, seenNote, older]))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    #expect(deck.earlier.map(\.id) == ["40", "39"])
+    #expect(deck.hasMoreEarlier)
+    await deck.loadMoreEarlier()
+    #expect(deck.earlier.map(\.id) == ["40", "39", "b0"])
+    #expect(!deck.hasMoreEarlier)
+
+    await deck.showEarlier(.unseen)
+    #expect(deck.earlier.map(\.id) == ["40", "b0"])
+    // Opened from 以前, a card is seen on every phone; it stays in the list until it is read again.
+    deck.read(oldNote)
+    #expect(deck.earlier.first?.isSeen == true)
+    try await Task.sleep(for: .milliseconds(50))
+    #expect(source.state.withLock(\.seen) == [oldNote.key])
+    // A card swiped away now isn't one of the unseen.
+    deck.seen(board)
+    #expect(deck.earlier.map(\.id) == ["40", "b0"])
+    await deck.showEarlier(.all)
+    #expect(deck.earlier.first?.key == board.key)
 }

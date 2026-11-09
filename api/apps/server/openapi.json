@@ -4896,6 +4896,51 @@
         ],
         "additionalProperties": false
       },
+      "EarlierCoachCards": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CoachPageCard"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "seen": {
+                      "type": "boolean",
+                      "description": "Whether the caller has seen it."
+                    }
+                  },
+                  "required": [
+                    "seen"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "next": {
+            "type": "string",
+            "pattern": "^\\d{1,15}~[A-Za-z]{1,16}:[A-Za-z0-9_.:-]{1,64}$",
+            "description": "The cursor for the page after this one; left out on the last page.",
+            "example": "1794193129000~note:42"
+          }
+        },
+        "required": [
+          "version",
+          "cards"
+        ],
+        "additionalProperties": false
+      },
       "CoachCardSeen": {
         "type": "object",
         "properties": {
@@ -11725,7 +11770,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
         "security": [
           {
             "bearer": []
@@ -11755,6 +11800,107 @@
           },
           "400": {
             "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/cards/earlier": {
+      "get": {
+        "operationId": "getEarlierCoachCards",
+        "summary": "The coach page’s 以前, a page at a time",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,15}~[A-Za-z]{1,16}:[A-Za-z0-9_.:-]{1,64}$",
+              "description": "The `next` of the page before.",
+              "example": "1794193129000~note:42"
+            },
+            "required": false,
+            "description": "The `next` of the page before.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "description": "`true` keeps only the cards not seen yet."
+            },
+            "required": false,
+            "description": "`true` keeps only the cards not seen yet.",
+            "name": "unseen",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of 以前",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarlierCoachCards"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or cursor",
             "content": {
               "application/problem+json": {
                 "schema": {

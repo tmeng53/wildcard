@@ -106,21 +106,24 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
     public let text: String?
     public let challenge: Challenge?
     public let gift: Gift?
+    /// Whether the member has seen it: every card in the stack is unseen, and a card in 以前 may
+    /// still be, a coach's that left or one older than the stack keeps.
+    public let isSeen: Bool
 
     public init(
         kind: Kind, id: String, coach: CoachSpeaker, look: String, time: Date, day: LocalDay? = nil,
-        text: String? = nil, challenge: Challenge? = nil, gift: Gift? = nil
+        text: String? = nil, challenge: Challenge? = nil, gift: Gift? = nil, isSeen: Bool = false
     ) {
         (self.kind, self.id, self.coach, self.look, self.time) = (kind, id, coach, look, time)
-        (self.day, self.text, self.challenge, self.gift) = (day, text, challenge, gift)
+        (self.day, self.text, self.challenge, self.gift, self.isSeen) = (day, text, challenge, gift, isSeen)
     }
 
-    /// The same card with its challenge or gift as it stands now.
-    public func with(challenge: Challenge? = nil, gift: Gift? = nil) -> CoachPageCard {
+    /// The same card with its challenge or gift as it stands now, or seen.
+    public func with(challenge: Challenge? = nil, gift: Gift? = nil, isSeen: Bool? = nil) -> CoachPageCard {
         CoachPageCard(
             kind: kind, id: id, coach: coach, look: look, time: time, day: day, text: text,
             challenge: challenge ?? self.challenge,
-            gift: gift ?? self.gift)
+            gift: gift ?? self.gift, isSeen: isSeen ?? self.isSeen)
     }
 
     /// What tells two cards apart: the same id may stand for a note and its challenge.
@@ -142,4 +145,14 @@ public struct CoachPageCards: Hashable, Sendable {
     }
 
     public static let empty = CoachPageCards(stack: [], earlier: [])
+}
+
+/// A page of 以前, newest first, and where the next one starts; nil on the last page.
+public struct CoachEarlierCards: Hashable, Sendable {
+    public let cards: [CoachPageCard]
+    public let next: String?
+
+    public init(cards: [CoachPageCard], next: String?) {
+        (self.cards, self.next) = (cards, next)
+    }
 }

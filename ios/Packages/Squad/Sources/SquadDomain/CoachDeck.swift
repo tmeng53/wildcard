@@ -7,6 +7,10 @@ import Observation
 public protocol CoachCardSource: Sendable {
     /// The member's stack (unseen, oldest first) and 以前 (newest first) in `squad`.
     func cards(in squad: SquadID) async throws(SquadError) -> CoachPageCards
+    /// A page of 以前 in `squad`, newest first, from `cursor` (the page before's `next`, nil for
+    /// the first); only the cards not seen yet when `unseenOnly`.
+    func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
+        -> CoachEarlierCards
     /// Marks a card seen, so it is in 以前 on every phone; a seen note is also put away on 今天.
     /// Safe to repeat.
     func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(SquadError)
@@ -30,11 +34,21 @@ public final class CoachDeck {
         case failed(SquadError)
     }
 
+    /// What 以前 lists (Tracy, 2026-11-09): every card, or only the ones not seen yet.
+    public enum EarlierFilter: Hashable, Sendable, CaseIterable {
+        case all, unseen
+    }
+
     public private(set) var load: Load = .loading
     /// The cards still to see, the top one first.
     public private(set) var stack: [CoachPageCard] = []
-    /// 以前: the cards seen, newest first.
+    /// 以前: the pages read so far, newest first, a page at a time as the member scrolls.
     public private(set) var earlier: [CoachPageCard] = []
+    public private(set) var earlierFilter: EarlierFilter = .all
+    /// Whether 以前 has another page to read.
+    public var hasMoreEarlier: Bool { earlierNext != nil }
+    /// A page of 以前 is on its way.
+    public private(set) var isLoadingEarlier = false
     /// The cards whose 拆开 or answer is on its way; their buttons hold still.
     public private(set) var sending: Set<CoachPageCard.Key> = []
     /// The last 拆开 or answer didn't go through; the card says so until the next one.
@@ -48,6 +62,10 @@ public final class CoachDeck {
     @ObservationIgnored private let changed: @MainActor () -> Void
     /// Cards swiped away whose seen mark didn't reach the server yet; the next read sends them again.
     @ObservationIgnored private var unmarked: [CoachPageCard.Key] = []
+    /// The cards swiped away on this page, newest first, which a read already on its way doesn't
+    /// bring back into the stack.
+    @ObservationIgnored private var swiped: [CoachPageCard] = []
+    @ObservationIgnored private var earlierNext: String?
 
     /// `wear` puts a gift on the member's character (立刻穿上) once it is opened; `changed` is
     /// called after a gift is opened or a card seen, so 我's wardrobe and 今天 read again.
@@ -70,21 +88,65 @@ public final class CoachDeck {
         do {
             let cards = try await source.cards(in: squad)
             // A card swiped away while the read was on its way stays in 以前.
-            let seenHere = Set(earlier.map(\.key))
+            let seenHere = Set(swiped.map(\.key))
             stack = cards.stack.filter { !seenHere.contains($0.key) }
-            earlier = cards.earlier + earlier.filter { seen in !cards.earlier.contains { $0.key == seen.key } }
-            earlier.sort { $0.time > $1.time }
             load = .loaded
         } catch {
             if load != .loaded { load = .failed(error) }
         }
+        await readEarlier(from: nil)
+    }
+
+    /// 全部 or 未读: 以前 starts again from its newest card.
+    public func showEarlier(_ filter: EarlierFilter) async {
+        guard filter != earlierFilter else { return }
+        earlierFilter = filter
+        earlier = []
+        earlierNext = nil
+        await readEarlier(from: nil)
+    }
+
+    /// The next page of 以前, once the member scrolls near its end.
+    public func loadMoreEarlier() async {
+        guard let earlierNext else { return }
+        await readEarlier(from: earlierNext)
+    }
+
+    /// A card opened from 以前 is seen, on every phone.
+    public func read(_ card: CoachPageCard) {
+        guard !current(card).isSeen else { return }
+        replace(current(card).with(isSeen: true))
+        Task {
+            do { try await source.markSeen(card.key, in: squad) } catch { unmarked.append(card.key) }
+        }
+    }
+
+    private func readEarlier(from cursor: String?) async {
+        guard !isLoadingEarlier else { return }
+        isLoadingEarlier = true
+        defer { isLoadingEarlier = false }
+        let filter = earlierFilter
+        guard let page = try? await source.earlier(in: squad, from: cursor, unseenOnly: filter == .unseen),
+            filter == earlierFilter
+        else { return }
+        if cursor == nil {
+            // What was swiped away here comes first, though the server may not have it yet.
+            let fresh = Set(page.cards.map(\.key))
+            let local = filter == .all ? swiped.filter { !fresh.contains($0.key) } : []
+            earlier = (local + page.cards).sorted { $0.time > $1.time }
+        } else {
+            let known = Set(earlier.map(\.key))
+            earlier += page.cards.filter { !known.contains($0.key) }
+        }
+        earlierNext = page.next
     }
 
     /// Swiped right: the card goes into 以前 at once and is marked seen on the server.
     public func seen(_ card: CoachPageCard) {
         guard let index = stack.firstIndex(where: { $0.key == card.key }) else { return }
-        let gone = stack.remove(at: index)
-        earlier.insert(gone, at: 0)
+        let gone = stack.remove(at: index).with(isSeen: true)
+        swiped.insert(gone, at: 0)
+        if earlierFilter == .all { earlier.insert(gone, at: 0) }
         putAway += 1
         if failed == card.key { failed = nil }
         Task {
@@ -136,11 +198,12 @@ public final class CoachDeck {
 
     /// The card as it stands now, wherever it is.
     public func current(_ card: CoachPageCard) -> CoachPageCard {
-        (stack + earlier).first { $0.key == card.key } ?? card
+        (stack + earlier + swiped).first { $0.key == card.key } ?? card
     }
 
     private func replace(_ card: CoachPageCard) {
         if let index = stack.firstIndex(where: { $0.key == card.key }) { stack[index] = card }
         if let index = earlier.firstIndex(where: { $0.key == card.key }) { earlier[index] = card }
+        if let index = swiped.firstIndex(where: { $0.key == card.key }) { swiped[index] = card }
     }
 }

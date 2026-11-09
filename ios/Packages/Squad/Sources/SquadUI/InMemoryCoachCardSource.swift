@@ -44,7 +44,7 @@ public actor InMemoryCoachCardSource: CoachCardSource {
                     line: word("昨天跑完腿还紧，睡前拉一拉。"))),
         ]
         return empty
-            ? InMemoryCoachCardSource(stack: [], earlier: cards.reversed())
+            ? InMemoryCoachCardSource(stack: [], earlier: cards.reversed().map { $0.with(isSeen: true) })
             : InMemoryCoachCardSource(stack: cards)
     }
 
@@ -57,9 +57,28 @@ public actor InMemoryCoachCardSource: CoachCardSource {
         CoachPageCards(stack: stack, earlier: earlier)
     }
 
+    /// 以前 as the API pages it, newest first, a page of 20.
+    public func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
+        -> CoachEarlierCards
+    {
+        let listed = earlier.filter { !unseenOnly || !$0.isSeen }
+        let start =
+            cursor.flatMap { after in listed.firstIndex { "\($0.kind.rawValue):\($0.id)" == after } }
+            .map { $0 + 1 } ?? 0
+        let page = Array(listed.dropFirst(start).prefix(Self.page))
+        let more = start + Self.page < listed.count
+        return CoachEarlierCards(
+            cards: page, next: more ? page.last.map { "\($0.kind.rawValue):\($0.id)" } : nil)
+    }
+
+    private static let page = 20
+
     public func markSeen(_ card: CoachPageCard.Key, in squad: SquadID) async throws(SquadError) {
+        if let index = earlier.firstIndex(where: { $0.key == card }) {
+            earlier[index] = earlier[index].with(isSeen: true)
+        }
         guard let index = stack.firstIndex(where: { $0.key == card }) else { return }
-        earlier.insert(stack.remove(at: index), at: 0)
+        earlier.insert(stack.remove(at: index).with(isSeen: true), at: 0)
     }
 
     public func openGift(_ piece: String, worn: Bool) async throws(SquadError) -> CoachPageCard.Gift {

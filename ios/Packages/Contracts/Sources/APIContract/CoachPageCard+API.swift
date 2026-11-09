@@ -12,8 +12,17 @@ extension CoachPageCards {
     }
 }
 
+extension CoachEarlierCards {
+    /// A card of a kind this build doesn't know, or one it can't read, is left out.
+    public init(_ wire: Components.Schemas.EarlierCoachCards) {
+        self.init(
+            cards: wire.cards.compactMap { try? CoachPageCard($0.value1, isSeen: $0.value2.seen) },
+            next: wire.next)
+    }
+}
+
 extension CoachPageCard {
-    public init(_ wire: Components.Schemas.CoachPageCard) throws(ContractsError) {
+    public init(_ wire: Components.Schemas.CoachPageCard, isSeen: Bool = false) throws(ContractsError) {
         guard let kind = Kind(rawValue: wire.kind) else { throw .invalidID(wire.kind) }
         let challenge = wire.challenge.map(\.value1).map(Challenge.init)
         let gift = wire.gift.map {
@@ -22,7 +31,7 @@ extension CoachPageCard {
         self.init(
             kind: kind, id: wire.id, coach: try CoachSpeaker(wire.coach), look: wire.coach.look, time: wire.at,
             day: try wire.day.map { day throws(ContractsError) in try LocalDay(day) }, text: wire.text,
-            challenge: challenge, gift: gift)
+            challenge: challenge, gift: gift, isSeen: isSeen)
     }
 }
 
