@@ -103,19 +103,18 @@ describe('rewards', () => {
     const member = await newMember();
     const at = new Date('2026-11-09T10:00:00Z');
     await rewards.happened({ member, event: set.event, id: 'f1', at });
-    await rewards.putTrigger({
-      kind: 'badge',
-      id: set.badge,
-      way: 'event',
-      events: [set.event],
-      offered: false,
-    });
+    const listed = (
+      await rewards.putTrigger({
+        kind: 'badge',
+        id: set.badge,
+        way: 'event',
+        events: [set.event],
+        offered: false,
+      })
+    ).find(({ kind, id }) => kind === 'badge' && id === set.badge);
     const later = await rewards.happened({ member, event: set.event, id: 'f2', at });
     expect(later).toEqual([{ kind: 'voucher', id: set.voucher }]);
     expect((await rewards.badgesOf(member)).map(({ times }) => times)).toEqual([1]);
-    const listed = (await rewards.rewards()).find(
-      ({ kind, id }) => kind === 'badge' && id === set.badge,
-    );
     expect(listed?.triggers).toEqual([{ kind: 'event', offered: false, events: [set.event] }]);
   });
 

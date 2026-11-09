@@ -1,6 +1,5 @@
 import type {
   Badge,
-  EventName,
   Given,
   HeldBadge,
   Occurrence,
@@ -28,8 +27,6 @@ export interface Rewards {
 
 /** The catalog and triggers, for admins. */
 export interface RewardsAdmin {
-  /** Every reward and every way it is got. */
-  rewards(): Promise<Reward[]>;
   badges(): Promise<Badge[]>;
   /** Adds or changes a badge and answers with every badge now. */
   putBadge(badge: Badge): Promise<Badge[]>;
@@ -38,8 +35,6 @@ export interface RewardsAdmin {
   putVoucher(voucher: Voucher): Promise<Voucher[]>;
   /** Adds or changes an `event` or `team` trigger and answers with every reward now. */
   putTrigger(edit: RewardTriggerEdit): Promise<Reward[]>;
-  /** What an offered `event` trigger gives for `event`. */
-  givenBy(event: EventName): Promise<Given[]>;
   /**
    * `admin` gives `member` `reward`, which has an offered `team` trigger; false for a piece they
    * hold already. Each badge or voucher given is one more.
@@ -67,7 +62,6 @@ export function createRewards(deps: {
       return deps.store.grantFor(occurrence, rewards);
     },
 
-    rewards: () => deps.unlocks.rewards(),
     badges: () => deps.store.badges(),
 
     async putBadge(badge) {
@@ -89,8 +83,6 @@ export function createRewards(deps: {
       await deps.store.putTrigger(edit);
       return deps.unlocks.rewards();
     },
-
-    givenBy: (event) => deps.store.givenBy(event),
 
     async give({ member, reward, admin }) {
       if (!(await deps.store.teamGives(reward))) throw new RewardNotTeamGivenError(named(reward));
