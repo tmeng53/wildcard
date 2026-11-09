@@ -9042,6 +9042,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/firstWeek`.
             public var firstWeek: Swift.String?
+            /// The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/squadFirstWeek`.
+            public var squadFirstWeek: Swift.String?
             /// Creates a new `WeeklyPlan`.
             ///
             /// - Parameters:
@@ -9052,6 +9056,7 @@ extension Components {
             ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///   - fuelGoals:
             ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
+            ///   - squadFirstWeek: The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
@@ -9059,7 +9064,8 @@ extension Components {
                 days: Components.Schemas.PlanDays,
                 source: Components.Schemas.WeeklyPlan.SourcePayload,
                 fuelGoals: Components.Schemas.FuelGoals,
-                firstWeek: Swift.String? = nil
+                firstWeek: Swift.String? = nil,
+                squadFirstWeek: Swift.String? = nil
             ) {
                 self.version = version
                 self.member = member
@@ -9068,6 +9074,7 @@ extension Components {
                 self.source = source
                 self.fuelGoals = fuelGoals
                 self.firstWeek = firstWeek
+                self.squadFirstWeek = squadFirstWeek
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -9077,6 +9084,7 @@ extension Components {
                 case source
                 case fuelGoals
                 case firstWeek
+                case squadFirstWeek
             }
         }
         /// - Remark: Generated from `#/components/schemas/FuelGoals`.
@@ -10525,7 +10533,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/plannedDays`.
                 public var plannedDays: Swift.Int
-                /// This week’s Monday, in their time zone. Left out by older servers.
+                /// This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/weekStart`.
                 public var weekStart: Swift.String?
@@ -10537,11 +10545,15 @@ extension Components {
                 public var marks: [Components.Schemas.DayMark]?
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/fuelGoals`.
                 public var fuelGoals: Components.Schemas.FuelGoals?
-                /// The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
+                /// The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/firstWeek`.
                 public var firstWeek: Swift.String?
-                /// Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                /// The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/squadFirstWeek`.
+                public var squadFirstWeek: Swift.String?
+                /// Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/today`.
                 public var today: Swift.String?
@@ -10550,12 +10562,13 @@ extension Components {
                 /// - Parameters:
                 ///   - trainedDays: Days they trained this week, from all their check-ins wherever they went.
                 ///   - plannedDays: Days their plan trains this week, from the day they joined on.
-                ///   - weekStart: This week’s Monday, in their time zone. Left out by older servers.
+                ///   - weekStart: This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.
                 ///   - days:
                 ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///   - fuelGoals:
-                ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
-                ///   - today: Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.
+                ///   - squadFirstWeek: The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.
+                ///   - today: Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
@@ -10564,6 +10577,7 @@ extension Components {
                     marks: [Components.Schemas.DayMark]? = nil,
                     fuelGoals: Components.Schemas.FuelGoals? = nil,
                     firstWeek: Swift.String? = nil,
+                    squadFirstWeek: Swift.String? = nil,
                     today: Swift.String? = nil
                 ) {
                     self.trainedDays = trainedDays
@@ -10573,6 +10587,7 @@ extension Components {
                     self.marks = marks
                     self.fuelGoals = fuelGoals
                     self.firstWeek = firstWeek
+                    self.squadFirstWeek = squadFirstWeek
                     self.today = today
                 }
                 public enum CodingKeys: String, CodingKey {
@@ -10583,6 +10598,7 @@ extension Components {
                     case marks
                     case fuelGoals
                     case firstWeek
+                    case squadFirstWeek
                     case today
                 }
             }

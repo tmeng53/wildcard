@@ -45,6 +45,41 @@ struct ScheduleStoreTests {
         #expect(store.weeks.last == Fixtures.day("2026-10-26"))
     }
 
+    @Test func weeksAreNumberedFromTheSquadsFirstWeek() async throws {
+        // The squad began the week of 10-05; the member joined two weeks later.
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2026-10-21"), squadFirstWeek: Fixtures.day("2026-10-07")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [3, 4])
+        #expect(profile.startsWithNotYetJoined(store.weeks), "W1 and W2 are the squad's, not theirs: 还未入队")
+    }
+
+    @Test func aFoundingMemberHasNoNotYetJoinedChip() async throws {
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2026-10-08"), squadFirstWeek: Fixtures.day("2026-10-05")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [1, 2, 3, 4])
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
+    }
+
+    @Test func outsideASquadWeeksCountFromTheirOwnFirst() async throws {
+        let store = store(FakeBackend(firstWeek: Fixtures.day("2026-10-12")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(store.weeks.map(profile.weekNumber(of:)) == [1, 2, 3])
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
+    }
+
+    @Test func noNotYetJoinedChipOnceTheWeeksNoLongerReachTheJoinedWeek() async throws {
+        let store = store(
+            FakeBackend(firstWeek: Fixtures.day("2025-02-03"), squadFirstWeek: Fixtures.day("2025-01-06")))
+        await store.load()
+        let profile = try #require(store.profile)
+        #expect(!profile.startsWithNotYetJoined(store.weeks))
+    }
+
     @Test func signedOutAndOfflineSayWhere() async {
         let backend = FakeBackend()
         await backend.failProfile(with: .signedOut)

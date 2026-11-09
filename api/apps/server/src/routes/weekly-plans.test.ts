@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   createCheckIns,
   createPostgresCheckInStore,
@@ -9,6 +11,7 @@ import {
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createDatabase } from '../adapters/postgres.js';
@@ -159,6 +162,13 @@ function joinedWeek() {
 const memberWeek = (weeks: number) =>
   new Date(Date.parse(joinedWeek()) + 7 * weeks * DAY).toISOString().slice(0, 10);
 
+/** A fresh invite code in the codes' own alphabet. */
+const inviteCode = () =>
+  Array.from(
+    { length: 8 },
+    () => '23456789ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 31)],
+  ).join('');
+
 const train = { kind: 'train' } as const;
 const rest = { kind: 'rest' } as const;
 const days = [{ kind: 'train', sport: 'tennis' }, rest, train, train, train, rest, train];
@@ -272,6 +282,22 @@ describe('/me/weekly-plans/{weekStart}', () => {
     const { token } = await member({ profile: false });
     const [, body] = await call('GET', { path: `/me/weekly-plans/${monday(0)}`, token });
     expect(body).not.toHaveProperty('firstWeek');
+  });
+
+  it('counts the week from the squad’s first, the same for everyone in it', async () => {
+    const { token, userId } = await member();
+    const [, alone] = await call('GET', { path: `/me/weekly-plans/${monday(0)}`, token });
+    expect(alone).not.toHaveProperty('squadFirstWeek');
+    // Made on Wednesday 2026-10-07 at 03:00 UTC: still Tuesday the 6th in New York, the clock of
+    // a squad that never set its own, so its W1 is the week of Monday 2026-10-05.
+    const squad = randomUUID();
+    await sql`insert into public.squads (id, name, invite_code, created_at)
+      values (${squad}, 'squad', ${inviteCode()}, '2026-10-07T03:00:00Z')`.execute(db);
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${squad}, ${userId}, now())`.execute(db);
+    const [status, body] = await call('GET', { path: `/me/weekly-plans/${monday(0)}`, token });
+    expect(status).toBe(200);
+    expect(body).toMatchObject({ firstWeek: joinedWeek(), squadFirstWeek: '2026-10-05' });
   });
 
   it('keeps past weeks as they were', async () => {

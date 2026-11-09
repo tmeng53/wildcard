@@ -59,7 +59,7 @@ struct PosterContent: Equatable {
     /// whose scene isn't picked yet, the brand's graphite.
     let paint: Paint
     let weekStart: LocalDay
-    /// W1 for the week the member joined.
+    /// The squad's week, W1 for the week the squad began.
     let weekNumber: Int
     let lanes: [Lane]
     let titles: [AwardTitle]
