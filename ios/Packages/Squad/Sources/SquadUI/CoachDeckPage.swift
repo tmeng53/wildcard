@@ -84,7 +84,7 @@ public struct CoachDeckPage: View {
         case .failed:
             StateView.offline(retryIdentifier: "coachDeck.retry") { Task { await deck.reload() } }
         default:
-            VStack(spacing: Space.s) {
+            VStack(spacing: Space.xs) {
                 stack
                 if !deck.stack.isEmpty { hint(left: deck.stack.count - 1) }
             }
@@ -101,7 +101,7 @@ public struct CoachDeckPage: View {
             }
             Image(systemName: "arrow.right").accessibilityHidden(true)
         }
-        .typeStyle(TypeRamp.footnote)
+        .typeStyle(TypeRamp.caption)
         .foregroundStyle(Color(role: .fgMuted, in: theme))
         .lineLimit(1)
         .minimumScaleFactor(0.8)
