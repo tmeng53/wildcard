@@ -322,7 +322,9 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
-        isAdmin = (try? await api.me())?.isAdmin ?? false
+        let member = try? await api.me()
+        isAdmin = member?.isAdmin ?? false
+        Self.health.birthday = member?.birthday
     }
 
     /// The member's home, from what the phone kept for them alone.

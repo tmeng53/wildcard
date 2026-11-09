@@ -18,19 +18,19 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
         self.restingBpm = restingBpm
     }
 
-    /// The workout with its heart-rate zones placed for a member born on `birthday`, as of the
-    /// day it started; unchanged without a birthday or a heart-rate curve. Only the zones are
-    /// posted, never the birthday or the resting heart rate.
-    public func withZones(birthday: DateComponents?, calendar: Calendar) -> Workout {
+    /// The workout with its heart-rate zones placed for a member born on `birthday`, at their age
+    /// on the day it started on `timeZone`'s clock; unchanged without a birthday or a heart-rate
+    /// curve. Only the zones are posted, never the birthday or the resting heart rate.
+    public func withZones(birthday: Birthday?, in timeZone: TimeZone) -> ImportedWorkout {
         guard let series = workout.series, let curve = series.heartRate, let birthday,
-            let born = calendar.date(from: birthday),
-            let age = calendar.dateComponents([.year], from: born, to: workout.startedAt.date).year,
-            let zones = HeartRateZones(age: age, restingBpm: restingBpm)
-        else { return workout }
-        return Workout(
+            let zones = HeartRateZones(
+                age: birthday.age(on: LocalDay(at: workout.startedAt.date, in: timeZone)), restingBpm: restingBpm)
+        else { return self }
+        let zoned = Workout(
             source: workout.source, startedAt: workout.startedAt, endedAt: workout.endedAt, summary: workout.summary,
             series: WorkoutSeries(heartRate: curve, laps: series.laps, zones: zones), route: workout.route,
             tilePosition: workout.tilePosition, chartPosition: workout.chartPosition)
+        return ImportedWorkout(workout: zoned, activity: activity, restingBpm: restingBpm)
     }
 
     public var id: WorkoutSource { workout.source }
