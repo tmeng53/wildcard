@@ -74,6 +74,18 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     #expect(sharing.keptTiles(of: swim) == [])
 }
 
+@Test func caloriesStayOnForSettingsKeptBeforeThem() throws {
+    let kept = Data(
+        #"{"version":1,"distance":true,"pace":false,"heartRate":true,"effort":true,"laps":true,"route":true}"#.utf8)
+    let sharing = try JSONDecoder().decode(HealthSharing.self, from: kept)
+    #expect(sharing.calories)
+    #expect(!sharing.pace)
+    var off = sharing
+    off.calories = false
+    #expect(off.struck.contains(.calories))
+    #expect(try JSONDecoder().decode(HealthSharing.self, from: JSONEncoder().encode(off)) == off)
+}
+
 @Test func zonesArePlacedFromTheBirthdayAndRestingRateOnly() throws {
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
