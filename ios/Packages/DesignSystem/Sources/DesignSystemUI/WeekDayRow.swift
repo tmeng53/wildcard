@@ -12,13 +12,13 @@ public struct WeekDayRow: View {
     }
 
     private let days: [WeekDayStatus]
-    private let today: Int
+    private let today: Int?
     private let size: Size
 
     /// - Parameters:
     ///   - days: Monday first, seven days.
-    ///   - today: today's index in `days`.
-    public init(days: [WeekDayStatus], today: Int, size: Size = .compact) {
+    ///   - today: today's index in `days`, or nil when today isn't in this week.
+    public init(days: [WeekDayStatus], today: Int?, size: Size = .compact) {
         self.days = days
         self.today = today
         self.size = size

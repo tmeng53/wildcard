@@ -39,8 +39,8 @@ public struct EditorChoices: Hashable, Sendable {
     /// A prop of this release. Its name is UI copy, in the editor's String Catalog.
     public struct Prop: Hashable, Sendable, Identifiable {
         public let id: String
-        /// Whether every member holds it from the start: the tumbler and the dumbbell. The
-        /// others open once the member unlocks them by training.
+        /// Whether every member holds it from the start (every prop now, Tracy 2026-11-09); one
+        /// that isn't opens once the member unlocks it by training.
         public let isOpen: Bool
 
         public init(id: String, isOpen: Bool = false) {

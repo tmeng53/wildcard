@@ -188,6 +188,7 @@ export interface CoachSettings {
   output_micros_per_million: number;
   rules: string;
   squad_daily_cap_micros: Generated<number>;
+  wakes: string;
 }
 
 export interface CoachUsage {

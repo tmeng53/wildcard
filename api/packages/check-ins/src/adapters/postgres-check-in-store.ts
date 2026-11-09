@@ -16,6 +16,7 @@ import {
 import { storedWorkout, workoutFromStored, workoutView, type Workout } from '../domain/workout.js';
 import { PhotoPath, type PhotoRef } from '../domain/photos.js';
 import { SportKey } from '../domain/sports.js';
+import type { CheckInTotals } from '../domain/totals.js';
 import type { CheckInStore, InsertOutcome, UpdateOutcome } from '../ports.js';
 import type { CheckIns, DB } from './tables.js';
 
@@ -235,50 +236,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return [...new Set(rows.map(({ path }) => path))].map((path) => PhotoPath.parse(path));
     },
 
-    async totals(member) {
-      const counts = await db
-        .selectFrom('check_ins')
-        .select([
-          sql<string>`count(distinct day) filter (where kind = 'trained')`.as('trainedDays'),
-          sql<string>`count(*) filter (where kind = 'healthyMeal')`.as('healthyMeals'),
-          sql<string>`count(*) filter (where kind = 'cheatMeal')`.as('cheatMeals'),
-          // A 休息 (`restDay`) is a planned rest, not a 请假条.
-          sql<string>`count(*) filter (where kind = 'disclaimer' and payload -> 'restDay' is null)`.as(
-            'disclaimers',
-          ),
-        ])
-        .where('member_id', '=', member)
-        .executeTakeFirstOrThrow();
-      const top = await db
-        .selectFrom('check_ins')
-        .select([
-          sql<string>`payload ->> 'sport'`.as('sport'),
-          sql<string | null>`payload ->> 'customSport'`.as('customSport'),
-          sql<string>`count(*)`.as('checkIns'),
-        ])
-        .where('member_id', '=', member)
-        .where('kind', '=', 'trained')
-        .groupBy([sql`payload ->> 'sport'`, sql`payload ->> 'customSport'`])
-        .orderBy(sql`count(*)`, 'desc')
-        .orderBy(sql`max(created_at)`, 'desc')
-        .limit(1)
-        .executeTakeFirst();
-      return {
-        trainedDays: Number(counts.trainedDays),
-        healthyMeals: Number(counts.healthyMeals),
-        cheatMeals: Number(counts.cheatMeals),
-        disclaimers: Number(counts.disclaimers),
-        ...(top === undefined
-          ? {}
-          : {
-              topSport: {
-                sport: SportKey.parse(top.sport),
-                ...(top.customSport === null ? {} : { customSport: top.customSport }),
-                checkIns: Number(top.checkIns),
-              },
-            }),
-      };
-    },
+    totals: (member) => totalsOf(db, { member }),
+
+    totalsSharedTo: ({ member, squad }) => totalsOf(db, { member, squad }),
 
     async trainedSince({ member, since }) {
       const rows = await db
@@ -487,5 +447,61 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .executeTakeFirstOrThrow();
       return Number(count);
     },
+  };
+}
+
+/** The counts of everything `member` checked in, or of only what they shared to `squad`. */
+async function totalsOf(
+  db: Kysely<CheckInTables>,
+  { member, squad }: { readonly member: MemberId; readonly squad?: SquadId },
+): Promise<CheckInTotals> {
+  // Only what reached the squad, when asked for a squad's view: a 仅自己可见 post never counts.
+  const shared =
+    squad === undefined
+      ? sql<boolean>`true`
+      : sql<boolean>`exists (select 1 from check_in_squads where check_in_squads.check_in_id = check_ins.id and check_in_squads.squad_id = ${squad})`;
+  const counts = await db
+    .selectFrom('check_ins')
+    .select([
+      sql<string>`count(distinct day) filter (where kind = 'trained')`.as('trainedDays'),
+      sql<string>`count(*) filter (where kind = 'healthyMeal')`.as('healthyMeals'),
+      sql<string>`count(*) filter (where kind = 'cheatMeal')`.as('cheatMeals'),
+      // A 休息 (`restDay`) is a planned rest, not a 请假条.
+      sql<string>`count(*) filter (where kind = 'disclaimer' and payload -> 'restDay' is null)`.as(
+        'disclaimers',
+      ),
+    ])
+    .where('member_id', '=', member)
+    .where(shared)
+    .executeTakeFirstOrThrow();
+  const top = await db
+    .selectFrom('check_ins')
+    .select([
+      sql<string>`payload ->> 'sport'`.as('sport'),
+      sql<string | null>`payload ->> 'customSport'`.as('customSport'),
+      sql<string>`count(*)`.as('checkIns'),
+    ])
+    .where('member_id', '=', member)
+    .where(shared)
+    .where('kind', '=', 'trained')
+    .groupBy([sql`payload ->> 'sport'`, sql`payload ->> 'customSport'`])
+    .orderBy(sql`count(*)`, 'desc')
+    .orderBy(sql`max(created_at)`, 'desc')
+    .limit(1)
+    .executeTakeFirst();
+  return {
+    trainedDays: Number(counts.trainedDays),
+    healthyMeals: Number(counts.healthyMeals),
+    cheatMeals: Number(counts.cheatMeals),
+    disclaimers: Number(counts.disclaimers),
+    ...(top === undefined
+      ? {}
+      : {
+          topSport: {
+            sport: SportKey.parse(top.sport),
+            ...(top.customSport === null ? {} : { customSport: top.customSport }),
+            checkIns: Number(top.checkIns),
+          },
+        }),
   };
 }

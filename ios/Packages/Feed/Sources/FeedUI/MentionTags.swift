@@ -47,19 +47,28 @@ extension MentionedWords {
     }
 }
 
-/// Draws each @ tag's capsule under its words, in the scene's soft accent.
+/// Draws each @ tag's capsule under its words, in the scene's soft accent. A tag can be laid out
+/// as several runs (the thin spaces, the 「@」 and a CJK name each take their own font), so the
+/// runs of one tag are joined into one capsule, drawn under the words.
 struct MentionTagRenderer: TextRenderer {
     let fill: Color
 
     func draw(layout: Text.Layout, in context: inout GraphicsContext) {
         for line in layout {
+            var tag: CGRect?
             for run in line {
                 if run[MentionTagRun.self] != nil {
-                    let bounds = run.typographicBounds.rect.insetBy(dx: 0, dy: 1)
-                    context.fill(Capsule().path(in: bounds), with: .color(fill))
+                    let bounds = run.typographicBounds.rect
+                    tag = tag.map { $0.union(bounds) } ?? bounds
+                } else if let done = tag {
+                    context.fill(Capsule().path(in: done.insetBy(dx: 0, dy: 1)), with: .color(fill))
+                    tag = nil
                 }
-                context.draw(run)
             }
+            if let done = tag {
+                context.fill(Capsule().path(in: done.insetBy(dx: 0, dy: 1)), with: .color(fill))
+            }
+            for run in line { context.draw(run) }
         }
     }
 }

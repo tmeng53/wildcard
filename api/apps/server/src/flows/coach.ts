@@ -156,7 +156,7 @@ export function coachMemberFacts(deps: {
   readonly awards: Pick<WeeklyAwards, 'titlesWon'>;
   readonly sports: Sports;
 }): CoachMemberFacts {
-  return async ({ members, weekStart }) => {
+  return async ({ squad, members, weekStart }) => {
     const catalog = await deps.sports.catalog();
     const sportNames = new Map(
       catalog.categories.flatMap(({ sports }) => sports.map(({ id, names }) => [id, names.zhHans])),
@@ -166,7 +166,11 @@ export function coachMemberFacts(deps: {
     return Promise.all(
       members.map(async (member): Promise<MemberFacts> => {
         const [totals, plan, won] = await Promise.all([
-          deps.checkIns.totals(CheckInMember.parse(member)),
+          // Only what reached this squad: a 仅自己可见 post never reaches its coach.
+          deps.checkIns.totalsSharedTo({
+            member: CheckInMember.parse(member),
+            squad: CheckInSquad.parse(squad),
+          }),
           deps.plans.find({
             member: CheckInMember.parse(member),
             weekStart: CheckInWeek.parse(weekStart),

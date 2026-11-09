@@ -395,6 +395,9 @@
           "disclaimerDice": {
             "$ref": "#/components/schemas/DisclaimerDiceCatalog"
           },
+          "appCopy": {
+            "$ref": "#/components/schemas/AppCopyCatalog"
+          },
           "scenes": {
             "$ref": "#/components/schemas/ScenesCatalog"
           },
@@ -553,6 +556,45 @@
         "required": [
           "lines"
         ],
+        "additionalProperties": {}
+      },
+      "AppCopyCatalog": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AppCopyWords"
+            },
+            "description": "Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).",
+            "example": {
+              "还有 %lld 次开门": {
+                "zhHans": "再练 %lld 次就开门"
+              }
+            }
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "additionalProperties": {}
+      },
+      "AppCopyWords": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string",
+            "description": "Simplified Chinese."
+          },
+          "en": {
+            "type": "string",
+            "description": "English."
+          },
+          "zhHant": {
+            "type": "string",
+            "description": "Traditional Chinese (Taiwan)."
+          }
+        },
         "additionalProperties": {}
       },
       "ScenesCatalog": {
@@ -14103,7 +14145,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
+        "description": "Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

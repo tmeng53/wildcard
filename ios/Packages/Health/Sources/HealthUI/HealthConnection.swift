@@ -17,6 +17,19 @@ public final class HealthConnection {
     public private(set) var recent: [ImportedWorkout] = []
     /// The workouts put away from the home's card on this phone; the card offers the next one.
     public private(set) var putAway: Set<WorkoutSource>
+    /// The birthday the member chose to give on their profile, which places a heart-rate
+    /// chart's zones; nil without one. Never read from Health. Kept on this phone with the rest,
+    /// so a post from the home screen widgets places them too.
+    public var birthday: Birthday? {
+        didSet {
+            guard birthday != oldValue else { return }
+            if let birthday {
+                defaults.set(birthday.description, forKey: Self.birthdayKey)
+            } else {
+                defaults.removeObject(forKey: Self.birthdayKey)
+            }
+        }
+    }
 
     /// `putAway` in the order put away, oldest first.
     @ObservationIgnored private var stored: [WorkoutSource]
@@ -35,6 +48,7 @@ public final class HealthConnection {
             defaults.data(forKey: Self.putAwayKey).flatMap { try? JSONDecoder().decode(PutAway.self, from: $0) }
             .flatMap { $0.version == 1 ? $0.workouts : nil } ?? []
         putAway = Set(stored)
+        birthday = defaults.string(forKey: Self.birthdayKey).flatMap { try? LocalDay($0) }.map(Birthday.init(sent:))
     }
 
     /// Takes `workout` off the home's card for good on this phone; it can still be posted from 打卡.
@@ -68,9 +82,21 @@ public final class HealthConnection {
     }
 
     /// Today's workouts for the member's `day`, newest first, each marked posted when `posted`
-    /// holds it.
+    /// holds it, with its heart-rate zones placed when the member gave their birthday.
     public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
-        recent.today(day, in: timeZone, posted: posted)
+        recent.map { $0.withZones(birthday: birthday, in: timeZone) }.today(day, in: timeZone, posted: posted)
+    }
+
+    /// Moves what this phone kept about Health (connected, what a post shares, what was put away
+    /// from 今天's card) from `old` to `shared`, once, so the home screen widgets read the same:
+    /// builds before the widgets kept it in the app's own defaults. Leaves `shared` as it is
+    /// once it holds any of it.
+    public static func share(from old: UserDefaults, to shared: UserDefaults) {
+        let keys = [HealthKeys.connected, sharingKey, putAwayKey]
+        guard keys.allSatisfy({ shared.object(forKey: $0) == nil }) else { return }
+        for key in keys {
+            if let value = old.object(forKey: key) { shared.set(value, forKey: key) }
+        }
     }
 
     private func keep(_ sharing: HealthSharing) {
@@ -79,6 +105,7 @@ public final class HealthConnection {
 
     private static let sharingKey = "health.sharing"
     private static let putAwayKey = "health.putAway"
+    private static let birthdayKey = "health.birthday"
     private static let putAwayLimit = 50
 
     /// What `putAway` keeps on the phone.
@@ -86,4 +113,10 @@ public final class HealthConnection {
         let version: Int
         let workouts: [WorkoutSource]
     }
+}
+
+/// Where HealthKit's connection is kept on the phone, which `HealthConnection.share(from:to:)`
+/// moves too.
+enum HealthKeys {
+    static let connected = "health.connected"
 }

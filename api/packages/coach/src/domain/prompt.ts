@@ -9,6 +9,7 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
+import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
   checkInLine,
@@ -21,7 +22,7 @@ import {
 import type { WakeReason } from './wake.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's
-// identity and soul, and how each kind of wake goes) and each wake's task. Chinese, as the coach
+// identity and soul, and how each kind of wake goes, each from the settings) and each wake's task. Chinese, as the coach
 // speaks. The instructions are the same for every wake of a coach and come first, and each task
 // holds only what changes, so the model's provider can cache that beginning (OpenAI does for a
 // beginning of 1024 tokens or more) and charge less for it.
@@ -40,27 +41,27 @@ export interface GiftOptions {
 }
 
 /** The standing instructions for a coach. */
-export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Coach): string {
+export function instructionsOf(
+  settings: Pick<CoachSettings, 'rules' | 'wakes'>,
+  coach: Coach,
+): string {
   return [
     settings.rules,
     `你的人设：\n名字：${coach.name}\n风格：${coach.style}`,
     coach.soul,
-    WAKES,
+    wakesOf(settings.wakes),
   ].join('\n\n');
 }
 
-/** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
-const WAKES = [
-  '你会在四种时候醒来，任务会告诉你是哪一种：',
-  '- 有人打卡。',
-  '- 有人回复你或 @ 你。',
-  '- 夜里：整理你的记性，什么都不说。',
-  '- 新的一天：给全队写今天的战术板，给任务里列出的每个人各写一张只有他看得到的便条。一张便条只说一件事，每个人不一样。',
-  '做什么、用哪个工具，你自己判断。',
-  '你每次醒来都会忘掉以前的一切，只有任务里「你的记性」留得住。',
-  '队员看得到的话里用昵称称呼人，不写队员N。',
-  '队员看得到的话用任务说的语言写。',
-].join('\n');
+/**
+ * How each kind of wake goes, as the settings word it: the same for every squad, so it is part of
+ * the instructions, with the limits the API holds the coach to put in.
+ */
+function wakesOf(wakes: string): string {
+  return wakes
+    .replaceAll('{replyLimit}', String(REPLY_LIMIT))
+    .replaceAll('{noteLimit}', String(NOTE_LIMIT));
+}
 
 /** What was said to and by the coach under one check-in, oldest first. */
 export interface CoachThread {

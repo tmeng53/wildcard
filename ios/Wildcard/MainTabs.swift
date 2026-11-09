@@ -146,6 +146,7 @@ struct MainTabs: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await profile.reload() } }
         }
+        .placesZones(from: profile, in: today.health)
         .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }

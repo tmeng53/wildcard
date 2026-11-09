@@ -8,6 +8,9 @@
       "path": "packages/admins"
     },
     {
+      "path": "packages/app-copy"
+    },
+    {
       "path": "packages/ai-consent"
     },
     {

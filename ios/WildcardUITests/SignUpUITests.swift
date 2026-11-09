@@ -82,13 +82,14 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(run.waitForExistence(timeout: Self.wait), "关于你 never appeared")
         let next = app.buttons["sports.done"]
         XCTAssertFalse(next.isEnabled, "下一步 is on with nothing picked")
-        // The birthday opens on 2000-01-01, never a day from Apple Health, and a drag turns it.
+        // The birthday opens on 2000-01-01, never a day from Apple Health, and its chevrons turn it.
         let year = app.descendants(matching: .any)["sports.birthday.year"]
         XCTAssertEqual(year.value as? String, "2000", "the birthday doesn't open on 2000")
         XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.month"].value as? String, "01")
         XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.day"].value as? String, "01")
-        year.swipeDown()
-        XCTAssertNotEqual(year.value as? String, "2000", "a drag down doesn't turn the year back")
+        // The column's down chevron, at its foot: a swipe on the card is taken by the page's scroll.
+        year.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.92)).tap()
+        waitFor(year, "value != '2000'", "the down chevron doesn't turn the year back")
         XCTAssertLessThanOrEqual(
             app.descendants(matching: .any)["sports.birthday.day"].frame.maxX, app.frame.maxX,
             "the day's card runs off the screen")

@@ -1,10 +1,12 @@
 import CheckInDomain
 import Contracts
 import Foundation
+import HealthDomain
 
 /// What the home screen widgets show, from the home the app or the widget last loaded: my week
 /// (我的一周, the small widget) and the squad's week and today (小队今天, the medium one), each
-/// counted the way the home's squad card counts them.
+/// counted the way the home's squad card counts them, and the Apple Health workout either offers
+/// to post with one tap, as 今天's Health card does.
 public struct WidgetBoard: Hashable, Sendable {
     /// Where one member's day stands, as their ring shows it.
     public enum MateStatus: Hashable, Sendable {
@@ -41,11 +43,23 @@ public struct WidgetBoard: Hashable, Sendable {
     public let coach: CoachID?
     /// The coach has a card I haven't seen: its phone's ink dot.
     public let coachHasNews: Bool
+    /// Today's newest workout in Health I haven't posted or put away from 今天's card, of a sport
+    /// on the list: what the widgets' 打卡 capsule posts. Nil when there is none.
+    public let workout: ImportedWorkout?
+    /// While there is none, today's newest workout I posted, which the capsule keeps showing with
+    /// 已打卡 once its 打卡 went out. Nil when I posted none from Health today.
+    public let postedWorkout: ImportedWorkout?
 
     /// - Parameters:
     ///   - home: the home as last loaded; moved on to `day` when it is from an earlier one.
     ///   - day: my day now, on my profile's clock (`Home.timeZone`).
-    public init(home: Home, day: LocalDay, coach: CoachID? = nil, coachHasNews: Bool = false) {
+    ///   - health: the workouts read from Health lately; pass none for a home that is the copy kept
+    ///     on the phone, which may be from before a post and so can't say what is still to post.
+    ///   - putAway: the workouts put away from 今天's Health card on this phone.
+    public init(
+        home: Home, day: LocalDay, coach: CoachID? = nil, coachHasNews: Bool = false, health: [ImportedWorkout] = [],
+        putAway: Set<WorkoutSource> = []
+    ) {
         // A copy read on an earlier day of mine says nothing about anyone's today yet. Each
         // teammate's row is their own today on their own clock, so a teammate behind me in time
         // reads an earlier day in a fresh copy too, and counts as the squad card counts them.
@@ -67,6 +81,11 @@ public struct WidgetBoard: Hashable, Sendable {
         }
         self.coach = coach
         self.coachHasNews = coachHasNews
+        // One Health has no sport of the list for is picked by hand in the app, so the widgets
+        // leave it out.
+        let todays = health.filter { $0.activity != nil }.today(day, in: home.timeZone, posted: home.postedWorkouts)
+        workout = todays.newestToPost(skipping: putAway)
+        postedWorkout = workout == nil ? todays.first(where: \.isPosted)?.imported : nil
     }
 
     /// How many in the squad checked in today: 今天 x/y.

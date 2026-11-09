@@ -129,6 +129,22 @@
         }
       }
     },
+    "已打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checked in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打卡"
+          }
+        }
+      }
+    },
     "今天 %lld/%lld": {
       "localizations": {
         "en": {

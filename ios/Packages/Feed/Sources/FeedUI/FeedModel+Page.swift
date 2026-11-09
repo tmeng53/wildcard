@@ -38,6 +38,7 @@ extension FeedModel {
         }
         // A tag on the page opens the card as 动态 does, whenever 动态 set that up.
         page.openTeammate = { [weak self] member in self?.openTeammate(member) }
+        page.squadName = { [weak self] in self?.squadName() }
         return page
     }
 

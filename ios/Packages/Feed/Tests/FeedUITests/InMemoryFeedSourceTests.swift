@@ -30,13 +30,15 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     let posts = feed.sections.flatMap(\.posts)
     #expect(posts.count == 8)
     #expect(posts.contains { $0.author == viewer })
-    // Three 训练 come from Apple Health: two with their map, the swim with its laps.
+    // Four 训练 come from Apple Health: two with their map, the swim with its laps, my strength
+    // session with its heart rate after its photo.
     let tiles = posts.compactMap { post -> [Contracts.PostTile]? in
         guard case .trained(let training) = post.checkIn.entry, training.workout != nil else { return nil }
         return training.tiles
     }
-    #expect(tiles.count == 3)
+    #expect(tiles.count == 4)
     #expect(tiles.contains([.workout(.map)]))
+    #expect(tiles.contains { $0.count == 2 && $0.first != .workout(.chart) && $0.last == .workout(.chart) })
     #expect(tiles.contains { $0.count == 2 && $0.last == .workout(.chart) })
     #expect(posts.allSatisfy { feed.characters[$0.author] != nil })
     let disclaimer = posts.first {

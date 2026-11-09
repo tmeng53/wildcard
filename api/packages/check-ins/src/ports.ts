@@ -52,6 +52,11 @@ export interface CheckInStore {
   photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
+  /** The same counts of only what `member` shared to `squad`: none of their 仅自己可见 posts. */
+  totalsSharedTo(query: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+  }): Promise<CheckInTotals>;
   /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
