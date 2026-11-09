@@ -141,6 +141,12 @@ public final class ScheduleModel {
         Task { await store.show(week) }
     }
 
+    /// Shows the week to plan after a 战报 of the week before `week` (its 排下周): that week, or
+    /// this week once it has begun, as a 战报 read late is planning the week it is in.
+    public func plan(_ week: LocalDay) {
+        show(store.today.map { max(week, $0.weekStart) } ?? week)
+    }
+
     /// Shows the 我的每周计划 instead of a week, from its chip.
     func showTemplate() {
         fuelOpen = false

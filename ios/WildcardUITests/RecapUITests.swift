@@ -34,6 +34,24 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "✕ didn't close the story")
     }
 
+    /// 排下周 on the last page closes the story and opens 出赛表 in 我.
+    func testPlanNextWeekOpensSchedule() {
+        let app = launch(language: "zh-Hans")
+        let tile = app.buttons["recap.entry"]
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
+        tile.tap()
+        let pages = ["podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending"]
+        for page in pages {
+            show(page, in: app)
+            if page != "ending" { next(in: app) }
+        }
+        let plan = app.buttons["recap.planNextWeek"]
+        XCTAssertTrue(plan.waitForExistence(timeout: Self.wait), "no 排下周 on the ending")
+        plan.tap()
+        XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: Self.wait), "排下周 didn't open 出赛表")
+        keepScreenshot(named: "7a-recap-plan-next-week")
+    }
+
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
     func testPendingTitlesCanBeNudged() {
         let app = launch(language: "zh-Hans", extra: ["-recap-pending"])
