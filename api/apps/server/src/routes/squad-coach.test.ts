@@ -829,7 +829,7 @@ describe('/squads/{squadId}/coach/cards', () => {
     const first = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(first.cards).toHaveLength(20);
     expect(first.cards[0]).toMatchObject({ text: '第0句', seen: false });
-    expect(first.next).toBeDefined();
+    expect(first.next).toMatch(/^\d+~board:\d{4}-\d{2}-\d{2}$/u);
     const second = Page.parse(
       (
         await call({
