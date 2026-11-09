@@ -41,7 +41,7 @@ final class LanguageUITests: XCTestCase {
         waitFor(squadDone, "isEnabled == true", "建小队 stays off with a name")
         squadDone.tap()
         let skipSports = app.buttons["sports.skip"]
-        XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
+        XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "关于你 never appeared")
         XCTAssertTrue(app.buttons["sports.run"].label.contains("跑步"), "a sport isn't in Chinese")
         skipSports.tap()
         let skipHealth = app.buttons["health.skip"]

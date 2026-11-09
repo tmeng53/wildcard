@@ -142,6 +142,23 @@ public final class MeModel {
         load = .loaded(overview)
     }
 
+    /// Saves the member's birthday, or forgets it (nil), and shows it. Answers whether it was saved.
+    @discardableResult
+    public func save(birthday: Birthday?) async -> Bool {
+        saveFailed = false
+        do {
+            try await service.save(birthday: birthday)
+        } catch {
+            saveFailed = true
+            await signOutIfEnded(error)
+            return false
+        }
+        guard case .loaded(var overview) = load else { return true }
+        overview.birthday = birthday
+        load = .loaded(overview)
+        return true
+    }
+
     /// The pieces that came to the member and aren't claimed yet: the unlocked ones and the ones
     /// the street holds as theirs (a limited store's starters while it is open). They wait in
     /// their stores on 商店街, marked NEW.

@@ -36,6 +36,8 @@ public enum Haptic: String, CaseIterable, Sendable {
     case unseal
     /// A finger scrubbing a heart-rate chart crossing into another zone: a selection tick.
     case zone
+    /// 我完成了 on the day's challenge, as its flag turns into a check: the system's success.
+    case done
 
     /// How many ticks a status ring plays while it draws itself closed.
     public static let ringTicks = 3

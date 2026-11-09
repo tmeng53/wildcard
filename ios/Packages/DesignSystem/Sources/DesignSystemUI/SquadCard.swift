@@ -93,7 +93,7 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 }
 
 /// The card on the home scene, swiped between two pages of the same height: the squad's week
-/// (score, bar, everyone's rings in one row) and my week (my count, Monday to Sunday, and the
+/// (score, bar, everyone's rings in one row, then today's accepted challenge) and my week (Monday to Sunday under its label, and the
 /// picked day's line: what I trained and my meals; tapping a day picks it, today until then).
 /// One card of scene glass straight on the scene, no shadow: a swipe moves only what is inside it,
 /// and two dots at its foot say which page shows; tapping one goes there. Given `collapses`, a
@@ -134,10 +134,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         VStack(spacing: 0) {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
-                    SquadPage(squad: squad, avatar: avatar, footer: footer, openSquad: openSquad)
-                        .squadCardPage()
-                        .id(SquadCardPage.squad)
-                    MyWeekPage(mine: mine, pickedDay: $pickedDay, completeChallenge: completeChallenge)
+                    SquadPage(
+                        squad: squad, challenge: mine.challenge, avatar: avatar, footer: footer,
+                        openSquad: openSquad, completeChallenge: completeChallenge
+                    )
+                    .squadCardPage()
+                    .id(SquadCardPage.squad)
+                    MyWeekPage(mine: mine, pickedDay: $pickedDay)
                         .squadCardPage()
                         .id(SquadCardPage.mine)
                 }
@@ -198,7 +201,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         return card
     }
 
-    /// 我完成了 on today's challenge, under my week's today (`MyWeek.challenge`).
+    /// 我完成了 on today's challenge, the squad page's last row (`MyWeek.challenge`).
     public func completesChallenge(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.completeChallenge = action
@@ -236,17 +239,15 @@ extension SquadCard where Footer == EmptyView {
     }
 }
 
-/// A big number with its label and title on the left, as both pages open. Given `open`, the
-/// title is a button with a chevron after it.
+/// The squad page's top: its label and title on the left, the big score on the right. Given
+/// `open`, the title is a button with a chevron after it.
 private struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
     let label: Text
-    /// Under the label; a page whose label says enough leaves it out.
-    let title: String?
+    let title: String
     let count: Int
     let goal: Int
-    var unit: Text?  // A word after the score (次).
-    var showsExtra = false  // 训练 past the goal as a small 「+N」 tag after the score.
+    let unit: Text  // A word after the score (次).
     var open: (() -> Void)?
 
     var body: some View {
@@ -266,19 +267,17 @@ private struct PageHeader: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier("squadcard.squad")
-                } else if title != nil {
+                } else {
                     titleText
                 }
             }
             Spacer(minLength: 0)
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                 Score(count: count, goal: goal, size: .hero)
-                if let unit {
-                    unit
-                        .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
-                        .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                }
-                if showsExtra, count > goal {
+                unit
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
                         .accessibilityLabel(Text("多练 \(count - goal) 次", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
@@ -288,7 +287,7 @@ private struct PageHeader: View {
     }
 
     private var titleText: some View {
-        Text(verbatim: title ?? "")
+        Text(verbatim: title)
             .typeStyle(TypeRamp.headline)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
@@ -297,9 +296,12 @@ private struct PageHeader: View {
 
 private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
+    /// Today's accepted challenge, under everything else, so it is seen first (Tracy, 2026-11-09).
+    let challenge: WeekChallenge?
     let avatar: (SquadMember) -> Avatar
     let footer: Footer?
     let openSquad: (() -> Void)?
+    let completeChallenge: (() -> Void)?
 
     var body: some View {
         // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
@@ -307,7 +309,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
                 label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                unit: Text("次", bundle: .module), showsExtra: true, open: openSquad)
+                unit: Text("次", bundle: .module), open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -319,6 +321,9 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
             if let footer {
                 Spacer(minLength: gap)
                 footer
+            }
+            if let challenge {
+                ChallengeRow(challenge: challenge, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)
@@ -344,16 +349,15 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
 }
 
 private struct MyWeekPage: View {
-    @Environment(\.sceneTheme) private var theme
     let mine: MyWeek
     @Binding var pickedDay: Int?
-    let completeChallenge: (() -> Void)?
 
     var body: some View {
         let picked = shownDay
         VStack(alignment: .leading, spacing: 0) {
-            PageHeader(
-                label: Text("我的一周", bundle: .module), title: nil, count: mine.done, goal: mine.planned)
+            // Only its label: the week's circles say how it stands, so the page keeps no big
+            // number and the card stays compact (Tracy, 2026-11-09).
+            SectionLabel(Text("我的一周", bundle: .module))
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in
@@ -379,9 +383,6 @@ private struct MyWeekPage: View {
             Spacer(minLength: Space.s)
             if mine.details.indices.contains(picked) {
                 DayLine(detail: mine.details[picked], weekday: picked, isToday: picked == mine.today)
-            }
-            if let challenge = mine.challenge, picked == mine.today {
-                ChallengeRow(challenge: challenge, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)

@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var isSigningOut = false
     @State private var isPickingLanguage = false
     @State private var isHealthOpen = false
+    @State private var isBirthdayOpen = false
     /// 意见反馈 while it is open, a fresh page each time.
     @State private var feedback: FeedbackModel?
     @Environment(\.openURL) private var openURL
@@ -32,6 +33,9 @@ struct SettingsView: View {
                 DeleteAccountView(model: model) { model.closeDeletion() }
                     .pushedPage(canGoBack: model.deletion != .deleting, hidesTabBar: true)
                     .accentTone(.ink)
+            }
+            .navigationDestination(isPresented: $isBirthdayOpen) {
+                BirthdayView(model: model)
             }
             .navigationDestination(isPresented: $isHealthOpen) {
                 if let health = destinations.health { HealthSettingsView(health: health) }
@@ -109,6 +113,13 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
             )
             .accessibilityIdentifier("me.coachNotifications")
+            ListRow(
+                Text("生日", bundle: .module),
+                value: model.overview?.birthday.map { Text(verbatim: $0.dotted) } ?? Text("未填", bundle: .module)
+            ) {
+                isBirthdayOpen = true
+            }
+            .accessibilityIdentifier("me.birthday")
             if let health = destinations.health, health.isAvailable {
                 ListRow(
                     Text("Apple 健康", bundle: .module),

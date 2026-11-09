@@ -33,7 +33,7 @@ extension TodayView {
             challenge: challenge)
     }
 
-    /// The challenge I accepted from the coach for today, under today's line (Tracy, 2026-11-08):
+    /// The challenge I accepted from the coach for today, the squad page's last row (Tracy, 2026-11-09):
     /// what to do then how much (「拉伸 5 分钟」), and who set it.
     func weekChallenge(_ today: DayChallenge?, coach: CoachSpeaker?) -> WeekChallenge? {
         guard let today else { return nil }
