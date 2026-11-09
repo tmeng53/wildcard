@@ -2063,4 +2063,34 @@ describe('the coach', () => {
       });
     });
   });
+  it('delivers a previewed note to the member alone when asked, once a day', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const { agent } = scriptedAgent(() => [
+        { tool: 'post_note', input: { text: '周日歇好' } },
+        {
+          tool: 'note_to',
+          input: {
+            member: '队员1',
+            text: '今天多喝水',
+            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+          },
+        },
+      ]);
+      const first = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
+      expect(first).toMatchObject({ ran: true, delivered: true, note: { text: '今天多喝水' } });
+      const saved = await sql<{ member: string; text: string; title: string; board: string }>`
+        select m.member_id as member, m.text, m.challenge_title as title,
+          (select count(*) from public.coach_notes where squad_id = ${squad}) as board
+        from public.coach_member_notes m where m.squad_id = ${squad}
+      `.execute(trx);
+      expect(saved.rows).toStrictEqual([
+        { member: mia, text: '今天多喝水', title: '喝水', board: '0' },
+      ]);
+      const again = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
+      expect(again).toMatchObject({ ran: true, delivered: false });
+      const plain = await wakes(fixture, { agent }).preview({ squad, member: mia });
+      expect(plain.ran && 'delivered' in plain).toBe(false);
+    });
+  });
 });

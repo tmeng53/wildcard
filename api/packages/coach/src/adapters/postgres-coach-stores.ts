@@ -272,7 +272,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
              challenge_unit, challenge_line, wake_id)
           select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text},
             ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int,
-            ${challenge?.unit ?? null}, ${challenge?.line ?? null}, ${String(wake)}::bigint
+            ${challenge?.unit ?? null}, ${challenge?.line ?? null},
+            ${wake === undefined ? null : String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (squad_id, member_id, day) do nothing
           returning id`.execute(db);

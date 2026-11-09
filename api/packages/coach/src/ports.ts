@@ -188,7 +188,8 @@ export interface CoachMemberNoteStore {
     readonly day: string;
     readonly text: string;
     readonly challenge?: Challenge;
-    readonly wake: number;
+    /** The wake that wrote it; none for a preview an admin sent to themselves. */
+    readonly wake?: number;
   }): Promise<boolean>;
   /**
    * The challenge the member's note of `day` (the squad's day) set, and what they said to it;
