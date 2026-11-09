@@ -69,9 +69,6 @@ struct CoachDeckStage: View {
             .frame(width: size.width, height: size.height)
         }
         .clipped()
-        // The scene art stands taller than the stage, cut to it; VoiceOver and the UI tests take the
-        // card by the stage's own bounds, not the art's.
-        .accessibilityRepresentation { Color.clear }
         .accessibilityHidden(true)
     }
 
