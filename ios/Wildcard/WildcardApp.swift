@@ -14,6 +14,7 @@ import FeedDomain
 import FeedUI
 import Foundation
 import HealthUI
+import HomeWidgetDomain
 import LocationDomain
 import LocationUI
 import MeDomain
@@ -183,7 +184,13 @@ struct WildcardApp: App {
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:], offline: LaunchOptions.feedIsOffline)
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
-                photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)
+                photos: samplePhotos(), coach: LaunchOptions.sidelineCoach)
+    }
+
+    /// The sample posts' photos, drawn only when the sample squad can show: with a backend the
+    /// tabs are `AppRoot`'s, and drawing them would hold the launch on the main actor for nothing.
+    private static func samplePhotos() -> [String: Data] {
+        AppConfig.current == nil ? InMemoryFeedSource.renderSamplePhotos() : [:]
     }
 
     /// 动态 on the sample squad.
@@ -210,6 +217,11 @@ struct WildcardApp: App {
         case nil:
             tab.wrappedValue = .today
         }
+    }
+
+    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
+    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
     }
 
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
@@ -272,6 +284,8 @@ struct WildcardApp: App {
             LaunchCover()
         } else if LaunchOptions.showsRecap {
             RecapDemo()
+        } else if LaunchOptions.showsWidgets {
+            WidgetPreview(now: LaunchOptions.now())
         } else if let day = LaunchOptions.dailyPush {
             DailyPushPreview(day: day, now: LaunchOptions.now())
         } else if let app {

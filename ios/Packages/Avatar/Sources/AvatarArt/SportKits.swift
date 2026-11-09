@@ -109,11 +109,10 @@ extension PlaceholderCharacter {
         if let own = try? file("moves/sports/\(kit.id).json") {
             return try Clip.decode(own).atTempo(persona.accentTempo)
         }
-        guard let prop = kit.prop, var move = try propMove(for: Outfit(["prop": prop])) else {
+        guard let prop = kit.prop, let move = try heldMove(wearing: Outfit(["prop": prop]), persona: persona) else {
             throw .missingFile("moves/sports/\(kit.id).json")
         }
-        move.loops = true
-        return try move.atTempo(persona.accentTempo)
+        return move
     }
 
     /// The hop a character changes into a kit in: `out` squashes it down, where the kit goes on,

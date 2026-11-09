@@ -46,6 +46,8 @@ public struct PostEdit: Hashable, Sendable {
     /// The sport and minutes, for a 练了; ignored for the other kinds.
     public let activity: Activity
     public let minutes: WorkoutMinutes?
+    /// When a 练了 started, if the member picked it.
+    public let startTime: StartTime?
     /// The caption, or a 请假条's text.
     public let line: String
     /// At most `Photos.maxCount`, the cover first.
@@ -56,11 +58,12 @@ public struct PostEdit: Hashable, Sendable {
 
     public init(
         original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
-        workout: Workout? = nil
+        workout: Workout? = nil, startTime: StartTime? = nil
     ) {
         self.original = original
         self.activity = activity
         self.minutes = minutes
+        self.startTime = startTime
         self.line = line
         self.photos = Array(photos.prefix(Photos.maxCount))
         self.workout = workout
@@ -97,8 +100,8 @@ public struct PostEdit: Hashable, Sendable {
                 case .trained:
                     .trained(
                         Training(
-                            activity: activity, minutes: minutes, photos: photos, caption: caption,
-                            workout: workout))
+                            activity: activity, minutes: minutes, startTime: startTime, photos: photos,
+                            caption: caption, workout: workout))
                 case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
                 case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
                 case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))

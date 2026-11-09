@@ -2,21 +2,20 @@
 import DesignSystem
 import SwiftUI
 
-/// News that nobody on the scene can tell (the squad moved to another scene, a store opened, a
-/// prop unlocked): a brand capsule that drops from the top of the screen like the Dynamic Island
-/// opening (approved 2026-11-02, design A). A round icon on the left, one line of title, an
-/// optional muted line under it (up to two, so a broadcast's message mostly reads whole; 通知 shows
-/// all of it), and a chevron when a tap goes somewhere, or the button's words in a
-/// white pill when it has one (a broadcast's 去商店街看看; approved 2026-11-04). Teammates' own news
-/// (who joined, who is captain) stays in their speech bubbles on the scene.
+/// News that drops in over whatever page is open (a teammate's comment, the coach's reply, a store
+/// that opened, the squad moving): a Liquid Glass capsule that drops from the top of the screen
+/// like the Dynamic Island opening (approved 2026-11-02, design A; glass on every page 2026-11-08).
+/// A round icon on the left, which carries the news's colour, one line of title, an optional
+/// muted line under it (up to two, so a broadcast's message mostly reads whole; 通知 shows all of
+/// it), and its button's words in a graphite pill: a tap anywhere on the banner takes it.
 ///
 /// Shown with `.noticeBanner(item:onTap:content:)`, which drops it in, keeps it
 /// `Motion.noticeHold`, and puts it away on a swipe up or a tap.
 public struct NoticeBanner<Icon: View>: View {
+    @Environment(\.sceneTheme) private var theme
     private let title: Text
     private let detail: Text?
-    private let showsChevron: Bool
-    private let action: Text?
+    private let action: Text
     private let icon: Icon
 
     /// The icon's circle.
@@ -25,75 +24,54 @@ public struct NoticeBanner<Icon: View>: View {
     private static var inset: Double { 9 }
 
     /// - Parameters:
-    ///   - showsChevron: a tap opens somewhere (the store that opened); without it a tap only puts
-    ///     the banner away.
-    ///   - action: a button's words, in a pill in place of the chevron; a tap anywhere on the
-    ///     banner takes it.
-    ///   - icon: filled into a 36-point circle: a scene's `SceneBadge`, a store's mark, a prop.
-    public init(
-        _ title: Text, detail: Text? = nil, showsChevron: Bool = false, action: Text? = nil,
-        @ViewBuilder icon: () -> Icon
-    ) {
+    ///   - action: the button's words (去看看, 查看, 重发), in a pill at the end.
+    ///   - icon: filled into a 36-point circle: a scene's `SceneBadge`, a store's mark, a
+    ///     `NoticeSymbol` in the squad's colour.
+    public init(_ title: Text, detail: Text? = nil, action: Text, @ViewBuilder icon: () -> Icon) {
         self.title = title
         self.detail = detail
-        self.showsChevron = showsChevron
         self.action = action
         self.icon = icon()
     }
 
     public var body: some View {
-        let ink = Color(role: .fgOnBrand, in: .gym)
         HStack(spacing: Self.inset) {
             icon
                 .frame(width: Self.iconSize, height: Self.iconSize)
                 .clipShape(Circle())
+                .environment(\.noticeSymbolTone, .scene)
             VStack(alignment: .leading, spacing: 1) {
                 title
                     .typeStyle(TypeRamp.calloutEmphasis)
-                    .foregroundStyle(ink)
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
                 if let detail {
                     detail
                         .typeStyle(TypeRamp.caption)
-                        .foregroundStyle(ink.opacity(0.62))
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            if let action {
-                NoticeActionLabel(action, on: .brand)
-            } else if showsChevron {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(ink.opacity(0.6))
-                    .accessibilityHidden(true)
-            }
+            NoticeActionLabel(action)
         }
         .padding(.leading, Self.inset)
-        .padding(.trailing, Space.m)
+        .padding(.trailing, Self.inset)
         .padding(.vertical, Self.inset)
-        .background(Capsule(style: .continuous).fill(Color(role: .bgBrand, in: .gym)))
+        .sceneGlass(in: Capsule(style: .continuous), theme: theme)
         .accessibilityElement(children: .combine)
     }
 }
 
-/// A notice's button words in a pill: white on the graphite banner, graphite under a 通知 row's
-/// words. It is a label, not a button: a tap on the banner or the row it sits in takes it.
+/// A notice's button words in a graphite pill: at the end of a `NoticeBanner`, and under a 通知
+/// row's words. It is a label, not a button: a tap on the banner or the row it sits in takes it.
 public struct NoticeActionLabel: View {
-    public enum Placement: Sendable {
-        /// On a `NoticeBanner`.
-        case brand
-        /// Under a row's words on a page.
-        case page
-    }
-
     private let words: Text
-    private let placement: Placement
     private static var height: Double { 26 }
 
-    public init(_ words: Text, on placement: Placement) {
-        (self.words, self.placement) = (words, placement)
+    public init(_ words: Text) {
+        self.words = words
     }
 
     public var body: some View {
@@ -101,29 +79,48 @@ public struct NoticeActionLabel: View {
             .typeStyle(TypeRamp.tabSelected)
             .lineLimit(1)
             .fixedSize()
-            .foregroundStyle(Color(role: placement == .brand ? .fgDefault : .fgOnBrand, in: .gym))
+            .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
             .padding(.horizontal, Space.s)
             .frame(height: Self.height)
-            .background(
-                Capsule().fill(Color(role: placement == .brand ? .fgOnBrand : .bgBrand, in: .gym)))
+            .background(Capsule().fill(Color(role: .bgBrand, in: .gym)))
     }
 }
 
-/// A symbol on graphite, for news without a picture of its own: a notice's icon on its banner and
-/// its 通知 row.
-public struct NoticeSymbol: View {
-    private let systemImage: String
+/// What a `NoticeSymbol`'s circle is painted with.
+public enum NoticeSymbolTone: Sendable {
+    /// Graphite: a 通知 row's icon, and the app's own news on a banner (a post that didn't go out).
+    case brand
+    /// The scene's colour: news from the squad on a banner, which sets it for its icon.
+    case scene
+}
 
-    public init(systemImage: String) {
+extension EnvironmentValues {
+    /// How a `NoticeSymbol` without a tone of its own is painted: a banner sets `.scene`.
+    @Entry public var noticeSymbolTone: NoticeSymbolTone = .brand
+}
+
+/// A symbol in a circle, for news without a picture of its own: a notice's icon on its banner, in
+/// the squad's colour, and on its 通知 row, in graphite.
+public struct NoticeSymbol: View {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.noticeSymbolTone) private var placedTone
+    private let systemImage: String
+    private let tone: NoticeSymbolTone?
+
+    /// - Parameter tone: graphite for the app's own news on a banner too; nil paints it as its
+    ///   place does (graphite on a row, the scene's colour on a banner).
+    public init(systemImage: String, tone: NoticeSymbolTone? = nil) {
         self.systemImage = systemImage
+        self.tone = tone
     }
 
     public var body: some View {
+        let scene = (tone ?? placedTone) == .scene
         ZStack {
-            Color(role: .bgBrand, in: .gym)
+            Color(role: scene ? .bgAccent : .bgBrand, in: scene ? theme : .gym)
             Image(systemName: systemImage)
                 .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                .foregroundStyle(Color(role: .fgOnBrand, in: .gym))
+                .foregroundStyle(Color(role: scene ? .fgOnAccent : .fgOnBrand, in: scene ? theme : .gym))
         }
         .accessibilityHidden(true)
     }
@@ -189,7 +186,8 @@ private struct NoticesWaiting: ViewModifier {
                 ZStack(alignment: .bottom) {
                     ForEach((1...count).reversed(), id: \.self) { edge in
                         Capsule(style: .continuous)
-                            .fill(Color(role: .bgBrand, in: .gym).opacity(edge == 1 ? 0.55 : 0.3))
+                            .fill(.regularMaterial)
+                            .opacity(edge == 1 ? 1 : 0.7)
                             .frame(height: 2 * Self.peek * Double(edge))
                             .padding(.horizontal, Self.narrowing * Double(edge))
                             .offset(y: Self.peek * Double(edge))

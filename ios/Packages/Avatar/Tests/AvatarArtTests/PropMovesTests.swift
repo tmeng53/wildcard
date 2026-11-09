@@ -5,9 +5,20 @@ import Testing
 
 /// The props a character can hold or stand on, each with a move of its own.
 let heldProps = [
-    "badminton", "basketball", "bottle", "chalkbag", "dumbbell", "gloves", "goggles", "helmet", "kettlebell",
+    "badminton", "basketball", "bottle", "broom", "chalkbag", "dumbbell", "gloves", "goggles", "helmet", "kettlebell",
     "pickleball", "pingpong", "racket", "skis", "snowboard", "soccerball", "yogamat",
 ]
+
+/// A character standing with a prop plays its move over and over, at its persona's tempo (a
+/// yoga mat's tree pose on the player card); one holding nothing stands in its persona's idle.
+@Test func aHeldPropLoopsItsMove() throws {
+    let mat = try #require(try PlaceholderCharacter.heldMove(wearing: Outfit(["prop": "yogamat"]), persona: .deadpan))
+    let once = try #require(try PlaceholderCharacter.propMove(for: Outfit(["prop": "yogamat"])))
+    #expect(mat.loops)
+    #expect(mat.name == "yogamat")
+    #expect(abs(mat.duration - once.duration / Persona.deadpan.accentTempo) < 0.001)
+    #expect(try PlaceholderCharacter.heldMove(wearing: Outfit([:]), persona: .deadpan) == nil)
+}
 
 /// Every held prop has a move of its own that plays once, ends at rest and stays on the canvas
 /// on every look holding it; a look holding nothing has none.
@@ -88,7 +99,8 @@ func everyPropIsHeldInAFist(prop: String) throws {
     #expect(gripped == !["gloves", "snowboard"].contains(prop))
 }
 
-/// Skis and a snowboard stay under the feet when nothing moves, and only they draw there; the
+/// Skis and a snowboard stay under the feet when nothing moves, and only they draw there (the
+/// skis' tips over the boots too); the
 /// skis' poles are held in both fists, the gloves worn on both hands.
 @Test func gearUnderTheFeetAndInTheLeftHand() throws {
     for prop in heldProps {
@@ -96,6 +108,10 @@ func everyPropIsHeldInAFist(prop: String) throws {
         let feet = try figure.part("propFeet")
         #expect(feet.restOpacity == 1)
         #expect(feet.art.flatMap(\.shapes).isEmpty == !["skis", "snowboard"].contains(prop), "\(prop)")
+        // The skis point at the viewer, so their tips come out in front of the boots.
+        let toes = try figure.part("propToes")
+        #expect(toes.restOpacity == 1)
+        #expect(toes.art.flatMap(\.shapes).isEmpty == (prop != "skis"), "\(prop)")
         let left = try figure.part("propL").art.flatMap(\.shapes)
         #expect(left.isEmpty == !["skis", "gloves"].contains(prop), "\(prop)")
         let fist = try figure.part("gripL").art.flatMap(\.shapes)

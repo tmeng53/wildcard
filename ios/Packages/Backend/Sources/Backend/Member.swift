@@ -11,6 +11,8 @@ public struct Member: Hashable, Sendable {
     public let joinedAt: Timestamp?
     /// Whether the member is on the admin list: the app shows them tools only admins need.
     public let isAdmin: Bool
+    /// The birthday they chose to give, saved and removed apart from the profile. Nil without one.
+    public let birthday: Birthday?
 }
 
 /// What the member tells the API about themselves.

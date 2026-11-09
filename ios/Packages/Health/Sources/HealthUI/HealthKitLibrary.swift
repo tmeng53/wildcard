@@ -8,8 +8,10 @@ import HealthKit
 /// Apple Health through HealthKit, read only: the only code that knows HealthKit. Each workout
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
-/// thinned, its heart rate or lap times for the chart, and its active calories. Weight and sleep
-/// are never read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+/// thinned, its heart rate or lap times for the chart, its active calories, and the member's
+/// latest resting heart rate, which with their birthday on their profile places the chart's zones
+/// (only the zones are posted). Their date of birth, weight and sleep are never read. Its two
+/// lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
@@ -36,7 +38,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
     }
 
-    /// A member who connected before this build added a read type (active calories) was never
+    /// A member who connected before this build added a read type (active calories, resting heart rate) was never
     /// asked for it; Health shows its sheet again for just the new types, once.
     private func askForTypesAddedSinceConnecting() async {
         let status = try? await store.statusForAuthorizationRequest(toShare: [], read: Self.readTypes)
@@ -52,14 +54,25 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             predicates: [.workout(window)], sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
             limit: Self.workoutsMax)
         guard let found = try? await query.result(for: store) else { return [] }
+        let resting = await restingHeartRate(before: end)
         var imported: [ImportedWorkout] = []
         for workout in found {
-            imported.append(await self.imported(workout))
+            imported.append(await self.imported(workout, resting: resting))
         }
         return imported
     }
 
-    private func imported(_ workout: HKWorkout) async -> ImportedWorkout {
+    /// The newest resting heart rate Health has from the month before `end`.
+    private func restingHeartRate(before end: Date) async -> Int? {
+        let month = HKQuery.predicateForSamples(withStart: end.addingTimeInterval(-30 * 24 * 3600), end: end)
+        let query = HKSampleQueryDescriptor(
+            predicates: [.quantitySample(type: HKQuantityType(.restingHeartRate), predicate: month)],
+            sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)], limit: 1)
+        guard let sample = try? await query.result(for: store).first else { return nil }
+        return Self.bpm(sample.quantity.doubleValue(for: HKUnit.count().unitDivided(by: .minute())))
+    }
+
+    private func imported(_ workout: HKWorkout, resting: Int?) async -> ImportedWorkout {
         let type = workout.workoutActivityType
         let kind = WorkoutKind(type, openWater: Self.isOpenWater(workout))
         let seconds = workout.duration
@@ -81,7 +94,8 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
                 source: WorkoutSource(provider: WorkoutSource.appleHealth, id: workout.uuid.uuidString),
                 startedAt: Timestamp(workout.startDate), endedAt: Timestamp(workout.endDate), summary: summary,
                 series: series, route: route?.points),
-            activity: WorkoutKind.sport(for: type).map(Activity.sport))
+            activity: WorkoutKind.sport(for: type).map(Activity.sport),
+            restingBpm: series?.heartRate == nil ? nil : resting)
     }
 
     /// Its average heart rate, and its highest where its kind shows that: the workout's own
@@ -224,6 +238,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         HKQuantityType(.distancePaddleSports), HKQuantityType(.distanceSkatingSports),
         HKQuantityType(.distanceWheelchair), HKQuantityType(.workoutEffortScore),
         HKQuantityType(.estimatedWorkoutEffortScore), HKQuantityType(.activeEnergyBurned),
+        HKQuantityType(.restingHeartRate),
     ]
     private static let connectedKey = "health.connected"
     private static let workoutsMax = 20

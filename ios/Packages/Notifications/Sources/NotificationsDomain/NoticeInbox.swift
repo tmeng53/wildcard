@@ -68,6 +68,11 @@ public final class NoticeInbox {
     private var listened = false
     private var loadingMore: Int?
     private let source: any NoticeSource
+    /// Notices told while the app was in front and 通知 wasn't open, for its banner to drop in
+    /// (`takeToldLive()`), the earliest first.
+    public private(set) var toldLive: [Notice] = []
+    /// Every notice ever put in `toldLive`, so the stream and a push's `catchUp()` tell each once.
+    private var toldIDs: Set<NoticeID> = []
 
     /// The most pages one load or one scroll reads in a row while none of them has anything this
     /// build can show, before waiting for the member to scroll again.
@@ -150,6 +155,25 @@ public final class NoticeInbox {
         }
     }
 
+    /// A push arrived at `now` while the app was in front, which the app tells itself in place of
+    /// iOS's banner: reads the newest page, and what it finds newer than the newest already here
+    /// is heard as if it came live, in case the stream missed it. With nothing here before (not
+    /// loaded yet, or the member's first notice), what was told in the last `catchUpWindow` is.
+    public func catchUp(at now: Date) async {
+        let newest = notices.first?.id
+        await load()
+        guard !isOpen else { return }
+        let isNew: (Notice) -> Bool =
+            if let newest { { $0.id > newest } } else { { now.timeIntervalSince($0.toldAt) <= Self.catchUpWindow } }
+        for notice in notices.filter(isNew).reversed() { tellLive(notice) }
+    }
+
+    /// The notices heard since the last call, the earliest first: each is given once.
+    public func takeToldLive() -> [Notice] {
+        defer { toldLive = [] }
+        return toldLive
+    }
+
     /// The page opened: loads the newest notices, keeps which were new for the bold rows, and
     /// marks everything up to the newest read, which takes the bell's dot away.
     public func open() async {
@@ -190,6 +214,8 @@ public final class NoticeInbox {
     public static let firstWait = Duration.seconds(3)
     /// The longest wait between tries while the stream can't be heard.
     public static let longestWait = Duration.seconds(60)
+    /// How recent a notice must be for a push to tell it when nothing was loaded before it.
+    public static let catchUpWindow: TimeInterval = 120
 
     func hear(_ heard: LiveNotice) async {
         switch heard {
@@ -204,9 +230,14 @@ public final class NoticeInbox {
         case .told(let notice):
             guard let notice, !notices.contains(where: { $0.id == notice.id }) else { return }
             notices.insert(notice, at: notices.firstIndex { $0.id < notice.id } ?? notices.endIndex)
-            // On the open page it shows bold, and is read.
-            if isOpen { await markNewestSeen() }
+            // On the open page it shows bold, and is read; anywhere else its banner drops in.
+            if isOpen { await markNewestSeen() } else { tellLive(notice) }
         }
+    }
+
+    private func tellLive(_ notice: Notice) {
+        guard toldIDs.insert(notice.id).inserted else { return }
+        toldLive.append(notice)
     }
 
     /// The open page pulled: loads the newest notices and marks them read, keeping the rows that

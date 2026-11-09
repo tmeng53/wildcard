@@ -1767,28 +1767,6 @@
         }
       }
     },
-    "平时练什么？": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What do you usually do?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平时练什么？"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平常都練什麼？"
-          }
-        }
-      }
-    },
     "建一个小队": {
       "localizations": {
         "en": {
@@ -2431,6 +2409,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "已打開大概位置"
+          }
+        }
+      }
+    },
+    "关于你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關於你"
+          }
+        }
+      }
+    },
+    "生日 · 可选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birthday · optional"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "生日 · 選填"
+          }
+        }
+      }
+    },
+    "用来算心率区间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used for your heart rate zones"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用來算心率區間"
           }
         }
       }

@@ -58,13 +58,39 @@ public struct CoachFigure<Placeholder: View>: View {
             }
         }
         .accessibilityHidden(true)
-        .task(id: pose) {
-            guard CoachCharacter.exists(coach) else { return }
-            player = try? CharacterPlayer(
-                figure: CoachCharacter.figure(coach),
-                idle: CoachCharacter.clip(pose == .crying ? .crying : .idle, coach: coach))
-            if greets, pose == .idle { try? player?.play(CoachCharacter.clip(.cheer, coach: coach)) }
+        .task(id: Key(coach: coach, pose: pose)) {
+            guard CoachCharacter.exists(coach) else {
+                player = nil
+                return
+            }
+            // Parsed off the main actor, so a page with a coach on it doesn't drop a frame opening.
+            let (coach, pose, greets) = (coach, pose, greets)
+            guard
+                let art = try? await Task.detached(operation: {
+                    try CoachArt(
+                        figure: CoachCharacter.figure(coach),
+                        idle: CoachCharacter.clip(pose == .crying ? .crying : .idle, coach: coach),
+                        cheer: greets && pose == .idle ? CoachCharacter.clip(.cheer, coach: coach) : nil)
+                }).value
+            else { return }
+            // Another coach or pose replaced this one while it parsed.
+            guard !Task.isCancelled else { return }
+            player = try? CharacterPlayer(figure: art.figure, idle: art.idle)
+            if let cheer = art.cheer { try? player?.play(cheer) }
         }
     }
+
+    /// What the figure is redrawn for: another coach on the same view, or another pose.
+    private struct Key: Hashable {
+        let coach: String
+        let pose: Pose
+    }
+}
+
+/// A coach's parsed character, built off the main actor.
+private struct CoachArt: Sendable {
+    let figure: Figure
+    let idle: Clip
+    let cheer: Clip?
 }
 #endif

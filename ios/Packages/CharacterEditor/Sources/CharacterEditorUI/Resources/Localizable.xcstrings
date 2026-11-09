@@ -3939,22 +3939,6 @@
         }
       }
     },
-    "%@ · 穿上看看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · Try it on"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ · 穿上看看"
-          }
-        }
-      }
-    },
     "网络开小差了，没领上": {
       "localizations": {
         "en": {
@@ -4051,6 +4035,22 @@
         }
       }
     },
+    "扫帚": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broom"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掃帚"
+          }
+        }
+      }
+    },
     "单板": {
       "localizations": {
         "en": {
@@ -4063,6 +4063,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "單板"
+          }
+        }
+      }
+    },
+    "穿上看看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try it on"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "穿上看看"
           }
         }
       }

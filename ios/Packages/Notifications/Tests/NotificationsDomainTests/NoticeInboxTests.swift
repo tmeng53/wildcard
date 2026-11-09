@@ -1,10 +1,11 @@
 import Contracts
 import Foundation
-import NotificationsDomain
 import Testing
 
+@testable import NotificationsDomain
+
 /// A member's notices on the server, a page of `size` at a time, newest first.
-private actor FakeNotices: NoticeSource {
+actor FakeNotices: NoticeSource {
     var all: [Notice]
     var seen: NoticeID?
     var size: Int
@@ -20,6 +21,10 @@ private actor FakeNotices: NoticeSource {
 
     func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage {
         reads += 1
+        if let duringRead {
+            self.duringRead = nil
+            await duringRead()
+        }
         if unreachable { throw .unavailable }
         let older = all.filter { notice in before.map { notice.id < $0 } ?? true }.sorted { $0.id > $1.id }
         let page = Array(older.prefix(size))
@@ -54,6 +59,9 @@ private actor FakeNotices: NoticeSource {
     func set(refusals: [NotificationsError]) { self.refusals = refusals }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
     func add(_ notice: Notice) { all.append(notice) }
+    /// Runs once while the next page is on its way, as the live stream may tell a notice then.
+    var duringRead: (@Sendable () async -> Void)?
+    func set(duringRead: @escaping @Sendable () async -> Void) { self.duringRead = duringRead }
 }
 
 @Test @MainActor func theBellShowsItsDotOnlyForANoticeNewerThanTheSeenOne() async {
@@ -201,6 +209,9 @@ private actor FakeNotices: NoticeSource {
     // Told once, though it came twice; a kind this build can't show is left out.
     #expect(inbox.notices.map(\.id.rawValue) == [3, 2, 1])
     #expect(inbox.hasUnread)
+    // Its banner drops in once; nothing more until another is told.
+    #expect(inbox.takeToldLive().map(\.id.rawValue) == [3])
+    #expect(inbox.takeToldLive().isEmpty)
     following.cancel()
     await following.value
 }
@@ -245,6 +256,8 @@ private actor FakeNotices: NoticeSource {
     #expect(!inbox.hasUnread)
     #expect(await server.marked.last == NoticeID(rawValue: 2))
     #expect(inbox.isUnread(told))
+    // 通知 shows it: no banner over it.
+    #expect(inbox.takeToldLive().isEmpty)
     following.cancel()
     await following.value
 

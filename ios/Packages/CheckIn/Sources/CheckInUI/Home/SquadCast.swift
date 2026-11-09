@@ -219,6 +219,11 @@ final class SquadCast {
         play(.pepTalk)
     }
 
+    /// The coach claps for its challenge marked done (我完成了).
+    func coachClaps() {
+        play(.clap)
+    }
+
     /// The coach whistles at a post that arrived and claps at a week that reached its goal, as
     /// the home changes under it; it lands as my ring closes, when the post is mine.
     private func watch(_ home: Home, by speaker: CoachSpeaker?) {

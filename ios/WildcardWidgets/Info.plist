@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app's languages, as in its Info.plist. Without them an extension supports only the
+	     phone's language, and iOS looks every package's strings up in that one, whatever the app
+	     picked. -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
+		<string>en</string>
+	</array>
+	<!-- Where the hosted backend is, as in the app's Info.plist: the widgets read the squad
+	     through our API. -->
+	<key>WildcardAPIURL</key>
+	<string>$(WILDCARD_API_URL)</string>
+	<key>WildcardAuthURL</key>
+	<string>$(WILDCARD_AUTH_URL)</string>
+	<key>WildcardAuthPublishableKey</key>
+	<string>$(WILDCARD_AUTH_PUBLISHABLE_KEY)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+</dict>
+</plist>

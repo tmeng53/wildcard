@@ -75,8 +75,8 @@ struct ClaimedBanner: View {
         let preview = model.preview(of: piece)
         NoticeBanner(
             Text("已放进衣橱", bundle: .module),
-            detail: preview.map { Text("\(EditorNames.variant(piece, in: $0.slot)) · 穿上看看", bundle: .module) },
-            showsChevron: true
+            detail: preview.map { EditorNames.variant(piece, in: $0.slot) },
+            action: Text("穿上看看", bundle: .module)
         ) {
             ZStack {
                 Color(role: .bgCanvas, in: .gym)

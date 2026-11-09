@@ -73,6 +73,18 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try TitleBoard(board) }
     }
 
+    /// Saves the birthday the member chose to give. Safe to repeat.
+    public func save(_ birthday: Birthday) async throws(APIError) {
+        _ = try await call {
+            try await client.putMyBirthday(body: .json(.init(version: ._1, birthday: birthday.description))).ok
+        }
+    }
+
+    /// Forgets the member's birthday. Safe to repeat.
+    public func forgetBirthday() async throws(APIError) {
+        try await call { _ = try await client.deleteMyBirthday().noContent }
+    }
+
     /// Wears one of the member's titles on their card, or the latest won again for nil; answers
     /// the board as it stands. Safe to repeat.
     public func equip(title: String?) async throws(APIError) -> TitleBoard {

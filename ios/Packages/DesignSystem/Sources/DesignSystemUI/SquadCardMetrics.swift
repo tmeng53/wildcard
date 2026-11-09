@@ -31,6 +31,8 @@ enum SquadCardMetrics {
     /// line between the squad and my week, and its height with the grabber under its content.
     static let compactDay: Double = 24
     static let compactDayGap: Double = 2
+    /// The small home screen widget's day circles, seven across its narrow width.
+    static let tinyDay: Double = 16
     static let capsuleHead: Double = 26
     static let capsuleDivider: Double = 36
     static let capsuleHeight: Double = 70

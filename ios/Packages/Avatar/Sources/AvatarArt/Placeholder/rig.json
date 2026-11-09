@@ -20,6 +20,7 @@
     { "id": "legR", "parent": "root", "pivot": [134.4, 277.2],
       "layers": [{ "slot": "body", "art": "legR" }, { "slot": "bottom", "art": "legR" },
         { "slot": "shoes", "art": "legR" }] },
+    { "id": "propToes", "parent": "root", "pivot": [120, 312], "layers": [{ "slot": "prop", "art": "toes" }] },
     { "id": "armLBack", "twin": "armL", "parent": "torso", "pivot": [92.4, 222], "elbow": { "at": [78.6, 238.8], "hand": [69.6, 264] },
       "layers": [{ "slot": "body", "art": "armL" }, { "slot": "top", "art": "armL" }] },
     { "id": "armRBack", "twin": "armR", "parent": "torso", "pivot": [147.6, 222], "elbow": { "at": [161.4, 238.8], "hand": [170.4, 264] },

@@ -19,7 +19,8 @@ public struct SpeechBubble: View {
     public enum Kind {
         case line
         /// A line said in `.line`'s type that must show whole (a coach's catchphrase, which can be
-        /// any length): it wraps at `.info`'s width instead of cutting off.
+        /// any length): it wraps at `.info`'s width instead of cutting off, its lines balanced so
+        /// none is left with a lone character.
         case quote
         case info(title: Text?)
         case status(detail: Text?, button: StatusButton?)
@@ -112,7 +113,7 @@ public struct SpeechBubble: View {
                     .lineLimit(1)
             }
         case .quote:
-            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding) {
+            HuggingWidth(max: Self.infoWidth - 2 * Self.horizontalPadding, balanced: true) {
                 text
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -173,22 +174,41 @@ public struct SpeechBubble: View {
 /// Offers its content at most `max` wide and takes only the width the content uses (at least
 /// `min`), so a bubble hugs its words however wide its caller offers it. A
 /// `.frame(maxWidth:)` would instead stretch to whatever it is offered, up to its max.
+/// `balanced` narrows wrapped words to the least width that keeps their lines, as CSS's
+/// `text-wrap: balance` does, so the last line isn't one lone character.
 private struct HuggingWidth: Layout {
     var min: Double = 0
     let max: Double
+    var balanced = false
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         guard let content = subviews.first else { return .zero }
-        let size = content.sizeThatFits(offer(proposal))
+        let size = content.sizeThatFits(offer(proposal, content))
         return CGSize(width: Swift.max(min, size.width), height: size.height)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        subviews.first?.place(at: CGPoint(x: bounds.midX, y: bounds.minY), anchor: .top, proposal: offer(proposal))
+        guard let content = subviews.first else { return }
+        content.place(at: CGPoint(x: bounds.midX, y: bounds.minY), anchor: .top, proposal: offer(proposal, content))
     }
 
-    private func offer(_ proposal: ProposedViewSize) -> ProposedViewSize {
-        ProposedViewSize(width: Swift.min(proposal.width ?? max, max), height: nil)
+    private func offer(_ proposal: ProposedViewSize, _ content: LayoutSubview) -> ProposedViewSize {
+        let widest = Swift.min(proposal.width ?? max, max)
+        guard balanced else { return ProposedViewSize(width: widest, height: nil) }
+        let height = content.sizeThatFits(ProposedViewSize(width: widest, height: nil)).height
+        // Words that wrap to n lines at the widest need at least (n - 1) / n of it, so half is
+        // a safe floor; a few halvings find the narrowest width to the point.
+        var low = widest / 2
+        var high = widest
+        while high - low > 1 {
+            let middle = (low + high) / 2
+            if content.sizeThatFits(ProposedViewSize(width: middle, height: nil)).height > height {
+                low = middle
+            } else {
+                high = middle
+            }
+        }
+        return ProposedViewSize(width: high, height: nil)
     }
 }
 

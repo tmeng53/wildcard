@@ -1,0 +1,209 @@
+{
+ "version": 1,
+ "name": "broom",
+ "duration": 2.8,
+ "loops": false,
+ "holds": "broom",
+ "tracks": [
+  {
+   "part": "armR",
+   "channel": "rotation",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 0.35,
+     "v": 14,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 0.75,
+     "v": -12,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.15,
+     "v": 14,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.55,
+     "v": -12,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.95,
+     "v": 14,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 2.4,
+     "v": 0,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 2.8,
+     "v": 0
+    }
+   ]
+  },
+  {
+   "part": "armR",
+   "channel": "bend",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 0.35,
+     "v": 18,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 2.1,
+     "v": 18
+    },
+    {
+     "t": 2.5,
+     "v": 0,
+     "ease": "easeInOut"
+    }
+   ]
+  },
+  {
+   "part": "torso",
+   "channel": "rotation",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 0.35,
+     "v": -3,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 0.75,
+     "v": 3,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.15,
+     "v": -3,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.55,
+     "v": 3,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.95,
+     "v": -3,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 2.4,
+     "v": 0,
+     "ease": "easeInOut"
+    }
+   ]
+  },
+  {
+   "part": "head",
+   "channel": "rotation",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 0.5,
+     "v": 5,
+     "ease": "easeInOut"
+    },
+    {
+     "t": 1.9,
+     "v": 5
+    },
+    {
+     "t": 2.4,
+     "v": 0,
+     "ease": "easeInOut"
+    }
+   ]
+  },
+  {
+   "part": "dustR",
+   "channel": "opacity",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 0.72,
+     "v": 0
+    },
+    {
+     "t": 0.75,
+     "v": 1
+    },
+    {
+     "t": 1,
+     "v": 0
+    },
+    {
+     "t": 1.52,
+     "v": 0
+    },
+    {
+     "t": 1.55,
+     "v": 1
+    },
+    {
+     "t": 1.8,
+     "v": 0
+    }
+   ]
+  },
+  {
+   "part": "dustL",
+   "channel": "opacity",
+   "keys": [
+    {
+     "t": 0,
+     "v": 0
+    },
+    {
+     "t": 1.12,
+     "v": 0
+    },
+    {
+     "t": 1.15,
+     "v": 1
+    },
+    {
+     "t": 1.4,
+     "v": 0
+    },
+    {
+     "t": 1.92,
+     "v": 0
+    },
+    {
+     "t": 1.95,
+     "v": 1
+    },
+    {
+     "t": 2.2,
+     "v": 0
+    }
+   ]
+  }
+ ]
+}
