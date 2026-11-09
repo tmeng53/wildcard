@@ -43,6 +43,35 @@ extension TheAppsLanguage {
             return try #require(Bundle(url: root))
         }
 
+        #if canImport(Darwin)
+        /// A plural line, as Xcode builds a String Catalog's plural variations: a stringsdict.
+        @Test func fillsAPluralLineByItsCount() throws {
+            let root = FileManager.default.temporaryDirectory.appending(path: "AppCopyCatalog/\(UUID().uuidString)")
+            let folder = root.appending(path: "en.lproj")
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let info = try PropertyListSerialization.data(
+                fromPropertyList: ["CFBundleDevelopmentRegion": "zh-Hans"], format: .xml, options: 0)
+            try info.write(to: root.appending(path: "Info.plist"))
+            let plural: [String: Any] = [
+                "%lld 天": [
+                    "NSStringLocalizedFormatKey": "%#@days@",
+                    "days": [
+                        "NSStringFormatSpecTypeKey": "NSStringPluralRuleType", "NSStringFormatValueTypeKey": "lld",
+                        "one": "%lld day", "other": "%lld days",
+                    ] as [String: String],
+                ] as [String: Any]
+            ]
+            let data = try PropertyListSerialization.data(fromPropertyList: plural, format: .xml, options: 0)
+            try data.write(to: folder.appending(path: "Localizable.stringsdict"))
+            let catalog = try #require(Bundle(url: root))
+            AppCopyLines.install(.none)
+            AppLanguage.english.pick()
+            #expect(String(copy: "\(1) 天", bundle: catalog) == "1 day")
+            #expect(String(copy: "\(3) 天", bundle: catalog) == "3 days")
+            AppLanguage.simplifiedChinese.pick()
+        }
+        #endif
+
         @Test func speaksTheSourceLanguageWhereItHasNoTable() throws {
             let catalog = try Self.sourceCatalog(english: ["本周小队已练": "Squad this week"])
             AppCopyLines.install(.none)

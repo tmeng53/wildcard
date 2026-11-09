@@ -138,7 +138,7 @@ struct WildcardApp: App {
         // the newest for the next one), before anything shows.
         AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        AppModel.show(CatalogClient.bundled)
+        AppModel.show(CatalogClient.bundled, keepsCopy: false)
     }
 
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
