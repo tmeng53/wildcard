@@ -61,7 +61,7 @@ public struct ScheduleDayRow: View {
         HStack(spacing: Space.s - 2) {
             Group {
                 if isToday {
-                    Text("今天", bundle: .module)
+                    Text(copy: "今天", bundle: .module)
                 } else {
                     ScheduleLabels.weekday(day)
                 }
@@ -123,7 +123,7 @@ public struct ScheduleDayRow: View {
                 .background(colors.markDisc, in: Circle())
                 .accessibilityHidden(true)
         case .disclaimer:
-            Text("请假", bundle: .module)
+            Text(copy: "请假", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(colors.markGlyph)
                 .padding(.horizontal, Space.xs - 1)
@@ -136,14 +136,14 @@ public struct ScheduleDayRow: View {
 
     /// The row read out: 周三 跑步，训练.
     public var accessibilityText: Text {
-        let weekday = isToday ? Text("今天", bundle: .module) : ScheduleLabels.weekday(day)
+        let weekday = isToday ? Text(copy: "今天", bundle: .module) : ScheduleLabels.weekday(day)
         let status: Text =
             switch mark {
-            case .trained: Text("，训练", bundle: .module)
-            case .disclaimer: Text("，请假", bundle: .module)
+            case .trained: Text(copy: "，训练", bundle: .module)
+            case .disclaimer: Text(copy: "，请假", bundle: .module)
             case .none: Text(verbatim: "")
             }
-        return Text("\(weekday) \(ScheduleLabels.plan(shown))\(status)", bundle: .module)
+        return Text(copy: "\(weekday) \(ScheduleLabels.plan(shown))\(status)", bundle: .module)
     }
 }
 #endif

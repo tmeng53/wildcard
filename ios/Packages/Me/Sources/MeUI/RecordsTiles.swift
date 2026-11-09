@@ -25,7 +25,7 @@ struct RecordsHero: View {
 
     var body: some View {
         RecordsTile(topPadding: Self.topPadding, spacing: Space.s) {
-            RecordsLabel(text: Text("训练时间", bundle: .module))
+            RecordsLabel(text: Text(copy: "训练时间", bundle: .module))
             if let hour = records.usualHour {
                 RecordsHourTitle(hour: hour)
                     .typeStyle(TypeRamp.title)
@@ -46,13 +46,13 @@ struct RecordsHero: View {
             .padding(.top, Self.stageLift)
             weekdays
             HStack(alignment: .firstTextBaseline) {
-                Text("每个周几练了几次", bundle: .module)
+                Text(copy: "每个周几练了几次", bundle: .module)
                     .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                     .typeStyle(TypeRamp.caption)
                 Spacer(minLength: Space.xs)
                 if let busiest = records.busiestWeekday {
                     let name = Self.weekdayName(busiest, locale: locale)
-                    Text("\(name)最多", bundle: .module)
+                    Text(copy: "\(name)最多", bundle: .module)
                         .typeStyle(TypeRamp.captionEmphasis)
                 }
             }
@@ -83,14 +83,14 @@ struct RecordsHero: View {
 
     private func chip(_ first: SquadStanding.First) -> Text {
         switch first {
-        case .latestTrainer: Text("小队里练得最晚", bundle: .module)
-        case .earliestTrainer: Text("小队里练得最早", bundle: .module)
-        case .mostDays: Text("小队里练得最多", bundle: .module)
+        case .latestTrainer: Text(copy: "小队里练得最晚", bundle: .module)
+        case .earliestTrainer: Text(copy: "小队里练得最早", bundle: .module)
+        case .mostDays: Text(copy: "小队里练得最多", bundle: .module)
         case .topSport:
             if let top = records.sports.first {
-                Text("小队里\(top.activity.name)最多", bundle: .module)
+                Text(copy: "小队里\(top.activity.name)最多", bundle: .module)
             } else {
-                Text("小队里练得最多", bundle: .module)
+                Text(copy: "小队里练得最多", bundle: .module)
             }
         }
     }
@@ -117,7 +117,7 @@ struct RecordsHero: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("每个周几练了几次", bundle: .module))
+        .accessibilityLabel(Text(copy: "每个周几练了几次", bundle: .module))
         .accessibilityValue(
             Text(
                 verbatim: records.weekdays.enumerated()
@@ -163,30 +163,30 @@ struct RecordsHourTitle: View {
 
     var body: some View {
         switch hour {
-        case 0: Text("半夜十二点运动", bundle: .module)
-        case 1: Text("凌晨一点运动", bundle: .module)
-        case 2: Text("凌晨两点运动", bundle: .module)
-        case 3: Text("凌晨三点运动", bundle: .module)
-        case 4: Text("凌晨四点运动", bundle: .module)
-        case 5: Text("早五点运动", bundle: .module)
-        case 6: Text("早六点运动", bundle: .module)
-        case 7: Text("早七点运动", bundle: .module)
-        case 8: Text("早八点运动", bundle: .module)
-        case 9: Text("早九点运动", bundle: .module)
-        case 10: Text("早十点运动", bundle: .module)
-        case 11: Text("上午十一点运动", bundle: .module)
-        case 12: Text("中午十二点运动", bundle: .module)
-        case 13: Text("下午一点运动", bundle: .module)
-        case 14: Text("下午两点运动", bundle: .module)
-        case 15: Text("下午三点运动", bundle: .module)
-        case 16: Text("下午四点运动", bundle: .module)
-        case 17: Text("下午五点运动", bundle: .module)
-        case 18: Text("晚六点运动", bundle: .module)
-        case 19: Text("晚七点运动", bundle: .module)
-        case 20: Text("晚八点运动", bundle: .module)
-        case 21: Text("晚九点运动", bundle: .module)
-        case 22: Text("晚十点运动", bundle: .module)
-        default: Text("晚十一点运动", bundle: .module)
+        case 0: Text(copy: "半夜十二点运动", bundle: .module)
+        case 1: Text(copy: "凌晨一点运动", bundle: .module)
+        case 2: Text(copy: "凌晨两点运动", bundle: .module)
+        case 3: Text(copy: "凌晨三点运动", bundle: .module)
+        case 4: Text(copy: "凌晨四点运动", bundle: .module)
+        case 5: Text(copy: "早五点运动", bundle: .module)
+        case 6: Text(copy: "早六点运动", bundle: .module)
+        case 7: Text(copy: "早七点运动", bundle: .module)
+        case 8: Text(copy: "早八点运动", bundle: .module)
+        case 9: Text(copy: "早九点运动", bundle: .module)
+        case 10: Text(copy: "早十点运动", bundle: .module)
+        case 11: Text(copy: "上午十一点运动", bundle: .module)
+        case 12: Text(copy: "中午十二点运动", bundle: .module)
+        case 13: Text(copy: "下午一点运动", bundle: .module)
+        case 14: Text(copy: "下午两点运动", bundle: .module)
+        case 15: Text(copy: "下午三点运动", bundle: .module)
+        case 16: Text(copy: "下午四点运动", bundle: .module)
+        case 17: Text(copy: "下午五点运动", bundle: .module)
+        case 18: Text(copy: "晚六点运动", bundle: .module)
+        case 19: Text(copy: "晚七点运动", bundle: .module)
+        case 20: Text(copy: "晚八点运动", bundle: .module)
+        case 21: Text(copy: "晚九点运动", bundle: .module)
+        case 22: Text(copy: "晚十点运动", bundle: .module)
+        default: Text(copy: "晚十一点运动", bundle: .module)
         }
     }
 }
@@ -251,14 +251,14 @@ struct RecordsClock: View {
             if let usual {
                 let number = Text(verbatim: "\(usual)").font(.wildcard(TypeRamp.scoreInline)).foregroundStyle(white)
                 context.draw(
-                    Text("\(number)点", bundle: .module)
+                    Text(copy: "\(number)点", bundle: .module)
                         .font(.wildcard(TypeRamp.caption))
                         .foregroundStyle(white.opacity(0.7)),
                     at: CGPoint(x: center.x, y: center.y + 1), anchor: .center)
             }
         }
         .accessibilityElement()
-        .accessibilityLabel(Text("每个钟点练了几次", bundle: .module))
+        .accessibilityLabel(Text(copy: "每个钟点练了几次", bundle: .module))
         .accessibilityValue(
             Text(
                 verbatim: hours.indices.filter { hours[$0] > 0 }.map { "\($0):00 \(hours[$0])" }
@@ -272,8 +272,8 @@ struct RecordsClock: View {
     private static let outer = 66.0
     private static var quarters: [(Int, Text)] {
         [
-            (0, Text("半夜", bundle: .module)), (6, Text("早上", bundle: .module)),
-            (12, Text("中午", bundle: .module)), (18, Text("晚上", bundle: .module)),
+            (0, Text(copy: "半夜", bundle: .module)), (6, Text(copy: "早上", bundle: .module)),
+            (12, Text(copy: "中午", bundle: .module)), (18, Text(copy: "晚上", bundle: .module)),
         ]
     }
 }

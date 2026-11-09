@@ -15,11 +15,11 @@ struct ShareRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SwitchRow(Text("分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
+            SwitchRow(Text(copy: "分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
                 .accessibilityIdentifier("compose.share.\(squad.id)")
             // Sharing is the default and the switch says it; only the private choice needs a word.
             if !isShared {
-                Text("仅自己可见，不计入小队数据", bundle: .module)
+                Text(copy: "仅自己可见，不计入小队数据", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .accessibilityIdentifier("compose.share.hint")

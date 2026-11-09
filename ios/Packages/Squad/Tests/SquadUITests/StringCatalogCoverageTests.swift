@@ -61,7 +61,7 @@ struct StringCatalogCoverageTests {
     /// with each `\(…)` marked, to match the `%lld` or `%@` it becomes.
     private static func localizedKeys() throws -> Set<String> {
         let pattern = try NSRegularExpression(
-            pattern: #"(?:Text|String)\(\s*(?:localized:\s*)?"((?:[^"\\]|\\.)*)",\s*bundle: \.module\)"#)
+            pattern: #"(?:Text|String)\(\s*copy:\s*"((?:[^"\\]|\\.)*)",\s*bundle: \.module\)"#)
         let interpolation = try NSRegularExpression(pattern: #"\\\((?:[^()]|\([^()]*\))*\)"#)
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }

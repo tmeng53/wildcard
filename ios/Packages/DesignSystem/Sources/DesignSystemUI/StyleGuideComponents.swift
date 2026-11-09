@@ -12,40 +12,40 @@ struct ButtonSection: View {
 
     private var tabs: [TabBarItem<Int>] {
         [
-            TabBarItem(id: 0, title: Text("今天", bundle: .module), systemImage: "sun.max"),
-            TabBarItem(id: 1, title: Text("动态", bundle: .module), systemImage: "bubble.left.and.bubble.right"),
-            TabBarItem(id: 2, title: Text("出赛表", bundle: .module), systemImage: "calendar"),
-            TabBarItem(id: 3, title: Text("我", bundle: .module), systemImage: "person.crop.circle"),
+            TabBarItem(id: 0, title: Text(copy: "今天", bundle: .module), systemImage: "sun.max"),
+            TabBarItem(id: 1, title: Text(copy: "动态", bundle: .module), systemImage: "bubble.left.and.bubble.right"),
+            TabBarItem(id: 2, title: Text(copy: "出赛表", bundle: .module), systemImage: "calendar"),
+            TabBarItem(id: 3, title: Text(copy: "我", bundle: .module), systemImage: "person.crop.circle"),
         ]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 4, title: Text("按钮、页头、标签栏", bundle: .module))
-            GuideGroup(Text("主按钮：当前场景色", bundle: .module)) {
+            SectionTitle(number: 4, title: Text(copy: "按钮、页头、标签栏", bundle: .module))
+            GuideGroup(Text(copy: "主按钮：当前场景色", bundle: .module)) {
                 VStack(spacing: Space.xs) {
                     Button {
                     } label: {
-                        Text("下一步", bundle: .module).frame(maxWidth: .infinity)
+                        Text(copy: "下一步", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     Button {
                     } label: {
-                        Text("发布", bundle: .module).frame(maxWidth: .infinity)
+                        Text(copy: "发布", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(true)
                     // Ink, on the pages that keep out of the scene's colours (我, 设置, 注销账号).
                     Button {
                     } label: {
-                        Text("下一步", bundle: .module).frame(maxWidth: .infinity)
+                        Text(copy: "下一步", bundle: .module).frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .accentTone(.ink)
                     Button {
                     } label: {
                         Label {
-                            Text("用 Apple 确认", bundle: .module)
+                            Text(copy: "用 Apple 确认", bundle: .module)
                         } icon: {
                             Image(systemName: "apple.logo")
                         }
@@ -53,32 +53,32 @@ struct ButtonSection: View {
                     .buttonStyle(AppleButtonStyle(.outlined))
                 }
             }
-            GuideGroup(Text("次要按钮、文字按钮", bundle: .module)) {
+            GuideGroup(Text(copy: "次要按钮、文字按钮", bundle: .module)) {
                 HStack(spacing: Space.xs) {
                     Button {
                     } label: {
-                        Text("去打卡", bundle: .module)
+                        Text(copy: "去打卡", bundle: .module)
                     }
                     .buttonStyle(PrimaryButtonStyle(.regular))
                     Button {
                     } label: {
-                        Text("换一组", bundle: .module)
+                        Text(copy: "换一组", bundle: .module)
                     }
                     .buttonStyle(SecondaryButtonStyle())
                     Button {
                     } label: {
-                        Text("以后再选", bundle: .module)
+                        Text(copy: "以后再选", bundle: .module)
                     }
                     .buttonStyle(TextButtonStyle())
                     Button {
                     } label: {
-                        Text("删除", bundle: .module)
+                        Text(copy: "删除", bundle: .module)
                     }
                     .buttonStyle(TextButtonStyle(.plain))
                     Button {
                     } label: {
                         Label {
-                            Text("用 Apple 确认", bundle: .module)
+                            Text(copy: "用 Apple 确认", bundle: .module)
                         } icon: {
                             Image(systemName: "apple.logo")
                         }
@@ -89,18 +89,18 @@ struct ButtonSection: View {
             FloatingGuide()
             StateGuide()
             LoadingGuide()
-            GuideGroup(Text("页头：44 的圆，右边最多一个", bundle: .module)) {
+            GuideGroup(Text(copy: "页头：44 的圆，右边最多一个", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.m) {
                     StepHeader(step: 2, of: 4) {}
                         .accessibilityIdentifier("styleguide.stepheader")
                     HStack {
-                        HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark") {}
+                        HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark") {}
                         Spacer()
-                        HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") {}
+                        HeaderButton(Text(copy: "设置", bundle: .module), systemImage: "gearshape") {}
                     }
                     HStack {
                         Spacer()
-                        HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", on: .ink) {}
+                        HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", on: .ink) {}
                     }
                     .padding(Space.s)
                     .background(
@@ -108,7 +108,7 @@ struct ButtonSection: View {
                         in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                 }
             }
-            GuideGroup(Text("标签栏：系统的液态玻璃，选中是墨色", bundle: .module)) {
+            GuideGroup(Text(copy: "标签栏：系统的液态玻璃，选中是墨色", bundle: .module)) {
                 AppTabs(tabs, selection: $tab) { _ in
                     Color(role: .bgScene, in: theme)
                 }
@@ -128,10 +128,10 @@ private enum Sport: String, CaseIterable, Identifiable {
 
     var name: Text {
         switch self {
-        case .swim: Text("游泳", bundle: .module)
-        case .run: Text("跑步", bundle: .module)
-        case .lift: Text("力量", bundle: .module)
-        case .tennis: Text("网球", bundle: .module)
+        case .swim: Text(copy: "游泳", bundle: .module)
+        case .run: Text(copy: "跑步", bundle: .module)
+        case .lift: Text(copy: "力量", bundle: .module)
+        case .tennis: Text(copy: "网球", bundle: .module)
         }
     }
 
@@ -160,23 +160,22 @@ struct PickSection: View {
     @State private var query = ""
     @State private var minutes = 45
 
-    private let moreNames: [Text] = [
-        Text("骑车", bundle: .module), Text("普拉提", bundle: .module), Text("羽毛球", bundle: .module),
-        Text("徒步", bundle: .module), Text("篮球", bundle: .module),
-    ]
+    private let moreNames: [Text] = (["骑车", "普拉提", "羽毛球", "徒步", "篮球"] as [CopyLine]).map {
+        Text(copy: $0, bundle: .module)
+    }
     private let tiles = ["figure.wave", "figure.run", "figure.yoga", "figure.climbing"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 5, title: Text("切换和选择", bundle: .module))
-            GuideGroup(Text("我在哪：墨色胶囊", bundle: .module)) {
+            SectionTitle(number: 5, title: Text(copy: "切换和选择", bundle: .module))
+            GuideGroup(Text(copy: "我在哪：墨色胶囊", bundle: .module)) {
                 CategoryBar(
                     [
-                        CategoryBarItem(id: GuideRange.week, title: Text("本周", bundle: .module)),
-                        CategoryBarItem(id: GuideRange.all, title: Text("全部", bundle: .module)),
+                        CategoryBarItem(id: GuideRange.week, title: Text(copy: "本周", bundle: .module)),
+                        CategoryBarItem(id: GuideRange.all, title: Text(copy: "全部", bundle: .module)),
                     ], selection: $range)
             }
-            GuideGroup(Text("我选了啥：白底细线，选中是场景色描边加勾", bundle: .module)) {
+            GuideGroup(Text(copy: "我选了啥：白底细线，选中是场景色描边加勾", bundle: .module)) {
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: Space.xs), count: 2), spacing: Space.xs
                 ) {
@@ -195,7 +194,7 @@ struct PickSection: View {
                     }
                 }
             }
-            GuideGroup(Text("图片选项和色块", bundle: .module)) {
+            GuideGroup(Text(copy: "图片选项和色块", bundle: .module)) {
                 HStack(spacing: Space.xs) {
                     ForEach(Array(tiles.enumerated()), id: \.offset) { index, symbol in
                         PickTile(Text(verbatim: symbol), isSelected: tile == index) {
@@ -215,20 +214,21 @@ struct PickSection: View {
                     }
                 }
             }
-            GuideGroup(Text("刻度尺：滑动选数字，每过一格轻震一下", bundle: .module)) {
+            GuideGroup(Text(copy: "刻度尺：滑动选数字，每过一格轻震一下", bundle: .module)) {
                 TickRuler(
                     value: $minutes, scale: RulerScale(range: 1...360, step: 1, midEvery: 5, labelEvery: 15),
-                    label: Text("时长 · 分钟", bundle: .module), unit: Text("分钟", bundle: .module))
+                    label: Text(copy: "时长 · 分钟", bundle: .module), unit: Text(copy: "分钟", bundle: .module))
             }
-            GuideGroup(Text("输入框", bundle: .module)) {
+            GuideGroup(Text(copy: "输入框", bundle: .module)) {
                 InputField(
-                    text: $catchphrase, label: Text("口头禅", bundle: .module), prompt: Text("冲冲冲！", bundle: .module),
+                    text: $catchphrase, label: Text(copy: "口头禅", bundle: .module),
+                    prompt: Text(copy: "冲冲冲！", bundle: .module),
                     limit: 10)
-                SearchField(text: $query, prompt: Text("搜索", bundle: .module))
+                SearchField(text: $query, prompt: Text(copy: "搜索", bundle: .module))
             }
-            GuideGroup(Text("入场券：写字的卡，撕线上写，下面放照片", bundle: .module)) {
+            GuideGroup(Text(copy: "入场券：写字的卡，撕线上写，下面放照片", bundle: .module)) {
                 TicketCard {
-                    Text("昨天练腿，今天下楼都难", bundle: .module)
+                    Text(copy: "昨天练腿，今天下楼都难", bundle: .module)
                         .typeStyle(TypeRamp.field)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                 } stub: {
@@ -252,25 +252,25 @@ struct KindSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 6, title: Text("打卡四类：用场景浅底", bundle: .module))
-            GuideGroup(Text("放在白底", bundle: .module)) {
+            SectionTitle(number: 6, title: Text(copy: "打卡四类：用场景浅底", bundle: .module))
+            GuideGroup(Text(copy: "放在白底", bundle: .module)) {
                 KindRow(onScene: false)
             }
-            GuideGroup(Text("放在场景底", bundle: .module)) {
+            GuideGroup(Text(copy: "放在场景底", bundle: .module)) {
                 KindRow(onScene: true)
                     .padding(Space.cardPadding)
                     .background(
                         Color(role: .bgScene, in: theme),
                         in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
-            GuideGroup(Text("标签", bundle: .module)) {
+            GuideGroup(Text(copy: "标签", bundle: .module)) {
                 HStack(spacing: Space.xs) {
                     ForEach(CheckInKind.allCases, id: \.self) { kind in
                         Tag(kind.shortName, systemImage: kind.symbol)
                     }
                 }
             }
-            GuideGroup(Text("打卡展开", bundle: .module)) {
+            GuideGroup(Text(copy: "打卡展开", bundle: .module)) {
                 CheckInBurst(isOpen: $isOpen, unavailable: [.disclaimer], identifierPrefix: "styleguide") { _ in }
                     .frame(maxWidth: .infinity)
                     .padding(.top, BurstLayout.radius + Sizing.control)
@@ -306,7 +306,7 @@ struct StatusSection: View {
 
     private var squadWeek: SquadWeek {
         SquadWeek(
-            name: String(localized: "周三不练腿俱乐部", bundle: .module.inAppLanguage), done: mine == .done ? 15 : 14, goal: 22,
+            name: String(copy: "周三不练腿俱乐部", bundle: .module), done: mine == .done ? 15 : 14, goal: 22,
             members: members)
     }
 
@@ -322,28 +322,28 @@ struct StatusSection: View {
             details: [
                 WeekDayDetail(
                     lines: [
-                        String(localized: "跑步 32 分钟", bundle: .module.inAppLanguage),
-                        String(localized: "力量训练 20 分钟", bundle: .module.inAppLanguage),
+                        String(copy: "跑步 32 分钟", bundle: .module),
+                        String(copy: "力量训练 20 分钟", bundle: .module),
                     ], isPlan: false, meals: .init(healthy: 1, cheat: 0)),
                 WeekDayDetail(
-                    line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false,
+                    line: String(copy: "休息日", bundle: .module), isPlan: false,
                     meals: .init(healthy: 2, cheat: 1)),
                 WeekDayDetail(
-                    line: String(localized: "游泳 45 分钟", bundle: .module.inAppLanguage), isPlan: false,
+                    line: String(copy: "游泳 45 分钟", bundle: .module), isPlan: false,
                     meals: .init(healthy: 0, cheat: 0)),
                 WeekDayDetail(
-                    line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false,
+                    line: String(copy: "请假了", bundle: .module), isPlan: false,
                     meals: .init(healthy: 0, cheat: 1)),
                 mine == .done
                     ? WeekDayDetail(
-                        line: String(localized: "跑步", bundle: .module.inAppLanguage), isPlan: false,
+                        line: String(copy: "跑步", bundle: .module), isPlan: false,
                         meals: .init(healthy: 1, cheat: 0))
                     : WeekDayDetail(
-                        line: String(localized: "跑步", bundle: .module.inAppLanguage), isPlan: true,
+                        line: String(copy: "跑步", bundle: .module), isPlan: true,
                         meals: .init(healthy: 1, cheat: 0)
                     ),
-                WeekDayDetail(line: String(localized: "瑜伽", bundle: .module.inAppLanguage), isPlan: true, meals: nil),
-                WeekDayDetail(line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: nil),
+                WeekDayDetail(line: String(copy: "瑜伽", bundle: .module), isPlan: true, meals: nil),
+                WeekDayDetail(line: String(copy: "休息日", bundle: .module), isPlan: false, meals: nil),
             ])
     }
 
@@ -354,8 +354,8 @@ struct StatusSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 7, title: Text("卡片、状态圈、进度", bundle: .module))
-            GuideGroup(Text("场景上：毛玻璃卡片，可收起", bundle: .module)) {
+            SectionTitle(number: 7, title: Text(copy: "卡片、状态圈、进度", bundle: .module))
+            GuideGroup(Text(copy: "场景上：毛玻璃卡片，可收起", bundle: .module)) {
                 SquadCard(squad: squadWeek, mine: myWeek, page: $page, pickedDay: $pickedDay) { member in
                     GuideFace(index: members.firstIndex(of: member) ?? 0)
                 }
@@ -377,15 +377,15 @@ struct StatusSection: View {
                 mine = mine == .done ? .open : .done
                 if mine == .done { plusOnes += 1 }
             } label: {
-                mine == .done ? Text("重来", bundle: .module) : Text("我打卡了", bundle: .module)
+                mine == .done ? Text(copy: "重来", bundle: .module) : Text(copy: "我打卡了", bundle: .module)
             }
             .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("styleguide.ring.play")
-            GuideGroup(Text("白底页上：浅灰卡片", bundle: .module)) {
+            GuideGroup(Text(copy: "白底页上：浅灰卡片", bundle: .module)) {
                 HStack(alignment: .lastTextBaseline) {
                     VStack(alignment: .leading, spacing: Space.xxs) {
-                        SectionLabel(Text("本周", bundle: .module))
-                        Text("周三不练腿俱乐部", bundle: .module)
+                        SectionLabel(Text(copy: "本周", bundle: .module))
+                        Text(copy: "周三不练腿俱乐部", bundle: .module)
                             .typeStyle(TypeRamp.headline)
                             .foregroundStyle(Color(role: .fgDefault, in: theme))
                     }

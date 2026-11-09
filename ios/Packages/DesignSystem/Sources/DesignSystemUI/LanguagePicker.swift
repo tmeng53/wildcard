@@ -8,7 +8,7 @@ extension View {
     public func languagePicker(isPresented: Binding<Bool>) -> some View {
         let current = AppLanguage.current
         return glassMenu(
-            isPresented: isPresented, title: Text("语言", bundle: .module),
+            isPresented: isPresented, title: Text(copy: "语言", bundle: .module),
             items: AppLanguage.allCases.map { language in
                 GlassMenuItem(
                     Text(verbatim: language.name), isSelected: language == current, id: "language.\(language.rawValue)"

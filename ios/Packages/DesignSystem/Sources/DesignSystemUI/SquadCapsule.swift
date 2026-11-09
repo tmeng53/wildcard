@@ -51,9 +51,11 @@ public struct SquadCapsule<Heads: View>: View {
             .accessibilityElement(children: .ignore)
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(Text("展开小队卡片", bundle: .module))
+        .accessibilityLabel(Text(copy: "展开小队卡片", bundle: .module))
         .accessibilityValue(
-            Text("\(squad.name)，本周 \(squad.done)/\(squad.goal) 次；我这周 \(mine.done)/\(mine.planned)", bundle: .module)
+            Text(
+                copy: "\(squad.name)，本周 \(squad.done)/\(squad.goal) 次；我这周 \(mine.done)/\(mine.planned)", bundle: .module
+            )
         )
         .accessibilityIdentifier("squadcard.capsule")
         .sceneGlass(in: Capsule(), theme: theme, interactive: true, morph: morph)
@@ -73,7 +75,7 @@ public struct SquadCapsule<Heads: View>: View {
     private var score: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
             Score(count: squad.done, goal: squad.goal, size: .small)
-            Text("次", bundle: .module)
+            Text(copy: "次", bundle: .module)
                 .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreSmall))
                 .foregroundStyle(Color(role: .fgSubtle, in: theme))
         }

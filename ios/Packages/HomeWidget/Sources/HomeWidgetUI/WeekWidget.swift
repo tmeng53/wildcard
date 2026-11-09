@@ -50,10 +50,10 @@ public struct WeekWidget<Post: View>: View {
     /// The week as one element; the capsule stays its own, with its 打卡.
     private var summary: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionLabel(Text("我的一周", bundle: .module))
+            SectionLabel(Text(copy: "我的一周", bundle: .module))
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Score(count: board.mine.trainedDays, goal: board.mine.plannedDays, size: .card)
-                Text("天", bundle: .module)
+                Text(copy: "天", bundle: .module)
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
             }
@@ -64,16 +64,16 @@ public struct WeekWidget<Post: View>: View {
                 .lineLimit(1)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("我的一周", bundle: .module))
+        .accessibilityLabel(Text(copy: "我的一周", bundle: .module))
         .accessibilityValue(
-            Text("\(board.mine.trainedDays)/\(board.mine.plannedDays) 天，\(status)", bundle: .module))
+            Text(copy: "\(board.mine.trainedDays)/\(board.mine.plannedDays) 天，\(status)", bundle: .module))
     }
 
     private var status: Text {
         switch board.myStatus {
-        case .trained: Text("今天练了", bundle: .module)
-        case .disclaimer: Text("今天请假", bundle: .module)
-        case .notCheckedIn: Text("今天还没练", bundle: .module)
+        case .trained: Text(copy: "今天练了", bundle: .module)
+        case .disclaimer: Text(copy: "今天请假", bundle: .module)
+        case .notCheckedIn: Text(copy: "今天还没练", bundle: .module)
         }
     }
 

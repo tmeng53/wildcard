@@ -39,7 +39,7 @@ struct RecordsPage: View {
                     RecordsContent(records: records, cast: cast, today: today, playsIntro: true)
                 }
                 .scrollIndicators(.hidden)
-                .barTitleOnScroll(Text("外卡记录", bundle: .module))
+                .barTitleOnScroll(Text(copy: "外卡记录", bundle: .module))
                 .task(id: records) {
                     cast.dress(character, records: records)
                     guard !reduceMotion else { return }
@@ -73,7 +73,7 @@ struct RecordsPage: View {
             Image(systemName: "square.and.arrow.up")
         }
         // An icon only, in the bar's round glass like the back button across from it.
-        .accessibilityLabel(Text("存图", bundle: .module))
+        .accessibilityLabel(Text(copy: "存图", bundle: .module))
         .accessibilityIdentifier("records.save")
     }
 
@@ -117,7 +117,7 @@ struct RecordsContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("外卡记录", bundle: .module)
+            Text(copy: "外卡记录", bundle: .module)
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.xxs)
@@ -150,10 +150,10 @@ struct RecordsContent: View {
             }
             HStack(alignment: .top, spacing: Space.cardGap) {
                 StreakTile(
-                    label: Text("最长连续训练", bundle: .module), streak: records.longestStreak, today: today,
+                    label: Text(copy: "最长连续训练", bundle: .module), streak: records.longestStreak, today: today,
                     order: 0, intro: intro)
                 StreakTile(
-                    label: Text("健康餐连续", bundle: .module), streak: records.mealStreak, today: today,
+                    label: Text(copy: "健康餐连续", bundle: .module), streak: records.mealStreak, today: today,
                     order: 1, intro: intro)
             }
             .fixedSize(horizontal: false, vertical: true)

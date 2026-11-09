@@ -52,7 +52,7 @@ public struct CoachBoard: View {
             .padding(.horizontal, Space.m)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("教练 \(note.coach.name)：\(note.text)", bundle: .module))
+        .accessibilityLabel(Text(copy: "教练 \(note.coach.name)：\(note.text)", bundle: .module))
         .accessibilityIdentifier("feed.coachBoard")
     }
 }
@@ -85,16 +85,16 @@ struct CoachCommentLine: View {
     private var said: Text {
         let words = self.words.text(in: theme)
         guard let recipient else { return words }
-        let reply = Text("回复 \(recipient)", bundle: .module)
+        let reply = Text(copy: "回复 \(recipient)", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)  \(words)", bundle: .module)
+        return Text(copy: "\(reply)  \(words)", bundle: .module)
     }
 }
 
 /// What VoiceOver reads for the coach's line or answer: 「教练 毛头：…」, 「教练 毛头 回复 小美：…」.
 private func coachSaid(_ coach: CoachSpeaker, _ text: String, to recipient: String?) -> Text {
-    guard let recipient else { return Text("教练 \(coach.name)：\(text)", bundle: .module) }
-    return Text("教练 \(coach.name) 回复 \(recipient)：\(text)", bundle: .module)
+    guard let recipient else { return Text(copy: "教练 \(coach.name)：\(text)", bundle: .module) }
+    return Text(copy: "教练 \(coach.name) 回复 \(recipient)：\(text)", bundle: .module)
 }
 
 /// The coach's line on a post's own page, first among the comments, or its answer to a member's
@@ -142,9 +142,9 @@ struct CoachCommentRow: View {
     private var said: Text {
         let words = model.words(of: text, mentioning: mentions).text(in: theme)
         guard let recipient else { return words }
-        let reply = Text("回复 \(recipient)：", bundle: .module)
+        let reply = Text(copy: "回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(reply)\(words)", bundle: .module)
+        return Text(copy: "\(reply)\(words)", bundle: .module)
     }
 }
 #endif

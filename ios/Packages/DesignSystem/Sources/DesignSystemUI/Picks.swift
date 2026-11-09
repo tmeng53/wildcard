@@ -143,7 +143,7 @@ public struct PickPill: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
         .haptic(.pick, trigger: taps)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isRemovable ? Text("移除这一项", bundle: .module) : Text(verbatim: ""))
+        .accessibilityHint(isRemovable ? Text(copy: "移除这一项", bundle: .module) : Text(verbatim: ""))
     }
 
     private var isFilled: Bool { look == .solid && isSelected }

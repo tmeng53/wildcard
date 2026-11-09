@@ -97,7 +97,7 @@ private struct CardFront: View {
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 nameAndSquad
                 if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
-                    Text("card.since \(year)", bundle: .module)
+                    Text(copy: "card.since \(year)", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                         .accessibilityIdentifier("me.since")
@@ -130,7 +130,7 @@ private struct CardFront: View {
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .monospacedDigit()
                     .fixedSize()
-                    .accessibilityLabel(Text("card.number \(number.text)", bundle: .module))
+                    .accessibilityLabel(Text(copy: "card.number \(number.text)", bundle: .module))
                     .accessibilityIdentifier("me.cardNumber")
             }
             if let worn = face.board.wornTitle {
@@ -172,16 +172,16 @@ private struct CardFront: View {
 
     private var stats: some View {
         HStack(alignment: .top, spacing: Space.xs) {
-            FrontStat(label: Text("训练", bundle: .module)) {
+            FrontStat(label: Text(copy: "训练", bundle: .module)) {
                 Score(count: face.counts.trainedDays, size: .card, onInk: true)
                     .accessibilityIdentifier("me.trainedDays")
             }
             if let week = face.week {
-                FrontStat(label: Text("本周", bundle: .module)) {
+                FrontStat(label: Text(copy: "本周", bundle: .module)) {
                     Score(count: week.trainedDays, goal: week.plannedDays, size: .card, onInk: true)
                 }
             }
-            FrontStat(label: Text("徽章", bundle: .module)) {
+            FrontStat(label: Text(copy: "徽章", bundle: .module)) {
                 Score(count: face.board.count, size: .card, onInk: true)
                     .accessibilityIdentifier("me.titles")
             }
@@ -228,7 +228,7 @@ private struct CardBack: View {
             if let toSchedule {
                 Button(action: toSchedule) {
                     Label {
-                        Text("出赛表", bundle: .module)
+                        Text(copy: "出赛表", bundle: .module)
                     } icon: {
                         Image(systemName: "chevron.left")
                     }
@@ -254,7 +254,7 @@ private struct CardBack: View {
             }
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 Score(count: face.counts.trainedDays, size: .hero, onInk: true)
-                Text("card.career \(face.counts.healthyMeals) \(face.counts.disclaimers)", bundle: .module)
+                Text(copy: "card.career \(face.counts.healthyMeals) \(face.counts.disclaimers)", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                     // One line, shrunk to fit, so a word never breaks across lines.
@@ -264,7 +264,7 @@ private struct CardBack: View {
             .padding(.top, Space.xs)
             .accessibilityElement(children: .combine)
             HStack(alignment: .firstTextBaseline) {
-                Text("徽章", bundle: .module)
+                Text(copy: "徽章", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 Spacer()

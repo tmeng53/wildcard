@@ -128,9 +128,9 @@ public struct StatusRing<Avatar: View>: View {
 
     private var statusLabel: Text {
         switch status {
-        case .open: Text("还没打卡", bundle: .module)
-        case .done: Text("打卡了", bundle: .module)
-        case .restDay: Text("休息日", bundle: .module)
+        case .open: Text(copy: "还没打卡", bundle: .module)
+        case .done: Text(copy: "打卡了", bundle: .module)
+        case .restDay: Text(copy: "休息日", bundle: .module)
         }
     }
 }

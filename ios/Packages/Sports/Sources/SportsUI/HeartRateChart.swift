@@ -37,7 +37,7 @@ struct HeartRateChart: View {
         .foregroundStyle(Color(ZoneColors.ink))
         .haptic(.zone, trigger: pickedZone) { old, new in old != new && new != nil }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("心率曲线", bundle: .module))
+        .accessibilityLabel(Text(copy: "心率曲线", bundle: .module))
         .accessibilityValue(accessibilityMinutes)
         .accessibilityIdentifier("workout.chart")
     }
@@ -58,7 +58,7 @@ struct HeartRateChart: View {
             .frame(height: Self.headerHeight, alignment: .bottomLeading)
             .accessibilityIdentifier("workout.chart.reading")
         } else {
-            Text("心率曲线", bundle: .module)
+            Text(copy: "心率曲线", bundle: .module)
                 .typeStyle(TypeRamp.caption)
                 .opacity(0.85)
                 .frame(height: Self.headerHeight, alignment: .bottomLeading)
@@ -181,7 +181,7 @@ struct HeartRateChart: View {
                         .fill(Color(ZoneColors.zone(entry.zone.rawValue)))
                         .frame(width: 6, height: 6)
                     if named { entry.zone.name.typeStyle(TypeRamp.caption).opacity(0.7) }
-                    Text("\(entry.minutes) 分", bundle: .module).typeStyle(TypeRamp.scoreSmall)
+                    Text(copy: "\(entry.minutes) 分", bundle: .module).typeStyle(TypeRamp.scoreSmall)
                 }
                 .fixedSize()
                 .opacity(isLit(entry.zone) ? 1 : 0.35)
@@ -204,7 +204,7 @@ struct HeartRateChart: View {
 
     private var accessibilityMinutes: Text {
         trace.minutes.reduce(Text(verbatim: "")) { words, entry in
-            words + entry.zone.name + Text(verbatim: " ") + Text("\(entry.minutes) 分", bundle: .module)
+            words + entry.zone.name + Text(verbatim: " ") + Text(copy: "\(entry.minutes) 分", bundle: .module)
                 + Text(verbatim: "  ")
         }
     }
@@ -218,10 +218,10 @@ extension HeartRateZone {
     /// 轻松, 适中, 剧烈 or 峰值.
     var name: Text {
         switch self {
-        case .light: Text("轻松", bundle: .module)
-        case .moderate: Text("适中", bundle: .module)
-        case .vigorous: Text("剧烈", bundle: .module)
-        case .peak: Text("峰值", bundle: .module)
+        case .light: Text(copy: "轻松", bundle: .module)
+        case .moderate: Text(copy: "适中", bundle: .module)
+        case .vigorous: Text(copy: "剧烈", bundle: .module)
+        case .peak: Text(copy: "峰值", bundle: .module)
         }
     }
 }

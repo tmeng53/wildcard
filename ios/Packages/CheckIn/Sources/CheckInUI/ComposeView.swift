@@ -43,7 +43,7 @@ public struct ComposeView: View {
                         }
                         if let today = model.postableDays.last, model.postableDays.count > 1 {
                             VStack(alignment: .leading, spacing: Space.xxs) {
-                                SectionLabel(Text("日期", bundle: .module))
+                                SectionLabel(Text(copy: "日期", bundle: .module))
                                 DayPick(
                                     days: model.postableDays,
                                     picked: Binding {
@@ -104,18 +104,18 @@ public struct ComposeView: View {
         // An alert, not a confirmation dialog: iOS 26 drops a dialog's cancel button, and the
         // design shows 继续编辑 beside 放弃.
         .alert(
-            model.isEditing ? Text("放弃这些修改？", bundle: .module) : Text("放弃这条动态？", bundle: .module),
+            model.isEditing ? Text(copy: "放弃这些修改？", bundle: .module) : Text(copy: "放弃这条动态？", bundle: .module),
             isPresented: $isDiscarding
         ) {
             Button(role: .destructive) {
                 model.close()
             } label: {
-                Text("放弃", bundle: .module)
+                Text(copy: "放弃", bundle: .module)
             }
             .accessibilityIdentifier("compose.discard")
             Button(role: .cancel) {
             } label: {
-                Text("继续编辑", bundle: .module)
+                Text(copy: "继续编辑", bundle: .module)
             }
             .accessibilityIdentifier("compose.keepEditing")
         }
@@ -124,13 +124,13 @@ public struct ComposeView: View {
     private static let minutesID = "minutes"
 
     private var failedLine: Text {
-        model.isEditing ? Text("没保存上，再点一次保存", bundle: .module) : Text("没发出去，再点一次发布", bundle: .module)
+        model.isEditing ? Text(copy: "没保存上，再点一次保存", bundle: .module) : Text(copy: "没发出去，再点一次发布", bundle: .module)
     }
 
     private var bar: some View {
         ComposeBar(
             title: model.kind.fullName,
-            finish: model.isEditing ? Text("保存", bundle: .module) : Text("发布", bundle: .module),
+            finish: model.isEditing ? Text(copy: "保存", bundle: .module) : Text(copy: "发布", bundle: .module),
             isWorking: model.isSending, canFinish: !model.isSending && model.canSave,
             cancelID: "compose.cancel", finishID: "compose.post",
             cancel: { if model.hasChanges { isDiscarding = true } else { model.close() } },
@@ -167,10 +167,10 @@ public struct ComposeView: View {
 
     private var placeholder: Text {
         switch model.kind {
-        case .trained: Text("炫耀一下成果…", bundle: .module)
-        case .healthyMeal: Text("这顿很自律…", bundle: .module)
-        case .cheatMeal: Text("坦白从宽…", bundle: .module)
-        case .disclaimer: Text("今天为什么请假…", bundle: .module)
+        case .trained: Text(copy: "炫耀一下成果…", bundle: .module)
+        case .healthyMeal: Text(copy: "这顿很自律…", bundle: .module)
+        case .cheatMeal: Text(copy: "坦白从宽…", bundle: .module)
+        case .disclaimer: Text(copy: "今天为什么请假…", bundle: .module)
         }
     }
 }
@@ -183,7 +183,7 @@ private struct SportRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("运动", bundle: .module))
+            SectionLabel(Text(copy: "运动", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(choices, id: \.key) { activity in
@@ -194,7 +194,7 @@ private struct SportRow: View {
                         }
                         .accessibilityIdentifier("compose.sport.\(activity.key)")
                     }
-                    PickPill(Text("更多", bundle: .module), systemImage: "ellipsis", isSelected: false) {
+                    PickPill(Text(copy: "更多", bundle: .module), systemImage: "ellipsis", isSelected: false) {
                         isPickingSport = true
                     }
                     .accessibilityIdentifier("compose.sport.more")
@@ -222,7 +222,7 @@ private struct MinutesRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("开始 · 时长", bundle: .module))
+            SectionLabel(Text(copy: "开始 · 时长", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     StartTimePill(startTime: $startTime)
@@ -236,10 +236,10 @@ private struct MinutesRow: View {
                             isRuling = false
                             minutes = isPicked ? nil : try? WorkoutMinutes(value)
                         }
-                        .accessibilityLabel(Text("\(value) 分钟", bundle: .module))
+                        .accessibilityLabel(Text(copy: "\(value) 分钟", bundle: .module))
                         .accessibilityIdentifier("compose.minutes.\(value)")
                     }
-                    PickPill(Text("其他", bundle: .module), look: .solid, isSelected: isRuling) {
+                    PickPill(Text(copy: "其他", bundle: .module), look: .solid, isSelected: isRuling) {
                         if isRuling {
                             isRuling = false
                             minutes = nil
@@ -256,8 +256,8 @@ private struct MinutesRow: View {
             .horizontalScrollFade()
             if isRuling {
                 TickRuler(
-                    value: $ruled, scale: Self.scale, label: Text("时长 · 分钟", bundle: .module),
-                    unit: Text("分钟", bundle: .module)
+                    value: $ruled, scale: Self.scale, label: Text(copy: "时长 · 分钟", bundle: .module),
+                    unit: Text(copy: "分钟", bundle: .module)
                 )
                 .padding(.top, Space.xs)
                 .onChange(of: ruled) { _, value in minutes = try? WorkoutMinutes(value) }

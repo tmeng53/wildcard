@@ -49,7 +49,7 @@ struct PostPhotos: View {
                         face(tile)
                             .accessibilityLabel(label(tile, index: index))
                             .accessibilityAddTraits(isPhoto(tile) ? .isButton : [])
-                            .accessibilityHint(isPhoto(tile) ? Text("全屏看", bundle: .module) : Text(verbatim: ""))
+                            .accessibilityHint(isPhoto(tile) ? Text(copy: "全屏看", bundle: .module) : Text(verbatim: ""))
                             .accessibilityAction { open(index) }
                             .tag(index)
                     }
@@ -112,9 +112,9 @@ struct PostPhotos: View {
 
     private func label(_ tile: Contracts.PostTile, index: Int) -> Text {
         switch tile {
-        case .photo: Text("第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
-        case .workout(.map): Text("路线地图，第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
-        case .workout(.chart): Text("数据图，第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
+        case .photo: Text(copy: "第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
+        case .workout(.map): Text(copy: "路线地图，第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
+        case .workout(.chart): Text(copy: "数据图，第 \(index + 1) 张，共 \(tiles.count) 张", bundle: .module)
         }
     }
 

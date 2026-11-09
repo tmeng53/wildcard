@@ -41,15 +41,15 @@ public struct CoachDeckPage: View {
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button(action: places.market) { Image(systemName: "briefcase") }
-                        .accessibilityLabel(Text("教练招聘会", bundle: .module))
+                        .accessibilityLabel(Text(copy: "教练招聘会", bundle: .module))
                         .accessibilityIdentifier("coachDeck.market")
                     Button(action: places.resume) { Image(systemName: "doc.text") }
-                        .accessibilityLabel(Text("简历", bundle: .module))
+                        .accessibilityLabel(Text(copy: "简历", bundle: .module))
                         .accessibilityIdentifier("coachDeck.resume")
                     Button(action: places.earlier) {
                         Image(systemName: "clock").symbolEffect(.bounce, value: deck.putAway)
                     }
-                    .accessibilityLabel(Text("以前", bundle: .module))
+                    .accessibilityLabel(Text(copy: "以前", bundle: .module))
                     .accessibilityIdentifier("coachDeck.history")
                 }
             }
@@ -95,9 +95,9 @@ public struct CoachDeckPage: View {
     private func hint(left: Int) -> some View {
         HStack(spacing: Space.xxs) {
             if left > 0 {
-                Text("还有 \(left) 张 · 右滑收起", bundle: .module)
+                Text(copy: "还有 \(left) 张 · 右滑收起", bundle: .module)
             } else {
-                Text("最后一张 · 右滑收起", bundle: .module)
+                Text(copy: "最后一张 · 右滑收起", bundle: .module)
             }
             Image(systemName: "arrow.right").accessibilityHidden(true)
         }
@@ -131,7 +131,7 @@ public struct CoachDeckPage: View {
                     .allowsHitTesting(isTop)
                     .accessibilityHidden(!isTop)
                     .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
-                    .accessibilityAction(named: Text("收进以前", bundle: .module)) { putAway(card) }
+                    .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
                 }
                 if shown.isEmpty {
                     CoachDeckCard(

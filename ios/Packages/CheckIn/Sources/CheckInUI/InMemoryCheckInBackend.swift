@@ -80,7 +80,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     member: member, timeZone: zone,
                     squad: Squad(
                         id: squadID,
-                        name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                        name: String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module),
                         inviteCode: "K7M2QX9P", members: everyone.filter(kept.contains) + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
@@ -106,7 +106,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// A sample title, its words from the catalog.
     private static func worn(_ key: String, _ shape: String, _ colour: String, _ glyph: String) -> WornTitle {
         WornTitle(
-            title: Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil),
+            title: String(copyKey: key, bundle: Bundle.module),
             badge: TitleBadge(shape: shape, colour: colour, glyph: glyph))
     }
 
@@ -127,7 +127,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private static func character(of member: MemberID, everyone: [MemberID]) -> MemberCharacter? {
         guard let index = everyone.firstIndex(of: member),
             let nickname = try? Nickname(
-                Bundle.module.inAppLanguage.localizedString(forKey: names[index], value: nil, table: nil))
+                String(copyKey: names[index], bundle: Bundle.module))
         else { return nil }
         return MemberCharacter(
             nickname: nickname,
@@ -156,7 +156,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 entry: entry)
         }
         let leave = try? Disclaimer(
-            Bundle.module.inAppLanguage.localizedString(forKey: "加班到十点，腿说它也想下班", value: nil, table: nil))
+            String(copyKey: "加班到十点，腿说它也想下班", bundle: Bundle.module))
         return [
             checkIn(mates[0], 5, .trained(Training(activity: .sport("run")))),
             checkIn(mates[1], 4, .trained(Training(activity: .sport(secondSport)))),
@@ -171,8 +171,8 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     ) -> [CheckIn] {
         let words = Bundle.module.inAppLanguage
         guard let audience = try? Audience([squad]),
-            let salad = try? Caption(words.localizedString(forKey: "练完来碗沙拉", value: nil, table: nil)),
-            let boba = try? Caption(words.localizedString(forKey: "奶茶续命", value: nil, table: nil))
+            let salad = try? Caption(String(copyKey: "练完来碗沙拉", bundle: words)),
+            let boba = try? Caption(String(copyKey: "奶茶续命", bundle: words))
         else { return [] }
         return [
             CheckIn(
@@ -294,8 +294,8 @@ extension InMemoryCheckInBackend {
         return DayChallenge(
             note: "41", day: day,
             challenge: CoachPageCard.Challenge(
-                title: words.localizedString(forKey: "拉伸", value: nil, table: nil), amount: 5,
-                unit: words.localizedString(forKey: "分钟", value: nil, table: nil), answer: .accepted))
+                title: String(copyKey: "拉伸", bundle: words), amount: 5,
+                unit: String(copyKey: "分钟", bundle: words), answer: .accepted))
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? { dayChallenge }

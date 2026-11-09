@@ -24,7 +24,7 @@ public struct HealthSettingsView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Apple 健康", bundle: .module)
+                Text(copy: "Apple 健康", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -37,7 +37,7 @@ public struct HealthSettingsView: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
-        .barTitleOnScroll(Text("Apple 健康", bundle: .module))
+        .barTitleOnScroll(Text(copy: "Apple 健康", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .pushedPage()
         .task { await health.refresh() }
@@ -47,11 +47,14 @@ public struct HealthSettingsView: View {
     private var connection: some View {
         VStack(spacing: 0) {
             if health.isConnected {
-                ListRow(Text("Apple 健康", bundle: .module), value: Text("已连接", bundle: .module), showsDivider: false) {}
-                    .disabled(true)
-                    .accessibilityIdentifier("health.connected")
+                ListRow(
+                    Text(copy: "Apple 健康", bundle: .module), value: Text(copy: "已连接", bundle: .module),
+                    showsDivider: false
+                ) {}
+                .disabled(true)
+                .accessibilityIdentifier("health.connected")
             } else {
-                ListRow(Text("连接 Apple 健康", bundle: .module), showsDivider: false) {
+                ListRow(Text(copy: "连接 Apple 健康", bundle: .module), showsDivider: false) {
                     guard !isConnecting else { return }
                     isConnecting = true
                     Task {
@@ -71,24 +74,24 @@ public struct HealthSettingsView: View {
 
     private var sharing: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("发动态时显示", bundle: .module))
+            SectionLabel(Text(copy: "发动态时显示", bundle: .module))
             VStack(spacing: 0) {
-                SwitchRow(Text("距离", bundle: .module), isOn: $health.sharing.distance)
+                SwitchRow(Text(copy: "距离", bundle: .module), isOn: $health.sharing.distance)
                     .accessibilityIdentifier("health.share.distance")
-                SwitchRow(Text("配速 / 速度", bundle: .module), isOn: $health.sharing.pace)
+                SwitchRow(Text(copy: "配速 / 速度", bundle: .module), isOn: $health.sharing.pace)
                     .accessibilityIdentifier("health.share.pace")
-                SwitchRow(Text("心率", bundle: .module), isOn: $health.sharing.heartRate)
+                SwitchRow(Text(copy: "心率", bundle: .module), isOn: $health.sharing.heartRate)
                     .accessibilityIdentifier("health.share.heartRate")
-                SwitchRow(Text("强度", bundle: .module), isOn: $health.sharing.effort)
+                SwitchRow(Text(copy: "强度", bundle: .module), isOn: $health.sharing.effort)
                     .accessibilityIdentifier("health.share.effort")
-                SwitchRow(Text("趟数（游泳、滑雪）", bundle: .module), isOn: $health.sharing.laps)
+                SwitchRow(Text(copy: "趟数（游泳、滑雪）", bundle: .module), isOn: $health.sharing.laps)
                     .accessibilityIdentifier("health.share.laps")
-                SwitchRow(Text("卡路里", bundle: .module), isOn: $health.sharing.calories)
+                SwitchRow(Text(copy: "卡路里", bundle: .module), isOn: $health.sharing.calories)
                     .accessibilityIdentifier("health.share.calories")
-                SwitchRow(Text("路线", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
+                SwitchRow(Text(copy: "路线", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
                     .accessibilityIdentifier("health.share.route")
             }
-            Text("发之前还能逐项关掉。路线的起点和终点各 200 米不显示。", bundle: .module)
+            Text(copy: "发之前还能逐项关掉。路线的起点和终点各 200 米不显示。", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
@@ -100,11 +103,11 @@ public struct HealthSettingsView: View {
     /// Health never says whether reading was allowed, so the way to change it is always here.
     private var permissions: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            ListRow(Text("在“设置”中管理权限", bundle: .module), showsDivider: false) {
+            ListRow(Text(copy: "在“设置”中管理权限", bundle: .module), showsDivider: false) {
                 if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
             }
             .accessibilityIdentifier("health.permissions")
-            Text("没看到运动记录？前往 设置 › App › 健康 › 数据访问与设备 › 外卡，打开读取。", bundle: .module)
+            Text(copy: "没看到运动记录？前往 设置 › App › 健康 › 数据访问与设备 › 外卡，打开读取。", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)

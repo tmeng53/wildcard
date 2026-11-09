@@ -40,12 +40,12 @@ struct MealsPage: View {
         }
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("全队", bundle: .module), title: Text("吃了", bundle: .module))
+                PageTitle(label: Text(copy: "全队", bundle: .module), title: Text(copy: "吃了", bundle: .module))
                 // PageTitle keeps its own inset; the counts and the line take the same.
                 VStack(alignment: .leading, spacing: Space.l) {
                     HStack(alignment: .top, spacing: Space.xl) {
-                        count(meals.healthy, Text("健康餐", bundle: .module), size: .story)
-                        count(meals.cheat, Text("放纵餐", bundle: .module), size: .hero)
+                        count(meals.healthy, Text(copy: "健康餐", bundle: .module), size: .story)
+                        count(meals.cheat, Text(copy: "放纵餐", bundle: .module), size: .hero)
                     }
                     if let line = meals.line {
                         Text(verbatim: line)
@@ -105,8 +105,8 @@ struct BestDisclaimerPage: View {
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
                 PageTitle(
-                    label: Text("本周", bundle: .module), systemImage: "bubble.left.fill",
-                    title: Text("最佳请假条", bundle: .module))
+                    label: Text(copy: "本周", bundle: .module), systemImage: "bubble.left.fill",
+                    title: Text(copy: "最佳请假条", bundle: .module))
                 card
                     .padding(.horizontal, Space.l)
                     .offset(y: 24 * (1 - page.pop(0, 0.5)))
@@ -126,7 +126,7 @@ struct BestDisclaimerPage: View {
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Spacer(minLength: 0)
-                Text("\(note.reactions) 个回应", bundle: .module)
+                Text(copy: "\(note.reactions) 个回应", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
@@ -162,7 +162,7 @@ struct EndingPage: View {
         }
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(label: Text("全队", bundle: .module), title: headline)
+                PageTitle(label: Text(copy: "全队", bundle: .module), title: headline)
                 VStack(alignment: .leading, spacing: Space.s) {
                     Score(count: Int((Double(ending.done) * counted).rounded()), goal: ending.plan, size: .story)
                     line.typeStyle(TypeRamp.headline)
@@ -181,12 +181,12 @@ struct EndingPage: View {
     }
 
     private var headline: Text {
-        ending.headline.map { Text(verbatim: $0) } ?? Text("这一周", bundle: .module)
+        ending.headline.map { Text(verbatim: $0) } ?? Text(copy: "这一周", bundle: .module)
     }
 
     private var line: Text {
         if let line = ending.line { return Text(verbatim: line) }
-        return ending.isHit ? Text("全队达标", bundle: .module) : Text("一起练了 \(ending.done) 次", bundle: .module)
+        return ending.isHit ? Text(copy: "全队达标", bundle: .module) : Text(copy: "一起练了 \(ending.done) 次", bundle: .module)
     }
 
     @ViewBuilder
@@ -264,7 +264,7 @@ struct EndingButtons: View {
             Button {
                 isSaving = true
             } label: {
-                Text("存图", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "存图", bundle: .module).frame(maxWidth: .infinity)
             }
             .disabled(actions.picture == nil)
             .buttonStyle(PrimaryButtonStyle(.large))
@@ -274,7 +274,7 @@ struct EndingButtons: View {
                     SavePictureSheet(image: picture) { isSaving = false }
                 }
             }
-            Button(action: actions.planNextWeek) { Text("排下周", bundle: .module) }
+            Button(action: actions.planNextWeek) { Text(copy: "排下周", bundle: .module) }
                 .buttonStyle(TextButtonStyle(.muted))
                 .accessibilityIdentifier("recap.planNextWeek")
         }

@@ -19,7 +19,7 @@ struct StartTimePill: View {
             if startTime == nil { isPicking = true } else { startTime = nil }
         }
         .monospacedDigit()
-        .accessibilityLabel(Text("开始时间", bundle: .module))
+        .accessibilityLabel(Text(copy: "开始时间", bundle: .module))
         .accessibilityValue(Text(verbatim: startTime?.wire ?? ""))
         .accessibilityIdentifier("compose.start")
         .sheet(isPresented: $isPicking) {
@@ -57,7 +57,7 @@ struct FlipClockSheet: View {
     var body: some View {
         VStack(spacing: Space.xs) {
             ComposeBar(
-                title: Text("开始时间", bundle: .module), finish: Text("完成", bundle: .module), isWorking: false,
+                title: Text(copy: "开始时间", bundle: .module), finish: Text(copy: "完成", bundle: .module), isWorking: false,
                 canFinish: true, cancelID: "start.cancel", finishID: "start.done", cancel: cancel
             ) {
                 guard let picked = try? StartTime(hour: values[0], minute: values[1]) else { return }
@@ -65,7 +65,7 @@ struct FlipClockSheet: View {
             }
             FlipClockView(
                 .timeOfDay, values: $values,
-                labels: [Text("小时", bundle: .module), Text("分钟", bundle: .module)],
+                labels: [Text(copy: "小时", bundle: .module), Text(copy: "分钟", bundle: .module)],
                 identifiers: ["start.hour", "start.minute"], size: .large, separator: .colon
             )
             .padding(.bottom, Space.m)

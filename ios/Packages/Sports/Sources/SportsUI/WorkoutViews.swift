@@ -32,15 +32,15 @@ public enum LapBars {
 extension ScoreCell.Unit {
     public var text: Text {
         switch self {
-        case .minutes: Text("分钟", bundle: .module)
-        case .laps: Text("趟", bundle: .module)
-        case .runs: Text("score.runs.unit", bundle: .module)
-        case .meters: Text("米", bundle: .module)
-        case .kilometres: Text("公里", bundle: .module)
-        case .kilometresPerHour: Text("km/h", bundle: .module)
-        case .per100Meters: Text("/100 米", bundle: .module)
+        case .minutes: Text(copy: "分钟", bundle: .module)
+        case .laps: Text(copy: "趟", bundle: .module)
+        case .runs: Text(copy: "score.runs.unit", bundle: .module)
+        case .meters: Text(copy: "米", bundle: .module)
+        case .kilometres: Text(copy: "公里", bundle: .module)
+        case .kilometresPerHour: Text(copy: "km/h", bundle: .module)
+        case .per100Meters: Text(copy: "/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
-        case .kilocalories: Text("千卡", bundle: .module)
+        case .kilocalories: Text(copy: "千卡", bundle: .module)
         }
     }
 }
@@ -48,20 +48,20 @@ extension ScoreCell.Unit {
 extension ScoreCell.Label {
     public var text: Text {
         switch self {
-        case .duration: Text("时长", bundle: .module)
-        case .distance: Text("距离", bundle: .module)
-        case .pace: Text("配速", bundle: .module)
-        case .speed: Text("均速", bundle: .module)
-        case .averageHeartRate: Text("平均心率", bundle: .module)
-        case .maxHeartRate: Text("最高心率", bundle: .module)
-        case .effort: Text("强度", bundle: .module)
-        case .runs: Text("score.runs", bundle: .module)
-        case .descent: Text("落差", bundle: .module)
-        case .topSpeed: Text("最高速", bundle: .module)
-        case .elevationGain: Text("爬升", bundle: .module)
-        case .calories: Text("卡路里", bundle: .module)
-        case .laps(let pool?): Text("\(pool) 米泳池", bundle: .module)
-        case .laps(nil): Text("趟数", bundle: .module)
+        case .duration: Text(copy: "时长", bundle: .module)
+        case .distance: Text(copy: "距离", bundle: .module)
+        case .pace: Text(copy: "配速", bundle: .module)
+        case .speed: Text(copy: "均速", bundle: .module)
+        case .averageHeartRate: Text(copy: "平均心率", bundle: .module)
+        case .maxHeartRate: Text(copy: "最高心率", bundle: .module)
+        case .effort: Text(copy: "强度", bundle: .module)
+        case .runs: Text(copy: "score.runs", bundle: .module)
+        case .descent: Text(copy: "落差", bundle: .module)
+        case .topSpeed: Text(copy: "最高速", bundle: .module)
+        case .elevationGain: Text(copy: "爬升", bundle: .module)
+        case .calories: Text(copy: "卡路里", bundle: .module)
+        case .laps(let pool?): Text(copy: "\(pool) 米泳池", bundle: .module)
+        case .laps(nil): Text(copy: "趟数", bundle: .module)
         }
     }
 }
@@ -151,8 +151,10 @@ public struct ScoreStrip: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .haptic(.pick, trigger: isStruck)
-                    .accessibilityValue(isStruck ? Text("不发", bundle: .module) : Text("发", bundle: .module))
-                    .accessibilityHint(isStruck ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
+                    .accessibilityValue(isStruck ? Text(copy: "不发", bundle: .module) : Text(copy: "发", bundle: .module))
+                    .accessibilityHint(
+                        isStruck ? Text(copy: "点一下恢复", bundle: .module) : Text(copy: "点一下划掉", bundle: .module)
+                    )
                     .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
                 } else {
                     face(cell, isStruck: false)
@@ -226,7 +228,7 @@ public struct WorkoutMap: View {
         // The camera frames the route only when the map is made, so another route makes another map.
         .id(route)
         .allowsHitTesting(false)
-        .accessibilityLabel(Text("路线地图", bundle: .module))
+        .accessibilityLabel(Text(copy: "路线地图", bundle: .module))
         .accessibilityIdentifier("workout.map")
     }
 
@@ -294,9 +296,9 @@ public struct WorkoutChart: View {
 
     private var label: Text {
         if let laps = series.laps, !laps.isEmpty, let fastest = series.fastestLap {
-            return Text("每趟用时 · 最快第 \(fastest + 1) 趟", bundle: .module)
+            return Text(copy: "每趟用时 · 最快第 \(fastest + 1) 趟", bundle: .module)
         }
-        return Text("心率曲线", bundle: .module)
+        return Text(copy: "心率曲线", bundle: .module)
     }
 
     private static func drawLaps(

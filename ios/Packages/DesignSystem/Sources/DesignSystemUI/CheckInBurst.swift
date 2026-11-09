@@ -132,9 +132,9 @@ private struct BurstButton: View {
                     .rotationEffect(.degrees(isOpen ? 135 : 0))
                     .accessibilityHidden(true)
                 if isOpen {
-                    Text("收起", bundle: .module)
+                    Text(copy: "收起", bundle: .module)
                 } else {
-                    Text("打卡", bundle: .module)
+                    Text(copy: "打卡", bundle: .module)
                 }
             }
             .padding(.leading, Self.iconSide - Space.l)

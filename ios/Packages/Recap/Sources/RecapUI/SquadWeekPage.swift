@@ -32,13 +32,13 @@ struct SquadWeekPage: View {
 
     private func summary(cards: Int) -> some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            PageTitle(label: Text("全队", bundle: .module), title: Text("运动总结", bundle: .module))
+            PageTitle(label: Text(copy: "全队", bundle: .module), title: Text(copy: "运动总结", bundle: .module))
             HStack(alignment: .lastTextBaseline, spacing: Space.s) {
                 // The squad's 训练, several on one day each counting, as its goal counts them.
                 Score(count: page.story.ending?.done ?? 0, size: .hero)
                 VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text("次训练", bundle: .module).typeStyle(TypeRamp.headline)
-                    Text("\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
+                    Text(copy: "次训练", bundle: .module).typeStyle(TypeRamp.headline)
+                    Text(copy: "\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
@@ -121,11 +121,11 @@ private struct SportsCard: View {
         let rest = sports.dropFirst(Self.named)
         VStack(alignment: .leading, spacing: Space.s) {
             HStack(alignment: .firstTextBaseline) {
-                Text("项目", bundle: .module)
+                Text(copy: "项目", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgAccent, in: theme))
                 Spacer(minLength: Space.s)
-                Text("\(sports.count) 种运动", bundle: .module)
+                Text(copy: "\(sports.count) 种运动", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
@@ -137,7 +137,7 @@ private struct SportsCard: View {
             }
             if !rest.isEmpty {
                 SportRow(
-                    symbol: "ellipsis", name: Text("其他 \(rest.count) 种", bundle: .module),
+                    symbol: "ellipsis", name: Text(copy: "其他 \(rest.count) 种", bundle: .module),
                     heads: week.members(training: Set(rest.map(\.sport))).map(head),
                     days: rest.reduce(0) { $0 + $1.days },
                     fraction: Double(rest.reduce(0) { $0 + $1.days }) / Double(most), isRest: true)
@@ -199,7 +199,7 @@ private struct SportRow: View {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                 Text(verbatim: "\(days)").typeStyle(TypeRamp.scoreInline).monospacedDigit()
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("天", bundle: .module).typeStyle(TypeRamp.caption)
+                Text(copy: "天", bundle: .module).typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
             .frame(width: Self.daysWidth, alignment: .trailing)

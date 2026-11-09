@@ -37,7 +37,7 @@ struct SceneStep: View {
 
     private var page: some View {
         StepPage(
-            step: .scene, title: Text("这周在哪练？", bundle: .module), character: model.myCharacter, onBack: model.back
+            step: .scene, title: Text(copy: "这周在哪练？", bundle: .module), character: model.myCharacter, onBack: model.back
         ) {
             if let picker = model.scenePicker {
                 SceneTileRow(picker: picker, height: Self.tileHeight, spacing: Space.xs)
@@ -46,7 +46,7 @@ struct SceneStep: View {
         } actions: {
             FailureLine(failure: model.failure)
             StepButton(
-                title: Text("确认", bundle: .module), isWorking: model.isPickingScene,
+                title: Text(copy: "确认", bundle: .module), isWorking: model.isPickingScene,
                 isEnabled: model.scenePicker?.canConfirm ?? false, action: model.confirmScene
             )
             .accessibilityIdentifier("scene.done")

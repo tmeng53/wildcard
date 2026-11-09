@@ -15,7 +15,7 @@ struct UnlockBanner: View {
     var body: some View {
         NoticeBanner(
             UnlockNames.title(unlock.kind, item: unlock.id), detail: UnlockNames.detail(unlock),
-            action: Text("去看看")
+            action: Text(copy: "去看看", bundle: .main)
         ) {
             switch unlock.kind {
             // A store opening and new pieces in one both show the store's sign.

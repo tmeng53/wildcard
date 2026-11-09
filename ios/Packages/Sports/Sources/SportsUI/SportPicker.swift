@@ -27,12 +27,12 @@ public struct SportPicker: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.m) {
-                SearchField(text: $query, prompt: Text("搜索运动", bundle: .module))
+                SearchField(text: $query, prompt: Text(copy: "搜索运动", bundle: .module))
                     .padding(.horizontal, Space.pageMargin)
                     .accessibilityIdentifier("sports.search")
                 if query.isEmpty, !recent.isEmpty {
                     VStack(alignment: .leading, spacing: Space.labelGap) {
-                        SectionLabel(Text("常用运动", bundle: .module))
+                        SectionLabel(Text(copy: "常用运动", bundle: .module))
                         FlowRow {
                             ForEach(recent, id: \.key) { activity in
                                 PickPill(activity.name, isSelected: selected == activity) { pick(activity) }

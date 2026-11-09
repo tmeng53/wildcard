@@ -146,7 +146,7 @@ public struct BroadcastCelebration: View {
                 Button {
                     model.closeCelebration(opening: false)
                 } label: {
-                    Text("先不了", bundle: .module)
+                    Text(copy: "先不了", bundle: .module)
                 }
                 .buttonStyle(TextButtonStyle())
                 .accessibilityIdentifier("broadcast.celebration.later")
@@ -154,7 +154,7 @@ public struct BroadcastCelebration: View {
                 Button {
                     model.closeCelebration(opening: false)
                 } label: {
-                    Text("好的", bundle: .module).frame(maxWidth: .infinity)
+                    Text(copy: "好的", bundle: .module).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(.bottom, Space.s)
