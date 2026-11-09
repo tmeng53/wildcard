@@ -29,8 +29,7 @@ import Testing
 }
 
 /// The shared moves end where they began, so the idle takes over without a jump, and the front
-/// left arm fades in over the one behind the body before that one hides (and back out after it
-/// returns): one of them is always whole, so there is never no left arm and never a gap between.
+/// left arm shows only while the one behind the body hides: never two left arms, never none.
 @Test func sharedMovesEndAtRestWithOneLeftArm() throws {
     let figure = try CoachCharacter.figure("xiaohun")
     let (back, front) = (try figure.index("armL"), try figure.index("armLFront"))
@@ -40,7 +39,7 @@ import Testing
         #expect(figure.pose(bound, at: clip.duration) == figure.restPose, "\(move) ends off rest")
         for frame in 0...Int(clip.duration * 50) {
             let pose = figure.pose(bound, at: Double(frame) / 50)
-            #expect(pose.parts[back].opacity == 1 || pose.parts[front].opacity == 1, "\(move) at frame \(frame)")
+            #expect(pose.parts[back].opacity + pose.parts[front].opacity == 1, "\(move) at frame \(frame)")
         }
     }
 }

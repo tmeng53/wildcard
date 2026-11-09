@@ -75,6 +75,16 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     #expect(try opacity("steamL", in: "pout", at: 1.1) == 1)
 }
 
+/// 秀肌肉 and the dumbbell raise never bring the arm in front of the body: a front/back swap shows
+/// as a jump however it is timed, so the arm curls out to the side behind the body instead.
+@Test func flexingArmsNeverSwapDepth() throws {
+    let flex = try #require(PlaceholderCharacter.reactionMove("flex"))
+    let dumbbell = try #require(try PlaceholderCharacter.propMove(for: Outfit(["prop": "dumbbell"])))
+    for clip in [flex, dumbbell] {
+        #expect(clip.tracks.allSatisfy { $0.channel != .front }, "\(clip.name)")
+    }
+}
+
 /// Every brows variant draws an angry `mad` pair in its own style and color, for a pout.
 @Test func everyBrowsHaveAMadPair() throws {
     for brows in PlaceholderCharacter.variants(for: "brows") {
