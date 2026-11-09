@@ -86,7 +86,7 @@ struct StageSection: View {
                 VStack(spacing: Space.s) {
                     NoticeBanner(Text("小米把小队搬到了跑道", bundle: .module)) { SceneBadge(.track) }
                     NoticeBanner(
-                        Text("DEUCE CLUB 开门了", bundle: .module), detail: Text("网球练满 3 次", bundle: .module),
+                        Text("DEUCE CLUB 开门了", bundle: .module), detail: Text("网球练满 3 天", bundle: .module),
                         showsChevron: true
                     ) { SceneBadge(.tennis) }
                     NoticeBanner(

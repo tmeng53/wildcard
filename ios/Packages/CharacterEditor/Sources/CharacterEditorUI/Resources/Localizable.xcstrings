@@ -2098,82 +2098,82 @@
         }
       }
     },
-    "跑步、快走或徒步 3 次解锁": {
+    "跑步、快走或徒步练满 3 天解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 runs, walks or hikes"
+            "value": "Unlock: run, walk or hike on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "跑步、快走或健行 3 次解鎖"
+            "value": "跑步、快走或健行練滿 3 天解鎖"
           }
         }
       }
     },
-    "球类 3 次解锁": {
+    "球类练满 3 天解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 ball games"
+            "value": "Unlock: ball games on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "球類 3 次解鎖"
+            "value": "球類練滿 3 天解鎖"
           }
         }
       }
     },
-    "攀岩或徒步 3 次解锁": {
+    "攀岩或徒步练满 3 天解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 climbs or hikes"
+            "value": "Unlock: climb or hike on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "攀岩或健行 3 次解鎖"
+            "value": "攀岩或健行練滿 3 天解鎖"
           }
         }
       }
     },
-    "随便练 3 次解锁": {
+    "随便练满 3 天解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 workouts"
+            "value": "Unlock: work out on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隨便練 3 次解鎖"
+            "value": "隨便練滿 3 天解鎖"
           }
         }
       }
     },
-    "拍类运动 3 次解锁": {
+    "拍类运动练满 3 天解锁": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock: 3 racket sessions"
+            "value": "Unlock: racket sports on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "拍類運動 3 次解鎖"
+            "value": "拍類運動練滿 3 天解鎖"
           }
         }
       }
@@ -2210,34 +2210,58 @@
         }
       }
     },
-    "随便练满 %lld 次": {
+    "随便练满 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Any %lld workouts"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Any workout on %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Any workouts on %lld days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隨便練滿 %lld 次"
+            "value": "隨便練滿 %lld 天"
           }
         }
       }
     },
-    "%@练满 %lld 次": {
+    "%@练满 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ × %lld"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ on %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%@ on %lld days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@練滿 %lld 次"
+            "value": "%@練滿 %lld 天"
           }
         }
       }
@@ -2306,18 +2330,30 @@
         }
       }
     },
-    "再练 %lld 次": {
+    "再练 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld more to go"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "再練 %lld 次"
+            "value": "再練 %lld 天"
           }
         }
       }
@@ -2338,18 +2374,30 @@
         }
       }
     },
-    "神秘款，再练 %lld 次解锁": {
+    "神秘款，再练 %lld 天解锁": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mystery piece, unlocks in %lld more workouts"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mystery piece, unlocks in %lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mystery piece, unlocks in %lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "神秘款，再練 %lld 次解鎖"
+            "value": "神秘款，再練 %lld 天解鎖"
           }
         }
       }
@@ -3811,18 +3859,30 @@
         }
       }
     },
-    "还有 %lld 次开门": {
+    "还有 %lld 天开门": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens in %lld more"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Opens in %lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Opens in %lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "還有 %lld 次開門"
+            "value": "還有 %lld 天開門"
           }
         }
       }

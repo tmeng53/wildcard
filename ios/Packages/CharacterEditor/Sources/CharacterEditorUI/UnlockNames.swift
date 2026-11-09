@@ -9,9 +9,9 @@ import SportsUI
 import SwiftUI
 
 /// What a store opening or a prop unlocking says outside the editor, in the editor's own names,
-/// the same on the home's banner and in 通知: 「DEUCE CLUB 开门了 · 网球练满 3 次」,
+/// the same on the home's banner and in 通知: 「DEUCE CLUB 开门了 · 网球练满 3 天」,
 /// 「解锁了网球拍 · 第一次打网球」. A piece is told by its store's wordmark, never its own name, so
-/// it stays a surprise until the store shows it: 「LAP NINE 到新货了 · 跑步练满 5 次」.
+/// it stays a surprise until the store shows it: 「LAP NINE 到新货了 · 跑步练满 5 天」.
 public enum UnlockNames {
     public static func title(_ kind: Unlock.Kind, item: String) -> Text {
         switch kind {
@@ -41,12 +41,12 @@ public enum UnlockNames {
     /// rule's first sport stands for the rest (DEUCE CLUB takes 网球, 匹克球 and 壁球, and says 网球).
     public static func detail(_ unlock: Unlock) -> Text {
         guard let sport = unlock.sports.first else {
-            return Text("随便练满 \(unlock.checkIns) 次", bundle: .module)
+            return Text("随便练满 \(unlock.checkIns) 天", bundle: .module)
         }
         let name = sport.localizedName
         switch unlock.kind {
         case .store, .piece:
-            return Text("\(name)练满 \(unlock.checkIns) 次", bundle: .module)
+            return Text("\(name)练满 \(unlock.checkIns) 天", bundle: .module)
         case .prop:
             // Ball and racket sports are played (打), the rest trained (练).
             let played = ["racket", "ball"].contains(sport.entry?.category ?? "")

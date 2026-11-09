@@ -283,7 +283,12 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     async trainedSince({ member, since }) {
       const rows = await db
         .selectFrom('check_ins')
-        .select(['id', sql<string>`payload ->> 'sport'`.as('sport'), 'created_at'])
+        .select([
+          'id',
+          sql<string>`payload ->> 'sport'`.as('sport'),
+          sql<string>`day::text`.as('day'),
+          'created_at',
+        ])
         .where('member_id', '=', member)
         .where('kind', '=', 'trained')
         .where('created_at', '>=', since)
@@ -293,6 +298,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return rows.map((row) => ({
         id: CheckInId.parse(row.id),
         sport: SportKey.parse(row.sport),
+        day: row.day,
         madeAt: new Date(row.created_at),
       }));
     },

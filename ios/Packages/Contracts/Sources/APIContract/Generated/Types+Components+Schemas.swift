@@ -10834,7 +10834,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/UnlockReason/sports`.
             public var sports: [Swift.String]
-            /// How many 训练 check-ins in them it took.
+            /// On how many different days 训练 in them it took.
             ///
             /// - Remark: Generated from `#/components/schemas/UnlockReason/checkIns`.
             public var checkIns: Swift.Int
@@ -10842,7 +10842,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - sports: The sports whose 训练 counted; empty for any sport.
-            ///   - checkIns: How many 训练 check-ins in them it took.
+            ///   - checkIns: On how many different days 训练 in them it took.
             public init(
                 sports: [Swift.String],
                 checkIns: Swift.Int
@@ -10898,7 +10898,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/LockedPiece/sports`.
             public var sports: [Swift.String]
-            /// How many more 训练 check-ins in its sports open it.
+            /// How many more days of 训练 in its sports open it (many on one day count once).
             ///
             /// - Remark: Generated from `#/components/schemas/LockedPiece/checkInsToGo`.
             public var checkInsToGo: Swift.Int
@@ -10907,7 +10907,7 @@ extension Components {
             /// - Parameters:
             ///   - id: The piece’s id in the app’s art.
             ///   - sports: The sports whose 训练 count towards it; empty for any sport.
-            ///   - checkInsToGo: How many more 训练 check-ins in its sports open it.
+            ///   - checkInsToGo: How many more days of 训练 in its sports open it (many on one day count once).
             public init(
                 id: Swift.String,
                 sports: [Swift.String],
@@ -10962,7 +10962,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfStore/open`.
             public var open: Swift.Bool
-            /// For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins in its sports open it.
+            /// For a store whose rule the member hasn’t reached yet: how many more days of 训练 in its sports open it.
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfStore/checkInsToGo`.
             public var checkInsToGo: Swift.Int?
@@ -10971,7 +10971,7 @@ extension Components {
             /// - Parameters:
             ///   - id: The store’s id in the app’s art.
             ///   - open: Whether it is open now (its switch on). A closed store shows only what the member owns.
-            ///   - checkInsToGo: For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins in its sports open it.
+            ///   - checkInsToGo: For a store whose rule the member hasn’t reached yet: how many more days of 训练 in its sports open it.
             public init(
                 id: Swift.String,
                 open: Swift.Bool,
@@ -11009,7 +11009,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/state`.
             public var state: Components.Schemas.ShelfPiece.StatePayload
-            /// For a locked piece: how many more 训练 check-ins in its sports open it.
+            /// For a locked piece: how many more days of 训练 in its sports open it.
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkInsToGo`.
             public var checkInsToGo: Swift.Int?
@@ -11017,7 +11017,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/sports`.
             public var sports: [Swift.String]
-            /// How many 训练 check-ins it takes; 0 for a starter.
+            /// On how many different days of 训练 it opens; 0 for a starter.
             ///
             /// - Remark: Generated from `#/components/schemas/ShelfPiece/checkIns`.
             public var checkIns: Swift.Int
@@ -11027,9 +11027,9 @@ extension Components {
             ///   - id: The piece’s id in the app’s art.
             ///   - storeId: The store it hangs in.
             ///   - state: `owned` once unlocked or claimed (worn all year, whatever the switches), and for a limited store’s starter while it is out (claim it to keep it); `available` for any other starter that is out now, `locked` for one still to earn (a 「？」 box).
-            ///   - checkInsToGo: For a locked piece: how many more 训练 check-ins in its sports open it.
+            ///   - checkInsToGo: For a locked piece: how many more days of 训练 in its sports open it.
             ///   - sports: The sports whose 训练 count towards it; empty for any sport.
-            ///   - checkIns: How many 训练 check-ins it takes; 0 for a starter.
+            ///   - checkIns: On how many different days of 训练 it opens; 0 for a starter.
             public init(
                 id: Swift.String,
                 storeId: Swift.String,

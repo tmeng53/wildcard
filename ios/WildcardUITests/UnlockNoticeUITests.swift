@@ -21,7 +21,7 @@ final class UnlockNoticeUITests: XCTestCase {
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
         XCTAssertTrue(banner.label.contains("DEUCE CLUB 开门了"), "the notice says \(banner.label)")
-        XCTAssertTrue(banner.label.contains("网球练满 3 次"), "the notice says \(banner.label)")
+        XCTAssertTrue(banner.label.contains("网球练满 3 天"), "the notice says \(banner.label)")
         // Lets the drop's spring settle.
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "96-notice-store-unlocked")
@@ -53,7 +53,7 @@ final class UnlockNoticeUITests: XCTestCase {
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
         XCTAssertTrue(banner.label.contains("WARM-UP 到新货了"), "the notice says \(banner.label)")
-        XCTAssertTrue(banner.label.contains("随便练满 2 次"), "the notice says \(banner.label)")
+        XCTAssertTrue(banner.label.contains("随便练满 2 天"), "the notice says \(banner.label)")
         XCTAssertFalse(banner.label.contains("耳机"), "the notice gave the piece away: \(banner.label)")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "98-notice-piece-came-in")

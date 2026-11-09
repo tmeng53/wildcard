@@ -40,7 +40,7 @@ const Unlock = z
           .int()
           .min(1)
           .max(AFTER_MAX)
-          .meta({ description: 'How many 训练 check-ins in them it took.', example: 3 }),
+          .meta({ description: 'On how many different days 训练 in them it took.', example: 3 }),
       })
       .openapi('UnlockReason'),
   })
@@ -67,7 +67,7 @@ const LockedPiece = z
       .int()
       .min(1)
       .max(AFTER_MAX)
-      .meta({ description: 'How many more 训练 check-ins in its sports open it.', example: 2 }),
+      .meta({ description: 'How many more days of 训练 in its sports open it (many on one day count once).', example: 2 }),
   })
   .openapi('LockedPiece');
 
@@ -80,7 +80,7 @@ const ShelfStore = z
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
       description:
-        'For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins ' +
+        'For a store whose rule the member hasn’t reached yet: how many more days of 训练 ' +
         'in its sports open it.',
     }),
   })
@@ -97,7 +97,7 @@ const ShelfPiece = z
         'other starter that is out now, `locked` for one still to earn (a 「？」 box).',
     }),
     checkInsToGo: LockedPiece.shape.checkInsToGo.optional().meta({
-      description: 'For a locked piece: how many more 训练 check-ins in its sports open it.',
+      description: 'For a locked piece: how many more days of 训练 in its sports open it.',
     }),
     sports: z.array(SportId).meta({
       description: 'The sports whose 训练 count towards it; empty for any sport.',
@@ -107,7 +107,7 @@ const ShelfPiece = z
       .int()
       .min(0)
       .max(AFTER_MAX)
-      .meta({ description: 'How many 训练 check-ins it takes; 0 for a starter.', example: 1 }),
+      .meta({ description: 'On how many different days of 训练 it opens; 0 for a starter.', example: 1 }),
   })
   .openapi('ShelfPiece');
 const GiftedPiece = z

@@ -173,8 +173,18 @@ describe('unlocks', () => {
     ).rejects.toBeInstanceOf(UnlockStoreMissingError);
 
     const me = await newMember();
-    const july = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-07-01T12:00:00Z') };
-    const december = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-12-01T12:00:00Z') };
+    const july = {
+      id: randomUUID(),
+      sport: 'ski',
+      day: '2099-07-01',
+      madeAt: new Date('2099-07-01T12:00:00Z'),
+    };
+    const december = {
+      id: randomUUID(),
+      sport: 'ski',
+      day: '2099-12-01',
+      madeAt: new Date('2099-12-01T12:00:00Z'),
+    };
     const trained = new Map<MemberId, Trained[]>([[me, [july]]]);
     const switched = unlocksWith(trained);
     const summer = await switched.standing(me);
@@ -263,6 +273,8 @@ describe('unlocks', () => {
     const tennis = [1, 2, 3].map((minutes) => ({
       id: randomUUID(),
       sport: 'tennis',
+      // Each on a day of its own, since a rule counts days.
+      day: `2099-01-0${minutes}`,
       madeAt: new Date(now + minutes * 60_000),
     }));
     trained.set(me, tennis.slice(0, 1));
@@ -366,7 +378,12 @@ describe('unlocks', () => {
     const trained = new Map<MemberId, Trained[]>();
     const told: string[] = [];
     const unlocks = unlocksWith(trained, told);
-    const racket = { id: randomUUID(), sport: 'tennis', madeAt: new Date(Date.now() + 60_000) };
+    const racket = {
+      id: randomUUID(),
+      sport: 'tennis',
+      day: '2099-01-01',
+      madeAt: new Date(Date.now() + 60_000),
+    };
     trained.set(me, [racket]);
     expect(await unlocks.of(me)).toHaveLength(1);
 

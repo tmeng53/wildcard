@@ -7094,7 +7094,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "How many 训练 check-ins in them it took.",
+            "description": "On how many different days 训练 in them it took.",
             "example": 3
           }
         },
@@ -7157,7 +7157,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "How many more 训练 check-ins in its sports open it.",
+            "description": "How many more days of 训练 in its sports open it (many on one day count once).",
             "example": 2
           }
         },
@@ -7210,7 +7210,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "For a store whose rule the member hasn’t reached yet: how many more 训练 check-ins in its sports open it.",
+            "description": "For a store whose rule the member hasn’t reached yet: how many more days of 训练 in its sports open it.",
             "example": 2
           }
         },
@@ -7249,7 +7249,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
-            "description": "For a locked piece: how many more 训练 check-ins in its sports open it.",
+            "description": "For a locked piece: how many more days of 训练 in its sports open it.",
             "example": 2
           },
           "sports": {
@@ -7268,7 +7268,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 100,
-            "description": "How many 训练 check-ins it takes; 0 for a starter.",
+            "description": "On how many different days of 训练 it opens; 0 for a starter.",
             "example": 1
           }
         },

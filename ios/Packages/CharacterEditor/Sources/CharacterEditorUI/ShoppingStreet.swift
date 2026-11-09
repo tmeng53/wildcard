@@ -231,10 +231,10 @@ enum StoreCopy {
     }
     static func tagline(_ store: String) -> Text { text(uploaded(store)?.tagline, taglines[store], or: "") }
     static func unlock(_ store: String) -> Text { text(uploaded(store)?.unlock, unlocks[store], or: "") }
-    /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
+    /// How far a closed store is from opening: 「还有 2 天开门」 once the server says, else how it unlocks.
     static func opens(_ store: EditorChoices.Store) -> Text {
         guard let toGo = store.toGo else { return unlock(store.id) }
-        return Text("还有 \(toGo) 次开门", bundle: .module)
+        return Text("还有 \(toGo) 天开门", bundle: .module)
     }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
     static func limited(_ store: String) -> Text? {
@@ -269,8 +269,8 @@ enum StoreCopy {
         "powder": "雪道见，压个弯。",
     ]
     private static let unlocks = [
-        "lap": "跑步、快走或徒步 3 次解锁", "nolook": "球类 3 次解锁", "moss": "攀岩或徒步 3 次解锁", "halfmoon": "随便练 3 次解锁",
-        "deuce": "拍类运动 3 次解锁",
+        "lap": "跑步、快走或徒步练满 3 天解锁", "nolook": "球类练满 3 天解锁", "moss": "攀岩或徒步练满 3 天解锁", "halfmoon": "随便练满 3 天解锁",
+        "deuce": "拍类运动练满 3 天解锁",
     ]
     private static let limits = ["powder": "冬季限定"]
     /// Each bundled limit's tag colour (冬季限定: glacier blue); an uploaded store names its own
