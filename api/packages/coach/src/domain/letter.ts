@@ -1,9 +1,10 @@
 import type { Coach, CoachId } from './coach.js';
 import type { SquadId } from './settings.js';
 
-// The letter a coach leaves the next one when its squad changes coach (换教练): the outgoing
-// coach writes it once, in its own voice, from the squad's memory files, and the squad's members
-// read it. It is only for them: the new coach keeps reading the same files, never the letter.
+// The letter a coach leaves when its squad changes coach (换教练): the outgoing coach writes it
+// once, in its own voice, to the squad and the next coach, saying goodbye and handing the squad
+// over (Tracy, 2026-11-09), and the squad's members read it. It is never a briefing between
+// coaches: the new coach keeps reading the squad's memory files, never the letter.
 
 /** The longest letter, in characters; the database checks the same. */
 export const LETTER_LIMIT = 200;
@@ -68,16 +69,17 @@ export function letterTask({
   const before = history.slice(0, -1);
   const back = before.some(({ coach }) => coach === to.id);
   return [
-    `这个小队换教练了：你被换掉，接手的是${to.name}。走之前给${to.name}留一封交接信，全队都会看到。`,
+    `这个小队换教练了：你被换掉，接手的是${to.name}。走之前给小队和${to.name}留一封告别信，全队都会看到。`,
     `这个小队请过的教练（先后顺序）：\n${tenures.join('\n')}`,
     ...(back ? [`${to.name}以前带过这个小队，这次是回来。`] : []),
     `队员的昵称：\n${[...nicknames].map(([name, nickname]) => `- ${name}：${nickname}`).join('\n')}`,
     memory,
     [
       '怎么写：',
-      '- 用你自己的口吻，像交接时顺手写给同行的，不客套，不煽情。',
-      '- 只写你记性里过很久还成立的事，具体到人；记性里没有的不编。',
-      '- 叫队员用昵称。不写体重、身材、伤病。',
+      `- 用你自己的口吻，对全队和${to.name}说：跟大家道别，把小队交给${to.name}。轻松点，不客套，不煽情，不卖惨。`,
+      '- 可以提跟这个小队一起的事，只挑大家乐意被当众提起的；记性里没有的不编。',
+      '- 这不是教练之间的交接笔记：不写谁住哪、做什么工作、私下说过什么，不写体重、身材、伤病。',
+      '- 叫队员用昵称。',
       `- 只写正文，称呼和落款不写，最多 ${String(LETTER_LIMIT)} 字。写好用 write_letter 交。`,
     ].join('\n'),
   ].join('\n\n');

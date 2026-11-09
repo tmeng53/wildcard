@@ -1,6 +1,13 @@
 import type { ReaderLanguage } from '@wildcard/language-model';
 
-import type { EquippedTitle, MemberId, Profile, ProfileSave, Squadmate } from './domain/profile.js';
+import type {
+  Birthday,
+  EquippedTitle,
+  MemberId,
+  Profile,
+  ProfileSave,
+  Squadmate,
+} from './domain/profile.js';
 
 /** Where members' profiles are kept. */
 export interface ProfileStore {
@@ -19,6 +26,12 @@ export interface ProfileStore {
    * has no profile.
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<boolean>;
+  /**
+   * Saves the member's birthday (null removes it), logged with the rest of the profile; nothing is
+   * saved or logged when it is the one saved already. Returns `false` when the member has no
+   * profile.
+   */
+  saveBirthday(member: MemberId, birthday: Birthday | null): Promise<boolean>;
   /**
    * Saves the language the member's app speaks, logged with the rest of the profile; nothing is
    * saved or logged when it is the one saved already. Returns `false` when the member has no

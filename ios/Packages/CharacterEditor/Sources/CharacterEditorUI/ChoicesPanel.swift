@@ -61,7 +61,9 @@ struct ChoicesPanel: View {
         case .prop:
             scroll {
                 ChoiceSection(label: nil) {
-                    TileGrid(model: model, slot: "prop", variants: model.draft.catalog.props, offersNothing: true)
+                    TileGrid(
+                        model: model, slot: "prop", variants: model.draft.catalog.props, offersNothing: true,
+                        named: true)
                 }
             }
         }
@@ -99,12 +101,14 @@ private struct ChoiceSection<Content: View>: View {
 }
 
 /// Four picture tiles a row: the character in each choice, and first a tile that takes the
-/// piece off when the slot can be left empty.
+/// piece off when the slot can be left empty. Props carry their names under the tiles, as
+/// 我的衣橱 does (Tracy, 2026-11-09); hair, faces and bodies don't.
 private struct TileGrid: View {
     let model: CharacterEditorModel
     let slot: Slot
     let variants: [String]
     let offersNothing: Bool
+    var named = false
     @Environment(\.sceneTheme) private var theme
     private let nothingGlyph: Double = 26
 
@@ -112,13 +116,19 @@ private struct TileGrid: View {
         let choices: [String?] = (offersNothing ? [nil] : []) + variants.map { $0 }
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Space.s), count: 4), spacing: Space.s) {
             ForEach(choices, id: \.self) { variant in
-                PickTile(
-                    variant.map { EditorNames.variant($0, in: slot) } ?? EditorNames.nothing(in: slot),
-                    isSelected: model.draft.picks.variants[slot] == variant,
-                    action: { model.pick(variant, for: slot) },
-                    picture: { picture(variant) }
-                )
-                .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant ?? "none")")
+                let name = variant.map { EditorNames.variant($0, in: slot) } ?? EditorNames.nothing(in: slot)
+                VStack(spacing: Space.xxs) {
+                    PickTile(
+                        name,
+                        isSelected: model.draft.picks.variants[slot] == variant,
+                        action: { model.pick(variant, for: slot) },
+                        picture: { picture(variant) }
+                    )
+                    .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant ?? "none")")
+                    if named {
+                        TileName(name)
+                    }
+                }
             }
         }
     }
@@ -139,6 +149,26 @@ private struct TileGrid: View {
         var draft = model.draft
         draft.pick(variant, for: slot)
         return draft.outfit
+    }
+}
+
+/// A choice's name under its tile, as 我的衣橱 and the racks show theirs. The tile carries the
+/// same name for VoiceOver, so this one is hidden from it.
+struct TileName: View {
+    private let name: Text
+    @Environment(\.sceneTheme) private var theme
+
+    init(_ name: Text) {
+        self.name = name
+    }
+
+    var body: some View {
+        name
+            .typeStyle(TypeRamp.caption)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .accessibilityHidden(true)
     }
 }
 
