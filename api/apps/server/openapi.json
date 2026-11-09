@@ -4253,7 +4253,7 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 7,
-                "description": "The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.",
+                "description": "The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.",
                 "example": 3.4
               }
             },

@@ -819,6 +819,44 @@ describe('the squad’s weekly goal', () => {
     // (1 / 1 + 6 / 2) / 2 = 2.
     expect(goal.body).toMatchObject({ daysPerMember: 3, recent: { weeks: 2, daysPerMember: 2 } });
   });
+
+  it('keeps the recent average at 7 a member, the highest goal, however often they trained', async () => {
+    const me = await signUp();
+    const DAY = 86_400_000;
+    const today = new Date();
+    const monday = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
+        ((today.getUTCDay() + 6) % 7) * DAY,
+    );
+    const lastWeek = (offset: number) =>
+      new Date(monday.getTime() + (offset - 7) * DAY).toISOString().slice(0, 10);
+    // Made 8 days ago: only last week finished.
+    const id = randomUUID();
+    const made = new Date(monday.getTime() - 7 * DAY).toISOString();
+    await sql`insert into public.squads (id, name, invite_code, created_by, captain_id, created_at)
+      values (${id}, '双练队', ${inviteCodeFor(id)}, ${me.userId}, ${me.userId}, ${made})`.execute(
+      db,
+    );
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${id}, ${me.userId}, ${made})`.execute(db);
+    await sql`insert into public.squad_membership_events (squad_id, member_id, kind, actor_id, at)
+      values (${id}, ${me.userId}, 'joined', ${me.userId}, ${made})`.execute(db);
+    // Twice a day, every day of last week: 14.
+    for (let day = 0; day < 7; day += 1) {
+      for (const hour of ['08', '18']) {
+        const checkIn = randomUUID();
+        const on = lastWeek(day);
+        await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+          values (${checkIn}, ${me.userId}, ${on}, ${`${on}T${hour}:00:00.000Z`}, 'trained',
+            '{"version":1,"sport":"run"}')`.execute(db);
+        await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
+          values (${checkIn}, ${id}, 1)`.execute(db);
+      }
+    }
+
+    const goal = await goalOf(me.token, id);
+    expect(goal.body).toMatchObject({ recent: { weeks: 1, daysPerMember: 7 } });
+  });
 });
 
 describe('the squad’s time zone', () => {

@@ -6687,7 +6687,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/weeks`.
                 public var weeks: Swift.Int
-                /// The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                /// The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/daysPerMember`.
                 public var daysPerMember: Swift.Double
@@ -6695,7 +6695,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - weeks: How many finished weeks it averages: up to 4.
-                ///   - daysPerMember: The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                ///   - daysPerMember: The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.
                 public init(
                     weeks: Swift.Int,
                     daysPerMember: Swift.Double

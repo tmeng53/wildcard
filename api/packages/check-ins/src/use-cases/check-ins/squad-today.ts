@@ -52,9 +52,9 @@ export interface SquadToday {
   /**
    * The squad's week against its weekly goal (小队每周目标): `trainedDays` adds up the 训练 each
    * member sent to this squad in their own week, several on one day each counting (the name is
-   * the wire's, from when it counted days); `plannedDays` is the goal, `daysPerMember` (人均 N 次, the
-   * captain's, in the viewer's week) times the members now. Anyone's days count towards it, and
-   * nobody's share is shown.
+   * the wire's, from when it counted days); `plannedDays` is the goal, `daysPerMember` (人均 N
+   * 次, the captain's, in the viewer's week) times the members now. Anyone's 训练 count towards
+   * it, and nobody's share is shown.
    */
   readonly squadWeek: {
     readonly trainedDays: number;

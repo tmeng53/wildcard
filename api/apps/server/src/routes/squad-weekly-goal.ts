@@ -45,8 +45,9 @@ const SquadWeeklyGoalBody = z
           .max(7)
           .meta({
             description:
-              'The days each member trained on average in those weeks, to one decimal: each ' +
-              'week’s trained days (from check-ins sent to the squad) over its members then.',
+              'The 训练 each member sent to the squad on average in those weeks, to one ' +
+              'decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no ' +
+              'higher). The name is from when it counted days.',
             example: 3.4,
           }),
       })
@@ -151,7 +152,8 @@ export function squadWeeklyGoal(deps: {
     }
     if (averages.length === 0) return null;
     const mean = averages.reduce((sum, each) => sum + each, 0) / averages.length;
-    return { weeks: averages.length, daysPerMember: Math.round(mean * 10) / 10 };
+    // Several 训练 a day can pass 7 a member; the goal goes no higher, so neither does this.
+    return { weeks: averages.length, daysPerMember: Math.min(7, Math.round(mean * 10) / 10) };
   }
 
   async function body(input: {

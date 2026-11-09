@@ -245,8 +245,8 @@ private struct PageHeader: View {
     let title: String?
     let count: Int
     let goal: Int
-    var unit: Text?  // A word after the score (天).
-    var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
+    var unit: Text?  // A word after the score (次).
+    var showsExtra = false  // 训练 past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
     var body: some View {

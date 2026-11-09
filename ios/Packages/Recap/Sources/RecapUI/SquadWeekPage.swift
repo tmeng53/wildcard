@@ -35,7 +35,7 @@ struct SquadWeekPage: View {
             PageTitle(label: Text("全队", bundle: .module), title: Text("运动总结", bundle: .module))
             HStack(alignment: .lastTextBaseline, spacing: Space.s) {
                 // The squad's 训练, several on one day each counting, as its goal counts them.
-                Score(count: page.story.ending?.done ?? week.trainedDays, size: .hero)
+                Score(count: page.story.ending?.done ?? 0, size: .hero)
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     Text("次训练", bundle: .module).typeStyle(TypeRamp.headline)
                     Text("\(week.members.count) 人 · \(week.sports.count) 种运动", bundle: .module)
