@@ -21,6 +21,8 @@ struct AppRoot: View {
     @State private var widgetLink: WidgetLink?
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
+    /// Pushes that arrived while the tabs were in front, which they tell in their own banner.
+    @State private var pushesInFront = 0
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -58,10 +60,10 @@ struct AppRoot: View {
                     squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
                     previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
-                    location: AppModel.location
-                ) {
-                    Task { await app.leftSquad() }
-                }
+                    location: AppModel.location, pushesInFront: pushesInFront,
+                    sceneMoved: { Task { await app.refreshScene() } },
+                    leftSquad: { Task { await app.leftSquad() } }
+                )
                 .onAppear {
                     // A tap that launched the app came before the tabs.
                     if let destination = delegate.takeDestination() {
@@ -127,6 +129,13 @@ struct AppRoot: View {
             }
         }
         .onAppear {
+            // A push while the tabs are up drops in as their banner, not iOS's.
+            // Only a push 通知 keeps (not an admin's 战报-stuck or test push) becomes its banner.
+            delegate.arrived = { [app, $pushesInFront] category in
+                guard app.showsTabs, Push.toldInNotices.contains(category) else { return false }
+                $pushesInFront.wrappedValue += 1
+                return true
+            }
             delegate.opened = { [app, delegate, $tab, $pushDestination] opened in
                 switch opened {
                 // Where its notice in 通知 goes (MainTabs' `open`), unless the 6pm push's view

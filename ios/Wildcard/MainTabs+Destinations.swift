@@ -1,6 +1,7 @@
 import Contracts
 import FeedDomain
 import FeedUI
+import NotificationsUI
 import SwiftUI
 
 /// The one router: every notice, banner, push and broadcast button opens its place here.
@@ -123,6 +124,19 @@ extension MainTabs {
         (wall, post) = (nil, nil)
     }
 
+    /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
+    func openWardrobe(_ kind: Unlock.Kind, item: String) {
+        selection = .profile
+        closeProfilePages()
+        Task { await wardrobe.open(kind, item: item) }
+    }
+
+    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队.
+    func tellWaiting() {
+        tellBroadcasts()
+        tellGoalSuggestions()
+    }
+
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
     func tellBroadcasts() {
         // Whose phone this is shows once the home is in: until then, nothing is told.
@@ -130,6 +144,45 @@ extension MainTabs {
         for broadcast in inbox.unseenBroadcasts where !ShownBroadcasts.contains(broadcast.id, for: member) {
             today.tell(broadcast, open: open) { ShownBroadcasts.mark($0.id, for: member) }
         }
+    }
+
+    /// What 通知 was told while the app is open, each in a banner over whatever page is open:
+    /// not a comment on the post on screen, which shows it, nor a broadcast or goal suggestion,
+    /// which drop in once on each phone (`tellBroadcasts`). An unlock is told by the home, which
+    /// knows which it already told; a scene move by the drop onto the new scene.
+    func tellToldLive() {
+        for notice in inbox.takeToldLive() {
+            switch notice.subject {
+            case .broadcast, .goalSuggestion:
+                continue
+            case .unlocked:
+                Task { await today.checkUnlocks() }
+            case .sceneMoved:
+                sceneMoved()
+            case .comment(_, let post), .coachReply(let post, _, _, _, _):
+                if !isOnScreen(post) { tell(notice) }
+            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter:
+                tell(notice)
+            }
+        }
+    }
+
+    private func tell(_ notice: Notice) {
+        today.tell(notice) { AnyView(ToldNoticeBanner($0, unlocked: unlockWords)) }
+    }
+
+    /// Whether `post`'s own page is the one on screen.
+    private func isOnScreen(_ post: CheckInID) -> Bool {
+        switch selection {
+        case .feed: if case .post(let opened) = feedPages.last { opened.id == post } else { false }
+        case .profile: self.post?.id == post
+        case .today: false
+        }
+    }
+
+    /// A screen over the tabs, which a banner would drop in under.
+    var tabsCovered: Bool {
+        recap.open != nil || wardrobe.editor != nil
     }
 
     /// What drops in on 今天 from 通知, with whose phone it is: told again when any changes.

@@ -119,9 +119,11 @@ enum LaunchOptions {
     /// The sample member's 通知: the sample squad's last two weeks, or none with
     /// `-uitest-no-notices`, to see the page empty. `-uitest-broadcast trot|jingle` adds that
     /// holiday's pre-holiday broadcast, told just now, which 今天 shows on its celebration card.
+    /// `-uitest-live-comment` tells a teammate's comment live a few seconds after launch.
     static var notices: any NoticeSource {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("-uitest-no-notices") { return InMemoryNoticeSource.empty }
+        if arguments.contains("-uitest-live-comment") { return InMemoryNoticeSource.withLiveComment(now: now()) }
         guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count else {
             return InMemoryNoticeSource.sample(now: now())
         }
