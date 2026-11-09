@@ -667,14 +667,21 @@ describe('the coach', () => {
       await wakes(fixture, { agent }).run();
       expect(runs[0]?.answers).toStrictEqual(['记下了，在 me.md。']);
 
-      // 暖暖 takes over: it never reads 小混's page, and starts its own.
+      // 小混's 战术板 lines, which 暖暖 must not take for its own voice.
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text)
+        values (${squad}, 'xiaohun', '2026-10-30', '我先把沙发热好')`.execute(trx);
+
+      // 暖暖 takes over: it never reads 小混's page or lines, and starts its own.
       await hiring.change({ squad, coach: nuannuan, by });
       says = '我说话慢';
       const seen = runs.length;
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const hers = runs.slice(seen);
       expect(hers.length).toBeGreaterThan(0);
-      for (const run of hers) expect(run.task).not.toContain('我最会偷懒');
+      for (const run of hers) {
+        expect(run.task).not.toContain('我最会偷懒');
+        expect(run.task).not.toContain('我先把沙发热好');
+      }
 
       // 小混 comes back to his own page, never hers.
       await hiring.change({ squad, coach: CoachId.parse('xiaohun'), by });

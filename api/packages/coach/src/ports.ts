@@ -157,11 +157,15 @@ export interface CoachNoteStore {
     readonly text: string;
     readonly wake: number;
   }): Promise<boolean>;
-  /** The squad's last lines, newest first. */
-  recent(
-    squad: SquadId,
-    limit: number,
-  ): Promise<readonly { readonly day: string; readonly text: string }[]>;
+  /**
+   * The last lines this coach wrote for the squad, newest first: never another coach's, so a new
+   * coach doesn't take the last one's voice for its own.
+   */
+  recent(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly { readonly day: string; readonly text: string }[]>;
 }
 
 /** A coach's morning note (便条) to one member, as written. */
@@ -252,8 +256,12 @@ export interface CoachReplyStore {
     squad: SquadId,
     checkIn: string,
   ): Promise<{ readonly coach: CoachId; readonly text: string | undefined } | undefined>;
-  /** The emoji the squad's coaches reacted with lately, newest first. */
-  recent(squad: SquadId, limit: number): Promise<readonly CoachEmoji[]>;
+  /** The emoji this coach reacted with lately in the squad, newest first: never another coach's. */
+  recent(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly CoachEmoji[]>;
 }
 
 /** What coaches answered members' replies to them, one a squad a reply. */

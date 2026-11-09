@@ -553,7 +553,9 @@ async function think(
       ...new Set([...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])]),
     ],
     backAgain: await deps.hiring.backAgain(wake.squad),
-    recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
+    recentNotes: daily
+      ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
+      : [],
     ...(thread === undefined ? {} : { thread: thread.thread }),
     canSeePhotos: deps.photoUrls !== undefined,
     ...(challenge === undefined
@@ -569,7 +571,11 @@ async function think(
     ...(gifting === undefined ? {} : { gifting }),
     recentEmoji:
       wake.reason.kind === 'checkIn'
-        ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
+        ? await deps.stores.replies.recent({
+            squad: wake.squad,
+            coach: coach.id,
+            limit: RECENT_EMOJI,
+          })
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     ...(wake.reason.kind === 'daily'
