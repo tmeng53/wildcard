@@ -5826,6 +5826,12 @@
             "format": "date",
             "description": "The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.",
             "example": "2026-10-12"
+          },
+          "squadFirstWeek": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.",
+            "example": "2026-10-05"
           }
         },
         "required": [
@@ -6882,7 +6888,7 @@
               "weekStart": {
                 "type": "string",
                 "format": "date",
-                "description": "This week’s Monday, in their time zone. Left out by older servers.",
+                "description": "This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.",
                 "example": "2026-11-02"
               },
               "days": {
@@ -6903,13 +6909,19 @@
               "firstWeek": {
                 "type": "string",
                 "format": "date",
-                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.",
+                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.",
                 "example": "2026-10-12"
+              },
+              "squadFirstWeek": {
+                "type": "string",
+                "format": "date",
+                "description": "The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.",
+                "example": "2026-10-05"
               },
               "today": {
                 "type": "string",
                 "format": "date",
-                "description": "Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.",
+                "description": "Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.",
                 "example": "2026-10-29"
               }
             },

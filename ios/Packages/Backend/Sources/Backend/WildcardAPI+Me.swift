@@ -256,7 +256,8 @@ extension MateSchedule {
         // A goal this build can't read is left out rather than the whole week.
         let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
         let weekStart = try LocalDay(start)
-        let first = try wire.firstWeek.map { day throws(ContractsError) in try LocalDay(day) }
+        // The squad's W1 when the server sends it, so every card shows the squad's week number.
+        let first = try (wire.squadFirstWeek ?? wire.firstWeek).map { day throws(ContractsError) in try LocalDay(day) }
         let today = try wire.today.map { day throws(ContractsError) in try LocalDay(day) }
         // Seven of each, checked above, is all it refuses.
         guard

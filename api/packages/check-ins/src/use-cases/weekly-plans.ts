@@ -82,7 +82,7 @@ export interface WeeklyPlans {
 
 /** The member's plan for a week: saved for it, else their template, else the default. */
 export async function findWeeklyPlan(
-  { store }: { readonly store: WeeklyPlanStore },
+  { store }: { readonly store: Pick<WeeklyPlanStore, 'savedFor' | 'templateFor'> },
   {
     member,
     weekStart,
