@@ -1855,28 +1855,6 @@
         }
       }
     },
-    "最常见": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Most common"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最常见"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最常見"
-          }
-        }
-      }
-    },
     "正在找这个小队": {
       "localizations": {
         "en": {
@@ -2457,6 +2435,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "用來算心率區間"
+          }
+        }
+      }
+    },
+    "平时练什么 · 可多选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What you play · pick any"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平時練什麼 · 可複選"
+          }
+        }
+      }
+    },
+    "其他运动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other sports"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他運動"
           }
         }
       }
