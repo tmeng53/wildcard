@@ -514,8 +514,8 @@ async function think(
       )
     : [];
   const files = new Map(
-    shownPaths(roster).map((path) => {
-      const at = storedPathOf(path, roster);
+    shownPaths({ roster, coach: coach.id }).map((path) => {
+      const at = storedPathOf(path, { roster, coach: coach.id });
       return [path, at === undefined ? undefined : draft.files.get(at)];
     }),
   );
@@ -586,6 +586,7 @@ async function think(
     tools: toolbox({
       week,
       roster,
+      coach: coach.id,
       draft,
       kind: wake.reason.kind,
       to: author,
