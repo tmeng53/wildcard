@@ -45,9 +45,11 @@ public struct WeekChallenge: Sendable, Hashable {
 }
 
 /// The squad page's last row, past a hairline: the flag in a graphite disc, the challenge and
-/// who set it, then 我完成了 (graphite) or 「✓ 已完成」.
+/// who set it, then 我完成了 (graphite) or 「✓ 已完成」. Done, the flag turns into a check with a
+/// success haptic (Tracy, 2026-11-09: a check, no stamp).
 struct ChallengeRow: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let challenge: WeekChallenge
     let complete: (() -> Void)?
 
@@ -57,7 +59,8 @@ struct ChallengeRow: View {
                 .fill(Color(role: .borderDefault, in: theme))
                 .frame(height: Sizing.hairline)
             HStack(spacing: Space.s) {
-                Image(systemName: "flag.fill")
+                Image(systemName: challenge.isDone ? "checkmark" : "flag.fill")
+                    .contentTransition(.symbolEffect(.replace))
                     .font(.system(size: Sizing.smallIcon * 0.75, weight: .semibold))
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .frame(width: Sizing.smallIcon * 1.6, height: Sizing.smallIcon * 1.6)
@@ -90,6 +93,8 @@ struct ChallengeRow: View {
             }
         }
         .padding(.top, Space.s)
+        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: challenge.isDone)
+        .haptic(.done, trigger: challenge.isDone) { wasDone, isDone in !wasDone && isDone }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squadcard.challenge")
     }
