@@ -36,13 +36,15 @@ public struct FlipClockView: View {
     private let identifiers: [String]
     private let size: Size
     private let separator: Separator
+    private let showsNames: Bool
 
     /// - Parameters:
     ///   - labels: each column's VoiceOver name (小时, 分钟; 年, 月, 日).
     ///   - identifiers: each column's accessibility identifier, for UI tests.
+    ///   - showsNames: whether each column's name also shows, small, under it (a date's 年 月 日).
     public init(
         _ clock: FlipClock, values: Binding<[Int]>, labels: [Text], identifiers: [String],
-        size: Size = .regular, separator: Separator = .none
+        size: Size = .regular, separator: Separator = .none, showsNames: Bool = false
     ) {
         precondition(labels.count == clock.columns.count && identifiers.count == clock.columns.count)
         self.clock = clock
@@ -51,6 +53,7 @@ public struct FlipClockView: View {
         self.identifiers = identifiers
         self.size = size
         self.separator = separator
+        self.showsNames = showsNames
     }
 
     public var body: some View {
@@ -60,7 +63,7 @@ public struct FlipClockView: View {
                 FlipColumn(
                     label: clock.label(shown[column], column: column),
                     width: size.width(digits: clock.columns[column].digits), size: size,
-                    name: labels[column]
+                    name: labels[column], showsName: showsNames
                 ) { pages in
                     values = clock.turning(shown, column: column, by: pages)
                 }
@@ -87,7 +90,7 @@ public struct FlipClockView: View {
 }
 
 extension FlipClockView {
-    /// 年 · 月 · 日 on regular cards: the year stops at `years`' ends, the month and day wrap, and
+    /// 年 · 月 · 日 on regular cards, each named under its card: the year stops at `years`' ends, the month and day wrap, and
     /// the day runs to its month's length. Identifiers are `<prefix>.year`, `.month` and `.day`.
     public static func date(values: Binding<[Int]>, years: ClosedRange<Int>, identifier prefix: String) -> Self {
         FlipClockView(
@@ -95,7 +98,7 @@ extension FlipClockView {
             labels: [
                 Text(copy: "年", bundle: .module), Text(copy: "月", bundle: .module), Text(copy: "日期·日", bundle: .module),
             ],
-            identifiers: ["\(prefix).year", "\(prefix).month", "\(prefix).day"])
+            identifiers: ["\(prefix).year", "\(prefix).month", "\(prefix).day"], showsNames: true)
     }
 }
 
@@ -107,6 +110,7 @@ private struct FlipColumn: View {
     let width: Double
     let size: FlipClockView.Size
     let name: Text
+    let showsName: Bool
     let turn: (Int) -> Void
     /// The pages the drag has turned so far, so each new one turns once.
     @State private var dragged = 0
@@ -121,6 +125,11 @@ private struct FlipColumn: View {
                 .contentShape(Rectangle())
                 .highPriorityGesture(drag)
             chevron("chevron.down", by: -1)
+            if showsName {
+                name
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(name)
