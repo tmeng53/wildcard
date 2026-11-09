@@ -97,6 +97,14 @@ function dayWords(day: string): string {
   return `${day.slice(5)} ${WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay()] ?? ''}`;
 }
 
+/** What a check-in was, in a few words: `游泳 45 分钟`, `健康餐`, `计划休息`. */
+export function postWhat(checkIn: WeekCheckIn): string {
+  if (checkIn.restDay === true) return PLANNED_REST;
+  if (checkIn.kind !== 'trained') return KIND_WORDS[checkIn.kind];
+  const sport = checkIn.sport ?? KIND_WORDS.trained;
+  return checkIn.minutes === undefined ? sport : `${sport} ${String(checkIn.minutes)} 分钟`;
+}
+
 /** One check-in as a line the model reads. */
 export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
   const who = roster.get(checkIn.member) ?? '队员';

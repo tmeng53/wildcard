@@ -64,6 +64,14 @@ export function factsText(
     .join('\n');
 }
 
+/** One of a member's posts this week, as their morning note's brief reads it. */
+export interface WeekPost {
+  /** The member's own day it counts for, `YYYY-MM-DD`. */
+  readonly day: string;
+  /** What it was: `游泳 45 分钟`, `健康餐`, `计划休息`. */
+  readonly what: string;
+}
+
 /** What the daily wake tells the coach about one member it writes a morning note to. */
 export interface NoteBrief {
   /** The member as the model knows them: 队员N. */
@@ -72,8 +80,10 @@ export interface NoteBrief {
   readonly language?: ReaderLanguage;
   /** Days this week with a 练了 so far. */
   readonly trainedDays: number;
-  /** Today's plan and this week's 饮食小目标, when they could be read. */
-  readonly plan?: { readonly today: PlanDayFacts; readonly fuelGoals: readonly string[] };
+  /** What they posted to the squad this week so far, oldest first. */
+  readonly posts?: readonly WeekPost[];
+  /** This week's whole plan, Monday first, and its 饮食小目标, when they could be read. */
+  readonly plan?: { readonly week: readonly PlanDayFacts[]; readonly fuelGoals: readonly string[] };
   /** Today's (and yesterday's) weather where they are, in words starting 今天, when known. */
   readonly weather?: string;
 }
@@ -88,14 +98,25 @@ export function weekdayOf(day: string): string {
   return WEEKDAYS[planIndexOf(day)] ?? '';
 }
 
-/** One member's line in the daily task, for their morning note. */
+/** What a member posted this week, day by day: `周一游泳 45 分钟、健康餐，周三请假条`. */
+function postsWords(posts: readonly WeekPost[]): string {
+  if (posts.length === 0) return '这周还没发过动态';
+  const days = new Map<string, string[]>();
+  for (const { day, what } of posts) days.set(day, [...(days.get(day) ?? []), what]);
+  const lines = [...days.entries()]
+    .toSorted(([a], [b]) => a.localeCompare(b))
+    .map(([day, theirs]) => `${weekdayOf(day)}${theirs.join('、')}`);
+  return `这周发过的：${lines.join('，')}`;
+}
+
+/** One member's line in the daily task, for their morning note: their whole week, plan and posts. */
 export function briefLine(brief: NoteBrief): string {
   const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
   const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
+  const posts = brief.posts === undefined ? '' : `；${postsWords(brief.posts)}`;
   const weather = brief.weather === undefined ? '' : `；当地${brief.weather}`;
-  if (brief.plan === undefined) return `- ${brief.name}：${trained}${weather}。${language}`;
-  const { today, fuelGoals } = brief.plan;
-  const plan =
-    today.kind === 'rest' ? '今天出赛表是休息日' : `今天出赛表排了${planDayWords(today)}`;
-  return `- ${brief.name}：${plan}；${fuelWords(fuelGoals)}；${trained}${weather}。${language}`;
+  if (brief.plan === undefined) return `- ${brief.name}：${trained}${posts}${weather}。${language}`;
+  const { week, fuelGoals } = brief.plan;
+  const plan = week.map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`).join('，');
+  return `- ${brief.name}：本周出赛表：${plan}；${fuelWords(fuelGoals)}；${trained}${posts}${weather}。${language}`;
 }

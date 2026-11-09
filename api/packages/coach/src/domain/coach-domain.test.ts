@@ -506,10 +506,34 @@ describe('when the coach wakes', () => {
           {
             name: '队员1',
             trainedDays: 2,
-            plan: { today: { kind: 'train', sport: '游泳' }, fuelGoals: ['喝够水', '少吃外卖'] },
+            posts: [
+              { day: '2026-10-26', what: '游泳 45 分钟' },
+              { day: '2026-10-26', what: '健康餐' },
+              { day: '2026-10-28', what: '力量' },
+            ],
+            plan: {
+              week: [
+                { kind: 'train', sport: '游泳' },
+                { kind: 'rest' },
+                { kind: 'train', sport: '力量' },
+                { kind: 'rest' },
+                { kind: 'train', sport: '游泳' },
+                { kind: 'train' },
+                { kind: 'rest' },
+              ],
+              fuelGoals: ['喝够水', '少吃外卖'],
+            },
             weather: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
           },
-          { name: '队员2', trainedDays: 0, plan: { today: { kind: 'rest' }, fuelGoals: [] } },
+          {
+            name: '队员2',
+            trainedDays: 0,
+            posts: [],
+            plan: {
+              week: Array.from({ length: 7 }, () => ({ kind: 'rest' }) as const),
+              fuelGoals: [],
+            },
+          },
           // Plans that couldn't be read: only the days trained.
           { name: '队员3', trainedDays: 1, weather: '今天晴，-2–5°C' },
         ],
@@ -519,8 +543,8 @@ describe('when the coach wakes', () => {
     ).toBe(
       [
         '今天给这些人各写一张便条：',
-        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
-        '- 队员2：今天出赛表是休息日；这周没定饮食小目标；这周已经练了 0 天。',
+        '- 队员1：本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；这周发过的：周一游泳 45 分钟、健康餐，周三力量；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
+        '- 队员2：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息；这周没定饮食小目标；这周已经练了 0 天；这周还没发过动态。',
         '- 队员3：这周已经练了 1 天；当地今天晴，-2–5°C。',
       ].join('\n'),
     );
