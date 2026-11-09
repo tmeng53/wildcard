@@ -122,7 +122,7 @@ struct DayCircle: View {
     }
 }
 /// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right. A day
-/// with more than one session shows the first and how many more (「玩耍 60 分钟 +2」, Tracy
+/// with more than one session shows the first and how many more (「玩耍 60 分钟 +2 项」, Tracy
 /// 2026-11-09), so the line never runs into the meals.
 struct DayLine: View {
     @Environment(\.sceneTheme) private var theme
@@ -145,7 +145,7 @@ struct DayLine: View {
                     .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
                     .accessibilityLabel(Text(verbatim: detail.lines.joined(separator: " · ")))
                 if detail.lines.count > 1 {
-                    InkTag(Text(verbatim: "+\(detail.lines.count - 1)"))
+                    InkTag(Text("+\(detail.lines.count - 1) 项", bundle: .module))
                         .padding(.leading, Space.xs)
                         .accessibilityHidden(true)
                         .accessibilityIdentifier("squadcard.dayLine.more")
