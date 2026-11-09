@@ -338,7 +338,7 @@ describe('the daily progress push', () => {
       {
         alert: {
           key: 'push.dailyProgress.received',
-          args: ['1', '9', '2'],
+          args: ['2', '9', '2'],
         },
         category: 'dailyProgress',
         thread: 'dailyProgress',
@@ -348,8 +348,8 @@ describe('the daily progress push', () => {
           kind: 'dailyProgress',
           day: dayAt(eve.offset),
           squad,
-          // One day trained, of the squad's default goal: 3 days a member.
-          squadTrainedDays: 1,
+          // Two 训练 (one day, each counting), of the squad's default goal: 3 a member.
+          squadTrainedDays: 2,
           squadPlannedDays: 9,
           received: { reaction: 2 },
           // Eve's own posts aren't in her push.
@@ -380,7 +380,7 @@ describe('the daily progress push', () => {
           squadId: squad,
           alert: {
             key: 'push.dailyProgress.received',
-            args: ['1', '9', '2'],
+            args: ['2', '9', '2'],
           },
         },
       ],

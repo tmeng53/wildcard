@@ -2,7 +2,7 @@ import Contracts
 
 extension SquadToday {
     /// The squad's today with one more check-in of the signed-in member's counted, the way the
-    /// server will count it: the first 练了 of a day adds a trained day to their week and the squad's, a 请假条
+    /// server will count it: the first 练了 of a day adds a trained day to their week, each 练了 one to the squad's, a 请假条
     /// marks a day not yet trained, a meal only shows as their latest. The home shows a post at
     /// once with this, before the server answers or while it waits to go out. One not shared to
     /// this squad counts only in the member's own row and week: teammates never see it.
@@ -108,19 +108,21 @@ extension SquadToday {
         return counted
     }
 
-    /// A 练了: the member's first today adds a trained day to their week, and the squad's
-    /// first it sees adds one to the squad's.
+    /// A 练了: the member's first today adds a trained day to their week, every one shared
+    /// here adds one to the squad's week (its goal counts 训练, 人均 N 次), and the squad's
+    /// first it sees today adds them to today's trained.
     private mutating func countTraining(of member: inout SquadmateToday, on day: LocalDay, counts: Counts) {
         let firstForMe = member.training != .trained
         member.training = .trained
         if firstForMe, counts != .none, (myWeek.firstDay...myWeek.lastDay).contains(day) {
             myWeek.week.trainedDays += 1
         }
-        guard case .squadAndMine(let saw) = counts, saw != .trained else { return }
+        guard case .squadAndMine(let saw) = counts else { return }
+        squadWeek.trainedDays += 1
+        guard saw != .trained else { return }
         if saw == .disclaimer { today.disclaimer -= 1 }
         if member.plannedRest && saw == .notCheckedIn { today.resting -= 1 }
         today.trained += 1
-        squadWeek.trainedDays += 1
     }
 
     /// A 休息: the day is a rest day now, as the server's plan will say.

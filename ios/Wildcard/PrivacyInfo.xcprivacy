@@ -68,7 +68,7 @@
 		</dict>
 		<!-- Workout check-ins: kind, sport, minutes, the weekly plan; and, for a 训练 posted from
 		     Apple Health, the numbers the member keeps on it (distance, pace or speed, effort,
-		     laps). -->
+		     laps, active calories). -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeFitness</string>

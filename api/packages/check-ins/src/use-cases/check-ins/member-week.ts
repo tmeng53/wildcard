@@ -28,21 +28,22 @@ export interface MemberWeek {
   readonly fuelGoals: FuelGoals;
   /** The Monday of the week they joined, in their time zone: their 出赛表's W1. */
   readonly firstWeek?: WeekStart;
-  /** Their today, in their time zone: the row their 出赛表 shades as 今天. */
+  /** Today on the squad's clock (else theirs): the row their 出赛表 shades as 今天. */
   readonly today: LocalDay;
 }
 
 /**
  * A member's own week as their player card shows it to a squadmate: their days trained, from all
- * their check-ins wherever they went, against their plan, in their own time zone (else the
- * viewer's), as the home counts the viewer's own week; and the card's back, their 出赛表 for this
+ * their check-ins wherever they went, against their plan, in the week the squad's clock is in
+ * (`squadZone`, so every squadmate sees the same week at once, Tracy 2026-11-09; else their own
+ * time zone, else the viewer's); and the card's back, their 出赛表 for this
  * week only (never another week's), whose marks come only from the posts shared to the squad the
  * card is read in, so a squadmate never learns what a post they can't see was.
  */
 export async function memberWeek(
   deps: {
-    readonly store: CheckInStore;
-    readonly plans: WeeklyPlanStore;
+    readonly store: Pick<CheckInStore, 'listForMember'>;
+    readonly plans: Pick<WeeklyPlanStore, 'savedFor' | 'templateFor' | 'trainedBy' | 'fuelGoals'>;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
@@ -50,11 +51,17 @@ export async function memberWeek(
     member,
     viewer,
     squad,
-  }: { readonly member: MemberId; readonly viewer: MemberId; readonly squad: SquadId },
+    squadZone,
+  }: {
+    readonly member: MemberId;
+    readonly viewer: MemberId;
+    readonly squad: SquadId;
+    readonly squadZone?: string;
+  },
 ): Promise<MemberWeek> {
   const zones = await zonesOf(deps.calendarOf, { members: [member, viewer], viewer });
   const { zone, joinedOn } = zones[0] ?? { zone: 'UTC', joinedOn: undefined };
-  const today = localDayAt(deps.clock(), zone);
+  const today = localDayAt(deps.clock(), squadZone ?? zone);
   const week = weekOf(today);
   const weekStart = WeekStart.parse(week.from);
   const [plan, trainedBy, theirs, fuelGoals] = await Promise.all([

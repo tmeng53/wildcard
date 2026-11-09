@@ -512,6 +512,11 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       .parse(card.body).week;
     expect(firstWeek <= weekStart).toBe(true);
     expect(Date.parse(weekStart) - Date.parse(firstWeek)).toBeLessThanOrEqual(7 * 86_400_000);
+    // Every card counts the squad's weeks: its W1 is the week it was made, on its own clock.
+    const { squadFirstWeek } = z
+      .object({ week: z.object({ squadFirstWeek: WeekStartText }) })
+      .parse(card.body).week;
+    expect(squadFirstWeek <= weekStart).toBe(true);
     // Their today, on their calendar, is the row their 出赛表 shades.
     const { today: cardToday } = z
       .object({ week: z.object({ today: z.iso.date() }) })

@@ -5,11 +5,11 @@ import { SceneWeek } from './scene.js';
 
 /** A week of a squad of two with goal 3 a member, unless `squad` says otherwise. */
 const week = (
-  trainedDays: number,
+  trainings: number,
   squad: { readonly members?: number; readonly daysPerMember?: number } = {},
 ): GoalWeek => ({
   week: SceneWeek.parse('2026-10-19'),
-  trainedDays,
+  trainings,
   members: squad.members ?? 2,
   daysPerMember: squad.daysPerMember ?? 3,
 });

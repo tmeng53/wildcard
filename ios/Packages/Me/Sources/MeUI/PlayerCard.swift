@@ -278,6 +278,8 @@ private struct CardBack: View {
             .padding(.top, Space.xxs)
             ScrollView {
                 LazyVGrid(columns: Self.columns, spacing: Space.s) {
+                    // The team's tickets first: few, and given by hand.
+                    ForEach(face.board.teamBadges) { badge in TeamBadgeCell(badge: badge) }
                     ForEach(face.board.titles) { title in
                         Button {
                             open(title)

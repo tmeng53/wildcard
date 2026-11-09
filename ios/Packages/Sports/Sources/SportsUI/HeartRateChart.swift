@@ -153,7 +153,7 @@ struct HeartRateChart: View {
             GeometryReader { geometry in
                 let total = max(trace.minutes.map(\.minutes).reduce(0, +), 1)
                 let gaps = Double(trace.minutes.count - 1) * 2
-                HStack(spacing: 2) {
+                HStack(spacing: Space.xxs / 2) {
                     ForEach(trace.minutes, id: \.zone) { entry in
                         Capsule()
                             .fill(Color(ZoneColors.zone(entry.zone.rawValue)))

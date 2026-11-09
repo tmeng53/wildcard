@@ -806,15 +806,15 @@ describe('weekly awards', () => {
     expect(first.scene).toBe('gym');
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
-    // Against the squad's weekly goal: 人均 3 天 (the default) times its 2 members.
+    // 3 训练 against the squad's weekly goal: 人均 3 次 (the default) times its 2 members.
     expect(first.ending).toStrictEqual({
       done: 3,
       plan: 6,
       headline: '稳了',
       line: '三天全拿下，计划都不够用。',
     });
-    // The run reads every squad that checked in that week; this one's prompt brings its days.
-    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainedDays":3,'))).toBe(true);
+    // The run reads every squad that checked in that week; this one's prompt brings its 训练.
+    expect(prompts.some((prompt) => prompt.includes('"squad":{"trainings":3,'))).toBe(true);
     // Ana trained the most days, so she stands in the middle; neither planned a day this week,
     // so both carry the plan-done mark.
     expect(first.podium).toStrictEqual({

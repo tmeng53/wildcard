@@ -371,6 +371,13 @@ const unlockSources = (scope: Database) => ({
     const was = await switchesOn(scope).historyFor(member);
     return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
   },
+  // A previewer keeps only what the switches as really set give them, so a preview ends clean.
+  keptSwitches: async (member: string) => {
+    const was = await switchesOn(scope).keptHistoryFor(member);
+    return was === undefined
+      ? undefined
+      : (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+  },
 });
 /**
  * A broadcast's gifts, unlocked for the member from the admin who saved it, like `give_unlocks`

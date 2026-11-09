@@ -64,7 +64,7 @@ extension WildcardAPI {
         return try read { () throws(ContractsError) in try SquadScene(wire) }
     }
 
-    /// The squad's weekly goal (人均 N 天), this week's and next, and its recent average.
+    /// The squad's weekly goal (人均 N 次), this week's and next, and its recent average.
     public func weeklyGoal(of squad: SquadID) async throws(APIError) -> SquadWeeklyGoal {
         let wire = try await call {
             try await client.getSquadWeeklyGoal(path: .init(squadId: squad.description)).ok.body.json

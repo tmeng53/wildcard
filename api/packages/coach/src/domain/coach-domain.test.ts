@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  CoachFilePath,
   editBody,
   FILE_LIMIT,
   shownBody,
+  shownPathOf,
   shownPaths,
   squadSeed,
   storedBody,
@@ -146,17 +148,31 @@ describe('the memory files', () => {
   const roster = rosterOf(week);
 
   it('show each member’s page by roster name and store it by member id', () => {
-    expect(shownPaths(roster)).toStrictEqual([
+    const view = { roster, coach: 'xiaohun' };
+    expect(shownPaths(view)).toStrictEqual([
       'squad.md',
       'memory.md',
+      'me.md',
       'people/队员1.md',
       'people/队员2.md',
     ]);
-    expect(storedPathOf('people/队员2.md', roster)).toBe(`people/${leo}.md`);
-    expect(storedPathOf('memory.md', roster)).toBe('memory.md');
-    expect(storedPathOf('people/队员3.md', roster)).toBeUndefined();
-    expect(storedPathOf(`people/${mia}.md`, roster)).toBeUndefined();
-    expect(storedPathOf('../secrets.md', roster)).toBeUndefined();
+    expect(storedPathOf('people/队员2.md', view)).toBe(`people/${leo}.md`);
+    expect(storedPathOf('memory.md', view)).toBe('memory.md');
+    expect(storedPathOf('people/队员3.md', view)).toBeUndefined();
+    expect(storedPathOf(`people/${mia}.md`, view)).toBeUndefined();
+    expect(storedPathOf('../secrets.md', view)).toBeUndefined();
+    expect(shownPathOf(`people/${leo}.md`, view)).toBe('people/队员2.md');
+    expect(shownPathOf('people/00000000-0000-4000-8000-000000000000.md', view)).toBeUndefined();
+  });
+
+  it('give each coach a page of its own that no other coach reads', () => {
+    expect(storedPathOf('me.md', { roster, coach: 'xiaohun' })).toBe('coaches/xiaohun.md');
+    expect(storedPathOf('me.md', { roster, coach: 'yalina' })).toBe('coaches/yalina.md');
+    expect(storedPathOf('coaches/xiaohun.md', { roster, coach: 'yalina' })).toBeUndefined();
+    expect(shownPathOf('coaches/yalina.md', { roster, coach: 'yalina' })).toBe('me.md');
+    expect(shownPathOf('coaches/xiaohun.md', { roster, coach: 'yalina' })).toBeUndefined();
+    expect(CoachFilePath.safeParse('coaches/yalina.md').success).toBe(true);
+    expect(CoachFilePath.safeParse('coaches/../x.md').success).toBe(false);
   });
 
   it('start a squad’s file from its name and who is in it', () => {

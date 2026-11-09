@@ -4,7 +4,9 @@ import type { SquadWeek } from './squad-week.js';
 
 // A squad's memory: the files its coach keeps. Stored by member id (`people/<id>.md`), shown to
 // the model by roster name (`people/队员N.md`), so the model never sees an id and a member's
-// page follows them when the numbering changes.
+// page follows them when the numbering changes. Each coach also keeps a page of its own in the
+// squad (`coaches/<coach id>.md`, shown to it as `me.md`), which only that coach reads: a coach
+// who comes back finds its page again, and a new one starts its own (Tracy, 2026-11-09).
 
 /** The longest a file may grow, in characters, as the model sees it. */
 export const FILE_LIMIT = 8000;
@@ -12,31 +14,60 @@ export const FILE_LIMIT = 8000;
 /** The files every squad has, empty until the coach writes them. */
 const SQUAD_FILES = ['squad.md', 'memory.md'] as const;
 
-/** A file's path as stored: `squad.md`, `memory.md` or `people/<member id>.md`. */
+/** The coach's own page as the model sees it. */
+const OWN_PAGE = 'me.md';
+
+/**
+ * A file's path as stored: `squad.md`, `memory.md`, `people/<member id>.md` or
+ * `coaches/<coach id>.md`.
+ */
 export type StoredPath = string;
 
 /** A stored path as an admin names it. */
 export const CoachFilePath = z
   .string()
   .regex(
-    /^(squad\.md|memory\.md|people\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.md)$/,
+    /^(squad\.md|memory\.md|people\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.md|coaches\/[a-z][a-z0-9-]{1,39}\.md)$/,
   );
 
-/** Every path the model may read or edit for this roster, shown as it sees them. */
-export function shownPaths(roster: ReadonlyMap<string, string>): string[] {
-  return [...SQUAD_FILES, ...[...roster.values()].map((name) => `people/${name}.md`)];
+/** Whose eyes the files are shown to: the squad's roster names and the coach reading them. */
+export interface MemoryView {
+  /** Each member's roster name (`队员N`), by member id. */
+  readonly roster: ReadonlyMap<string, string>;
+  /** The coach reading the files, by id: it sees its own page and no other coach's. */
+  readonly coach: string;
+}
+
+/** The stored path of a coach's own page in a squad. */
+export function coachPagePath(coach: string): StoredPath {
+  return `coaches/${coach}.md`;
+}
+
+/** Every path the model may read or edit, shown as it sees them. */
+export function shownPaths({ roster }: MemoryView): string[] {
+  return [...SQUAD_FILES, OWN_PAGE, ...[...roster.values()].map((name) => `people/${name}.md`)];
 }
 
 /** The stored path for a path the model named, or `undefined` for one it may not use. */
-export function storedPathOf(
-  shown: string,
-  roster: ReadonlyMap<string, string>,
-): StoredPath | undefined {
+export function storedPathOf(shown: string, { roster, coach }: MemoryView): StoredPath | undefined {
   if (SQUAD_FILES.some((path) => path === shown)) return shown;
+  if (shown === OWN_PAGE) return coachPagePath(coach);
   for (const [member, name] of roster) {
     if (shown === `people/${name}.md`) return `people/${member}.md`;
   }
   return undefined;
+}
+
+/**
+ * The path the model sees for a stored one, or `undefined` for a file it may not read: another
+ * coach's page, or the page of someone no longer on the roster.
+ */
+export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): string | undefined {
+  if (SQUAD_FILES.some((path) => path === stored)) return stored;
+  if (stored === coachPagePath(coach)) return OWN_PAGE;
+  const member = memberOfPath(stored);
+  const name = member === undefined ? undefined : roster.get(member);
+  return name === undefined ? undefined : `people/${name}.md`;
 }
 
 // In a file's text, the model names members by roster name too, but the numbering changes when
