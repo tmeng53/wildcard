@@ -72,3 +72,38 @@ private let newer = #"""
     #expect(scenes.first?.names.english == "Turkey Trot")
     #expect(scenes.first?.colors.floor == "#F3DCCD")
 }
+
+/// The switches: on, off, a schedule; a mode this build doesn't know, or a schedule it can't read,
+/// is off.
+@Test func switchesAreReadAndAnUnknownOneIsOff() throws {
+    let text = #"""
+        {"version": 1, "switches": {"switches": [
+          {"id": "betaFreePlan", "mode": "on"},
+          {"id": "winter", "mode": "schedule", "window": {"start": "11-15", "end": "03-31"}},
+          {"id": "odd", "mode": "schedule", "window": {"start": "13-01", "end": "03-31"}},
+          {"id": "later", "mode": "someday"}]}}
+        """#
+    let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(text.utf8))
+    let winter = try #require(CatalogSwitch.MonthDay("11-15"))
+    #expect(
+        AppCatalog(wire, otherwise: .empty).switches == [
+            CatalogSwitch(id: "betaFreePlan", mode: .alwaysOn),
+            CatalogSwitch(
+                id: "winter", mode: .schedule(start: winter, end: try #require(CatalogSwitch.MonthDay("03-31")))),
+            CatalogSwitch(id: "odd", mode: .alwaysOff),
+            CatalogSwitch(id: "later", mode: .alwaysOff),
+        ])
+}
+
+/// The build ships with every beta feature on, so it shows them before the first read.
+@Test func theBundledCatalogTurnsEveryBetaFeatureOn() throws {
+    let text = try String(
+        contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
+            .appending(path: "../../../Backend/Sources/Backend/Resources/catalog.json"), encoding: .utf8)
+    let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(text.utf8))
+    let board = Switchboard()
+    board.show(AppCatalog(wire, otherwise: .empty).switches)
+    for feature in BetaFeature.allCases {
+        #expect(board.isOn(feature, at: Date(timeIntervalSince1970: 1_800_000_000)), "\(feature)")
+    }
+}

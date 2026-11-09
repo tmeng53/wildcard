@@ -45,7 +45,7 @@ select throws_ok(
 update public.switches set mode = 'on' where id = 'winter';
 update public.switches set mode = 'on' where id = 'winter';
 select is(
-  (select count(*)::int from public.switch_events),
+  (select count(*)::int from public.switch_events where value ->> 'id' = 'winter'),
   2,
   'a switch logs its seeding and each change, once'
 );

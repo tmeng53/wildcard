@@ -4,12 +4,12 @@ import Foundation
 /// One cell of a 成绩条: the number as Health gave it, its unit and what it is.
 public struct ScoreCell: Hashable, Identifiable, Sendable {
     public enum Unit: Hashable, Sendable {
-        case minutes, laps, runs, meters, kilometres, kilometresPerHour, per100Meters, outOfTen
+        case minutes, laps, runs, meters, kilometres, kilometresPerHour, per100Meters, outOfTen, kilocalories
     }
 
     public enum Label: Hashable, Sendable {
         case duration, distance, pace, speed, averageHeartRate, maxHeartRate, effort
-        case runs, descent, topSpeed, elevationGain
+        case runs, descent, topSpeed, elevationGain, calories
         /// Laps, with the pool's length when Health has it.
         case laps(poolMeters: Int?)
     }
@@ -100,6 +100,10 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
                     ScoreCell(
                         cell: cell, value: $0.rounded() == $0 ? "\(Int($0))" : String(format: "%.1f", $0),
                         unit: .outOfTen, label: .effort)
+                }
+            case .calories:
+                summary.activeEnergyKcal.map {
+                    ScoreCell(cell: cell, value: grouped(Int($0.rounded())), unit: .kilocalories, label: .calories)
                 }
             }
         }

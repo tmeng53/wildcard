@@ -2820,7 +2820,7 @@ extension Components {
                 case endedAt
             }
         }
-        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike).
+        /// The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike), active energy in kilocalories.
         ///
         /// - Remark: Generated from `#/components/schemas/WorkoutSummary`.
         public struct WorkoutSummary: Codable, Hashable, Sendable {
@@ -2852,6 +2852,8 @@ extension Components {
             public var elevationGainM: Swift.Double?
             /// - Remark: Generated from `#/components/schemas/WorkoutSummary/paceSecPer100m`.
             public var paceSecPer100m: Swift.Double?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSummary/activeEnergyKcal`.
+            public var activeEnergyKcal: Swift.Double?
             /// Creates a new `WorkoutSummary`.
             ///
             /// - Parameters:
@@ -2869,6 +2871,7 @@ extension Components {
             ///   - topSpeedKmh:
             ///   - elevationGainM:
             ///   - paceSecPer100m:
+            ///   - activeEnergyKcal:
             public init(
                 durationSec: Swift.Int? = nil,
                 distanceM: Swift.Double? = nil,
@@ -2883,7 +2886,8 @@ extension Components {
                 descentM: Swift.Double? = nil,
                 topSpeedKmh: Swift.Double? = nil,
                 elevationGainM: Swift.Double? = nil,
-                paceSecPer100m: Swift.Double? = nil
+                paceSecPer100m: Swift.Double? = nil,
+                activeEnergyKcal: Swift.Double? = nil
             ) {
                 self.durationSec = durationSec
                 self.distanceM = distanceM
@@ -2899,6 +2903,7 @@ extension Components {
                 self.topSpeedKmh = topSpeedKmh
                 self.elevationGainM = elevationGainM
                 self.paceSecPer100m = paceSecPer100m
+                self.activeEnergyKcal = activeEnergyKcal
             }
             public enum CodingKeys: String, CodingKey {
                 case durationSec
@@ -2915,6 +2920,7 @@ extension Components {
                 case topSpeedKmh
                 case elevationGainM
                 case paceSecPer100m
+                case activeEnergyKcal
             }
         }
         /// Sent only when the chart tile was kept.

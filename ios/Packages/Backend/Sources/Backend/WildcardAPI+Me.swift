@@ -145,7 +145,9 @@ extension WildcardAPI {
                         id: piece.id, store: piece.storeId, state: state,
                         sports: piece.sports.compactMap(Sport.init(rawValue:)))
                 }),
-            gifts: body.gifts.sorted { $0.givenAt < $1.givenAt }.filter { $0.openedAt != nil }.map(\.id))
+            // What was given, worn without 领取: the coach's gifts once opened, then the team's pieces.
+            gifts: body.gifts.sorted { $0.givenAt < $1.givenAt }.filter { $0.openedAt != nil }.map(\.id)
+                + body.teamPieces.sorted { $0.givenAt < $1.givenAt }.map(\.id))
     }
 
     /// 领取: puts an unlocked piece in the member's wardrobe, on every phone. Safe to repeat.

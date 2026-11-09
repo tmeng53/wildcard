@@ -12,7 +12,27 @@ extension AppCatalog {
             diceLines: dice.isEmpty ? fallback.diceLines : dice,
             starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock,
             art: wire.art.map(ArtManifest.init) ?? fallback.art,
-            scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes)
+            scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes,
+            switches: wire.switches.map(Self.switches) ?? fallback.switches)
+    }
+
+    /// The switches; a mode this build doesn't know, or a schedule without a window it can read,
+    /// is off.
+    static func switches(_ wire: Components.Schemas.SwitchesCatalog) -> [CatalogSwitch] {
+        wire.switches.map { each in
+            let mode: CatalogSwitch.Mode =
+                switch each.mode {
+                case "on": .alwaysOn
+                case "schedule":
+                    each.window.flatMap { window in
+                        CatalogSwitch.MonthDay(window.start).flatMap { start in
+                            CatalogSwitch.MonthDay(window.end).map { .schedule(start: start, end: $0) }
+                        }
+                    } ?? .alwaysOff
+                default: .alwaysOff
+                }
+            return CatalogSwitch(id: each.id, mode: mode)
+        }
     }
 
     /// The scenes, leaving out one whose id can't be one.

@@ -40,6 +40,7 @@ extension ScoreCell.Unit {
         case .kilometresPerHour: Text("km/h", bundle: .module)
         case .per100Meters: Text("/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
+        case .kilocalories: Text("千卡", bundle: .module)
         }
     }
 }
@@ -58,6 +59,7 @@ extension ScoreCell.Label {
         case .descent: Text("落差", bundle: .module)
         case .topSpeed: Text("最高速", bundle: .module)
         case .elevationGain: Text("爬升", bundle: .module)
+        case .calories: Text("卡路里", bundle: .module)
         case .laps(let pool?): Text("\(pool) 米泳池", bundle: .module)
         case .laps(nil): Text("趟数", bundle: .module)
         }
@@ -256,7 +258,7 @@ public struct WorkoutChart: View {
 
     private var lapChart: some View {
         let ink = Color(colors.ink)
-        Canvas { context, size in
+        return Canvas { context, size in
             let pad = size.width > 100 ? Space.s : Space.xxs + 2
             let top = showsLabel ? Space.xxl : pad
             let area = CGRect(x: pad, y: top, width: size.width - 2 * pad, height: size.height - top - pad)
