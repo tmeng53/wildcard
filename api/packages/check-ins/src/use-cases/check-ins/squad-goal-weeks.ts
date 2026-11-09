@@ -1,5 +1,5 @@
 import type { MemberId, SquadId } from '../../domain/check-in.js';
-import { trainedDays, weekOf } from '../../domain/days.js';
+import { trainings, weekOf } from '../../domain/days.js';
 import { localDayAt, weekStartOf, type WeekStart } from '../../domain/weekly-plan.js';
 import type { CheckInStore, Clock, MemberCalendar } from '../../ports.js';
 
@@ -13,11 +13,10 @@ export async function weekStartNow(
 }
 
 /**
- * The days these members trained in the week starting `weekStart`, added up, from check-ins sent
- * to the squad, a day counting once however many times they trained: what the squad's weekly
- * goal counts.
+ * The 训练 these members sent to the squad in the week starting `weekStart` (each in their own
+ * week), several on one day each counting: what the squad's weekly goal (人均 N 次) counts.
  */
-export async function squadTrainedDays(
+export async function squadTrainings(
   { store }: { readonly store: CheckInStore },
   {
     squad,
@@ -35,7 +34,7 @@ export async function squadTrainedDays(
   return members.reduce(
     (sum, member) =>
       sum +
-      trainedDays(
+      trainings(
         checkIns.filter((each) => each.member === member),
         week.days,
       ),

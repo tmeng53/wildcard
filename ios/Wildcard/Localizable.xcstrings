@@ -152,19 +152,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad's at %1$@/%2$@ days this week"
+            "value": "Squad's at %1$@/%2$@ workouts this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "本周小队已练 %1$@/%2$@ 天"
+            "value": "本周小队已练 %1$@/%2$@ 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週小隊已練 %1$@/%2$@ 天"
+            "value": "本週小隊已練 %1$@/%2$@ 次"
           }
         }
       }
@@ -176,19 +176,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad's at %1$@/%2$@ days this week · cheers from %3$@ teammates today"
+            "value": "Squad's at %1$@/%2$@ workouts this week · cheers from %3$@ teammates today"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "本周小队已练 %1$@/%2$@ 天 · 今天 %3$@ 位队友给你打了气"
+            "value": "本周小队已练 %1$@/%2$@ 次 · 今天 %3$@ 位队友给你打了气"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週小隊已練 %1$@/%2$@ 天 · 今天有 %3$@ 位隊友幫你加油"
+            "value": "本週小隊已練 %1$@/%2$@ 次 · 今天有 %3$@ 位隊友幫你加油"
           }
         }
       }
@@ -200,19 +200,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ gave you a pat · squad's at %1$@/%2$@ days this week"
+            "value": "%3$@ gave you a pat · squad's at %1$@/%2$@ workouts this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 天"
+            "value": "%3$@拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@拍了拍你 · 本週小隊已練 %1$@/%2$@ 天"
+            "value": "%3$@拍了拍你 · 本週小隊已練 %1$@/%2$@ 次"
           }
         }
       }
@@ -224,19 +224,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@ and %4$@ more gave you a pat · squad's at %1$@/%2$@ days this week"
+            "value": "%3$@ and %4$@ more gave you a pat · squad's at %1$@/%2$@ workouts this week"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本周小队已练 %1$@/%2$@ 天"
+            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本周小队已练 %1$@/%2$@ 次"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本週小隊已練 %1$@/%2$@ 天"
+            "value": "%3$@和另外 %4$@ 人拍了拍你 · 本週小隊已練 %1$@/%2$@ 次"
           }
         }
       }

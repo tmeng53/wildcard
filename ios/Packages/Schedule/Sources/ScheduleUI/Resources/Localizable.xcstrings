@@ -826,6 +826,23 @@
           }
         }
       }
+    },
+    "还未入队": {
+      "comment": "出赛表's greyed chip before the week the member joined their squad.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not joined yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還未入隊"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

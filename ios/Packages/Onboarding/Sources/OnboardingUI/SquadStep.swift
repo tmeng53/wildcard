@@ -168,7 +168,7 @@ private struct SquadFound: View {
                         if squad.isFull {
                             Text("\(squad.memberCount) 人 · 满员了", bundle: .module)
                         } else {
-                            Text("\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 天", bundle: .module)
+                            Text("\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 次", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
@@ -229,14 +229,14 @@ private struct CreatePanel: View {
                 label: Text("小队名", bundle: .module), limit: SquadName.maxLength
             )
             .accessibilityIdentifier("squad.name")
-            SectionLabel(Text("小队目标 · 每人每周练几天", bundle: .module))
+            SectionLabel(Text("小队目标 · 每人每周练几次", bundle: .module))
                 .padding(.top, Space.s)
             HStack(spacing: Space.xxs) {
                 ForEach(Array(SquadWeeklyGoal.choices), id: \.self) { days in
                     PickPill(Text(verbatim: "\(days)"), isSelected: days == model.squad.daysPerMember) {
                         model.pickDaysPerMember(days)
                     }
-                    .accessibilityLabel(Text("人均 \(days) 天", bundle: .module))
+                    .accessibilityLabel(Text("人均 \(days) 次", bundle: .module))
                     .accessibilityAddTraits(days == model.squad.daysPerMember ? .isSelected : [])
                     .accessibilityIdentifier("squad.goal.pick.\(days)")
                 }
@@ -271,13 +271,13 @@ extension SignUpModel {
         squad.timeZone = identifier
     }
 
-    /// 小队目标 · 每人每周练几天, for the squad being made.
+    /// 小队目标 · 每人每周练几次, for the squad being made.
     func pickDaysPerMember(_ days: Int) {
         guard SquadWeeklyGoal.choices.contains(days) else { return }
         squad.daysPerMember = days
     }
 
-    /// The squad's goal this week, before and after the member's 人均 N 天 adds to it.
+    /// The squad's goal this week, before and after the member's 人均 N 次 adds to it.
     var squadGoal: (before: Int, after: Int) {
         let before = joined?.weekGoal ?? 0
         return (before, before + (joined?.daysPerMember ?? 0))

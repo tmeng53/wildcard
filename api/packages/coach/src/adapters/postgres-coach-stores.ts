@@ -252,11 +252,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         return saved.length > 0;
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         return db
           .selectFrom('coach_notes')
           .select([sql<string>`to_char(day, 'YYYY-MM-DD')`.as('day'), 'text'])
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .orderBy('coach_notes.day', 'desc')
           .limit(limit)
           .execute();
@@ -342,11 +343,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           : { coach: CoachId.parse(row.coach_id), text: row.text ?? undefined };
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         const rows = await db
           .selectFrom('coach_replies')
           .select('emoji')
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .where('emoji', 'is not', null)
           .orderBy('id', 'desc')
           .limit(limit)
@@ -737,7 +739,14 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('squad_id', '=', squad)
         .where('member_id', '=', member)
         .execute();
-      return new Set(rows.map((row) => cardKey(CoachCardKind.parse(row.kind), row.card_id)));
+      // A kind no longer a card (the coach's `reply` and `answer`, which show only under the posts
+      // since 2026-11-09) stays in the log, marking nothing.
+      return new Set(
+        rows.flatMap((row) => {
+          const kind = CoachCardKind.safeParse(row.kind);
+          return kind.success ? [cardKey(kind.data, row.card_id)] : [];
+        }),
+      );
     },
 
     async markSeen({ squad, member, kind, id }) {

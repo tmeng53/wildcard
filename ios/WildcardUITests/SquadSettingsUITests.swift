@@ -26,7 +26,7 @@ final class SquadSettingsUITests: XCTestCase {
 
         // The captain's change counts from next week: this week's number stays, the line says so.
         app.buttons["squad.goal.pick.5"].tap()
-        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 天'", "the change didn't wait for next week")
+        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 次'", "the change didn't wait for next week")
         XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
 
         app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3).tap()

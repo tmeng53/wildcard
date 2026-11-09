@@ -204,6 +204,8 @@ struct CountdownCard: View {
 enum SchedulePage: Hashable {
     case week(LocalDay)
     case template
+    /// The greyed 还未入队 chip, which never opens.
+    case notYetJoined
 }
 
 /// The two tickets rocking on the poster's grey card while the weeks are read.

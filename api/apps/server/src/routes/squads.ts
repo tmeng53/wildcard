@@ -73,8 +73,8 @@ const SquadList = z
 
 const daysPerMemberField = DaysPerMember.meta({
   description:
-    'The squad’s weekly goal (小队每周目标): how many days each member trains a week on average ' +
-    '(人均 N 天), 1 to 7; the goal is this times the members.',
+    'The squad’s weekly goal (小队每周目标): how many times each member trains a week on average ' +
+    '(人均 N 次), 1 to 7; the goal is this times the members.',
   example: 3,
 });
 
@@ -84,7 +84,7 @@ const NewSquad = z
     name: SquadName,
     daysPerMember: daysPerMemberField.optional().meta({
       description:
-        'The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 ' +
+        'The squad’s weekly goal (人均 N 次, 1 to 7), counting from the creator’s week now; 3 ' +
         'when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.',
       default: DEFAULT_DAYS_PER_MEMBER,
     }),
@@ -118,7 +118,7 @@ const SquadInvite = z
     }),
     joined: z.boolean().meta({ description: 'True when the caller is in it already.' }),
     daysPerMember: daysPerMemberField.meta({
-      description: 'The squad’s weekly goal (人均 N 天) as its captain last set it.',
+      description: 'The squad’s weekly goal (人均 N 次) as its captain last set it.',
     }),
     looks: z.array(LookBody).meta({
       description:
@@ -137,7 +137,7 @@ const PublicSquadInvite = z
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
     daysPerMember: daysPerMemberField.meta({
-      description: 'The squad’s weekly goal (人均 N 天) as its captain last set it.',
+      description: 'The squad’s weekly goal (人均 N 次) as its captain last set it.',
     }),
     looks: z.array(LookBody).meta({
       description:

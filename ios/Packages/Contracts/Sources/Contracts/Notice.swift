@@ -52,11 +52,11 @@ public struct Notice: Hashable, Sendable, Identifiable {
     }
 }
 
-/// A higher weekly goal suggested to a squad's captain (连续 3 周超过小队目标 · 改成人均 4 天？).
+/// A higher weekly goal suggested to a squad's captain (连续 3 周超过小队目标 · 改成人均 4 次？).
 public struct GoalSuggestion: Hashable, Sendable {
     /// How many weeks in a row the squad trained over its goal.
     public let weeks: Int
-    /// The goal suggested, 人均 N 天.
+    /// The goal suggested, 人均 N 次.
     public let daysPerMember: Int
 
     public init(weeks: Int, daysPerMember: Int) {

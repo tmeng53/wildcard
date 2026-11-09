@@ -34,7 +34,6 @@ struct PosterContentTests {
         let content = PosterContent(
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
-        #expect(content.lanes.map(\.isEditable) == [false, false, false, true, true, true, true])
         #expect(content.tally == .trained(2, planned: 5, isPast: false))
         #expect(content.titles.isEmpty, "titles wait for the week's awards")
         #expect(content.fuelOpen, "this week's goals open too")
@@ -84,7 +83,7 @@ struct PosterContentTests {
         let content = PosterContent(template: board, nickname: "Tracy")
         #expect(content.isTemplate)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .held, .plain, .plain, .plain, .plain])
-        #expect(content.lanes.allSatisfy { $0.isEditable && $0.mark == .none && !$0.isToday })
+        #expect(content.lanes.allSatisfy { $0.mark == .none && !$0.isToday })
         #expect(content.tally == .typical(train: 5))
         #expect(content.fuel.isEmpty)
         #expect(content.fuelEditable == false)
@@ -136,7 +135,6 @@ struct PosterContentTests {
         #expect(content.titles == titles)
         #expect(content.tally == .trained(2, planned: 5, isPast: true))
         #expect(!content.fuelOpen)
-        #expect(content.lanes.allSatisfy { !$0.isEditable })
     }
 
     @Test func aGoalBeingTypedShowsOnThePoster() throws {
@@ -159,7 +157,6 @@ struct PosterContentTests {
             sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false
         ).forSaving
         #expect(held.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
-        #expect(held.lanes.allSatisfy { !$0.isEditable })
         let award = PosterContent(
             sheet: try sheet(last), board: WeekBoard(weekStart: last, days: plan, today: thursday), nickname: "Tracy",
             weekNumber: 3,

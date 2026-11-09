@@ -12,11 +12,14 @@ public struct CategoryBarItem<ID: Hashable>: Identifiable {
     public let startsGroup: Bool
     /// For UI tests; the bar puts it on the item's button.
     public let accessibilityIdentifier: String?
+    /// False for an item shown greyed that can't be picked (出赛表's 还未入队).
+    public let isEnabled: Bool
 
     public init(
         id: ID, title: Text, systemImage: String? = nil, startsGroup: Bool = false,
-        accessibilityIdentifier: String? = nil
+        accessibilityIdentifier: String? = nil, isEnabled: Bool = true
     ) {
+        self.isEnabled = isEnabled
         self.id = id
         self.title = title
         self.systemImage = systemImage
@@ -99,7 +102,7 @@ public struct CategoryBar<ID: Hashable>: View {
                 item.title
             }
             .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
-            .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgMuted, in: theme))
+            .foregroundStyle(Color(role: isSelected ? .bgCanvas : item.isEnabled ? .fgMuted : .fgSubtle, in: theme))
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, Self.itemInset)
@@ -116,6 +119,7 @@ public struct CategoryBar<ID: Hashable>: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(!item.isEnabled)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(ifPresent: item.accessibilityIdentifier)
     }

@@ -225,34 +225,34 @@
         }
       }
     },
-    "本周小队已练 %lld/%lld 天": {
+    "本周小队已练 %lld/%lld 次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Squad this week: %1$lld of %2$lld days"
+            "value": "Squad this week: %1$lld of %2$lld workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "本週小隊已練 %1$lld/%2$lld 天"
+            "value": "本週小隊已練 %1$lld/%2$lld 次"
           }
         }
       }
     },
-    "天": {
+    "次": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "days"
+            "value": "workouts"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "天"
+            "value": "次"
           }
         }
       }

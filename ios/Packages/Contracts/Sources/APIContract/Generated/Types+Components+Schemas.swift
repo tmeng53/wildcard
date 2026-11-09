@@ -186,7 +186,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/weeks`.
             public var weeks: Swift.Int?
-            /// The goal suggested, 人均 N 天 (`goalSuggestion`).
+            /// The goal suggested, 人均 N 次 (`goalSuggestion`).
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/daysPerMember`.
             public var daysPerMember: Swift.Int?
@@ -332,7 +332,7 @@ extension Components {
             ///   - item: The store’s, prop’s or piece’s id (`unlocked`).
             ///   - broadcast: The broadcast’s id (`broadcast`), the same for every member told it. Its `title` is what it says and `body` its muted second line, if any, each as it says them now.
             ///   - weeks: How many weeks in a row the squad trained over its goal (`goalSuggestion`).
-            ///   - daysPerMember: The goal suggested, 人均 N 天 (`goalSuggestion`).
+            ///   - daysPerMember: The goal suggested, 人均 N 次 (`goalSuggestion`).
             ///   - feedback: The feedback we used (`thanks`): the id the app sent it with.
             ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
             ///   - title:
@@ -5391,7 +5391,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NewSquad/name`.
             public var name: Swift.String
-            /// The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
+            /// The squad’s weekly goal (人均 N 次, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
             ///
             /// - Remark: Generated from `#/components/schemas/NewSquad/daysPerMember`.
             public var daysPerMember: Swift.Int?
@@ -5404,7 +5404,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - name: Trimmed, then 1 to 20 characters as people see them, on one line.
-            ///   - daysPerMember: The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 次, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.
             ///   - timeZone: The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their own profile’s zone when left out. The captain changes it later with `PUT /squads/{squadId}/time-zone`.
             public init(
                 version: Components.Schemas.NewSquad.VersionPayload,
@@ -5506,7 +5506,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
-            /// The squad’s weekly goal (人均 N 天) as its captain last set it.
+            /// The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/daysPerMember`.
             public var daysPerMember: Swift.Int
@@ -5522,7 +5522,7 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
-            ///   - daysPerMember: The squad’s weekly goal (人均 N 天) as its captain last set it.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.SquadInvite.VersionPayload,
@@ -5571,7 +5571,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/full`.
             public var full: Swift.Bool
-            /// The squad’s weekly goal (人均 N 天) as its captain last set it.
+            /// The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///
             /// - Remark: Generated from `#/components/schemas/PublicSquadInvite/daysPerMember`.
             public var daysPerMember: Swift.Int
@@ -5586,7 +5586,7 @@ extension Components {
             ///   - name: The squad’s name.
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
-            ///   - daysPerMember: The squad’s weekly goal (人均 N 天) as its captain last set it.
+            ///   - daysPerMember: The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the page to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
                 version: Components.Schemas.PublicSquadInvite.VersionPayload,
@@ -5835,24 +5835,24 @@ extension Components {
             public var me: Components.Schemas.SquadToday.MePayload
             /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek`.
             public struct SquadWeekPayload: Codable, Hashable, Sendable {
-                /// Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained.
+                /// The 训练 sent to this squad this week, added up over the members, each in their own week; several on one day each count (named before the goal counted 训练, not days).
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/trainedDays`.
                 public var trainedDays: Swift.Int
-                /// The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it.
+                /// The squad’s weekly goal (小队每周目标) in 训练: `daysPerMember` times the members now. Anyone’s 训练 count towards it.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/plannedDays`.
                 public var plannedDays: Swift.Int
-                /// The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.
+                /// The weekly goal its captain set (人均 N 次), in the caller’s week: how many times each member trains on average.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadToday/squadWeek/daysPerMember`.
                 public var daysPerMember: Swift.Int
                 /// Creates a new `SquadWeekPayload`.
                 ///
                 /// - Parameters:
-                ///   - trainedDays: Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained.
-                ///   - plannedDays: The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it.
-                ///   - daysPerMember: The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.
+                ///   - trainedDays: The 训练 sent to this squad this week, added up over the members, each in their own week; several on one day each count (named before the goal counted 训练, not days).
+                ///   - plannedDays: The squad’s weekly goal (小队每周目标) in 训练: `daysPerMember` times the members now. Anyone’s 训练 count towards it.
+                ///   - daysPerMember: The weekly goal its captain set (人均 N 次), in the caller’s week: how many times each member trains on average.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
@@ -6667,7 +6667,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/version`.
             public var version: Components.Schemas.SquadWeeklyGoal.VersionPayload
-            /// This week’s goal (人均 N 天).
+            /// This week’s goal (人均 N 次).
             ///
             /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/daysPerMember`.
             public var daysPerMember: Swift.Int
@@ -6687,7 +6687,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/weeks`.
                 public var weeks: Swift.Int
-                /// The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                /// The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.
                 ///
                 /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoal/recent/daysPerMember`.
                 public var daysPerMember: Swift.Double
@@ -6695,7 +6695,7 @@ extension Components {
                 ///
                 /// - Parameters:
                 ///   - weeks: How many finished weeks it averages: up to 4.
-                ///   - daysPerMember: The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.
+                ///   - daysPerMember: The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.
                 public init(
                     weeks: Swift.Int,
                     daysPerMember: Swift.Double
@@ -6716,7 +6716,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - daysPerMember: This week’s goal (人均 N 天).
+            ///   - daysPerMember: This week’s goal (人均 N 次).
             ///   - nextDaysPerMember: Next week’s goal: a change counts from the next week, so it differs from `daysPerMember` only after the captain changed it this week.
             ///   - canChange: True for the captain, the only one who sets it.
             ///   - recent: Null until the squad has a finished week.
@@ -6749,7 +6749,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange/version`.
             public var version: Components.Schemas.SquadWeeklyGoalChange.VersionPayload
-            /// How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.
+            /// How many times each member trains a week on average (人均 N 次), 1 to 7. The squad’s goal for a week is this times its members; anyone’s 训练 sent to the squad count towards it, several on one day each counting.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadWeeklyGoalChange/daysPerMember`.
             public var daysPerMember: Swift.Int
@@ -6757,7 +6757,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - daysPerMember: How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.
+            ///   - daysPerMember: How many times each member trains a week on average (人均 N 次), 1 to 7. The squad’s goal for a week is this times its members; anyone’s 训练 sent to the squad count towards it, several on one day each counting.
             public init(
                 version: Components.Schemas.SquadWeeklyGoalChange.VersionPayload,
                 daysPerMember: Swift.Int
@@ -9042,6 +9042,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WeeklyPlan/firstWeek`.
             public var firstWeek: Swift.String?
+            /// The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WeeklyPlan/squadFirstWeek`.
+            public var squadFirstWeek: Swift.String?
             /// Creates a new `WeeklyPlan`.
             ///
             /// - Parameters:
@@ -9052,6 +9056,7 @@ extension Components {
             ///   - source: `saved` for a plan saved for this week; `carriedOver` when the week follows the member’s typical week (`/me/plan-template`); `default` (rest on Wednesday and Sunday) before they make one.
             ///   - fuelGoals:
             ///   - firstWeek: The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.
+            ///   - squadFirstWeek: The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.
             public init(
                 version: Components.Schemas.WeeklyPlan.VersionPayload,
                 member: Swift.String,
@@ -9059,7 +9064,8 @@ extension Components {
                 days: Components.Schemas.PlanDays,
                 source: Components.Schemas.WeeklyPlan.SourcePayload,
                 fuelGoals: Components.Schemas.FuelGoals,
-                firstWeek: Swift.String? = nil
+                firstWeek: Swift.String? = nil,
+                squadFirstWeek: Swift.String? = nil
             ) {
                 self.version = version
                 self.member = member
@@ -9068,6 +9074,7 @@ extension Components {
                 self.source = source
                 self.fuelGoals = fuelGoals
                 self.firstWeek = firstWeek
+                self.squadFirstWeek = squadFirstWeek
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -9077,6 +9084,7 @@ extension Components {
                 case source
                 case fuelGoals
                 case firstWeek
+                case squadFirstWeek
             }
         }
         /// - Remark: Generated from `#/components/schemas/FuelGoals`.
@@ -10120,29 +10128,33 @@ extension Components {
                 case reactions
             }
         }
-        /// 这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell.
+        /// 这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a quiet week isn’t told how short it fell.
         ///
         /// - Remark: Generated from `#/components/schemas/StoryEnding`.
         public struct StoryEnding: Codable, Hashable, Sendable {
+            /// The 训练 the squad’s members sent to it that week, several on one day each counting.
+            ///
             /// - Remark: Generated from `#/components/schemas/StoryEnding/done`.
             public var done: Swift.Int
+            /// The squad’s weekly goal that week, in 训练 (人均 N 次).
+            ///
             /// - Remark: Generated from `#/components/schemas/StoryEnding/plan`.
             public var plan: Swift.Int
             /// The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryEnding/headline`.
             public var headline: Swift.String?
-            /// The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
+            /// The line under the 训练 against the goal, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many 训练 are missing, or that the squad made it.
             ///
             /// - Remark: Generated from `#/components/schemas/StoryEnding/line`.
             public var line: Swift.String?
             /// Creates a new `StoryEnding`.
             ///
             /// - Parameters:
-            ///   - done:
-            ///   - plan:
+            ///   - done: The 训练 the squad’s members sent to it that week, several on one day each counting.
+            ///   - plan: The squad’s weekly goal that week, in 训练 (人均 N 次).
             ///   - headline: The headline over the page, such as 稳了 or 差一点, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks.
-            ///   - line: The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it.
+            ///   - line: The line under the 训练 against the goal, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many 训练 are missing, or that the squad made it.
             public init(
                 done: Swift.Int,
                 plan: Swift.Int,
@@ -10525,7 +10537,7 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/plannedDays`.
                 public var plannedDays: Swift.Int
-                /// This week’s Monday, in their time zone. Left out by older servers.
+                /// This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/weekStart`.
                 public var weekStart: Swift.String?
@@ -10537,11 +10549,15 @@ extension Components {
                 public var marks: [Components.Schemas.DayMark]?
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/fuelGoals`.
                 public var fuelGoals: Components.Schemas.FuelGoals?
-                /// The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
+                /// The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/firstWeek`.
                 public var firstWeek: Swift.String?
-                /// Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                /// The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlayerCard/week/squadFirstWeek`.
+                public var squadFirstWeek: Swift.String?
+                /// Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlayerCard/week/today`.
                 public var today: Swift.String?
@@ -10550,12 +10566,13 @@ extension Components {
                 /// - Parameters:
                 ///   - trainedDays: Days they trained this week, from all their check-ins wherever they went.
                 ///   - plannedDays: Days their plan trains this week, from the day they joined on.
-                ///   - weekStart: This week’s Monday, in their time zone. Left out by older servers.
+                ///   - weekStart: This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.
                 ///   - days:
                 ///   - marks: How each day of this week went, Monday first: `trained` with the sport of the day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers.
                 ///   - fuelGoals:
-                ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.
-                ///   - today: Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.
+                ///   - firstWeek: The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.
+                ///   - squadFirstWeek: The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.
+                ///   - today: Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.
                 public init(
                     trainedDays: Swift.Int,
                     plannedDays: Swift.Int,
@@ -10564,6 +10581,7 @@ extension Components {
                     marks: [Components.Schemas.DayMark]? = nil,
                     fuelGoals: Components.Schemas.FuelGoals? = nil,
                     firstWeek: Swift.String? = nil,
+                    squadFirstWeek: Swift.String? = nil,
                     today: Swift.String? = nil
                 ) {
                     self.trainedDays = trainedDays
@@ -10573,6 +10591,7 @@ extension Components {
                     self.marks = marks
                     self.fuelGoals = fuelGoals
                     self.firstWeek = firstWeek
+                    self.squadFirstWeek = squadFirstWeek
                     self.today = today
                 }
                 public enum CodingKeys: String, CodingKey {
@@ -10583,6 +10602,7 @@ extension Components {
                     case marks
                     case fuelGoals
                     case firstWeek
+                    case squadFirstWeek
                     case today
                 }
             }

@@ -13,7 +13,7 @@ public protocol SignUpService: Sendable {
     func agreeToAI() async throws(SignUpError)
     /// Joins the squad by its code. Safe to repeat.
     func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad
-    /// Makes a squad with the member in it, its goal, 人均 `daysPerMember` 天, and its 比赛时区,
+    /// Makes a squad with the member in it, its goal, 人均 `daysPerMember` 次, and its 比赛时区,
     /// `timeZone` (an IANA name).
     func create(named name: SquadName, daysPerMember: Int, timeZone: String) async throws(SignUpError) -> JoinedSquad
     /// Saves the character made in 角色和昵称.
@@ -61,12 +61,12 @@ public struct JoinedSquad: Hashable, Sendable {
     public let name: String
     /// Everyone in it but the member, the earliest to join first.
     public let teammates: [Squadmate]
-    /// The squad's goal this week (小队本周目标) before the member joined, in days; the member
+    /// The squad's goal this week (小队本周目标) before the member joined, in 训练; the member
     /// adds `daysPerMember` to it.
     public let weekGoal: Int
-    /// Days the squad has trained this week.
+    /// The 训练 sent to the squad this week (人均 N 次 counts them).
     public let weekDone: Int
-    /// The goal its captain set, 人均 N 天.
+    /// The goal its captain set, 人均 N 次.
     public let daysPerMember: Int
 
     public init(

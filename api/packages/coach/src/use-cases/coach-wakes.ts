@@ -538,8 +538,8 @@ async function think(
       )
     : [];
   const files = new Map(
-    shownPaths(roster).map((path) => {
-      const at = storedPathOf(path, roster);
+    shownPaths({ roster, coach: coach.id }).map((path) => {
+      const at = storedPathOf(path, { roster, coach: coach.id });
       return [path, at === undefined ? undefined : draft.files.get(at)];
     }),
   );
@@ -577,7 +577,9 @@ async function think(
       ...new Set([...holidaysOn(settings.holidays, day), ...((await deps.occasions?.(day)) ?? [])]),
     ],
     backAgain: await deps.hiring.backAgain(wake.squad),
-    recentNotes: daily ? await deps.stores.notes.recent(wake.squad, RECENT_NOTES) : [],
+    recentNotes: daily
+      ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
+      : [],
     ...(thread === undefined ? {} : { thread: thread.thread }),
     canSeePhotos: deps.photoUrls !== undefined,
     ...(challenge === undefined
@@ -593,7 +595,11 @@ async function think(
     ...(gifting === undefined ? {} : { gifting }),
     recentEmoji:
       wake.reason.kind === 'checkIn'
-        ? await deps.stores.replies.recent(wake.squad, RECENT_EMOJI)
+        ? await deps.stores.replies.recent({
+            squad: wake.squad,
+            coach: coach.id,
+            limit: RECENT_EMOJI,
+          })
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     ...(wake.reason.kind === 'daily'
@@ -610,6 +616,7 @@ async function think(
     tools: toolbox({
       week,
       roster,
+      coach: coach.id,
       draft,
       kind: wake.reason.kind,
       to: author,
@@ -1016,10 +1023,15 @@ async function threadOf(
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;
-  // A reply to the coach needs something it said; an @ doesn't.
-  if (answering.toCoach !== undefined && reply === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
   if (answers.some(({ comment }) => comment === reason.comment)) return undefined;
+  // A reply to the coach needs something it said here, its reply to the check-in or an answer
+  // to someone who wrote to it; an @ doesn't.
+  const toThisCoach = new Set(
+    comments.filter((each) => saidTo(each) === coach.id).map(({ id }) => id),
+  );
+  const answered = answers.some(({ comment }) => toThisCoach.has(comment));
+  if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
   // Each answer right after the reply it answers.
   const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
   const said = comments

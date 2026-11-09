@@ -19,7 +19,7 @@ public struct SquadMember: Identifiable, Sendable, Hashable {
     }
 }
 
-/// The squad's week: its name, the days anyone trained against its goal (人均 N 天 times its
+/// The squad's week: its name, the 练了 anyone sent against its goal (人均 N 次 times its
 /// members), and everyone's today.
 public struct SquadWeek: Sendable, Hashable {
     public let name: String
@@ -245,8 +245,8 @@ private struct PageHeader: View {
     let title: String?
     let count: Int
     let goal: Int
-    var unit: Text?  // A word after the score (天).
-    var showsExtra = false  // Days past the goal as a small 「+N」 tag after the score.
+    var unit: Text?  // A word after the score (次).
+    var showsExtra = false  // 训练 past the goal as a small 「+N」 tag after the score.
     var open: (() -> Void)?
 
     var body: some View {
@@ -280,7 +280,7 @@ private struct PageHeader: View {
                 }
                 if showsExtra, count > goal {
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
-                        .accessibilityLabel(Text("多练 \(count - goal) 天", bundle: .module))
+                        .accessibilityLabel(Text("多练 \(count - goal) 次", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
                 }
             }
@@ -307,7 +307,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
                 label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                unit: Text("天", bundle: .module), showsExtra: true, open: openSquad)
+                unit: Text("次", bundle: .module), showsExtra: true, open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)

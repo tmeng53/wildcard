@@ -103,3 +103,14 @@ extension SquadToday {
         countingMine(checkIn, squadSaw: members.first { $0.member == checkIn.member }?.training ?? .notCheckedIn)
     }
 }
+
+@Test func aSecondSharedTrainingTheSameDayCountsAgainForTheSquadOnly() throws {
+    var today = sampleToday()
+    today.members[1].training = .trained
+    today.myWeek.week.trainedDays = 2
+    today.today = TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true)
+    let counted = today.countingMine(try mine(.trained(Training(activity: .sport("run")))), squadSaw: .trained)
+    #expect(counted.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
+    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(counted.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
+}

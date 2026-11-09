@@ -141,7 +141,8 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
     title: 'Read a squad’s coaching',
     description:
       'Shows a squad’s AI coach (null when it hired none) and what it has done: its memory files now (squad.md, memory.md and a ' +
-      'page per member, stored as people/<member id>.md; the model sees each member as 队员N), ' +
+      'page per member, stored as people/<member id>.md; the model sees each member as 队员N; ' +
+      'and each coach’s own page, coaches/<coach id>.md, which only that coach reads, as me.md), ' +
       'its last 14 战术板 lines, its last 20 wakes (checkIn, comment or daily, state, tries, why ' +
       'the last try failed, and each tool call of its runs in order: the tool, its arguments and ' +
       'what it answered, a read by its length only) and the tokens and cost (millionths of a US dollar) of every wake so ' +
@@ -160,12 +161,15 @@ export function editCoachFiles({ memory }: CoachToolDependencies) {
     description:
       'Replaces one of a squad’s coach memory files with a new body, logged as yours; an empty ' +
       'body clears it. Paths and bodies are as get_squad_coaching shows them: squad.md, ' +
-      'memory.md or people/<member id>.md, members named as {队员:<member id>}. Every version ' +
+      'memory.md, people/<member id>.md or coaches/<coach id>.md, members named as ' +
+      '{队员:<member id>}. Every version ' +
       'is kept. The coach reads the new body on its next wake. Returns the squad’s files now.',
     changes: true,
     input: z.strictObject({
       squad: SquadId.describe('The squad’s id.'),
-      path: CoachFilePath.describe('squad.md, memory.md or people/<member id>.md'),
+      path: CoachFilePath.describe(
+        'squad.md, memory.md, people/<member id>.md or coaches/<coach id>.md',
+      ),
       body: z.string().max(20_000).describe('The file’s whole new text, Chinese.'),
     }),
     run: async (input) => memory.rewrite(input),

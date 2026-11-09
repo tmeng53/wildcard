@@ -15,6 +15,7 @@ import {
   trainedDays,
   trainedDaysReachedAt,
   trainingOn,
+  trainings,
   weekOf,
 } from './days.js';
 
@@ -114,6 +115,19 @@ describe('a day’s check-ins', () => {
       checkIn('trained', { day: '2026-10-18' }),
     ];
     expect(trainedDays(checkIns, week)).toBe(2);
+  });
+
+  it('counts each 练了 of the week for a squad’s goal, several on one day too', () => {
+    const week = weekOf('2026-10-19').days;
+    const checkIns = [
+      checkIn('trained', { day: '2026-10-19' }),
+      checkIn('trained', { day: '2026-10-19' }),
+      checkIn('disclaimer', { day: '2026-10-20' }),
+      checkIn('healthyMeal', { day: '2026-10-20' }),
+      checkIn('trained', { day: '2026-10-21' }),
+      checkIn('trained', { day: '2026-10-18' }),
+    ];
+    expect(trainings(checkIns, week)).toBe(3);
   });
 });
 

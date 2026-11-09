@@ -826,6 +826,23 @@ describe('/squads/{squadId}/coach/cards', () => {
     await fire(mate, squad);
   });
 
+  it('still reads once the caller swiped cards of a kind that is no longer one', async () => {
+    // Before 2026-11-09 the coach's replies and answers were cards too; their seen marks stay.
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    await hire(mate, squad);
+    await sql`insert into public.coach_card_seen (member_id, squad_id, kind, card_id)
+      values (${mate.userId}, ${squad}, 'reply', '7'), (${mate.userId}, ${squad}, 'answer', '8')`.execute(
+      db,
+    );
+    const path = `/squads/${squad}/coach/cards`;
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({ status: 200 });
+    expect(await call({ method: 'GET', path: `${path}/earlier`, token: mate.token })).toMatchObject(
+      { status: 200 },
+    );
+    await fire(mate, squad);
+  });
+
   it('pages 以前 newest first, and keeps only the unseen ones when asked', async () => {
     const mate = await signUp();
     const squad = await squadOf(mate);
