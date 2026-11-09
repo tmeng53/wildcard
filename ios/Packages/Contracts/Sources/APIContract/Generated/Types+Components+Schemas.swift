@@ -2634,6 +2634,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/minutes`.
             public var minutes: Swift.Int?
+            /// When it started, on the member's clock on its day, as HH:mm.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingView/startTime`.
+            public var startTime: Swift.String?
             /// Trimmed, then 1 to 60 characters as people see them, on one line.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/caption`.
@@ -2650,6 +2654,7 @@ extension Components {
             ///   - sport:
             ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
             ///   - minutes: How long the workout took, in whole minutes.
+            ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             ///   - workout:
@@ -2657,6 +2662,7 @@ extension Components {
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
                 minutes: Swift.Int? = nil,
+                startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
                 workout: Components.Schemas.WorkoutView? = nil
@@ -2664,6 +2670,7 @@ extension Components {
                 self.sport = sport
                 self.customSport = customSport
                 self.minutes = minutes
+                self.startTime = startTime
                 self.caption = caption
                 self.photos = photos
                 self.workout = workout
@@ -2672,6 +2679,7 @@ extension Components {
                 case sport
                 case customSport
                 case minutes
+                case startTime
                 case caption
                 case photos
                 case workout
@@ -3470,6 +3478,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/minutes`.
             public var minutes: Swift.Int?
+            /// When it started, on the member's clock on its day, as HH:mm.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Training/startTime`.
+            public var startTime: Swift.String?
             /// Trimmed, then 1 to 60 characters as people see them, on one line.
             ///
             /// - Remark: Generated from `#/components/schemas/Training/caption`.
@@ -3486,6 +3498,7 @@ extension Components {
             ///   - sport:
             ///   - customSport: Trimmed, then 1 to 20 characters as people see them, on one line.
             ///   - minutes: How long the workout took, in whole minutes.
+            ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             ///   - workout:
@@ -3493,6 +3506,7 @@ extension Components {
                 sport: Components.Schemas.Sport,
                 customSport: Swift.String? = nil,
                 minutes: Swift.Int? = nil,
+                startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil,
                 workout: Components.Schemas.Workout? = nil
@@ -3500,6 +3514,7 @@ extension Components {
                 self.sport = sport
                 self.customSport = customSport
                 self.minutes = minutes
+                self.startTime = startTime
                 self.caption = caption
                 self.photos = photos
                 self.workout = workout
@@ -3508,6 +3523,7 @@ extension Components {
                 case sport
                 case customSport
                 case minutes
+                case startTime
                 case caption
                 case photos
                 case workout

@@ -43,7 +43,8 @@ struct RecapTag: View {
                 }
             }
             .frame(minHeight: Sizing.tag)
-            .contentShape(Capsule())
+            // A small tag, tapped at the full 44 points.
+            .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Sizing.tag) / 2))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isSeen ? Text("今日赛况", bundle: .module) : Text("今日赛况，还没看", bundle: .module))

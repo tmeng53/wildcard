@@ -128,6 +128,11 @@ public actor InMemoryMeService: MeService {
         current.jerseyNumber = jerseyNumber
     }
 
+    public func save(birthday: Birthday?) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.birthday = birthday
+    }
+
     public func setDailyPush(_ isOn: Bool) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.dailyPushOn = isOn

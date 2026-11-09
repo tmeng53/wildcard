@@ -125,6 +125,8 @@ struct CoachStage: View {
                 figure
             }
             .padding(.horizontal, Space.s + 2)
+            // A bubble that wraps keeps clear of the stage's top; the caller's stage grows for it.
+            .padding(.top, Space.s + 2)
             .padding(.bottom, floor * CoachMetrics.feet)
         }
     }

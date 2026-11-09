@@ -177,6 +177,16 @@
         }
       }
     },
+    "已回应 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reacted %@"
+          }
+        }
+      }
+    },
     "我的回应 %@，换一个": {
       "localizations": {
         "en": {

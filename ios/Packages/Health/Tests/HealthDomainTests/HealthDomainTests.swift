@@ -87,8 +87,7 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
 }
 
 @Test func zonesArePlacedFromTheBirthdayAndRestingRateOnly() throws {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+    let utc = try #require(TimeZone(identifier: "UTC"))
     let curve = [HeartRatePoint(seconds: 0, bpm: 100), HeartRatePoint(seconds: 60, bpm: 150)]
     // 2026-11-08 12:00 UTC.
     let workout = Workout(
@@ -97,9 +96,20 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
         endedAt: Timestamp(millisecondsSince1970: 1_794_139_260_000), summary: WorkoutSummary(avgHr: 125),
         series: WorkoutSeries(heartRate: curve), tilePosition: 1)
     let imported = ImportedWorkout(workout: workout, activity: nil, restingBpm: 60)
-    let zoned = imported.withZones(birthday: DateComponents(year: 1992, month: 3, day: 1), calendar: calendar)
-    #expect(zoned.series?.zones == HeartRateZones(age: 34, restingBpm: 60))
-    #expect(zoned.series?.heartRate == curve)
-    #expect(zoned.tilePosition == 1)
-    #expect(imported.withZones(birthday: nil, calendar: calendar) == workout)
+    let born = Birthday(sent: try LocalDay("1992-03-01"))
+    let zoned = imported.withZones(birthday: born, in: utc)
+    #expect(zoned.workout.series?.zones == HeartRateZones(age: 34, restingBpm: 60))
+    #expect(zoned.workout.series?.heartRate == curve)
+    #expect(zoned.workout.tilePosition == 1)
+    #expect(zoned.restingBpm == 60)
+    // The day before their birthday they are still a year younger.
+    let tomorrow = Birthday(sent: try LocalDay("1992-11-09"))
+    #expect(
+        imported.withZones(birthday: tomorrow, in: utc).workout.series?.zones
+            == HeartRateZones(age: 33, restingBpm: 60))
+    #expect(imported.withZones(birthday: nil, in: utc) == imported)
+    // Without resting heart rate, the zones come from the highest rate alone.
+    let unrested = ImportedWorkout(workout: workout, activity: nil)
+    #expect(
+        unrested.withZones(birthday: born, in: utc).workout.series?.zones == HeartRateZones(age: 34, restingBpm: nil))
 }

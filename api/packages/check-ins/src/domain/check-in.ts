@@ -49,11 +49,22 @@ export const WorkoutMinutes = z
   .meta({ description: 'How long the workout took, in whole minutes.' });
 export type WorkoutMinutes = z.infer<typeof WorkoutMinutes>;
 
+/**
+ * When a 训练 started, on the member's own clock on its day, as `HH:mm` (24 hours). Optional;
+ * a workout from Apple Health carries its own start instead.
+ */
+export const StartTime = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+  .meta({ description: "When it started, on the member's clock on its day, as HH:mm." });
+export type StartTime = z.infer<typeof StartTime>;
+
 // The fields kept in `check_ins.payload`, and with photos, the fields the app sends.
 export const storedTrainingFields = {
   sport: SportKey,
   customSport: CustomSportName.optional(),
   minutes: WorkoutMinutes.optional(),
+  startTime: StartTime.optional(),
   caption: Caption.optional(),
 };
 const trainingFields = {

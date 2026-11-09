@@ -59,8 +59,10 @@ extension TodayModel {
     /// The day's challenge I accepted from the coach, while its day lasts.
     var myChallenge: DayChallenge? { store.acceptedChallenge }
 
-    /// 我完成了 on today's challenge.
+    /// 我完成了 on today's challenge: the coach who set it claps.
     func completeChallenge() {
+        guard myChallenge?.challenge.completedBy == nil else { return }
+        cast.coachClaps()
         Task { await store.completeChallenge() }
     }
 

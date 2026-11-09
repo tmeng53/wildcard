@@ -22,6 +22,18 @@
 	     public by design. Empty, as in Debug, reports nothing. -->
 	<key>WildcardSentryDSN</key>
 	<string>$(WILDCARD_SENTRY_DSN)</string>
+	<!-- wildcard://widget/…: where a tap on a home screen widget opens the app (WidgetLink). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.wildcardsquad.wildcard.widget</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wildcard</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Plain HTTP to this Mac's local backend from the simulator; every other host stays HTTPS. -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

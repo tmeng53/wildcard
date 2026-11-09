@@ -11,6 +11,7 @@ public actor InMemorySignUpService: SignUpService {
     private let sample: JoinedSquad
     private(set) var character: NewCharacter?
     private(set) var plan: [PlanDay]?
+    private(set) var birthday: Birthday?
     private(set) var squad: JoinedSquad?
     private(set) var agreedToAI = false
     private(set) var scene: SceneID?
@@ -70,6 +71,10 @@ public actor InMemorySignUpService: SignUpService {
 
     public func save(_ character: NewCharacter) async throws(SignUpError) {
         self.character = character
+    }
+
+    public func save(birthday: Birthday) async throws(SignUpError) {
+        self.birthday = birthday
     }
 
     public func savePlan(_ days: [PlanDay]) async throws(SignUpError) {

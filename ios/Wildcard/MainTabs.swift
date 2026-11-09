@@ -42,6 +42,10 @@ struct MainTabs: View {
     @Binding var destination: AppDestination?
     /// The member left the squad on its page.
     var leftSquad: () -> Void = {}
+    /// 通知 was told a teammate moved the squad: the app reads the squad's scene again.
+    var sceneMoved: () -> Void = {}
+    /// Bumped each time a push arrives while the app is in front, which the app tells itself.
+    var pushesInFront = 0
     /// 设置's 预览注册, for admins; nil for everyone else.
     var previewSignUp: (() -> Void)?
     /// 设置 › 位置: the phone's approximate location for the coach's weather.
@@ -83,8 +87,10 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
-        location: LocationSharing? = nil, leftSquad: @escaping () -> Void = {}
+        location: LocationSharing? = nil, pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {},
+        leftSquad: @escaping () -> Void = {}
     ) {
+        (self.pushesInFront, self.sceneMoved) = (pushesInFront, sceneMoved)
         self.previewSignUp = previewSignUp
         self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
@@ -117,13 +123,6 @@ struct MainTabs: View {
                     badge: { WardrobeBadge($0, item: $1) }, picture: { WardrobePicture($0, item: $1) })
             )
         }
-        // A broadcast (群发通知) not yet seen in 通知 drops in on 今天 once on this phone, once the
-        // home says whose it is; its button opens what its 通知 row opens.
-        // So does a higher squad goal suggested to the captain, whose button opens 小队.
-        .onChange(of: bannerNotices, initial: true) {
-            tellBroadcasts()
-            tellGoalSuggestions()
-        }
         // A tapped push's place.
         .onChange(of: destination, initial: true) { _, asked in
             guard let asked else { return }
@@ -147,6 +146,7 @@ struct MainTabs: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await profile.reload() } }
         }
+        .placesZones(from: profile, in: today.health)
         .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
             if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
         }
@@ -177,6 +177,13 @@ struct MainTabs: View {
         // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
         .celebrationPopup(today)
         .onChange(of: homeInFront, initial: true) { today.isHomeInFront = $1 }
+        // Every notice told while the app is open, as a banner over any page (`TabNotices`).
+        .modifier(
+            TabNotices(
+                today: today, inbox: inbox, covered: tabsCovered, pushesInFront: pushesInFront,
+                waiting: bannerNotices, tellWaiting: tellWaiting,
+                tellToldLive: tellToldLive)
+        )
         .onChange(of: squad.hasLeft) { _, left in
             guard left else { return }
             leftSquad()
@@ -195,13 +202,6 @@ struct MainTabs: View {
             selection = .today
         }
         Task { await today.dropIn(on: scene, coveredAt: coveredAt) }
-    }
-
-    /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.
-    func openWardrobe(_ kind: Unlock.Kind, item: String) {
-        selection = .profile
-        closeProfilePages()
-        Task { await wardrobe.open(kind, item: item) }
     }
 
     /// A tab's full-screen step (writing a check-in, a scene pick's reveal), 通知, and a page pushed

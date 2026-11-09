@@ -99,7 +99,7 @@ extension Training {
     var wire: Components.Schemas.Training {
         .init(
             sport: activity.wireSport, customSport: activity.wireCustomSport, minutes: minutes?.value,
-            caption: caption?.text, photos: photos?.wire, workout: workout?.wire)
+            startTime: startTime?.wire, caption: caption?.text, photos: photos?.wire, workout: workout?.wire)
     }
 }
 
@@ -116,6 +116,7 @@ extension Training {
         self.init(
             activity: try Activity(sport: wire.sport, customSport: wire.customSport),
             minutes: try wire.minutes.map(WorkoutMinutes.init),
+            startTime: try wire.startTime.map { (text) throws(ContractsError) in try StartTime(wire: text) },
             photos: try Photos(wire: wire.photos, postedAt: postedAt),
             caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
     }

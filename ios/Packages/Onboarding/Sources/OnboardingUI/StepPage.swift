@@ -78,10 +78,12 @@ struct StepButton: View {
     }
 }
 
-/// What went wrong with the step's last call, in a line above its button.
+/// What went wrong with the step's last call, in a line above its button. VoiceOver moves to it
+/// as it shows, so a failure is heard, not only seen.
 struct FailureLine: View {
     let failure: SignUpError?
     @Environment(\.sceneTheme) private var theme
+    @AccessibilityFocusState private var heard: Bool
 
     var body: some View {
         if let failure {
@@ -92,6 +94,8 @@ struct FailureLine: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Space.xxs)
                 .accessibilityIdentifier("signup.failure")
+                .accessibilityFocused($heard)
+                .onAppear { heard = true }
         }
     }
 

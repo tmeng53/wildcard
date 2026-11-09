@@ -826,6 +826,34 @@ describe('/squads/{squadId}/coach/cards', () => {
     await fire(mate, squad);
   });
 
+  it("shows only the day's newest challenge when a second note came that day", async () => {
+    // An admin's delivered preview and the morning's wake both write a note with a challenge;
+    // the newest one is the day's, so the older challenge doesn't show twice (Tracy, 2026-11-09).
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    await hire(mate, squad);
+    const path = `/squads/${squad}/coach/cards`;
+    const note = async (title: string) => {
+      const written = await sql<{ id: string }>`
+        insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
+        values (${squad}, ${mate.userId}, 'xiaohun', current_date, '热身', ${title})
+        returning id`.execute(db);
+      const id = String(written.rows[0]?.id);
+      await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(
+        db,
+      );
+      return id;
+    };
+    const first = await note('热身');
+    const second = await note('肩髋热身');
+    const cards = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    const all = ids([...cards.stack, ...cards.earlier]);
+    expect(all.filter((id) => id.startsWith('challenge:'))).toStrictEqual([`challenge:${second}`]);
+    expect(all).toContain(`note:${first}`);
+    expect(all).toContain(`note:${second}`);
+    await fire(mate, squad);
+  });
+
   it('still reads once the caller swiped cards of a kind that is no longer one', async () => {
     // Before 2026-11-09 the coach's replies and answers were cards too; their seen marks stay.
     const mate = await signUp();

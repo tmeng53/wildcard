@@ -60,8 +60,11 @@ public struct ComposeView: View {
                             if model.workout != nil {
                                 ScoreRow(model: model)
                             } else {
-                                MinutesRow(minutes: $model.minutes, isRuling: $isRulingMinutes)
-                                    .id(Self.minutesID)
+                                MinutesRow(
+                                    startTime: $model.startTime, minutes: $model.minutes,
+                                    isRuling: $isRulingMinutes
+                                )
+                                .id(Self.minutesID)
                             }
                         }
                         if model.sendFailed {
@@ -207,18 +210,26 @@ private struct SportRow: View {
     }
 }
 
-/// How long it took, if the member wants to say: the usual lengths one tap each (tap again to
-/// clear), and 其他 for any other length on a ruler, which starts on the length last picked.
+/// When it started and how long it took, if the member wants to say: the start on its clock
+/// pill, then the usual lengths one tap each (tap again to clear), and 其他 for any other length
+/// on a ruler, which starts on the length last picked.
 private struct MinutesRow: View {
+    @Environment(\.sceneTheme) private var theme
+    @Binding var startTime: StartTime?
     @Binding var minutes: WorkoutMinutes?
     @Binding var isRuling: Bool
     @State private var ruled = Self.rulerStart
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("时长 · 分钟", bundle: .module))
+            SectionLabel(Text("开始 · 时长", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
+                    StartTimePill(startTime: $startTime)
+                    Rectangle()
+                        .fill(Color(role: .borderDefault, in: theme))
+                        .frame(width: 1, height: Self.dividerHeight)
+                        .accessibilityHidden(true)
                     ForEach(Self.quickPicks, id: \.self) { value in
                         let isPicked = !isRuling && minutes?.value == value
                         PickPill(Text(verbatim: "\(value)"), look: .solid, isSelected: isPicked) {
@@ -260,5 +271,6 @@ private struct MinutesRow: View {
     /// Where the ruler starts when no usual length was picked first.
     private static let rulerStart = 60
     private static let quickPicks = [30, 60, 90]
+    private static let dividerHeight: Double = 20
 }
 #endif
