@@ -10,9 +10,9 @@ import HomeWidgetDomain
 import SwiftUI
 
 /// 小队今天, the medium widget: the squad's week as the squad card's first page counts it, with
-/// 打卡 under it (or, while Health has a workout to post, its 打卡 capsule), and on the right who
-/// checked in today, ringed as on home, under the coach, who wears its ink dot while it has a
-/// card I haven't seen.
+/// 打卡 under it, and on the right who checked in today, ringed as on home, under the coach, who
+/// wears its ink dot while it has a card I haven't seen. While Health has a workout to post, its
+/// 打卡 capsule runs across the foot in place of 打卡, and stays with 已打卡 once it is posted.
 public struct SquadWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
@@ -25,13 +25,25 @@ public struct SquadWidget<Post: View>: View {
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: Space.m) {
-            week
-            today
-                .frame(width: WidgetMetrics.ringed * 4 + Space.xxs * 3)
+        VStack(spacing: Space.xs) {
+            HStack(alignment: .top, spacing: Space.m) {
+                week
+                today
+                    .frame(width: WidgetMetrics.ringed * 4 + Space.xxs * 3)
+            }
+            if let workout = board.workout {
+                Spacer(minLength: 0)
+                WorkoutCapsule(workout: workout, size: .medium) { post(workout) }
+            } else if let posted = board.postedWorkout {
+                Spacer(minLength: 0)
+                WorkoutCapsule(workout: posted, size: .medium) { PostedWorkoutLabel() }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+
+    /// Whether the capsule runs across the foot, where 打卡 would be.
+    private var hasCapsule: Bool { board.workout != nil || board.postedWorkout != nil }
 
     private var week: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -49,10 +61,8 @@ public struct SquadWidget<Post: View>: View {
             .lineLimit(1)
             DayCells(filled: board.squad.trainedDays, total: board.squad.plannedDays)
                 .padding(.top, Space.xxs)
-            Spacer(minLength: Space.xs)
-            if let workout = board.workout {
-                WorkoutCapsule(workout: workout) { post(workout) }
-            } else {
+            if !hasCapsule {
+                Spacer(minLength: Space.xs)
                 checkIn
             }
         }

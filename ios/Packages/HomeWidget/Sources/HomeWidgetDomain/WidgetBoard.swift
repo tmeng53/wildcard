@@ -46,6 +46,9 @@ public struct WidgetBoard: Hashable, Sendable {
     /// Today's newest workout in Health I haven't posted or put away from 今天's card, of a sport
     /// on the list: what the widgets' 打卡 capsule posts. Nil when there is none.
     public let workout: ImportedWorkout?
+    /// While there is none, today's newest workout I posted, which the capsule keeps showing with
+    /// 已打卡 once its 打卡 went out. Nil when I posted none from Health today.
+    public let postedWorkout: ImportedWorkout?
 
     /// - Parameters:
     ///   - home: the home as last loaded; moved on to `day` when it is from an earlier one.
@@ -80,8 +83,9 @@ public struct WidgetBoard: Hashable, Sendable {
         self.coachHasNews = coachHasNews
         // One Health has no sport of the list for is picked by hand in the app, so the widgets
         // leave it out.
-        workout = health.filter { $0.activity != nil }.today(day, in: home.timeZone, posted: home.postedWorkouts)
-            .newestToPost(skipping: putAway)
+        let todays = health.filter { $0.activity != nil }.today(day, in: home.timeZone, posted: home.postedWorkouts)
+        workout = todays.newestToPost(skipping: putAway)
+        postedWorkout = workout == nil ? todays.first(where: \.isPosted)?.imported : nil
     }
 
     /// How many in the squad checked in today: 今天 x/y.

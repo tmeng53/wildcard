@@ -18,8 +18,18 @@ public final class HealthConnection {
     /// The workouts put away from the home's card on this phone; the card offers the next one.
     public private(set) var putAway: Set<WorkoutSource>
     /// The birthday the member chose to give on their profile, which places a heart-rate
-    /// chart's zones; nil without one. Never read from Health.
-    public var birthday: Birthday?
+    /// chart's zones; nil without one. Never read from Health. Kept on this phone with the rest,
+    /// so a post from the home screen widgets places them too.
+    public var birthday: Birthday? {
+        didSet {
+            guard birthday != oldValue else { return }
+            if let birthday {
+                defaults.set(birthday.description, forKey: Self.birthdayKey)
+            } else {
+                defaults.removeObject(forKey: Self.birthdayKey)
+            }
+        }
+    }
 
     /// `putAway` in the order put away, oldest first.
     @ObservationIgnored private var stored: [WorkoutSource]
@@ -38,6 +48,7 @@ public final class HealthConnection {
             defaults.data(forKey: Self.putAwayKey).flatMap { try? JSONDecoder().decode(PutAway.self, from: $0) }
             .flatMap { $0.version == 1 ? $0.workouts : nil } ?? []
         putAway = Set(stored)
+        birthday = defaults.string(forKey: Self.birthdayKey).flatMap { try? LocalDay($0) }.map(Birthday.init(sent:))
     }
 
     /// Takes `workout` off the home's card for good on this phone; it can still be posted from 打卡.
@@ -94,6 +105,7 @@ public final class HealthConnection {
 
     private static let sharingKey = "health.sharing"
     private static let putAwayKey = "health.putAway"
+    private static let birthdayKey = "health.birthday"
     private static let putAwayLimit = 50
 
     /// What `putAway` keeps on the phone.

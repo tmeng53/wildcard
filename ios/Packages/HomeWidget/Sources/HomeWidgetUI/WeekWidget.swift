@@ -13,7 +13,8 @@ import SwiftUI
 
 /// 我的一周, the small widget: my week's x/y, whether I trained today, my character standing in
 /// the corner and the week's days along the bottom, as the squad card's second page draws them;
-/// while Health has a workout to post, its 打卡 capsule stands in for the days.
+/// while Health has a workout to post, its 打卡 capsule stands in for the days, and stays with
+/// 已打卡 once it is posted.
 public struct WeekWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
@@ -31,6 +32,8 @@ public struct WeekWidget<Post: View>: View {
             Spacer(minLength: Space.xs)
             if let workout = board.workout {
                 WorkoutCapsule(workout: workout) { post(workout) }
+            } else if let posted = board.postedWorkout {
+                WorkoutCapsule(workout: posted) { PostedWorkoutLabel() }
             } else {
                 WeekDayRow(days: days, today: board.week.today, size: .tiny)
             }

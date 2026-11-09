@@ -135,6 +135,13 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
     #expect(
         WidgetBoard(home: home(checkIns: [posted(late, by: mate)]), day: tuesday, health: [late]).workout?.id.id
             == "late")
+    // Once both are posted, the newest posted stays, for 已打卡; never while one is to post.
+    let both = WidgetBoard(home: home(checkIns: [posted(late), posted(early)]), day: tuesday, health: [early, late])
+    #expect(both.workout == nil)
+    #expect(both.postedWorkout?.id.id == "late")
+    #expect(
+        WidgetBoard(home: home(checkIns: [posted(late)]), day: tuesday, health: [early, late]).postedWorkout == nil)
+    #expect(offered.postedWorkout == nil)
     // Put away from 今天's card on this phone.
     #expect(WidgetBoard(home: home(), day: tuesday, health: [late], putAway: [late.id]).workout == nil)
     #expect(WidgetBoard(home: home(), day: tuesday, health: [yesterday]).workout == nil)
@@ -152,10 +159,12 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
                 HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150),
             ]),
             route: [RoutePoint(lat: 34.05, lon: -118.25), RoutePoint(lat: 34.06, lon: -118.24)]),
-        activity: .sport("run"))
+        activity: .sport("run"), restingBpm: 60)
+    let born = (try? LocalDay("1995-03-01")).map(Birthday.init(sent:))
     let board = WidgetBoard(home: home(), day: tuesday, health: [workout])
     let now = Timestamp(tuesdayMorning)
-    let post = board.checkIn(posting: "late", from: home(), sharing: HealthSharing(), id: CheckInID(id(60)), at: now)
+    let post = board.checkIn(
+        posting: "late", from: home(), sharing: HealthSharing(), id: CheckInID(id(60)), at: now)
     #expect(post?.member == viewer)
     #expect(post?.day == tuesday)
     #expect(post?.audience == (try? Audience([squadID])))
@@ -171,7 +180,9 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
     // Routes off in 设置 › Apple 健康: the chart alone, as the cover.
     var noRoute = HealthSharing()
     noRoute.route = false
-    let chartOnly = board.checkIn(posting: "late", from: home(), sharing: noRoute, id: CheckInID(id(61)), at: now)
+    // With my birthday, the board's workout carries the chart's zones, as the app places them.
+    let zoned = WidgetBoard(home: home(), day: tuesday, health: [workout.withZones(birthday: born, in: losAngeles)])
+    let chartOnly = zoned.checkIn(posting: "late", from: home(), sharing: noRoute, id: CheckInID(id(61)), at: now)
     guard case .trained(let charted) = chartOnly?.entry else {
         Issue.record("a 训练")
         return
@@ -179,7 +190,11 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
     #expect(charted.workout?.route == nil)
     #expect(charted.workout?.tilePosition == 1)
     #expect(charted.workout?.series != nil)
+    #expect(charted.workout?.series?.zones != nil)
+    #expect(training.workout?.series?.zones == nil)
     // Only the workout the board still offers.
     #expect(
-        board.checkIn(posting: "early", from: home(), sharing: HealthSharing(), id: CheckInID(id(62)), at: now) == nil)
+        board.checkIn(
+            posting: "early", from: home(), sharing: HealthSharing(), id: CheckInID(id(62)), at: now)
+            == nil)
 }

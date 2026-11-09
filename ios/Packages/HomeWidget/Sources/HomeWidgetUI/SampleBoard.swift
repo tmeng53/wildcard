@@ -8,7 +8,10 @@ import HomeWidgetDomain
 /// them trained today, and I trained twice this week but not yet today; with `workout`, a 32
 /// minute run Health synced at noon, which the 打卡 capsule offers.
 public enum SampleBoard {
-    public static func board(on day: LocalDay, workout: Bool = false) -> WidgetBoard {
+    /// - Parameters:
+    ///   - workout: with a run Health synced today.
+    ///   - posted: that run already posted from the capsule.
+    public static func board(on day: LocalDay, workout: Bool = false, posted: Bool = false) -> WidgetBoard {
         let people = (1...4).map { MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID()) }
         let viewer = people[0]
         let monday = day.weekStart
@@ -30,8 +33,21 @@ public enum SampleBoard {
         let home = Home(
             member: viewer, timeZone: .gmt,
             squad: Squad(id: today.squad, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: people, captain: viewer),
-            today: today, plan: plan(of: viewer, from: monday), checkIns: [])
-        return WidgetBoard(home: home, day: day, health: workout ? [run(on: day)] : [])
+            today: today, plan: plan(of: viewer, from: monday),
+            checkIns: posted ? [checkIn(of: run(on: day), by: viewer, to: today.squad, on: day)] : [])
+        return WidgetBoard(home: home, day: day, health: workout || posted ? [run(on: day)] : [])
+    }
+
+    /// My 训练 posted from `run`.
+    private static func checkIn(of run: ImportedWorkout, by member: MemberID, to squad: SquadID, on day: LocalDay)
+        -> CheckIn
+    {
+        guard let audience = try? Audience([squad]), let activity = run.activity else {
+            fatalError("one squad and a listed sport are always a post")
+        }
+        return CheckIn(
+            id: CheckInID(UUID()), member: member, day: day, createdAt: run.workout.endedAt, audience: audience,
+            entry: .trained(Training(activity: activity, minutes: run.minutes, workout: run.workout)))
     }
 
     /// A 32 minute, 5.2 km run ending at noon on `day`, on the sample home's clock (GMT).

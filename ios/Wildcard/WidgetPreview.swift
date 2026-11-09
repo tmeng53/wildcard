@@ -18,6 +18,7 @@ struct WidgetPreview: View {
         // With a run Health synced: the 打卡 capsule. Its 打卡 is an App Intent in the widget;
         // here it is only its label.
         let synced = SampleBoard.board(on: day, workout: true)
+        let posted = SampleBoard.board(on: day, posted: true)
         ScrollView {
             VStack(spacing: Space.l) {
                 HStack(spacing: Space.l) {
@@ -29,9 +30,15 @@ struct WidgetPreview: View {
                 face(
                     SquadWidget(board: board) { _ in PostWorkoutLabel() }, width: Self.medium,
                     identifier: "widget.squad")
-                face(
-                    WeekWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.small,
-                    identifier: "widget.weekWorkout")
+                HStack(spacing: Space.l) {
+                    face(
+                        WeekWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.small,
+                        identifier: "widget.weekWorkout")
+                    // Once posted: the capsule stays, with 已打卡.
+                    face(
+                        WeekWidget(board: posted) { _ in PostWorkoutLabel() }, width: Self.small,
+                        identifier: "widget.weekPosted")
+                }
                 face(
                     SquadWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.medium,
                     identifier: "widget.squadWorkout")

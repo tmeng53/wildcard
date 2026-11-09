@@ -36,6 +36,7 @@ final class WidgetUITests: XCTestCase {
     private func assertContentInside(_ app: XCUIApplication) {
         for name in [
             "widget.week", "widget.notice", "widget.squad", "widget.weekWorkout", "widget.squadWorkout",
+            "widget.weekPosted",
         ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.waitForExistence(timeout: Self.wait), "\(name) didn't show")
@@ -54,6 +55,9 @@ final class WidgetUITests: XCTestCase {
             XCTAssertTrue(widget.descendants(matching: .any)["widget.workout"].exists, "\(name): no workout")
             XCTAssertTrue(widget.descendants(matching: .any)["widget.postWorkout"].exists, "\(name): no 打卡")
         }
+        let posted = app.otherElements["widget.weekPosted"].descendants(matching: .any)
+        XCTAssertTrue(posted["widget.postedWorkout"].exists, "widget.weekPosted: no 已打卡")
+        XCTAssertFalse(posted["widget.postWorkout"].exists, "widget.weekPosted: 打卡 again")
         Thread.sleep(forTimeInterval: 0.8)
     }
 

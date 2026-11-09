@@ -10,14 +10,21 @@ import SwiftUI
 /// 「跑步 32 分钟 · 5.2 公里」 and 打卡, which posts it there and then. Widgets can't draw Liquid
 /// Glass, so it is the card's shape on the subtle fill with a hairline; the home screen's tinted
 /// and clear styles turn it to glass themselves. The distance goes first, then the minutes, when
-/// the line is too long for the widget.
+/// the line is too long for the widget. Once posted it stays, its button 已打卡.
 public struct WorkoutCapsule<Post: View>: View {
+    /// The small widget's line, or the medium one's larger, across its whole width.
+    public enum Size: Sendable {
+        case small, medium
+    }
+
     @Environment(\.sceneTheme) private var theme
     private let workout: ImportedWorkout
+    private let size: Size
     private let post: Post
 
-    public init(workout: ImportedWorkout, @ViewBuilder post: () -> Post) {
+    public init(workout: ImportedWorkout, size: Size = .small, @ViewBuilder post: () -> Post) {
         self.workout = workout
+        self.size = size
         self.post = post()
     }
 
@@ -46,7 +53,7 @@ public struct WorkoutCapsule<Post: View>: View {
 
     private func line(minutes: WorkoutMinutes?, summary: WorkoutSummary) -> some View {
         WorkoutSummaryLine(activity: workout.activity, minutes: minutes, summary: summary)
-            .typeStyle(TypeRamp.footnoteEmphasis)
+            .typeStyle(size == .medium ? TypeRamp.calloutEmphasis : TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
             .fixedSize()
@@ -68,6 +75,23 @@ public struct PostWorkoutLabel: View {
             .frame(height: WidgetMetrics.capsuleButton)
             .background(Color(role: .bgInk, in: theme), in: Capsule())
             .accessibilityIdentifier("widget.postWorkout")
+    }
+}
+
+/// The capsule's button once its workout is posted: 已打卡, greyed, doing nothing.
+public struct PostedWorkoutLabel: View {
+    @Environment(\.sceneTheme) private var theme
+
+    public init() {}
+
+    public var body: some View {
+        Text("已打卡", bundle: .module)
+            .typeStyle(TypeRamp.footnoteEmphasis)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+            .padding(.horizontal, Space.s)
+            .frame(height: WidgetMetrics.capsuleButton)
+            .background(Color(role: .bgCanvas, in: theme), in: Capsule())
+            .accessibilityIdentifier("widget.postedWorkout")
     }
 }
 #endif

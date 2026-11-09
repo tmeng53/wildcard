@@ -103,12 +103,15 @@ struct HealthRead {
     var putAway: Set<WorkoutSource> = []
     /// What a post from Health carries unless struck, as 设置 › Apple 健康 says.
     var sharing = HealthSharing()
+    /// The birthday the app keeps for the chart's zones.
+    var birthday: Birthday?
 
     @MainActor static func now(_ detail: HealthKitLibrary.Detail = .numbers) async -> HealthRead {
         guard let defaults = AppGroup.defaults else { return HealthRead() }
         let library = HealthKitLibrary(defaults: defaults, detail: detail, asksForNewTypes: false)
         let health = HealthConnection(library: library, defaults: defaults)
         await health.refresh()
-        return HealthRead(workouts: health.recent, putAway: health.putAway, sharing: health.sharing)
+        return HealthRead(
+            workouts: health.recent, putAway: health.putAway, sharing: health.sharing, birthday: health.birthday)
     }
 }

@@ -2,6 +2,7 @@ import AppIntents
 import CheckInDomain
 import Contracts
 import Foundation
+import HealthDomain
 import HealthUI
 import HomeWidgetDomain
 
@@ -33,7 +34,10 @@ struct PostWorkoutIntent: AppIntent {
         let health = await HealthRead.now(.full)
         let now = Date()
         let board = WidgetBoard(
-            home: home, day: LocalDay(at: now, in: home.timeZone), health: health.workouts, putAway: health.putAway)
+            home: home, day: LocalDay(at: now, in: home.timeZone),
+            // The chart's zones placed for my birthday, as the app places them.
+            health: health.workouts.map { $0.withZones(birthday: health.birthday, in: home.timeZone) },
+            putAway: health.putAway)
         guard
             let checkIn = board.checkIn(
                 posting: workout, from: home, sharing: health.sharing, id: CheckInID(UUID()), at: Timestamp(now))
