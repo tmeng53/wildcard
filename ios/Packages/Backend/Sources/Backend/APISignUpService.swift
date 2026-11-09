@@ -94,7 +94,6 @@ public struct APISignUpService: SignUpService {
         let (member, today) = try await signUp { () throws(APIError) in
             (try await api.me().id, try await api.today(of: squad.id))
         }
-        let mine = today.myWeek.week
         return JoinedSquad(
             id: squad.id, name: squad.name,
             teammates: squad.members.compactMap { id in
@@ -105,7 +104,7 @@ public struct APISignUpService: SignUpService {
                     persona: Persona(character.look))
             },
             weekGoal: max(today.squadWeek.plannedDays - today.squadDaysPerMember, 0),
-            weekDone: max(today.squadWeek.trainedDays - mine.trainedDays, 0),
+            weekDone: today.squadWeek.trainedDays,
             daysPerMember: today.squadDaysPerMember)
     }
 

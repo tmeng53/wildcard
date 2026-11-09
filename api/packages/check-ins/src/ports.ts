@@ -115,7 +115,7 @@ export interface SquadMembership {
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**
-   * The squad's weekly goal for the week starting `week` (a Monday, `YYYY-MM-DD`): how many days
+   * The squad's weekly goal for the week starting `week` (a Monday, `YYYY-MM-DD`): how many times
    * each member trains on average (人均 N 次), as its captain set it.
    */
   daysPerMember(squad: SquadId, week: string): Promise<number>;

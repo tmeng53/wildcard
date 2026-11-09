@@ -6,7 +6,7 @@ import SquadDomain
 import SwiftUI
 
 /// 小队's 每周目标 (approved 2026-11-06): the goal and how the squad did lately as two
-/// scoreboard numbers on graphite, 「目标 · 人均 3 次」 and 「最近 4 周 · 人均 3.4 天」 (left out
+/// scoreboard numbers on graphite, 「目标 · 人均 3 次」 and 「最近 4 周 · 人均 3.4 次」 (left out
 /// until a week has finished). The captain picks 1 to 7 under them; a change counts from next
 /// week, which the line under the card says. Everyone else reads it only.
 struct SquadGoalCard: View {
@@ -72,7 +72,7 @@ struct SquadGoalCard: View {
     }
 }
 
-/// One of the card's numbers: its label over the number in Barlow and 天.
+/// One of the card's numbers: its label over the number in Barlow and 次.
 private struct Figure: View {
     let label: Text
     let value: Text

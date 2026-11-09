@@ -64,7 +64,7 @@ public struct JoinedSquad: Hashable, Sendable {
     /// The squad's goal this week (小队本周目标) before the member joined, in days; the member
     /// adds `daysPerMember` to it.
     public let weekGoal: Int
-    /// Days the squad has trained this week.
+    /// The 训练 sent to the squad this week (人均 N 次 counts them).
     public let weekDone: Int
     /// The goal its captain set, 人均 N 次.
     public let daysPerMember: Int

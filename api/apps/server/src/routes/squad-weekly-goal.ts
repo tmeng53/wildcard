@@ -72,7 +72,8 @@ function weeksBefore(week: WeekStart, weeks: number): WeekStart {
 /**
  * `GET` and `PUT /squads/{squadId}/weekly-goal`: the squad's weekly goal (小队每周目标, 人均 N 次)
  * and how the squad did lately (小队页's 每周目标). It spans modules: the squads keep the goal
- * and who was in the squad when, the check-ins count the days trained and each member's week.
+ * and who was in the squad when, the check-ins count the 训练 sent to the squad in each
+ * member's week.
  */
 export function squadWeeklyGoal(deps: {
   readonly verifyToken: VerifyToken;

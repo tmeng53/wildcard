@@ -13,7 +13,7 @@ public struct SquadDraft: Hashable, Sendable {
     public var typedCode: String
     /// The name as typed; `name` reads it.
     public var typedName: String
-    /// 小队目标 for a squad being made: each member's days a week, 人均 N 次. The captain
+    /// 小队目标 for a squad being made: each member's 训练 a week, 人均 N 次. The captain
     /// changes it later on 小队.
     public var daysPerMember = SquadWeeklyGoal.defaultDaysPerMember
 
