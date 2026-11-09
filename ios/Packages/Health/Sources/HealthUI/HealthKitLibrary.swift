@@ -8,8 +8,8 @@ import HealthKit
 /// Apple Health through HealthKit, read only: the only code that knows HealthKit. Each workout
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
-/// thinned, and its heart rate or lap times for the chart. Calories, weight and sleep are never
-/// read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+/// thinned, its heart rate or lap times for the chart, and its active calories. Weight and sleep
+/// are never read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
@@ -36,8 +36,17 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
     }
 
+    /// A member who connected before this build added a read type (active calories) was never
+    /// asked for it; Health shows its sheet again for just the new types, once.
+    private func askForTypesAddedSinceConnecting() async {
+        let status = try? await store.statusForAuthorizationRequest(toShare: [], read: Self.readTypes)
+        guard status == .shouldRequest else { return }
+        try? await store.requestAuthorization(toShare: [], read: Self.readTypes)
+    }
+
     public func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout] {
         guard await isConnected() else { return [] }
+        await askForTypesAddedSinceConnecting()
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictEndDate)
         let query = HKSampleQueryDescriptor(
             predicates: [.workout(window)], sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
