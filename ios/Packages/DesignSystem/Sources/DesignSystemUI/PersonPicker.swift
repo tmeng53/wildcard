@@ -78,26 +78,4 @@ public struct PersonPicker<Person: Identifiable, Head: View>: View {
         .accessibilityLabel(Text("提到谁", bundle: .module))
     }
 }
-
-/// Words with each 「@名字」 of the people they @ in bold and underlined, as comments and the
-/// composer show them. Only the names given count, so an @ of no one stays plain.
-public enum MentionHighlight {
-    public static func attributed(_ text: String, names: some Sequence<String>) -> AttributedString {
-        var result = AttributedString(text)
-        // Longest first, so 「@毛头头」 isn't styled as 「@毛头」 and the rest.
-        let tokens = Set(names.filter { !$0.isEmpty }.map { "@\($0)" }).sorted { $0.count > $1.count }
-        var styled: [Range<AttributedString.Index>] = []
-        for token in tokens {
-            var from = result.startIndex
-            while from < result.endIndex, let found = result[from...].range(of: token) {
-                from = found.upperBound
-                guard !styled.contains(where: { $0.overlaps(found) }) else { continue }
-                styled.append(found)
-                result[found].inlinePresentationIntent = .stronglyEmphasized
-                result[found].underlineStyle = .single
-            }
-        }
-        return result
-    }
-}
 #endif

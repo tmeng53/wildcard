@@ -21,8 +21,10 @@ struct CardComments: View {
         } label: {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 if let reply = model.coachReply(on: post.id), let text = reply.text {
-                    CoachCommentLine(coach: reply.coach, text: text)
-                        .lineLimit(2)
+                    CoachCommentLine(
+                        coach: reply.coach, text: text, words: model.words(of: text, mentioning: reply.mentions)
+                    )
+                    .lineLimit(2)
                 }
                 let answers = model.coachAnswers(on: post.id)
                 ForEach(post.threadOnCard(answers: answers)) { entry in
@@ -32,7 +34,9 @@ struct CardComments: View {
                             .lineLimit(2)
                     case .answer(let answer, let member):
                         CoachCommentLine(
-                            coach: answer.coach, text: answer.text, recipient: model.displayName(of: member)
+                            coach: answer.coach, text: answer.text,
+                            words: model.words(of: answer.text, mentioning: answer.mentions),
+                            recipient: model.displayName(of: member)
                         )
                         .lineLimit(2)
                     }
@@ -49,6 +53,7 @@ struct CardComments: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
+            .mentionTags(model)
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityHint(Text("看全部评论", bundle: .module))
@@ -72,7 +77,7 @@ struct CommentLine: View {
 
     private var line: Text {
         let name = Text(verbatim: model.displayName(of: comment.member)).fontWeight(.semibold)
-        let words = Text(model.words(of: comment))
+        let words = model.words(of: comment).text(in: theme)
         guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
             return Text("\(name)  \(words)", bundle: .module)
         }

@@ -44,6 +44,7 @@ const LOGGED = [
   'nickname',
   'look',
   'jersey_number',
+  'birthday',
   'equipped_title',
   'language',
 ] as const;
@@ -54,7 +55,14 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
     async find(member) {
       const row = await db
         .selectFrom('profiles')
-        .select(['time_zone', 'catchphrase', 'nickname', 'look', 'jersey_number'])
+        .select([
+          'time_zone',
+          'catchphrase',
+          'nickname',
+          'look',
+          'jersey_number',
+          sql<string | null>`birthday::text`.as('birthday'),
+        ])
         .where('member_id', '=', member)
         .executeTakeFirst();
       return row === undefined
@@ -64,6 +72,7 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
             catchphrase: row.catchphrase,
             character: characterOf(row),
             jerseyNumber: row.jersey_number,
+            birthday: row.birthday,
           });
     },
 
@@ -106,6 +115,30 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
             .set({ equipped_title: title })
             .where('member_id', '=', member)
             .where(sql<boolean>`equipped_title is distinct from ${title}::text`)
+            .returning(LOGGED),
+        )
+        .insertInto('profile_events')
+        .columns(LOGGED)
+        .expression((eb) => eb.selectFrom('saved').select(LOGGED))
+        .execute();
+      const row = await db
+        .selectFrom('profiles')
+        .select('member_id')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row !== undefined;
+    },
+
+    async saveBirthday(member, birthday) {
+      // One statement, like a save: the change and its log entry together, neither when it is
+      // the birthday saved already.
+      await db
+        .with('saved', (cte) =>
+          cte
+            .updateTable('profiles')
+            .set({ birthday })
+            .where('member_id', '=', member)
+            .where(sql<boolean>`birthday is distinct from ${birthday}::date`)
             .returning(LOGGED),
         )
         .insertInto('profile_events')

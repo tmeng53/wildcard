@@ -73,7 +73,7 @@ public struct PostDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
                     PostCard(model: model, post: post)
-                    comments(post)
+                    comments(post).mentionTags(model)
                 }
                 .padding(.horizontal, Space.pageMargin)
                 .padding(.top, Space.xs)
@@ -116,7 +116,9 @@ public struct PostDetailView: View {
                 SectionLabel(Text("评论 \(count)", bundle: .module))
                 if let coach, let text = coach.text {
                     replyToCoach(coach.coach) {
-                        CoachCommentRow(model: model, coach: coach.coach, text: text, writtenAt: coach.writtenAt)
+                        CoachCommentRow(
+                            model: model, coach: coach.coach, text: text, mentions: coach.mentions,
+                            writtenAt: coach.writtenAt)
                     }
                     .accessibilityIdentifier("post.coachComment")
                 }
@@ -127,8 +129,8 @@ public struct PostDetailView: View {
                     case .answer(let answer, let member):
                         replyToCoach(answer.coach) {
                             CoachCommentRow(
-                                model: model, coach: answer.coach, text: answer.text, writtenAt: answer.writtenAt,
-                                recipient: model.displayName(of: member))
+                                model: model, coach: answer.coach, text: answer.text, mentions: answer.mentions,
+                                writtenAt: answer.writtenAt, recipient: model.displayName(of: member))
                         }
                         .accessibilityIdentifier("post.coachAnswer")
                         .id(entry.id)
@@ -140,14 +142,18 @@ public struct PostDetailView: View {
 
     /// The coach's line or answer, which a tap replies to (回复 毛头), as a teammate's comment.
     private func replyToCoach(_ coach: CoachSpeaker, @ViewBuilder label: () -> some View) -> some View {
-        Button {
-            model.replyingTo = .coach(coach.id)
-            isTyping = true
-        } label: {
-            label().contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint(Text("回复", bundle: .module))
+        // A tap, not a button, so a tap on an @ tag in it opens that teammate's card instead.
+        label()
+            .contentShape(Rectangle())
+            .onTapGesture { replyToCoach(coach) }
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { replyToCoach(coach) }
+            .accessibilityHint(Text("回复", bundle: .module))
+    }
+
+    private func replyToCoach(_ coach: CoachSpeaker) {
+        model.replyingTo = .coach(coach.id)
+        isTyping = true
     }
 
     /// A comment: the writer's head, name and time, then 回复 and whom, then the words. A tap
@@ -225,7 +231,7 @@ public struct PostDetailView: View {
 
     /// 回复 Mia：the words, with 回复 and the name in grey.
     private func words(of comment: Comment) -> Text {
-        let words = Text(model.words(of: comment))
+        let words = model.words(of: comment).text(in: theme)
         guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else { return words }
         let reply = Text("回复 \(recipient)：", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))

@@ -1,4 +1,6 @@
 import {
+  type Adoption,
+  type AdoptionKind,
   FEEDBACK_MAX_LENGTH,
   FeedbackBody,
   FEEDBACK_MAX_SCREENSHOTS,
@@ -9,7 +11,12 @@ import {
   type FiledIssue,
   type MemberId,
 } from '../domain/feedback.js';
-import { FeedbackIdTakenError, FeedbackInvalidError, FeedbackLimitError } from '../errors.js';
+import {
+  FeedbackIdTakenError,
+  FeedbackInvalidError,
+  FeedbackLimitError,
+  FeedbackMissingError,
+} from '../errors.js';
 import type { Clock, FeedbackStore } from '../ports.js';
 
 export interface SendFeedbackInput {
@@ -35,6 +42,32 @@ export interface FeedbackInbox {
   toFile(olderThanMs: number, limit: number): Promise<Feedback[]>;
   /** Keeps the issue a message was filed as. */
   filed(id: FeedbackId, issue: FiledIssue): Promise<void>;
+}
+
+/** Which messages we used, for admins: only one adopts a message, after checking it. */
+export interface FeedbackAdoptions {
+  /**
+   * Keeps that `admin` adopted message `id` as `kind`; adopting it again keeps the first, with
+   * `fresh` false. Throws `FeedbackMissingError` for a message that isn't there.
+   */
+  adopt(request: {
+    readonly id: FeedbackId;
+    readonly kind: AdoptionKind;
+    readonly admin: MemberId;
+  }): Promise<{ readonly adoption: Adoption; readonly fresh: boolean }>;
+}
+
+export function createFeedbackAdoptions(deps: {
+  readonly store: Pick<FeedbackStore, 'adopt'>;
+  readonly clock: Clock;
+}): FeedbackAdoptions {
+  return {
+    async adopt({ id, kind, admin }) {
+      const kept = await deps.store.adopt({ feedback: id, kind, admin, at: deps.clock() });
+      if (kept === undefined) throw new FeedbackMissingError(id);
+      return kept;
+    },
+  };
 }
 
 /** How many messages a member may send in a day, so a stuck button can't flood the tracker. */

@@ -1,6 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
 import {
+  AdoptionKind,
   FeedbackId,
   FeedbackKind,
   MemberId,
@@ -98,6 +99,36 @@ export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): Feedbac
         .values({ feedback_id: id, number, url, at })
         .onConflict((conflict) => conflict.column('feedback_id').doNothing())
         .execute();
+    },
+
+    async adopt({ feedback, kind, admin, at }) {
+      const sent = await db
+        .selectFrom('feedback')
+        .select('member_id')
+        .where('id', '=', feedback)
+        .executeTakeFirst();
+      if (sent === undefined) return undefined;
+      const inserted = await db
+        .insertInto('feedback_adoptions')
+        .values({ feedback_id: feedback, kind, admin_id: admin, at })
+        .onConflict((conflict) => conflict.column('feedback_id').doNothing())
+        .returning('feedback_id')
+        .executeTakeFirst();
+      const kept = await db
+        .selectFrom('feedback_adoptions')
+        .selectAll()
+        .where('feedback_id', '=', feedback)
+        .executeTakeFirstOrThrow();
+      return {
+        adoption: {
+          feedback,
+          member: MemberId.parse(sent.member_id),
+          kind: AdoptionKind.parse(kept.kind),
+          admin: MemberId.parse(kept.admin_id),
+          at: new Date(kept.at),
+        },
+        fresh: inserted !== undefined,
+      };
     },
   };
 }

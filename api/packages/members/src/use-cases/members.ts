@@ -1,6 +1,6 @@
 import type { ReaderLanguage } from '@wildcard/language-model';
 
-import type { EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
+import type { Birthday, EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
 import { ProfileMissingError } from '../errors.js';
 import type { PastLocalHour, ProfileStore } from '../ports.js';
 import { findProfile } from './members/find-profile.js';
@@ -20,6 +20,11 @@ export interface Members {
    * the caller's to check. Throws `ProfileMissingError` before they have a profile.
    */
   equipTitle(member: MemberId, title: EquippedTitle | null): Promise<void>;
+  /**
+   * Saves the member's birthday, or removes it for null. Throws `ProfileMissingError` before they
+   * have a profile.
+   */
+  saveBirthday(member: MemberId, birthday: Birthday | null): Promise<void>;
   /**
    * Keeps the language the member's app speaks, for the AI to write to them in. Says whether it
    * was kept: not before they have a profile.
@@ -52,6 +57,9 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     squadmates: (members) => deps.store.squadmates(members),
     equipTitle: async (member, title) => {
       if (!(await deps.store.equipTitle(member, title))) throw new ProfileMissingError();
+    },
+    saveBirthday: async (member, birthday) => {
+      if (!(await deps.store.saveBirthday(member, birthday))) throw new ProfileMissingError();
     },
     saveLanguage: (member, language) => deps.store.saveLanguage(member, language),
     languages: (members) => deps.store.languages(members),
