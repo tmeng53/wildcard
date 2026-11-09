@@ -252,11 +252,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         return saved.length > 0;
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         return db
           .selectFrom('coach_notes')
           .select([sql<string>`to_char(day, 'YYYY-MM-DD')`.as('day'), 'text'])
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .orderBy('coach_notes.day', 'desc')
           .limit(limit)
           .execute();
@@ -342,11 +343,12 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           : { coach: CoachId.parse(row.coach_id), text: row.text ?? undefined };
       },
 
-      async recent(squad, limit) {
+      async recent({ squad, coach, limit }) {
         const rows = await db
           .selectFrom('coach_replies')
           .select('emoji')
           .where('squad_id', '=', squad)
+          .where('coach_id', '=', coach)
           .where('emoji', 'is not', null)
           .orderBy('id', 'desc')
           .limit(limit)

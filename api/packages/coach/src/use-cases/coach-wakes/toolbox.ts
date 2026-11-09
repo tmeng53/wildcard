@@ -163,6 +163,7 @@ const atParameter = z
 export function toolbox({
   week,
   roster,
+  coach,
   draft,
   kind,
   photos,
@@ -176,6 +177,8 @@ export function toolbox({
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
+  /** The coach at work, by id: its own page is `me.md`. */
+  readonly coach: string;
   readonly draft: WakeDraft;
   readonly kind: WakeReason['kind'];
   /** The URLs of the photos of the check-in this wake is about, when it has any to look at. */
@@ -216,13 +219,13 @@ export function toolbox({
         path: z
           .string()
           .describe(
-            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事',
+            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事，me.md 记你自己（只有你读得到）',
           ),
         fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
       kept: ({ path, fact }) => ({ path, fact: `（${String(fact.length)} 字）` }),
       run: ({ path, fact }) => {
-        const stored = storedPathOf(path, roster);
+        const stored = storedPathOf(path, { roster, coach });
         if (stored === undefined) return unknownPath(path);
         const line = fact.trim();
         if (line === '') return 'fact 是空的，写上要记的事。';
@@ -238,7 +241,7 @@ export function toolbox({
       description:
         '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+        path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
@@ -249,7 +252,7 @@ export function toolbox({
         replace: `（${String(replace.length)} 字）`,
       }),
       run: ({ path, find, replace }) => {
-        const stored = storedPathOf(path, roster);
+        const stored = storedPathOf(path, { roster, coach });
         if (stored === undefined) return unknownPath(path);
         const edited = editBody(draft.files.get(stored) ?? '', { find, replace });
         if (!edited.ok) return edited.why;
@@ -403,12 +406,12 @@ export function toolbox({
         name: 'rewrite_file',
         description: `把记性里的一个文件整个换成新写的内容：留下的照写，删掉的不写。body 为空就是清空。不超过 ${String(FILE_LIMIT)} 字。`,
         parameters: z.object({
-          path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+          path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
           body: z.string().describe('这个文件的全部新内容，用队员N称呼人'),
         }),
         kept: ({ path, body }) => ({ path, body: `（${String(body.length)} 字）` }),
         run: ({ path, body }) => {
-          const stored = storedPathOf(path, roster);
+          const stored = storedPathOf(path, { roster, coach });
           if (stored === undefined) return unknownPath(path);
           const next = body.trim();
           if (next.length > FILE_LIMIT) {

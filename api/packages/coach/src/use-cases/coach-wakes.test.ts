@@ -650,6 +650,58 @@ describe('the coach', () => {
     });
   });
 
+  it('keeps each coach’s own page for that coach alone, and gives it back when it returns', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const hiring = createCoachHiring({ hiring: createPostgresCoachHiring(trx), catalog });
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      const nuannuan = CoachId.parse('nuannuan');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+      let says = '我最会偷懒';
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'remember', input: { path: 'me.md', fact: says } },
+      ]);
+      await wakes(fixture, { agent }).run();
+      expect(runs[0]?.answers).toStrictEqual(['记下了，在 me.md。']);
+
+      // 小混's 战术板 lines, which 暖暖 must not take for its own voice.
+      await sql`insert into public.coach_notes (squad_id, coach_id, day, text)
+        values (${squad}, 'xiaohun', '2026-10-30', '我先把沙发热好')`.execute(trx);
+
+      // 暖暖 takes over: it never reads 小混's page or lines, and starts its own.
+      await hiring.change({ squad, coach: nuannuan, by });
+      says = '我说话慢';
+      const seen = runs.length;
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
+      const hers = runs.slice(seen);
+      // Its daily wake, which is told the lines it wrote lately, is among them.
+      expect(hers.some(({ task }) => task.includes('新的一天'))).toBe(true);
+      for (const run of hers) {
+        expect(run.task).not.toContain('我最会偷懒');
+        expect(run.task).not.toContain('我先把沙发热好');
+      }
+
+      // 小混 comes back to his own page, never hers.
+      await hiring.change({ squad, coach: CoachId.parse('xiaohun'), by });
+      const back = runs.length;
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 2 * 86_400_000) }).run();
+      const his = runs[back];
+      expect(his?.task).toContain('【me.md】\n- 我最会偷懒');
+      expect(his?.task).not.toContain('我说话慢');
+
+      const pages = await sql<{ path: string; member_id: string | null }>`
+        select distinct path, member_id from public.coach_files
+        where squad_id = ${squad} and path like 'coaches/%' order by path`.execute(trx);
+      expect(pages.rows).toStrictEqual([
+        { path: 'coaches/nuannuan.md', member_id: null },
+        { path: 'coaches/xiaohun.md', member_id: null },
+      ]);
+    });
+  });
+
   it('knows a coach hired back until it first runs for the squad', async () => {
     await rolledBack(async ({ trx, squad, mia }) => {
       const by = MemberId.parse(mia);
