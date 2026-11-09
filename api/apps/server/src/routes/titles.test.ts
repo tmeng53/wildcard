@@ -463,7 +463,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       character: { nickname: '阿杰', look },
       jerseyNumber: 7,
       squadPlace: 2,
-      trainedDays: 1,
+      // Squadmates count only what was shared to this squad: the run went elsewhere.
+      trainedDays: 0,
       healthyMeals: 0,
       cheatMeals: 0,
       disclaimers: 0,
@@ -480,6 +481,9 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       worn: '冷面杀手',
     });
     expect(JSON.stringify(card.body)).not.toContain('别的小队');
+    // The member's own card counts everything they posted, as 我 does.
+    const mine = await call({ method: 'GET', path, token: mate.token });
+    expect(z.object({ trainedDays: z.int() }).parse(mine.body).trainedDays).toBe(1);
     // Their week on the card is the one their own home counts.
     const theirToday = await call({
       method: 'GET',
@@ -557,6 +561,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     });
     expect(days[weekday]).toStrictEqual({ kind: 'train', sport: 'swim' });
     expect(marks.filter((mark) => JSON.stringify(mark) === '{"status":"none"}')).toHaveLength(6);
+    expect(z.object({ trainedDays: z.int() }).parse(again.body).trainedDays).toBe(1);
     // With the swim deleted, and then the run that made the day a training day, it reads as
     // the rest day it was planned as.
     for (const id of [swimId, runId]) {
