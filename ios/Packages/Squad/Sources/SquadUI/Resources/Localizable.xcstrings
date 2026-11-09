@@ -2068,6 +2068,38 @@
           }
         }
       }
+    },
+    "还有 %lld 张 · 右滑收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld more · Swipe right to put away"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有 %lld 張 · 右滑收起"
+          }
+        }
+      }
+    },
+    "最后一张 · 右滑收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last one · Swipe right to put away"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最後一張 · 右滑收起"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

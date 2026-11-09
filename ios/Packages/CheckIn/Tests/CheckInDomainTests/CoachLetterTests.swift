@@ -183,6 +183,7 @@ private func close(_ value: Double, _ expected: Double) -> Bool { abs(value - ex
 @Test func theSealOpensOnlyOnceTheEnvelopeHasLanded() {
     var opening = LetterOpening(shown: start)
     #expect(opening.flight(at: start) == 0)
+    #expect(opening.showsEnvelope(at: start.addingTimeInterval(60)))
     #expect(opening.flight(at: start.addingTimeInterval(0.75)) == 1)
     #expect(close(opening.scrim(at: start.addingTimeInterval(0.4)), 1))
     opening.open(at: start.addingTimeInterval(0.5))
@@ -214,6 +215,8 @@ private func close(_ value: Double, _ expected: Double) -> Bool { abs(value - ex
     #expect(opening.clipsLetter(at: at(1.49)))
     #expect(!opening.clipsLetter(at: at(1.5)))
     #expect(close(opening.drop(at: at(2.06)), 1))
+    #expect(opening.showsEnvelope(at: at(2.05)))
+    #expect(!opening.showsEnvelope(at: at(2.07)))
     #expect(close(opening.unfold(at: at(2.33)).place, 1))
     #expect(close(opening.unfold(at: at(2.4)).height, 1))
     #expect(close(opening.button(at: at(2.08)), 0))
