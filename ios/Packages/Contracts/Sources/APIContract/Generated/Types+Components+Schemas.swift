@@ -7378,6 +7378,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
             public var emoji: Swift.String?
+            /// Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachReply/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachReply`.
@@ -7387,18 +7391,21 @@ extension Components {
             ///   - coach:
             ///   - text: Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///   - mentions: Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 coach: Components.Schemas.CoachReply.CoachPayload,
                 text: Swift.String? = nil,
                 emoji: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.coach = coach
                 self.text = text
                 self.emoji = emoji
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7406,6 +7413,7 @@ extension Components {
                 case coach
                 case text
                 case emoji
+                case mentions
                 case at
             }
         }
@@ -7452,6 +7460,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/text`.
             public var text: Swift.String
+            /// Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachAnswer`.
@@ -7461,18 +7473,21 @@ extension Components {
             ///   - commentId: The member’s reply to the coach (`replyToCoach`) this answers.
             ///   - coach:
             ///   - text: Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 commentId: Swift.String,
                 coach: Components.Schemas.CoachAnswer.CoachPayload,
                 text: Swift.String,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.commentId = commentId
                 self.coach = coach
                 self.text = text
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7480,6 +7495,7 @@ extension Components {
                 case commentId
                 case coach
                 case text
+                case mentions
                 case at
             }
         }
