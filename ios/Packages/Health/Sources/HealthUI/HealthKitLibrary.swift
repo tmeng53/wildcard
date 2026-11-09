@@ -57,6 +57,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         var summary = WorkoutSummary(durationSec: seconds >= 1 ? Int(seconds.rounded()) : nil)
         await addHeartRate(of: workout, kind: kind, to: &summary)
         Self.addDistance(of: workout, kind: kind, to: &summary)
+        Self.addCalories(of: workout, to: &summary)
         var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
@@ -98,6 +99,12 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             predicate: .quantitySample(type: HKQuantityType(.heartRate), predicate: during),
             options: [.discreteAverage, .discreteMax])
         return try? await query.result(for: store)
+    }
+
+    /// The active energy Health has for it, in kilocalories, as the Fitness app shows it.
+    private static func addCalories(of workout: HKWorkout, to summary: inout WorkoutSummary) {
+        let burned = workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()
+        if let kcal = burned?.doubleValue(for: .kilocalorie()), kcal >= 1 { summary.activeEnergyKcal = kcal.rounded() }
     }
 
     /// A pool swim's laps with the pool's length, and each lap's time for its chart; nil without.
@@ -207,7 +214,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         HKQuantityType(.distanceCrossCountrySkiing), HKQuantityType(.distanceRowing),
         HKQuantityType(.distancePaddleSports), HKQuantityType(.distanceSkatingSports),
         HKQuantityType(.distanceWheelchair), HKQuantityType(.workoutEffortScore),
-        HKQuantityType(.estimatedWorkoutEffortScore),
+        HKQuantityType(.estimatedWorkoutEffortScore), HKQuantityType(.activeEnergyBurned),
     ]
     private static let connectedKey = "health.connected"
     private static let workoutsMax = 20

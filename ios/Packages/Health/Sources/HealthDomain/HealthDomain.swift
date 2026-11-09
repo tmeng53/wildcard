@@ -39,8 +39,22 @@ public struct HealthSharing: Hashable, Sendable, Codable {
     /// A swim's 趟数, and a ski day's runs.
     public var laps = true
     public var route = true
+    /// 卡路里, the active energy (Tracy, 2026-11-08); on for settings kept before it.
+    public var calories = true
 
     public init() {}
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        version = try values.decode(Int.self, forKey: .version)
+        distance = try values.decode(Bool.self, forKey: .distance)
+        pace = try values.decode(Bool.self, forKey: .pace)
+        heartRate = try values.decode(Bool.self, forKey: .heartRate)
+        effort = try values.decode(Bool.self, forKey: .effort)
+        laps = try values.decode(Bool.self, forKey: .laps)
+        route = try values.decode(Bool.self, forKey: .route)
+        calories = try values.decodeIfPresent(Bool.self, forKey: .calories) ?? true
+    }
 
     /// The cells a new post from Health starts with struck.
     public var struck: Set<WorkoutCell> {
@@ -50,6 +64,7 @@ public struct HealthSharing: Hashable, Sendable, Codable {
         if !heartRate { cells.formUnion([.averageHeartRate, .maxHeartRate]) }
         if !effort { cells.insert(.effort) }
         if !laps { cells.formUnion([.laps, .runs]) }
+        if !calories { cells.insert(.calories) }
         return cells
     }
 
