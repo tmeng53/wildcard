@@ -142,6 +142,10 @@ describe('the switches', () => {
       expect(seen.on('thanksgiving', '2026-11-05')).toBe(false);
       expect((await switches.statesFor(other)).on('thanksgiving', '2026-11-24')).toBe(false);
       expect((await switches.states())('thanksgiving', '2026-11-24')).toBe(false);
+      // What a previewer keeps counts under the switches as really set, never the preview.
+      const kept = await switches.keptHistoryFor(admin);
+      expect(kept?.('thanksgiving', { at: new Date(), day: '2026-11-06' })).toBe(false);
+      expect(await switches.keptHistoryFor(other)).toBeUndefined();
 
       // Taking them off brings back the real day, and a repeat writes nothing.
       await switches.setView({
@@ -156,6 +160,7 @@ describe('the switches', () => {
       });
       expect(await switches.previewers()).toEqual([]);
       expect((await switches.statesFor(admin)).on('thanksgiving', '2026-11-24')).toBe(false);
+      expect(await switches.keptHistoryFor(admin)).toBeUndefined();
       const { rows } = await sql<{ n: number }>`
         select count(*)::int as n from public.switch_previews where member_id = ${admin}
       `.execute(trx);

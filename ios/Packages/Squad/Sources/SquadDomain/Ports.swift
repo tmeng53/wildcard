@@ -16,7 +16,7 @@ public struct SquadSettings: Hashable, Sendable {
     public var matchTimeZone: SquadTimeZone
     /// The squad's language (小队语言), what its coach and 战报 are written in.
     public var language: SquadLanguage
-    /// The member's day and clock when the page was read, for 「执教第 N 周」 and 「带队 N 天」.
+    /// The member's day and clock when the page was read, for 「执教 N 天」 and 「执教 N 周」.
     public let today: LocalDay
     public let timeZone: TimeZone
 

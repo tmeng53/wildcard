@@ -1016,10 +1016,15 @@ async function threadOf(
   if (!week.members.some(({ member }) => member === answering.member)) return undefined;
   const found = await deps.stores.replies.find(wake.squad, reason.checkIn);
   const reply = found?.coach === coach.id ? found.text : undefined;
-  // A reply to the coach needs something it said; an @ doesn't.
-  if (answering.toCoach !== undefined && reply === undefined) return undefined;
   const answers = await deps.stores.answers.ofCheckIn(wake.squad, reason.checkIn);
   if (answers.some(({ comment }) => comment === reason.comment)) return undefined;
+  // A reply to the coach needs something it said here, its reply to the check-in or an answer
+  // to someone who wrote to it; an @ doesn't.
+  const toThisCoach = new Set(
+    comments.filter((each) => saidTo(each) === coach.id).map(({ id }) => id),
+  );
+  const answered = answers.some(({ comment }) => toThisCoach.has(comment));
+  if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
   // Each answer right after the reply it answers.
   const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
   const said = comments

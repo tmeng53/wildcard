@@ -106,6 +106,12 @@ export function createUnlocks(deps: {
    * one lookup.
    */
   readonly switches: (member: MemberId) => Promise<SwitchOn>;
+  /**
+   * For a member previewing switches, every switch as it really was set at each time, which is
+   * all a grant or claim counts under, so a preview leaves nothing in their account once it ends;
+   * undefined for a member who doesn't preview (and left out where nobody previews).
+   */
+  readonly keptSwitches?: (member: MemberId) => Promise<SwitchOn | undefined>;
   /** Whether a switch by that id exists, for admins naming one. */
   readonly switchListed: (id: string) => Promise<boolean>;
   /** Told what each grant kept new; left out where nobody needs telling. */
@@ -121,16 +127,16 @@ export function createUnlocks(deps: {
     if (kept.length > 0) await deps.unlocked?.(member, kept);
   };
   const standing = async (member: MemberId) => {
-    const [rules, has, stores, pieces, switchOn, claims] = await Promise.all([
+    const [rules, has, stores, pieces, switchOn, kept, claims] = await Promise.all([
       deps.store.rules(),
       deps.store.unlocksOf(member),
       deps.store.stores(),
       deps.store.pieces(),
       deps.switches(member),
+      deps.keptSwitches?.(member),
       deps.store.claimsOf(member),
     ]);
     const now = new Date();
-    const on = (id: string) => switchOn(id, now);
     const held = new Set(has.map(({ kind, id }) => `${kind}:${id}`));
     // A retired store or piece, or a piece in a retired store, is neither earned nor boxed any
     // more; what was earned stays.
@@ -152,37 +158,54 @@ export function createUnlocks(deps: {
             member,
             since: new Date(Math.min(...open.map(({ countsFrom }) => countsFrom.getTime()))),
           });
-    const fresh = earned({ rules: open, trained, has, switchOn });
-    const locked = toGo({ rules: open, trained, switchOn });
+    // Only what the switches as really set earn is granted; a previewer also sees, without
+    // keeping, what their preview earns.
+    const fresh = earned({ rules: open, trained, has, switchOn: kept ?? switchOn });
     if (fresh.length > 0) await grant(member, fresh);
     const unlocks = fresh.length === 0 ? has : await deps.store.unlocksOf(member);
+    const previewed =
+      kept === undefined ? [] : earned({ rules: open, trained, has: unlocks, switchOn });
+    const shown = [...unlocks, ...previewed];
+    const locked = toGo({ rules: open, trained, switchOn });
     const claimed = claims.map(({ piece }) => piece);
+    const street = (on: SwitchOn, holding: readonly Unlock[]) =>
+      shelf({ stores, pieces, rules, has: holding, claimed, locked, on: (id) => on(id, now) });
+    const seen = street(switchOn, shown);
     return {
-      unlocks,
+      unlocks: shown,
       locked,
-      shelf: shelf({ stores, pieces, rules, has: unlocks, claimed, locked, on }),
+      shelf: seen,
+      // What may be kept for them: the street as the switches really are, without the preview.
+      keeps: kept === undefined ? seen : street(kept, unlocks),
     };
   };
+  /** Whether `piece` is `member`'s to keep: owned on their street as the switches really are. */
+  const keeps = (street: Shelf, piece: PieceId) =>
+    street.pieces.some(({ id, state }) => id === piece && state === 'owned');
   return {
     of: async (member) => (await standing(member)).unlocks,
-    standing,
+    async standing(member) {
+      const { unlocks, locked, shelf: street } = await standing(member);
+      return { unlocks, locked, shelf: street };
+    },
 
     claimsOf: (member) => deps.store.claimsOf(member),
 
     async claim(member, piece) {
       // What their training earned since the last read counts, so a piece just reached can be
       // claimed; so does a limited store's starter while it is out (the shelf holds both as theirs).
-      const { shelf: street } = await standing(member);
-      const theirs = street.pieces.some(({ id, state }) => id === piece && state === 'owned');
-      if (!theirs) throw new PieceNotUnlockedError(piece);
+      // A piece owned only in a preview is claimed for the preview without being kept.
+      const { shelf: street, keeps: real } = await standing(member);
+      if (!keeps(street, piece)) throw new PieceNotUnlockedError(piece);
+      if (!keeps(real, piece)) return { piece, claimedAt: new Date() };
       return deps.store.claim(member, piece);
     },
 
     async keepWorn(member, worn) {
       const wears = new Set(worn);
-      const { shelf: street } = await standing(member);
+      const { keeps: real } = await standing(member);
       const claimed = new Set((await deps.store.claimsOf(member)).map(({ piece }) => piece));
-      const toKeep = street.pieces.filter(
+      const toKeep = real.pieces.filter(
         ({ id, state }) => wears.has(id) && state === 'owned' && !claimed.has(id),
       );
       for (const { id } of toKeep) await deps.store.claim(member, id);
