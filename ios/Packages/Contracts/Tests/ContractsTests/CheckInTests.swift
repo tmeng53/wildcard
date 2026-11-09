@@ -101,3 +101,13 @@ func customSportNameHasNoDirectionControls(control: String) {
     #expect(throws: ContractsError.invisibleNickname) { try Nickname("小\u{202E}周") }
     #expect(try Nickname("Ann Lee").text == "Ann Lee")
 }
+
+@Test func startTimeIsATimeOfDayToTheMinute() throws {
+    #expect(try StartTime(hour: 0, minute: 0).wire == "00:00")
+    #expect(try StartTime(hour: 23, minute: 59).wire == "23:59")
+    #expect(try StartTime(wire: "07:30") == StartTime(hour: 7, minute: 30))
+    #expect(throws: ContractsError.startTime("24:0")) { try StartTime(hour: 24, minute: 0) }
+    #expect(throws: ContractsError.startTime("7:30")) { try StartTime(wire: "7:30") }
+    #expect(throws: ContractsError.startTime("07:60")) { try StartTime(wire: "07:60") }
+    #expect(try StartTime(hour: 6, minute: 59) < StartTime(hour: 7, minute: 0))
+}

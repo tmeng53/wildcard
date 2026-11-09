@@ -85,6 +85,19 @@ private func saved(_ kindAndFields: String) -> String {
     }
 }
 
+@Test func startTimeGoesWithTheSportBothWays() throws {
+    let training = Training(activity: .sport("run"), startTime: try StartTime(hour: 6, minute: 5))
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""kind":"trained","training":{"sport":"run","startTime":"06:05"},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","startTime":"06:05"}"#))
+            == checkIn(.trained(training)))
+    #expect(throws: ContractsError.startTime("24:00")) {
+        try decode(saved(#""kind":"trained","training":{"sport":"run","startTime":"24:00"}"#))
+    }
+}
+
 @Test func savedTrainingReadsWithItsPhotoURLs() throws {
     let json = saved(
         #""kind":"trained","training":{"sport":"swim","caption":"一千米","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a?token=1"}]}"#
