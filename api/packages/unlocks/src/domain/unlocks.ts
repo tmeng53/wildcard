@@ -350,7 +350,9 @@ export const UnlockRuleEdit = z
       .int()
       .min(1)
       .max(AFTER_MAX)
-      .describe('On how many different days 训练 in those sports open it; many on one day count once.'),
+      .describe(
+        'On how many different days 训练 in those sports open it; many on one day count once.',
+      ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

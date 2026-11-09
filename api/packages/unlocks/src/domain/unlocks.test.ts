@@ -110,7 +110,7 @@ describe('earned', () => {
     const trained = ['a', 'b', 'c'].map((id, index) => ({
       id,
       sport: 'custom',
-      day: `2026-11-0${index + 2}`,
+      day: `2026-11-0${String(index + 2)}`,
       madeAt: at(index + 1),
     }));
     expect(earned({ rules: [deuce, halfmoon], trained, has: [], switchOn: allYear })).toMatchObject(
@@ -119,7 +119,7 @@ describe('earned', () => {
   });
 
   it('counts days, not posts: many 训练 on one day count once', () => {
-    const skiDay = (id: string, day: string, minutes: number) => ({
+    const skiDay = (id: string, { day, minutes }: { day: string; minutes: number }) => ({
       id,
       sport: 'ski',
       day,
@@ -133,7 +133,9 @@ describe('earned', () => {
       countsFrom: start,
       switchIds: [],
     };
-    const oneDay = Array.from({ length: 30 }, (_, index) => skiDay(`a${index}`, '2026-11-03', index));
+    const oneDay = Array.from({ length: 30 }, (_, index) =>
+      skiDay(`a${String(index)}`, { day: '2026-11-03', minutes: index }),
+    );
     expect(earned({ rules: [tuna], trained: oneDay, has: [], switchOn: allYear })).toStrictEqual(
       [],
     );
@@ -141,7 +143,11 @@ describe('earned', () => {
       { kind: 'piece', id: 'powder-tuna', toGo: 2, sports: ['ski'] },
     ]);
     // A 补打卡 for an earlier day counts as its own day, opening it when it is made.
-    const more = [...oneDay, skiDay('b', '2026-11-04', 1500), skiDay('c', '2026-11-02', 1600)];
+    const more = [
+      ...oneDay,
+      skiDay('b', { day: '2026-11-04', minutes: 1500 }),
+      skiDay('c', { day: '2026-11-02', minutes: 1600 }),
+    ];
     expect(earned({ rules: [tuna], trained: more, has: [], switchOn: allYear })).toMatchObject([
       { id: 'powder-tuna', by: { checkIn: 'c' }, unlockedAt: at(1600) },
     ]);

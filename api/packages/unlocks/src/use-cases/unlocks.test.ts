@@ -274,7 +274,7 @@ describe('unlocks', () => {
       id: randomUUID(),
       sport: 'tennis',
       // Each on a day of its own, since a rule counts days.
-      day: `2099-01-0${minutes}`,
+      day: `2099-01-0${String(minutes)}`,
       madeAt: new Date(now + minutes * 60_000),
     }));
     trained.set(me, tennis.slice(0, 1));

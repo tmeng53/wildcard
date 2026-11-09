@@ -63,11 +63,10 @@ const LockedPiece = z
       description: 'The sports whose 训练 count towards it; empty for any sport.',
       example: ['run', 'walk'],
     }),
-    checkInsToGo: z
-      .int()
-      .min(1)
-      .max(AFTER_MAX)
-      .meta({ description: 'How many more days of 训练 in its sports open it (many on one day count once).', example: 2 }),
+    checkInsToGo: z.int().min(1).max(AFTER_MAX).meta({
+      description: 'How many more days of 训练 in its sports open it (many on one day count once).',
+      example: 2,
+    }),
   })
   .openapi('LockedPiece');
 
@@ -103,11 +102,10 @@ const ShelfPiece = z
       description: 'The sports whose 训练 count towards it; empty for any sport.',
       example: ['ski', 'snowboard'],
     }),
-    checkIns: z
-      .int()
-      .min(0)
-      .max(AFTER_MAX)
-      .meta({ description: 'On how many different days of 训练 it opens; 0 for a starter.', example: 1 }),
+    checkIns: z.int().min(0).max(AFTER_MAX).meta({
+      description: 'On how many different days of 训练 it opens; 0 for a starter.',
+      example: 1,
+    }),
   })
   .openapi('ShelfPiece');
 const GiftedPiece = z
