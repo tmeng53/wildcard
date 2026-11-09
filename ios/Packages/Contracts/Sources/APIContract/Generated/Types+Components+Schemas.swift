@@ -7542,11 +7542,11 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/CoachPageCard`.
         public struct CoachPageCard: Codable, Hashable, Sendable {
-            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
+            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/kind`.
             public var kind: Swift.String
-            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.
+            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/id`.
             public var id: Swift.String
@@ -7560,7 +7560,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/day`.
             public var day: Swift.String?
-            /// What the coach said, on a `board`, `note`, `reply` or `answer`.
+            /// What the coach said, on a `board` or `note`.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/text`.
             public var text: Swift.String?
@@ -7595,14 +7595,6 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
             public var challenge: Components.Schemas.CoachPageCard.ChallengePayload?
-            /// The caller’s check-in a `reply` is on, or an `answer`’s post.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachPageCard/checkInId`.
-            public var checkInId: Swift.String?
-            /// The caller’s reply an `answer` answers.
-            ///
-            /// - Remark: Generated from `#/components/schemas/CoachPageCard/commentId`.
-            public var commentId: Swift.String?
             /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
@@ -7655,15 +7647,13 @@ extension Components {
             /// Creates a new `CoachPageCard`.
             ///
             /// - Parameters:
-            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.
-            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.
+            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
+            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
             ///   - coach:
             ///   - at: When it came: a note when it was delivered, a `challengeDone` when marked.
             ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
-            ///   - text: What the coach said, on a `board`, `note`, `reply` or `answer`.
+            ///   - text: What the coach said, on a `board` or `note`.
             ///   - challenge:
-            ///   - checkInId: The caller’s check-in a `reply` is on, or an `answer`’s post.
-            ///   - commentId: The caller’s reply an `answer` answers.
             ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
             public init(
                 kind: Swift.String,
@@ -7673,8 +7663,6 @@ extension Components {
                 day: Swift.String? = nil,
                 text: Swift.String? = nil,
                 challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
-                checkInId: Swift.String? = nil,
-                commentId: Swift.String? = nil,
                 gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
             ) {
                 self.kind = kind
@@ -7684,8 +7672,6 @@ extension Components {
                 self.day = day
                 self.text = text
                 self.challenge = challenge
-                self.checkInId = checkInId
-                self.commentId = commentId
                 self.gift = gift
             }
             public enum CodingKeys: String, CodingKey {
@@ -7696,8 +7682,6 @@ extension Components {
                 case day
                 case text
                 case challenge
-                case checkInId
-                case commentId
                 case gift
             }
         }

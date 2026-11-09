@@ -19830,7 +19830,7 @@ public enum Operations {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours are the stack; the rest are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -20188,8 +20188,6 @@ public enum Operations {
                     case challenge = "challenge"
                     case challengeDone = "challengeDone"
                     case gift = "gift"
-                    case reply = "reply"
-                    case answer = "answer"
                 }
                 /// - Remark: Generated from `#/paths/squads/{squadId}/coach/cards/{kind}/{cardId}/seen/PUT/path/kind`.
                 public var kind: Operations.MarkCoachCardSeen.Input.Path.KindPayload

@@ -22,7 +22,8 @@ public enum CoachChallengeAnswer: String, Hashable, Sendable {
 
 /// One thing the squad's coach has for the member on the coach page (Tracy, 2026-11-08): a card in
 /// the stack until the member swipes it away (seen), then in 以前. The server keeps which cards
-/// were seen, so another phone shows the same stack.
+/// were seen, so another phone shows the same stack. The coach's lines to the member's check-ins
+/// and replies aren't cards: they stay under the posts in 动态 (Tracy, 2026-11-09).
 public struct CoachPageCard: Hashable, Sendable, Identifiable {
     /// What the card is about. The server may add kinds; a card of a kind this build doesn't know
     /// is left out when read.
@@ -35,10 +36,6 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
         case challenge
         /// 送你的: a piece from the coach's gift pool, unopened until 拆开.
         case gift
-        /// 回复了你的训练: the coach's line under the member's check-in.
-        case reply
-        /// 回复了你: the coach's answer to the member's reply to it.
-        case answer
     }
 
     /// A day's challenge: a short title, maybe an amount in the coach's own unit, and the line the
@@ -105,23 +102,17 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
     public let time: Date
     /// The day it is for, on the squad's clock, for a board line, note or challenge.
     public let day: LocalDay?
-    /// What the coach said, for a board line, note, reply or answer.
+    /// What the coach said, for a board line or note.
     public let text: String?
     public let challenge: Challenge?
     public let gift: Gift?
-    /// The member's check-in a reply or answer is under.
-    public let checkIn: CheckInID?
-    /// The member's reply an answer answers.
-    public let comment: CommentID?
 
     public init(
         kind: Kind, id: String, coach: CoachSpeaker, look: String, time: Date, day: LocalDay? = nil,
-        text: String? = nil,
-        challenge: Challenge? = nil, gift: Gift? = nil, checkIn: CheckInID? = nil, comment: CommentID? = nil
+        text: String? = nil, challenge: Challenge? = nil, gift: Gift? = nil
     ) {
         (self.kind, self.id, self.coach, self.look, self.time) = (kind, id, coach, look, time)
-        (self.day, self.text) = (day, text)
-        (self.challenge, self.gift, self.checkIn, self.comment) = (challenge, gift, checkIn, comment)
+        (self.day, self.text, self.challenge, self.gift) = (day, text, challenge, gift)
     }
 
     /// The same card with its challenge or gift as it stands now.
@@ -129,7 +120,7 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
         CoachPageCard(
             kind: kind, id: id, coach: coach, look: look, time: time, day: day, text: text,
             challenge: challenge ?? self.challenge,
-            gift: gift ?? self.gift, checkIn: checkIn, comment: comment)
+            gift: gift ?? self.gift)
     }
 
     /// What tells two cards apart: the same id may stand for a note and its challenge.

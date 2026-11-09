@@ -139,14 +139,8 @@ public struct APICheckInBackend: CheckInBackend {
         } catch { throw CheckInError(error) }
     }
 
-    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
-        var notes: [CoachMemberNote] = []
-        for squad in squads {
-            do {
-                if let note = try await api.coachActivity(of: squad).memberNote { notes.append(note) }
-            } catch { throw CheckInError(error) }
-        }
-        return notes
+    public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool {
+        do { return !(try await api.coachCards(in: squad).stack.isEmpty) } catch { throw CheckInError(error) }
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {

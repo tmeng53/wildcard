@@ -22,9 +22,7 @@ extension CoachPageCard {
         self.init(
             kind: kind, id: wire.id, coach: try CoachSpeaker(wire.coach), look: wire.coach.look, time: wire.at,
             day: try wire.day.map { day throws(ContractsError) in try LocalDay(day) }, text: wire.text,
-            challenge: challenge, gift: gift,
-            checkIn: try wire.checkInId.map { id throws(ContractsError) in try CheckInID(wire: id) },
-            comment: try wire.commentId.map { id throws(ContractsError) in try CommentID(wire: id) })
+            challenge: challenge, gift: gift)
     }
 }
 

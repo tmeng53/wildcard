@@ -1437,18 +1437,18 @@
         }
       }
     },
-    "今天的都看过了。": {
+    "暂时没有新消息": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All caught up for today."
+            "value": "No new messages"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "今天的都看過了。"
+            "value": "暫時沒有新消息"
           }
         }
       }
@@ -1529,54 +1529,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "去衣櫥看看"
-          }
-        }
-      }
-    },
-    "回他": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reply"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回他"
-          }
-        }
-      }
-    },
-    "回复了你": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replied to you"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回覆了你"
-          }
-        }
-      }
-    },
-    "回复了你的训练": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Replied to your workout"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回覆了你的訓練"
           }
         }
       }
@@ -1865,22 +1817,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "送你的"
-          }
-        }
-      }
-    },
-    "配速比上周快了，不错。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Faster pace than last week. Nice."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "配速比上週快了，不錯。"
           }
         }
       }

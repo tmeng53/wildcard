@@ -10,8 +10,6 @@ import SwiftUI
 public struct CoachDeckPlaces {
     /// 去动态看看, under a line to the squad.
     public let feed: () -> Void
-    /// 回他, under a reply to the member's check-in or an answer to their reply.
-    public let post: (CheckInID) -> Void
     /// 去衣橱看看, after a gift is opened: the wardrobe wearing it.
     public let wardrobe: (String) -> Void
     /// 招聘会, 简历 and 以前, top right.
@@ -24,11 +22,11 @@ public struct CoachDeckPlaces {
     public let giftName: (String) -> Text
 
     public init(
-        feed: @escaping () -> Void, post: @escaping (CheckInID) -> Void, wardrobe: @escaping (String) -> Void,
+        feed: @escaping () -> Void, wardrobe: @escaping (String) -> Void,
         market: @escaping () -> Void, resume: @escaping () -> Void, earlier: @escaping () -> Void,
         giftPicture: @escaping (String) -> AnyView, giftName: @escaping (String) -> Text
     ) {
-        (self.feed, self.post, self.wardrobe) = (feed, post, wardrobe)
+        (self.feed, self.wardrobe) = (feed, wardrobe)
         (self.market, self.resume, self.earlier) = (market, resume, earlier)
         (self.giftPicture, self.giftName) = (giftPicture, giftName)
     }
@@ -141,11 +139,11 @@ struct CoachDeckCard: View {
                 if let challenge = shown.challenge { ChallengeFace(challenge: challenge, stamped: stamped) }
             case .gift:
                 if let gift = shown.gift { giftFace(gift) }
-            case .board, .note, .reply, .answer:
+            case .board, .note:
                 big(Text(verbatim: shown.text ?? ""))
             }
         } else {
-            big(Text("今天的都看过了。", bundle: .module))
+            big(Text("暂时没有新消息", bundle: .module))
         }
     }
 
@@ -222,10 +220,6 @@ struct CoachDeckCard: View {
             switch shown.kind {
             case .board:
                 primary(Text("去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
-            case .reply, .answer:
-                if let post = shown.checkIn {
-                    primary(Text("回他", bundle: .module), id: "coachDeck.reply") { places.post(post) }
-                }
             case .gift:
                 giftButtons(shown)
             case .note, .challenge:
@@ -279,8 +273,6 @@ struct CoachDeckCard: View {
         case .note: Text("今天对你说", bundle: .module)
         case .challenge: Text("今日挑战", bundle: .module)
         case .gift: Text("送你的", bundle: .module)
-        case .reply: Text("回复了你的训练", bundle: .module)
-        case .answer: Text("回复了你", bundle: .module)
         }
     }
 
@@ -290,7 +282,6 @@ struct CoachDeckCard: View {
         case .note: nil
         case .challenge: "flag.fill"
         case .gift: "gift.fill"
-        case .reply, .answer: "bubble.left.fill"
         }
     }
 

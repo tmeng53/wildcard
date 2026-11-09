@@ -183,12 +183,12 @@ actor ScriptedBackend: CheckInBackend {
         return serverCoach
     }
 
-    private var serverNotes: [CoachMemberNote] = []
-    func set(notes: [CoachMemberNote]) { serverNotes = notes }
+    private var serverUnseenCards = false
+    func set(unseenCoachCards: Bool) { serverUnseenCards = unseenCoachCards }
 
-    func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
+    func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool {
         if let failure { throw failure }
-        return squads.compactMap { squad in serverNotes.first { $0.squad == squad } }
+        return serverUnseenCards
     }
 
     var serverChallenge: DayChallenge?

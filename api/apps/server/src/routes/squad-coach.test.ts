@@ -635,7 +635,7 @@ describe('/squads/{squadId}/coach/cards', () => {
   const ids = (cards: readonly { kind: string; id: string }[]) =>
     cards.map(({ kind, id }) => `${kind}:${id}`);
 
-  it('stacks what the coach said to the caller, oldest first, and moves a seen card to 以前', async () => {
+  it('stacks what the coach has for the caller, oldest first, and moves a seen card to 以前', async () => {
     const [captain, mate] = [await signUp(), await signUp()];
     const squad = await squadOf(captain, mate);
     const path = `/squads/${squad}/coach/cards`;
@@ -674,19 +674,16 @@ describe('/squads/{squadId}/coach/cards', () => {
     const theirs = await checkIn(captain.token, squad);
     await coachSaid(squad, { checkIn: mine, text: '配速比上周快了', emoji: null });
     await coachSaid(squad, { checkIn: theirs, text: '腿还在吗', emoji: null });
-    const reply = await sql<{ id: string }>`select id from public.coach_replies
-      where check_in_id = ${mine}`.execute(db);
 
     const read = await call({ method: 'GET', path, token: mate.token });
     expect(read.status).toBe(200);
     const cards = CardsBody.parse(read.body);
-    // The captain's post's reply is the captain's, not the mate's.
+    // The coach's lines to check-ins stay under the posts in 动态 (Tracy, 2026-11-09).
     expect(ids(cards.stack)).toStrictEqual([
       `board:${today}`,
       `note:${note}`,
       `challenge:${note}`,
       'gift:cards-towel',
-      `reply:${String(reply.rows[0]?.id)}`,
     ]);
     expect(cards.stack[2]).toMatchObject({
       coach: speaker,
@@ -697,7 +694,6 @@ describe('/squads/{squadId}/coach/cards', () => {
       gift: { pieceId: 'cards-towel', line: '练完擦汗' },
       coach: speaker,
     });
-    expect(cards.stack[4]).toMatchObject({ checkInId: mine, text: '配速比上周快了' });
 
     const seen = (kind: string, id: string) =>
       call({ method: 'PUT', path: `${path}/${kind}/${id}/seen`, token: mate.token });
@@ -709,11 +705,7 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect((await seen('note', note)).status).toBe(200);
     expect((await seen('gift', 'cards-towel')).status).toBe(200);
     const after = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
-    expect(ids(after.stack)).toStrictEqual([
-      `board:${today}`,
-      `challenge:${note}`,
-      `reply:${String(reply.rows[0]?.id)}`,
-    ]);
+    expect(ids(after.stack)).toStrictEqual([`board:${today}`, `challenge:${note}`]);
     // 以前 is newest first.
     expect(ids(after.earlier)).toStrictEqual(['gift:cards-towel', `note:${note}`]);
     // Seeing the note also put it away on 今天.
@@ -754,12 +746,12 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(off.status).toBe(200);
     const quiet = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect([...ids(quiet.stack), ...ids(quiet.earlier)].toSorted()).toStrictEqual(
-      [`board:${today}`, 'gift:cards-towel', `reply:${String(reply.rows[0]?.id)}`].toSorted(),
+      [`board:${today}`, 'gift:cards-towel'].toSorted(),
     );
-    // The captain's own stack is theirs: the board line and the reply to their post.
+    // The captain's stack is the board line alone, with no reply to their post.
     expect(
       ids(CardsBody.parse((await call({ method: 'GET', path, token: captain.token })).body).stack),
-    ).toHaveLength(2);
+    ).toStrictEqual([`board:${today}`]);
   });
 
   it('shows the coach marking a challenge done as its own card', async () => {

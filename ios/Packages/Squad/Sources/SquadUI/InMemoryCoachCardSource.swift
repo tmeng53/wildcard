@@ -4,7 +4,7 @@ import Foundation
 import SquadDomain
 
 /// The coach's cards kept in memory, for previews, UI tests and the sample squad: 毛头's line to
-/// the squad, a morning note, a gift, a challenge and a reply, as the approved deck shows them.
+/// the squad, a morning note, a gift and a challenge, as the approved deck shows them.
 public actor InMemoryCoachCardSource: CoachCardSource {
     private var stack: [CoachPageCard]
     private var earlier: [CoachPageCard]
@@ -23,7 +23,6 @@ public actor InMemoryCoachCardSource: CoachCardSource {
         let morning = calendar.date(bySettingHour: 8, minute: 0, second: 0, of: now) ?? now
         let board = calendar.date(bySettingHour: 6, minute: 0, second: 0, of: now) ?? now
         let day = LocalDay(at: now, in: .current)
-        let post = CheckInID(UUID(uuidString: "c0000000-0000-4000-8000-000000000001") ?? UUID())
         let cards = [
             CoachPageCard(
                 kind: .board, id: "board-1", coach: coach, look: coach.id.rawValue, time: board, day: day,
@@ -43,10 +42,6 @@ public actor InMemoryCoachCardSource: CoachCardSource {
                     title: word("拉伸"), amount: 5,
                     unit: word("分钟"),
                     line: word("昨天跑完腿还紧，睡前拉一拉。"))),
-            CoachPageCard(
-                kind: .reply, id: "reply-1", coach: coach, look: coach.id.rawValue,
-                time: morning.addingTimeInterval(4 * 3600 + 40 * 60),
-                text: word("配速比上周快了，不错。"), checkIn: post),
         ]
         return empty
             ? InMemoryCoachCardSource(stack: [], earlier: cards.reversed())

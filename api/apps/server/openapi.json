@@ -4824,12 +4824,12 @@
         "properties": {
           "kind": {
             "type": "string",
-            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
+            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.",
             "example": "challenge"
           },
           "id": {
             "type": "string",
-            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.",
+            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.",
             "example": "42"
           },
           "coach": {
@@ -4847,7 +4847,7 @@
           },
           "text": {
             "type": "string",
-            "description": "What the coach said, on a `board`, `note`, `reply` or `answer`.",
+            "description": "What the coach said, on a `board` or `note`.",
             "example": "配速比上周快了，不错。"
           },
           "challenge": {
@@ -4859,16 +4859,6 @@
                 "description": "A `challenge`’s or `challengeDone`’s challenge."
               }
             ]
-          },
-          "checkInId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s check-in a `reply` is on, or an `answer`’s post."
-          },
-          "commentId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s reply an `answer` answers."
           },
           "gift": {
             "type": "object",
@@ -11735,7 +11725,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
         "security": [
           {
             "bearer": []
@@ -11834,9 +11824,7 @@
                 "note",
                 "challenge",
                 "challengeDone",
-                "gift",
-                "reply",
-                "answer"
+                "gift"
               ]
             },
             "required": true,

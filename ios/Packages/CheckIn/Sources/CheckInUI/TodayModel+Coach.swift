@@ -12,8 +12,8 @@ extension TodayModel {
     /// The coach's 战术板 line while its day lasts, for its 简历.
     public var coachLine: CoachNote? { store.coachLine }
 
-    /// Whether the coach's phone shows its dot: a morning note waits unseen.
-    var coachHasNote: Bool { store.hasWaitingNote }
+    /// Whether the coach's phone shows its dot: its page has a card not seen yet.
+    var coachHasNews: Bool { store.hasUnseenCoachCards }
 
     /// Reads the squad's coach again, after it was hired, changed or fired, and stands the new
     /// one (or its empty spot) on the sideline; also after its page, where a note seen takes the

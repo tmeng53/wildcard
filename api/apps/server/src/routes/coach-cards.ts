@@ -28,8 +28,9 @@ import {
 
 // The coach page (Tracy, 2026-11-08): what the squad's coach said to the caller, a card a thing,
 // stacked in the order it came; a card swiped away is seen and goes to 以前. The cards span
-// modules: the coach's own (its 战术板 line, the caller's morning note and its challenge, its
-// replies and answers to them) and the unlocks module's gifts.
+// modules: the coach's own (its 战术板 line, the caller's morning note and its challenge) and the
+// unlocks module's gifts. Its lines to the caller's check-ins and replies show only under the
+// posts in 动态 (Tracy, 2026-11-09).
 
 const CoachCardBody = z
   .strictObject({
@@ -37,16 +38,14 @@ const CoachCardBody = z
       description:
         '`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), ' +
         '`challengeDone` (the coach marked that challenge done from the caller’s check-ins), ' +
-        '`gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s ' +
-        'reply). More ' +
-        'kinds may come: an app skips a kind it doesn’t know.',
+        'or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. ' +
+        'More kinds may come: an app skips a kind it doesn’t know.',
       example: 'challenge',
     }),
     id: z.string().meta({
       description:
         'The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a ' +
-        'note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or ' +
-        'answer’s id.',
+        'note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.',
       example: '42',
     }),
     coach: CoachSpeakerBody,
@@ -57,16 +56,12 @@ const CoachCardBody = z
       description: 'The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.',
     }),
     text: z.string().optional().meta({
-      description: 'What the coach said, on a `board`, `note`, `reply` or `answer`.',
+      description: 'What the coach said, on a `board` or `note`.',
       example: '配速比上周快了，不错。',
     }),
     challenge: CoachChallengeBody.optional().meta({
       description: 'A `challenge`’s or `challengeDone`’s challenge.',
     }),
-    checkInId: z.uuid().optional().meta({
-      description: 'The caller’s check-in a `reply` is on, or an `answer`’s post.',
-    }),
-    commentId: z.uuid().optional().meta({ description: 'The caller’s reply an `answer` answers.' }),
     gift: z
       .strictObject({
         pieceId: z.string().meta({ description: 'The piece, by the art’s id.' }),
@@ -124,10 +119,6 @@ function wireCard(card: CoachOwnCard, speaker: Speaker): z.infer<typeof CoachCar
       return { ...base, day: card.day, challenge: wireChallenge(card) };
     case 'challengeDone':
       return { ...base, day: card.day, challenge: card.challenge };
-    case 'reply':
-      return { ...base, checkInId: card.checkIn, text: card.text };
-    case 'answer':
-      return { ...base, checkInId: card.checkIn, commentId: card.comment, text: card.text };
   }
 }
 
@@ -172,8 +163,8 @@ export function coachCards(deps: {
     description:
       'A card for each thing the squad’s coach said to the caller since they joined, up to ' +
       `${String(CARDS_DAYS)} days back: its 战术板 lines, their morning notes and challenges once ` +
-      'delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins ' +
-      'and replies. The unseen ones from ' +
+      'delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins ' +
+      'and replies show only under the posts. The unseen ones from ' +
       `the last ${String(STACK_HOURS)} hours are the stack; the rest are 以前.`,
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,

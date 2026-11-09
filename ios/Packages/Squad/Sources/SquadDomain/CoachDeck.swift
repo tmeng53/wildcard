@@ -58,7 +58,7 @@ public final class CoachDeck {
         (self.squad, self.source, self.wear, self.changed) = (squad, source, wear, changed)
     }
 
-    /// The card on top, or nil once everything is seen (「今天的都看过了。」).
+    /// The card on top, or nil once everything is seen (「暂时没有新消息」).
     public var top: CoachPageCard? { stack.first }
 
     public func reload() async {

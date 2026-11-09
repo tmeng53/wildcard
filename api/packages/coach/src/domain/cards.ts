@@ -3,8 +3,9 @@ import { z } from 'zod';
 import type { Challenge, ChallengeAnswer, ChallengeCompletion } from './challenge.js';
 import type { CoachReply } from './reply.js';
 
-// The coach page (Tracy, 2026-11-08): everything the squad's coach said to a member, one card per
-// thing, stacked in the order it came. Swiping a card away marks it seen, and it goes to 以前.
+// The coach page (Tracy, 2026-11-08): what the squad's coach has for a member, one card per thing,
+// stacked in the order it came. Swiping a card away marks it seen, and it goes to 以前. Its lines
+// to the member's check-ins and replies stay under the posts in 动态 only (Tracy, 2026-11-09).
 
 /**
  * The kinds of card; the gift is the unlocks module's, the rest the coach's own. `challengeDone`
@@ -16,12 +17,10 @@ export const CoachCardKind = z.enum([
   'challenge',
   'challengeDone',
   'gift',
-  'reply',
-  'answer',
 ]);
 export type CoachCardKind = z.infer<typeof CoachCardKind>;
 
-/** A card's id within its kind: a 战术板 line's day, a note's (its challenge's) or a reply's id, a gift's piece. */
+/** A card's id within its kind: a 战术板 line's day, a note's (its challenge's) id, a gift's piece. */
 export const CoachCardId = z
   .string()
   .regex(/^[A-Za-z0-9_.:-]{1,64}$/)
@@ -41,8 +40,6 @@ export function isCardId(kind: CoachCardKind, id: string): boolean {
     case 'note':
     case 'challenge':
     case 'challengeDone':
-    case 'reply':
-    case 'answer':
       return /^[1-9]\d{0,17}$/u.test(id);
   }
 }
@@ -75,13 +72,6 @@ export type CoachOwnCard =
       readonly kind: 'challengeDone';
       readonly day: string;
       readonly challenge: Challenge;
-    })
-  | (CardBase & { readonly kind: 'reply'; readonly checkIn: string; readonly text: string })
-  | (CardBase & {
-      readonly kind: 'answer';
-      readonly checkIn: string;
-      readonly comment: string;
-      readonly text: string;
     });
 
 /** The key a card is marked seen by. */

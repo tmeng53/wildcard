@@ -72,20 +72,20 @@ private let gift = card(
 private let stretch = card(
     .challenge, "41", minutes: 2,
     challenge: CoachPageCard.Challenge(title: "拉伸", amount: 5, unit: "分钟", line: "昨天跑完腿还紧，睡前拉一拉。"))
-private let oldReply = card(.reply, "r0", minutes: -1440, text: "配速比上周快了。")
+private let oldNote = card(.note, "40", minutes: -1440, text: "昨天跑完 5 公里，今天随便动动。")
 
 @MainActor @Test func theStackShowsTheOldestUnseenCardOnTop() async {
     let deck = CoachDeck(
-        squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [board, gift, stretch], earlier: [oldReply])))
+        squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [board, gift, stretch], earlier: [oldNote])))
     #expect(deck.load == .loading)
     await deck.reload()
     #expect(deck.load == .loaded)
     #expect(deck.top == board)
-    #expect(deck.earlier == [oldReply])
+    #expect(deck.earlier == [oldNote])
 }
 
 @MainActor @Test func aSwipeMovesTheCardIntoEarlierAndMarksItSeen() async throws {
-    let source = CardsInMemory(CoachPageCards(stack: [board, gift], earlier: [oldReply]))
+    let source = CardsInMemory(CoachPageCards(stack: [board, gift], earlier: [oldNote]))
     let deck = CoachDeck(squad: deckSquad, source: source)
     await deck.reload()
     deck.seen(board)
