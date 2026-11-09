@@ -66,9 +66,9 @@ public struct CoachDeckPage: View {
     /// Once a page opening, the top card leans right and springs back, as a swipe would start.
     private func nudge() async {
         guard !nudged, !reduceMotion, !deck.stack.isEmpty else { return }
-        nudged = true
         try? await Task.sleep(for: .seconds(DeckMetrics.nudgeDelay))
-        guard !Task.isCancelled, drag == .zero, flying == nil else { return }
+        guard !Task.isCancelled, !nudged, drag == .zero, flying == nil else { return }
+        nudged = true
         withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
             drag = CGSize(width: DeckMetrics.nudge, height: 0)
         }
@@ -93,18 +93,20 @@ public struct CoachDeckPage: View {
 
     /// 「还有 3 张 · 右滑收起 →」, or 「最后一张 · 右滑收起 →」 on the last one.
     private func hint(left: Int) -> some View {
-        Group {
+        HStack(spacing: Space.xxs) {
             if left > 0 {
-                Text("还有 \(left) 张 · 右滑收起 \(Image(systemName: "arrow.right"))", bundle: .module)
+                Text("还有 \(left) 张 · 右滑收起", bundle: .module)
             } else {
-                Text("最后一张 · 右滑收起 \(Image(systemName: "arrow.right"))", bundle: .module)
+                Text("最后一张 · 右滑收起", bundle: .module)
             }
+            Image(systemName: "arrow.right").accessibilityHidden(true)
         }
         .typeStyle(TypeRamp.footnote)
         .foregroundStyle(Color(role: .fgMuted, in: theme))
         .lineLimit(1)
         .minimumScaleFactor(0.8)
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
         .accessibilityIdentifier("coachDeck.hint")
         .contentTransition(.numericText())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: left)

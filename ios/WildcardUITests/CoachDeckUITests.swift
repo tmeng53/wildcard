@@ -26,11 +26,13 @@ final class CoachDeckUITests: XCTestCase {
         // 对小队说: 去动态看看.
         let board = card("board", in: app)
         XCTAssertTrue(board.waitForExistence(timeout: Self.wait), "the page didn't open on the line to the squad")
+        // The top card leans right and back once as the page opens; let it settle first.
+        Thread.sleep(forTimeInterval: 1.5)
         assertOnScreen(board, app.buttons["coachDeck.feed"], in: app)
         // Under the stack: how many are left after this one, and that a swipe right puts it away.
         let hint = element("coachDeck.hint", in: app)
         XCTAssertTrue(hint.waitForExistence(timeout: Self.wait), "nothing says how many cards are left")
-        XCTAssertTrue(hint.label.hasPrefix("还有 3 张 · 右滑收起"), "the count under the stack is \(hint.label)")
+        XCTAssertEqual(hint.label, "还有 3 张 · 右滑收起")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(hint.frame), "the count runs off the screen: \(hint.frame)")
         XCTAssertGreaterThanOrEqual(hint.frame.minY, board.frame.maxY, "the count is on the card")
         keepScreenshot(named: "106-coach-deck-board")
@@ -74,8 +76,8 @@ final class CoachDeckUITests: XCTestCase {
             putAway(next, in: app)
         }
         let challenge = card("challenge", in: app)
-        let hint = element("coachDeck.hint", in: app)
-        XCTAssertTrue(hint.label.hasPrefix("最后一张 · 右滑收起"), "the last card's line is \(hint.label)")
+        waitFor(
+            element("coachDeck.hint", in: app), "label == '最后一张 · 右滑收起'", "the last card doesn't say it is the last")
         let reason = element("coachDeck.reason", in: app)
         XCTAssertTrue(reason.waitForExistence(timeout: Self.wait), "the challenge has no field for why")
         XCTAssertEqual(reason.placeholderValue, "告诉毛头为什么（可选）")
