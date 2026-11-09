@@ -21,10 +21,10 @@ public enum CoachRoute: Hashable {
 }
 
 /// 小队设置's 教练 card, on graphite: an empty spot and 招聘, or the coach standing whole (never
-/// cropped), its name and week; for a mate, 逛逛招聘会 too.
+/// cropped), its name and how long it has coached; for a mate, 逛逛招聘会 too.
 struct CoachCard: View {
     let hire: SquadCoach.Hire?
-    let week: Int?
+    let tenure: CoachTenure?
     let canHire: Bool
     let open: (CoachRoute) -> Void
     @Environment(\.sceneTheme) private var theme
@@ -89,6 +89,13 @@ struct CoachCard: View {
         .accessibilityIdentifier("squad.coach.browse")
     }
 
+    private static func tenureText(_ tenure: CoachTenure) -> Text {
+        switch tenure {
+        case .days(let days): Text("执教 \(days) 天", bundle: .module)
+        case .weeks(let weeks): Text("执教 \(weeks) 周", bundle: .module)
+        }
+    }
+
     private func hired(_ coach: Coach) -> some View {
         VStack(spacing: Space.s) {
             Button {
@@ -103,12 +110,12 @@ struct CoachCard: View {
                     .frame(height: CoachMetrics.cardFigure)
                     VStack(alignment: .leading, spacing: Space.xxs) {
                         CoachName(coach: coach, name: TypeRamp.headline, title: TypeRamp.footnote, onInk: true)
-                        if let week {
-                            Text("执教第 \(week) 周", bundle: .module)
+                        if let tenure {
+                            Self.tenureText(tenure)
                                 .typeStyle(TypeRamp.footnote)
                                 .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                                 .lineLimit(1)
-                                .accessibilityIdentifier("squad.coach.week")
+                                .accessibilityIdentifier("squad.coach.tenure")
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
