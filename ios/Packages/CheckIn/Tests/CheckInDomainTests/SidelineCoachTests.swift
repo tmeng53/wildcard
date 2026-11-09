@@ -63,22 +63,21 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     #expect(!today.isHiringCoach)
 }
 
-private func memberNote(_ id: Int, in squad: SquadID, _ text: String) throws -> CoachMemberNote {
-    CoachMemberNote(id: id, squad: squad, day: try LocalDay("2026-11-03"), text: text, coach: maotou)
-}
-
-@MainActor @Test func aWaitingMorningNoteShowsOnTheCoachsPhoneUntilSeen() async throws {
+@MainActor @Test func anUnseenCardOnTheCoachsPageShowsOnItsPhoneUntilSeen() async {
     let backend = ScriptedBackend(server: sampleHome())
-    // A squad the member isn't in is never asked.
-    await backend.set(notes: [
-        try memberNote(1, in: squadID, "今天练力量"), try memberNote(3, in: SquadID(UUID()), "不是我的队"),
-    ])
     let today = store(backend)
     await today.load()
-    #expect(today.coachNotes.map(\.id) == [1])
-    #expect(today.hasWaitingNote)
-    // Seen on the coach's page, the server puts it away; the next load takes the dot away.
-    await backend.set(notes: [])
+    #expect(!today.hasUnseenCoachCards)
+    await backend.set(unseenCoachCards: true)
     await today.load()
-    #expect(!today.hasWaitingNote)
+    #expect(today.hasUnseenCoachCards)
+    // What was shown stays while the server can't be reached.
+    await backend.set(failure: .notSent)
+    await today.loadCoach()
+    #expect(today.hasUnseenCoachCards)
+    // Swiped away on the coach's page, the server marks them seen; the next load takes the dot away.
+    await backend.set(failure: nil)
+    await backend.set(unseenCoachCards: false)
+    await today.load()
+    #expect(!today.hasUnseenCoachCards)
 }
