@@ -20,6 +20,7 @@ import {
   createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
 import {
   createDiceLines,
@@ -86,6 +87,7 @@ import { artTools } from './tools/art.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
+import { appCopyTools } from './tools/app-copy.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
@@ -228,6 +230,7 @@ beforeAll(async () => {
               ...disclaimerDiceTools({
                 dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
               }),
+              ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
               ...dailyPushTools({
                 settings: createDailyPushSettings({
                   store: createPostgresDailyPushSettings(scope),
@@ -462,6 +465,8 @@ describe('the admin MCP server', () => {
       ['change_weekly_award_settings', false],
       ['get_disclaimer_dice', true],
       ['change_disclaimer_dice', false],
+      ['get_app_copy', true],
+      ['change_app_copy', false],
       ['get_daily_push_settings', true],
       ['change_daily_push_settings', false],
       ['get_week_summary_words', true],
@@ -972,6 +977,57 @@ describe('the admin MCP server', () => {
       ...before,
       stats: { ...before.stats, checkIns: restored },
     });
+    await client.close();
+  });
+
+  it('puts the app’s copy by key and takes it back, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const Copy = z.object({ version: z.literal(1), entries: z.record(z.string(), z.unknown()) });
+    const before = Copy.parse(JSON.parse((await call('get_app_copy')).text));
+    const logged = async () =>
+      (
+        await sql<{ copy: unknown }>`
+          select copy from public.app_copy_events
+          where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ copy }) => copy);
+
+    try {
+      const put = {
+        练了: { zhHans: '训练', en: 'Trained' },
+        '还有 %lld 次开门': { zhHans: '再练 %lld 次' },
+      };
+      const changed = Copy.parse(JSON.parse((await call('change_app_copy', { put })).text));
+      expect(changed.entries).toStrictEqual({ ...before.entries, ...put });
+      // The same words again change nothing.
+      await call('change_app_copy', { put });
+      expect(await logged()).toHaveLength(1);
+
+      // A placeholder dropped or changed, words in no language, or a word too long.
+      for (const args of [
+        { put: { '还有 %lld 次开门': { zhHans: '快开门了' } } },
+        { put: { '还有 %lld 次开门': { en: '%@ to go' } } },
+        { put: { 练了: {} } },
+        { put: { 练了: { en: 'x'.repeat(501) } } },
+      ]) {
+        expect((await call('change_app_copy', args)).isError).toBe(true);
+      }
+      expect(await logged()).toHaveLength(1);
+
+      const taken = Copy.parse(
+        JSON.parse((await call('change_app_copy', { takeBack: ['还有 %lld 次开门'] })).text),
+      );
+      expect(taken.entries).toStrictEqual({ ...before.entries, 练了: put.练了 });
+      expect(await logged()).toHaveLength(2);
+    } finally {
+      await call('change_app_copy', { takeBack: ['练了', '还有 %lld 次开门'] });
+    }
+    expect(Copy.parse(JSON.parse((await call('get_app_copy')).text))).toStrictEqual(before);
     await client.close();
   });
 

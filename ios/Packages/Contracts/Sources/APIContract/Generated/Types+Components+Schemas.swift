@@ -610,6 +610,8 @@ extension Components {
             public var sports: Components.Schemas.SportsCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/disclaimerDice`.
             public var disclaimerDice: Components.Schemas.DisclaimerDiceCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/appCopy`.
+            public var appCopy: Components.Schemas.AppCopyCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/scenes`.
             public var scenes: Components.Schemas.ScenesCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/switches`.
@@ -628,6 +630,7 @@ extension Components {
             ///   - version:
             ///   - sports:
             ///   - disclaimerDice:
+            ///   - appCopy:
             ///   - scenes:
             ///   - switches:
             ///   - stores:
@@ -638,6 +641,7 @@ extension Components {
                 version: Components.Schemas.Catalog.VersionPayload,
                 sports: Components.Schemas.SportsCatalog? = nil,
                 disclaimerDice: Components.Schemas.DisclaimerDiceCatalog? = nil,
+                appCopy: Components.Schemas.AppCopyCatalog? = nil,
                 scenes: Components.Schemas.ScenesCatalog? = nil,
                 switches: Components.Schemas.SwitchesCatalog? = nil,
                 stores: Components.Schemas.StoresCatalog? = nil,
@@ -648,6 +652,7 @@ extension Components {
                 self.version = version
                 self.sports = sports
                 self.disclaimerDice = disclaimerDice
+                self.appCopy = appCopy
                 self.scenes = scenes
                 self.switches = switches
                 self.stores = stores
@@ -659,6 +664,7 @@ extension Components {
                 case version
                 case sports
                 case disclaimerDice
+                case appCopy
                 case scenes
                 case switches
                 case stores
@@ -678,6 +684,10 @@ extension Components {
                 self.disclaimerDice = try container.decodeIfPresent(
                     Components.Schemas.DisclaimerDiceCatalog.self,
                     forKey: .disclaimerDice
+                )
+                self.appCopy = try container.decodeIfPresent(
+                    Components.Schemas.AppCopyCatalog.self,
+                    forKey: .appCopy
                 )
                 self.scenes = try container.decodeIfPresent(
                     Components.Schemas.ScenesCatalog.self,
@@ -703,6 +713,7 @@ extension Components {
                     "version",
                     "sports",
                     "disclaimerDice",
+                    "appCopy",
                     "scenes",
                     "switches",
                     "stores",
@@ -723,6 +734,10 @@ extension Components {
                 try container.encodeIfPresent(
                     self.disclaimerDice,
                     forKey: .disclaimerDice
+                )
+                try container.encodeIfPresent(
+                    self.appCopy,
+                    forKey: .appCopy
                 )
                 try container.encodeIfPresent(
                     self.scenes,
@@ -1180,6 +1195,144 @@ extension Components {
                 try container.encode(
                     self.lines,
                     forKey: .lines
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AppCopyCatalog`.
+        public struct AppCopyCatalog: Codable, Hashable, Sendable {
+            /// Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppCopyCatalog/entries`.
+            public struct EntriesPayload: Codable, Hashable, Sendable {
+                /// A container of undocumented properties.
+                public var additionalProperties: [String: Components.Schemas.AppCopyWords]
+                /// Creates a new `EntriesPayload`.
+                ///
+                /// - Parameters:
+                ///   - additionalProperties: A container of undocumented properties.
+                public init(additionalProperties: [String: Components.Schemas.AppCopyWords] = .init()) {
+                    self.additionalProperties = additionalProperties
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [])
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try encoder.encodeAdditionalProperties(additionalProperties)
+                }
+            }
+            /// Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppCopyCatalog/entries`.
+            public var entries: Components.Schemas.AppCopyCatalog.EntriesPayload
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `AppCopyCatalog`.
+            ///
+            /// - Parameters:
+            ///   - entries: Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                entries: Components.Schemas.AppCopyCatalog.EntriesPayload,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.entries = entries
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case entries
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.entries = try container.decode(
+                    Components.Schemas.AppCopyCatalog.EntriesPayload.self,
+                    forKey: .entries
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "entries"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.entries,
+                    forKey: .entries
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AppCopyWords`.
+        public struct AppCopyWords: Codable, Hashable, Sendable {
+            /// Simplified Chinese.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppCopyWords/zhHans`.
+            public var zhHans: Swift.String?
+            /// English.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppCopyWords/en`.
+            public var en: Swift.String?
+            /// Traditional Chinese (Taiwan).
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppCopyWords/zhHant`.
+            public var zhHant: Swift.String?
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `AppCopyWords`.
+            ///
+            /// - Parameters:
+            ///   - zhHans: Simplified Chinese.
+            ///   - en: English.
+            ///   - zhHant: Traditional Chinese (Taiwan).
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                zhHans: Swift.String? = nil,
+                en: Swift.String? = nil,
+                zhHant: Swift.String? = nil,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.zhHans = zhHans
+                self.en = en
+                self.zhHant = zhHant
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case zhHans
+                case en
+                case zhHant
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.zhHans = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .zhHans
+                )
+                self.en = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .en
+                )
+                self.zhHant = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .zhHant
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "zhHans",
+                    "en",
+                    "zhHant"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encodeIfPresent(
+                    self.zhHans,
+                    forKey: .zhHans
+                )
+                try container.encodeIfPresent(
+                    self.en,
+                    forKey: .en
+                )
+                try container.encodeIfPresent(
+                    self.zhHant,
+                    forKey: .zhHant
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }
