@@ -2,7 +2,7 @@ import { MemberId, SquadId, type CoachWakes } from '@wildcard/coach';
 import { MemberId as SquadMember, type Squads } from '@wildcard/squads';
 import { z } from 'zod';
 
-import { CoachPreviewNoSquadError } from '../../errors.js';
+import { CoachPreviewDeliverNotSelfError, CoachPreviewNoSquadError } from '../../errors.js';
 import { adminTool } from '../admin-tool.js';
 
 // What the coach would write to one member today, to test a prompt or a coach without waiting
@@ -27,19 +27,23 @@ export function previewCoachDaily({ preview, squads }: CoachPreviewToolDependenc
       'and one-gift-a-week limits are untouched. It calls the model once, so it costs like a ' +
       'wake (`costMicros`, millionths of a US dollar), counted against the squad’s daily cap; ' +
       '`ran: false` says why it didn’t run (no coach, off duty). Works while coaching is off. ' +
-      'With `deliver: true` (for testing on your own phone) the note and its challenge are saved ' +
-      'as the member’s real note for today, so it is pushed and shows on their coach page within ' +
-      'ten minutes; `delivered` says whether it was (false when they already have today’s). The ' +
-      '战术板 line and the gift stay a preview.',
+      'With `deliver: true`, only for yourself as the member, the note and its challenge are ' +
+      'saved as your real note for today: it is pushed and shows on your coach page at the next ' +
+      'run of the coach job (every 10 minutes) once your clock is past the morning note hour, and ' +
+      'it is your one note for the day, so that morning’s wake writes you none. `delivered` says ' +
+      'whether it was saved (false when you already have today’s). The 战术板 line and the gift ' +
+      'stay a preview.',
     changes: true,
     input: z.strictObject({
       member: MemberId.describe('The member’s id.'),
       deliver: z
         .boolean()
         .optional()
-        .describe('Also send the note to the member as today’s, for real. Default false.'),
+        .describe('Also send the note to you as today’s, for real; you must be the member.'),
     }),
-    run: async ({ member, deliver }) => {
+    run: async ({ member, deliver }, { admin }) => {
+      if (deliver === true && String(member) !== String(admin))
+        throw new CoachPreviewDeliverNotSelfError();
       const [squad] = await squads.listMine(SquadMember.parse(member));
       if (squad === undefined) throw new CoachPreviewNoSquadError();
       return {
