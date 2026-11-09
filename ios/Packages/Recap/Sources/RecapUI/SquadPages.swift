@@ -137,7 +137,7 @@ struct BestDisclaimerPage: View {
     }
 }
 
-/// 这一周: the squad's training days against its plans, the AI's headline and line, and its
+/// 这一周: the squad's 训练 against its weekly goal, the AI's headline and line, and its
 /// finale. Never red, never guilt. 存图 and 排下周 wait here.
 struct EndingPage: View {
     let ending: Ending

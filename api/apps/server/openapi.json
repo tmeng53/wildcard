@@ -182,7 +182,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The goal suggested, 人均 N 天 (`goalSuggestion`)."
+            "description": "The goal suggested, 人均 N 次 (`goalSuggestion`)."
           },
           "feedback": {
             "type": "string",
@@ -3326,7 +3326,7 @@
             "minimum": 1,
             "maximum": 7,
             "default": 3,
-            "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
+            "description": "The squad’s weekly goal (人均 N 次, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
             "example": 3
           },
           "timeZone": {
@@ -3415,7 +3415,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "description": "The squad’s weekly goal (人均 N 次) as its captain last set it.",
             "example": 3
           },
           "looks": {
@@ -3462,7 +3462,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "description": "The squad’s weekly goal (人均 N 次) as its captain last set it.",
             "example": 3
           },
           "looks": {
@@ -3643,18 +3643,18 @@
               "trainedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained."
+                "description": "The 训练 sent to this squad this week, added up over the members, each in their own week; several on one day each count (named before the goal counted 训练, not days)."
               },
               "plannedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it."
+                "description": "The squad’s weekly goal (小队每周目标) in 训练: `daysPerMember` times the members now. Anyone’s 训练 count towards it."
               },
               "daysPerMember": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 7,
-                "description": "The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.",
+                "description": "The weekly goal its captain set (人均 N 次), in the caller’s week: how many times each member trains on average.",
                 "example": 3
               }
             },
@@ -4223,7 +4223,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "This week’s goal (人均 N 天).",
+            "description": "This week’s goal (人均 N 次).",
             "example": 3
           },
           "nextDaysPerMember": {
@@ -4253,7 +4253,7 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 7,
-                "description": "The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.",
+                "description": "The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.",
                 "example": 3.4
               }
             },
@@ -4287,7 +4287,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.",
+            "description": "How many times each member trains a week on average (人均 N 次), 1 to 7. The squad’s goal for a week is this times its members; anyone’s 训练 sent to the squad count towards it, several on one day each counting.",
             "example": 3
           }
         },
@@ -6561,11 +6561,13 @@
         "properties": {
           "done": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "The 训练 the squad’s members sent to it that week, several on one day each counting."
           },
           "plan": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "The squad’s weekly goal that week, in 训练 (人均 N 次)."
           },
           "headline": {
             "type": "string",
@@ -6575,7 +6577,7 @@
           "line": {
             "type": "string",
             "minLength": 1,
-            "description": "The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it."
+            "description": "The line under the 训练 against the goal, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many 训练 are missing, or that the squad made it."
           }
         },
         "required": [
@@ -6583,7 +6585,7 @@
           "plan"
         ],
         "additionalProperties": false,
-        "description": "这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell."
+        "description": "这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a quiet week isn’t told how short it fell."
       },
       "StoryTitle": {
         "type": "object",

@@ -36,7 +36,7 @@ import { squadsAwardedIn } from './awarded-squads.js';
 // to the captain through notices.
 
 export interface GoalSuggestionDependencies {
-  readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainedDays' | 'weekStartNow'>;
+  readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainings' | 'weekStartNow'>;
   readonly squads: Pick<
     Squads,
     'captainOf' | 'goalSuggestions' | 'membersAt' | 'timeZonesFor' | 'weeklyGoals'
@@ -171,7 +171,7 @@ async function overSince(
   return true;
 }
 
-/** Counts one of the squad's weeks: its trained days, members at its end and goal. */
+/** Counts one of the squad's weeks: its 训练, members at its end and goal. */
 function weekCounter(
   deps: GoalSuggestionDependencies,
   { squad, settings }: { readonly squad: SquadId; readonly settings: readonly WeeklyGoalSetting[] },
@@ -180,15 +180,15 @@ function weekCounter(
     // A week not over yet counts whoever is in the squad now.
     const end = Math.min(Date.parse(weekAfter(week)), deps.clock().getTime());
     const members = await deps.squads.membersAt(squad, new Date(end));
-    const trainedDays =
+    const trainings =
       members.length === 0
         ? 0
-        : await deps.checkIns.squadTrainedDays({
+        : await deps.checkIns.squadTrainings({
             squad: CheckInSquad.parse(squad),
             members: members.map((member) => CheckInMember.parse(member)),
             weekStart: CheckInWeek.parse(week),
           });
-    return { week, trainedDays, members: members.length, daysPerMember: goalFor(settings, week) };
+    return { week, trainings, members: members.length, daysPerMember: goalFor(settings, week) };
   };
 }
 

@@ -89,7 +89,7 @@ export interface Squads {
    */
   removeMember(input: { squad: SquadId; member: MemberId; removed: MemberId }): Promise<void>;
   /**
-   * The squad's weekly goal (人均 N 天) in the viewer's week (its Monday, `YYYY-MM-DD`) and the
+   * The squad's weekly goal (人均 N 次) in the viewer's week (its Monday, `YYYY-MM-DD`) and the
    * next.
    */
   weeklyGoal(input: { squad: SquadId; viewer: MemberId; week: string }): Promise<WeeklyGoal>;
@@ -109,7 +109,7 @@ export interface Squads {
    */
   weeklyGoals(squad: SquadId): Promise<WeeklyGoalSetting[]>;
   /**
-   * The squad's weekly goal (人均 N 天) for the week starting `week` (a Monday, `YYYY-MM-DD`):
+   * The squad's weekly goal (人均 N 次) for the week starting `week` (a Monday, `YYYY-MM-DD`):
    * what other modules ask to count a squad's week against.
    */
   daysPerMember(squad: SquadId, week: string): Promise<DaysPerMember>;

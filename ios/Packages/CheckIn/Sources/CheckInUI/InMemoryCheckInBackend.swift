@@ -97,7 +97,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
-    /// The squad's week at 人均 3 天, the default goal: 14 days so far, or the whole goal once
+    /// The squad's week at 人均 3 次, the default goal: 14 训练 so far, or the whole goal once
     /// everyone `reached` it together.
     private static func squadWeek(of members: Int, reached: Bool) -> WeekCount {
         WeekCount(trainedDays: reached ? 3 * members : 14, plannedDays: 3 * members)

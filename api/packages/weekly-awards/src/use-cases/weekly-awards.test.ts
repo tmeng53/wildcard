@@ -197,7 +197,7 @@ describe('createWeeklyAwards', () => {
       members,
       ending: { done: 19, plan: 22 },
     });
-    expect(asked[0]).toContain('"squad":{"trainedDays":19,"plannedDays":22}');
+    expect(asked[0]).toContain('"squad":{"trainings":19,"goal":22}');
     expect(given.ending).toStrictEqual({
       version: 1,
       headline: '差一点',

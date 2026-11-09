@@ -278,7 +278,7 @@ export interface SquadStory {
   /** The squad's meals; who ate more of what is in each member's part. */
   readonly meals?: { readonly healthy: number; readonly cheat: number };
   /**
-   * The squad's days trained against its weekly goal (人均 N 天 times its members), only when
+   * The squad's 训练 against its weekly goal (人均 N 次 times its members), only when
    * someone trained, with the model's headline and line for them once the awards are written.
    */
   readonly ending?: {
@@ -299,7 +299,7 @@ export interface SquadStory {
 }
 
 /**
- * The squad's days trained against its weekly goal that week (小队每周目标: 人均 N 天 times the
+ * The squad's 训练 against its weekly goal that week (小队每周目标: 人均 N 次 times the
  * members in its 战报), as the squad's ring on 今天 counts them, or none when nobody trained. The
  * goal is read, not taken from the frozen story: weeks frozen before the goal came stored the
  * members' plans added up, and a week's goal never changes once the week has begun.
@@ -314,7 +314,7 @@ async function squadEnding(
   return { done: ending.done, plan: days * story.members.length };
 }
 
-/** The squad's days against its goal, with the model's words for them once they are written. */
+/** The squad's 训练 against its goal, with the model's words for them once they are written. */
 function endingOf(
   ending: { readonly done: number; readonly plan: number },
   state: AwardsState | undefined,

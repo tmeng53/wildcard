@@ -23,7 +23,7 @@ export interface CreateSquadInput {
   readonly id: SquadId;
   readonly creator: MemberId;
   readonly name: SquadName;
-  /** The squad's weekly goal, 人均 N 天; the default when the creator didn't pick one. */
+  /** The squad's weekly goal, 人均 N 次; the default when the creator didn't pick one. */
   readonly daysPerMember?: DaysPerMember | undefined;
   /** The squad's time zone (小队时区), which the creator picks; New York when left out. */
   readonly timeZone?: string | undefined;

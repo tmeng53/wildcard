@@ -78,7 +78,7 @@ public struct SquadInvite: Hashable, Sendable {
     public let isFull: Bool
     /// The member is in it already.
     public let joined: Bool
-    /// Its goal, 人均 N 天 a week.
+    /// Its goal, 人均 N 次 a week.
     public let daysPerMember: Int
     /// The members' characters, the earliest to join first; members without one are left out.
     public let looks: [CharacterLook]
