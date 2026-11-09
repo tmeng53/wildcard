@@ -29,7 +29,7 @@ public enum SampleBoard {
             member: viewer, timeZone: .gmt,
             squad: Squad(id: today.squad, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: people, captain: viewer),
             today: today, plan: plan(of: viewer, from: monday), checkIns: [])
-        return WidgetBoard(home: home, day: day)
+        return WidgetBoard(home: home, day: day, coach: sampleCoach)
     }
 
     /// Mondays, Wednesdays, Fridays and Saturdays.
@@ -41,3 +41,25 @@ public enum SampleBoard {
         return plan
     }
 }
+
+#if canImport(SwiftUI)
+import DesignSystemUI
+
+extension SampleBoard {
+    /// 毛头 with a line for me and today's challenge, not yet accepted.
+    public static var coach: CoachFace {
+        CoachFace(
+            coach: CoachSpeaker(id: "xiaohun", name: String(localized: "毛头", bundle: .module.inAppLanguage)),
+            line: String(localized: "昨天腿练狠了，今天别上重量。", bundle: .module.inAppLanguage), hasNews: true,
+            challenge: CoachFace.Challenge(
+                squad: SquadID(UUID()), note: "1", title: String(localized: "拉伸 20 分钟", bundle: .module.inAppLanguage),
+                step: .open))
+    }
+
+    static var sampleCoach: CoachFace? { coach }
+}
+#else
+extension SampleBoard {
+    static var sampleCoach: CoachFace? { nil }
+}
+#endif

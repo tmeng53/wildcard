@@ -21,6 +21,12 @@ struct WidgetPreview: View {
                     face(WidgetNotice(.signedOut), width: Self.small, identifier: "widget.notice")
                 }
                 face(SquadWidget(board: board), width: Self.medium, identifier: "widget.squad")
+                if let coach = board.coach {
+                    // The widget's 接受 is an App Intent; here it is only its label.
+                    face(
+                        CoachWidget(face: coach) { challenge in ChallengeButtonLabel(step: challenge.step) },
+                        width: Self.medium, identifier: "widget.coach")
+                }
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)

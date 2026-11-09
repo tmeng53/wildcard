@@ -102,7 +102,14 @@ enum WidgetMetrics {
     static let coachHead: Double = 26
     /// The coach's ink dot.
     static let dot: Double = 8
-    /// The medium widget's 打卡.
+    /// The medium widget's 打卡 and the coach's challenge button.
     static let button: Double = 32
+    /// The coach peeking in from the corner of its face: its width, how far it reaches past the
+    /// right edge and how far below the bottom, so it shows head to chest.
+    static let coachPeek: Double = 132
+    static let coachOverlap: Double = 28
+    static let coachDrop: Double = 40
+    /// The coach's challenge button, a size under 打卡.
+    static let challengeButton: Double = 28
 }
 #endif

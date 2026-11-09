@@ -90,10 +90,10 @@ public struct SquadWidget: View {
         .accessibilityLabel(Text("今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module))
     }
 
-    @ViewBuilder private func coachHead(_ coach: CoachID) -> some View {
-        MemberHead(player: Self.player(of: coach), size: WidgetMetrics.coachHead, figure: .coach)
+    @ViewBuilder private func coachHead(_ coach: CoachFace) -> some View {
+        MemberHead(player: WidgetCoachFigure.player(of: coach.coach.id), size: WidgetMetrics.coachHead, figure: .coach)
             .overlay(alignment: .topTrailing) {
-                if board.coachHasNews {
+                if coach.hasNews {
                     Circle()
                         .fill(Color(role: .fgDefault, in: theme))
                         .frame(width: WidgetMetrics.dot, height: WidgetMetrics.dot)
@@ -101,13 +101,6 @@ public struct SquadWidget: View {
                         .offset(x: 1, y: -1)
                 }
             }
-    }
-
-    /// The coach standing still; nil for a coach this build has no art for, an empty head.
-    private static func player(of coach: CoachID) -> CharacterPlayer? {
-        let id = coach.rawValue
-        guard CoachCharacter.exists(id) else { return nil }
-        return try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
     }
 
     /// The squad, up to eight, four to a row.

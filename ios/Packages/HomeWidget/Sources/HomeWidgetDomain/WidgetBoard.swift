@@ -3,8 +3,8 @@ import Contracts
 import Foundation
 
 /// What the home screen widgets show, from the home the app or the widget last loaded: my week
-/// (我的一周, the small widget) and the squad's week and today (小队今天, the medium one), each
-/// counted the way the home's squad card counts them.
+/// (我的一周, the small widget), the squad's week and today (小队今天, the medium one) and its
+/// coach (教练, the medium one's other face), each counted the way the home's squad card counts them.
 public struct WidgetBoard: Hashable, Sendable {
     /// Where one member's day stands, as their ring shows it.
     public enum MateStatus: Hashable, Sendable {
@@ -37,15 +37,13 @@ public struct WidgetBoard: Hashable, Sendable {
     public let squad: WeekCount
     /// Everyone in the squad, me included, in the home's order: who checked in first.
     public let mates: [Mate]
-    /// The squad's coach, when it has one.
-    public let coach: CoachID?
-    /// The coach has a card I haven't seen: its phone's ink dot.
-    public let coachHasNews: Bool
+    /// The squad's coach and what it says to me today, when the squad has one.
+    public let coach: CoachFace?
 
     /// - Parameters:
     ///   - home: the home as last loaded; moved on to `day` when it is from an earlier one.
     ///   - day: my day now, on my profile's clock (`Home.timeZone`).
-    public init(home: Home, day: LocalDay, coach: CoachID? = nil, coachHasNews: Bool = false) {
+    public init(home: Home, day: LocalDay, coach: CoachFace? = nil) {
         // A copy read on an earlier day of mine says nothing about anyone's today yet. Each
         // teammate's row is their own today on their own clock, so a teammate behind me in time
         // reads an earlier day in a fresh copy too, and counts as the squad card counts them.
@@ -66,7 +64,6 @@ public struct WidgetBoard: Hashable, Sendable {
             return Mate(member: mate.member, look: mate.character?.look, status: status, isMe: isMe)
         }
         self.coach = coach
-        self.coachHasNews = coachHasNews
     }
 
     /// How many in the squad checked in today: 今天 x/y.

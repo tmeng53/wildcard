@@ -219,7 +219,8 @@ struct WildcardApp: App {
         }
     }
 
-    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
+    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天 (the coach's page
+    /// opens through `AppRoot`'s destination, as a morning note's push does).
     static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
         open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
     }

@@ -7,6 +7,8 @@ public enum WidgetLink: String, CaseIterable, Sendable {
     case today
     /// 今天, with 打卡 open.
     case checkIn = "check-in"
+    /// The coach's page over 今天.
+    case coach
 
     private static let scheme = "wildcard"
     private static let host = "widget"

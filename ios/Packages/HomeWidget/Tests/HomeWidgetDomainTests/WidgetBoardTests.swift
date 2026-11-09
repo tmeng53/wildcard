@@ -97,5 +97,6 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
         #expect(WidgetLink(url: link.url) == link)
     }
     #expect(WidgetLink.checkIn.url.absoluteString == "wildcard://widget/check-in")
+    #expect(WidgetLink.coach.url.absoluteString == "wildcard://widget/coach")
     #expect(WidgetLink(url: URL(string: "https://wildcardsquad.com/join/K7M2QX9P") ?? WidgetLink.today.url) == nil)
 }
