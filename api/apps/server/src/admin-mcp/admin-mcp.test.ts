@@ -1017,6 +1017,11 @@ describe('the admin MCP server', () => {
       ]) {
         expect((await call('change_app_copy', args)).isError).toBe(true);
       }
+      // A placeholder kept wrong is refused with what to fix, not as a failed call.
+      expect(
+        (await call('change_app_copy', { put: { '还有 %lld 次开门': { zhHans: '快开门了' } } }))
+          .text,
+      ).toContain('Keep the key’s placeholders');
       expect(await logged()).toHaveLength(1);
 
       const taken = Copy.parse(

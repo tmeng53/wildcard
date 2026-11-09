@@ -62,24 +62,28 @@ export type CopyWords = z.infer<typeof CopyWords>;
 /** Every line put, by key; no more than this, a bound on the catalog's size. */
 export const COPY_LIMIT = 2000;
 
+/** Refuses any line whose words don't fill like its key, naming the line and the language. */
+function keepsPlaceholders(entries: Record<string, CopyWords>, context: z.RefinementCtx): void {
+  for (const [key, words] of Object.entries(entries)) {
+    for (const [language, text] of Object.entries(words)) {
+      if (!fillsLike(key, text)) {
+        context.addIssue({
+          code: 'custom',
+          path: [key, language],
+          message:
+            'Keep the key’s placeholders (%lld, %@, …): the same kinds, in its order or by explicit position (%2$lld)',
+        });
+      }
+    }
+  }
+}
+
 export const CopyEntries = z
   .record(CopyKey, CopyWords)
   .refine((entries) => Object.keys(entries).length <= COPY_LIMIT, {
     message: `At most ${String(COPY_LIMIT)} lines`,
   })
-  .superRefine((entries, context) => {
-    for (const [key, words] of Object.entries(entries)) {
-      for (const [language, text] of Object.entries(words)) {
-        if (!fillsLike(key, text)) {
-          context.addIssue({
-            code: 'custom',
-            path: [key, language],
-            message: 'Keep the key’s placeholders (%lld, %@, …), the same kinds in the same order',
-          });
-        }
-      }
-    }
-  });
+  .superRefine(keepsPlaceholders);
 
 /** The copy put, whole, as stored and logged. */
 export const AppCopy = z.strictObject({ version: z.literal(1), entries: CopyEntries });
@@ -89,6 +93,8 @@ export type AppCopy = z.infer<typeof AppCopy>;
 export const AppCopyChange = z.strictObject({
   put: z
     .record(CopyKey, CopyWords)
+    // Checked here too, so the admin is told which line is wrong instead of a failed call.
+    .superRefine(keepsPlaceholders)
     .optional()
     .describe('Lines to put, by key; each replaces whatever its key had.'),
   takeBack: z
