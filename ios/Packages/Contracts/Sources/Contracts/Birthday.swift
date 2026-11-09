@@ -1,7 +1,7 @@
 /// A member's birthday, which they choose to give at sign-up or in 设置: a whole day, from 1900 to
 /// today. The heart rate chart reads the age from it.
 public struct Birthday: Hashable, Sendable, CustomStringConvertible {
-    /// The API's earliest; `APIContract`'s tests fail when the two differ.
+    /// The API's `BIRTHDAY_EARLIEST`; `APIContract`'s parity test fails when the two differ.
     public static let earliest = LocalDay(calendarYear: 1900, month: 1, day: 1)
 
     public let day: LocalDay

@@ -92,7 +92,7 @@ extension FlipClockView {
     public static func date(values: Binding<[Int]>, years: ClosedRange<Int>, identifier prefix: String) -> Self {
         FlipClockView(
             .date(years: years), values: values,
-            labels: [Text("年", bundle: .module), Text("月", bundle: .module), Text("日", bundle: .module)],
+            labels: [Text("年", bundle: .module), Text("月", bundle: .module), Text("日期·日", bundle: .module)],
             identifiers: ["\(prefix).year", "\(prefix).month", "\(prefix).day"])
     }
 }
