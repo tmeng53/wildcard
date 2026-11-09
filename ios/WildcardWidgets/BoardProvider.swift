@@ -39,6 +39,7 @@ enum WidgetSide: String, AppEnum {
 /// 我的一周 has nothing to set; WidgetKit's async provider needs an intent all the same.
 struct WeekIntent: WidgetConfigurationIntent, ShowsSide {
     static let title: LocalizedStringResource = "我的一周"
+    static let readsCoach = false
     var side: WidgetSide { .squad }
 }
 
@@ -51,9 +52,15 @@ struct SquadOrCoachIntent: WidgetConfigurationIntent, ShowsSide {
     var side: WidgetSide { shown }
 }
 
-/// A widget's intent says which side it shows.
+/// A widget's intent says which side it shows, and whether it shows the coach at all.
 protocol ShowsSide {
     var side: WidgetSide { get }
+    /// 我的一周 doesn't, so it reads nothing about the coach.
+    static var readsCoach: Bool { get }
+}
+
+extension ShowsSide {
+    static var readsCoach: Bool { true }
 }
 
 /// Reads the squad for the widgets: the home over our API, signed in with the app's shared
@@ -117,24 +124,53 @@ struct BoardProvider<Intent: WidgetConfigurationIntent & ShowsSide>: AppIntentTi
             guard let saved = await backend.savedHome() else { return entry(.unavailable) }
             home = saved
         }
-        let coach = await coachFace(in: home.squad.id, api: session.api, withChallenge: side == .coach, at: now)
+        var coach: CoachFace?
+        if Intent.readsCoach {
+            let read = await coachFace(in: home.squad.id, api: session.api, side: side, at: now)
+            // The coach's side can't say the squad has no coach when it only couldn't ask: try
+            // again soon. The squad's side just leaves the coach's head out.
+            if case .unreadable = read, side == .coach { return entry(.unavailable) }
+            coach = read.face
+        }
         let board = WidgetBoard(home: home, day: LocalDay(at: now, in: home.timeZone), coach: coach)
         return (BoardEntry(date: now, state: .board(board), side: side), home.timeZone)
     }
 
-    /// The squad's coach and what it says to me now; nil while the squad has none, or when it
-    /// can't be read. Today's challenge only for the coach's side, which offers it.
-    private static func coachFace(in squad: SquadID, api: WildcardAPI, withChallenge: Bool, at now: Date) async
-        -> CoachFace?
+    /// What reading the coach found.
+    private enum CoachRead {
+        case face(CoachFace)
+        /// The squad has no coach.
+        case noCoach
+        /// The coach couldn't be read now (offline).
+        case unreadable
+
+        var face: CoachFace? {
+            if case .face(let face) = self { face } else { nil }
+        }
+    }
+
+    /// The squad's coach and what it says to me now. Only the coach's side reads what it said
+    /// and today's challenge; the squad's side needs just its head and dot.
+    private static func coachFace(in squad: SquadID, api: WildcardAPI, side: WidgetSide, at now: Date) async
+        -> CoachRead
     {
-        guard let hire = try? await api.coach(of: squad).hire else { return nil }
-        let activity = try? await api.coachActivity(of: squad)
+        let hire: SquadCoach.Hire
+        do {
+            guard let hired = try await api.coach(of: squad).hire else { return .noCoach }
+            hire = hired
+        } catch {
+            return .unreadable
+        }
         let unseen = (try? await api.coachCards(in: squad).stack.isEmpty).map { !$0 } ?? false
-        let challenge = withChallenge ? (try? await api.todayChallenge(in: squad)) ?? nil : nil
-        let coach = SidelineCoach(
-            coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name), note: activity?.note)
-        return CoachFace(
-            squad: squad, coach: coach, morningNote: activity?.memberNote, challenge: challenge, hasNews: unseen,
-            at: now)
+        let speaker = CoachSpeaker(id: hire.coach.id, name: hire.coach.name)
+        guard side == .coach else {
+            return .face(CoachFace(coach: speaker, line: nil, hasNews: unseen, challenge: nil))
+        }
+        let activity = try? await api.coachActivity(of: squad)
+        let challenge = (try? await api.todayChallenge(in: squad)) ?? nil
+        return .face(
+            CoachFace(
+                squad: squad, coach: SidelineCoach(coach: speaker, note: activity?.note),
+                morningNote: activity?.memberNote, challenge: challenge, hasNews: unseen, at: now))
     }
 }
