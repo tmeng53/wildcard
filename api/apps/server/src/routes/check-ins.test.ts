@@ -1365,7 +1365,7 @@ describe('a 训练 from Apple Health', () => {
     expect(posted.status).toBe(201);
   });
 
-  it('keeps a ski day’s runs, drop and top speed, a hike’s climb and a swim’s pace per 100 m', async () => {
+  it('keeps a ski day’s runs, drop and top speed, a hike’s climb, a swim’s pace per 100 m and active calories', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -1400,6 +1400,9 @@ describe('a 训练 from Apple Health', () => {
     expect(await post('hike', hike)).toStrictEqual(hike);
     const swim = { durationSec: 2520, distanceM: 1800, paceSecPer100m: 140, avgHr: 136 };
     expect(await post('swim', swim)).toStrictEqual(swim);
+    const strength = { durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 312 };
+    expect(await post('strength', strength)).toStrictEqual(strength);
+    expect(await post('strength', { activeEnergyKcal: -1 })).toBe(400);
     expect(await post('ski', { runs: 0 })).toBe(400);
     expect(await post('ski', { topSpeedKmh: 400 })).toBe(400);
   });

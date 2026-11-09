@@ -33,6 +33,7 @@ export const WorkoutSummary = z
     topSpeedKmh: z.number().nonnegative().max(300).optional(),
     elevationGainM: z.number().nonnegative().max(20_000).optional(),
     paceSecPer100m: z.number().positive().max(DAY_SECONDS).optional(),
+    activeEnergyKcal: z.number().nonnegative().max(20_000).optional(),
   })
   .meta({
     id: 'WorkoutSummary',
@@ -41,7 +42,8 @@ export const WorkoutSummary = z
       'provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), ' +
       'speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per ' +
       '100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, ' +
-      'snowboard: worked out on the phone from the route), metres climbed (hike).',
+      'snowboard: worked out on the phone from the route), metres climbed (hike), active energy ' +
+      'in kilocalories.',
   });
 export type WorkoutSummary = z.infer<typeof WorkoutSummary>;
 

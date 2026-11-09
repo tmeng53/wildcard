@@ -16,13 +16,15 @@ public struct AppCatalog: Hashable, Sendable {
     /// Every scene, in the picker's order: a scene added since this build takes its names and
     /// colours from here.
     public let scenes: [CatalogScene]
+    /// The global switches, such as what only the public beta has (`BetaFeature`).
+    public let switches: [CatalogSwitch]
 
     public init(
         sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
-        art: ArtManifest = .none, scenes: [CatalogScene] = []
+        art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = []
     ) {
         (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
-        self.scenes = scenes
+        (self.scenes, self.switches) = (scenes, switches)
     }
 
     /// Nothing at all.

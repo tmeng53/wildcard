@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <path d="M 38.4 126 L 60 126 L 62.4 170 Q 50.4 178 37.2 172.8 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M 201.6 126 L 180 126 L 177.6 170 Q 189.6 178 202.8 172.8 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.2" stroke-linejoin="round"/>
-  <path d="M 43.2 133.2 C 40.8 70.8 199.2 70.8 196.8 133.2 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.4"/>
-  <path d="M 120 78 L 120 133.2 M 82 88 Q 90 110 92 133 M 158 88 Q 150 110 148 133" fill="none" stroke="#6E5E46" stroke-width="1.8"/>
-  <circle cx="100" cy="92" r="1.4" fill="#6E5E46"/>
-  <circle cx="106" cy="90" r="1.4" fill="#6E5E46"/>
-  <circle cx="134" cy="90" r="1.4" fill="#6E5E46"/>
-  <circle cx="140" cy="92" r="1.4" fill="#6E5E46"/>
-  <path d="M 45.6 130.8 Q 120 116.4 194.4 130.8 Q 204 142.8 182.4 145.2 Q 120 133.2 57.6 145.2 Q 36 142.8 45.6 130.8 Z" fill="#4F6B22" stroke="#3F561B" stroke-width="2"/>
-  <rect x="112.8" y="104.4" width="14.4" height="9.6" rx="1.4" fill="#F6B92B" stroke="#B9851A" stroke-width="1.2"/>
-  <path d="M 115.4 111.4 L 118.2 107.4 L 120 109.8 L 121.8 107.2 L 124.6 111.4" fill="none" stroke="#22252E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 38.4 124.27 L 60 124.27 L 62.4 170 Q 50.4 178 37.2 172.8 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M 201.6 124.27 L 180 124.27 L 177.6 170 Q 189.6 178 202.8 172.8 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M 43.2 133.2 C 40.8 55.82 199.2 55.82 196.8 133.2 Z" fill="#8E7A5C" stroke="#6E5E46" stroke-width="2.4"/>
+  <path d="M 120 64.75 L 120 133.2 M 82 77.15 Q 90 104.43 92 132.95 M 158 77.15 Q 150 104.43 148 132.95" fill="none" stroke="#6E5E46" stroke-width="1.8"/>
+  <circle cx="100" cy="82.11" r="1.4" fill="#6E5E46"/>
+  <circle cx="106" cy="79.63" r="1.4" fill="#6E5E46"/>
+  <circle cx="134" cy="79.63" r="1.4" fill="#6E5E46"/>
+  <circle cx="140" cy="82.11" r="1.4" fill="#6E5E46"/>
+  <path d="M 45.6 130.22 Q 120 112.37 194.4 130.22 Q 204 142.8 182.4 145.2 Q 120 133.2 57.6 145.2 Q 36 142.8 45.6 130.22 Z" fill="#4F6B22" stroke="#3F561B" stroke-width="2"/>
+  <rect x="112.8" y="98.64" width="14.4" height="9.6" rx="1.4" fill="#F6B92B" stroke="#B9851A" stroke-width="1.2"/>
+  <path d="M 115.4 106.17 L 118.2 101.21 L 120 104.18 L 121.8 100.96 L 124.6 106.17" fill="none" stroke="#22252E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

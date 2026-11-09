@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <circle cx="120" cy="66" r="11.4" fill="#E6A23C" stroke="#B97F25" stroke-width="2"/>
-  <path d="M 115 62 L 117 65 M 122 60 L 123 64 M 125 68 L 127 70" fill="none" stroke="#B97F25" stroke-width="1.4" stroke-linecap="round"/>
-  <path d="M 43.2 128 C 40.8 64.8 199.2 64.8 196.8 128 Z" fill="#E6A23C" stroke="#B97F25" stroke-width="2.4"/>
-  <path d="M 72 92 Q 78 108 79 122 M 96 82 Q 99 102 100 120 M 120 78 L 120 118 M 144 82 Q 141 102 140 120 M 168 92 Q 162 108 161 122" fill="none" stroke="#D29232" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M 41.4 123.6 Q 120 108 198.6 123.6 L 199.2 141.6 Q 120 126 40.8 141.6 Z" fill="#E6A23C" stroke="#B97F25" stroke-width="2.4" stroke-linejoin="round"/>
-  <path d="M 52 123.3925 L 52 135.39249999999998 M 61 121.07078125 L 61 133.07078124999998 M 70 119.078125 L 70 131.078125 M 79 117.41453125 L 79 129.41453124999998 M 88 116.08 L 88 128.07999999999998 M 97 115.07453125 L 97 127.07453125 M 106 114.398125 L 106 126.398125 M 115 114.05078125 L 115 126.05078125 M 124 114.0325 L 124 126.0325 M 133 114.34328125 L 133 126.34328125 M 142 114.983125 L 142 126.983125 M 151 115.95203125 L 151 127.95203125 M 160 117.25 L 160 129.25 M 169 118.87703125 L 169 130.87703125000002 M 178 120.833125 L 178 132.833125 M 187 123.11828125 L 187 135.11828125" fill="none" stroke="#D29232" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="120" cy="62.32" r="11.4" fill="#E6A23C" stroke="#B97F25" stroke-width="2"/>
+  <path d="M 115 58 L 117 61.24 M 122 55.84 L 123 60.16 M 125 64.48 L 127 66.64" fill="none" stroke="#B97F25" stroke-width="1.4" stroke-linecap="round"/>
+  <path d="M 43.2 128 C 40.8 61.02 199.2 61.02 196.8 128 Z" fill="#E6A23C" stroke="#B97F25" stroke-width="2.4"/>
+  <path d="M 72 90.4 Q 78 107.68 79 122 M 96 79.6 Q 99 101.2 100 120 M 120 75.28 L 120 118 M 144 79.6 Q 141 101.2 140 120 M 168 90.4 Q 162 107.68 161 122" fill="none" stroke="#D29232" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M 41.4 123.6 Q 120 107.68 198.6 123.6 L 199.2 141.6 Q 120 126 40.8 141.6 Z" fill="#E6A23C" stroke="#B97F25" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M 52 123.39 L 52 135.39 M 61 121.07 L 61 133.07 M 70 119.08 L 70 131.08 M 79 117.41 L 79 129.41 M 88 116.08 L 88 128.08 M 97 115.07 L 97 127.07 M 106 114.4 L 106 126.4 M 115 114.05 L 115 126.05 M 124 114.03 L 124 126.03 M 133 114.34 L 133 126.34 M 142 114.98 L 142 126.98 M 151 115.95 L 151 127.95 M 160 117.25 L 160 129.25 M 169 118.88 L 169 130.88 M 178 120.83 L 178 132.83 M 187 123.12 L 187 135.12" fill="none" stroke="#D29232" stroke-width="1.6" stroke-linecap="round"/>
   <rect x="148" y="122" width="11" height="7" rx="1.2" fill="#FFFFFF"/>
 </svg>

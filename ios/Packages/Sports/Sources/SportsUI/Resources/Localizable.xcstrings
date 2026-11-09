@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "千卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kcal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大卡"
+          }
+        }
+      }
+    },
+    "卡路里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calories"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡路里"
+          }
+        }
+      }
+    },
     "发": {
       "localizations": {
         "en": {
