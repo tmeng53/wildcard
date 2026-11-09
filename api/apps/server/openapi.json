@@ -1462,6 +1462,9 @@
             "minItems": 1,
             "maxItems": 1000,
             "description": "Each lap’s time in seconds, in order."
+          },
+          "zones": {
+            "$ref": "#/components/schemas/HeartRateZones"
           }
         },
         "additionalProperties": false,
@@ -1487,6 +1490,39 @@
           "bpm"
         ],
         "additionalProperties": false
+      },
+      "HeartRateZones": {
+        "type": "object",
+        "properties": {
+          "light": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "moderate": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "vigorous": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "peak": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          }
+        },
+        "required": [
+          "light",
+          "moderate",
+          "vigorous",
+          "peak"
+        ],
+        "additionalProperties": false,
+        "description": "Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`."
       },
       "RoutePoint": {
         "type": "object",

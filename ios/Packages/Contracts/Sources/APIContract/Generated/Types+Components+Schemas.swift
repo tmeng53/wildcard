@@ -2913,21 +2913,27 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/WorkoutSeries/laps`.
             public var laps: [Swift.Double]?
+            /// - Remark: Generated from `#/components/schemas/WorkoutSeries/zones`.
+            public var zones: Components.Schemas.HeartRateZones?
             /// Creates a new `WorkoutSeries`.
             ///
             /// - Parameters:
             ///   - hr: Heart rate, earliest first, thinned on the phone to about 120 points.
             ///   - laps: Each lap’s time in seconds, in order.
+            ///   - zones:
             public init(
                 hr: [Components.Schemas.HeartRatePoint]? = nil,
-                laps: [Swift.Double]? = nil
+                laps: [Swift.Double]? = nil,
+                zones: Components.Schemas.HeartRateZones? = nil
             ) {
                 self.hr = hr
                 self.laps = laps
+                self.zones = zones
             }
             public enum CodingKeys: String, CodingKey {
                 case hr
                 case laps
+                case zones
             }
         }
         /// - Remark: Generated from `#/components/schemas/HeartRatePoint`.
@@ -2953,6 +2959,43 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case t
                 case bpm
+            }
+        }
+        /// Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/HeartRateZones`.
+        public struct HeartRateZones: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/light`.
+            public var light: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/moderate`.
+            public var moderate: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/vigorous`.
+            public var vigorous: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/HeartRateZones/peak`.
+            public var peak: Swift.Int
+            /// Creates a new `HeartRateZones`.
+            ///
+            /// - Parameters:
+            ///   - light:
+            ///   - moderate:
+            ///   - vigorous:
+            ///   - peak:
+            public init(
+                light: Swift.Int,
+                moderate: Swift.Int,
+                vigorous: Swift.Int,
+                peak: Swift.Int
+            ) {
+                self.light = light
+                self.moderate = moderate
+                self.vigorous = vigorous
+                self.peak = peak
+            }
+            public enum CodingKeys: String, CodingKey {
+                case light
+                case moderate
+                case vigorous
+                case peak
             }
         }
         /// - Remark: Generated from `#/components/schemas/RoutePoint`.

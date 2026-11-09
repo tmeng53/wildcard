@@ -229,20 +229,32 @@ public struct WorkoutMap: View {
     }
 }
 
-/// A workout's chart on the sport category's colour: heart rate as a line, or for a swim each lap's
-/// time as a bar, the fastest in white and the rest dimmed. With `label`, its name top left.
+/// A workout's chart. Heart rate is `HeartRateChart` on graphite, detailed with `label` (a post's
+/// cover: zones, minutes per zone, scrubbing), the curve alone without. A swim's laps stay on the
+/// sport category's colour, each lap's time as a bar, the fastest in white and the rest dimmed, with
+/// `label` its name top left.
 public struct WorkoutChart: View {
     private let series: WorkoutSeries
     private let colors: PostBlockColors
     private let showsLabel: Bool
+    private let startedAt: Date?
 
-    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false) {
+    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil) {
         self.series = series
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.showsLabel = showsLabel
+        self.startedAt = startedAt
     }
 
     public var body: some View {
+        if series.laps?.isEmpty ?? true, let curve = series.heartRate, curve.count >= 2 {
+            HeartRateChart(points: curve, zones: series.zones, startedAt: startedAt, isDetailed: showsLabel)
+        } else {
+            lapChart
+        }
+    }
+
+    private var lapChart: some View {
         let ink = Color(colors.ink)
         Canvas { context, size in
             let pad = size.width > 100 ? Space.s : Space.xxs + 2
@@ -250,8 +262,6 @@ public struct WorkoutChart: View {
             let area = CGRect(x: pad, y: top, width: size.width - 2 * pad, height: size.height - top - pad)
             if let laps = series.laps, !laps.isEmpty {
                 Self.drawLaps(laps, fastest: series.fastestLap, in: area, ink: ink, context: context)
-            } else if let curve = series.heartRate, curve.count >= 2 {
-                Self.drawHeartRate(curve, in: area, ink: ink, lineWidth: size.width > 100 ? 2.5 : 2, context: context)
             }
         }
         .background(Color(colors.fill))
@@ -289,23 +299,6 @@ public struct WorkoutChart: View {
                 Path(roundedRect: bar, cornerRadius: min(2, slot.width / 2)),
                 with: .color(index == fastest ? ink : ink.opacity(0.55)))
         }
-    }
-
-    private static func drawHeartRate(
-        _ points: [HeartRatePoint], in area: CGRect, ink: Color, lineWidth: Double, context: GraphicsContext
-    ) {
-        let lowest = Double(points.map(\.bpm).min() ?? 0)
-        let highest = Double(points.map(\.bpm).max() ?? 1)
-        let start = points.first?.seconds ?? 0
-        let span = max((points.last?.seconds ?? 1) - start, 1)
-        var path = Path()
-        for (index, point) in points.enumerated() {
-            let across = area.minX + (point.seconds - start) / span * area.width
-            let share = highest == lowest ? 0.5 : (Double(point.bpm) - lowest) / (highest - lowest)
-            let location = CGPoint(x: across, y: area.maxY - share * area.height)
-            if index == 0 { path.move(to: location) } else { path.addLine(to: location) }
-        }
-        context.stroke(path, with: .color(ink), style: StrokeStyle(lineWidth: lineWidth, lineJoin: .round))
     }
 }
 #endif
