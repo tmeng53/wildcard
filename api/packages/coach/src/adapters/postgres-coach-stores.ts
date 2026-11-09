@@ -686,6 +686,13 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           left join public.coach_challenge_completions done on done.note_id = m.id
           where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
             and m.challenge_title is not null and d.at >= ${since}
+            -- Only the day's standing challenge: a newer note of that day with one replaces it,
+            -- as in challengesOn (an admin may have sent themselves a note besides the morning's).
+            and not exists (
+              select 1 from public.coach_member_notes newer
+              join public.coach_member_note_deliveries nd on nd.note_id = newer.id
+              where newer.squad_id = m.squad_id and newer.member_id = m.member_id
+                and newer.day = m.day and newer.challenge_title is not null and newer.id > m.id)
           union all
           select 'challengeDone', m.id::text, to_char(m.day, 'YYYY-MM-DD'), null, null, null,
             m.challenge_title, m.challenge_amount, m.challenge_unit, m.challenge_line, null, null,
