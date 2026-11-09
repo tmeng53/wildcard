@@ -277,14 +277,14 @@ actor Squad3: SquadSettingsService {
         await model.reload()
         #expect(model.canHireCoach)
         #expect(model.coach == nil)
-        #expect(model.coachWeek == nil)
+        #expect(model.coachTenure == nil)
 
         await model.loadMarket()
         #expect(model.market == .loaded([maotou, nuannuan]))
 
         #expect(await model.hire("xiaohun") == .done)
         #expect(model.coach?.coach == maotou)
-        #expect(model.coachWeek == 1)
+        #expect(model.coachTenure == .days(1))
 
         // 换教练 is one step.
         #expect(await model.hire("nuannuan") == .done)
@@ -343,15 +343,30 @@ actor Squad3: SquadSettingsService {
         #expect(await service.hires.isEmpty)
     }
 
-    /// The week it was hired counts 1; weeks start on Monday, on the member's clock.
-    @Test(arguments: [("2026-10-27", 1), ("2026-11-01", 1), ("2026-11-02", 2), ("2026-11-16", 4)])
-    func theCoachsWeekCountsFromTheHire(today: String, week: Int) async throws {
+    /// Days under a week, the hire day counting 1, then whole weeks, on the member's clock.
+    @Test(arguments: [
+        ("2026-10-27", CoachTenure.days(1)), ("2026-11-01", .days(6)), ("2026-11-02", .weeks(1)),
+        ("2026-11-08", .weeks(1)), ("2026-11-09", .weeks(2)), ("2026-11-16", .weeks(3)),
+    ])
+    func theCoachsTenureCountsFromTheHire(today: String, tenure: CoachTenure) async throws {
         let model = SquadSettingsModel(
             service: try Squad3(
                 viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false),
                 coach: .init(coach: maotou, since: tuesday), today: today))
         await model.reload()
-        #expect(model.coachWeek == week)
+        #expect(model.coachTenure == tenure)
+    }
+
+    /// Hired on a Sunday evening in Toronto (Monday in UTC), the coach has coached 2 days on Monday.
+    @Test(arguments: [("2026-11-08", CoachTenure.days(1)), ("2026-11-09", .days(2)), ("2026-11-14", .weeks(1))])
+    func aCoachHiredOnSundayCountsDaysOnMonday(today: String, tenure: CoachTenure) async throws {
+        let sundayEvening = Date(timeIntervalSince1970: 1_794_189_600)
+        let model = SquadSettingsModel(
+            service: try Squad3(
+                viewer: lin, scene: try scene(pickers: .crown([coco]), canPick: false),
+                coach: .init(coach: maotou, since: sundayEvening), today: today))
+        await model.reload()
+        #expect(model.coachTenure == tenure)
     }
 
     @Test func aMarketThatCantBeReadSaysSo() async throws {

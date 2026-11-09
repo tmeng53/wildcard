@@ -9,8 +9,8 @@ import SwiftUI
 
 /// The squad's coach standing on the sideline, as big as me, idling; it has no ring, since it
 /// doesn't check in. It drops in after the squad onto a newly picked scene. While its page has a
-/// card not seen yet, the phone in its hand shows the unread dot and buzzes, and it glances down at it (the
-/// approved 毛头的手机来消息; under Reduce Motion, the dot only).
+/// card not seen yet, the phone in its hand shows the unread dot, and the home has it whistle
+/// again and again (Tracy, 2026-11-09; under Reduce Motion, the dot only).
 struct SidelineCoachFigure: View {
     let coach: SquadCast.Coach
     let unit: Double
@@ -33,16 +33,13 @@ struct SidelineCoachFigure: View {
     /// The part holding the phone, and the phone's top corner on its art, where the dot sits.
     private static let phoneHand: PartID = "armR"
     private static let phoneCorner = Point(x: 160, y: 179)
-    /// The dot, and the ring around it, as on 动态's bell; the buzz lines, in points.
+    /// The dot, and the ring around it, as on 动态's bell, in points.
     private static let dot: Double = 8
     private static let dotRing: Double = 2
-    private static let buzzLine = CGSize(width: 2, height: 6)
 
     var body: some View {
         let scale = coach.scale * unit
         let frame = reduceMotion ? coach.player.restFrame : coach.player.frame(at: date)
-        let seconds = date.timeIntervalSinceReferenceDate
-        let buzzes = hasNews && !reduceMotion
         Color.clear
             .overlay {
                 CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: Self.reach)
@@ -52,15 +49,14 @@ struct SidelineCoachFigure: View {
             }
             .overlay(alignment: .topLeading) {
                 if hasNews, let corner = phoneCorner(frame.placements) {
-                    phone(lines: buzzes ? PhoneBuzz.lines(at: seconds) : 0)
+                    unreadDot
                         .position(x: corner.x * scale, y: corner.y * scale)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: hasNews)
-            .rotationEffect(.degrees(buzzes ? PhoneBuzz.sway(at: seconds) : 0), anchor: .bottom)
             .rotationEffect(.degrees(tilt))
-            .offset(y: -lift * unit - (buzzes ? PhoneBuzz.hop(at: seconds) * scale : 0))
+            .offset(y: -lift * unit)
             .frame(width: Self.canvas.width * scale, height: Self.canvas.height * scale)
             .contentShape(Rectangle())
             .position(
@@ -77,24 +73,13 @@ struct SidelineCoachFigure: View {
         return placements[hand].transform.apply(to: Self.phoneCorner)
     }
 
-    /// The unread dot on the phone, with two buzz lines beside it showing by `lines`.
-    private func phone(lines: Double) -> some View {
+    /// The unread dot on the phone.
+    private var unreadDot: some View {
         Circle()
             .fill(Color(role: .bgBrand, in: .gym))
             .frame(width: Self.dot, height: Self.dot)
             .padding(Self.dotRing)
             .background(Circle().fill(Color(role: .bgCanvas, in: .gym)))
-            .overlay(alignment: .topTrailing) {
-                ZStack(alignment: .topLeading) {
-                    Capsule().frame(width: Self.buzzLine.width, height: Self.buzzLine.height)
-                        .rotationEffect(.degrees(-30))
-                    Capsule().frame(width: Self.buzzLine.width, height: Self.buzzLine.height * 0.8)
-                        .offset(x: Self.buzzLine.height / 2, y: Self.buzzLine.height + 1)
-                }
-                .foregroundStyle(Color(role: .fgDefault, in: .gym))
-                .opacity(lines)
-                .offset(x: Self.buzzLine.height + 2, y: -Self.buzzLine.height / 2)
-            }
             .accessibilityHidden(true)
     }
 }
