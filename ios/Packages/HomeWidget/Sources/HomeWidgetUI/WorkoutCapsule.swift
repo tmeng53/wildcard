@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import Contracts
 import DesignSystem
 import DesignSystemUI
