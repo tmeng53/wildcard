@@ -22,6 +22,9 @@
 	<true/>
 	<key>com.apple.developer.healthkit.access</key>
 	<array/>
+	<!-- Woken in the background when Health gets a new workout, to remind the member of it. -->
+	<key>com.apple.developer.healthkit.background-delivery</key>
+	<true/>
 	<!-- Shared with the 6pm push's view (WildcardPushReact): the sign-in (an app group is also a
 	     Keychain access group), the squad's looks and where to open the app; and with it and
 	     WildcardPushService, the language picked in the app. -->

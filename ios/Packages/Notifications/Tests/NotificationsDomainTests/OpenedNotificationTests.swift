@@ -52,3 +52,10 @@ import Testing
         OpenedNotification(category: "weeklyAwards", event: ["squad": "nope", "weekStart": "2026-10-19"]) == .other)
     #expect(OpenedNotification(category: nil, event: [:]) == .other)
 }
+
+@Test func aNewWorkoutsReminderOpensItsComposePage() {
+    #expect(
+        OpenedNotification(category: "newWorkout", event: ["provider": "apple_health", "workout": "W1"])
+            == .open(.newWorkout(WorkoutSource(provider: "apple_health", id: "W1"))))
+    #expect(OpenedNotification(category: "newWorkout", event: [:]) == .open(.today))
+}

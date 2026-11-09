@@ -15,7 +15,7 @@ let package = Package(
         .library(name: "HealthDomain", targets: ["HealthDomain"]),
         .library(name: "HealthUI", targets: ["HealthUI"]),
     ],
-    dependencies: [.package(path: "../Contracts"), .package(path: "../DesignSystem")],
+    dependencies: [.package(path: "../Contracts"), .package(path: "../DesignSystem"), .package(path: "../Sports")],
     targets: [
         .target(name: "HealthDomain", dependencies: [.product(name: "Contracts", package: "Contracts")]),
         .target(
@@ -24,6 +24,7 @@ let package = Package(
                 "HealthDomain", .product(name: "Contracts", package: "Contracts"),
                 .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "DesignSystemUI", package: "DesignSystem"),
+                .product(name: "SportsUI", package: "Sports"),
             ],
             resources: [.process("Resources/Localizable.xcstrings")]),
         .testTarget(

@@ -13,6 +13,12 @@ public final class HealthConnection {
     public var sharing: HealthSharing {
         didSet { keep(sharing) }
     }
+    /// 新运动提醒: a notification for each new workout Health gets, on until switched off.
+    public var remindsOfWorkouts: Bool {
+        didSet { defaults.set(remindsOfWorkouts, forKey: Self.remindersKey) }
+    }
+    /// What follows connecting on this phone: the app starts listening for new workouts.
+    @ObservationIgnored public var onConnect: (@MainActor () async -> Void)?
     /// The workouts read last, newest first; `today(_:in:posted:)` picks today's.
     public private(set) var recent: [ImportedWorkout] = []
     /// The workouts put away from the home's card on this phone; the card offers the next one.
@@ -28,13 +34,23 @@ public final class HealthConnection {
         self.library = library
         self.defaults = defaults
         self.now = now
-        sharing =
-            defaults.data(forKey: Self.sharingKey).flatMap { try? JSONDecoder().decode(HealthSharing.self, from: $0) }
-            .flatMap { $0.version == 1 ? $0 : nil } ?? HealthSharing()
+        sharing = Self.sharing(in: defaults)
         stored =
             defaults.data(forKey: Self.putAwayKey).flatMap { try? JSONDecoder().decode(PutAway.self, from: $0) }
             .flatMap { $0.version == 1 ? $0.workouts : nil } ?? []
         putAway = Set(stored)
+        remindsOfWorkouts = Self.remindsOfWorkouts(in: defaults)
+    }
+
+    /// What a new post from Health shares, as `sharing` keeps it, for code off the main actor.
+    public nonisolated static func sharing(in defaults: UserDefaults) -> HealthSharing {
+        defaults.data(forKey: sharingKey).flatMap { try? JSONDecoder().decode(HealthSharing.self, from: $0) }
+            .flatMap { $0.version == 1 ? $0 : nil } ?? HealthSharing()
+    }
+
+    /// Whether 新运动提醒 is on, as `remindsOfWorkouts` keeps it, for code off the main actor.
+    public nonisolated static func remindsOfWorkouts(in defaults: UserDefaults) -> Bool {
+        defaults.object(forKey: remindersKey) as? Bool ?? true
     }
 
     /// Takes `workout` off the home's card for good on this phone; it can still be posted from 打卡.
@@ -65,6 +81,7 @@ public final class HealthConnection {
     public func connect() async {
         _ = await library.connect()
         await refresh()
+        if isConnected { await onConnect?() }
     }
 
     /// Today's workouts for the member's `day`, newest first, each marked posted when `posted`
@@ -77,7 +94,8 @@ public final class HealthConnection {
         if let data = try? JSONEncoder().encode(sharing) { defaults.set(data, forKey: Self.sharingKey) }
     }
 
-    private static let sharingKey = "health.sharing"
+    private nonisolated static let sharingKey = "health.sharing"
+    private nonisolated static let remindersKey = "health.reminders"
     private static let putAwayKey = "health.putAway"
     private static let putAwayLimit = 50
 

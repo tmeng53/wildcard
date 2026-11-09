@@ -92,6 +92,21 @@ extension TodayStore {
         await drain()
     }
 
+    /// Takes over posts made outside the app (a new workout's reminder, posted from its card
+    /// while offline) into the outbox and sends them: each the signed-in member's, once by id,
+    /// counted on the home at once like the member's own.
+    public func adopt(_ posts: [PendingCheckIn]) async {
+        guard let member = home?.member else { return }
+        var new: [PendingCheckIn] = []
+        for post in posts where post.member == member && !(pending + new).contains(where: { $0.id == post.id }) {
+            new.append(post)
+        }
+        guard !new.isEmpty else { return }
+        pending.append(contentsOf: new)
+        await outbox.save(pending)
+        await drain()
+    }
+
     /// What became of a post someone waits on.
     enum Fate {
         case saved(CheckIn)

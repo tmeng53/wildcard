@@ -53,6 +53,8 @@
 		A1C0DE0000000000000000C4 /* ScheduleUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000C3 /* ScheduleUI */; };
 		A1C0DE0000000000000000D5 /* SportsUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE0000000000000000D4 /* SportsUI */; };
 		A1C0DE000000000000000322 /* HealthUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000321 /* HealthUI */; };
+		A1C0DE000000000000000340 /* HealthUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000341 /* HealthUI */; };
+		A1C0DE000000000000000342 /* HealthDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000343 /* HealthDomain */; };
 		A1C0DE000000000000000332 /* LocationUI in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000331 /* LocationUI */; };
 		A1C0DE000000000000000334 /* LocationDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A1C0DE000000000000000333 /* LocationDomain */; };
 /* End PBXBuildFile section */
@@ -213,6 +215,8 @@
 				A1C0DE00000000000000021F /* DesignSystem in Frameworks */,
 				A1C0DE000000000000000220 /* DesignSystemUI in Frameworks */,
 				A1C0DE000000000000000223 /* SportsUI in Frameworks */,
+				A1C0DE000000000000000340 /* HealthUI in Frameworks */,
+				A1C0DE000000000000000342 /* HealthDomain in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -360,6 +364,8 @@
 				A1C0DE000000000000000221 /* DesignSystem */,
 				A1C0DE000000000000000222 /* DesignSystemUI */,
 				A1C0DE000000000000000224 /* SportsUI */,
+				A1C0DE000000000000000341 /* HealthUI */,
+				A1C0DE000000000000000343 /* HealthDomain */,
 			);
 			productName = WildcardPushReact;
 			productReference = A1C0DE000000000000000200 /* WildcardPushReact.appex */;
@@ -1134,6 +1140,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */;
 			productName = HealthUI;
+		};
+		A1C0DE000000000000000341 /* HealthUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */;
+			productName = HealthUI;
+		};
+		A1C0DE000000000000000343 /* HealthDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1C0DE000000000000000320 /* XCLocalSwiftPackageReference "Packages/Health" */;
+			productName = HealthDomain;
 		};
 		A1C0DE000000000000000331 /* LocationUI */ = {
 			isa = XCSwiftPackageProductDependency;

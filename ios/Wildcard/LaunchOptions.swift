@@ -185,6 +185,12 @@ enum LaunchOptions {
         guard let flag = arguments.firstIndex(of: "-uitest-push"), flag + 1 < arguments.count else { return nil }
         return (try? JSONSerialization.jsonObject(with: Data(arguments[flag + 1].utf8))) as? [String: Any]
     }
+
+    /// With `-uitest-workout-reminder`: a new workout's reminder, as HealthKit's wake would make
+    /// it, for a UI test to long-press.
+    static var workoutReminderSample: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-workout-reminder")
+    }
     #endif
 
     /// With `-onboarding`, `-slow-sign-in`: signing in on the open screen takes this long, in

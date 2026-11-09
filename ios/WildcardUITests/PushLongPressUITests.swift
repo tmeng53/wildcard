@@ -47,14 +47,44 @@ final class PushLongPressUITests: XCTestCase {
         XCTAssertTrue(plain.label.contains("测试队友"), "the extension's words aren't the push's: \(plain.label)")
     }
 
+    /// A new workout's reminder (made on the phone when HealthKit wakes the app): long-pressed, the
+    /// run with its 数据 and 发布, in the app's language.
+    func testANewWorkoutsReminderOpensItsPost() throws {
+        continueAfterFailure = false
+        let expanded = try longPress(
+            launching: ["-uitest-workout-reminder"], banner: "要打卡吗", shot: "92-workout-reminder-long-press")
+        let card = expanded.descendants(matching: .any).matching(identifier: "quickPost").firstMatch
+        XCTAssertTrue(
+            card.waitForExistence(timeout: Self.wait),
+            "the long-pressed reminder doesn't draw its post:\n\(springboard.debugDescription.prefix(4000))")
+        XCTAssertTrue(
+            expanded.buttons.matching(identifier: "quickPost.post").firstMatch.exists,
+            "the long-pressed reminder has no 发布:\n\(springboard.debugDescription.prefix(4000))")
+        XCTAssertTrue(
+            expanded.descendants(matching: .any).matching(identifier: "pushReact.zh-Hans").firstMatch.exists,
+            "the long-pressed reminder doesn't speak the app's language")
+        for english in ["Run", "Post", "Share to"] {
+            XCTAssertFalse(
+                expanded.staticTexts.matching(NSPredicate(format: "label == %@", english)).firstMatch.exists,
+                "the long-pressed reminder shows \(english)")
+        }
+    }
+
     /// Launches the app with the push, goes home, long-presses its banner and keeps a screenshot
     /// of what opens.
     private func longPress(_ payload: [String: Any], shot: String) throws -> XCUIApplication {
-        let app = XCUIApplication()
         let json = try XCTUnwrap(String(bytes: try JSONSerialization.data(withJSONObject: payload), encoding: .utf8))
-        app.launchArguments += [
-            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-push", json,
-        ]
+        return try longPress(launching: ["-uitest-push", json], banner: "测试队友", shot: shot)
+    }
+
+    /// Launches the app with `arguments`, which make a notification, goes home, long-presses the
+    /// banner that says `banner` and keeps a screenshot of what opens.
+    private func longPress(launching arguments: [String], banner words: String, shot: String) throws
+        -> XCUIApplication
+    {
+        let app = XCUIApplication()
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
+        app.launchArguments += arguments
         app.launch()
         // The system prompt's second button allows, in any language; it shows only the first time.
         let allow = springboard.alerts.firstMatch
@@ -62,8 +92,8 @@ final class PushLongPressUITests: XCTestCase {
             allow.buttons.element(boundBy: 1).tap()
         }
         XCUIDevice.shared.press(.home)
-        let banner = springboard.buttons.matching(NSPredicate(format: "label CONTAINS %@", "测试队友")).firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "no banner for the 6pm push")
+        let banner = springboard.buttons.matching(NSPredicate(format: "label CONTAINS %@", words)).firstMatch
+        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "no banner saying \(words)")
         banner.press(forDuration: 1.5)
         // The extension starts, draws and resizes its card.
         Thread.sleep(forTimeInterval: 4)

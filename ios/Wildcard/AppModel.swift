@@ -321,6 +321,7 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
+        await sendQuickPosts()
         isAdmin = (try? await api.me())?.isAdmin ?? false
     }
 
@@ -328,7 +329,7 @@ final class AppModel {
     private func todayStore(of member: MemberID) -> TodayStore {
         let (directory, api) = (folders.folder(for: member), memberAPI(member))
         return TodayStore(
-            backend: APICheckInBackend(api: api, directory: directory, shared: shared),
+            backend: APICheckInBackend(api: api, directory: directory, shared: shared, posting: Self.posting),
             outbox: DeviceOutbox(directory: directory), unlocks: APIUnlockLedger(api: api, directory: directory),
             now: { Date() }, newID: { UUID() })
     }
@@ -357,6 +358,7 @@ final class AppModel {
         folders.forgetAll()
         await api.forgetPhotos()
         shared?.forget()
+        Self.posting?.forget()
         if case .signUp(let model) = screen, model.step == .welcome { return }
         screen = .signUp(newSignUp(hasAgreedToAI: false))
     }

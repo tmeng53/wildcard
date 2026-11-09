@@ -87,6 +87,8 @@ public enum AppDestination: Hashable, Sendable {
     case profile
     /// 通知, behind the bell on 动态.
     case notices
+    /// A new workout from Health on the compose page, picked: a tap on its reminder.
+    case newWorkout(WorkoutSource)
 }
 
 extension Notice {

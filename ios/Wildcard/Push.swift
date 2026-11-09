@@ -1,8 +1,10 @@
 import Backend
 import DailyPushDomain
 import DailyPushUI
+import HealthUI
 import NotificationsDomain
 import NotificationsUI
+import SportsUI
 import UIKit
 import UserNotifications
 
@@ -43,6 +45,14 @@ enum Push {
         let soon = UNTimeIntervalNotificationTrigger(timeInterval: 8, repeats: false)
         try? await center.add(UNNotificationRequest(identifier: key, content: content, trigger: soon))
     }
+
+    /// With `-uitest-workout-reminder`, a sample run's reminder, as HealthKit's wake makes one.
+    static func deliverWorkoutReminderSample() async {
+        guard LaunchOptions.workoutReminderSample,
+            (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) == true
+        else { return }
+        await WorkoutReminderCenter.remindOfSample(after: 8)
+    }
     #endif
 }
 
@@ -72,13 +82,21 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         // Set before launching ends, so a tap that launched the app is delivered.
         UNUserNotificationCenter.current().delegate = taps
-        // The 6pm push opens into today's check-ins (its content extension, by this category).
+        // The 6pm push opens into today's check-ins, and a new workout's reminder into its post
+        // (their content extension, by these categories).
         UNUserNotificationCenter.current().setNotificationCategories([
-            UNNotificationCategory(identifier: "dailyProgress", actions: [], intentIdentifiers: [])
+            UNNotificationCategory(identifier: "dailyProgress", actions: [], intentIdentifiers: []),
+            WorkoutReminderCenter.notificationCategory,
         ])
         Task { await Push.registration.launched() }
+        // Listening for new workouts from launching, as HealthKit asks, so a background launch for
+        // one is told; and again once Health is connected.
+        if SportList.shared.catalog == .empty { SportList.shared.show(CatalogClient.bundled.sports) }
+        AppModel.health.onConnect = { await AppModel.workoutReminders.start() }
+        Task { await AppModel.workoutReminders.start() }
         #if DEBUG
         Task { await Push.deliverLaunchSample() }
+        Task { await Push.deliverWorkoutReminderSample() }
         #endif
         return true
     }

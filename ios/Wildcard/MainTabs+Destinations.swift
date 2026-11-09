@@ -42,6 +42,7 @@ extension MainTabs {
         case .pats: today.replayPatsOnMe()
         case .coachNote, .waitingCoachNote: openCoachDeck()
         case .coachLetter(let letter): today.showAgain(letter)
+        case .newWorkout(let workout): Task { await today.compose(workout) }
         default: break
         }
     }
@@ -57,7 +58,7 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .newWorkout:
             openToday(destination)
         case .schedule:
             selection = .profile

@@ -22,12 +22,16 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
-			<!-- The 6pm push (the API's dailyProgress category). -->
+			<!-- The 6pm push (the API's dailyProgress category), and the app's own reminder of a
+			     new workout from Apple Health (newWorkout). -->
 			<key>UNNotificationExtensionCategory</key>
-			<string>dailyProgress</string>
+			<array>
+				<string>dailyProgress</string>
+				<string>newWorkout</string>
+			</array>
 			<key>UNNotificationExtensionInitialContentSizeRatio</key>
 			<real>1.2</real>
-			<!-- The view shows the week itself, so the push's own words are hidden under it. -->
+			<!-- Each view shows what the words say, so they are hidden under it. -->
 			<key>UNNotificationExtensionDefaultContentHidden</key>
 			<true/>
 			<!-- Taps react in place instead of opening the app. -->

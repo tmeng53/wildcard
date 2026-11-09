@@ -36,6 +36,27 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
     }
 
+    /// Calls `changed` whenever Health gets a workout, the app woken in the background for it
+    /// (background delivery, as soon as iOS allows; later on low power). Set up once per launch,
+    /// from launching, as Apple asks; nothing once Health isn't connected.
+    public func watchWorkouts(_ changed: @escaping @Sendable () async -> Void) {
+        guard isAvailable, defaults.bool(forKey: Self.connectedKey) else { return }
+        let type = HKObjectType.workoutType()
+        let query = HKObserverQuery(sampleType: type, predicate: nil) { _, finished, error in
+            let done = ObserverDone(finished)
+            guard error == nil else {
+                done.call()
+                return
+            }
+            Task {
+                await changed()
+                done.call()
+            }
+        }
+        store.execute(query)
+        store.enableBackgroundDelivery(for: type, frequency: .immediate) { _, _ in }
+    }
+
     public func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout] {
         guard await isConnected() else { return [] }
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictEndDate)
@@ -338,6 +359,16 @@ private enum WorkoutKind: Equatable {
         case 30: "aerobics"
         default: nil
         }
+    }
+}
+
+/// HealthKit's "done" for an observer query's update, told once the reminders are worked out, so
+/// iOS keeps waking the app for the next workout.
+private struct ObserverDone: @unchecked Sendable {  // HealthKit's handler; called once, from one task
+    let call: () -> Void
+
+    init(_ call: @escaping () -> Void) {
+        self.call = call
     }
 }
 #endif

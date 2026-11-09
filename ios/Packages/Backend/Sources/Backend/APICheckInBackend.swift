@@ -13,21 +13,25 @@ public struct APICheckInBackend: CheckInBackend {
     /// The newest coach's letter (交接信) opened on this phone.
     private let openedLetterFile: URL
     private let shared: SharedSquad?
+    private let posting: SharedPostingContext?
     private let now: @Sendable () -> Date
     private let phoneZone: @Sendable () -> TimeZone
 
     /// - Parameters:
     ///   - directory: where the copy is kept, such as Application Support.
     ///   - shared: where the squad's looks are kept for the 6pm push view.
+    ///   - posting: where who posts for which squad is kept for a new workout's reminder.
     ///   - phoneZone: the phone's time zone, which the member's day follows.
     public init(
-        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, now: @escaping @Sendable () -> Date = { Date() },
+        api: WildcardAPI, directory: URL, shared: SharedSquad? = nil, posting: SharedPostingContext? = nil,
+        now: @escaping @Sendable () -> Date = { Date() },
         phoneZone: @escaping @Sendable () -> TimeZone = { .autoupdatingCurrent }
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
         openedLetterFile = directory.appending(path: "coach-letter.json")
         self.shared = shared
+        self.posting = posting
         self.phoneZone = phoneZone
         self.now = now
     }
@@ -51,6 +55,7 @@ public struct APICheckInBackend: CheckInBackend {
             guard let squad = try await api.mySquadWire() else {
                 try? FileManager.default.removeItem(at: saved)
                 shared?.forget()
+                posting?.forget()
                 return nil
             }
             let day = LocalDay(at: now(), in: signedIn.profile.flatMap { TimeZone(identifier: $0.timeZone) } ?? zone)
@@ -68,6 +73,7 @@ public struct APICheckInBackend: CheckInBackend {
             let home = try copy.home(api: api)
             try? DeviceJSON.write(try DeviceJSON.encoder.encode(copy), to: saved)
             shared?.save(home.today.members)
+            posting?.save(home)
             return home
         } catch let error as APIError {
             throw CheckInError(error)

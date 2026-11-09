@@ -47,9 +47,11 @@ public struct HealthSettingsView: View {
     private var connection: some View {
         VStack(spacing: 0) {
             if health.isConnected {
-                ListRow(Text("Apple 健康", bundle: .module), value: Text("已连接", bundle: .module), showsDivider: false) {}
+                ListRow(Text("Apple 健康", bundle: .module), value: Text("已连接", bundle: .module)) {}
                     .disabled(true)
                     .accessibilityIdentifier("health.connected")
+                SwitchRow(Text("新运动提醒", bundle: .module), isOn: $health.remindsOfWorkouts, showsDivider: false)
+                    .accessibilityIdentifier("health.reminders")
             } else {
                 ListRow(Text("连接 Apple 健康", bundle: .module), showsDivider: false) {
                     guard !isConnecting else { return }

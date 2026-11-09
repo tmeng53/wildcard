@@ -19,6 +19,14 @@ public enum OpenedNotification: Hashable, Sendable {
             self = .open(.waitingCoachNote)
             return
         }
+        // A new workout's reminder, made on this phone: its compose page, the workout picked.
+        if category == "newWorkout" {
+            self =
+                event["provider"].flatMap { provider in
+                    event["workout"].map { .open(.newWorkout(WorkoutSource(provider: provider, id: $0))) }
+                } ?? .open(.today)
+            return
+        }
         self = Self.subject(category: category, event: event).flatMap(\.destination).map(Self.open) ?? .other
     }
 

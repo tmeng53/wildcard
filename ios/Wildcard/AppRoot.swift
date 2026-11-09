@@ -105,6 +105,9 @@ struct AppRoot: View {
                 Task { await app.refreshCatalog() }
                 Task { await app.refreshScene() }
                 Task { await AppModel.location.refresh() }
+                Task { await app.sendQuickPosts() }
+                // Reminders missed while the app was away, and those of workouts posted since gone.
+                Task { await AppModel.workoutReminders.check() }
             }
         }
         .onAppear {

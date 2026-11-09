@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "%@ %lld 分钟" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld min"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$lld 分鐘"
+          }
+        }
+      }
+    },
+    "%@ %lld 分钟 · %@ 公里" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$lld min · %3$@ km"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ %2$lld 分鐘 · %3$@ 公里"
+          }
+        }
+      }
+    },
     "App 设置 › 集成" : {
       "localizations" : {
         "en" : {
@@ -65,6 +97,54 @@
         }
       }
     },
+    "写一句再发" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a line"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "寫一句再發"
+          }
+        }
+      }
+    },
+    "分享到 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share to %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "分享到 %@"
+          }
+        }
+      }
+    },
+    "去打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "去打卡"
+          }
+        }
+      }
+    },
     "发之前还能逐项关掉。路线的起点和终点各 200 米不显示。" : {
       "localizations" : {
         "en" : {
@@ -97,6 +177,22 @@
         }
       }
     },
+    "发布" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Post"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "發布"
+          }
+        }
+      }
+    },
     "在“设置”中管理权限" : {
       "localizations" : {
         "en" : {
@@ -125,6 +221,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "一律顯示"
+          }
+        }
+      }
+    },
+    "已发布" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posted"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已發布"
           }
         }
       }
@@ -289,6 +401,22 @@
         }
       }
     },
+    "打开外卡后自动发出" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Posts when you open Wildcard"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開外卡後自動發出"
+          }
+        }
+      }
+    },
     "数据共享 › Apple 健康" : {
       "localizations" : {
         "en" : {
@@ -305,6 +433,22 @@
         }
       }
     },
+    "新运动提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New workout reminders"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新運動提醒"
+          }
+        }
+      }
+    },
     "时长" : {
       "localizations" : {
         "en" : {
@@ -317,6 +461,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "時長"
+          }
+        }
+      }
+    },
+    "没发出去，打开外卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not posted. Open Wildcard"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒發出去，打開外卡"
           }
         }
       }
@@ -353,6 +513,22 @@
         }
       }
     },
+    "点一格可以不发" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a number to leave it out"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "點一格可以不發"
+          }
+        }
+      }
+    },
     "用 Fitbit、WHOOP 或 Oura？" : {
       "localizations" : {
         "en" : {
@@ -369,6 +545,22 @@
         }
       }
     },
+    "要打卡吗？长按一键打卡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in? Press and hold to post."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要打卡嗎？長按一鍵打卡"
+          }
+        }
+      }
+    },
     "设备" : {
       "localizations" : {
         "en" : {
@@ -381,6 +573,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "裝置"
+          }
+        }
+      }
+    },
+    "说点什么（可选）" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Say something (optional)"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "說點什麼（可選）"
           }
         }
       }
@@ -429,6 +637,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "路線"
+          }
+        }
+      }
+    },
+    "运动" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "運動"
           }
         }
       }
