@@ -126,3 +126,13 @@ import Testing
     shared.save(copy)
     #expect(SharedCopy(directory: directory).read() == copy)
 }
+
+@Test func aCatalogWhoseOnlyChangeIsItsCopyIsShownSoItsCopyIsKept() {
+    let bundled = CatalogClient.bundled
+    let copy = AppCopy(entries: ["练了": AppCopy.Words(simplifiedChinese: "训练")])
+    let recopied = AppCatalog(
+        sports: bundled.sports, diceLines: bundled.diceLines, starterStock: bundled.starterStock, art: bundled.art,
+        scenes: bundled.scenes, switches: bundled.switches, copy: copy)
+    #expect(CatalogClient.shows(recopied, differentlyFrom: bundled))
+    #expect(!CatalogClient.shows(bundled, differentlyFrom: bundled))
+}
