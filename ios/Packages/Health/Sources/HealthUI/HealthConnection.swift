@@ -17,6 +17,9 @@ public final class HealthConnection {
     public private(set) var recent: [ImportedWorkout] = []
     /// The workouts put away from the home's card on this phone; the card offers the next one.
     public private(set) var putAway: Set<WorkoutSource>
+    /// The birthday the member chose to give on their profile, which places a heart-rate
+    /// chart's zones; nil without one. Never read from Health.
+    public var birthday: Birthday?
 
     /// `putAway` in the order put away, oldest first.
     @ObservationIgnored private var stored: [WorkoutSource]
@@ -68,9 +71,9 @@ public final class HealthConnection {
     }
 
     /// Today's workouts for the member's `day`, newest first, each marked posted when `posted`
-    /// holds it.
+    /// holds it, with its heart-rate zones placed when the member gave their birthday.
     public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
-        recent.today(day, in: timeZone, posted: posted)
+        recent.map { $0.withZones(birthday: birthday, in: timeZone) }.today(day, in: timeZone, posted: posted)
     }
 
     private func keep(_ sharing: HealthSharing) {

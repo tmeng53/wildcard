@@ -285,6 +285,8 @@ final class AppModel {
 
     /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        // Zones wait for this member's own birthday: one signed in before never lends theirs.
+        Self.health.birthday = nil
         let today = TodayModel(
             store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
             health: Self.health, posted: posted,
@@ -322,7 +324,9 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
-        isAdmin = (try? await api.me())?.isAdmin ?? false
+        let member = try? await api.me()
+        // A failed read keeps what 我 may have handed Health meanwhile.
+        (isAdmin, Self.health.birthday) = (member?.isAdmin ?? false, member.map(\.birthday) ?? Self.health.birthday)
     }
 
     /// The member's home, from what the phone kept for them alone.
