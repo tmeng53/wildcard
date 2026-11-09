@@ -72,19 +72,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reads your workouts in Apple Health to fill in a post's time, distance, heart rate and route. Never reads calories, weight or sleep."
+            "value" : "Reads your workouts in Apple Health to fill in a post's time, distance, heart rate, calories and route. Never reads weight or sleep."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率和路线。不读取卡路里、体重和睡眠。"
+            "value" : "读取你在 Apple 健康里的运动，发训练时帮你填好时长、距离、心率、卡路里和路线。不读取体重和睡眠。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "讀取你在 Apple 健康裡的運動，發訓練時幫你填好時長、距離、心率和路線。不讀取卡路里、體重和睡眠。"
+            "value" : "讀取你在 Apple 健康裡的運動，發訓練時幫你填好時長、距離、心率、卡路里和路線。不讀取體重和睡眠。"
           }
         }
       }

@@ -27,6 +27,12 @@ import {
   createPostgresNoticeStore,
   createPostgresBroadcastStore,
 } from '@wildcard/notices';
+import {
+  MemberId as RewardMember,
+  createPostgresRewardStore,
+  createPostgresUnlockStore,
+  createRewards,
+} from '@wildcard/unlocks';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -64,6 +70,11 @@ import { catalogOn } from '../test-kit/public-routes.js';
 
 const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
+const rewards = createRewards({
+  store: createPostgresRewardStore(db),
+  unlocks: createPostgresUnlockStore(db),
+  clock: () => new Date(),
+});
 const photos = createSupabasePhotoStorage({
   supabaseUrl: config.supabaseUrl,
   secretKey: config.supabaseSecretKey,
@@ -134,6 +145,7 @@ const app = createApp({
   weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
   notices: createNotices({
@@ -278,7 +290,7 @@ describe('/me/titles and /me/equipped-title', () => {
     expect(await call({ method: 'GET', path: '/me/titles', token: me.token })).toStrictEqual({
       status: 200,
       type: 'application/json',
-      body: { version: 1, titles: [] },
+      body: { version: 1, teamBadges: [], titles: [] },
     });
     await award({ squad: squad, weekStart: '2026-10-12', member: me.userId }, [
       { title: '早八战神', speech: '天天七点' },
@@ -293,6 +305,7 @@ describe('/me/titles and /me/equipped-title', () => {
     await freeze({ squad, weekStart: '2026-10-26', name: '早八战队' });
     const board = {
       version: 1,
+      teamBadges: [],
       titles: [
         {
           title: '早八战神',
@@ -574,5 +587,57 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       token: me.token,
     });
     expect([notHere.status, reason(notHere)]).toStrictEqual([404, 'SQUAD_MEMBER_UNKNOWN']);
+  });
+});
+
+describe('the team’s badges', () => {
+  it('shows the badges the team gave apart from the titles, ×N, on the board and the card', async () => {
+    const me = await signUp();
+    const mate = await signUp();
+    await profileOf(me, { nickname: '小米' });
+    await profileOf(mate, { nickname: '阿杰' });
+    const squad = await squadOf(me, mate);
+    const badge = `bug-${randomUUID().slice(0, 8)}`;
+    await rewards.putBadge({
+      id: badge,
+      names: { 'zh-Hans': '捉虫队', 'zh-Hant': '捉蟲隊', en: 'Bug Hunter' },
+      glyph: 'ladybug.fill',
+      tone: '#E65345',
+      offered: true,
+    });
+    await rewards.putTrigger({ kind: 'badge', id: badge, way: 'team', offered: true });
+    const admin = RewardMember.parse(randomUUID());
+    for (let times = 0; times < 2; times += 1) {
+      expect(
+        await rewards.give({
+          member: RewardMember.parse(mate.userId),
+          reward: { kind: 'badge', id: badge },
+          admin,
+        }),
+      ).toBe(true);
+    }
+    const shown = {
+      id: badge,
+      name: { zhHans: '捉虫队', en: 'Bug Hunter', zhHant: '捉蟲隊' },
+      glyph: 'ladybug.fill',
+      tone: '#E65345',
+      times: 2,
+    };
+    const mine = await call({ method: 'GET', path: '/me/titles', token: mate.token });
+    expect(mine.body).toMatchObject({ version: 1, teamBadges: [shown], titles: [] });
+    expect(
+      z
+        .object({ teamBadges: z.tuple([z.object({ latestAt: z.iso.datetime() })]) })
+        .safeParse(mine.body).success,
+    ).toBe(true);
+    const card = await call({
+      method: 'GET',
+      path: `/squads/${squad}/members/${mate.userId}/card`,
+      token: me.token,
+    });
+    expect(card.body).toMatchObject({ teamBadges: [shown], titles: [] });
+    expect((await call({ method: 'GET', path: '/me/titles', token: me.token })).body).toMatchObject(
+      { teamBadges: [] },
+    );
   });
 });

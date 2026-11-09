@@ -272,7 +272,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
              challenge_unit, challenge_line, wake_id)
           select ${squad}::uuid, ${member}::uuid, ${coach}, ${day}::date, ${text},
             ${challenge?.title ?? null}, ${challenge?.amount ?? null}::int,
-            ${challenge?.unit ?? null}, ${challenge?.line ?? null}, ${String(wake)}::bigint
+            ${challenge?.unit ?? null}, ${challenge?.line ?? null},
+            ${wake === undefined ? null : String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (squad_id, member_id, day) do nothing
           returning id`.execute(db);
@@ -308,7 +309,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     replies: {
-      async save({ squad, checkIn, coach, text, emoji, wake }) {
+      async save({ squad, checkIn, coach, text, emoji, mentions = [], wake }) {
         // Nothing when the check-in went while the run was thinking: a failed insert would undo
         // the rest of the wake's save with it.
         const saved = await sql<{ id: string }>`
@@ -317,7 +318,13 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           from public.check_ins where id = ${checkIn}
           on conflict (squad_id, check_in_id) do nothing
           returning id`.execute(db);
-        return saved.rows.length > 0;
+        const [row] = saved.rows;
+        if (row === undefined) return false;
+        if (mentions.length > 0)
+          await sql`
+          insert into public.coach_reply_mentions (reply_id, member_id, position)
+          ${mentionRows(row.id, mentions)}`.execute(db);
+        return true;
       },
 
       async find(squad, checkIn) {
@@ -349,7 +356,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     answers: {
-      async save({ squad, checkIn, comment, coach, text, wake }) {
+      async save({ squad, checkIn, comment, coach, text, mentions = [], wake }) {
         // Nothing when the reply went while the run was thinking, as for a reply to a check-in.
         const saved = await sql<{ id: string }>`
           insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text, wake_id)
@@ -357,7 +364,13 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           from public.check_in_comments where id = ${comment} and check_in_id = ${checkIn}
           on conflict (squad_id, comment_id) do nothing
           returning id`.execute(db);
-        return saved.rows.length > 0;
+        const [row] = saved.rows;
+        if (row === undefined) return false;
+        if (mentions.length > 0)
+          await sql`
+          insert into public.coach_answer_mentions (answer_id, member_id, position)
+          ${mentionRows(row.id, mentions)}`.execute(db);
+        return true;
       },
 
       async ofCheckIn(squad, checkIn) {
@@ -744,6 +757,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coaches.id as coach_id',
           'coaches.name',
           'coaches.look',
+          mentionsOf('reply'),
         ])
         .where('coach_replies.squad_id', '=', squad)
         .where('coach_replies.check_in_id', 'in', checkIns)
@@ -753,6 +767,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         coach: { id: row.coach_id, name: row.name, look: row.look },
         text: row.text ?? undefined,
         emoji: row.emoji ?? undefined,
+        mentions: row.mentions,
         at: new Date(row.at),
       }));
     },
@@ -770,6 +785,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coaches.id as coach_id',
           'coaches.name',
           'coaches.look',
+          mentionsOf('answer'),
         ])
         .where('coach_answers.squad_id', '=', squad)
         .where('coach_answers.check_in_id', 'in', checkIns)
@@ -781,6 +797,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         comment: row.comment_id,
         coach: { id: row.coach_id, name: row.name, look: row.look },
         text: row.text,
+        mentions: row.mentions,
         at: new Date(row.at),
       }));
     },
@@ -985,6 +1002,29 @@ async function saveFiles(
 }
 
 const FOREIGN_KEY_VIOLATION = '23503';
+
+/** Whom a coach's line (a reply to a check-in or an answer) @s, in the order written, as a column. */
+function mentionsOf(line: 'reply' | 'answer') {
+  const [table, of] =
+    line === 'reply'
+      ? [sql.table('public.coach_reply_mentions'), sql.ref('reply_id')]
+      : [sql.table('public.coach_answer_mentions'), sql.ref('answer_id')];
+  const id = sql.ref(line === 'reply' ? 'coach_replies.id' : 'coach_answers.id');
+  return sql<string[]>`coalesce(
+    (select array_agg(member_id::text order by position) from ${table} where ${of} = ${id}),
+    '{}'::text[])`.as('mentions');
+}
+
+/**
+ * The rows of a coach's line's @s, in the order written, for an insert: an account deleted while
+ * the run was thinking is left out, as a failed insert would undo the rest of the wake's save.
+ */
+function mentionRows(line: string, mentions: readonly string[]) {
+  return sql`
+    select ${line}::bigint, m.member, m.position - 1
+    from unnest(${[...mentions]}::uuid[]) with ordinality as m (member, position)
+    where exists (select 1 from auth.users where id = m.member)`;
+}
 
 /** A note row's challenge, if it set one. */
 function challengeOfRow(row: {

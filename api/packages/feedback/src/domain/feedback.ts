@@ -67,3 +67,20 @@ export interface FiledIssue {
   readonly number: number;
   readonly url: string;
 }
+
+/**
+ * What we used a message as: a bug we confirmed is real (reproduced or fixed), or an idea whose
+ * change shipped. Only an admin says so, after checking; nothing adopts on its own.
+ */
+export const AdoptionKind = z.enum(['bug', 'idea']);
+export type AdoptionKind = z.infer<typeof AdoptionKind>;
+
+/** A message we used, once a message, and the admin who said so. Never changed. */
+export interface Adoption {
+  readonly feedback: FeedbackId;
+  /** Who sent the message: whom it thanks. */
+  readonly member: MemberId;
+  readonly kind: AdoptionKind;
+  readonly admin: MemberId;
+  readonly at: Date;
+}

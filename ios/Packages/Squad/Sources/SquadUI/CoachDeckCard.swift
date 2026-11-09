@@ -95,7 +95,13 @@ struct CoachDeckCard: View {
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: giftMoment)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: typing)
         .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen")
+        // The card's name for the UI tests goes on a marker of the card's own bounds: a container's
+        // frame takes in its stage's scene art, which stands taller than the stage and is cut to it.
+        .background {
+            Color.clear
+                .accessibilityElement()
+                .accessibilityIdentifier(card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen")
+        }
     }
 
     /// The card as it stands now in the deck (a gift opened, a challenge answered).

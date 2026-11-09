@@ -118,10 +118,16 @@ public struct CoachReply: Hashable, Sendable {
     public let text: String?
     /// Nil when it only spoke. Not one of the post's reactions.
     public let emoji: Emoji?
+    /// Whom its line @s, in the order written: each 「@昵称」 at its start.
+    public let mentions: [MemberID]
     public let writtenAt: Date
 
-    public init(checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, writtenAt: Date) {
-        (self.checkIn, self.coach, self.text, self.emoji, self.writtenAt) = (checkIn, coach, text, emoji, writtenAt)
+    public init(
+        checkIn: CheckInID, coach: CoachSpeaker, text: String?, emoji: Emoji?, mentions: [MemberID] = [],
+        writtenAt: Date
+    ) {
+        (self.checkIn, self.coach, self.text, self.emoji) = (checkIn, coach, text, emoji)
+        (self.mentions, self.writtenAt) = (mentions, writtenAt)
     }
 }
 
@@ -133,12 +139,18 @@ public struct CoachAnswer: Hashable, Sendable, Identifiable {
     public let comment: CommentID
     public let coach: CoachSpeaker
     public let text: String
+    /// Whom it @s, in the order written: each 「@昵称」 at its start.
+    public let mentions: [MemberID]
     public let writtenAt: Date
 
     public var id: CommentID { comment }
 
-    public init(checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, writtenAt: Date) {
-        (self.checkIn, self.comment, self.coach, self.text, self.writtenAt) = (checkIn, comment, coach, text, writtenAt)
+    public init(
+        checkIn: CheckInID, comment: CommentID, coach: CoachSpeaker, text: String, mentions: [MemberID] = [],
+        writtenAt: Date
+    ) {
+        (self.checkIn, self.comment, self.coach, self.text) = (checkIn, comment, coach, text)
+        (self.mentions, self.writtenAt) = (mentions, writtenAt)
     }
 }
 

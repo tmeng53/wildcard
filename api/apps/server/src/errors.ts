@@ -270,6 +270,16 @@ export class TestPushNoSquadError extends AppError {
   }
 }
 
+export class CoachPreviewDeliverNotSelfError extends AppError {
+  override readonly name = 'CoachPreviewDeliverNotSelfError';
+  readonly reason = 'COACH_PREVIEW_DELIVER_NOT_SELF';
+  readonly status = 'PERMISSION_DENIED';
+
+  constructor() {
+    super('A preview is delivered only to the admin who asks for it.');
+  }
+}
+
 export class CoachPreviewNoSquadError extends AppError {
   override readonly name = 'CoachPreviewNoSquadError';
   readonly reason = 'COACH_PREVIEW_NO_SQUAD';

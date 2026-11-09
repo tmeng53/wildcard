@@ -51,12 +51,15 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
     name: 'get_rewards',
     title: 'Read the rewards and their triggers',
     description:
-      'Shows everything a member can get (a store, a prop or a piece) and every way they get it, ' +
-      'one trigger per way: training (sports, empty = any; after 训练 check-ins, counted from ' +
-      'countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may give it, one a ' +
-      'member a week; offered and the description its model reads; change with put_gift_piece) ' +
-      'or team (only the Wildcard team gives it; no coach or rule ever does). give_unlocks gives ' +
-      'what has a training trigger. Starter pieces and the tumbler and dumbbell need none.',
+      'Shows everything a member can get (a store, prop, piece, badge or voucher) and every way ' +
+      'they get it, one trigger per way: training (sports, empty = any; after 训练 check-ins, ' +
+      'counted from countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may ' +
+      'give it, one a member a week; offered and the description its model reads; change with ' +
+      'put_gift_piece), team (only the Wildcard team gives it, with give_reward) or event (the ' +
+      'named events give it, such as bug-adopted and idea-adopted from adopt_feedback; change ' +
+      'team and event triggers with put_reward_trigger). give_unlocks gives what has a training ' +
+      'trigger. Starter pieces and the tumbler and dumbbell need none. Badges and vouchers ' +
+      'themselves: get_badges.',
     changes: false,
     input: z.strictObject({}),
     run: async () => ({

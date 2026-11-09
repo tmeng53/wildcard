@@ -11,7 +11,29 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface Badges {
+  added_at: Generated<Timestamp>;
+  glyph: string;
+  id: string;
+  kind: Generated<string>;
+  names: Json;
+  offered: Generated<boolean>;
+  tone: string;
+}
 
 export interface GrantOpens {
   at: Generated<Timestamp>;
@@ -25,6 +47,8 @@ export interface Grants {
   at: Timestamp;
   check_in_id: string | null;
   coach_id: string | null;
+  event: string | null;
+  event_id: string | null;
   given_by: string | null;
   granted_at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -65,6 +89,7 @@ export interface RewardTriggers {
   after: number | null;
   counts_from: Timestamp | null;
   description: string | null;
+  events: string[] | null;
   kind: string;
   offered: Generated<boolean>;
   reward_id: string;
@@ -79,7 +104,16 @@ export interface Stores {
   switch_id: string | null;
 }
 
+export interface Vouchers {
+  added_at: Generated<Timestamp>;
+  id: string;
+  kind: Generated<string>;
+  offered: Generated<boolean>;
+  premium_days: number;
+}
+
 export interface DB {
+  badges: Badges;
   grant_opens: GrantOpens;
   grants: Grants;
   piece_claims: PieceClaims;
@@ -87,4 +121,5 @@ export interface DB {
   reward_triggers: RewardTriggers;
   rewards: Rewards;
   stores: Stores;
+  vouchers: Vouchers;
 }
