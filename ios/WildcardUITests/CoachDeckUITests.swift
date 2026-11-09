@@ -4,7 +4,8 @@ import XCTest
 /// the phone in 毛头's hand shows a dot and the note never slides up over 今天 by itself; a tap on
 /// 毛头 opens its page, a stack of what it has for me, oldest on top. Each card is swiped right
 /// into 以前; a gift opens in place (拆开, then 立刻穿上) and a challenge is answered in place
-/// (接受挑战). Under the stack a line says how many are left (Tracy, 2026-11-09). Once all are seen, 看以前的 opens 以前, where every card is a row. Screenshots are
+/// (接受挑战). Under the stack a line says how many are left (Tracy, 2026-11-09). Once all are seen,
+/// 看以前的 opens 以前, where every card is a row and 挑战 keeps only the challenges. Screenshots are
 /// kept for review.
 @MainActor
 final class CoachDeckUITests: XCTestCase {
@@ -60,6 +61,13 @@ final class CoachDeckUITests: XCTestCase {
         XCTAssertEqual(rows.count, 4, "以前 doesn't list every card seen")
         XCTAssertEqual(rows.firstMatch.identifier, "coachEarlier.row.challenge", "以前 isn't newest first")
         keepScreenshot(named: "114-coach-earlier")
+
+        // 挑战 keeps only the challenges (Tracy, 2026-11-09).
+        app.buttons["挑战"].tap()
+        let challenges = app.buttons.matching(identifier: "coachEarlier.row.challenge")
+        XCTAssertTrue(challenges.firstMatch.waitForExistence(timeout: Self.wait), "挑战 lists no challenge")
+        XCTAssertEqual(rows.count, challenges.count, "挑战 lists more than challenges")
+        keepScreenshot(named: "114b-coach-earlier-challenges")
     }
 
     /// 不接挑战 with a word to 毛头 on why: the field and 不接挑战 stay above the keyboard while it

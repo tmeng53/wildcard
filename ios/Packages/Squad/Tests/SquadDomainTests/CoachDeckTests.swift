@@ -25,6 +25,7 @@ private final class CardsInMemory: CoachCardSource {
         var opened: [(piece: String, worn: Bool)] = []
         var answers: [String: CoachChallengeAnswer] = [:]
         var reasons: [String?] = []
+        var filters: [CoachDeck.EarlierFilter] = []
         var down = false
     }
 
@@ -39,12 +40,18 @@ private final class CardsInMemory: CoachCardSource {
         }
     }
 
-    func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
-        -> CoachEarlierCards
+    func earlier(in squad: SquadID, from cursor: String?, showing filter: CoachDeck.EarlierFilter)
+        async throws(SquadError) -> CoachEarlierCards
     {
         try state.withLock { state throws(SquadError) in
             if state.down { throw .unavailable }
-            let listed = state.cards.earlier.filter { !unseenOnly || !$0.isSeen }
+            state.filters.append(filter)
+            let listed =
+                switch filter {
+                case .all: state.cards.earlier
+                case .unseen: state.cards.earlier.filter { !$0.isSeen }
+                case .challenges: (state.cards.stack.reversed() + state.cards.earlier).filter { $0.kind == .challenge }
+                }
             let start = cursor.flatMap { after in listed.firstIndex { $0.id == after } }.map { $0 + 1 } ?? 0
             let page = Array(listed.dropFirst(start).prefix(2))
             return CoachEarlierCards(cards: page, next: start + 2 < listed.count ? page.last?.id : nil)
@@ -240,4 +247,21 @@ func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, 
     #expect(deck.earlier.map(\.id) == ["40", "b0"])
     await deck.showEarlier(.all)
     #expect(deck.earlier.first?.key == board.key)
+}
+
+@MainActor @Test func challengesListsEveryChallengeTheStacksToo() async {
+    let today = card(.challenge, "41", minutes: 0, challenge: CoachPageCard.Challenge(title: "喝水"))
+    let done = card(
+        .challenge, "30", minutes: -1440,
+        challenge: CoachPageCard.Challenge(title: "拉伸", answer: .accepted, completedBy: .member))
+    let source = CardsInMemory(CoachPageCards(stack: [today], earlier: [oldNote, done]))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    await deck.showEarlier(.challenges)
+    #expect(deck.earlier.map(\.id) == ["41", "30"])
+    #expect(deck.earlier.last?.challenge?.completedBy == .member)
+    #expect(source.state.withLock(\.filters) == [.all, .challenges])
+    // Swiping today's challenge away leaves the list as it is: it was in it already.
+    deck.seen(today)
+    #expect(deck.earlier.map(\.id) == ["41", "30"])
 }

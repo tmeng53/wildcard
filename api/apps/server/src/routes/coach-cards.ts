@@ -254,7 +254,9 @@ export function coachCards(deps: {
       'The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, ' +
       `${String(EARLIER_PAGE)} at a time: pass the reply’s \`next\` as \`cursor\` for the page after ` +
       'it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older ' +
-      `than ${String(STACK_HOURS)} hours); each card says whether it was seen.`,
+      `than ${String(STACK_HOURS)} hours); each card says whether it was seen. \`challenges\` keeps ` +
+      'only the challenges, every one since the caller joined, those in the stack too (挑战, ' +
+      'Tracy 2026-11-09).',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -264,6 +266,12 @@ export function coachCards(deps: {
         unseen: z.enum(['true', 'false']).optional().meta({
           description: '`true` keeps only the cards not seen yet.',
         }),
+        challenges: z
+          .enum(['true', 'false'])
+          .optional()
+          .meta({
+            description: `\`true\` keeps only the challenges, from when the caller joined (not only the last ${String(CARDS_DAYS)} days).`,
+          }),
       }),
     },
     responses: {
@@ -278,14 +286,29 @@ export function coachCards(deps: {
     },
   });
 
-  /** Every card for the caller in the squad, oldest first, each knowing whether it is stacked. */
-  async function sorted(squadId: z.infer<typeof SquadId>, member: string) {
+  /**
+   * Every card for the caller in the squad, oldest first, each knowing whether it is stacked:
+   * from the last `CARDS_DAYS` days, or `sinceJoined`, from whenever they joined.
+   */
+  async function sorted({
+    squadId,
+    member,
+    sinceJoined = false,
+  }: {
+    squadId: z.infer<typeof SquadId>;
+    member: string;
+    sinceJoined?: boolean;
+  }) {
     // Throws `SquadNotJoinedError` for anyone not in the squad.
     const squad = await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
     const now = new Date();
     const joined = squad.members.find((each) => String(each.member) === member)?.joinedAt;
     const back = new Date(now.getTime() - CARDS_DAYS * 24 * 60 * 60_000);
-    const since = joined !== undefined && joined > back ? joined : back;
+    const since = sinceJoined
+      ? (joined ?? new Date(0))
+      : joined !== undefined && joined > back
+        ? joined
+        : back;
     const [{ cards: all, seen: seenKeys }, allGifts, coaches, notesOn, hired] = await Promise.all([
       deps.coachActivity.cards({ squad: CoachSquadId.parse(squadId), member, since }),
       deps.gifts.of(UnlockMember.parse(member)),
@@ -342,7 +365,7 @@ export function coachCards(deps: {
   return new OpenAPIHono<SignedIn>()
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
-      const cards = await sorted(squadId, c.var.caller.userId);
+      const cards = await sorted({ squadId, member: c.var.caller.userId });
       return c.json(
         {
           version: 1 as const,
@@ -357,9 +380,12 @@ export function coachCards(deps: {
     })
     .openapi(earlierRoute, async (c) => {
       const { squadId } = c.req.valid('param');
-      const { cursor, unseen } = c.req.valid('query');
-      const listed = (await sorted(squadId, c.var.caller.userId))
-        .filter((card) => !card.stacked)
+      const { cursor, unseen, challenges } = c.req.valid('query');
+      const onlyChallenges = challenges === 'true';
+      const listed = (
+        await sorted({ squadId, member: c.var.caller.userId, sinceJoined: onlyChallenges })
+      )
+        .filter((card) => (onlyChallenges ? card.wire.kind === 'challenge' : !card.stacked))
         .reverse();
       const shown = (card: (typeof listed)[number]) => unseen !== 'true' || !card.seen;
       // The page starts after the card the cursor names. Found in the whole list, so one seen since

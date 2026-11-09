@@ -29,6 +29,7 @@ public struct CoachEarlierPage: View {
             Picker(selection: filter) {
                 Text(copy: "全部", bundle: .module).tag(CoachDeck.EarlierFilter.all)
                 Text(copy: "未读", bundle: .module).tag(CoachDeck.EarlierFilter.unseen)
+                Text(copy: "挑战", bundle: .module).tag(CoachDeck.EarlierFilter.challenges)
             } label: {
                 Text(copy: "以前", bundle: .module)
             }
@@ -37,11 +38,8 @@ public struct CoachEarlierPage: View {
             .padding(.vertical, Space.xs)
             .accessibilityIdentifier("coachEarlier.filter")
             if deck.earlier.isEmpty && !deck.isLoadingEarlier {
-                StateView(
-                    deck.earlierFilter == .unseen
-                        ? Text(copy: "没有未读的", bundle: .module) : Text(copy: "还没有看过的", bundle: .module)
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                StateView(emptyWords)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 list
             }
@@ -49,6 +47,14 @@ public struct CoachEarlierPage: View {
         .background(Color(role: .bgCanvas, in: theme))
         .navigationTitle(Text(copy: "以前", bundle: .module))
         .pushedPage()
+    }
+
+    private var emptyWords: Text {
+        switch deck.earlierFilter {
+        case .all: Text(copy: "还没有看过的", bundle: .module)
+        case .unseen: Text(copy: "没有未读的", bundle: .module)
+        case .challenges: Text(copy: "还没有挑战", bundle: .module)
+        }
     }
 
     private var filter: Binding<CoachDeck.EarlierFilter> {
