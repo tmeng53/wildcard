@@ -25,7 +25,8 @@ import Testing
 
 /// Each check-in move plays once on every look and persona, stays on the canvas and ends where
 /// the body started, so idle takes over without a jump. Food and the chewing mouth may end
-/// changed: the food is gone and the look puts its own prop back.
+/// changed: the food is gone and the look puts its own prop back. Its arms may end in front:
+/// the crossfade keeps them there until they are back at rest (`Pose.blended`).
 @Test(arguments: Persona.allCases)
 func checkInMovesPlayOnceOnEveryLook(persona: Persona) throws {
     for move in CheckInMove.allCases {
@@ -38,7 +39,9 @@ func checkInMovesPlayOnceOnEveryLook(persona: Persona) throws {
             let end = figure.pose(bound, at: clip.duration)
             let free: Set<PartID> = ["food0", "food1", "food2", "propR", "mouthOpen", "mouthSmile"]
             for (index, part) in figure.parts.enumerated() where !free.contains(part.id) {
-                let gaps = Channel.allCases.map { abs(end.parts[index][$0] - figure.restPose.parts[index][$0]) }
+                let gaps = Channel.allCases.filter { $0 != .front }.map {
+                    abs(end.parts[index][$0] - figure.restPose.parts[index][$0])
+                }
                 #expect(gaps.allSatisfy { $0 < 1e-6 }, "\(move) \(part.id) \(persona.rawValue)")
             }
         }

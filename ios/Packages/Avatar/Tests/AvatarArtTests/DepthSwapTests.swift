@@ -6,44 +6,96 @@ import Testing
 /// Every change of an arm's depth happens while its forearm is clear of the body, so it can't be
 /// seen: where the forearm (the only part drawn in front, `Figure.forearm`) covers the torso, what
 /// is worn over it or the other arm, front and behind look different, and a swap there jumps
-/// however it is timed. Measured as the canvas area, in square points, where the forearm overlaps
-/// what lies between its two copies, at the swap and the frame before it.
-@Test func everyArmDepthSwapHappensClearOfTheBody() throws {
+/// however it is timed. Every move and clip is played as the app plays it (`Performance`), on
+/// each species' body, over the persona's idle with that species' moves: from two moments of the
+/// idle, blending in, through to the blend back to idle (a loop is ended by the next `play`). At
+/// every frame where an arm changes depth, and the frame before, the forearm may overlap what
+/// lies between its two copies by at most 16 square points: a sliver along an outline, where the
+/// two drawings already agree.
+@Test(arguments: ["cat", "bear"])
+func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
     let root = URL(filePath: #filePath).deletingLastPathComponent()
         .appending(path: "../../Sources/AvatarArt/Placeholder")
     let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
     var swaps = 0
     for case let url as URL in files where url.pathExtension == "json" {
         let name = url.path().replacing(root.path(), with: "")
-        guard ["/moves/", "/clips/", "/accents/"].contains(where: url.path().contains),
+        guard ["/moves/", "/clips/"].contains(where: name.hasPrefix),
             let clip = try? Clip.decode(Data(contentsOf: url))
         else { continue }
+        let file = url.deletingPathExtension().lastPathComponent
+        // A persona's own clips, reactions and meals play only for it; the rest for any.
+        let own = Persona.allCases.filter { name.contains("/\($0.rawValue)/") || file.hasSuffix("-\($0.rawValue)") }
+        // Clips, meals and the entrance play as drawn; every other move at the persona's tempo.
+        let asDrawn =
+            name.hasPrefix("/clips/") || name.contains("/checkins/") && !name.contains("doze")
+            || file == "entrance"
+        var look: [Slot: String] = ["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]
         // A prop's move is played holding it.
-        let prop = url.path().contains("/props/") ? url.deletingPathExtension().lastPathComponent : nil
-        var look: [Slot: String] = ["body": "cat", "top": "warmup-tee", "bottom": "warmup-shorts"]
-        look["prop"] = prop
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(look))
-        let bound = try figure.bind(clip)
-        for track in clip.tracks where track.channel == .front {
-            for (previous, key) in zip(track.keys, track.keys.dropFirst()) where key.value != previous.value {
-                swaps += 1
-                let shown =
-                    try [key.time, key.time - 1.0 / 60].map {
-                        try overlap(of: track.part, in: figure, blendedIn(bound, figure, at: max($0, 0)))
-                    }.max() ?? 0
-                #expect(shown <= 16, "\(name) swaps \(track.part) at \(key.time) over \(shown) pt² of the body")
+        look["prop"] = name.contains("/props/") ? file : nil
+        let outfit = Outfit(look)
+        let figure = try PlaceholderCharacter.figure(wearing: outfit)
+        for persona in own.isEmpty ? Persona.allCases : own {
+            let idle = try figure.bind(
+                PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
+            let move = try figure.bind(asDrawn ? clip : clip.atTempo(persona.accentTempo))
+            for start in [0.5, 2.9] {
+                var performance = Performance(figure: figure, idle: idle)
+                performance.play(move, at: start)
+                let end = start + move.clip.duration * (move.clip.loops ? 1.5 : 1)
+                if move.clip.loops { performance.play(idle, at: end) }
+                for (frame, pair) in swapsOfDepth(in: performance, figure, through: end + 0.5) {
+                    swaps += 1
+                    let shown = try max(
+                        overlap(of: pair.arm, in: figure, pair.after), overlap(of: pair.arm, in: figure, pair.before))
+                    #expect(
+                        shown <= 16,
+                        "\(name) as \(persona) on \(body) from \(start)s swaps \(pair.arm) at frame \(frame) over \(shown) pt²"
+                    )
+                }
             }
         }
     }
     #expect(swaps > 200)
 }
 
-/// A clip's pose as it plays from rest: crossfading in from idle over its first moments, as
-/// `Performance` plays it.
-private func blendedIn(_ bound: BoundClip, _ figure: Figure, at time: Double) -> Pose {
-    let blend = 0.15
-    let fraction = min(time / blend, 1)
-    return figure.restPose.blended(to: figure.pose(bound, at: time), amount: fraction * fraction * (3 - 2 * fraction))
+/// No idle, with any species' moves on top, holds a forearm over the body, so a move can bring an
+/// arm in front, or hand it back behind, right as it blends from or back to idle.
+@Test(arguments: ["peach", "cat", "corgi", "lop", "bear"])
+func noIdleHoldsAnArmOverTheBody(body: String) throws {
+    let outfit = Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"])
+    let figure = try PlaceholderCharacter.figure(wearing: outfit)
+    for persona in Persona.allCases {
+        let idle = try figure.bind(
+            PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
+        for frame in 0...Int(idle.clip.duration / persona.accentTempo * 30) {
+            let pose = figure.pose(idle, at: Double(frame) / 30)
+            for arm: PartID in ["armL", "armR"] {
+                let shown = try overlap(of: arm, in: figure, pose)
+                #expect(
+                    shown <= 4,
+                    "\(persona)'s idle on \(body) holds \(arm) over the body at frame \(frame): \(shown) pt²")
+            }
+        }
+    }
+}
+
+/// Each frame, at 60 a second, where an arm's front copy shows or hides, with the poses either
+/// side of it.
+private func swapsOfDepth(in performance: Performance, _ figure: Figure, through end: Double)
+    -> [(frame: Int, pair: (arm: PartID, before: Pose, after: Pose))]
+{
+    var found: [(frame: Int, pair: (arm: PartID, before: Pose, after: Pose))] = []
+    var before = performance.pose(at: 0)
+    for frame in 1...Int((end * 60).rounded(.up)) {
+        let pose = performance.pose(at: Double(frame) / 60)
+        for (index, part) in figure.parts.enumerated()
+        where part.front && (pose.parts[index].front >= 0.5) != (before.parts[index].front >= 0.5) {
+            found.append((frame, (part.id, before, pose)))
+        }
+        before = pose
+    }
+    return found
 }
 
 /// The area where an arm's front copy, drawn past the elbow, covers a part drawn between it and

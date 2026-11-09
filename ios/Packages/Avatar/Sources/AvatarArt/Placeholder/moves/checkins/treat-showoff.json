@@ -949,7 +949,7 @@
     }
    ]
   },
-  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.033, "v": 1, "ease": "hold"}, {"t": 3.7, "v": 0, "ease": "hold"}]},
+  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 1}]},
   {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 1.133, "v": 1, "ease": "hold"}, {"t": 3.7, "v": 0, "ease": "hold"}]}
  ]
 }
