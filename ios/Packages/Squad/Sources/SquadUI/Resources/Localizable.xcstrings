@@ -1813,6 +1813,22 @@
         }
       }
     },
+    "还没有挑战": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No challenges yet"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒有挑戰"
+          }
+        }
+      }
+    },
     "这周还差 6 天，周日前补上。": {
       "localizations": {
         "en": {
