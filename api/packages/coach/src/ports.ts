@@ -243,6 +243,8 @@ export interface CoachReplyStore {
     readonly coach: CoachId;
     readonly text: string | undefined;
     readonly emoji: CoachEmoji | undefined;
+    /** Whom its line @s, in the order written. */
+    readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
   /** What the squad's coach said to a check-in, if it said anything: its coach and line. */
@@ -266,6 +268,8 @@ export interface CoachAnswerStore {
     readonly comment: string;
     readonly coach: CoachId;
     readonly text: string;
+    /** Whom it @s, in the order written. */
+    readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
   /** The squad's answers under a check-in, oldest first. */

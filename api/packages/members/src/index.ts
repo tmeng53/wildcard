@@ -6,6 +6,8 @@ export {
 } from './adapters/postgres-profile-store.js';
 export {
   ArtId,
+  BIRTHDAY_EARLIEST,
+  Birthday,
   CATCHPHRASE_MAX_CHARACTERS,
   Catchphrase,
   Character,
@@ -23,6 +25,7 @@ export {
   Swatch,
   TimeZone,
   type Squadmate,
+  latestBirthday,
 } from './domain/profile.js';
 export { ProfileMissingError, TimeZoneUnknownError } from './errors.js';
 export type { PastLocalHour, ProfileStore } from './ports.js';

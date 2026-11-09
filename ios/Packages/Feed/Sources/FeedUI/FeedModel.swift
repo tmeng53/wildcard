@@ -69,6 +69,8 @@ public final class FeedModel {
     /// The post whose own page is open over the feed, with its comments. The app hides its tab
     /// bar while one is.
     public var opened: CheckInID?
+    /// Opens a teammate's card, from a tap on their @ tag in a comment; the app sets it.
+    @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
     /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
     var replyingTo: ReplyTarget?
     /// Bumps on each comment the member sends, for its haptic.

@@ -2100,6 +2100,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/jerseyNumber`.
                 public var jerseyNumber: Swift.Int?
+                /// The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.
+                ///
+                /// - Remark: Generated from `#/components/schemas/Me/profile/birthday`.
+                public var birthday: Swift.String?
                 /// When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 ///
                 /// - Remark: Generated from `#/components/schemas/Me/profile/joinedAt`.
@@ -2111,18 +2115,21 @@ extension Components {
                 ///   - catchphrase: What the member’s character shouts when the squad cheers a teammate’s 训练 (口头禅): 1 to 10 characters on one line, emoji welcome, no links. Null (or left out) until they pick one; the app then uses their persona’s own line. Squadmates read it on the squad’s today.
                 ///   - character:
                 ///   - jerseyNumber: The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.
+                ///   - birthday: The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.
                 ///   - joinedAt: When the member first saved their profile, right after signing up, in UTC: the day on their character’s ticket.
                 public init(
                     timeZone: Swift.String,
                     catchphrase: Swift.String? = nil,
                     character: Components.Schemas.Character? = nil,
                     jerseyNumber: Swift.Int? = nil,
+                    birthday: Swift.String? = nil,
                     joinedAt: Foundation.Date
                 ) {
                     self.timeZone = timeZone
                     self.catchphrase = catchphrase
                     self.character = character
                     self.jerseyNumber = jerseyNumber
+                    self.birthday = birthday
                     self.joinedAt = joinedAt
                 }
                 public enum CodingKeys: String, CodingKey {
@@ -2130,6 +2137,7 @@ extension Components {
                     case catchphrase
                     case character
                     case jerseyNumber
+                    case birthday
                     case joinedAt
                 }
             }
@@ -2319,6 +2327,35 @@ extension Components {
                 case catchphrase
                 case character
                 case jerseyNumber
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/Birthday`.
+        public struct Birthday: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/Birthday/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/Birthday/version`.
+            public var version: Components.Schemas.Birthday.VersionPayload
+            /// The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Birthday/birthday`.
+            public var birthday: Swift.String
+            /// Creates a new `Birthday`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - birthday: The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.
+            public init(
+                version: Components.Schemas.Birthday.VersionPayload,
+                birthday: Swift.String
+            ) {
+                self.version = version
+                self.birthday = birthday
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case birthday
             }
         }
         /// - Remark: Generated from `#/components/schemas/AccountDeletion`.
@@ -7357,6 +7394,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachReply/emoji`.
             public var emoji: Swift.String?
+            /// Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachReply/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachReply/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachReply`.
@@ -7366,18 +7407,21 @@ extension Components {
             ///   - coach:
             ///   - text: Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted.
             ///   - emoji: Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions.
+            ///   - mentions: Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 coach: Components.Schemas.CoachReply.CoachPayload,
                 text: Swift.String? = nil,
                 emoji: Swift.String? = nil,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.coach = coach
                 self.text = text
                 self.emoji = emoji
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7385,6 +7429,7 @@ extension Components {
                 case coach
                 case text
                 case emoji
+                case mentions
                 case at
             }
         }
@@ -7431,6 +7476,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/text`.
             public var text: Swift.String
+            /// Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachAnswer/mentions`.
+            public var mentions: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/CoachAnswer/at`.
             public var at: Foundation.Date
             /// Creates a new `CoachAnswer`.
@@ -7440,18 +7489,21 @@ extension Components {
             ///   - commentId: The member’s reply to the coach (`replyToCoach`) this answers.
             ///   - coach:
             ///   - text: Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag.
+            ///   - mentions: Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone.
             ///   - at:
             public init(
                 checkInId: Swift.String,
                 commentId: Swift.String,
                 coach: Components.Schemas.CoachAnswer.CoachPayload,
                 text: Swift.String,
+                mentions: [Swift.String]? = nil,
                 at: Foundation.Date
             ) {
                 self.checkInId = checkInId
                 self.commentId = commentId
                 self.coach = coach
                 self.text = text
+                self.mentions = mentions
                 self.at = at
             }
             public enum CodingKeys: String, CodingKey {
@@ -7459,6 +7511,7 @@ extension Components {
                 case commentId
                 case coach
                 case text
+                case mentions
                 case at
             }
         }

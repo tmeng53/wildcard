@@ -884,6 +884,12 @@
                 "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
                 "example": 22
               },
+              "birthday": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.",
+                "example": "1996-04-18"
+              },
               "joinedAt": {
                 "type": "string",
                 "format": "date-time",
@@ -1009,6 +1015,28 @@
         "required": [
           "version",
           "timeZone"
+        ],
+        "additionalProperties": false
+      },
+      "Birthday": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.",
+            "example": "1996-04-18"
+          }
+        },
+        "required": [
+          "version",
+          "birthday"
         ],
         "additionalProperties": false
       },
@@ -4702,6 +4730,14 @@
             ],
             "description": "Its reaction, shown first among the post’s reactions with the 教练 tag, or null when it only spoke. Not counted in the post’s reactions."
           },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom its line @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone."
+          },
           "at": {
             "type": "string",
             "format": "date-time"
@@ -4742,6 +4778,14 @@
             "type": "string",
             "maxLength": 100,
             "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Whom it @s, in the order written, when it @s anyone: each 「@昵称」 at its start, which the app shows as a tag that opens that member’s card. One whose account is deleted is gone."
           },
           "at": {
             "type": "string",
@@ -7602,6 +7646,125 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/birthday": {
+      "put": {
+        "operationId": "putMyBirthday",
+        "summary": "Save the signed-in member’s birthday",
+        "description": "Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Birthday"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Birthday"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid date, one before 1900 or after today, or no profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMyBirthday",
+        "summary": "Remove the signed-in member’s birthday",
+        "description": "Forgets the birthday on the profile, logged with it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "No profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

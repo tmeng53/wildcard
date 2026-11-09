@@ -39,6 +39,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/profile`.
     /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
     func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    func putMyBirthday(_ input: Operations.PutMyBirthday.Input) async throws -> Operations.PutMyBirthday.Output
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    func deleteMyBirthday(_ input: Operations.DeleteMyBirthday.Input) async throws -> Operations.DeleteMyBirthday.Output
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -637,6 +651,30 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    public func putMyBirthday(
+        headers: Operations.PutMyBirthday.Input.Headers = .init(),
+        body: Operations.PutMyBirthday.Input.Body
+    ) async throws -> Operations.PutMyBirthday.Output {
+        try await putMyBirthday(Operations.PutMyBirthday.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    public func deleteMyBirthday(headers: Operations.DeleteMyBirthday.Input.Headers = .init()) async throws -> Operations.DeleteMyBirthday.Output {
+        try await deleteMyBirthday(Operations.DeleteMyBirthday.Input(headers: headers))
     }
     /// The signed-in member’s AI consent
     ///

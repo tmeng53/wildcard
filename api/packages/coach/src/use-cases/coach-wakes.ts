@@ -898,10 +898,9 @@ async function saveDraft(
       coach: coach.id,
       text: draft.reply,
       emoji: draft.reaction,
+      mentions: draft.replyMentions,
     };
-    if (await stores.replies.save({ ...reply, wake: wake.id })) {
-      return { reply: { ...reply, mentions: draft.replyMentions } };
-    }
+    if (await stores.replies.save({ ...reply, wake: wake.id })) return { reply };
   }
   if (wake.reason.kind === 'comment' && draft.answer !== undefined) {
     const answer = {
@@ -910,10 +909,9 @@ async function saveDraft(
       comment: wake.reason.comment,
       coach: coach.id,
       text: draft.answer,
+      mentions: draft.answerMentions,
     };
-    if (await stores.answers.save({ ...answer, wake: wake.id })) {
-      return { answer: { ...answer, mentions: draft.answerMentions } };
-    }
+    if (await stores.answers.save({ ...answer, wake: wake.id })) return { answer };
   }
   return {};
 }

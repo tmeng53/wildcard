@@ -146,6 +146,7 @@ alter table public.reward_triggers add constraint reward_triggers_check check (
       and counts_from is null and events is null
     when 'event' then events is not null and sports is null and after is null
       and counts_from is null and description is null
+      and reward_kind in ('piece', 'badge', 'voucher')
     else sports is null and after is null and counts_from is null and description is null
       and events is null
   end

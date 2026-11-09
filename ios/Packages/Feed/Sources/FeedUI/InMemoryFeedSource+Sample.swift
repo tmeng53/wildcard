@@ -61,25 +61,26 @@ extension InMemoryFeedSource {
         let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
         return InMemoryFeedSource(
             viewer: viewer, posts: posts, characters: characters, photos: byPath,
-            coach: coach ? sampleCoach(on: posts, now: now) : nil)
+            coach: coach ? sampleCoach(on: posts, now: now, mia: mia) : nil)
     }
 
     /// 毛头's line for today and its replies to the run (posts[0]),
-    /// the swim (posts[3]) and the 请假条 (the last).
-    private static func sampleCoach(on posts: [FeedPost], now: Date) -> CoachActivity {
+    /// the swim (posts[3]), which @s Mia, and the 请假条 (the last).
+    private static func sampleCoach(on posts: [FeedPost], now: Date, mia: MemberID) -> CoachActivity {
         let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
         let note = CoachNote(
             day: LocalDay(at: now, in: CoachNote.timeZone), text: localized("今天谁先动，谁就是队长"),
             coach: maotou, writtenAt: now.addingTimeInterval(-3600))
-        func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?) -> CoachReply? {
+        func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?, mentioning: [MemberID] = []) -> CoachReply? {
             guard let post else { return nil }
             return CoachReply(
                 checkIn: post.id, coach: maotou, text: text, emoji: emoji.flatMap { try? Emoji($0) },
+                mentions: mentioning,
                 writtenAt: post.checkIn.createdAt.date.addingTimeInterval(120))
         }
         let replies = [
             reply(posts.first, localized("下雨还跑，鞋的牺牲我记下了"), "🔥"),
-            reply(posts.count > 3 ? posts[3] : nil, localized("夜泳人，记一笔"), nil),
+            reply(posts.count > 3 ? posts[3] : nil, "@Mia " + localized("夜泳人，记一笔"), nil, mentioning: [mia]),
             reply(posts.last, nil, "🫡"),
         ]
         return CoachActivity(note: note, replies: replies.compactMap(\.self))

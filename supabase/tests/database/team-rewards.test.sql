@@ -1,7 +1,7 @@
 -- What the team and events give: dedicated badges and vouchers in their catalogs, logged and never
 -- deleted; `event` triggers; grants by event once an occurrence; and which feedback we adopted.
 begin;
-select plan(22);
+select plan(23);
 
 insert into auth.users (id, email) values ('e3000000-0000-0000-0000-000000000001', 'tia@example.com');
 
@@ -47,6 +47,11 @@ select throws_ok(
 select throws_ok(
   $$insert into public.reward_triggers (reward_kind, reward_id, kind, events) values ('badge', 'bug-hunter', 'event', '{Bug Adopted}')$$,
   '23514', null, 'an event has a kebab name'
+);
+select throws_ok(
+  $$insert into public.rewards (kind, id) values ('store', 'deuceEvent');
+    insert into public.reward_triggers (reward_kind, reward_id, kind, events) values ('store', 'deuceEvent', 'event', '{bug-adopted}')$$,
+  '23514', null, 'an event gives a piece, a badge or a voucher, never a store'
 );
 insert into public.reward_triggers (reward_kind, reward_id, kind, events) values
   ('badge', 'bug-hunter', 'event', '{bug-adopted}'),

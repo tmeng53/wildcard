@@ -353,8 +353,13 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     const asked = randomUUID();
     await sql`insert into public.check_in_comments (id, check_in_id, member_id, text, reply_to_coach, commented_at)
       values (${asked}, ${run}, ${mate.userId}, '在呢', 'xiaohun', now())`.execute(db);
-    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
-      values (${squad}, ${run}, ${asked}, 'xiaohun', '那就再跑一圈')`.execute(db);
+    // Its answer @s the captain, so the app shows the tag that opens their card.
+    await sql`with answer as (
+        insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+        values (${squad}, ${run}, ${asked}, 'xiaohun', '@队长 那就再跑一圈') returning id
+      )
+      insert into public.coach_answer_mentions (answer_id, member_id, position)
+      select id, ${captain.userId}, 0 from answer`.execute(db);
 
     const read = await call({
       method: 'GET',
@@ -391,7 +396,14 @@ describe('GET /squads/{squadId}/coach/activity', () => {
         { checkInId: swim, coach: speaker, text: null, emoji: '🔥', at: 'at' },
       ],
       answers: [
-        { checkInId: run, commentId: asked, coach: speaker, text: '那就再跑一圈', at: 'at' },
+        {
+          checkInId: run,
+          commentId: asked,
+          coach: speaker,
+          text: '@队长 那就再跑一圈',
+          mentions: [captain.userId],
+          at: 'at',
+        },
       ],
     });
 
