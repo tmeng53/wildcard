@@ -1,8 +1,9 @@
 import Contracts
 import Observation
 
-/// A squadmate's player card in its sheet, opened from their name on the home or in 小队设置:
-/// read once when it opens, and again on a retry. It has nothing to change.
+/// A player's card in its pop-up, opened from their name on the home or in 小队: read once when it
+/// opens, and again on a retry. A squadmate's has nothing to change; the member's own wears a
+/// title from its badges, through 我's model, so 我 shows the same one.
 @MainActor @Observable
 public final class SquadmateCardModel {
     public enum Load: Hashable, Sendable {
@@ -17,9 +18,31 @@ public final class SquadmateCardModel {
     /// Their squad's name, for the card's front.
     private let squadName: String?
     @ObservationIgnored private let cards: any SquadmateCards
+    /// 我's model when the card is the member's own; nil on a squadmate's.
+    @ObservationIgnored private let own: MeModel?
 
-    public init(member: MemberID, squad: SquadID, squadName: String?, cards: any SquadmateCards) {
-        (self.member, self.squad, self.squadName, self.cards) = (member, squad, squadName, cards)
+    /// `own` is 我's model when `member` is the member themselves, so their badges can be worn.
+    public init(
+        member: MemberID, squad: SquadID, squadName: String?, cards: any SquadmateCards, own: MeModel? = nil
+    ) {
+        (self.member, self.squad, self.squadName, self.cards, self.own) = (member, squad, squadName, cards, own)
+    }
+
+    /// The member's own card, whose badges have 装备.
+    public var canEquip: Bool { own != nil }
+
+    /// Wears `title` on this card at once and saves it as 我 does; puts the one worn before back
+    /// if saving fails. Does nothing on a squadmate's card.
+    public func equip(_ title: String) async {
+        guard let own, case .loaded(var face) = load else { return }
+        let before = face.board.worn
+        face.board.worn = title
+        load = .loaded(face)
+        let saved = await own.equip(title)
+        guard case .loaded(var latest) = load else { return }
+        // Only what is worn: this card's board lists what this squad's route sent.
+        latest.board.worn = saved.map(\.worn) ?? before
+        load = .loaded(latest)
     }
 
     /// Reads the card; after a failure, shows it failed until the next try, which shows the

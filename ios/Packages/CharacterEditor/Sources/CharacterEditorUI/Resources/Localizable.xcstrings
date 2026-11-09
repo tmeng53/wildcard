@@ -2241,18 +2241,28 @@
     "%@练满 %lld 天": {
       "localizations": {
         "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%@ on %lld day"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%@ on %lld days"
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ on %#@days@"
+          },
+          "substitutions": {
+            "days": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg day"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg days"
+                    }
+                  }
                 }
               }
             }

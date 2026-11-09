@@ -13,7 +13,7 @@ import {
   type Unlock,
   type UnlockRule,
 } from '../domain/unlocks.js';
-import type { Trigger } from '../domain/rewards.js';
+import { EventName, RewardKind, rewardIdFits, type Trigger } from '../domain/rewards.js';
 import type { UnlockStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -34,8 +34,8 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         db.selectFrom('reward_triggers').selectAll().orderBy('kind').execute(),
       ]);
       return rewards.map(({ kind, id }) => ({
-        kind: UnlockKind.parse(kind),
-        id: itemId({ kind, item_id: id }),
+        kind: RewardKind.parse(kind),
+        id: rewardId(kind, id),
         triggers: triggers
           .filter((row) => row.reward_kind === kind && row.reward_id === id)
           .map(triggerOf),
@@ -145,6 +145,7 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
           'at',
         ])
         .where('member_id', '=', member)
+        .where('reward_kind', 'in', ['store', 'prop', 'piece'])
         .where('via', 'in', ['training', 'team'])
         .where('after', 'is not', null)
         .orderBy('at')
@@ -179,7 +180,10 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
           })),
         )
         .onConflict((conflict) =>
-          conflict.columns(['member_id', 'reward_kind', 'reward_id']).doNothing(),
+          conflict
+            .columns(['member_id', 'reward_kind', 'reward_id'])
+            .where('reward_kind', 'in', ['store', 'prop', 'piece'])
+            .doNothing(),
         )
         .returning(['reward_kind', 'reward_id'])
         .execute();
@@ -229,6 +233,12 @@ function itemId(row: { kind: string; item_id: string }): string {
   return row.item_id;
 }
 
+/** A reward row's id, checked against its kind's shape (the database checks it too). */
+function rewardId(kind: string, id: string): string {
+  if (!rewardIdFits(RewardKind.parse(kind), id)) throw new Error(`${id} is not a ${kind} id`);
+  return id;
+}
+
 /** A row's slot, which the database checks too. */
 function slot(value: string): Piece['slot'] {
   const found = SLOTS.find((known) => known === value);
@@ -254,6 +264,7 @@ function triggerOf(row: {
   after: number | null;
   counts_from: Date | string | null;
   description: string | null;
+  events: string[] | null;
 }): Trigger {
   switch (row.kind) {
     case 'training':
@@ -271,6 +282,12 @@ function triggerOf(row: {
       };
     case 'team':
       return { kind: 'team', offered: row.offered };
+    case 'event':
+      return {
+        kind: 'event',
+        offered: row.offered,
+        events: (row.events ?? []).map((event) => EventName.parse(event)),
+      };
     default:
       throw new Error(`${row.kind} is not a way to get a reward`);
   }

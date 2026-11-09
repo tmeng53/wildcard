@@ -19,6 +19,9 @@ import {
   PieceId,
   createCoachGifts,
   createPostgresGiftStore,
+  createPostgresRewardStore,
+  createRewards,
+  EventName,
   createPostgresUnlockStore,
   createUnlocks,
 } from '@wildcard/unlocks';
@@ -61,6 +64,11 @@ const photos = createSupabasePhotoStorage({
 });
 const sports = createSports({ store: createPostgresSportStore(db) });
 const gifts = createCoachGifts({ store: createPostgresGiftStore(db) });
+const rewards = createRewards({
+  store: createPostgresRewardStore(db),
+  unlocks: createPostgresUnlockStore(db),
+  clock: () => new Date(),
+});
 const checkIns = createCheckIns({
   sports,
   store: createPostgresCheckInStore(db),
@@ -114,6 +122,7 @@ const app = createApp({
     switchListed: () => Promise.resolve(true),
   }),
   gifts,
+  rewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -364,6 +373,30 @@ describe('GET /me/unlocks', () => {
     expect((await call({ method: 'PUT', path: '/me/pieces/warmup-headphones/claim' })).status).toBe(
       401,
     );
+  });
+
+  it('lists the pieces the team gave apart from the stores and the coach’s gifts', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const tag = randomUUID().slice(0, 8);
+    const piece = PieceId.parse(`thanks-${tag}`);
+    const event = EventName.parse(`test-${tag}`);
+    await rewards.putTrigger({
+      kind: 'piece',
+      id: piece,
+      way: 'event',
+      events: [event],
+      offered: true,
+    });
+    const at = new Date('2026-11-09T10:00:00Z');
+    await rewards.happened({ member: MemberId.parse(me.userId), event, id: randomUUID(), at });
+    const mine = await call({ method: 'GET', path: '/me/unlocks', token: me.token });
+    expect(mine.body).toMatchObject({
+      pieces: [],
+      gifts: [],
+      teamPieces: [{ id: piece, givenAt: at.toISOString(), event }],
+    });
+    const theirs = await call({ method: 'GET', path: '/me/unlocks', token: friend.token });
+    expect(theirs.body).toMatchObject({ teamPieces: [] });
   });
 
   it('lists the pieces a coach gave apart from what training unlocked', async () => {

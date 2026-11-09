@@ -6,6 +6,7 @@ export {
   type FeedbackTables,
 } from './adapters/postgres-feedback-store.js';
 export {
+  AdoptionKind,
   AppInfo,
   FEEDBACK_MAX_LENGTH,
   FEEDBACK_MAX_SCREENSHOTS,
@@ -13,14 +14,22 @@ export {
   FeedbackId,
   FeedbackKind,
   MemberId,
+  type Adoption,
   type Feedback,
   type FiledIssue,
 } from './domain/feedback.js';
-export { FeedbackIdTakenError, FeedbackInvalidError, FeedbackLimitError } from './errors.js';
+export {
+  FeedbackIdTakenError,
+  FeedbackInvalidError,
+  FeedbackLimitError,
+  FeedbackMissingError,
+} from './errors.js';
 export type { Clock, FeedbackStore } from './ports.js';
 export {
   FEEDBACK_DAILY_LIMIT,
+  createFeedbackAdoptions,
   createFeedbackInbox,
+  type FeedbackAdoptions,
   type FeedbackInbox,
   type SendFeedbackInput,
 } from './use-cases/feedback.js';

@@ -20,6 +20,7 @@ extension Haptic {
         case .unbox: .impact(weight: .heavy)
         case .lights: .impact(flexibility: .rigid, intensity: 1)
         case .unseal: .impact(weight: .light)
+        case .zone: .selection
         }
     }
 }

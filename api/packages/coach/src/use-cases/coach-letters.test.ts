@@ -205,6 +205,9 @@ describe('the outgoing coach’s letter', () => {
       expect(run?.tools).toStrictEqual(['write_letter']);
       expect(run?.instructions).toContain('你是小混');
       expect(run?.task).toContain('接手的是暖暖');
+      // A goodbye to the squad and the next coach, never a briefing between coaches.
+      expect(run?.task).toContain('给小队和暖暖留一封告别信，全队都会看到');
+      expect(run?.task).toContain('不写谁住哪、做什么工作、私下说过什么');
       expect(run?.task).toContain('- 队员1：米亚\n- 队员2：阿杰');
       // Its memory, members by the names the model knows them by.
       expect(run?.task).toContain('【people/队员1.md】\n队员1 周三雷打不动游泳');

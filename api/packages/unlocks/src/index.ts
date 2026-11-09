@@ -32,7 +32,31 @@ export {
   type Unlock,
   type UnlockRule,
 } from './domain/unlocks.js';
-export { TRIGGER_KINDS, type Reward, type Trigger, type TriggerKind } from './domain/rewards.js';
+export {
+  BadgeEdit,
+  BadgeNames,
+  CatalogRewardId,
+  EventName,
+  GivenKind,
+  REWARD_KINDS,
+  RewardKind,
+  RewardTriggerEdit,
+  TRIGGER_KINDS,
+  VOUCHER_DAYS_MAX,
+  VoucherEdit,
+  rewardIdFits,
+  type Badge,
+  type Given,
+  type HeldBadge,
+  type Occurrence,
+  type Reward,
+  type TeamPiece,
+  type Trigger,
+  type TriggerKind,
+  type Voucher,
+} from './domain/rewards.js';
+export { createPostgresRewardStore } from './adapters/postgres-reward-store.js';
+export { createRewards, type Rewards, type RewardsAdmin } from './use-cases/rewards.js';
 export {
   CoachId,
   GiftPieceEdit,
@@ -50,11 +74,20 @@ export {
   GiftPieceNotOfferedError,
   GiftWeeklyLimitError,
   PieceNotUnlockedError,
+  RewardMissingError,
+  RewardNotTeamGivenError,
   UnlockItemMissingError,
   UnlockSportNotListedError,
   UnlockStoreMissingError,
   UnlockSwitchMissingError,
 } from './errors.js';
-export type { GiftStore, SportListed, TrainedSince, UnlockStore, Unlocked } from './ports.js';
+export type {
+  GiftStore,
+  RewardStore,
+  SportListed,
+  TrainedSince,
+  UnlockStore,
+  Unlocked,
+} from './ports.js';
 export { createCoachGifts, type CoachGifts, type GiftsAdmin } from './use-cases/gifts.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

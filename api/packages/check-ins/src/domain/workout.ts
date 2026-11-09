@@ -45,6 +45,26 @@ export const WorkoutSummary = z
   });
 export type WorkoutSummary = z.infer<typeof WorkoutSummary>;
 
+/** Where the four heart-rate zones start, in bpm, each above the one before. */
+export const HeartRateZones = z
+  .strictObject({ light: heartRate, moderate: heartRate, vigorous: heartRate, peak: heartRate })
+  .refine(
+    (zones) =>
+      zones.light < zones.moderate &&
+      zones.moderate < zones.vigorous &&
+      zones.vigorous < zones.peak,
+    {
+      message: 'Each zone starts above the one before.',
+    },
+  )
+  .meta({
+    id: 'HeartRateZones',
+    description:
+      'Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on ' +
+      'their phone from their age and resting heart rate; never the age itself. Only with `hr`.',
+  });
+export type HeartRateZones = z.infer<typeof HeartRateZones>;
+
 /** The chart tile's data: heart rate over the workout, or each lap's time for a swim. */
 export const WorkoutSeries = z
   .strictObject({
@@ -73,6 +93,11 @@ export const WorkoutSeries = z
       .max(1000)
       .optional()
       .meta({ description: 'Each lap’s time in seconds, in order.' }),
+    zones: HeartRateZones.optional(),
+  })
+  .refine((series) => series.zones === undefined || series.hr !== undefined, {
+    message: 'Zones come only with heart rate.',
+    path: ['zones'],
   })
   .meta({ id: 'WorkoutSeries', description: 'Sent only when the chart tile was kept.' });
 export type WorkoutSeries = z.infer<typeof WorkoutSeries>;
