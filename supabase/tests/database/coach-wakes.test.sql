@@ -87,7 +87,8 @@ select is((select array_agg(tool) from public.coach_wake_steps), array['post_not
 delete from auth.users where id = '11111111-1111-4111-8111-111111111111';
 select is((select changed_by from public.squad_coach_events), null, 'a hire outlives who made it');
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
-select is((select array_agg(path) from public.coach_files), array['memory.md'], 'a member''s page goes with them');
+select is((select array_agg(path order by path) from public.coach_files),
+  array['coaches/xiaohun.md', 'memory.md'], 'a member''s page goes with them, a coach''s stays');
 delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is(
   (select count(*)::int from public.coach_files) + (select count(*)::int from public.coach_notes)
