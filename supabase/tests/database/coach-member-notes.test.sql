@@ -17,11 +17,11 @@ select lives_ok($$insert into public.coach_member_notes (id, squad_id, member_id
   'a member may get more than one note a day');
 insert into public.coach_wakes (id, squad_id, reason, day) overriding system value
   values (900, '33333333-3333-4333-8333-333333333333', 'daily', '2026-11-05');
-insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, wake_id)
-  values ('33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-05', '早', 900);
-select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, wake_id)
-  values ('33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-05', '又一张', 900)$$,
-  '23505', null, 'one note a member a wake');
+insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, text, wake_id) overriding system value
+  values (7, '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-05', '早', 900);
+select throws_ok($$insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, text, wake_id) overriding system value
+  values (8, '33333333-3333-4333-8333-333333333333', '22222222-2222-4222-8222-222222222222', 'xiaohun', '2026-11-05', '又一张', 900)$$,
+  '23505', 'duplicate key value violates unique constraint "coach_member_notes_one_a_wake"', 'one note a member a wake');
 select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text)
   values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-06', '')$$,
   '23514', null, 'a note has words');

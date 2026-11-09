@@ -300,8 +300,8 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       },
 
       async challengesOn({ squad, day }) {
-        // A member's newest note of the day stands for the day (an admin may have sent themselves
-        // one before the morning's).
+        // A member's newest challenge of the day stands for the day (an admin may have sent
+        // themselves a note besides the morning's); a note without one hides none.
         const rows = await dayChallenges(db, { squad, day }).execute();
         const newest = new Map(rows.map((row) => [row.member_id, row]));
         return [...newest.values()].flatMap((row) => {
@@ -1094,8 +1094,8 @@ async function completionOf(db: Kysely<DB>, note: number) {
 }
 
 /**
- * The squad's notes of a day that reached their members, with their challenges' answers, oldest
- * first.
+ * The squad's notes of a day that reached their members and set a challenge, with their answers,
+ * oldest first.
  */
 function dayChallenges(
   db: Kysely<DB>,
@@ -1128,6 +1128,7 @@ function dayChallenges(
     ])
     .where('coach_member_notes.squad_id', '=', squad)
     .where('coach_member_notes.day', '=', day)
+    .where('coach_member_notes.challenge_title', 'is not', null)
     .orderBy('coach_member_notes.id');
 }
 
@@ -1168,7 +1169,7 @@ async function dayChallenge(
   const rows = await dayChallenges(db, { squad, day })
     .where('coach_member_notes.member_id', '=', member)
     .execute();
-  // The newest note of the day stands, as in `challengesOn`.
+  // The newest challenge of the day stands, as in `challengesOn`.
   const row = rows.at(-1);
   return row === undefined ? undefined : dayChallengeOfRow(row, day);
 }

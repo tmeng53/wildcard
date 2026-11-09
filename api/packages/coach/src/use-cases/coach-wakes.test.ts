@@ -2105,6 +2105,21 @@ describe('the coach', () => {
       expect(await stores.memberNotes.challengesOn({ squad, day })).toMatchObject([
         { member: mia, note: Number(notes.rows[1]?.id) },
       ]);
+      // A later note without a challenge hides none.
+      await stores.memberNotes.save({
+        squad,
+        member: mia,
+        coach: CoachId.parse('xiaohun'),
+        day,
+        text: '早点睡',
+      });
+      const plainNote = await sql<{ id: string }>`
+        select max(id) as id from public.coach_member_notes where member_id = ${mia}
+      `.execute(trx);
+      await delivery.delivered(Number(plainNote.rows[0]?.id));
+      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
+        note: Number(notes.rows[1]?.id),
+      });
       const plain = await wakes(fixture, { agent }).preview({ squad, member: mia });
       expect(plain.ran && 'delivered' in plain).toBe(false);
     });
