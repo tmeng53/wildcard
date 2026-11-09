@@ -61,7 +61,9 @@ struct ChoicesPanel: View {
         case .prop:
             scroll {
                 ChoiceSection(label: nil) {
-                    TileGrid(model: model, slot: "prop", variants: model.draft.catalog.props, offersNothing: true)
+                    TileGrid(
+                        model: model, slot: "prop", variants: model.draft.catalog.props, offersNothing: true,
+                        named: true)
                 }
             }
         }
@@ -98,13 +100,15 @@ private struct ChoiceSection<Content: View>: View {
     }
 }
 
-/// Four picture tiles a row, each over its name: the character in each choice, and first a tile
-/// that takes the piece off when the slot can be left empty.
+/// Four picture tiles a row: the character in each choice, and first a tile that takes the
+/// piece off when the slot can be left empty. Props carry their names under the tiles, as
+/// 我的衣橱 does (Tracy, 2026-11-09); hair, faces and bodies don't.
 private struct TileGrid: View {
     let model: CharacterEditorModel
     let slot: Slot
     let variants: [String]
     let offersNothing: Bool
+    var named = false
     @Environment(\.sceneTheme) private var theme
     private let nothingGlyph: Double = 26
 
@@ -121,7 +125,9 @@ private struct TileGrid: View {
                         picture: { picture(variant) }
                     )
                     .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant ?? "none")")
-                    TileName(name)
+                    if named {
+                        TileName(name)
+                    }
                 }
             }
         }
