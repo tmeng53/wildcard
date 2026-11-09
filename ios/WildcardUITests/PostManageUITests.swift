@@ -56,7 +56,45 @@ final class PostManageUITests: XCTestCase {
             "the deleted post's line is still shown")
     }
 
+    /// 存成绩卡 opens 存图's page on the card: a tap on the number, a number of the strip and the
+    /// character changes it, the backdrops and 小队名 under it, all on the screen.
+    func testSaveScoreCard() {
+        let app = launch(language: "zh-Hans")
+        openMenuOnMyPost(in: app)
+        app.buttons["post.scoreCard"].tap()
+        let preview = app.descendants(matching: .any).matching(identifier: "scoreCard").firstMatch
+        XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存成绩卡 didn't open the card")
+        // Only until the phone's first tap on a card, so a rerun on the same simulator has none.
+        let hint = app.staticTexts["scoreCard.hint"]
+        XCTAssertTrue(app.staticTexts["scoreCard.weekCount"].waitForExistence(timeout: Self.wait), "no 本周第 N 次")
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.photo.0"].isSelected, "the post's photo isn't the backdrop")
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].exists, "the post's chart isn't a backdrop")
+        XCTAssertFalse(app.buttons["scoreCard.backdrop.map"].exists, "a post without a route offers 路线")
+        settle()
+        assertOnScreen(preview, in: app)
+        assertOnScreen(app.buttons["savePicture.save"], in: app)
+        keepScreenshot(named: "57-score-card")
+
+        app.buttons["scoreCard.hero"].tap()
+        waitFor(hint, "exists == false", "点数字和人物可以换 is still there after a tap")
+        // The card's strip, not the post's behind the sheet.
+        preview.buttons["strip.maxHeartRate"].tap()
+        app.buttons["scoreCard.character"].tap()
+        app.buttons["scoreCard.backdrop.plain"].tap()
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.plain"].isSelected, "纯色 isn't picked")
+        let squad = app.descendants(matching: .any).matching(identifier: "scoreCard.squad").firstMatch
+        XCTAssertTrue(squad.exists, "the squad's name isn't on the card")
+        app.switches.firstMatch.tap()
+        waitFor(squad, "exists == false", "小队名 off still shows the squad's name")
+        settle()
+        assertOnScreen(app.buttons["savePicture.share"], in: app)
+        keepScreenshot(named: "58-score-card-plain")
+        app.buttons["savePicture.close"].tap()
+        XCTAssertTrue(preview.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the card")
+    }
+
     /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.
+    @discardableResult
     private func openMenuOnMyPost(in app: XCUIApplication) -> XCUIElement {
         continueAfterFailure = false
         let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
@@ -102,6 +140,12 @@ final class PostManageUITests: XCTestCase {
         XCTAssertTrue(screen.contains(element.frame), "\(element.identifier) is cut off: \(element.frame)")
         let bar = tabButton("tab.feed", in: app)
         XCTAssertLessThanOrEqual(element.frame.maxY, bar.frame.minY, "\(element.identifier) is under the tab bar")
+    }
+
+    /// Whole inside the window.
+    private func assertOnScreen(_ element: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(
+            app.windows.firstMatch.frame.contains(element.frame), "\(element.identifier) is cut off: \(element.frame)")
     }
 
     /// Lets springs settle before a screenshot.

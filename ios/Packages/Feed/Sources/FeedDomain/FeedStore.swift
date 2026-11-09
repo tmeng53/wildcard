@@ -66,7 +66,7 @@ public final class FeedStore {
         case post(CheckInID)
     }
 
-    private let source: any FeedSource
+    let source: any FeedSource
     private let scope: Scope
     private let viewer: MemberID
     private let today: @Sendable () -> LocalDay

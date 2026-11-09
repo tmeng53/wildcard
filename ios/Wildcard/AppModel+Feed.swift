@@ -17,6 +17,9 @@ extension AppModel {
             source: source, squad: home.squad.id, viewer: home.member, today: { LocalDay(at: Date(), in: zone) },
             now: { Timestamp(Date()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: home.squad.id) { Date() }
-        return FeedModel(store: store, viewer: home.member, editor: editor, coach: coach, now: { Date() })
+        let feed = FeedModel(store: store, viewer: home.member, editor: editor, coach: coach, now: { Date() })
+        // 成绩卡's 小队名: the squad's name as 今天 last read it, so a rename shows.
+        feed.squadName = { [weak editor] in editor?.home?.squad.name }
+        return feed
     }
 }

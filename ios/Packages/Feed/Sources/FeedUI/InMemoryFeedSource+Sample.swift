@@ -42,7 +42,10 @@ extension InMemoryFeedSource {
                     WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50)),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
-                viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
+                viewer, 1, 19, 20,
+                write.fromHealth(
+                    "strength", ["gym"], "练腿日，明天下楼梯靠扶手", tile: 2,
+                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420)),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
@@ -155,7 +158,7 @@ private struct SamplePosts {
     }
 
     /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
-    /// the 17th the fastest, or a loop through a park.
+    /// the 17th the fastest, an hour of sets' heart rate indoors, or a loop through a park.
     func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
         -> CheckIn.Entry
     {
@@ -179,6 +182,15 @@ private struct SamplePosts {
             return Workout(
                 source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
                 series: WorkoutSeries(laps: laps), tilePosition: tile)
+        }
+        if sport == "strength" {
+            // No route indoors: the heart rate through the hour, sets and rests.
+            let beats = (0...60).map { (minute: Int) -> HeartRatePoint in
+                HeartRatePoint(seconds: Double(minute) * 60, bpm: 110 + (minute * 13) % 46)
+            }
+            return Workout(
+                source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
+                series: WorkoutSeries(heartRate: beats), tilePosition: tile)
         }
         let route: [RoutePoint] = (0...80).map { (step: Int) -> RoutePoint in
             let turn: Double = Double(step) / 80 * 1.7 * Double.pi

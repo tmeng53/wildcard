@@ -78,6 +78,7 @@ public struct ScoreStrip: View {
     private let bottom: Bottom
     private let struck: Set<WorkoutCell>
     private let onToggle: ((WorkoutCell) -> Void)?
+    private let fill: Fill
 
     /// Under a card (rounded) or across a post's ticket, where the stub goes on under it (square).
     public enum Bottom: Sendable {
@@ -85,22 +86,33 @@ public struct ScoreStrip: View {
         case square
     }
 
+    /// What the strip stands on.
+    public enum Fill: Sendable {
+        /// Its own block in the sport category's colour.
+        case block
+        /// Nothing of its own: a band the caller lays it on, such as the 成绩卡's.
+        case none
+    }
+
     /// Read only, under a post's cover.
-    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded) {
+    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded, fill: Fill = .block) {
         self.cells = cells
         self.bottom = bottom
+        self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
         struck = []
         onToggle = nil
     }
 
-    /// While a post is made: every corner rounded, and a tap on a cell calls `onToggle` with it.
+    /// While a post is made, or its 成绩卡: every corner rounded, and a tap on a cell calls
+    /// `onToggle` with it.
     public init(
-        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell>,
+        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell>, fill: Fill = .block,
         onToggle: @escaping (WorkoutCell) -> Void
     ) {
         self.cells = cells
         bottom = .rounded
+        self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.struck = struck
         self.onToggle = onToggle
@@ -150,7 +162,7 @@ public struct ScoreStrip: View {
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
-        .background(Color(colors.fill), in: shape)
+        .background(fill == .block ? Color(colors.fill) : .clear, in: shape)
         .foregroundStyle(Color(colors.ink))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(onToggle == nil ? "post.strip" : "compose.score")
@@ -219,7 +231,7 @@ public struct WorkoutMap: View {
     }
 
     /// The route's bounds with a margin, so the lane doesn't touch the edge.
-    private static func frame(around coordinates: [CLLocationCoordinate2D]) -> MKMapRect {
+    static func frame(around coordinates: [CLLocationCoordinate2D]) -> MKMapRect {
         let points = coordinates.map(MKMapPoint.init)
         guard let first = points.first else { return .world }
         var rect = MKMapRect(origin: first, size: MKMapSize(width: 0, height: 0))
