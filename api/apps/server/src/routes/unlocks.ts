@@ -9,6 +9,7 @@ import {
   UnlockKind,
   type CoachGift,
   type CoachGifts,
+  type Rewards,
   type Unlocks,
 } from '@wildcard/unlocks';
 
@@ -133,6 +134,26 @@ const GiftedPiece = z
   })
   .openapi('GiftedPiece');
 
+const TeamPiece = z
+  .strictObject({
+    id: PieceId.meta({ description: 'The piece’s id in the app’s art.', example: 'thanks-bulb' }),
+    givenAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When the team gave it.',
+      example: '2026-11-09T18:30:00.000Z',
+    }),
+    event: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'What gave it: `bug-adopted` (a bug the member reported that we confirmed) or ' +
+          '`idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the ' +
+          'team gave by hand.',
+        example: 'bug-adopted',
+      }),
+  })
+  .openapi('TeamPiece');
+
 const OpenedGift = z
   .strictObject({ version: bodyVersion(1), gift: GiftedPiece })
   .openapi('OpenedGift');
@@ -175,6 +196,12 @@ const MyUnlocks = z
         'Every piece a squad’s coach gave the member, the earliest first. No store sells these: ' +
         'they belong in the member’s wardrobe.',
     }),
+    teamPieces: z.array(TeamPiece).meta({
+      description:
+        'Every piece the Wildcard team gave the member (for feedback we used, say), the earliest ' +
+        'first. No store sells these, and no coach gives them: they belong in the member’s ' +
+        'wardrobe, worn without 领取.',
+    }),
     shelf: z
       .strictObject({
         stores: z.array(ShelfStore).meta({
@@ -200,6 +227,7 @@ export function unlocks(deps: {
   readonly verifyToken: VerifyToken;
   readonly unlocks: Unlocks;
   readonly gifts: Pick<CoachGifts, 'of' | 'open'>;
+  readonly rewards: Pick<Rewards, 'teamPiecesOf'>;
 }) {
   const route = createRoute({
     method: 'get',
@@ -308,10 +336,11 @@ export function unlocks(deps: {
     })
     .openapi(route, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
-      const [{ unlocks, locked, shelf }, claims, gifts] = await Promise.all([
+      const [{ unlocks, locked, shelf }, claims, gifts, teamPieces] = await Promise.all([
         deps.unlocks.standing(member),
         deps.unlocks.claimsOf(member),
         deps.gifts.of(member),
+        deps.rewards.teamPiecesOf(member),
       ]);
       const shown = (unlock: (typeof unlocks)[number]) => ({
         id: unlock.id,
@@ -330,6 +359,11 @@ export function unlocks(deps: {
             .map(({ id, toGo, sports }) => ({ id, sports: [...sports], checkInsToGo: toGo })),
           claimed: claims.map(shownClaim),
           gifts: gifts.map(shownGift),
+          teamPieces: teamPieces.map(({ piece, givenAt, event }) => ({
+            id: piece,
+            givenAt: givenAt.toISOString(),
+            ...(event === undefined ? {} : { event }),
+          })),
           shelf: {
             stores: shelf.stores.map(({ toGo, ...store }) => ({
               ...store,

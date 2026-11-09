@@ -28,3 +28,14 @@ export class FeedbackInvalidError extends AppError {
   readonly reason = 'FEEDBACK_INVALID';
   readonly status = 'INVALID_ARGUMENT';
 }
+
+/** Thrown when an admin adopts a message that doesn't exist (or went with its account). */
+export class FeedbackMissingError extends AppError {
+  override readonly name = 'FeedbackMissingError';
+  readonly reason = 'FEEDBACK_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly id: string) {
+    super(`There is no feedback ${id}.`);
+  }
+}

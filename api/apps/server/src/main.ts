@@ -75,7 +75,11 @@ import {
   MemberId as WeatherMember,
   weatherWords,
 } from '@wildcard/weather';
-import { createFeedbackInbox, createPostgresFeedbackStore } from '@wildcard/feedback';
+import {
+  createFeedbackAdoptions,
+  createFeedbackInbox,
+  createPostgresFeedbackStore,
+} from '@wildcard/feedback';
 import {
   createApnsSender,
   createOffSender,
@@ -110,7 +114,9 @@ import {
   MemberId as UnlockMember,
   createCoachGifts,
   createPostgresGiftStore,
+  createPostgresRewardStore,
   createPostgresUnlockStore,
+  createRewards,
   createUnlocks,
 } from '@wildcard/unlocks';
 
@@ -140,6 +146,7 @@ import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
+import { adoptFeedback } from './flows/feedback-adoption.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
 import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-push.js';
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
@@ -149,6 +156,7 @@ import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
 import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
+import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { artTools } from './admin-mcp/tools/art.js';
@@ -426,6 +434,13 @@ const unlocksOn = (scope: Database) =>
         })),
         what: 'an unlock',
       }),
+  });
+// What the team and events give (badges, 高级券, pieces no store sells), from their triggers.
+const rewardsOn = (scope: Database) =>
+  createRewards({
+    store: createPostgresRewardStore(scope),
+    unlocks: createPostgresUnlockStore(scope),
+    clock: () => new Date(),
   });
 const nudges = createNudges({
   store: createPostgresNudgeStore(db),
@@ -767,6 +782,7 @@ const app = createApp({
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
+  rewards: rewardsOn(db),
   log,
   jobs: {
     isScheduler,
@@ -835,6 +851,18 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         gifts: createCoachGifts({ store: createPostgresGiftStore(scope) }),
         giveGift: giveGiftAsAdmin(scope, giftWeekStart),
+      }),
+      ...rewardTools({
+        rewards: rewardsOn(scope),
+        // The adoption, what it gives and its notice commit with the call's log, or none does.
+        adopt: adoptFeedback({
+          feedback: createFeedbackAdoptions({
+            store: createPostgresFeedbackStore(scope),
+            clock: () => new Date(),
+          }),
+          rewards: rewardsOn(scope),
+          notices: noticesOn(scope),
+        }),
       }),
       ...broadcastTools({
         broadcasts: noticesOn(scope),
