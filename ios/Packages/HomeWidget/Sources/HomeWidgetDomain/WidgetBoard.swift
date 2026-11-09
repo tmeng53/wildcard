@@ -33,7 +33,7 @@ public struct WidgetBoard: Hashable, Sendable {
     /// Whether I trained today, posted a 请假条 or neither.
     public let myStatus: TrainingStatus
     public let squadName: String
-    /// 小队本周目标 x/y, as the squad card shows it.
+    /// 小队本周目标 x/y 次: every 训练 sent to the squad, as the squad card shows it.
     public let squad: WeekCount
     /// Everyone in the squad, me included, in the home's order: who checked in first.
     public let mates: [Mate]

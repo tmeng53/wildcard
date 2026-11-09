@@ -240,6 +240,22 @@
           }
         }
       }
+    },
+    "次": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "workouts"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

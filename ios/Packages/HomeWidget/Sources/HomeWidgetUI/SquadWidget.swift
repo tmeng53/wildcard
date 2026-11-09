@@ -37,7 +37,7 @@ public struct SquadWidget: View {
                 .lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Score(count: board.squad.trainedDays, goal: board.squad.plannedDays, size: .card)
-                Text("天", bundle: .module)
+                Text("次", bundle: .module)
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
             }
