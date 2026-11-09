@@ -51,8 +51,16 @@ final class CoachLetterUITests: XCTestCase {
         settle()
         keepScreenshot(named: "91d-coach-after-letter")
 
-        // The new coach's 简历 keeps the letter to read again.
-        app.descendants(matching: .any)["squadcard.squad"].tap()
+        readTheLetterAgain(in: app)
+    }
+
+    /// The new coach's 简历 keeps the letter to read again. The squad card starts folded into its
+    /// capsule, which opens it first.
+    private func readTheLetterAgain(in app: XCUIApplication) {
+        let squadName = app.descendants(matching: .any)["squadcard.squad"]
+        if !squadName.exists { app.buttons["squadcard.capsule"].tap() }
+        XCTAssertTrue(squadName.waitForExistence(timeout: 30), "the squad card didn't open")
+        squadName.tap()
         let open = app.buttons["squad.coach.open"]
         XCTAssertTrue(open.waitForExistence(timeout: 30), "小队 didn't open from 今天")
         open.tap()
