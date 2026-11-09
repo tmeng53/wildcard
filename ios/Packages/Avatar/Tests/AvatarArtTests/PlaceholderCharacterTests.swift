@@ -16,8 +16,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
-            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "flexL",
-            "muscleL", "flexR", "muscleR", "heart",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "heart",
             "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
@@ -72,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 65)
+    #expect(figure.parts.count == 61)
 }
 
 @Test(arguments: Persona.allCases)
@@ -371,19 +370,5 @@ func outline(_ path: [PathElement]) -> [Point] {
             Data(
                 #"{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
-    }
-}
-
-/// 秀肌肉's flexed arms and their biceps are the same fur as the arms at rest: a tuxedo's dark
-/// arm stays dark, with only the paw white.
-@Test(arguments: PlaceholderCharacter.variants(for: "body"))
-func theFlexedArmsKeepTheArmsColor(body: String) throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tank"]))
-    for (arm, flex, muscle) in [("armL", "flexL", "muscleL"), ("armR", "flexR", "muscleR")]
-        as [(PartID, PartID, PartID)]
-    {
-        let fur = try #require(figure.part(arm).art.first?.shapes[1].stroke?.color)
-        #expect(try figure.part(flex).art.first?.shapes[1].stroke?.color == fur, "\(body) \(flex)")
-        #expect(try figure.part(muscle).art.first?.shapes[0].fill == fur, "\(body) \(muscle)")
     }
 }
