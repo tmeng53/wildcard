@@ -275,7 +275,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
             ${challenge?.unit ?? null}, ${challenge?.line ?? null},
             ${wake === undefined ? null : String(wake)}::bigint
           where exists (select 1 from auth.users where id = ${member}::uuid)
-          on conflict (squad_id, member_id, day) do nothing
+          on conflict (wake_id, member_id) where wake_id is not null do nothing
           returning id`.execute(db);
         return saved.rows.length > 0;
       },
@@ -300,8 +300,11 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       },
 
       async challengesOn({ squad, day }) {
+        // A member's newest challenge of the day stands for the day (an admin may have sent
+        // themselves a note besides the morning's); a note without one hides none.
         const rows = await dayChallenges(db, { squad, day }).execute();
-        return rows.flatMap((row) => {
+        const newest = new Map(rows.map((row) => [row.member_id, row]));
+        return [...newest.values()].flatMap((row) => {
           const challenge = dayChallengeOfRow(row, day);
           return challenge === undefined ? [] : [{ ...challenge, member: row.member_id }];
         });
@@ -1062,7 +1065,10 @@ async function completionOf(db: Kysely<DB>, note: number) {
   return row === undefined ? undefined : completionOfRow(row);
 }
 
-/** The squad's notes of a day that reached their members, with their challenges' answers. */
+/**
+ * The squad's notes of a day that reached their members and set a challenge, with their answers,
+ * oldest first.
+ */
 function dayChallenges(
   db: Kysely<DB>,
   { squad, day }: { readonly squad: SquadId; readonly day: string },
@@ -1094,6 +1100,7 @@ function dayChallenges(
     ])
     .where('coach_member_notes.squad_id', '=', squad)
     .where('coach_member_notes.day', '=', day)
+    .where('coach_member_notes.challenge_title', 'is not', null)
     .orderBy('coach_member_notes.id');
 }
 
@@ -1131,8 +1138,10 @@ async function dayChallenge(
     day,
   }: { readonly squad: SquadId; readonly member: string; readonly day: string },
 ): Promise<DayChallenge | undefined> {
-  const row = await dayChallenges(db, { squad, day })
+  const rows = await dayChallenges(db, { squad, day })
     .where('coach_member_notes.member_id', '=', member)
-    .executeTakeFirst();
+    .execute();
+  // The newest challenge of the day stands, as in `challengesOn`.
+  const row = rows.at(-1);
   return row === undefined ? undefined : dayChallengeOfRow(row, day);
 }

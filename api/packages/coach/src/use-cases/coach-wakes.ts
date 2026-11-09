@@ -122,9 +122,10 @@ export interface CoachWakes {
    * for that member alone, and says what the coach would write and give, saving and sending
    * nothing; only its tokens are recorded, against the squad's caps, which it keeps to like any
    * wake. Works while coaching is off too. With `deliver` (Tracy, 2026-11-09: 要让他真的发给我自己)
-   * the member's note, with its challenge, is saved as their note for today, so it reaches their
-   * phone and coach page like the morning one; the 战术板 line and the gift stay a preview, since
-   * the board is the squad's and a gift is one a week.
+   * the member's note, with its challenge, is saved as a real note of today, every time it is
+   * asked, so it reaches their phone and coach page like the morning one, and the newest is the
+   * day's; the 战术板 line and the gift stay a preview, since the board is the squad's and a gift
+   * is one a week.
    */
   preview(input: {
     readonly squad: SquadId;
@@ -146,8 +147,8 @@ export type CoachPreview =
       /** Why no note: the member hasn't agreed to AI use, or turned the coach's messages off. */
       readonly noNote?: string;
       /**
-       * Asked to deliver: whether the note was saved for the member today. False when they
-       * already have one for today, or the coach wrote none.
+       * Asked to deliver: whether the note was saved for the member. False when the coach wrote
+       * none, or the run failed.
        */
       readonly delivered?: boolean;
       /** The gift it would give the member, and why none when the member can't get one. */
