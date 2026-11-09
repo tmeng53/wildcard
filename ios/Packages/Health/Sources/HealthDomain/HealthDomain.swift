@@ -26,7 +26,7 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
 }
 
 /// Which numbers a post from Health carries unless the member strikes them (设置 › Apple 健康,
-/// 「发动态时显示」): all on until switched off. 时长 always goes. Kept on the phone, with a
+/// 「发动态时显示」): all on until switched off. 时长 starts kept, and is struck per post. Kept on the phone, with a
 /// `version` as stored JSON.
 public struct HealthSharing: Hashable, Sendable, Codable {
     public var version = 1

@@ -542,7 +542,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),

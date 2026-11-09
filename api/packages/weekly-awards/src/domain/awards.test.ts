@@ -32,7 +32,10 @@ const catalog = BadgeCatalog.parse({
     { id: 'moon.fill', meaning: '月亮' },
   ],
 });
-const ModelReply = modelReplyFor(catalog, ['cheer', 'pump', 'warmup', 'flat']);
+const ModelReply = modelReplyFor(catalog, {
+  moves: ['cheer', 'pump', 'warmup', 'flat'],
+  members: 2,
+});
 const badge = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' } as const;
 
 const ana = MemberId.parse('a0000000-0000-4000-8000-000000000001');
@@ -40,24 +43,18 @@ const bo = MemberId.parse('a0000000-0000-4000-8000-000000000002');
 
 const good: ModelReply = {
   version: 1,
-  awards: [
-    {
-      member: 'A',
-      titles: [
-        { title: '雨中狠人', speech: '周三下着雨还去跑了 5 公里。', move: 'pump', badge },
-        { title: '早八战神', speech: '连着三天早上七点前打卡。', move: 'warmup', badge },
-      ],
-    },
-    {
-      member: 'B',
-      titles: [{ title: '请假条文豪', speech: '周二的请假条写成了连载。', move: 'flat', badge }],
-    },
-  ],
+  awards: {
+    A: [
+      { title: '雨中狠人', speech: '周三下着雨还去跑了 5 公里。', move: 'pump', badge },
+      { title: '早八战神', speech: '连着三天早上七点前打卡。', move: 'warmup', badge },
+    ],
+    B: [{ title: '请假条文豪', speech: '周二的请假条写成了连载。', move: 'flat', badge }],
+  },
   ending: { headline: '稳了', line: '二十三天，计划超额完成。' },
 };
 
 describe('modelReply', () => {
-  const ModelReply = modelReplyFor(catalog, ['cheer', 'pump', 'chin-up']);
+  const ModelReply = modelReplyFor(catalog, { moves: ['cheer', 'pump', 'chin-up'], members: 1 });
 
   it('tells the model the limits and refuses an answer over them', () => {
     const schema = JSON.stringify(z.toJSONSchema(ModelReply));
@@ -67,7 +64,7 @@ describe('modelReply', () => {
     const ending = { headline: '稳了', line: '全队超额完成。' };
     const titled = (title: string, speech = '周三下着雨还去跑了。') => ({
       version: 1,
-      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump', badge }] }],
+      awards: { A: [{ title, speech, move: 'pump', badge }] },
       ending,
     });
     expect(ModelReply.safeParse(titled('雨中狠人')).success).toBe(true);
@@ -88,12 +85,9 @@ describe('modelReply', () => {
   it('takes badges only from the catalog', () => {
     const titled = (picked: Record<string, string>) => ({
       version: 1,
-      awards: [
-        {
-          member: 'A',
-          titles: [{ title: '夜跑王', speech: '周三半夜还在跑。', move: 'pump', badge: picked }],
-        },
-      ],
+      awards: {
+        A: [{ title: '夜跑王', speech: '周三半夜还在跑。', move: 'pump', badge: picked }],
+      },
       ending: { headline: '稳了', line: '全队超额完成。' },
     });
     expect(ModelReply.safeParse(titled({ ...badge, glyph: 'moon.fill' })).success).toBe(true);
@@ -109,7 +103,7 @@ describe('modelReply', () => {
     expect(schema).toContain('"enum":["cheer","pump","chin-up"]');
     const moved = (move: string) => ({
       version: 1,
-      awards: [{ member: 'A', titles: [{ title: '雨中狠人', speech: '下雨也跑。', move, badge }] }],
+      awards: { A: [{ title: '雨中狠人', speech: '下雨也跑。', move, badge }] },
       ending: { headline: '稳了', line: '全队超额完成。' },
     });
     expect(ModelReply.safeParse(moved('chin-up')).success).toBe(true);
@@ -135,39 +129,50 @@ describe('titlesOf', () => {
   it('maps each letter back to its member, trimmed', () => {
     const reply: ModelReply = {
       ...good,
-      awards: [
-        good.awards[1] ?? { member: '', titles: [] },
-        {
-          member: ' A ',
-          titles: [{ title: ' 雨中狠人 ', speech: '周三下着雨还去跑了。 ', move: 'cheer', badge }],
-        },
-      ],
+      awards: {
+        B: good.awards.B ?? [],
+        A: [{ title: ' 雨中狠人 ', speech: '周三下着雨还去跑了。 ', move: 'cheer', badge }],
+      },
     };
     expect(titlesOf(reply, [ana, bo])).toStrictEqual(
       new Map([
-        [bo, [{ title: '请假条文豪', speech: '周二的请假条写成了连载。', move: 'flat', badge }]],
         [ana, [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'cheer', badge }]],
+        [bo, [{ title: '请假条文豪', speech: '周二的请假条写成了连载。', move: 'flat', badge }]],
       ]),
     );
   });
 
-  it('refuses a reply with a member missing, repeated or unknown', () => {
-    const [first, second] = good.awards;
-    if (first === undefined || second === undefined) throw new Error('two awards');
-    expect(titlesOf({ ...good, awards: [first] }, [ana, bo])).toBeUndefined();
-    expect(titlesOf({ ...good, awards: [first, first] }, [ana, bo])).toBeUndefined();
+  it('has one entry per member, null for none, so no reply names anyone twice or a stranger', () => {
+    const schema = JSON.stringify(z.toJSONSchema(ModelReply));
+    expect(schema).toContain('"required":["A","B"]');
+    const { A: first = [], B: second = [] } = good.awards;
+    expect(ModelReply.safeParse(good).success).toBe(true);
+    expect(ModelReply.safeParse({ ...good, awards: { A: first, B: null } }).success).toBe(true);
+    expect(ModelReply.safeParse({ ...good, awards: { A: first } }).success).toBe(false);
     expect(
-      titlesOf({ ...good, awards: [first, { ...second, member: 'C' }] }, [ana, bo]),
-    ).toBeUndefined();
+      ModelReply.safeParse({ ...good, awards: { A: first, B: second, C: second } }).success,
+    ).toBe(false);
+    expect(ModelReply.safeParse({ ...good, awards: { A: first, b: second } }).success).toBe(false);
   });
 
-  it('refuses a title or line that is blank once trimmed', () => {
+  it('drops a title or line blank once trimmed, and leaves out a member with none', () => {
+    const kept = {
+      title: '雨中狠人',
+      speech: '周三下着雨还去跑了。',
+      move: 'pump' as const,
+      badge,
+    };
     const blank = (title: string, speech: string) => ({
       ...good,
-      awards: [{ member: 'A', titles: [{ title, speech, move: 'pump' as const, badge }] }],
+      awards: { A: [{ title, speech, move: 'pump' as const, badge }, kept], B: null },
     });
-    expect(titlesOf(blank(' ', '周三下着雨还去跑了。'), [ana])).toBeUndefined();
-    expect(titlesOf(blank('雨中狠人', '  '), [ana])).toBeUndefined();
+    expect(titlesOf(blank(' ', '周三下着雨还去跑了。'), [ana, bo])).toStrictEqual(
+      new Map([[ana, [kept]]]),
+    );
+    expect(titlesOf(blank('雨中狠人', '  '), [ana, bo])).toStrictEqual(new Map([[ana, [kept]]]));
+    expect(
+      titlesOf({ ...good, awards: { A: [{ ...kept, title: ' ' }], B: null } }, [ana, bo]),
+    ).toStrictEqual(new Map());
   });
 
   it('keeps a title and line on one line', () => {
@@ -177,9 +182,7 @@ describe('titlesOf', () => {
       move: 'pump' as const,
       badge,
     };
-    expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
-    ).toStrictEqual([
+    expect(titlesOf({ ...good, awards: { A: [title] } }, [ana]).get(ana)).toStrictEqual([
       { title: '雨中 狠人', speech: '周三下着雨 还去 跑了。', move: 'pump', badge },
     ]);
   });
@@ -191,9 +194,7 @@ describe('titlesOf', () => {
       move: 'pump' as const,
       badge,
     };
-    expect(
-      titlesOf({ ...good, awards: [{ member: 'A', titles: [title] }] }, [ana])?.get(ana),
-    ).toStrictEqual([title]);
+    expect(titlesOf({ ...good, awards: { A: [title] } }, [ana]).get(ana)).toStrictEqual([title]);
   });
 });
 

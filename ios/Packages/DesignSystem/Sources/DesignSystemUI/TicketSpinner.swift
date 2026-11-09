@@ -98,12 +98,14 @@ enum TicketMark {
         var front = context
         front.translateBy(x: 0, y: -TicketRock.frontLift * rock)
         turn(&front, by: -10 + TicketRock.frontTurn * rock, about: pivot)
-        drawFront(in: &front, ground: ground, ink: ink)
+        drawFront(in: &front, ground: ground, ink: ink, letter: letterOpacity, check: check)
     }
 
     /// The front ticket, upright on the logo's 100-point grid: filled in `ink`, with notches, a
     /// perforation and a W in `ground`.
-    static func drawFront(in front: inout GraphicsContext, ground: Color, ink: Color) {
+    static func drawFront(
+        in front: inout GraphicsContext, ground: Color, ink: Color, letter letterOpacity: Double = 1, check: Double = 0
+    ) {
         front.fill(
             Path(roundedRect: CGRect(x: 26, y: 14, width: 48, height: 70), cornerRadius: corner), with: .color(ink))
         for notch in [26.0, 74] {

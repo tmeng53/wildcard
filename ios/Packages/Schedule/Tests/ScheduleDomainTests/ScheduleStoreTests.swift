@@ -21,7 +21,7 @@ struct ScheduleStoreTests {
         await backend.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.trained(.sport("run")), .disclaimer, .none, .trained(.sport("run")), .none, .none, .none]))
+                marks: [.trained([.sport("run")]), .disclaimer, .none, .trained([.sport("run")]), .none, .none, .none]))
         let store = store(backend)
         await store.load()
         #expect(store.phase == .ready)
@@ -86,8 +86,9 @@ struct ScheduleStoreTests {
         #expect(saved.last?.first == .rest)
     }
 
-    /// The poster's character trains at today's 练了, else today's plan, as the board has it.
-    @Test func todaysActivityIsTodaysCheckInElseTodaysPlan() async throws {
+    /// The poster's character trains at the sport today's row shows: the plan, as the board has
+    /// it, else the latest 练了 on a day without a planned sport.
+    @Test func todaysActivityIsTodaysPlanElseTodaysCheckIn() async throws {
         let backend = FakeBackend()
         let store = store(backend)
         #expect(store.todaysActivity == nil)
@@ -105,10 +106,10 @@ struct ScheduleStoreTests {
         await trained.set(
             try WeekSheet(
                 weekStart: thisWeek, plan: Fixtures.plan,
-                marks: [.none, .none, .none, .trained(.sport("climb")), .none, .none, .none]))
+                marks: [.none, .none, .none, .trained([.sport("climb")]), .none, .none, .none]))
         let climbed = self.store(trained)
         await climbed.load()
-        #expect(climbed.todaysActivity == .sport("climb"))
+        #expect(climbed.todaysActivity == .sport("strength"), "the plan stays what the member made it")
 
         // Saturday is a rest day.
         let resting = self.store(FakeBackend(), at: Fixtures.noon("2026-10-24"))

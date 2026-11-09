@@ -6798,6 +6798,26 @@
           "customSport": {
             "type": "string",
             "description": "The custom sport’s name, for `sport: \"custom\"`."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string",
+                  "description": "The custom sport’s name, for `sport: \"custom\"`."
+                }
+              },
+              "required": [
+                "sport"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers."
           }
         },
         "required": [

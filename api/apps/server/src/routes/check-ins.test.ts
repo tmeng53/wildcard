@@ -708,7 +708,9 @@ describe('GET /me/records', () => {
     const [me, coco, loner] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(me, coco);
     const today = new Date().toISOString().slice(0, 10);
-    const twoDaysAgo = new Date(Date.parse(today) - 2 * 24 * 60 * 60_000)
+    // Rest days don't break a streak, and the default plan never rests two days running, so
+    // one of the two days between is a training day whatever the weekday.
+    const threeDaysAgo = new Date(Date.parse(today) - 3 * 24 * 60 * 60_000)
       .toISOString()
       .slice(0, 10);
     const madeAt = new Date(Date.now() - 60_000);
@@ -734,10 +736,10 @@ describe('GET /me/records', () => {
       kind: 'trained',
       training: { sport: 'run', minutes: 45 },
     });
-    // A 补打卡: a day, but not on the clock. Without a time zone on the profile, a day two
+    // A 补打卡: a day, but not on the clock. Without a time zone on the profile, a day three
     // before the UTC date is one for sure.
     await put(me, {
-      day: twoDaysAgo,
+      day: threeDaysAgo,
       kind: 'trained',
       training: { sport: 'run', minutes: 30 },
     });
@@ -764,7 +766,7 @@ describe('GET /me/records', () => {
     hours[madeAt.getUTCHours()] = 1;
     const weekday = (day: string) => (new Date(day).getUTCDay() + 6) % 7;
     const weekdays = Array.from({ length: 7 }, () => 0);
-    for (const day of [today, twoDaysAgo])
+    for (const day of [today, threeDaysAgo])
       weekdays[weekday(day)] = (weekdays[weekday(day)] ?? 0) + 1;
     const cocoId = coco.userId;
     expect(body).toStrictEqual({

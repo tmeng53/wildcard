@@ -1,6 +1,70 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Posted"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "發"
+          }
+        }
+      }
+    },
+    "不发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不發"
+          }
+        }
+      }
+    },
+    "点一下恢复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to bring it back"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下恢復"
+          }
+        }
+      }
+    },
+    "点一下划掉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to leave it out"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下劃掉"
+          }
+        }
+      }
+    },
     "sport.unknown": {
       "comment": "A sport the app's list doesn't have yet, before it reads the newer list.",
       "extractionState": "manual",

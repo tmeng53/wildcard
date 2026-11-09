@@ -38,7 +38,7 @@ final class SignUpUITests: XCTestCase {
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")
         XCTAssertTrue(app.staticTexts["创建你的外卡运动员"].exists, "step 1 has no title")
         XCTAssertEqual(
-            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 5 步")
+            app.descendants(matching: .any).matching(identifier: "editor.steps").firstMatch.label, "第 1 步，共 6 步")
         let nickname = app.textFields["editor.nickname"]
         nickname.tap()
         nickname.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12))

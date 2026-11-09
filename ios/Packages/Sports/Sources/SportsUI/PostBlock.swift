@@ -78,8 +78,8 @@ public struct PostBlock: View {
                 Color(colors.fill)
                 if let photo {
                     photo.resizable().scaledToFill()
-                } else if layout == .strip, let activity {
-                    SportPattern(symbol: activity.symbol, color: Color(colors.shade))
+                } else if layout == .strip {
+                    IconPattern(glyph: patternGlyph, color: Color(colors.shade))
                 }
             }
             .overlay(alignment: .topLeading) {
@@ -135,6 +135,13 @@ public struct PostBlock: View {
     /// A strip's least height, the design's (Tracy, 2026-11-08): short when there are no words,
     /// which grow it from there.
     static let stripHeight: Double = 96
+
+    /// What a strip's pattern repeats: a 练了's sport, a 放纵餐's burger (Tracy, 2026-11-08), else
+    /// the kind's icon from 打卡's buttons.
+    private var patternGlyph: PatternGlyph {
+        if let activity { return .symbol(activity.symbol) }
+        return kind == .cheatMeal ? .burger : .symbol(kind.symbol)
+    }
 
     /// The sport for a 练了, else the kind.
     private var label: Text {
@@ -200,10 +207,17 @@ public struct PostBlock: View {
     }
 }
 
-/// A 练了's sport icon, upright, in rows that run diagonally and stagger, filling a strip without
-/// a photo in a shade a step darker than the block (Tracy, 2026-11-08).
-private struct SportPattern: View {
-    let symbol: String
+/// One icon a strip's pattern repeats: an SF Symbol, or the burger SF Symbols doesn't have.
+private enum PatternGlyph: Equatable {
+    case symbol(String)
+    case burger
+}
+
+/// A 练了's sport icon, or for any other post its kind's (a 放纵餐 a burger), upright, in rows
+/// that run diagonally and stagger, filling a strip without a photo in a shade a step darker than
+/// the block (Tracy, 2026-11-08): every post without a photo wears one.
+private struct IconPattern: View {
+    let glyph: PatternGlyph
     let color: Color
 
     private static let icon: Double = 34
@@ -213,12 +227,25 @@ private struct SportPattern: View {
 
     var body: some View {
         Canvas { context, size in
-            var glyph = context.resolve(Image(systemName: symbol))
-            glyph.shading = .color(color)
-            let natural = glyph.size
-            guard natural.width > 0, natural.height > 0 else { return }
-            let scale = Self.icon / max(natural.width, natural.height)
-            let drawn = CGSize(width: natural.width * scale, height: natural.height * scale)
+            let draw: (inout GraphicsContext, CGRect) -> Void
+            switch glyph {
+            case .symbol(let name):
+                var resolved = context.resolve(Image(systemName: name))
+                resolved.shading = .color(color)
+                let natural = resolved.size
+                guard natural.width > 0, natural.height > 0 else { return }
+                let scale = Self.icon / max(natural.width, natural.height)
+                let drawn = CGSize(width: natural.width * scale, height: natural.height * scale)
+                draw = { context, box in
+                    context.draw(
+                        resolved,
+                        in: CGRect(
+                            x: box.midX - drawn.width / 2, y: box.midY - drawn.height / 2,
+                            width: drawn.width, height: drawn.height))
+                }
+            case .burger:
+                draw = { context, box in context.fill(Burger.path(in: box), with: .color(color)) }
+            }
             let reach = Int((hypot(size.width, size.height) / Self.rowStep).rounded(.up)) / 2 + 1
             let (cosine, sine) = (cos(Self.angle), sin(Self.angle))
             for row in -reach...reach {
@@ -228,15 +255,46 @@ private struct SportPattern: View {
                     let center = CGPoint(
                         x: size.width / 2 + along * cosine - across * sine,
                         y: size.height / 2 + along * sine + across * cosine)
-                    context.draw(
-                        glyph,
-                        in: CGRect(
-                            x: center.x - drawn.width / 2, y: center.y - drawn.height / 2,
-                            width: drawn.width, height: drawn.height))
+                    draw(
+                        &context,
+                        CGRect(
+                            x: center.x - Self.icon / 2, y: center.y - Self.icon / 2, width: Self.icon,
+                            height: Self.icon))
                 }
             }
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// A burger in the filled SF Symbols style, on a 24-point grid scaled to its box: a domed top
+/// bun, a wavy leaf, the patty and the bottom bun, with gaps between them.
+private enum Burger {
+    static func path(in box: CGRect) -> Path {
+        let unit = box.width / 24
+        // The drawing's middle sits a point low on the grid; lift it so it centres in its cell.
+        let lift = 1.2
+        func point(_ across: Double, _ down: Double) -> CGPoint {
+            CGPoint(x: box.minX + across * unit, y: box.minY + (down - lift) * unit)
+        }
+        func rect(_ across: Double, _ down: Double, _ width: Double, _ height: Double) -> CGRect {
+            CGRect(origin: point(across, down), size: CGSize(width: width * unit, height: height * unit))
+        }
+        var path = Path()
+        path.move(to: point(2.5, 10))
+        path.addCurve(to: point(21.5, 10), control1: point(2.5, 2.5), control2: point(21.5, 2.5))
+        path.closeSubpath()
+        path.move(to: point(2, 11.6))
+        for step in 0..<5 {
+            let left = 2 + Double(step) * 4
+            path.addQuadCurve(to: point(left + 4, 11.6), control: point(left + 2, 14))
+        }
+        path.addLine(to: point(22, 12.4))
+        path.addLine(to: point(2, 12.4))
+        path.closeSubpath()
+        path.addRoundedRect(in: rect(2, 14.2, 20, 3.4), cornerSize: CGSize(width: 1.7 * unit, height: 1.7 * unit))
+        path.addRoundedRect(in: rect(2.5, 18.6, 19, 3.4), cornerSize: CGSize(width: 1.4 * unit, height: 1.4 * unit))
+        return path
     }
 }
 #endif
