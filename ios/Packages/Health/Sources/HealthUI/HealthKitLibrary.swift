@@ -11,14 +11,22 @@ import HealthKit
 /// thinned, its heart rate or lap times for the chart, its active calories, and the member's
 /// latest resting heart rate, which with their birthday on their profile places the chart's zones
 /// (only the zones are posted). Their date of birth, weight and sleep are never read. Its two
-/// lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+/// lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple, and the rest are constants.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
+    private let detail: Detail
+    private let asksForNewTypes: Bool
 
-    public init(defaults: UserDefaults = .standard) {
+    /// - Parameters:
+    ///   - detail: how much of each workout to read.
+    ///   - asksForNewTypes: whether a read asks for read types added since the member connected;
+    ///     only the app can show Health's sheet, so an extension passes false.
+    public init(defaults: UserDefaults = .standard, detail: Detail = .full, asksForNewTypes: Bool = true) {
         store = HKHealthStore()
         self.defaults = defaults
+        self.detail = detail
+        self.asksForNewTypes = asksForNewTypes
     }
 
     public var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
@@ -48,13 +56,13 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
 
     public func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout] {
         guard await isConnected() else { return [] }
-        await askForTypesAddedSinceConnecting()
+        if asksForNewTypes { await askForTypesAddedSinceConnecting() }
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictEndDate)
         let query = HKSampleQueryDescriptor(
             predicates: [.workout(window)], sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
             limit: Self.workoutsMax)
         guard let found = try? await query.result(for: store) else { return [] }
-        let resting = await restingHeartRate(before: end)
+        let resting = detail == .full ? await restingHeartRate(before: end) : nil
         var imported: [ImportedWorkout] = []
         for workout in found {
             imported.append(await self.imported(workout, resting: resting))
@@ -82,11 +90,11 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         Self.addCalories(of: workout, to: &summary)
         var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
-        let route = kind.hasRoute ? await route(of: workout) : nil
+        let route = detail == .full && kind.hasRoute ? await route(of: workout) : nil
         // A ski day's 趟数 · 落差 · 最高速 come from the route's heights and speeds, on the phone.
         if kind == .slope, let slopes = route?.slopes, let day = SlopeDay(slopes) { summary = summary.skied(day) }
         // With a route too, so a post can show the map and the heart rate (Tracy, 2026-11-07).
-        if series == nil, let curve = await heartRate(during: workout) {
+        if detail == .full, series == nil, let curve = await heartRate(during: workout) {
             series = WorkoutSeries(heartRate: curve)
         }
         return ImportedWorkout(

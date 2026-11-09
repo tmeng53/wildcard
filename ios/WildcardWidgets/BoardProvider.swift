@@ -95,16 +95,19 @@ struct BoardProvider: AppIntentTimelineProvider {
 
 /// Today's workouts in Apple Health and which were put away from 今天's card, as the app keeps
 /// them in the app group. Empty while Health isn't connected, or the phone is locked, when
-/// HealthKit reads nothing.
+/// HealthKit reads nothing. The widgets read the numbers alone, which is all the capsule shows;
+/// 打卡 reads the route and series too, for the post's map and chart. Neither asks for Health
+/// access, which only the app can.
 struct HealthRead {
     var workouts: [ImportedWorkout] = []
     var putAway: Set<WorkoutSource> = []
     /// What a post from Health carries unless struck, as 设置 › Apple 健康 says.
     var sharing = HealthSharing()
 
-    @MainActor static func now() async -> HealthRead {
+    @MainActor static func now(_ detail: HealthKitLibrary.Detail = .numbers) async -> HealthRead {
         guard let defaults = AppGroup.defaults else { return HealthRead() }
-        let health = HealthConnection(library: HealthKitLibrary(defaults: defaults), defaults: defaults)
+        let library = HealthKitLibrary(defaults: defaults, detail: detail, asksForNewTypes: false)
+        let health = HealthConnection(library: library, defaults: defaults)
         await health.refresh()
         return HealthRead(workouts: health.recent, putAway: health.putAway, sharing: health.sharing)
     }

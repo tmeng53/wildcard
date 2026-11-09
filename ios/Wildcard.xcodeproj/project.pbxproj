@@ -927,7 +927,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = WildcardWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "在桌面小组件上显示你今天在 Apple 健康里的运动，一键打卡。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -951,7 +950,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = WildcardWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Wildcard;
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "在桌面小组件上显示你今天在 Apple 健康里的运动，一键打卡。";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

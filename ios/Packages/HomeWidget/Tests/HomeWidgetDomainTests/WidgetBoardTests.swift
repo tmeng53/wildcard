@@ -142,3 +142,44 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
     let unlisted = ImportedWorkout(workout: late.workout, activity: nil)
     #expect(WidgetBoard(home: home(), day: tuesday, health: [early, unlisted]).workout?.id.id == "early")
 }
+
+@Test func postsTheOfferedWorkoutWithItsMapAndChartFirst() {
+    let plain = run("late", endedHoursBefore: 1).workout
+    let workout = ImportedWorkout(
+        workout: Workout(
+            source: plain.source, startedAt: plain.startedAt, endedAt: plain.endedAt, summary: plain.summary,
+            series: WorkoutSeries(heartRate: [
+                HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150),
+            ]),
+            route: [RoutePoint(lat: 34.05, lon: -118.25), RoutePoint(lat: 34.06, lon: -118.24)]),
+        activity: .sport("run"))
+    let board = WidgetBoard(home: home(), day: tuesday, health: [workout])
+    let now = Timestamp(tuesdayMorning)
+    let post = board.checkIn(posting: "late", from: home(), sharing: HealthSharing(), id: CheckInID(id(60)), at: now)
+    #expect(post?.member == viewer)
+    #expect(post?.day == tuesday)
+    #expect(post?.audience == (try? Audience([squadID])))
+    guard case .trained(let training) = post?.entry else {
+        Issue.record("a 训练")
+        return
+    }
+    #expect(training.activity == .sport("run"))
+    #expect(training.minutes == workout.minutes)
+    #expect(training.workout?.route?.count == 2)
+    #expect(training.workout?.tilePosition == 1)
+    #expect(training.workout?.chartPosition == 2)
+    // Routes off in 设置 › Apple 健康: the chart alone, as the cover.
+    var noRoute = HealthSharing()
+    noRoute.route = false
+    let chartOnly = board.checkIn(posting: "late", from: home(), sharing: noRoute, id: CheckInID(id(61)), at: now)
+    guard case .trained(let charted) = chartOnly?.entry else {
+        Issue.record("a 训练")
+        return
+    }
+    #expect(charted.workout?.route == nil)
+    #expect(charted.workout?.tilePosition == 1)
+    #expect(charted.workout?.series != nil)
+    // Only the workout the board still offers.
+    #expect(
+        board.checkIn(posting: "early", from: home(), sharing: HealthSharing(), id: CheckInID(id(62)), at: now) == nil)
+}
