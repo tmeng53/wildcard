@@ -6,21 +6,49 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthDomain
 import HomeWidgetDomain
 import SportsUI
 import SwiftUI
 
 /// 我的一周, the small widget: my week's x/y, whether I trained today, my character standing in
-/// the corner and the week's days along the bottom, as the squad card's second page draws them.
-public struct WeekWidget: View {
+/// the corner and the week's days along the bottom, as the squad card's second page draws them;
+/// while Health has a workout to post, its 打卡 capsule stands in for the days, and stays with
+/// 已打卡 once it is posted.
+public struct WeekWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
+    private let post: (ImportedWorkout) -> Post
 
-    public init(board: WidgetBoard) {
+    /// - Parameter post: the capsule's 打卡 for the board's workout.
+    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
         self.board = board
+        self.post = post
     }
 
     public var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            summary
+            Spacer(minLength: Space.xs)
+            if let workout = board.workout {
+                WorkoutCapsule(workout: workout) { post(workout) }
+            } else if let posted = board.postedWorkout {
+                WorkoutCapsule(workout: posted) { PostedWorkoutLabel() }
+            } else {
+                WeekDayRow(days: days, today: board.week.today, size: .tiny)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(alignment: .topTrailing) {
+            WidgetCharacter(look: board.mates.first(where: \.isMe)?.look)
+                .frame(width: WidgetMetrics.figureWidth)
+                .offset(x: Space.xs, y: -Space.xxs)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The week as one element; the capsule stays its own, with its 打卡.
+    private var summary: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionLabel(Text("我的一周", bundle: .module))
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
@@ -34,14 +62,6 @@ public struct WeekWidget: View {
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: board.myStatus == .notCheckedIn ? .fgMuted : .fgAccent, in: theme))
                 .lineLimit(1)
-            Spacer(minLength: Space.xs)
-            WeekDayRow(days: days, today: board.week.today, size: .tiny)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(alignment: .topTrailing) {
-            WidgetCharacter(look: board.mates.first(where: \.isMe)?.look)
-                .frame(width: WidgetMetrics.figureWidth)
-                .offset(x: Space.xs, y: -Space.xxs)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("我的一周", bundle: .module))
@@ -61,12 +81,22 @@ public struct WeekWidget: View {
     private var days: [WeekDayStatus] {
         zip(board.week.days, board.week.activities).map { status, activity in
             switch status {
-            case .trained: .trained(symbol: activity?.symbol)
+            case .trained: .trained(symbol: activity.flatMap(Self.symbol))
             case .disclaimer: .excused
             case .restDay: .restDay
             case .open: .open
             }
         }
+    }
+
+    /// A trained day's sport icon. SportsUI draws sports on iOS only, so the macOS build of this
+    /// package (`swift test`) leaves the icon out.
+    private static func symbol(_ activity: Activity) -> String? {
+        #if os(iOS)
+        return activity.symbol
+        #else
+        return nil
+        #endif
     }
 }
 
@@ -104,5 +134,9 @@ enum WidgetMetrics {
     static let dot: Double = 8
     /// The medium widget's 打卡.
     static let button: Double = 32
+    /// The workout's 打卡 capsule, its button and its heart.
+    static let capsule: Double = 36
+    static let capsuleButton: Double = 28
+    static let heart: Double = 10
 }
 #endif

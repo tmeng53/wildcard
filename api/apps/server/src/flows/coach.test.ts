@@ -3,6 +3,8 @@ import { readFileSync } from 'node:fs';
 
 import {
   FuelSuggestion,
+  MemberId as CheckInMember,
+  SquadId as CheckInSquad,
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
@@ -140,5 +142,44 @@ describe('the squad’s week as the coach reads it', () => {
       { member: newYork.userId, postedTime: '05:10', reactedBy: [] },
       { member: noProfile.userId, postedTime: undefined, reactedBy: [] },
     ]);
+  });
+
+  it('counts only what a member shared to the squad, never a post kept to themselves', async () => {
+    const me = await signUp();
+    const squad = randomUUID();
+    const made = '2026-07-01T00:00:00.000Z';
+    const inviteCode = Array.from(squad.replaceAll('-', '').slice(0, 8), (digit) =>
+      '23456789ABCDEFGH'.charAt(Number.parseInt(digit, 16)),
+    ).join('');
+    await sql`insert into public.squads (id, name, invite_code, created_by, captain_id, created_at)
+      values (${squad}, '私密', ${inviteCode}, ${me.userId}, ${me.userId}, ${made})`.execute(db);
+    const post = async ({ day, kind, shared }: { day: string; kind: string; shared: boolean }) => {
+      const id = randomUUID();
+      const payload = kind === 'trained' ? '{"version":1,"sport":"swim"}' : '{"version":1}';
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+        values (${id}, ${me.userId}, ${day}, ${`${day}T12:00:00.000Z`}, ${kind}, ${payload}::jsonb)`.execute(
+        db,
+      );
+      if (shared) {
+        await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
+          values (${id}, ${squad}, 1)`.execute(db);
+      }
+    };
+    await post({ day: '2026-08-03', kind: 'trained', shared: true });
+    await post({ day: '2026-08-04', kind: 'trained', shared: false });
+    await post({ day: '2026-08-05', kind: 'trained', shared: false });
+    await post({ day: '2026-08-04', kind: 'healthyMeal', shared: false });
+
+    const member = CheckInMember.parse(me.userId);
+    expect(await checkIns.totals(member)).toMatchObject({ trainedDays: 3, healthyMeals: 1 });
+    expect(
+      await checkIns.totalsSharedTo({ member, squad: CheckInSquad.parse(squad) }),
+    ).toStrictEqual({
+      trainedDays: 1,
+      healthyMeals: 0,
+      cheatMeals: 0,
+      disclaimers: 0,
+      topSport: { sport: 'swim', checkIns: 1 },
+    });
   });
 });

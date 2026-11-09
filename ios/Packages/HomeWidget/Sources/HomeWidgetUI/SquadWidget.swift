@@ -5,28 +5,45 @@ import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthDomain
 import HomeWidgetDomain
 import SwiftUI
 
 /// 小队今天, the medium widget: the squad's week as the squad card's first page counts it, with
 /// 打卡 under it, and on the right who checked in today, ringed as on home, under the coach, who
-/// wears its ink dot while it has a card I haven't seen.
-public struct SquadWidget: View {
+/// wears its ink dot while it has a card I haven't seen. While Health has a workout to post, its
+/// 打卡 capsule runs across the foot in place of 打卡, and stays with 已打卡 once it is posted.
+public struct SquadWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
+    private let post: (ImportedWorkout) -> Post
 
-    public init(board: WidgetBoard) {
+    /// - Parameter post: the capsule's 打卡 for the board's workout.
+    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
         self.board = board
+        self.post = post
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: Space.m) {
-            week
-            today
-                .frame(width: WidgetMetrics.ringed * 4 + Space.xxs * 3)
+        VStack(spacing: Space.xs) {
+            HStack(alignment: .top, spacing: Space.m) {
+                week
+                today
+                    .frame(width: WidgetMetrics.ringed * 4 + Space.xxs * 3)
+            }
+            if let workout = board.workout {
+                Spacer(minLength: 0)
+                WorkoutCapsule(workout: workout, size: .medium) { post(workout) }
+            } else if let posted = board.postedWorkout {
+                Spacer(minLength: 0)
+                WorkoutCapsule(workout: posted, size: .medium) { PostedWorkoutLabel() }
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+
+    /// Whether the capsule runs across the foot, where 打卡 would be.
+    private var hasCapsule: Bool { board.workout != nil || board.postedWorkout != nil }
 
     private var week: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -44,23 +61,29 @@ public struct SquadWidget: View {
             .lineLimit(1)
             DayCells(filled: board.squad.trainedDays, total: board.squad.plannedDays)
                 .padding(.top, Space.xxs)
-            Spacer(minLength: Space.xs)
-            Link(destination: WidgetLink.checkIn.url) {
-                Label {
-                    Text("打卡", bundle: .module)
-                } icon: {
-                    Image(systemName: "plus")
-                }
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .padding(.horizontal, Space.s)
-                .frame(height: WidgetMetrics.button)
-                .background(Color(role: .bgInk, in: theme), in: Capsule())
+            if !hasCapsule {
+                Spacer(minLength: Space.xs)
+                checkIn
             }
-            .accessibilityIdentifier("widget.checkIn")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
+    }
+
+    private var checkIn: some View {
+        Link(destination: WidgetLink.checkIn.url) {
+            Label {
+                Text("打卡", bundle: .module)
+            } icon: {
+                Image(systemName: "plus")
+            }
+            .typeStyle(TypeRamp.footnoteEmphasis)
+            .foregroundStyle(Color(role: .fgOnInk, in: theme))
+            .padding(.horizontal, Space.s)
+            .frame(height: WidgetMetrics.button)
+            .background(Color(role: .bgInk, in: theme), in: Capsule())
+        }
+        .accessibilityIdentifier("widget.checkIn")
     }
 
     private var today: some View {
@@ -110,9 +133,10 @@ public struct SquadWidget: View {
         return try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
     }
 
-    /// The squad, up to eight, four to a row.
+    /// The squad, up to eight, four to a row; one row, those who checked in first, while the
+    /// capsule takes the foot, so the widget keeps its height (今天 x/y still counts everyone).
     private var rows: [[WidgetBoard.Mate]] {
-        let shown = Array(board.mates.prefix(8))
+        let shown = Array(board.mates.prefix(hasCapsule ? 4 : 8))
         return stride(from: 0, to: shown.count, by: 4).map { Array(shown[$0..<min($0 + 4, shown.count)]) }
     }
 

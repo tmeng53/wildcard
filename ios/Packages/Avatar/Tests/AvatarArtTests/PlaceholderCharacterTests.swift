@@ -10,7 +10,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "armLBack", "armRBack",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "armLBack",
+            "armRBack",
             "torso", "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
@@ -71,7 +72,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 64)
+    #expect(figure.parts.count == 65)
 }
 
 @Test(arguments: Persona.allCases)
@@ -288,7 +289,7 @@ func outline(_ path: [PathElement]) -> [Point] {
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
 /// clothing and prop it offers is bundled, and WARM-UP's nineteen pieces recolor; any piece's first
-/// color is its art's own; every member starts with the tumbler and the dumbbell.
+/// color is its art's own; every member holds every prop from the start.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -296,7 +297,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props.filter(\.isOpen).map(\.id) == ["bottle", "dumbbell"])
+    #expect(choices.props.filter { !$0.isOpen }.isEmpty)
     #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [

@@ -30,9 +30,9 @@ import type {
 export interface UnlockStore {
   /** Every reward with every trigger it has, by kind and id. */
   rewards(): Promise<Reward[]>;
-  /** The `training` triggers, as rules. */
+  /** The `training` triggers not retired, as rules. */
   rules(): Promise<UnlockRule[]>;
-  /** Adds a rule counting from now, or changes one, keeping when it counts from. */
+  /** Adds a rule counting from now, or changes or brings back one, keeping when it counts from. */
   putRule(edit: UnlockRuleEdit): Promise<void>;
   /** Every store, retired ones too, in the street's order. */
   stores(): Promise<Store[]>;

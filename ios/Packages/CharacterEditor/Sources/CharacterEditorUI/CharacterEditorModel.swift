@@ -16,9 +16,10 @@ public enum EditorTab: String, CaseIterable, Hashable, Sendable {
 }
 
 /// The one move a change plays: the look's (the held prop's move, else the persona's cheer),
-/// or the persona's cheer when the persona changes.
+/// the same after a hop into a new prop (啪嗒: squashed down, the prop on, popped up and
+/// landed), or the persona's cheer when the persona changes.
 private enum StageMove {
-    case look, cheer
+    case look, hop, cheer
 }
 
 /// Where the editor is open: as a step of sign-up, or from 我 to change the character.
@@ -149,7 +150,7 @@ public final class CharacterEditorModel {
     func pick(_ variant: String?, for slot: Slot) {
         guard draft.pick(variant, for: slot) else { return }
         leaveTabsForPeople()
-        restyle(move: .look)
+        restyle(move: slot == "prop" && variant != nil ? .hop : .look)
     }
 
     /// Opens on a prop the member's training unlocked, from its notice: the 道具 tab. Stores and
@@ -283,17 +284,31 @@ public final class CharacterEditorModel {
         guard ticket == request else { return }
         outfitOnStage = outfit
         let idle = (tab == .persona ? clip("idle") : nil) ?? .still
+        let chosen: Clip? =
+            switch move {
+            case .look?, .hop?: propMove() ?? clip("cheer")
+            case .cheer?: clip("cheer")
+            case nil: nil
+            }
+        if move == .hop, let player, let hop = try? PlaceholderCharacter.kitHop(),
+            (try? player.change(into: figure, idle: idle, hop: hop)) != nil
+        {
+            // The prop's move waits for the landing: played sooner, it would stop the hop.
+            let landed = hop.out.duration + hop.in.duration
+            moveEnds = .now.addingTimeInterval(landed)
+            guard let chosen else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(landed))
+                guard ticket == self.request else { return }
+                self.play(chosen)
+            }
+            return
+        }
         if let player {
             try? player.wear(figure, idle: idle)
         } else {
             player = try? CharacterPlayer(figure: figure, idle: idle)
         }
-        let chosen: Clip? =
-            switch move {
-            case .look?: propMove() ?? clip("cheer")
-            case .cheer?: clip("cheer")
-            case nil: nil
-            }
         if let chosen { play(chosen) }
     }
 

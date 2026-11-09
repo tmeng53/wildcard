@@ -19,7 +19,7 @@ struct ShareRow: View {
                 .accessibilityIdentifier("compose.share.\(squad.id)")
             // Sharing is the default and the switch says it; only the private choice needs a word.
             if !isShared {
-                Text("仅自己可见", bundle: .module)
+                Text("仅自己可见，不计入小队数据", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .accessibilityIdentifier("compose.share.hint")

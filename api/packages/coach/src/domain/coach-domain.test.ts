@@ -13,8 +13,8 @@ import {
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, taskOf } from './prompt.js';
-import { lineProblem } from './reply.js';
+import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
+import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { costMicros, wakesDue, weekStartOf, weeksAround } from './wake.js';
@@ -412,7 +412,7 @@ describe('when the coach wakes', () => {
     ).toBe(1);
   });
 
-  it('lets the coach pick its tools, keep memory any time, and say one thing per note', () => {
+  it('puts the wakes setting after the soul, its limits filled in, and never the 口头禅', () => {
     const coach = Coach.parse({
       version: 3,
       id: 'nuannuan',
@@ -431,11 +431,14 @@ describe('when the coach wakes', () => {
       look: 'nuannuan',
       offered: true,
     });
-    const instructions = instructionsOf({ rules: '规矩' }, coach);
-    expect(instructions).toContain('一张便条只说一件事');
-    expect(instructions).toContain('做什么、用哪个工具，你自己判断。');
-    // The old rule had every note add something from memory, which made notes say "I remember".
-    expect(instructions).not.toContain('再加上记性里记着他的');
+    const instructions = instructionsOf(
+      { rules: '规矩', wakes: '回复最多 {replyLimit} 个字，便条最多 {noteLimit} 个字。' },
+      coach,
+    );
+    // The wakes setting comes after the soul, with the API's limits put in.
+    expect(instructions).toContain(
+      `回复最多 ${String(REPLY_LIMIT)} 个字，便条最多 ${String(NOTE_LIMIT)} 个字。`,
+    );
     // The 口头禅 is for its card only: told it, the model kept saying it.
     expect(instructions).not.toContain('今天也辛苦啦');
     expect(instructions).not.toContain('口头禅');

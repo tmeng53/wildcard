@@ -87,6 +87,14 @@ export interface CheckIns {
   listMyPosts(input: ListMyPostsInput): Promise<MyPostsPage>;
   /** Everything the member ever checked in, counted by kind, wherever it went. */
   totals(member: MemberId): Promise<CheckInTotals>;
+  /**
+   * The same counts of only what `member` shared to `squad`, for what the squad's coach reads:
+   * a post kept to the member never reaches it.
+   */
+  totalsSharedTo(query: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+  }): Promise<CheckInTotals>;
   /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
@@ -201,6 +209,7 @@ export function createCheckIns(deps: {
     listMine: (input) => listMyCheckIns(deps, input),
     listMyPosts: (input) => listMyPosts(deps, input),
     totals: (member) => deps.store.totals(member),
+    totalsSharedTo: (query) => deps.store.totalsSharedTo(query),
     trainedSince: (query) => deps.store.trainedSince(query),
     trainings: (query) => deps.store.trainingsForMember(query),
     records: (member) => records(deps, member),
