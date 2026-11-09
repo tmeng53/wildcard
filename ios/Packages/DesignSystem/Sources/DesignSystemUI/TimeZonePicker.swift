@@ -82,9 +82,9 @@ public struct TimeZonePicker: View {
             .listStyle(.plain)
             .searchable(
                 text: $query, placement: .navigationBarDrawer(displayMode: .always),
-                prompt: Text("搜索城市或时区", bundle: .module)
+                prompt: Text(copy: "搜索城市或时区", bundle: .module)
             )
-            .navigationTitle(Text("比赛时区", bundle: .module))
+            .navigationTitle(Text(copy: "比赛时区", bundle: .module))
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.large])

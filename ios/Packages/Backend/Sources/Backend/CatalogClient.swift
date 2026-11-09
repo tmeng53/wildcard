@@ -33,12 +33,15 @@ public actor CatalogClient {
         if let data = try? JSONEncoder().encode(fresh) { try? DeviceJSON.write(data, to: saved) }
         let catalog = AppCatalog(read.catalog, otherwise: Self.bundled)
         let before = copy.map { AppCatalog($0.catalog, otherwise: Self.bundled) } ?? Self.bundled
-        // Only what screens show counts; the art goes to `ArtDownloads`, which reads `kept()`.
-        let same =
-            catalog.sports == before.sports && catalog.diceLines == before.diceLines
-            && catalog.starterStock == before.starterStock && catalog.scenes == before.scenes
-            && catalog.switches == before.switches
-        return same ? nil : catalog
+        return Self.shows(catalog, differentlyFrom: before) ? catalog : nil
+    }
+
+    /// Whether `catalog` changes what screens show, or the copy kept for the next launch, from
+    /// `before`; the art goes to `ArtDownloads`, which reads `kept()`.
+    static func shows(_ catalog: AppCatalog, differentlyFrom before: AppCatalog) -> Bool {
+        catalog.sports != before.sports || catalog.diceLines != before.diceLines
+            || catalog.starterStock != before.starterStock || catalog.scenes != before.scenes
+            || catalog.switches != before.switches || catalog.copy != before.copy
     }
 
     /// The catalog this build ships with.

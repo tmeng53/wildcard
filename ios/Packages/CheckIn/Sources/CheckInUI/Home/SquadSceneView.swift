@@ -231,7 +231,7 @@ struct SquadSceneView: View {
 
     /// A teammate's nickname, or 我 for me; nil for anyone without one yet.
     private func nickname(of id: Placed.ID) -> String? {
-        guard case .mate(let member) = id else { return String(localized: "我", bundle: .module.inAppLanguage) }
+        guard case .mate(let member) = id else { return String(copy: "我", bundle: .module) }
         return cast.mates.first { $0.id == member }?.name
     }
 

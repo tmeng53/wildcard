@@ -47,15 +47,15 @@ struct CoachResumeFields: View {
 
     var body: some View {
         Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: Space.m, verticalSpacing: 0) {
-            row(Text("履历", bundle: .module)) { Text(verbatim: coach.background) }
-            row(Text("执教", bundle: .module)) {
+            row(Text(copy: "履历", bundle: .module)) { Text(verbatim: coach.background) }
+            row(Text(copy: "执教", bundle: .module)) {
                 HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                     Text(verbatim: "\(coach.yearsCoaching)").typeStyle(TypeRamp.scoreSmall)
-                    Text("年，\(coach.experience)", bundle: .module)
+                    Text(copy: "年，\(coach.experience)", bundle: .module)
                 }
             }
-            row(Text("风格", bundle: .module)) { Text(verbatim: coach.style) }
-            row(Text("期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
+            row(Text(copy: "风格", bundle: .module)) { Text(verbatim: coach.style) }
+            row(Text(copy: "期望待遇", bundle: .module)) { Text(verbatim: coach.pay) }
             hairline
         }
     }
@@ -95,7 +95,8 @@ struct StatusTag: View {
 
     var body: some View {
         Tag(
-            isCurrent ? Text("你们的教练", bundle: .module) : Text("求职中", bundle: .module), style: .ink, size: .small
+            isCurrent ? Text(copy: "你们的教练", bundle: .module) : Text(copy: "求职中", bundle: .module), style: .ink,
+            size: .small
         )
         .fixedSize()
     }

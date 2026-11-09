@@ -25,6 +25,12 @@ force_unwrapping: error
 
 # AGENTS.md rules a regex can catch (first drafted for issue #6).
 custom_rules:
+  copy_lookup:
+    name: "App copy lookup"
+    message: "AGENTS.md: look the app's words up with Text(copy:bundle:), String(copy:bundle:) or String(copyKey:bundle:), never Text(\"…\"), LocalizedStringKey, String(localized:) or localizedString(forKey:), so lines put over them show."
+    excluded: '.*/(Tests|WildcardUITests)/.*|.*/DesignSystemUI/AppCopyLines\.swift'
+    regex: '^(?:(?!//)[^\n])*?(\bText\(\s*("|LocalizedStringKey\b)|\bLocalizedStringKey\b|\b(Attributed)?String\(\s*localized:|\.localizedString\(forKey:)'
+    severity: error
   unchecked_sendable_without_reason:
     name: "@unchecked Sendable needs a reason"
     message: "AGENTS.md: say why it is safe in a comment on the same line."

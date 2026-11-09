@@ -129,7 +129,7 @@ struct PhotoTiles: View {
                 } else {
                     Image(systemName: "plus")
                         .font(.system(size: Sizing.icon, weight: .medium))
-                    Text("照片", bundle: .module)
+                    Text(copy: "照片", bundle: .module)
                         .typeStyle(TypeRamp.label)
                 }
             }
@@ -141,16 +141,17 @@ struct PhotoTiles: View {
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(model.isPreparingPhotos)
-        .accessibilityLabel(Text("加照片", bundle: .module))
+        .accessibilityLabel(Text(copy: "加照片", bundle: .module))
         .accessibilityIdentifier("compose.addPhoto")
         .glassMenu(
-            isPresented: $isChoosingSource, title: Text("加照片", bundle: .module),
+            isPresented: $isChoosingSource, title: Text(copy: "加照片", bundle: .module),
             items: [
-                GlassMenuItem(Text("拍照", bundle: .module), systemImage: "camera", id: "compose.addPhoto.camera") {
+                GlassMenuItem(Text(copy: "拍照", bundle: .module), systemImage: "camera", id: "compose.addPhoto.camera") {
                     isTakingPhoto = true
                 },
                 GlassMenuItem(
-                    Text("从相册选", bundle: .module), systemImage: "photo.on.rectangle", id: "compose.addPhoto.library"
+                    Text(copy: "从相册选", bundle: .module), systemImage: "photo.on.rectangle",
+                    id: "compose.addPhoto.library"
                 ) {
                     isPickingFromLibrary = true
                 },
@@ -238,7 +239,7 @@ private struct ComposeTile: View {
                 }
                 .overlay(alignment: .bottomLeading) {
                     if isCover {
-                        Text("封面", bundle: .module)
+                        Text(copy: "封面", bundle: .module)
                             .typeStyle(TypeRamp.label)
                             .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .padding(.horizontal, Space.xs)
@@ -250,7 +251,9 @@ private struct ComposeTile: View {
         .buttonStyle(PressableButtonStyle())
         .haptic(.pick, trigger: isCover)
         .accessibilityLabel(label)
-        .accessibilityHint(isWorkout ? Text("长按拖动换位置", bundle: .module) : Text("全屏看，长按拖动换位置", bundle: .module))
+        .accessibilityHint(
+            isWorkout ? Text(copy: "长按拖动换位置", bundle: .module) : Text(copy: "全屏看，长按拖动换位置", bundle: .module)
+        )
         .accessibilityAddTraits(isCover ? .isSelected : [])
         .accessibilityIdentifier(
             tile == .workout(.chart)
@@ -271,7 +274,7 @@ private struct ComposeTile: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("删掉这张", bundle: .module))
+            .accessibilityLabel(Text(copy: "删掉这张", bundle: .module))
             .accessibilityIdentifier(
                 tile == .workout(.chart)
                     ? "compose.chartTile.remove"
@@ -293,11 +296,11 @@ private struct ComposeTile: View {
     }
 
     private var label: Text {
-        let place = isCover ? Text("封面", bundle: .module) : Text("第 \(number) 张", bundle: .module)
+        let place = isCover ? Text(copy: "封面", bundle: .module) : Text(copy: "第 \(number) 张", bundle: .module)
         return switch tile {
         case .photo: place
-        case .workout(.map): Text("路线地图，\(place)", bundle: .module)
-        case .workout(.chart): Text("数据图，\(place)", bundle: .module)
+        case .workout(.map): Text(copy: "路线地图，\(place)", bundle: .module)
+        case .workout(.chart): Text(copy: "数据图，\(place)", bundle: .module)
         }
     }
 

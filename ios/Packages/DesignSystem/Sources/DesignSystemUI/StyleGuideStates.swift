@@ -8,12 +8,12 @@ struct FloatingGuide: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        GuideGroup(Text("浮着的按钮：液态玻璃", bundle: .module)) {
+        GuideGroup(Text(copy: "浮着的按钮：液态玻璃", bundle: .module)) {
             VStack(spacing: Space.s) {
                 HStack {
-                    HeaderTextButton(Text("取消", bundle: .module)) {}
+                    HeaderTextButton(Text(copy: "取消", bundle: .module)) {}
                     Spacer()
-                    HeaderTextButton(Text("发布", bundle: .module), prominent: true) {}
+                    HeaderTextButton(Text(copy: "发布", bundle: .module), prominent: true) {}
                 }
                 bottomActions
             }
@@ -24,12 +24,12 @@ struct FloatingGuide: View {
         HStack(spacing: Space.xs) {
             Button {
             } label: {
-                Text("再看一遍", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "再看一遍", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             Button {
             } label: {
-                Text("存图", bundle: .module)
+                Text(copy: "存图", bundle: .module)
             }
             .buttonStyle(SecondaryButtonStyle())
         }
@@ -44,7 +44,7 @@ struct FloatingGuide: View {
 /// The one offline state and the line under a change that didn't save.
 struct StateGuide: View {
     var body: some View {
-        GuideGroup(Text("空状态和出错", bundle: .module)) {
+        GuideGroup(Text(copy: "空状态和出错", bundle: .module)) {
             VStack(spacing: Space.m) {
                 StateView.offline(retryIdentifier: "styleguide.retry", retry: {})
                 InlineFailure()

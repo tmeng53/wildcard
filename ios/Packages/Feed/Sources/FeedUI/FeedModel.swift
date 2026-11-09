@@ -191,7 +191,7 @@ public final class FeedModel {
         }
         arrivals += 1
         let who = name(of: newest.member) ?? Self.teammate
-        announce(String(localized: "\(who)回应了你：\(newest.emoji.text)", bundle: .module.inAppLanguage))
+        announce(String(copy: "\(who)回应了你：\(newest.emoji.text)", bundle: .module))
     }
 
     /// The bubble has shown long enough.
@@ -262,7 +262,7 @@ public final class FeedModel {
                     play(move, on: post)
                 }
                 let author = name(of: post.author) ?? Self.teammate
-                announce(String(localized: "\(author)收到了\(mine.text)", bundle: .module.inAppLanguage))
+                announce(String(copy: "\(author)收到了\(mine.text)", bundle: .module))
             }
             picks += 1
         } catch {
@@ -280,7 +280,7 @@ public final class FeedModel {
         AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 
-    private static var teammate: String { String(localized: "队友", bundle: .module.inAppLanguage) }
+    private static var teammate: String { String(copy: "队友", bundle: .module) }
     private static let recentKey = "feed.recentEmoji"
     private static let recentLimit = 24
     private static func seenKey(_ viewer: MemberID) -> String { "feed.reactionsSeen.\(viewer)" }
@@ -356,8 +356,8 @@ public final class FeedModel {
 
     /// How a comment names someone: 我, their nickname, or 队友 when it isn't known.
     func displayName(of member: MemberID) -> String {
-        if member == viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
-        return name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
+        if member == viewer { return String(copy: "我", bundle: .module) }
+        return name(of: member) ?? String(copy: "队友", bundle: .module)
     }
 
     /// The move has finished: the character goes back to its idle.

@@ -53,6 +53,8 @@ struct BoardProvider: AppIntentTimelineProvider {
         // The language picked in the app, and the sports' icons from the list this build ships.
         AppLanguage.adopt(from: AppGroup.defaults, folder: AppGroup.directory)
         SportList.shared.show(CatalogClient.bundled.sports)
+        // The lines put over the String Catalog, as the app last kept them.
+        if let copy = SharedCopy.inAppGroup?.read() { AppCopyLines.install(copy) }
         let entry = { (state: WidgetState) in (BoardEntry(date: now, state: state), TimeZone.current) }
         let session: WidgetSession
         switch await WidgetSession.open() {

@@ -20,7 +20,7 @@ struct SquadGoalCard: View {
             VStack(alignment: .leading, spacing: Space.m) {
                 HStack(alignment: .top, spacing: Space.m) {
                     Figure(
-                        label: Text("目标 · 人均", bundle: .module), value: Text(verbatim: "\(goal.daysPerMember)")
+                        label: Text(copy: "目标 · 人均", bundle: .module), value: Text(verbatim: "\(goal.daysPerMember)")
                     )
                     .accessibilityIdentifier("squad.goal.now")
                     if let recent = goal.recent {
@@ -29,7 +29,7 @@ struct SquadGoalCard: View {
                             .frame(width: Sizing.hairline)
                             .accessibilityHidden(true)
                         Figure(
-                            label: Text("最近 \(recent.weeks) 周 · 人均", bundle: .module),
+                            label: Text(copy: "最近 \(recent.weeks) 周 · 人均", bundle: .module),
                             value: Text(
                                 recent.daysPerMember,
                                 format: .number.precision(.fractionLength(0...1)).locale(AppLanguage.current.locale))
@@ -46,7 +46,7 @@ struct SquadGoalCard: View {
                             ) {
                                 pick(days)
                             }
-                            .accessibilityLabel(Text("人均 \(days) 次", bundle: .module))
+                            .accessibilityLabel(Text(copy: "人均 \(days) 次", bundle: .module))
                             .accessibilityIdentifier("squad.goal.pick.\(days)")
                         }
                     }
@@ -57,9 +57,9 @@ struct SquadGoalCard: View {
             if canChange {
                 Group {
                     if goal.nextDaysPerMember != goal.daysPerMember {
-                        Text("下周起人均 \(goal.nextDaysPerMember) 次", bundle: .module)
+                        Text(copy: "下周起人均 \(goal.nextDaysPerMember) 次", bundle: .module)
                     } else {
-                        Text("改动下周生效", bundle: .module)
+                        Text(copy: "改动下周生效", bundle: .module)
                     }
                 }
                 .typeStyle(TypeRamp.footnote)
@@ -89,7 +89,7 @@ private struct Figure: View {
                     .typeStyle(TypeRamp.scoreCard)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .monospacedDigit()
-                Text("次", bundle: .module)
+                Text(copy: "次", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
             }

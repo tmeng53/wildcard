@@ -47,14 +47,14 @@ public struct SquadWidget<Post: View>: View {
 
     private var week: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionLabel(Text("小队本周目标", bundle: .module))
+            SectionLabel(Text(copy: "小队本周目标", bundle: .module))
             Text(verbatim: board.squadName)
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .lineLimit(1)
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Score(count: board.squad.trainedDays, goal: board.squad.plannedDays, size: .card)
-                Text("次", bundle: .module)
+                Text(copy: "次", bundle: .module)
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
             }
@@ -73,7 +73,7 @@ public struct SquadWidget<Post: View>: View {
     private var checkIn: some View {
         Link(destination: WidgetLink.checkIn.url) {
             Label {
-                Text("打卡", bundle: .module)
+                Text(copy: "打卡", bundle: .module)
             } icon: {
                 Image(systemName: "plus")
             }
@@ -89,7 +89,7 @@ public struct SquadWidget<Post: View>: View {
     private var today: some View {
         VStack(alignment: .leading, spacing: Space.s) {
             HStack(spacing: 0) {
-                Text("今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module)
+                Text(copy: "今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
@@ -110,7 +110,7 @@ public struct SquadWidget<Post: View>: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module))
+        .accessibilityLabel(Text(copy: "今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module))
     }
 
     @ViewBuilder private func coachHead(_ coach: CoachID) -> some View {

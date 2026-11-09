@@ -45,7 +45,7 @@ struct CardComments: View {
                 if thread.count > FeedPost.cardComments {
                     // The coach's line counts, as on the post's own page.
                     let count = thread.count + (model.coachReply(on: post.id)?.text == nil ? 0 : 1)
-                    Text("全部 \(count) 条评论", bundle: .module)
+                    Text(copy: "全部 \(count) 条评论", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .padding(.top, Space.xxs / 2)
@@ -56,7 +56,7 @@ struct CardComments: View {
             .mentionTags(model)
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityHint(Text("看全部评论", bundle: .module))
+        .accessibilityHint(Text(copy: "看全部评论", bundle: .module))
         .accessibilityIdentifier("feed.comments")
     }
 }
@@ -79,11 +79,11 @@ struct CommentLine: View {
         let name = Text(verbatim: model.displayName(of: comment.member)).fontWeight(.semibold)
         let words = model.words(of: comment).text(in: theme)
         guard let recipient = comment.replyTo.map({ model.displayName(of: $0) }) else {
-            return Text("\(name)  \(words)", bundle: .module)
+            return Text(copy: "\(name)  \(words)", bundle: .module)
         }
-        let reply = Text("回复 \(recipient)", bundle: .module)
+        let reply = Text(copy: "回复 \(recipient)", bundle: .module)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-        return Text("\(name) \(reply)  \(words)", bundle: .module)
+        return Text(copy: "\(name) \(reply)  \(words)", bundle: .module)
     }
 }
 #endif

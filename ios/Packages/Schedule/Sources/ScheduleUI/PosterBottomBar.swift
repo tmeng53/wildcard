@@ -62,7 +62,7 @@ struct PosterBottomBar: View {
                     .minimumScaleFactor(0.7)
             }
         } else {
-            Text("饮食", bundle: .module)
+            Text(copy: "饮食", bundle: .module)
         }
     }
 
@@ -71,23 +71,23 @@ struct PosterBottomBar: View {
             switch content.tally {
             case .trained(let trained, let planned, let isPast):
                 Group {
-                    if isPast { Text("训练", bundle: .module) } else { Text("本周", bundle: .module) }
+                    if isPast { Text(copy: "训练", bundle: .module) } else { Text(copy: "本周", bundle: .module) }
                 }
                 .typeStyle(TypeRamp.label)
                 Text(verbatim: "\(trained)/\(planned)")
                     .typeStyle(TypeRamp.scoreInline)
                     .contentTransition(.numericText(value: Double(trained)))
             case .planned(let train, let rest):
-                Text("\(train) 练 \(rest) 休", bundle: .module)
+                Text(copy: "\(train) 练 \(rest) 休", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .contentTransition(.numericText(value: Double(train)))
             case .typical(let train):
-                Text("每周训练", bundle: .module)
+                Text(copy: "每周训练", bundle: .module)
                     .typeStyle(TypeRamp.label)
                 Text(verbatim: "\(train)")
                     .typeStyle(TypeRamp.scoreInline)
                     .contentTransition(.numericText(value: Double(train)))
-                Text("天", bundle: .module)
+                Text(copy: "天", bundle: .module)
                     .typeStyle(TypeRamp.label)
             }
         }

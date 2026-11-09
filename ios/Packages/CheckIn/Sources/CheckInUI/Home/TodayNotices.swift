@@ -49,9 +49,9 @@ private struct TodayNotices: ViewModifier {
         case .moved(let scene, let picker):
             // Who moved the squad, over the new scene's badge.
             NoticeBanner(
-                picker.map { Text("\($0) 把小队搬到了\(scene.name)", bundle: .module) }
-                    ?? Text("小队搬到了\(scene.name)", bundle: .module),
-                action: Text("去看看", bundle: .module)
+                picker.map { Text(copy: "\($0) 把小队搬到了\(scene.name)", bundle: .module) }
+                    ?? Text(copy: "小队搬到了\(scene.name)", bundle: .module),
+                action: Text(copy: "去看看", bundle: .module)
             ) { SceneBadge(scene) }
         case .unlocked(let unlock):
             if let unlocks { unlocks.banner(unlock) }
@@ -61,7 +61,7 @@ private struct TodayNotices: ViewModifier {
                 Text(verbatim: broadcast.title.localized(in: language)),
                 detail: broadcast.body.map { Text(verbatim: $0.localized(in: language)) },
                 action: broadcast.action.map { Text(verbatim: $0.label.localized(in: language)) }
-                    ?? Text("查看", bundle: .module)
+                    ?? Text(copy: "查看", bundle: .module)
             ) {
                 if let icon = broadcast.icon, let unlocks {
                     unlocks.badge(icon.kind, icon.id)
@@ -71,20 +71,20 @@ private struct TodayNotices: ViewModifier {
             }
         case .goalSuggestion(let suggestion):
             NoticeBanner(
-                Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
-                detail: Text("改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
-                action: Text("去改目标", bundle: .module)
+                Text(copy: "连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
+                detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
+                action: Text(copy: "去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
         case .sendFailed(let canResend):
             NoticeBanner(
                 model.failed.count == 1
-                    ? Text("有一条发送失败", bundle: .module)
-                    : Text("有 \(model.failed.count) 条发送失败", bundle: .module),
+                    ? Text(copy: "有一条发送失败", bundle: .module)
+                    : Text(copy: "有 \(model.failed.count) 条发送失败", bundle: .module),
                 detail: sendFailedDetail(canResend: canResend),
-                action: canResend ? Text("重发", bundle: .module) : Text("知道了", bundle: .module)
+                action: canResend ? Text(copy: "重发", bundle: .module) : Text(copy: "知道了", bundle: .module)
             ) { NoticeSymbol(systemImage: "arrow.clockwise", tone: .brand) }
         case .more:
-            NoticeBanner(Text("还有新通知", bundle: .module), action: Text("查看", bundle: .module)) {
+            NoticeBanner(Text(copy: "还有新通知", bundle: .module), action: Text(copy: "查看", bundle: .module)) {
                 NoticeSymbol(systemImage: "bell.fill", tone: .brand)
             }
         case .told(let told):
@@ -93,13 +93,13 @@ private struct TodayNotices: ViewModifier {
     }
 
     private func sendFailedDetail(canResend: Bool) -> Text {
-        guard canResend else { return Text("没能发出去", bundle: .module) }
+        guard canResend else { return Text(copy: "没能发出去", bundle: .module) }
         let failed = model.failed
-        if failed.count > 1 { return Text("先重发最早的一条", bundle: .module) }
+        if failed.count > 1 { return Text(copy: "先重发最早的一条", bundle: .module) }
         if let line = failed.first?.draft.line, !line.isEmpty {
-            return Text("「\(line)」没能发出去，改一下再试试", bundle: .module)
+            return Text(copy: "「\(line)」没能发出去，改一下再试试", bundle: .module)
         }
-        return Text("改一下再试试", bundle: .module)
+        return Text(copy: "改一下再试试", bundle: .module)
     }
 
     private func tap(_ notice: TodayModel.Notice) {

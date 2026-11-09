@@ -34,9 +34,9 @@ public enum Wearable: String, CaseIterable, Identifiable, Sendable {
     /// 打开 Google Health / 打开 WHOOP / 打开 Oura.
     var openTitle: Text {
         switch self {
-        case .fitbit: Text("打开 Google Health", bundle: .module)
-        case .whoop: Text("打开 WHOOP", bundle: .module)
-        case .oura: Text("打开 Oura", bundle: .module)
+        case .fitbit: Text(copy: "打开 Google Health", bundle: .module)
+        case .whoop: Text(copy: "打开 WHOOP", bundle: .module)
+        case .oura: Text(copy: "打开 Oura", bundle: .module)
         }
     }
 
@@ -45,21 +45,21 @@ public enum Wearable: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .fitbit:
             [
-                Text("打开 Google Health，点右上角头像", bundle: .module),
-                Text("点「合作伙伴应用」", bundle: .module),
-                Text("选 Apple 健康，点「全部打开」", bundle: .module),
+                Text(copy: "打开 Google Health，点右上角头像", bundle: .module),
+                Text(copy: "点「合作伙伴应用」", bundle: .module),
+                Text(copy: "选 Apple 健康，点「全部打开」", bundle: .module),
             ]
         case .whoop:
             [
-                Text("打开 WHOOP，点「更多」", bundle: .module),
-                Text("App 设置 › 集成", bundle: .module),
-                Text("选 Apple 健康，点「全部打开」", bundle: .module),
+                Text(copy: "打开 WHOOP，点「更多」", bundle: .module),
+                Text(copy: "App 设置 › 集成", bundle: .module),
+                Text(copy: "选 Apple 健康，点「全部打开」", bundle: .module),
             ]
         case .oura:
             [
-                Text("打开 Oura，点左上角菜单 › 设置", bundle: .module),
-                Text("数据共享 › Apple 健康", bundle: .module),
-                Text("打开「连接健康」，再全部允许", bundle: .module),
+                Text(copy: "打开 Oura，点左上角菜单 › 设置", bundle: .module),
+                Text(copy: "数据共享 › Apple 健康", bundle: .module),
+                Text(copy: "打开「连接健康」，再全部允许", bundle: .module),
             ]
         }
     }
@@ -100,7 +100,7 @@ public struct SyncGuideLink: View {
     public var body: some View {
         Button(action: action) {
             HStack(spacing: Space.xxs) {
-                Text("用 Fitbit、WHOOP 或 Oura？", bundle: .module)
+                Text(copy: "用 Fitbit、WHOOP 或 Oura？", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
@@ -131,12 +131,12 @@ public struct SyncGuideSheet: View {
     public var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("先同步到 Apple 健康", bundle: .module)
+                Text(copy: "先同步到 Apple 健康", bundle: .module)
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: Space.s)
-                HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark") { dismiss() }
+                HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark") { dismiss() }
                     .accessibilityIdentifier("health.guide.close")
             }
             .padding(.horizontal, Space.pageMargin)
@@ -146,7 +146,7 @@ public struct SyncGuideSheet: View {
                     Picker(selection: $wearable) {
                         ForEach(Wearable.allCases) { Text(verbatim: $0.name).tag($0) }
                     } label: {
-                        Text("设备", bundle: .module)
+                        Text(copy: "设备", bundle: .module)
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("health.guide.wearable")

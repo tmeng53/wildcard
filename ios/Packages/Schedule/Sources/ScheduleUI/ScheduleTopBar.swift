@@ -14,7 +14,7 @@ extension ScheduleView {
     /// The title and the week chips.
     var topBar: some View {
         VStack(alignment: .leading, spacing: Space.s) {
-            Text("出赛表", bundle: .module)
+            Text(copy: "出赛表", bundle: .module)
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.xxs)
@@ -40,7 +40,7 @@ extension ScheduleView {
             Image(systemName: "square.and.arrow.up")
         }
         // An icon only, in the bar's round glass like the back button across from it.
-        .accessibilityLabel(Text("存图", bundle: .module))
+        .accessibilityLabel(Text(copy: "存图", bundle: .module))
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")
     }
@@ -50,7 +50,8 @@ extension ScheduleView {
         guard !store.weeks.isEmpty else { return [] }
         return weekChips + [
             CategoryBarItem(
-                id: .template, title: Text("我的每周计划", bundle: .module), systemImage: WeekPosterHeading.templateSymbol,
+                id: .template, title: Text(copy: "我的每周计划", bundle: .module),
+                systemImage: WeekPosterHeading.templateSymbol,
                 startsGroup: true, accessibilityIdentifier: "schedule.template")
         ]
     }
@@ -62,16 +63,16 @@ extension ScheduleView {
             store.profile?.startsWithNotYetJoined(store.weeks) == true
             ? [
                 CategoryBarItem(
-                    id: SchedulePage.notYetJoined, title: Text("还未入队", bundle: .module),
+                    id: SchedulePage.notYetJoined, title: Text(copy: "还未入队", bundle: .module),
                     accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false)
             ] : []
         return notYetJoined
             + store.weeks.map { week in
                 let title: Text =
                     if week == thisWeek {
-                        Text("本周", bundle: .module)
+                        Text(copy: "本周", bundle: .module)
                     } else if let thisWeek, week > thisWeek {
-                        Text("下周", bundle: .module)
+                        Text(copy: "下周", bundle: .module)
                     } else {
                         Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
                     }

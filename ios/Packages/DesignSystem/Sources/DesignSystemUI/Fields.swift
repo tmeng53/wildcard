@@ -97,7 +97,7 @@ public struct SearchField: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(Text("清除", bundle: .module))
+                .accessibilityLabel(Text(copy: "清除", bundle: .module))
             }
         }
         .padding(.leading, Space.s)

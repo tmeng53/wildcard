@@ -10,8 +10,8 @@ import SwiftUI
 enum ScheduleLabels {
     /// 周一 to 周日, Monday first.
     static func weekday(_ day: LocalDay) -> Text {
-        let keys: [LocalizedStringKey] = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-        return Text(keys[day.weekday - 1], bundle: .module)
+        let keys: [CopyLine] = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+        return Text(copy: keys[day.weekday - 1], bundle: .module)
     }
 
     /// 10.13 – 10.19: month and day, the way Chinese posters write dates.
@@ -37,15 +37,15 @@ enum ScheduleLabels {
     /// A lane's sport, or 休息; a training day with no sport set says 训练.
     static func plan(_ day: PlanDay) -> Text {
         switch day {
-        case .rest: Text("休息", bundle: .module)
+        case .rest: Text(copy: "休息", bundle: .module)
         case .train(let activity?): activity.cardName
-        case .train(nil): Text("训练", bundle: .module)
+        case .train(nil): Text(copy: "训练", bundle: .module)
         }
     }
 
     static func fuel(_ goal: FuelGoal) -> Text {
         switch goal {
-        case .suggested(let suggestion): Text(LocalizedStringKey(suggestion.key), bundle: .module)
+        case .suggested(let suggestion): Text(copyKey: suggestion.key, bundle: .module)
         case .own(let text): Text(verbatim: text)
         }
     }
@@ -53,7 +53,7 @@ enum ScheduleLabels {
     static func fuelName(_ goal: FuelGoal) -> String {
         switch goal {
         case .suggested(let suggestion):
-            Bundle.module.inAppLanguage.localizedString(forKey: suggestion.key, value: nil, table: nil)
+            String(copyKey: suggestion.key, bundle: Bundle.module)
         case .own(let text): text
         }
     }
@@ -61,12 +61,12 @@ enum ScheduleLabels {
     /// What went wrong saving, in friendly words; never a warning.
     static func failure(_ error: ScheduleError) -> Text {
         switch error {
-        case .notSent: Text("网络开小差了，没存上", bundle: .module)
-        case .signedOut: Text("登录过期了，重新登录再来排", bundle: .module)
-        case .weekOver: Text("这周已经结束了，就让它留在这儿吧", bundle: .module)
-        case .dayStarted: Text("已经开始的日子改不了啦", bundle: .module)
-        case .invalidFuelGoal: Text("小目标写 1 到 8 个字就好", bundle: .module)
-        case .refused: Text("没存上，换个排法试试", bundle: .module)
+        case .notSent: Text(copy: "网络开小差了，没存上", bundle: .module)
+        case .signedOut: Text(copy: "登录过期了，重新登录再来排", bundle: .module)
+        case .weekOver: Text(copy: "这周已经结束了，就让它留在这儿吧", bundle: .module)
+        case .dayStarted: Text(copy: "已经开始的日子改不了啦", bundle: .module)
+        case .invalidFuelGoal: Text(copy: "小目标写 1 到 8 个字就好", bundle: .module)
+        case .refused: Text(copy: "没存上，换个排法试试", bundle: .module)
         }
     }
 }

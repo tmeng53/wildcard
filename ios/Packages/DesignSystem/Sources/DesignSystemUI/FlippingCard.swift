@@ -40,19 +40,19 @@ public struct FlippingCard<Front: View, Back: View>: View {
                     back.tradingCardStock(fillsWidth: fillsWidth)
                         .onTapGesture(perform: flip)
                         .accessibilityElement(children: .contain)
-                        .accessibilityAction(named: Text("轻点翻面", bundle: .module), flip)
+                        .accessibilityAction(named: Text(copy: "轻点翻面", bundle: .module), flip)
                         .accessibilityIdentifier(identifier + "Back")
                 } else {
                     Button(action: flip) { front.tradingCardStock(fillsWidth: fillsWidth) }
                         .buttonStyle(PressableButtonStyle())
-                        .accessibilityHint(Text("轻点翻面", bundle: .module))
+                        .accessibilityHint(Text(copy: "轻点翻面", bundle: .module))
                         .accessibilityIdentifier(identifier)
                 }
             }
             .rotation3DEffect(.degrees(turn), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
             // It turns over rather than swipes, so it says so.
             if let hint {
-                Text("轻点翻面", bundle: .module)
+                Text(copy: "轻点翻面", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: hint, in: theme))
                     .accessibilityHidden(true)

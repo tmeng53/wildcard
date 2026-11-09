@@ -15,7 +15,7 @@ struct HealthChips: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("检测到的运动", bundle: .module))
+            SectionLabel(Text(copy: "检测到的运动", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
                     ForEach(model.healthWorkouts) { today in
@@ -40,16 +40,16 @@ struct HealthChips: View {
                     Image(systemName: "heart.fill")
                         .font(.system(size: Self.heart))
                         .foregroundStyle(Color(role: .fgDanger, in: theme))
-                    (imported.activity?.name ?? Text("运动", bundle: .module))
+                    (imported.activity?.name ?? Text(copy: "运动", bundle: .module))
                     if let minutes = imported.minutes {
-                        Text("\(minutes.value) 分钟", bundle: .module)
+                        Text(copy: "\(minutes.value) 分钟", bundle: .module)
                     }
                 }
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Group {
                     if today.isPosted {
-                        Text("已发", bundle: .module)
+                        Text(copy: "已发", bundle: .module)
                     } else {
                         Text(imported.workout.startedAt.date, format: .dateTime.hour().minute())
                     }
@@ -89,7 +89,7 @@ struct ScoreRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SectionLabel(Text("数据", bundle: .module))
+            SectionLabel(Text(copy: "数据", bundle: .module))
             ScoreStrip(cells: model.scoreCells, activity: model.currentActivity, struck: model.struck) { cell in
                 model.toggle(cell)
             }

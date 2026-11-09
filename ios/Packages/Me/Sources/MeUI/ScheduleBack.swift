@@ -76,7 +76,7 @@ struct ScheduleBack: View {
                 .typeStyle(TypeRamp.scoreWeek)
                 .foregroundStyle(ink)
                 .fixedSize()
-            Text("出赛表", bundle: .module)
+            Text(copy: "出赛表", bundle: .module)
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(ink)
                 .lineLimit(1)
@@ -84,7 +84,7 @@ struct ScheduleBack: View {
             if let count = face.week {
                 HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                     Score(count: count.trainedDays, goal: count.plannedDays, size: .card, onInk: true)
-                    Text("本周", bundle: .module)
+                    Text(copy: "本周", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(muted)
                         .lineLimit(1)
@@ -121,7 +121,7 @@ struct ScheduleBack: View {
     /// 饮食小目标 and the goals, on one line.
     private var fuel: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-            Text("饮食小目标", bundle: .module)
+            Text(copy: "饮食小目标", bundle: .module)
                 .typeStyle(TypeRamp.caption)
                 .foregroundStyle(muted)
                 .fixedSize()
@@ -147,7 +147,7 @@ struct ScheduleBack: View {
     private var badges: some View {
         Button(action: openBoard) {
             HStack(spacing: Space.xs) {
-                Text("徽章", bundle: .module)
+                Text(copy: "徽章", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(ink)
                 ForEach(face.board.titles.prefix(Self.badgesShown)) { title in

@@ -31,7 +31,7 @@ struct BirthdayView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.m) {
-                Text("生日", bundle: .module)
+                Text(copy: "生日", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -49,7 +49,7 @@ struct BirthdayView: View {
                 VStack(spacing: Space.xs) {
                     FlipClockView.date(
                         values: $draft.values, years: BirthdayDraft.years(through: today), identifier: "birthday")
-                    Text("用来算心率区间", bundle: .module)
+                    Text(copy: "用来算心率区间", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
@@ -68,7 +68,7 @@ struct BirthdayView: View {
                 Button {
                     run(.save, draft.birthday(today: today))
                 } label: {
-                    Text("保存", bundle: .module).loadingLabel(working == .save).frame(maxWidth: .infinity)
+                    Text(copy: "保存", bundle: .module).loadingLabel(working == .save).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(working != nil || !draft.isTouched || draft.birthday(today: today) == nil)
@@ -77,7 +77,7 @@ struct BirthdayView: View {
                     Button {
                         run(.forget, nil)
                     } label: {
-                        Text("删除生日", bundle: .module).loadingLabel(working == .forget)
+                        Text(copy: "删除生日", bundle: .module).loadingLabel(working == .forget)
                     }
                     .buttonStyle(TextButtonStyle(.danger))
                     .disabled(working != nil)

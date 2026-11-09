@@ -18,7 +18,7 @@ struct HolidayOpening: ViewModifier {
                         opening, squad: model.openingSquad, squadName: model.home?.squad.name,
                         language: AppLanguage.current.rawValue,
                         onPlayed: { model.cheerInOpening() }, onEnter: { model.enterFromOpening() },
-                        label: { Text("进场", bundle: .module) }
+                        label: { Text(copy: "进场", bundle: .module) }
                     )
                     .transition(.move(edge: .top))
                 }

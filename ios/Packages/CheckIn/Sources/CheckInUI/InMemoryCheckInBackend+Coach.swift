@@ -14,8 +14,8 @@ extension InMemoryCheckInBackend {
     /// 毛头 with today's line, as the approved home shows it.
     static func sampleCoach(now: Date) -> SidelineCoach {
         let words = Bundle.module.inAppLanguage
-        let coach = CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil))
-        let line = words.localizedString(forKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", value: nil, table: nil)
+        let coach = CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words))
+        let line = String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words)
         let note = CoachNote(
             day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
             writtenAt: now.addingTimeInterval(-3600))
@@ -25,7 +25,7 @@ extension InMemoryCheckInBackend {
     /// 帕帕, the coach a squad changes to in the samples.
     static var papa: CoachSpeaker {
         CoachSpeaker(
-            id: "papa", name: Bundle.module.inAppLanguage.localizedString(forKey: "帕帕", value: nil, table: nil))
+            id: "papa", name: String(copyKey: "帕帕", bundle: Bundle.module))
     }
 
     /// 毛头's letter to 帕帕, as the approved 教练交接信 shows it.
@@ -33,7 +33,7 @@ extension InMemoryCheckInBackend {
         let words = Bundle.module.inAppLanguage
         return CoachLetter(
             id: 1, squad: squad,
-            from: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)),
+            from: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)),
             to: papa, day: LocalDay(at: now, in: CoachNote.timeZone),
             text: words.localizedString(
                 forKey:

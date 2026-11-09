@@ -43,7 +43,7 @@ public struct SceneSticker: View {
                     if let reveal = await picker.confirm(), let scene = picker.selection { onPicked(reveal, scene) }
                 }
             } label: {
-                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
+                Text(copy: "确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
@@ -68,12 +68,12 @@ public struct SceneSticker: View {
                     .stroke(style: StrokeStyle(lineWidth: 2.2, lineJoin: .round))
                     .frame(width: 13, height: 13)
                     .accessibilityHidden(true)
-                Text("冠军专属", bundle: .module)
+                Text(copy: "冠军专属", bundle: .module)
                     .typeStyle(TypeRamp.tabSelected)
             }
             .foregroundStyle(Color(role: .fgAccent, in: theme))
             .frame(height: Self.lineHeight)
-            Text("下周去哪练？", bundle: .module)
+            Text(copy: "下周去哪练？", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .frame(height: 24)
@@ -137,14 +137,14 @@ public struct LastTrainedLine: View {
     public var body: some View {
         Group {
             switch last {
-            case .thisWeek: Text("这周就在这儿练", bundle: .module)
-            case .never: Text("小队还没来过", bundle: .module)
+            case .thisWeek: Text(copy: "这周就在这儿练", bundle: .module)
+            case .never: Text(copy: "小队还没来过", bundle: .module)
             case .weeksAgo(let weeks):
                 // Text's own modifiers, so the number stays a Text to interpolate.
                 let style = TypeRamp.scoreCaption
                 let number = Text(verbatim: "\(weeks)").font(.wildcard(style)).tracking(style.tracking)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("小队 \(number) 周前在这里练过", bundle: .module)
+                Text(copy: "小队 \(number) 周前在这里练过", bundle: .module)
             }
         }
         .typeStyle(TypeRamp.caption)
@@ -168,7 +168,7 @@ struct Crown: Shape {
 /// A carton's name for VoiceOver, which says it is still closed.
 enum SceneName {
     static func boxed(_ scene: SceneTheme) -> Text {
-        Text("\(scene.name)，还没开过", bundle: .module)
+        Text(copy: "\(scene.name)，还没开过", bundle: .module)
     }
 }
 #endif

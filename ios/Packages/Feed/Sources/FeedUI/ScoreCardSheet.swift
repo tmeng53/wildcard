@@ -25,7 +25,7 @@ struct ScoreCardSheet: View {
         } options: {
             VStack(alignment: .leading, spacing: Space.s) {
                 if model.showsHint {
-                    Text("点数字和人物可以换", bundle: .module)
+                    Text(copy: "点数字和人物可以换", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .frame(maxWidth: .infinity)
@@ -35,7 +35,7 @@ struct ScoreCardSheet: View {
                     BackdropRow(model: model)
                 }
                 if model.squadName != nil {
-                    SwitchRow(Text("小队名", bundle: .module), isOn: showsSquad, showsDivider: false)
+                    SwitchRow(Text(copy: "小队名", bundle: .module), isOn: showsSquad, showsDivider: false)
                         .accessibilityIdentifier("scoreCard.showsSquad")
                 }
             }
@@ -141,7 +141,7 @@ private struct BackdropRow: View {
                 Color(colors.shade)
             }
         case .plain:
-            Text("纯色", bundle: .module)
+            Text(copy: "纯色", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(colors.ink))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -151,10 +151,10 @@ private struct BackdropRow: View {
 
     private func label(of backdrop: ScoreCard.Backdrop, at index: Int) -> Text {
         switch backdrop {
-        case .photo: Text("照片 \(index + 1)", bundle: .module)
-        case .map: Text("路线", bundle: .module)
-        case .chart: Text("图表", bundle: .module)
-        case .plain: Text("纯色", bundle: .module)
+        case .photo: Text(copy: "照片 \(index + 1)", bundle: .module)
+        case .map: Text(copy: "路线", bundle: .module)
+        case .chart: Text(copy: "图表", bundle: .module)
+        case .plain: Text(copy: "纯色", bundle: .module)
         }
     }
 

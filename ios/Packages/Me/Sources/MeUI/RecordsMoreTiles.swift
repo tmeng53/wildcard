@@ -32,7 +32,7 @@ struct StreakTile: View {
         let days = streak?.days ?? 0
         RecordsTile {
             RecordsLabel(text: label)
-            RecordsNumber(value: days, unit: Text("天", bundle: .module), progress: intro.number(order))
+            RecordsNumber(value: days, unit: Text(copy: "天", bundle: .module), progress: intro.number(order))
             HStack(spacing: Self.ticketGap) {
                 ForEach(0..<Self.ticketsShown(days), id: \.self) { index in
                     let size = intro.ticket(tile: order, index: index)
@@ -73,11 +73,11 @@ struct RecordsDays: View {
 
     var body: some View {
         let (month, day) = (streak.first.month, streak.first.day)
-        let first = Text("\(month).\(day)", bundle: .module)
+        let first = Text(copy: "\(month).\(day)", bundle: .module)
         let last =
             streak.last == today
-            ? Text("今天", bundle: .module) : Text("\(streak.last.month).\(streak.last.day)", bundle: .module)
-        Text("\(first) – \(last)", bundle: .module)
+            ? Text(copy: "今天", bundle: .module) : Text(copy: "\(streak.last.month).\(streak.last.day)", bundle: .module)
+        Text(copy: "\(first) – \(last)", bundle: .module)
     }
 }
 
@@ -92,9 +92,9 @@ struct TopSportsTile: View {
         let most = max(records.sports.first?.days ?? 0, 1)
         RecordsTile {
             HStack(alignment: .firstTextBaseline) {
-                RecordsLabel(text: Text("最常练", bundle: .module))
+                RecordsLabel(text: Text(copy: "最常练", bundle: .module))
                 Spacer(minLength: Space.xs)
-                Text("\(records.sportCount) 种运动", bundle: .module)
+                Text(copy: "\(records.sportCount) 种运动", bundle: .module)
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                     .lineLimit(1)
@@ -126,7 +126,7 @@ struct TopSportsTile: View {
                         Text(verbatim: "\(Int((Double(sport.days) * intro.number(2 + index)).rounded()))")
                             .typeStyle(TypeRamp.scoreSmall)
                             .monospacedDigit()
-                        Text("天", bundle: .module)
+                        Text(copy: "天", bundle: .module)
                             .typeStyle(TypeRamp.caption)
                             .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                     }
@@ -135,7 +135,7 @@ struct TopSportsTile: View {
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(sport.activity.name)
-                .accessibilityValue(Text("\(sport.days) 天", bundle: .module))
+                .accessibilityValue(Text(copy: "\(sport.days) 天", bundle: .module))
             }
         }
     }
@@ -157,15 +157,19 @@ struct TotalsTile: View {
     var body: some View {
         RecordsTile {
             HStack(alignment: .top, spacing: 0) {
-                column(Text("一共训练", bundle: .module), records.trainedDays, Text("天", bundle: .module), order: 5)
+                column(
+                    Text(copy: "一共训练", bundle: .module), records.trainedDays, Text(copy: "天", bundle: .module), order: 5
+                )
                 divider
-                column(Text("一共", bundle: .module), records.hoursTrained, Text("小时", bundle: .module), order: 6)
+                column(
+                    Text(copy: "一共", bundle: .module), records.hoursTrained, Text(copy: "小时", bundle: .module), order: 6
+                )
                 divider
                 if let longest = records.longestMinutes {
-                    column(Text("最长一次", bundle: .module), longest, Text("分钟", bundle: .module), order: 7)
+                    column(Text(copy: "最长一次", bundle: .module), longest, Text(copy: "分钟", bundle: .module), order: 7)
                 } else {
                     VStack(alignment: .leading, spacing: Self.gap) {
-                        RecordsLabel(text: Text("最长一次", bundle: .module))
+                        RecordsLabel(text: Text(copy: "最长一次", bundle: .module))
                         Text(verbatim: "–").typeStyle(TypeRamp.scoreCard)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,7 +207,7 @@ struct SquadRecordsSection: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        Text("和小队", bundle: .module)
+        Text(copy: "和小队", bundle: .module)
             .typeStyle(TypeRamp.title)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -211,7 +215,7 @@ struct SquadRecordsSection: View {
             .accessibilityAddTraits(.isHeader)
         if let partner = squad.partner {
             RecordsTile {
-                RecordsLabel(text: Text("最佳搭档", bundle: .module))
+                RecordsLabel(text: Text(copy: "最佳搭档", bundle: .module))
                 HStack(alignment: .bottom, spacing: Space.xs) {
                     ZStack(alignment: .topLeading) {
                         RecordsFigure(player: cast.member, still: still)
@@ -235,7 +239,7 @@ struct SquadRecordsSection: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         let count = bold(partner.count)
-                        Text("同一天练了 \(count) 次", bundle: .module)
+                        Text(copy: "同一天练了 \(count) 次", bundle: .module)
                             .typeStyle(TypeRamp.caption)
                             .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                             .lineLimit(1)
@@ -248,10 +252,10 @@ struct SquadRecordsSection: View {
         }
         HStack(alignment: .top, spacing: Space.cardGap) {
             CheersTile(
-                label: Text("收到加油", bundle: .module), cheers: squad.cheersReceived, received: true, order: 8,
+                label: Text(copy: "收到加油", bundle: .module), cheers: squad.cheersReceived, received: true, order: 8,
                 intro: intro, cast: cast)
             CheersTile(
-                label: Text("送出加油", bundle: .module), cheers: squad.cheersGiven, received: false, order: 9,
+                label: Text(copy: "送出加油", bundle: .module), cheers: squad.cheersGiven, received: false, order: 9,
                 intro: intro, cast: cast)
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -292,7 +296,7 @@ struct CheersTile: View {
     var body: some View {
         RecordsTile {
             RecordsLabel(text: label)
-            RecordsNumber(value: cheers.count, unit: Text("次", bundle: .module), progress: intro.number(order))
+            RecordsNumber(value: cheers.count, unit: Text(copy: "次", bundle: .module), progress: intro.number(order))
             if let top = cheers.top {
                 HStack(spacing: Self.gap) {
                     MemberHead(player: cast.heads[top.mate.member], size: Self.head, rim: .none)
@@ -302,9 +306,9 @@ struct CheersTile: View {
                     Group {
                         if received {
                             let count = String(top.count)
-                            Text("\(name) 最多 · \(count) 次", bundle: .module)
+                            Text(copy: "\(name) 最多 · \(count) 次", bundle: .module)
                         } else {
-                            Text("最常给 \(name)", bundle: .module)
+                            Text(copy: "最常给 \(name)", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.caption)
@@ -326,7 +330,7 @@ extension RecordsMateName {
         if let name = mate.character?.nickname, !name.isEmpty {
             Text(verbatim: name)
         } else {
-            Text("队友", bundle: .module)
+            Text(copy: "队友", bundle: .module)
         }
     }
 }

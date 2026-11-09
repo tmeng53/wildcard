@@ -212,7 +212,7 @@ struct ScoreCardView: View {
     private var footLine: some View {
         HStack(spacing: Space.s) {
             if let count = model.weekCount {
-                Text("本周第 \(count) 次", bundle: .module)
+                Text(copy: "本周第 \(count) 次", bundle: .module)
                     .layoutPriority(1)
                     .accessibilityIdentifier("scoreCard.weekCount")
             }
@@ -237,7 +237,7 @@ struct ScoreCardView: View {
         } else {
             Button(action: model.tapHero, label: label)
                 .buttonStyle(PressableButtonStyle())
-                .accessibilityHint(Text("点一下换一个数字", bundle: .module))
+                .accessibilityHint(Text(copy: "点一下换一个数字", bundle: .module))
                 .accessibilityIdentifier("scoreCard.hero")
         }
     }
@@ -264,8 +264,8 @@ struct ScoreCardView: View {
                                 SpringKeyframe(0, duration: 0.24, spring: .bouncy)
                             }
                         }
-                        .accessibilityLabel(Text("人物", bundle: .module))
-                        .accessibilityHint(Text("点一下换个姿势", bundle: .module))
+                        .accessibilityLabel(Text(copy: "人物", bundle: .module))
+                        .accessibilityHint(Text(copy: "点一下换个姿势", bundle: .module))
                         .accessibilityIdentifier("scoreCard.character")
                 }
             }

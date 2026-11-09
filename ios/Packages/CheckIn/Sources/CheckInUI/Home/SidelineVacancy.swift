@@ -38,7 +38,7 @@ struct SidelineVacancy: View {
                 .fill(Color(role: .bgCanvas, in: theme).opacity(0.45))
             )
             .frame(width: width, height: height)
-            InkTag(Text("招聘教练", bundle: .module), height: CoachTag.Size.regular.height)
+            InkTag(Text(copy: "招聘教练", bundle: .module), height: CoachTag.Size.regular.height)
                 .fixedSize()
         }
         .contentShape(Rectangle())
@@ -47,7 +47,7 @@ struct SidelineVacancy: View {
         // Its feet on the spot: the outline's bottom edge, the tag hanging under it.
         .offset(y: (Space.xs + CoachTag.Size.regular.height - height) / 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("招聘教练", bundle: .module))
+        .accessibilityLabel(Text(copy: "招聘教练", bundle: .module))
         .accessibilityIdentifier("today.coachVacancy")
         .accessibilityAddTraits(.isButton)
     }

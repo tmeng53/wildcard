@@ -155,7 +155,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             PageDots(page: $page)
                 .padding(.bottom, Space.xs).zIndex(1)  // Over the grabber's tap area, which reaches up here.
             if let collapse {
-                Grabber(label: Text("收起小队卡片", bundle: .module), action: collapse)
+                Grabber(label: Text(copy: "收起小队卡片", bundle: .module), action: collapse)
                     .padding(.bottom, Space.xs)
                     .accessibilityIdentifier("squadcard.collapse")
             }
@@ -279,7 +279,7 @@ private struct PageHeader: View {
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
-                        .accessibilityLabel(Text("多练 \(count - goal) 次", bundle: .module))
+                        .accessibilityLabel(Text(copy: "多练 \(count - goal) 次", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
                 }
             }
@@ -308,8 +308,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                unit: Text("次", bundle: .module), open: openSquad)
+                label: Text(copy: "小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
+                unit: Text(copy: "次", bundle: .module), open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -332,7 +332,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     /// Everyone's ring, which shows their today, after a 今天 label.
     private func todayRings(avatarSize: Double, spacing: Double) -> some View {
         HStack(spacing: Space.xs) {
-            SectionLabel(Text("今天", bundle: .module))
+            SectionLabel(Text(copy: "今天", bundle: .module))
                 .fixedSize()
             rings(avatarSize: avatarSize, spacing: spacing)
         }
@@ -357,7 +357,7 @@ private struct MyWeekPage: View {
         VStack(alignment: .leading, spacing: 0) {
             // Only its label: the week's circles say how it stands, so the page keeps no big
             // number and the card stays compact (Tracy, 2026-11-09).
-            SectionLabel(Text("我的一周", bundle: .module))
+            SectionLabel(Text(copy: "我的一周", bundle: .module))
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in
