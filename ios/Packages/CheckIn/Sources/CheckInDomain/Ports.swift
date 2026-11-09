@@ -37,9 +37,9 @@ public protocol CheckInBackend: Sendable {
     /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
     /// nil while the squad has none.
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
-    /// The coaches' morning notes (便条) waiting for the member on 今天, one at most from each of
-    /// `squads`, in their order.
-    func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote]
+    /// Whether the squad's coach has anything on its page the member hasn't seen (a card in its
+    /// stack: its 战术板 line, their morning note, a challenge or a gift), for the dot on its phone.
+    func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool
     /// The challenge in the member's morning note today in `squad`, answered or not; nil when
     /// there is none.
     func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge?

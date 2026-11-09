@@ -2063,7 +2063,7 @@ describe('the coach', () => {
       });
     });
   });
-  it('delivers a previewed note to the member alone when asked, once a day', async () => {
+  it('delivers a previewed note to the member alone each time asked, the newest the day’s', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia } = fixture;
       const { agent } = scriptedAgent(() => [
@@ -2088,7 +2088,38 @@ describe('the coach', () => {
         { member: mia, text: '今天多喝水', title: '喝水', board: '0' },
       ]);
       const again = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
-      expect(again).toMatchObject({ ran: true, delivered: false });
+      expect(again).toMatchObject({ ran: true, delivered: true });
+      const notes = await sql<{ id: string }>`
+        select id from public.coach_member_notes where squad_id = ${squad} and member_id = ${mia}
+        order by id
+      `.execute(trx);
+      expect(notes.rows).toHaveLength(2);
+      // Once both reached her, the newest note's challenge is the day's.
+      const delivery = createPostgresCoachNoteDelivery(trx);
+      for (const { id } of notes.rows) await delivery.delivered(Number(id));
+      const stores = createPostgresCoachStores(trx);
+      const day = first.ran ? first.day : '';
+      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
+        note: Number(notes.rows[1]?.id),
+      });
+      expect(await stores.memberNotes.challengesOn({ squad, day })).toMatchObject([
+        { member: mia, note: Number(notes.rows[1]?.id) },
+      ]);
+      // A later note without a challenge hides none.
+      await stores.memberNotes.save({
+        squad,
+        member: mia,
+        coach: CoachId.parse('xiaohun'),
+        day,
+        text: '早点睡',
+      });
+      const plainNote = await sql<{ id: string }>`
+        select max(id) as id from public.coach_member_notes where member_id = ${mia}
+      `.execute(trx);
+      await delivery.delivered(Number(plainNote.rows[0]?.id));
+      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
+        note: Number(notes.rows[1]?.id),
+      });
       const plain = await wakes(fixture, { agent }).preview({ squad, member: mia });
       expect(plain.ran && 'delivered' in plain).toBe(false);
     });

@@ -178,9 +178,9 @@ export interface MemberNote {
   readonly at: Date;
 }
 
-/** The coach's morning notes to each member: one a member a squad a day. */
+/** The coach's notes to each member: one a member a wake; a day's newest challenge stands. */
 export interface CoachMemberNoteStore {
-  /** Saves the member's note for the day unless they have one; says whether this one was saved. */
+  /** Saves the member's note unless its wake wrote them one; says whether this one was saved. */
   save(note: {
     readonly squad: SquadId;
     readonly member: string;
@@ -192,7 +192,7 @@ export interface CoachMemberNoteStore {
     readonly wake?: number;
   }): Promise<boolean>;
   /**
-   * The challenge the member's note of `day` (the squad's day) set, and what they said to it;
+   * The newest challenge the member's notes of `day` (the squad's day) set, and their answer;
    * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
    */
   challengeOf(input: {
