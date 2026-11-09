@@ -189,7 +189,7 @@ function writeLetter(written: (text: string) => void): CoachTool {
   const parameters = z.object({ text: z.string().describe('信的正文') });
   return {
     name: 'write_letter',
-    description: `交上你的交接信，最多 ${String(LETTER_LIMIT)} 字。`,
+    description: `交上你的告别信，最多 ${String(LETTER_LIMIT)} 字。`,
     parameters,
     run: (input) => {
       const parsed = parameters.safeParse(input);
