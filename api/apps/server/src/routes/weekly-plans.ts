@@ -8,7 +8,10 @@ import {
   type WeeklyPlans,
 } from '@wildcard/check-ins';
 
+import type { Squads } from '@wildcard/squads';
+
 import { bodyVersion } from '../body-version.js';
+import { memberSquadFirstWeek } from '../flows/squad-weeks.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -51,6 +54,13 @@ export const WeeklyPlanBody = z
         '出赛表 looks back on. Missing before they save a profile.',
       example: '2026-10-12',
     }),
+    squadFirstWeek: WeekStart.optional().meta({
+      description:
+        'The Monday of the week the member’s squad was made, on the squad’s clock: the week ' +
+        'every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks ' +
+        'before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.',
+      example: '2026-10-05',
+    }),
   })
   .openapi('WeeklyPlan');
 
@@ -79,12 +89,21 @@ const FuelGoalsDraft = z
   .strictObject({ version: bodyVersion(1), goals: fuelGoalsBody })
   .openapi('FuelGoalsDraft');
 
-const wire = (member: string, { firstWeek, source, ...week }: PlannedWeek) => ({
+const wire = ({
+  member,
+  plan: { firstWeek, source, ...week },
+  squadFirstWeek,
+}: {
+  readonly member: string;
+  readonly plan: PlannedWeek;
+  readonly squadFirstWeek: WeekStart | undefined;
+}) => ({
   version: 1 as const,
   member,
   ...week,
   source: source === 'template' ? ('carriedOver' as const) : source,
   ...(firstWeek === undefined ? {} : { firstWeek }),
+  ...(squadFirstWeek === undefined ? {} : { squadFirstWeek }),
 });
 
 const signedInFailures = {
@@ -103,6 +122,8 @@ const params = z.strictObject({
 export function weeklyPlans(deps: {
   readonly verifyToken: VerifyToken;
   readonly weeklyPlans: WeeklyPlans;
+  /** Whose squad's weeks the 出赛表 counts. */
+  readonly squads: Pick<Squads, 'timeZonesAt' | 'listMine'>;
 }) {
   const get = createRoute({
     method: 'get',
@@ -240,7 +261,14 @@ export function weeklyPlans(deps: {
         member,
         weekStart: c.req.valid('param').weekStart,
       });
-      return c.json(wire(member, plan), 200);
+      return c.json(
+        wire({
+          member,
+          plan: plan,
+          squadFirstWeek: await memberSquadFirstWeek(deps.squads, member),
+        }),
+        200,
+      );
     })
     .openapi(put, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
@@ -249,7 +277,14 @@ export function weeklyPlans(deps: {
         weekStart: c.req.valid('param').weekStart,
         days: c.req.valid('json').days,
       });
-      return c.json(wire(member, plan), 200);
+      return c.json(
+        wire({
+          member,
+          plan: plan,
+          squadFirstWeek: await memberSquadFirstWeek(deps.squads, member),
+        }),
+        200,
+      );
     })
     .openapi(putFuelGoals, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
@@ -258,6 +293,13 @@ export function weeklyPlans(deps: {
         weekStart: c.req.valid('param').weekStart,
         goals: c.req.valid('json').goals,
       });
-      return c.json(wire(member, week), 200);
+      return c.json(
+        wire({
+          member,
+          plan: week,
+          squadFirstWeek: await memberSquadFirstWeek(deps.squads, member),
+        }),
+        200,
+      );
     });
 }

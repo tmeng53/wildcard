@@ -6,14 +6,14 @@ import Contracts
 import Foundation
 
 /// The coach on the home's sideline: a tap starts its pep talk and opens its page, the cards it
-/// has for the member (Tracy, 2026-11-08). While a morning note waits unseen, its phone shows a
-/// dot and buzzes.
+/// has for the member (Tracy, 2026-11-08). While its page has a card not seen yet, its phone shows
+/// a dot and it whistles again and again (Tracy, 2026-11-09).
 extension TodayModel {
     /// The coach's 战术板 line while its day lasts, for its 简历.
     public var coachLine: CoachNote? { store.coachLine }
 
-    /// Whether the coach's phone shows its dot: a morning note waits unseen.
-    var coachHasNote: Bool { store.hasWaitingNote }
+    /// Whether the coach's phone shows its dot: its page has a card not seen yet.
+    var coachHasNews: Bool { store.hasUnseenCoachCards }
 
     /// Reads the squad's coach again, after it was hired, changed or fired, and stands the new
     /// one (or its empty spot) on the sideline; also after its page, where a note seen takes the
@@ -27,6 +27,11 @@ extension TodayModel {
     func tapVacancy() {
         guard arrival == nil else { return }
         openDestination?(.coaches)
+    }
+
+    /// The coach whistles once more because its page has news.
+    func coachWhistlesForNews() {
+        cast.coachWhistlesForNews()
     }
 
     /// The coach was tapped: it gives its pep talk and its page opens.

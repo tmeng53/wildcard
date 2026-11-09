@@ -137,7 +137,10 @@ extension Workout {
             series: series.map { series in
                 .init(
                     hr: series.heartRate?.map { Components.Schemas.HeartRatePoint(t: $0.seconds, bpm: $0.bpm) },
-                    laps: series.laps)
+                    laps: series.laps,
+                    zones: series.zones.map {
+                        .init(light: $0.light, moderate: $0.moderate, vigorous: $0.vigorous, peak: $0.peak)
+                    })
             },
             route: route?.map { Components.Schemas.RoutePoint(lat: $0.lat, lon: $0.lon) },
             tilePosition: tilePosition, chartPosition: chartPosition, startedAt: startedAt.date, endedAt: endedAt.date)
@@ -150,21 +153,28 @@ extension WorkoutSummary {
             durationSec: wire.durationSec, distanceM: wire.distanceM, paceSecPerKm: wire.paceSecPerKm,
             speedKmh: wire.speedKmh, avgHr: wire.avgHr, maxHr: wire.maxHr, effort: wire.effort, laps: wire.laps,
             poolLengthM: wire.poolLengthM, runs: wire.runs, descentM: wire.descentM, topSpeedKmh: wire.topSpeedKmh,
-            elevationGainM: wire.elevationGainM, paceSecPer100m: wire.paceSecPer100m)
+            elevationGainM: wire.elevationGainM, paceSecPer100m: wire.paceSecPer100m,
+            activeEnergyKcal: wire.activeEnergyKcal)
     }
 
     var wire: Components.Schemas.WorkoutSummary {
         .init(
             durationSec: durationSec, distanceM: distanceM, paceSecPerKm: paceSecPerKm, speedKmh: speedKmh,
             avgHr: avgHr, maxHr: maxHr, effort: effort, laps: laps, poolLengthM: poolLengthM, runs: runs,
-            descentM: descentM, topSpeedKmh: topSpeedKmh, elevationGainM: elevationGainM, paceSecPer100m: paceSecPer100m
-        )
+            descentM: descentM, topSpeedKmh: topSpeedKmh, elevationGainM: elevationGainM,
+            paceSecPer100m: paceSecPer100m,
+            activeEnergyKcal: activeEnergyKcal)
     }
 }
 
 extension WorkoutSeries {
     init(_ wire: Components.Schemas.WorkoutSeries) {
-        self.init(heartRate: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps)
+        self.init(
+            heartRate: wire.hr?.map { HeartRatePoint(seconds: $0.t, bpm: $0.bpm) }, laps: wire.laps,
+            // Zones that don't rise are dropped, not the post: the chart just leaves them off.
+            zones: wire.zones.flatMap {
+                HeartRateZones(light: $0.light, moderate: $0.moderate, vigorous: $0.vigorous, peak: $0.peak)
+            })
     }
 }
 

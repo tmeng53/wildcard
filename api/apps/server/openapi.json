@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -182,7 +182,16 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The goal suggested, 人均 N 天 (`goalSuggestion`)."
+            "description": "The goal suggested, 人均 N 次 (`goalSuggestion`)."
+          },
+          "feedback": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The feedback we used (`thanks`): the id the app sent it with."
+          },
+          "adopted": {
+            "type": "string",
+            "description": "What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -875,6 +884,12 @@
                 "description": "The number on the member’s player card in 我, 0 to 99, shown with two digits (07). Null until they pick one; the app then shows their place in their squad. A save that leaves it out keeps the number saved before. Squadmates may share a number.",
                 "example": 22
               },
+              "birthday": {
+                "type": "string",
+                "format": "date",
+                "description": "The member’s birthday, `YYYY-MM-DD`, only if they chose to give it (`PUT /me/birthday`); left out otherwise.",
+                "example": "1996-04-18"
+              },
               "joinedAt": {
                 "type": "string",
                 "format": "date-time",
@@ -1000,6 +1015,28 @@
         "required": [
           "version",
           "timeZone"
+        ],
+        "additionalProperties": false
+      },
+      "Birthday": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "birthday": {
+            "type": "string",
+            "format": "date",
+            "description": "The member’s birthday, `YYYY-MM-DD`, from 1900-01-01 to today.",
+            "example": "1996-04-18"
+          }
+        },
+        "required": [
+          "version",
+          "birthday"
         ],
         "additionalProperties": false
       },
@@ -1407,10 +1444,15 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 86400
+          },
+          "activeEnergyKcal": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike), active energy in kilocalories."
       },
       "WorkoutSeries": {
         "type": "object",
@@ -1434,6 +1476,9 @@
             "minItems": 1,
             "maxItems": 1000,
             "description": "Each lap’s time in seconds, in order."
+          },
+          "zones": {
+            "$ref": "#/components/schemas/HeartRateZones"
           }
         },
         "additionalProperties": false,
@@ -1459,6 +1504,39 @@
           "bpm"
         ],
         "additionalProperties": false
+      },
+      "HeartRateZones": {
+        "type": "object",
+        "properties": {
+          "light": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "moderate": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "vigorous": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "peak": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          }
+        },
+        "required": [
+          "light",
+          "moderate",
+          "vigorous",
+          "peak"
+        ],
+        "additionalProperties": false,
+        "description": "Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`."
       },
       "RoutePoint": {
         "type": "object",
@@ -3248,7 +3326,7 @@
             "minimum": 1,
             "maximum": 7,
             "default": 3,
-            "description": "The squad’s weekly goal (人均 N 天, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
+            "description": "The squad’s weekly goal (人均 N 次, 1 to 7), counting from the creator’s week now; 3 when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.",
             "example": 3
           },
           "timeZone": {
@@ -3337,7 +3415,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "description": "The squad’s weekly goal (人均 N 次) as its captain last set it.",
             "example": 3
           },
           "looks": {
@@ -3384,7 +3462,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "The squad’s weekly goal (人均 N 天) as its captain last set it.",
+            "description": "The squad’s weekly goal (人均 N 次) as its captain last set it.",
             "example": 3
           },
           "looks": {
@@ -3565,18 +3643,18 @@
               "trainedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "Days trained this week, added up over the members, each in their own week and from check-ins sent to this squad; a day counts once however many times they trained."
+                "description": "The 训练 sent to this squad this week, added up over the members, each in their own week; several on one day each count (named before the goal counted 训练, not days)."
               },
               "plannedDays": {
                 "type": "integer",
                 "minimum": 0,
-                "description": "The squad’s weekly goal (小队每周目标) in days: `daysPerMember` times the members now. Anyone’s trained days count towards it."
+                "description": "The squad’s weekly goal (小队每周目标) in 训练: `daysPerMember` times the members now. Anyone’s 训练 count towards it."
               },
               "daysPerMember": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 7,
-                "description": "The weekly goal its captain set (人均 N 天), in the caller’s week: how many days each member trains on average.",
+                "description": "The weekly goal its captain set (人均 N 次), in the caller’s week: how many times each member trains on average.",
                 "example": 3
               }
             },
@@ -4145,7 +4223,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "This week’s goal (人均 N 天).",
+            "description": "This week’s goal (人均 N 次).",
             "example": 3
           },
           "nextDaysPerMember": {
@@ -4175,7 +4253,7 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 7,
-                "description": "The days each member trained on average in those weeks, to one decimal: each week’s trained days (from check-ins sent to the squad) over its members then.",
+                "description": "The 训练 each member sent to the squad on average in those weeks, to one decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no higher). The name is from when it counted days.",
                 "example": 3.4
               }
             },
@@ -4209,7 +4287,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 7,
-            "description": "How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal for a week is this times its members; anyone’s trained days count towards it.",
+            "description": "How many times each member trains a week on average (人均 N 次), 1 to 7. The squad’s goal for a week is this times its members; anyone’s 训练 sent to the squad count towards it, several on one day each counting.",
             "example": 3
           }
         },
@@ -4840,12 +4918,12 @@
         "properties": {
           "kind": {
             "type": "string",
-            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift`, `reply` (its line to the caller’s check-in) or `answer` (to the caller’s reply). More kinds may come: an app skips a kind it doesn’t know.",
+            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.",
             "example": "challenge"
           },
           "id": {
             "type": "string",
-            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece, a reply’s or answer’s id.",
+            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.",
             "example": "42"
           },
           "coach": {
@@ -4863,7 +4941,7 @@
           },
           "text": {
             "type": "string",
-            "description": "What the coach said, on a `board`, `note`, `reply` or `answer`.",
+            "description": "What the coach said, on a `board` or `note`.",
             "example": "配速比上周快了，不错。"
           },
           "challenge": {
@@ -4875,16 +4953,6 @@
                 "description": "A `challenge`’s or `challengeDone`’s challenge."
               }
             ]
-          },
-          "checkInId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s check-in a `reply` is on, or an `answer`’s post."
-          },
-          "commentId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The caller’s reply an `answer` answers."
           },
           "gift": {
             "type": "object",
@@ -4919,6 +4987,51 @@
           "id",
           "coach",
           "at"
+        ],
+        "additionalProperties": false
+      },
+      "EarlierCoachCards": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/CoachPageCard"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "seen": {
+                      "type": "boolean",
+                      "description": "Whether the caller has seen it."
+                    }
+                  },
+                  "required": [
+                    "seen"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "next": {
+            "type": "string",
+            "pattern": "^\\d{1,15}~[A-Za-z]{1,16}:[A-Za-z0-9_.:-]{1,64}$",
+            "description": "The cursor for the page after this one; left out on the last page.",
+            "example": "1794193129000~note:42"
+          }
+        },
+        "required": [
+          "version",
+          "cards"
         ],
         "additionalProperties": false
       },
@@ -5713,6 +5826,12 @@
             "format": "date",
             "description": "The Monday of the week the member joined, in their time zone: the earliest week the 出赛表 looks back on. Missing before they save a profile.",
             "example": "2026-10-12"
+          },
+          "squadFirstWeek": {
+            "type": "string",
+            "format": "date",
+            "description": "The Monday of the week the member’s squad was made, on the squad’s clock: the week every 出赛表 in the squad counts as W1, so everyone shows the same week number. Weeks before `firstWeek` show as 还未入队. Missing outside a squad, and from older servers.",
+            "example": "2026-10-05"
           }
         },
         "required": [
@@ -6442,11 +6561,13 @@
         "properties": {
           "done": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "The 训练 the squad’s members sent to it that week, several on one day each counting."
           },
           "plan": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "The squad’s weekly goal that week, in 训练 (人均 N 次)."
           },
           "headline": {
             "type": "string",
@@ -6456,7 +6577,7 @@
           "line": {
             "type": "string",
             "minLength": 1,
-            "description": "The line under the days against the plans, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many days are missing, or that the squad made it."
+            "description": "The line under the 训练 against the goal, written with the awards. Missing until they are, when the model didn’t write one, and for older weeks: the app then says how many 训练 are missing, or that the squad made it."
           }
         },
         "required": [
@@ -6464,7 +6585,7 @@
           "plan"
         ],
         "additionalProperties": false,
-        "description": "这一周: the squad’s days trained against its plans. Missing when nobody trained, so a quiet week isn’t told how short it fell."
+        "description": "这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a quiet week isn’t told how short it fell."
       },
       "StoryTitle": {
         "type": "object",
@@ -6552,6 +6673,13 @@
               1
             ]
           },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -6570,7 +6698,52 @@
         },
         "required": [
           "version",
+          "teamBadges",
           "titles"
+        ],
+        "additionalProperties": false
+      },
+      "TeamBadge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The badge’s id.",
+            "example": "bug-hunter"
+          },
+          "name": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "glyph": {
+            "type": "string",
+            "description": "The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.",
+            "example": "ladybug.fill"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$",
+            "description": "Its colour, as #RRGGBB.",
+            "example": "#E65345"
+          },
+          "times": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many times the member got it: ×N."
+          },
+          "latestAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they got it the last time.",
+            "example": "2026-11-09T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "glyph",
+          "tone",
+          "times",
+          "latestAt"
         ],
         "additionalProperties": false
       },
@@ -6717,7 +6890,7 @@
               "weekStart": {
                 "type": "string",
                 "format": "date",
-                "description": "This week’s Monday, in their time zone. Left out by older servers.",
+                "description": "This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.",
                 "example": "2026-11-02"
               },
               "days": {
@@ -6738,13 +6911,19 @@
               "firstWeek": {
                 "type": "string",
                 "format": "date",
-                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1. Missing before they save a profile, and from older servers.",
+                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.",
                 "example": "2026-10-12"
+              },
+              "squadFirstWeek": {
+                "type": "string",
+                "format": "date",
+                "description": "The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.",
+                "example": "2026-10-05"
               },
               "today": {
                 "type": "string",
                 "format": "date",
-                "description": "Their today, in their time zone, which their 出赛表 shades as 今天. Left out by older servers.",
+                "description": "Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.",
                 "example": "2026-10-29"
               }
             },
@@ -6754,6 +6933,13 @@
             ],
             "additionalProperties": false,
             "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
+          },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
           },
           "titles": {
             "type": "array",
@@ -6775,6 +6961,7 @@
           "healthyMeals",
           "cheatMeals",
           "disclaimers",
+          "teamBadges",
           "titles"
         ],
         "additionalProperties": false
@@ -6996,6 +7183,13 @@
             },
             "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
           },
+          "teamPieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamPiece"
+            },
+            "description": "Every piece the Wildcard team gave the member (for feedback we used, say), the earliest first. No store sells these, and no coach gives them: they belong in the member’s wardrobe, worn without 领取."
+          },
           "shelf": {
             "$ref": "#/components/schemas/Shelf"
           }
@@ -7007,6 +7201,7 @@
           "lockedPieces",
           "claimed",
           "gifts",
+          "teamPieces",
           "shelf"
         ],
         "additionalProperties": false
@@ -7137,6 +7332,34 @@
           "id",
           "sports",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "TeamPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "thanks-bulb"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the team gave it.",
+            "example": "2026-11-09T18:30:00.000Z"
+          },
+          "event": {
+            "type": "string",
+            "description": "What gave it: `bug-adopted` (a bug the member reported that we confirmed) or `idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the team gave by hand.",
+            "example": "bug-adopted"
+          }
+        },
+        "required": [
+          "id",
+          "givenAt"
         ],
         "additionalProperties": false
       },
@@ -7513,6 +7736,125 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/birthday": {
+      "put": {
+        "operationId": "putMyBirthday",
+        "summary": "Save the signed-in member’s birthday",
+        "description": "Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Birthday"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Birthday"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid date, one before 1900 or after today, or no profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMyBirthday",
+        "summary": "Remove the signed-in member’s birthday",
+        "description": "Forgets the birthday on the profile, logged with it. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "description": "No profile saved yet (`PROFILE_MISSING`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11751,7 +12093,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
         "security": [
           {
             "bearer": []
@@ -11822,6 +12164,107 @@
         }
       }
     },
+    "/squads/{squadId}/coach/cards/earlier": {
+      "get": {
+        "operationId": "getEarlierCoachCards",
+        "summary": "The coach page’s 以前, a page at a time",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{1,15}~[A-Za-z]{1,16}:[A-Za-z0-9_.:-]{1,64}$",
+              "description": "The `next` of the page before.",
+              "example": "1794193129000~note:42"
+            },
+            "required": false,
+            "description": "The `next` of the page before.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "description": "`true` keeps only the cards not seen yet."
+            },
+            "required": false,
+            "description": "`true` keeps only the cards not seen yet.",
+            "name": "unseen",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of 以前",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarlierCoachCards"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or cursor",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/coach/cards/{kind}/{cardId}/seen": {
       "put": {
         "operationId": "markCoachCardSeen",
@@ -11850,9 +12293,7 @@
                 "note",
                 "challenge",
                 "challengeDone",
-                "gift",
-                "reply",
-                "answer"
+                "gift"
               ]
             },
             "required": true,

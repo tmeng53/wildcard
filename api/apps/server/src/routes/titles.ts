@@ -10,13 +10,16 @@ import {
   type ShownBoardTitle,
   type WeeklyAwards,
 } from '@wildcard/weekly-awards';
+import { MemberId as RewardMember, type HeldBadge, type Rewards } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
+import { squadFirstWeek } from '../flows/squad-weeks.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
 import { checkInTotalsFields } from './check-ins.js';
+import { LocalizedWords } from './notices.js';
 import { fuelGoalsBody, planDays } from './weekly-plans.js';
 
 // 头衔徽章: the titles a member won in the Sunday 战报, each with its badge, on the back of their
@@ -96,7 +99,30 @@ const BoardTitleBody = z
   })
   .openapi('BoardTitle');
 
+/** A dedicated badge the team gives (捉虫队, 点子王), drawn as a ticket, apart from the titles. */
+const TeamBadgeBody = z
+  .strictObject({
+    id: z.string().meta({ description: 'The badge’s id.', example: 'bug-hunter' }),
+    name: LocalizedWords,
+    glyph: z.string().meta({
+      description: 'The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.',
+      example: 'ladybug.fill',
+    }),
+    tone: BadgeTone.meta({ description: 'Its colour, as #RRGGBB.', example: '#E65345' }),
+    times: z.int().min(1).meta({ description: 'How many times the member got it: ×N.' }),
+    latestAt: z.iso.datetime({ offset: true }).meta({
+      description: 'When they got it the last time.',
+      example: '2026-11-09T18:30:00.000Z',
+    }),
+  })
+  .openapi('TeamBadge');
+
 const boardFields = {
+  teamBadges: z.array(TeamBadgeBody).meta({
+    description:
+      'The dedicated badges the Wildcard team gave the member (for feedback we used, say), ' +
+      'the latest got first: tickets, shown apart from the titles. Never a title’s badge.',
+  }),
   titles: z.array(BoardTitleBody).meta({
     description:
       'Every title won, in all the member’s squads, one per title by its words, the latest ' +
@@ -185,7 +211,9 @@ const PlayerCardBody = z
         }),
         // The card's back, their 出赛表: this week only, never another week's.
         weekStart: WeekStart.optional().meta({
-          description: 'This week’s Monday, in their time zone. Left out by older servers.',
+          description:
+            'This week’s Monday on the squad’s clock (小队时区), the same week for every ' +
+            'squadmate. Left out by older servers.',
           example: '2026-11-02',
         }),
         days: planDays.optional(),
@@ -205,13 +233,21 @@ const PlayerCardBody = z
         firstWeek: WeekStart.optional().meta({
           description:
             'The Monday of the week they joined, in their time zone, which their 出赛表 counts ' +
-            'as W1. Missing before they save a profile, and from older servers.',
+            'as W1 before servers send `squadFirstWeek`. Missing before they save a profile, ' +
+            'and from older servers.',
           example: '2026-10-12',
+        }),
+        squadFirstWeek: WeekStart.optional().meta({
+          description:
+            'The Monday of the week this squad was made, on its clock: the week every 出赛表 in ' +
+            'the squad counts as W1, so every card shows the same week number. Left out by older ' +
+            'servers.',
+          example: '2026-10-05',
         }),
         today: LocalDay.optional().meta({
           description:
-            'Their today, in their time zone, which their 出赛表 shades as 今天. Left out by ' +
-            'older servers.',
+            'Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older ' +
+            'servers.',
           example: '2026-10-29',
         }),
       })
@@ -230,11 +266,24 @@ function wireBoard(
   {
     board,
     equipped,
-  }: { readonly board: readonly ShownBoardTitle[]; readonly equipped: string | null | undefined },
+    teamBadges,
+  }: {
+    readonly board: readonly ShownBoardTitle[];
+    readonly equipped: string | null | undefined;
+    readonly teamBadges: readonly HeldBadge[];
+  },
   speechIn: (squad: SquadId) => boolean,
 ) {
   const worn = wornOf(board, equipped);
   return {
+    teamBadges: teamBadges.map(({ badge, times, latestAt }) => ({
+      id: badge.id,
+      name: { zhHans: badge.names['zh-Hans'], en: badge.names.en, zhHant: badge.names['zh-Hant'] },
+      glyph: badge.glyph,
+      tone: badge.tone,
+      times,
+      latestAt: latestAt.toISOString(),
+    })),
     titles: board.map(({ title, badge, weeks }) => ({
       title,
       badge,
@@ -262,6 +311,8 @@ export function titles(deps: {
   readonly squads: Squads;
   readonly checkIns: CheckIns;
   readonly awards: WeeklyAwards;
+  /** The dedicated badges the team gave, apart from the titles. */
+  readonly rewards: Pick<Rewards, 'badgesOf'>;
 }) {
   const getBoard = createRoute({
     method: 'get',
@@ -322,22 +373,29 @@ export function titles(deps: {
 
   /** The member's board and the title they equipped. */
   const boardOf = async (member: MemberId) => {
-    const [boards, profile] = await Promise.all([
+    const [boards, profile, teamBadges] = await Promise.all([
       deps.awards.boards([member]),
       deps.members.squadmates([member]),
+      deps.rewards.badgesOf(RewardMember.parse(member)),
     ]);
-    return { board: boards.get(member) ?? [], equipped: profile.get(member)?.equippedTitle };
+    return {
+      board: boards.get(member) ?? [],
+      equipped: profile.get(member)?.equippedTitle,
+      teamBadges,
+    };
   };
 
   const wireMine = ({
     board,
     equipped,
+    teamBadges,
   }: {
     readonly board: readonly ShownBoardTitle[];
     readonly equipped: string | null | undefined;
+    readonly teamBadges: readonly HeldBadge[];
   }) => ({
     version: 1 as const,
-    ...wireBoard({ board, equipped }, () => true),
+    ...wireBoard({ board, equipped, teamBadges }, () => true),
     ...(equipped === null || equipped === undefined ? {} : { equipped }),
   });
 
@@ -348,12 +406,12 @@ export function titles(deps: {
     .openapi(putEquipped, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
       const { title } = c.req.valid('json');
-      const { board } = await boardOf(member);
+      const { board, teamBadges } = await boardOf(member);
       if (title !== null && !board.some((each) => each.title === title)) {
         throw new TitleNotWonError();
       }
       await deps.members.equipTitle(member, title);
-      return c.json(wireMine({ board, equipped: title }), 200);
+      return c.json(wireMine({ board, equipped: title, teamBadges }), 200);
     })
     .openapi(getCard, async (c) => {
       const { squadId, memberId } = c.req.valid('param');
@@ -364,7 +422,8 @@ export function titles(deps: {
       });
       const place = squad.members.findIndex(({ member }) => member === memberId);
       if (place < 0) throw new SquadMemberUnknownError(memberId);
-      const [boards, profiles, totals, week] = await Promise.all([
+      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date())).get(squad.id);
+      const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         deps.checkIns.totals(memberId),
@@ -372,7 +431,10 @@ export function titles(deps: {
           member: memberId,
           viewer: MemberId.parse(c.var.caller.userId),
           squad: squadId,
+          ...(squadZone === undefined ? {} : { squadZone }),
         }),
+        deps.rewards.badgesOf(RewardMember.parse(memberId)),
+        squadFirstWeek(deps.squads, squad),
       ]);
       const profile = profiles.get(memberId);
       return c.json(
@@ -386,13 +448,14 @@ export function titles(deps: {
           ...totals,
           week: {
             ...week,
+            squadFirstWeek: squadWeek,
             days: [...week.days],
             marks: week.marks.map((mark) =>
               mark.status === 'trained' ? { ...mark, sports: [...mark.sports] } : mark,
             ),
           },
           ...wireBoard(
-            { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle },
+            { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle, teamBadges },
             (squad) => squad === squadId,
           ),
         },

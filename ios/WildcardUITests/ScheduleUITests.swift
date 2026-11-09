@@ -34,8 +34,14 @@ final class ScheduleUITests: XCTestCase {
         settle()
         keepScreenshot(named: "60-schedule-this-week")
 
-        // The days before today stay as they are.
-        XCTAssertFalse(lane(app, 1).isEnabled, "Tuesday can still change")
+        // The days before today stay as they are: a tap plays their sport but opens no picks, and
+        // lets go of a day held.
+        lane(app, 4).tap()
+        XCTAssertTrue(app.buttons["schedule.pick.more"].waitForExistence(timeout: 10), "Friday's picks didn't open")
+        lane(app, 1).tap()
+        waitFor(app.buttons["schedule.pick.more"], "exists == false", "Tuesday can still change", timeout: 5)
+        settle()
+        keepScreenshot(named: "60-schedule-past-day-plays")
 
         // Today's training day becomes a 休息日, no 请假条 needed, and a training day again.
         lane(app, 3).tap()
@@ -133,7 +139,8 @@ final class ScheduleUITests: XCTestCase {
         }
         chips.element(boundBy: index - 1).tap()
 
-        XCTAssertFalse(lane(app, 4).isEnabled, "a past week can change")
+        lane(app, 4).tap()
+        XCTAssertFalse(app.buttons["schedule.pick.more"].waitForExistence(timeout: 2), "a past week can change")
         XCTAssertTrue(find(app, "schedule.title.0").waitForExistence(timeout: 10), "last week has no title")
         // The 颁奖词 sit under the poster, clear of the lanes.
         let award = find(app, "schedule.award.0")
@@ -208,7 +215,6 @@ final class ScheduleUITests: XCTestCase {
         let note = find(app, "schedule.template.note")
         XCTAssertTrue(note.waitForExistence(timeout: 10), "no note on when the template counts")
         XCTAssertLessThanOrEqual(note.frame.maxY, tabBar.frame.minY, "the note sits under the tab bar")
-        XCTAssertTrue((0..<7).allSatisfy { lane(app, $0).isEnabled }, "a template day is locked")
         settle()
         keepScreenshot(named: "69-schedule-template")
 

@@ -15,7 +15,7 @@ interface InviteSummary {
   readonly name: SquadName;
   readonly memberCount: number;
   readonly full: boolean;
-  /** The squad's weekly goal (人均 N 天) as its captain last set it: what a new member joins. */
+  /** The squad's weekly goal (人均 N 次) as its captain last set it: what a new member joins. */
   readonly daysPerMember: DaysPerMember;
 }
 

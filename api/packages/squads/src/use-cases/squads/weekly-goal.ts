@@ -5,7 +5,7 @@ import { NotSquadCaptainError } from '../../errors.js';
 import type { SquadStore } from '../../ports.js';
 import { findSquad } from './find-squad.js';
 
-/** A squad's weekly goal (人均 N 天) this week and next, as its members see it. */
+/** A squad's weekly goal (人均 N 次) this week and next, as its members see it. */
 export interface WeeklyGoal {
   /** This week's goal. */
   readonly daysPerMember: DaysPerMember;

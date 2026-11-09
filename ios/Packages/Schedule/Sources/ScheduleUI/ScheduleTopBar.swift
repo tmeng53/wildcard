@@ -31,23 +31,16 @@ extension ScheduleView {
                 saveButton
             }
         }
-        .sharedBackgroundVisibility(.hidden)
     }
 
     private var saveButton: some View {
         Button {
             save()
         } label: {
-            Label {
-                Text("存图", bundle: .module)
-            } icon: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-            }
+            Image(systemName: "square.and.arrow.up")
         }
-        // The navigation bar shows a label's icon alone unless told otherwise.
-        .labelStyle(.titleAndIcon)
-        .buttonStyle(SecondaryButtonStyle())
+        // An icon only, in the bar's round glass like the back button across from it.
+        .accessibilityLabel(Text("存图", bundle: .module))
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")
     }
@@ -64,17 +57,26 @@ extension ScheduleView {
 
     private var weekChips: [CategoryBarItem<SchedulePage>] {
         let thisWeek = store.today?.weekStart
-        return store.weeks.map { week in
-            let title: Text =
-                if week == thisWeek {
-                    Text("本周", bundle: .module)
-                } else if let thisWeek, week > thisWeek {
-                    Text("下周", bundle: .module)
-                } else {
-                    Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
-                }
-            return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
-        }
+        // The squad's weeks before the member joined: one greyed chip, never a page.
+        let notYetJoined =
+            store.profile?.startsWithNotYetJoined(store.weeks) == true
+            ? [
+                CategoryBarItem(
+                    id: SchedulePage.notYetJoined, title: Text("还未入队", bundle: .module),
+                    accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false)
+            ] : []
+        return notYetJoined
+            + store.weeks.map { week in
+                let title: Text =
+                    if week == thisWeek {
+                        Text("本周", bundle: .module)
+                    } else if let thisWeek, week > thisWeek {
+                        Text("下周", bundle: .module)
+                    } else {
+                        Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
+                    }
+                return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
+            }
     }
 
     private var pageSelection: Binding<SchedulePage> {
@@ -87,6 +89,7 @@ extension ScheduleView {
                 switch page {
                 case .week(let week): model.show(week)
                 case .template: model.showTemplate()
+                case .notYetJoined: break
                 }
             })
     }

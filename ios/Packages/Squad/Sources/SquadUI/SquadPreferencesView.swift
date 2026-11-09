@@ -32,7 +32,9 @@ struct SquadPreferencesView: View {
                 if model.changeFailed {
                     InlineFailure()
                 }
-                subscription
+                if Switchboard.shared.isOn(.freePlan, at: .now) {
+                    subscription
+                }
                 timeZone
                 language
                 leaveButton
@@ -51,7 +53,8 @@ struct SquadPreferencesView: View {
 
     // MARK: 订阅
 
-    /// Nothing to open yet: the squad's plan is free while the public beta runs.
+    /// Nothing to open yet: the squad's plan is free while the public beta runs, and the row
+    /// shows only while its switch (`BetaFeature.freePlan`) is on.
     private var subscription: some View {
         HStack(spacing: Space.s) {
             Text("订阅", bundle: .module)

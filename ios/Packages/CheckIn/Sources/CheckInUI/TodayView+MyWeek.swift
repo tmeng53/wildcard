@@ -46,21 +46,21 @@ extension TodayView {
             isDone: challenge.completedBy != nil)
     }
 
-    /// A day's line: what I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.
+    /// A day's lines: each session I trained with its minutes, 请假了 or 休息日, else the plan's sport, light.
     func dayDetail(
         _ status: WeekRecord.Day, activity: Activity?, log: WeekRecord.DayLog, isToCome: Bool
     ) -> WeekDayDetail {
         let meals = isToCome ? nil : WeekDayDetail.Meals(healthy: log.healthyMeals, cheat: log.cheatMeals)
         switch status {
         case .trained:
-            let line = log.sessions.map { session in
+            let lines = log.sessions.map { session in
                 if let minutes = session.minutes {
                     String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
                 } else {
                     session.activity.localizedName
                 }
             }
-            return WeekDayDetail(line: line.joined(separator: " · "), isPlan: false, meals: meals)
+            return WeekDayDetail(lines: lines, isPlan: false, meals: meals)
         case .disclaimer:
             return WeekDayDetail(
                 line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)

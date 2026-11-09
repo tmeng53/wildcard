@@ -54,6 +54,7 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -143,6 +144,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -392,6 +394,41 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(await toCoach({ token: bo.token, replyToCoach: 'xiaohun' })).toMatchObject({
       status: 404,
     });
+  });
+
+  it('lets members reply to a coach that only answered an @ under the post', async () => {
+    const [tracy, ann] = [await signUp(), await signUp()];
+    const squad = await squadOf(tracy, ann);
+    const run = await checkIn(tracy.token, squad);
+    const path = (id: string) => `/check-ins/${run}/comments/${id}`;
+    // Ann @s the coach; it answers her, without ever replying to the post itself.
+    const asked = randomUUID();
+    await call('PUT', {
+      path: path(asked),
+      token: ann.token,
+      body: { version: 1, text: '@小混 这个哪能买', mentionsCoach: 'xiaohun' },
+    });
+    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+      values (${squad}, ${run}, ${asked}, 'xiaohun', '先搜二手')`.execute(db);
+
+    const id = randomUUID();
+    const written = await call('PUT', {
+      path: path(id),
+      token: tracy.token,
+      body: {
+        version: 1,
+        text: '她车上这个哪能买',
+        replyToCoach: 'xiaohun',
+        mentionsCoach: 'xiaohun',
+      },
+    });
+    expect(written).toMatchObject({
+      status: 201,
+      body: { id, member: tracy.userId, replyToCoach: 'xiaohun' },
+    });
+    expect(answersAsked.filter(({ comment }) => comment === id)).toStrictEqual([
+      { checkIn: run, comment: id, coach: 'xiaohun', squads: [squad] },
+    ]);
   });
 
   it('deletes only the caller’s own comment, safely repeated', async () => {

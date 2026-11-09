@@ -91,8 +91,10 @@ struct PostPhotos: View {
             }
         case .workout(.chart):
             if let series = workout?.series {
-                WorkoutChart(series: series, activity: activity, showsLabel: true)
-                    .accessibilityIdentifier("feed.chart")
+                WorkoutChart(
+                    series: series, activity: activity, showsLabel: true, startedAt: workout?.startedAt.date
+                )
+                .accessibilityIdentifier("feed.chart")
             }
         }
     }

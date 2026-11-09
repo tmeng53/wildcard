@@ -39,6 +39,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/profile`.
     /// - Remark: Generated from `#/paths//me/profile/put(putMyProfile)`.
     func putMyProfile(_ input: Operations.PutMyProfile.Input) async throws -> Operations.PutMyProfile.Output
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    func putMyBirthday(_ input: Operations.PutMyBirthday.Input) async throws -> Operations.PutMyBirthday.Output
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    func deleteMyBirthday(_ input: Operations.DeleteMyBirthday.Input) async throws -> Operations.DeleteMyBirthday.Output
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -406,11 +420,18 @@ public protocol APIProtocol: Sendable {
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
     func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
+    /// The coach page’s 以前, a page at a time
+    ///
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
+    func getEarlierCoachCards(_ input: Operations.GetEarlierCoachCards.Input) async throws -> Operations.GetEarlierCoachCards.Output
     /// Mark one of the coach’s cards seen (swiped into 以前)
     ///
     /// The caller swiped the card away: it leaves the stack on every phone and stays in 以前. A seen `note` is also put away (收下) on 今天. Safe to repeat.
@@ -637,6 +658,30 @@ extension APIProtocol {
             headers: headers,
             body: body
         ))
+    }
+    /// Save the signed-in member’s birthday
+    ///
+    /// Saves the birthday the member chose to give, at sign-up or in 设置, logged with their profile. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/put(putMyBirthday)`.
+    public func putMyBirthday(
+        headers: Operations.PutMyBirthday.Input.Headers = .init(),
+        body: Operations.PutMyBirthday.Input.Body
+    ) async throws -> Operations.PutMyBirthday.Output {
+        try await putMyBirthday(Operations.PutMyBirthday.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Remove the signed-in member’s birthday
+    ///
+    /// Forgets the birthday on the profile, logged with it. Safe to repeat.
+    ///
+    /// - Remark: HTTP `DELETE /me/birthday`.
+    /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
+    public func deleteMyBirthday(headers: Operations.DeleteMyBirthday.Input.Headers = .init()) async throws -> Operations.DeleteMyBirthday.Output {
+        try await deleteMyBirthday(Operations.DeleteMyBirthday.Input(headers: headers))
     }
     /// The signed-in member’s AI consent
     ///
@@ -1413,7 +1458,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts, and its lines to their check-ins and replies. The unseen ones from the last 72 hours are the stack; the rest are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -1423,6 +1468,23 @@ extension APIProtocol {
     ) async throws -> Operations.GetCoachCards.Output {
         try await getCoachCards(Operations.GetCoachCards.Input(
             path: path,
+            headers: headers
+        ))
+    }
+    /// The coach page’s 以前, a page at a time
+    ///
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
+    public func getEarlierCoachCards(
+        path: Operations.GetEarlierCoachCards.Input.Path,
+        query: Operations.GetEarlierCoachCards.Input.Query = .init(),
+        headers: Operations.GetEarlierCoachCards.Input.Headers = .init()
+    ) async throws -> Operations.GetEarlierCoachCards.Output {
+        try await getEarlierCoachCards(Operations.GetEarlierCoachCards.Input(
+            path: path,
+            query: query,
             headers: headers
         ))
     }

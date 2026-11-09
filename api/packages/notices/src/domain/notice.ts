@@ -87,7 +87,7 @@ export const NoticeSubjects = {
   }),
   /**
    * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
-   * suggested a higher goal, 人均 `daysPerMember` 天, which they may set on 小队.
+   * suggested a higher goal, 人均 `daysPerMember` 次, which they may set on 小队.
    */
   goalSuggestion: z.strictObject({
     version: z.literal(1),
@@ -101,6 +101,15 @@ export const NoticeSubjects = {
     version: z.literal(1),
     kind: z.enum(['store', 'prop', 'piece']),
     item: z.string().min(1),
+  }),
+  /**
+   * We used feedback the member sent (意见反馈): a bug we confirmed or an idea that shipped, so
+   * they got its thanks (what it gave is in their wardrobe and badges).
+   */
+  thanks: z.strictObject({
+    version: z.literal(1),
+    feedback: z.uuid(),
+    adopted: z.enum(['bug', 'idea']),
   }),
 } as const;
 
@@ -116,6 +125,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
   z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
+  z.object({ kind: z.literal('thanks'), subject: NoticeSubjects.thanks }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

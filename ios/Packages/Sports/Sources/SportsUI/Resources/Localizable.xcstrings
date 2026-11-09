@@ -1,6 +1,38 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "千卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "kcal"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大卡"
+          }
+        }
+      }
+    },
+    "卡路里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calories"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡路里"
+          }
+        }
+      }
+    },
     "发": {
       "localizations": {
         "en": {
@@ -585,6 +617,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "落差"
+          }
+        }
+      }
+    },
+    "轻松": {
+      "comment": "A heart-rate zone: the lowest of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輕鬆"
+          }
+        }
+      }
+    },
+    "适中": {
+      "comment": "A heart-rate zone: the second of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moderate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適中"
+          }
+        }
+      }
+    },
+    "剧烈": {
+      "comment": "A heart-rate zone: the third of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vigorous"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "劇烈"
+          }
+        }
+      }
+    },
+    "峰值": {
+      "comment": "A heart-rate zone: the highest of four.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Peak"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "峰值"
+          }
+        }
+      }
+    },
+    "%lld 分": {
+      "comment": "Minutes spent in a heart-rate zone, under the chart.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 分"
           }
         }
       }

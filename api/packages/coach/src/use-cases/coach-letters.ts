@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import type { Coach } from '../domain/coach.js';
 import { letterTask, LETTER_LIMIT, tenuresOf, type CoachLetter } from '../domain/letter.js';
-import { memberOfPath, shownBody } from '../domain/memory.js';
+import { memberOfPath, shownBody, shownPathOf } from '../domain/memory.js';
 import { instructionsOf, memoryBlock } from '../domain/prompt.js';
 import { lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
@@ -82,7 +82,7 @@ export function createCoachLetters(deps: {
       const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
       const day = wallClockAt(now, zone).day;
       // Read before the try is claimed, so a failed read leaves the change one to try again.
-      const task = await taskFor(deps, { squad, to, coaches, zone, day });
+      const task = await taskFor(deps, { squad, from, to, coaches, zone, day });
       // One try a change: a second tap, or a retry while the first is writing, pays for nothing.
       if (!(await deps.letters.claim(handover))) return undefined;
 
@@ -138,12 +138,15 @@ async function taskFor(
   >,
   {
     squad,
+    from,
     to,
     coaches,
     zone,
     day,
   }: {
     readonly squad: SquadId;
+    /** The outgoing coach: it reads its own page, never another coach's. */
+    readonly from: Coach;
     readonly to: Coach;
     readonly coaches: ReadonlyMap<string, Coach>;
     readonly zone: string;
@@ -164,8 +167,8 @@ async function taskFor(
     const member = memberOfPath(path);
     // A member's page only while they are in the squad and agreed to AI use.
     if (member !== undefined && !consented.has(member)) continue;
-    const shown = member === undefined ? path : `people/${roster.get(member) ?? ''}.md`;
-    if (shown === 'people/.md') continue;
+    const shown = shownPathOf(path, { roster, coach: from.id });
+    if (shown === undefined) continue;
     files.set(shown, shownBody(body, roster));
   }
   const history = tenuresOf(
@@ -189,7 +192,7 @@ function writeLetter(written: (text: string) => void): CoachTool {
   const parameters = z.object({ text: z.string().describe('信的正文') });
   return {
     name: 'write_letter',
-    description: `交上你的交接信，最多 ${String(LETTER_LIMIT)} 字。`,
+    description: `交上你的告别信，最多 ${String(LETTER_LIMIT)} 字。`,
     parameters,
     run: (input) => {
       const parsed = parameters.safeParse(input);

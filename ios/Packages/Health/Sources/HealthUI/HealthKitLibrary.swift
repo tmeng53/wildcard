@@ -8,8 +8,8 @@ import HealthKit
 /// Apple Health through HealthKit, read only: the only code that knows HealthKit. Each workout
 /// comes with the numbers Health has for its kind (a run's distance and pace, a ride's speed, a
 /// pool swim's laps, heart rate and effort for all), its route trimmed 200 m at each end and
-/// thinned, and its heart rate or lap times for the chart. Calories, weight and sleep are never
-/// read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
+/// thinned, its heart rate or lap times for the chart, and its active calories. Weight and sleep
+/// are never read. Its two lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
     private let store: HKHealthStore
     private let defaults: UserDefaults
@@ -36,8 +36,17 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         }
     }
 
+    /// A member who connected before this build added a read type (active calories) was never
+    /// asked for it; Health shows its sheet again for just the new types, once.
+    private func askForTypesAddedSinceConnecting() async {
+        let status = try? await store.statusForAuthorizationRequest(toShare: [], read: Self.readTypes)
+        guard status == .shouldRequest else { return }
+        try? await store.requestAuthorization(toShare: [], read: Self.readTypes)
+    }
+
     public func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout] {
         guard await isConnected() else { return [] }
+        await askForTypesAddedSinceConnecting()
         let window = HKQuery.predicateForSamples(withStart: start, end: end, options: .strictEndDate)
         let query = HKSampleQueryDescriptor(
             predicates: [.workout(window)], sortDescriptors: [SortDescriptor(\.endDate, order: .reverse)],
@@ -57,6 +66,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         var summary = WorkoutSummary(durationSec: seconds >= 1 ? Int(seconds.rounded()) : nil)
         await addHeartRate(of: workout, kind: kind, to: &summary)
         Self.addDistance(of: workout, kind: kind, to: &summary)
+        Self.addCalories(of: workout, to: &summary)
         var series = kind == .poolSwim ? Self.addLaps(of: workout, to: &summary) : nil
         if kind.showsEffort, let effort = await effort(of: workout) { summary.effort = effort }
         let route = kind.hasRoute ? await route(of: workout) : nil
@@ -98,6 +108,12 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
             predicate: .quantitySample(type: HKQuantityType(.heartRate), predicate: during),
             options: [.discreteAverage, .discreteMax])
         return try? await query.result(for: store)
+    }
+
+    /// The active energy Health has for it, in kilocalories, as the Fitness app shows it.
+    private static func addCalories(of workout: HKWorkout, to summary: inout WorkoutSummary) {
+        let burned = workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()
+        if let kcal = burned?.doubleValue(for: .kilocalorie()), kcal >= 1 { summary.activeEnergyKcal = kcal.rounded() }
     }
 
     /// A pool swim's laps with the pool's length, and each lap's time for its chart; nil without.
@@ -207,7 +223,7 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         HKQuantityType(.distanceCrossCountrySkiing), HKQuantityType(.distanceRowing),
         HKQuantityType(.distancePaddleSports), HKQuantityType(.distanceSkatingSports),
         HKQuantityType(.distanceWheelchair), HKQuantityType(.workoutEffortScore),
-        HKQuantityType(.estimatedWorkoutEffortScore),
+        HKQuantityType(.estimatedWorkoutEffortScore), HKQuantityType(.activeEnergyBurned),
     ]
     private static let connectedKey = "health.connected"
     private static let workoutsMax = 20

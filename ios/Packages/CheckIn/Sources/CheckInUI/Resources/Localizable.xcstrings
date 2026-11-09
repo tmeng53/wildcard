@@ -1633,18 +1633,18 @@
         }
       }
     },
-    "改成人均 %lld 天？": {
+    "改成人均 %lld 次？": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make it %lld days each?"
+            "value": "Make it %lld workouts each?"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "改成人均 %lld 天？"
+            "value": "改成人均 %lld 次？"
           }
         }
       }
@@ -2177,34 +2177,34 @@
         }
       }
     },
-    "%@：": {
+    "各位和%@：": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@,"
+            "value": "Everyone and %@,"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@："
+            "value": "各位和%@："
           }
         }
       }
     },
-    "给 %@ · %@": {
+    "给小队和 %@ · %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "To %1$@ · from %2$@"
+            "value": "To the squad and %1$@ · from %2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "給 %1$@ · %2$@"
+            "value": "給小隊和 %1$@ · %2$@"
           }
         }
       }

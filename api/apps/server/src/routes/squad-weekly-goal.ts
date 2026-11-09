@@ -14,15 +14,16 @@ const DAY = 86_400_000;
 
 const daysPerMemberField = DaysPerMember.meta({
   description:
-    'How many days each member trains a week on average (人均 N 天), 1 to 7. The squad’s goal ' +
-    'for a week is this times its members; anyone’s trained days count towards it.',
+    'How many times each member trains a week on average (人均 N 次), 1 to 7. The squad’s goal ' +
+    'for a week is this times its members; anyone’s 训练 sent to the squad count towards it, ' +
+    'several on one day each counting.',
   example: 3,
 });
 
 const SquadWeeklyGoalBody = z
   .strictObject({
     version: bodyVersion(1),
-    daysPerMember: daysPerMemberField.meta({ description: 'This week’s goal (人均 N 天).' }),
+    daysPerMember: daysPerMemberField.meta({ description: 'This week’s goal (人均 N 次).' }),
     nextDaysPerMember: daysPerMemberField.meta({
       description:
         'Next week’s goal: a change counts from the next week, so it differs from ' +
@@ -44,8 +45,9 @@ const SquadWeeklyGoalBody = z
           .max(7)
           .meta({
             description:
-              'The days each member trained on average in those weeks, to one decimal: each ' +
-              'week’s trained days (from check-ins sent to the squad) over its members then.',
+              'The 训练 each member sent to the squad on average in those weeks, to one ' +
+              'decimal: each week’s 训练 over its members then, at most 7 (人均 N 次 goes no ' +
+              'higher). The name is from when it counted days.',
             example: 3.4,
           }),
       })
@@ -69,14 +71,15 @@ function weeksBefore(week: WeekStart, weeks: number): WeekStart {
 }
 
 /**
- * `GET` and `PUT /squads/{squadId}/weekly-goal`: the squad's weekly goal (小队每周目标, 人均 N 天)
+ * `GET` and `PUT /squads/{squadId}/weekly-goal`: the squad's weekly goal (小队每周目标, 人均 N 次)
  * and how the squad did lately (小队页's 每周目标). It spans modules: the squads keep the goal
- * and who was in the squad when, the check-ins count the days trained and each member's week.
+ * and who was in the squad when, the check-ins count the 训练 sent to the squad in each
+ * member's week.
  */
 export function squadWeeklyGoal(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
-  readonly checkIns: Pick<CheckIns, 'weekStartNow' | 'squadTrainedDays'>;
+  readonly checkIns: Pick<CheckIns, 'weekStartNow' | 'squadTrainings'>;
 }) {
   const params = z.strictObject({ squadId: SquadId });
   const goalResponse = (description: string) => ({
@@ -128,7 +131,7 @@ export function squadWeeklyGoal(deps: {
   });
 
   /**
-   * The days each member trained on average over the squad's latest finished weeks, up to
+   * The times each member trained on average over the squad's latest finished weeks, up to
    * `RECENT_WEEKS`, from the week it was made on; undefined before its first week ends.
    */
   async function recentOf(
@@ -144,12 +147,13 @@ export function squadWeeklyGoal(deps: {
       if (end <= createdAt) break;
       const members = await deps.squads.membersAt(squad, end);
       if (members.length === 0) continue;
-      const trained = await deps.checkIns.squadTrainedDays({ squad, members, weekStart });
+      const trained = await deps.checkIns.squadTrainings({ squad, members, weekStart });
       averages.push(trained / members.length);
     }
     if (averages.length === 0) return null;
     const mean = averages.reduce((sum, each) => sum + each, 0) / averages.length;
-    return { weeks: averages.length, daysPerMember: Math.round(mean * 10) / 10 };
+    // Several 训练 a day can pass 7 a member; the goal goes no higher, so neither does this.
+    return { weeks: averages.length, daysPerMember: Math.min(7, Math.round(mean * 10) / 10) };
   }
 
   async function body(input: {
