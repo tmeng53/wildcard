@@ -76,6 +76,15 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
     #expect(board.week.today == 3)
 }
 
+@Test func aMateBehindMeInTimeCountsTheirOwnToday() {
+    // A fresh copy: my row is today, the mate's is their Monday on a clock behind mine.
+    let board = WidgetBoard(
+        home: home(members: [row(mate, .trained, on: tuesday.adding(days: -1)), row(viewer, .notCheckedIn)]),
+        day: tuesday)
+    #expect(board.mates.map(\.status) == [.checkedIn, .notYet])
+    #expect(board.checkedInToday == 1)
+}
+
 @Test func looksAgainInHalfAnHourOrAtMidnight() {
     #expect(WidgetBoard.nextLook(after: tuesdayMorning, in: losAngeles) == tuesdayMorning.addingTimeInterval(1800))
     // 23:50 in Los Angeles: midnight comes first.

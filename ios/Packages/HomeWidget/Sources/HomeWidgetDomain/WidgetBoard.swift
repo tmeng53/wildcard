@@ -46,6 +46,10 @@ public struct WidgetBoard: Hashable, Sendable {
     ///   - home: the home as last loaded; moved on to `day` when it is from an earlier one.
     ///   - day: my day now, on my profile's clock (`Home.timeZone`).
     public init(home: Home, day: LocalDay, coach: CoachID? = nil, coachHasNews: Bool = false) {
+        // A copy read on an earlier day of mine says nothing about anyone's today yet. Each
+        // teammate's row is their own today on their own clock, so a teammate behind me in time
+        // reads an earlier day in a fresh copy too, and counts as the squad card counts them.
+        let stale = home.today.members.first { $0.member == home.member }.map { $0.day < day } ?? false
         let home = home.rolled(to: day)
         self.day = day
         week = home.week(on: day)
@@ -55,9 +59,8 @@ public struct WidgetBoard: Hashable, Sendable {
         squad = home.today.squadWeek
         mates = home.today.members.map { mate in
             let isMe = mate.member == home.member
-            // A teammate's row from an earlier day says nothing about today yet.
             let status: MateStatus =
-                mate.day < day && !isMe
+                stale && !isMe
                 ? .notYet
                 : mate.training != .notCheckedIn ? .checkedIn : mate.plannedRest ? .restDay : .notYet
             return Mate(member: mate.member, look: mate.character?.look, status: status, isMe: isMe)
