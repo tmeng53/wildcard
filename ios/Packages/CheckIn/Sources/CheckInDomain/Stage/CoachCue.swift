@@ -3,9 +3,14 @@ import Contracts
 /// What the coach on the sideline does when the home changes under it (Tracy, 2026-11-05):
 /// it blows its whistle when someone's post arrives today, and claps when a week reaches its
 /// goal, mine or the squad's, which wins over the whistle. The caller keeps the last `Sighting`.
+/// While its page has a card the member hasn't seen, it whistles again and again (Tracy,
+/// 2026-11-09), every `newsWhistlePeriod`.
 public enum CoachCue: Hashable, Sendable {
     case whistle
     case clap
+
+    /// How often the coach whistles while its page has news, in seconds: its whistle, then a rest.
+    public static let newsWhistlePeriod: Double = 3
 
     /// What the coach saw on the home: today's posts and whether each week has reached its goal.
     public struct Sighting: Hashable, Sendable {
