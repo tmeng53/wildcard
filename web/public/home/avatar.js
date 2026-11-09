@@ -95,6 +95,8 @@
     a.map((x, i) => {
       const out = {};
       for (const c of CHANNELS) out[c] = x[c] + (b[i][c] - x[c]) * f;
+      // An arm in front on either side stays in front until the blend ends (Pose.blended).
+      out.front = f < 1 ? Math.max(x.front, b[i].front) : b[i].front;
       return out;
     });
   const smooth = (f) => f * f * (3 - 2 * f);
@@ -165,7 +167,7 @@
         part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];
     };
     PARTS.forEach((_, i) => place(i));
-    return { matrices, opacities };
+    return { matrices, opacities, carriers };
   }
 
   const format = (m) => m.map((x) => x.toFixed(3)).join(' ');
@@ -315,17 +317,45 @@
     // A twin (an arm drawn again behind the body) moves as its twin does.
     const twinned = poses.map((q, i) => (PARTS[i].twin ? poses[INDEX[PARTS[i].twin]] : q));
     const posed = leveled(twinned, member.level);
-    const { matrices, opacities } = layout(posed);
+    const { matrices, opacities, carriers } = layout(posed);
     let svg = '';
     PARTS.forEach((part, i) => {
       const art =
         part.elbow && posed[i].bend && member.art[i]
           ? bent(member.art[i], part, posed[i].bend)
           : member.art[i];
-      if (art && opacities[i] > 0)
-        svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
+      if (!art || !(opacities[i] > 0)) return;
+      const g = `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
+      if (!FRONT.has(part.id) || !part.elbow) {
+        svg += g;
+        return;
+      }
+      // An arm's front copy shows only past the elbow (Figure.forearm), so the shoulder stays behind.
+      const id = `forearm${++clips}`;
+      const points = forearm(part, carriers[i]).map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`);
+      svg += `<clipPath id="${id}"><path d="M ${points.join(' L ')} Z"/></clipPath><g clip-path="url(#${id})">${g}</g>`;
     });
     return svg;
+  }
+
+  let clips = 0;
+  const REACH = 400;
+  // A wide band from the elbow out past the hand, in canvas coordinates (Figure.forearm).
+  function forearm(part, [a, b, c, d, e, f]) {
+    const [sx, sy] = part.pivot;
+    const [ex, ey] = part.elbow.at;
+    const [ax, ay] = [part.elbow.hand[0] - sx, part.elbow.hand[1] - sy];
+    const length = Math.hypot(ax, ay);
+    const [ux, uy] = [ax / length, ay / length];
+    return [
+      [-REACH, 0],
+      [REACH, 0],
+      [REACH, REACH],
+      [-REACH, REACH],
+    ].map(([across, along]) => {
+      const [x, y] = [ex - uy * across + ux * along, ey + ux * across + uy * along];
+      return [a * x + c * y + e, b * x + d * y + f];
+    });
   }
 
   window.WildcardAvatar = { pose, perform, figure, bent, layout };

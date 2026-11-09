@@ -3,8 +3,8 @@ import AvatarDomain
 import Foundation
 import Testing
 
-/// Each arm is drawn in two places: whole behind the torso (`armLBack`), and whole in front of the
-/// torso and what is worn over it but behind the head (`armL`). The front copy shows only while
+/// Each arm is drawn in two places: whole behind the torso (`armLBack`), and from the elbow out in
+/// front of the torso and what is worn over it but behind the head (`armL`, `Figure.forearm`). The front copy shows only while
 /// the move keys the arm in front (its `front` keys, held like Spine's draw-order keys), never
 /// worked out from the angle. The head always covers both, so no arm or sleeve ever crosses the
 /// face, and an arm at rest is behind, its sleeve root under the top.
@@ -53,9 +53,10 @@ import Testing
     #expect(try placed[figure.index("propR")].opacity == 1)
 }
 
-/// Every move that keys an arm's depth holds it, never easing between front and behind, and a
-/// one-shot hands back to idle with its arms behind, as idle has them.
-@Test func movesHoldTheirArmDepthAndOneShotsEndBehind() throws {
+/// Every move that keys an arm's depth holds it, never easing between front and behind. A one-shot
+/// may end in front: the crossfade back to idle keeps the arm there until it is back at rest
+/// (`Pose.blended`).
+@Test func movesHoldTheirArmDepth() throws {
     let root = URL(filePath: #filePath).deletingLastPathComponent()
         .appending(path: "../../Sources/AvatarArt/Placeholder")
     let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
@@ -69,9 +70,6 @@ import Testing
             keyed += 1
             let keys = try #require(track["keys"] as? [[String: Any]])
             #expect(keys.dropFirst().allSatisfy { $0["ease"] as? String == "hold" }, "\(name) eases its depth")
-            if json["loops"] as? Bool != true {
-                #expect(keys.last?["v"] as? Double == 0, "\(name) ends in front")
-            }
         }
     }
     #expect(keyed > 80)

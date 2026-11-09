@@ -64,12 +64,15 @@ public struct Pose: Hashable, Sendable {
     }
 
     /// Partway from this pose to another: 0 is this one, 1 is `other`. Rotations take the short
-    /// way round, so an arm stopped mid-stroke at -500° swings back 140°, not 500°.
+    /// way round, so an arm stopped mid-stroke at -500° swings back 140°, not 500°. An arm in
+    /// front on either side stays in front until the blend ends, so its depth changes where a
+    /// move keys it or at rest, never mid-swing halfway through a blend.
     public func blended(to other: Pose, amount: Double) -> Pose {
         Pose(
             parts: zip(parts, other.parts).map { start, target in
                 var mixed = start
-                for channel in Channel.allCases {
+                mixed.front = amount < 1 ? max(start.front, target.front) : target.front
+                for channel in Channel.allCases where channel != .front {
                     var gap = target[channel] - start[channel]
                     if channel == .rotation || channel == .bend { gap = remainder(gap, 360) }
                     mixed[channel] = target[channel] - gap * (1 - amount)
@@ -80,13 +83,15 @@ public struct Pose: Hashable, Sendable {
 }
 
 /// Where a part is drawn: its art's transform from canvas to canvas, and its opacity
-/// including its parents'. A bent arm's art is bent first (`bend`), then transformed.
+/// including its parents'. A bent arm's art is bent first (`bend`), then transformed. An arm's
+/// front copy is drawn only inside `area`, in canvas coordinates: past the elbow.
 public struct Placement: Hashable, Sendable {
     public var transform: Transform
     public var opacity: Double
     public var bend: Bend?
+    public var area: [Point]?
 
-    public init(transform: Transform, opacity: Double, bend: Bend? = nil) {
-        (self.transform, self.opacity, self.bend) = (transform, opacity, bend)
+    public init(transform: Transform, opacity: Double, bend: Bend? = nil, area: [Point]? = nil) {
+        (self.transform, self.opacity, self.bend, self.area) = (transform, opacity, bend, area)
     }
 }

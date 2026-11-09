@@ -141,6 +141,19 @@ private func setUp() throws -> (Figure, BoundClip, BoundClip) {
     #expect(abs(halfway.parts[0].rotation - -10) < 1e-9)
 }
 
+/// An arm in front on either side of a blend stays in front until the blend ends, so its depth
+/// never changes halfway through a blend, mid-swing: a move that brings it in front at once does
+/// so from its first frame, and one that ends in front goes behind once back at rest.
+@Test func armsStayInFrontThroughABlend() {
+    var front = Pose(parts: [PartPose()])
+    front.parts[0].front = 1
+    let behind = Pose(parts: [PartPose()])
+    #expect(behind.blended(to: front, amount: 0.01).parts[0].front == 1)
+    #expect(front.blended(to: behind, amount: 0.99).parts[0].front == 1)
+    #expect(front.blended(to: behind, amount: 1).parts[0].front == 0)
+    #expect(behind.blended(to: behind, amount: 0.5).parts[0].front == 0)
+}
+
 /// A clip played mid-hop stops the change: the character stays in the clothes on screen.
 @Test func playingMidHopKeepsTheClothesOnScreen() throws {
     let (figure, idle, cheer) = try setUp()

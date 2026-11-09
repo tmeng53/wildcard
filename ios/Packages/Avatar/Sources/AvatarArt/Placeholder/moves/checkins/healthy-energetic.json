@@ -1104,7 +1104,7 @@
     }
    ]
   },
-  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.083, "v": 1, "ease": "hold"}, {"t": 2.017, "v": 0, "ease": "hold"}]},
-  {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.083, "v": 1, "ease": "hold"}, {"t": 1.95, "v": 0, "ease": "hold"}, {"t": 2.1, "v": 1, "ease": "hold"}, {"t": 2.617, "v": 0, "ease": "hold"}]}
+  {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.033, "v": 1, "ease": "hold"}, {"t": 2.133, "v": 0, "ease": "hold"}]},
+  {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.033, "v": 1, "ease": "hold"}, {"t": 2.633, "v": 0, "ease": "hold"}]}
  ]
 }
