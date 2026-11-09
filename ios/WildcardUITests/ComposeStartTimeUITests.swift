@@ -28,7 +28,9 @@ final class ComposeStartTimeUITests: XCTestCase {
         XCTAssertTrue(hour.waitForExistence(timeout: Self.wait), "the flip clock didn't open")
         let opened = Int(hour.value as? String ?? "") ?? -1
         XCTAssertTrue((0..<24).contains(opened), "the hour card shows \(String(describing: hour.value))")
-        hour.increment()
+        // The card's up chevron, at the top of the hour column. XCUIElement.increment() is macOS
+        // only; on iOS the column is one adjustable element whose chevron a tap still reaches.
+        hour.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
         settle()
         let turned = (opened + 1) % 24
         XCTAssertEqual(Int(hour.value as? String ?? ""), turned, "the hour didn't turn up one")
