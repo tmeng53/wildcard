@@ -739,7 +739,14 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
         .where('squad_id', '=', squad)
         .where('member_id', '=', member)
         .execute();
-      return new Set(rows.map((row) => cardKey(CoachCardKind.parse(row.kind), row.card_id)));
+      // A kind no longer a card (the coach's `reply` and `answer`, which show only under the posts
+      // since 2026-11-09) stays in the log, marking nothing.
+      return new Set(
+        rows.flatMap((row) => {
+          const kind = CoachCardKind.safeParse(row.kind);
+          return kind.success ? [cardKey(kind.data, row.card_id)] : [];
+        }),
+      );
     },
 
     async markSeen({ squad, member, kind, id }) {
