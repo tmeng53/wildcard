@@ -378,7 +378,7 @@ describe('the daily progress push', () => {
           squadId: squad,
           alert: {
             key: 'push.dailyProgress.received',
-            args: ['1', '9', '2'],
+            args: ['2', '9', '2'],
           },
         },
       ],
