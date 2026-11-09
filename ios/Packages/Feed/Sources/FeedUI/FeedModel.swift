@@ -13,6 +13,9 @@ import Observation
 import SportsUI
 import SwiftUI
 
+/// A post's character and the outfit and persona it was built for.
+private typealias PostPlayer = (outfit: Outfit, persona: Persona, player: CharacterPlayer)
+
 /// The 动态 screen's state over its `FeedStore`: which post's emoji bar is open, the moves the
 /// authors' characters play when someone reacts, and the post to scroll to. Reactions show at
 /// once and go out behind.
@@ -97,10 +100,13 @@ public final class FeedModel {
     var deleting: CheckInID?
     /// The last delete didn't go through.
     var deleteFailed = false
+    /// The 成绩卡's sheet, over one of the member's 训练.
+    var scoreCard: ScoreCardModel?
+    /// The squad's name as it is now, which the 成绩卡 shows; the app sets it.
+    @ObservationIgnored public var squadName: @MainActor () -> String? = { nil }
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
-    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, persona: Persona, player: CharacterPlayer)] =
-        [:]
+    @ObservationIgnored private var players: [CheckInID: PostPlayer] = [:]
     @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
     /// The coaches' characters, by coach, for their heads and the 战术板.
     @ObservationIgnored var coachPlayers: [CoachID: CharacterPlayer] = [:]
