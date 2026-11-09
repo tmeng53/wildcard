@@ -265,7 +265,17 @@ describe('unlocks', () => {
     await unlocks.putRule({ kind: 'piece', id: sweater, sports: [], after: 1 });
     const me = await newMember();
     const trained = new Map<MemberId, Trained[]>([
-      [me, [{ id: randomUUID(), sport: 'run', madeAt: new Date('2099-12-01T12:00:00Z') }]],
+      [
+        me,
+        [
+          {
+            id: randomUUID(),
+            sport: 'run',
+            day: '2099-12-01',
+            madeAt: new Date('2099-12-01T12:00:00Z'),
+          },
+        ],
+      ],
     ]);
     // In the preview the store's switch is on; as really set, it is off.
     const pieceStore = createPostgresUnlockStore(db);
