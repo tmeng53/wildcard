@@ -34,7 +34,9 @@ final class WidgetUITests: XCTestCase {
 
     /// Each widget's text and its 打卡 sit inside the widget, so nothing is clipped at its edge.
     private func assertContentInside(_ app: XCUIApplication) {
-        for name in ["widget.week", "widget.notice", "widget.squad", "widget.coach"] {
+        for name in [
+            "widget.week", "widget.notice", "widget.squad", "widget.weekWorkout", "widget.squadWorkout",
+        ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.waitForExistence(timeout: Self.wait), "\(name) didn't show")
             let frame = widget.frame
@@ -46,8 +48,12 @@ final class WidgetUITests: XCTestCase {
             }
         }
         XCTAssertTrue(app.links["widget.checkIn"].exists || app.buttons["widget.checkIn"].exists, "no 打卡 on 小队今天")
-        XCTAssertTrue(app.descendants(matching: .any)["widget.coachLine"].exists, "no coach line on the coach's side")
-        XCTAssertTrue(app.descendants(matching: .any)["widget.challenge"].exists, "no challenge on the coach's side")
+        // The capsule's run and its 打卡, on both widgets.
+        for name in ["widget.weekWorkout", "widget.squadWorkout"] {
+            let widget = app.otherElements[name]
+            XCTAssertTrue(widget.descendants(matching: .any)["widget.workout"].exists, "\(name): no workout")
+            XCTAssertTrue(widget.descendants(matching: .any)["widget.postWorkout"].exists, "\(name): no 打卡")
+        }
         Thread.sleep(forTimeInterval: 0.8)
     }
 

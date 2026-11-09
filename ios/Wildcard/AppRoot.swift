@@ -107,10 +107,7 @@ struct AppRoot: View {
             if let code = InviteLink.code(in: url) { app.open(invite: code) }
             // A home screen widget: open its place now, or once the tabs are up.
             if let link = WidgetLink(url: url) {
-                // The coach face opens the coach's page, as its morning note's push does.
-                if link == .coach {
-                    pushDestination = .waitingCoachNote
-                } else if case .tabs(let today, _, _, _, _, _) = app.screen {
+                if case .tabs(let today, _, _, _, _, _) = app.screen {
                     WildcardApp.open(link, today: today, tab: $tab)
                 } else {
                     widgetLink = link

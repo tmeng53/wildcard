@@ -6,21 +6,46 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthDomain
 import HomeWidgetDomain
 import SportsUI
 import SwiftUI
 
 /// 我的一周, the small widget: my week's x/y, whether I trained today, my character standing in
-/// the corner and the week's days along the bottom, as the squad card's second page draws them.
-public struct WeekWidget: View {
+/// the corner and the week's days along the bottom, as the squad card's second page draws them;
+/// while Health has a workout to post, its 打卡 capsule stands in for the days.
+public struct WeekWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
+    private let post: (ImportedWorkout) -> Post
 
-    public init(board: WidgetBoard) {
+    /// - Parameter post: the capsule's 打卡 for the board's workout.
+    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
         self.board = board
+        self.post = post
     }
 
     public var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            summary
+            Spacer(minLength: Space.xs)
+            if let workout = board.workout {
+                WorkoutCapsule(workout: workout) { post(workout) }
+            } else {
+                WeekDayRow(days: days, today: board.week.today, size: .tiny)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(alignment: .topTrailing) {
+            WidgetCharacter(look: board.mates.first(where: \.isMe)?.look)
+                .frame(width: WidgetMetrics.figureWidth)
+                .offset(x: Space.xs, y: -Space.xxs)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The week as one element; the capsule stays its own, with its 打卡.
+    private var summary: some View {
         VStack(alignment: .leading, spacing: 0) {
             SectionLabel(Text("我的一周", bundle: .module))
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
@@ -34,14 +59,6 @@ public struct WeekWidget: View {
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: board.myStatus == .notCheckedIn ? .fgMuted : .fgAccent, in: theme))
                 .lineLimit(1)
-            Spacer(minLength: Space.xs)
-            WeekDayRow(days: days, today: board.week.today, size: .tiny)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(alignment: .topTrailing) {
-            WidgetCharacter(look: board.mates.first(where: \.isMe)?.look)
-                .frame(width: WidgetMetrics.figureWidth)
-                .offset(x: Space.xs, y: -Space.xxs)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("我的一周", bundle: .module))
@@ -102,14 +119,11 @@ enum WidgetMetrics {
     static let coachHead: Double = 26
     /// The coach's ink dot.
     static let dot: Double = 8
-    /// The medium widget's 打卡 and the coach's challenge button.
+    /// The medium widget's 打卡.
     static let button: Double = 32
-    /// The coach peeking in from the corner of its face: its width, how far it reaches past the
-    /// right edge and how far below the bottom, so it shows head to chest.
-    static let coachPeek: Double = 132
-    static let coachOverlap: Double = 28
-    static let coachDrop: Double = 40
-    /// The coach's challenge button, a size under 打卡.
-    static let challengeButton: Double = 28
+    /// The workout's 打卡 capsule, its button and its heart.
+    static let capsule: Double = 36
+    static let capsuleButton: Double = 28
+    static let heart: Double = 10
 }
 #endif

@@ -13,20 +13,28 @@ struct WidgetPreview: View {
     let now: Date
 
     var body: some View {
-        let board = SampleBoard.board(on: LocalDay(at: now, in: .current))
+        let day = LocalDay(at: now, in: .current)
+        let board = SampleBoard.board(on: day)
+        // With a run Health synced: the 打卡 capsule. Its 打卡 is an App Intent in the widget;
+        // here it is only its label.
+        let synced = SampleBoard.board(on: day, workout: true)
         ScrollView {
             VStack(spacing: Space.l) {
                 HStack(spacing: Space.l) {
-                    face(WeekWidget(board: board), width: Self.small, identifier: "widget.week")
+                    face(
+                        WeekWidget(board: board) { _ in PostWorkoutLabel() }, width: Self.small,
+                        identifier: "widget.week")
                     face(WidgetNotice(.signedOut), width: Self.small, identifier: "widget.notice")
                 }
-                face(SquadWidget(board: board), width: Self.medium, identifier: "widget.squad")
-                if let coach = board.coach {
-                    // The widget's 接受 is an App Intent; here it is only its label.
-                    face(
-                        CoachWidget(face: coach) { challenge in ChallengeButtonLabel(step: challenge.step) },
-                        width: Self.medium, identifier: "widget.coach")
-                }
+                face(
+                    SquadWidget(board: board) { _ in PostWorkoutLabel() }, width: Self.medium,
+                    identifier: "widget.squad")
+                face(
+                    WeekWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.small,
+                    identifier: "widget.weekWorkout")
+                face(
+                    SquadWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.medium,
+                    identifier: "widget.squadWorkout")
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)

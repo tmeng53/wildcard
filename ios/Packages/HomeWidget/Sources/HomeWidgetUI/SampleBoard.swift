@@ -1,12 +1,14 @@
 import CheckInDomain
 import Contracts
 import Foundation
+import HealthDomain
 import HomeWidgetDomain
 
 /// The board the widget gallery and a build without a backend show: a squad of four, two of
-/// them trained today, and I trained twice this week but not yet today.
+/// them trained today, and I trained twice this week but not yet today; with `workout`, a 32
+/// minute run Health synced at noon, which the 打卡 capsule offers.
 public enum SampleBoard {
-    public static func board(on day: LocalDay) -> WidgetBoard {
+    public static func board(on day: LocalDay, workout: Bool = false) -> WidgetBoard {
         let people = (1...4).map { MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID()) }
         let viewer = people[0]
         let monday = day.weekStart
@@ -29,7 +31,22 @@ public enum SampleBoard {
             member: viewer, timeZone: .gmt,
             squad: Squad(id: today.squad, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: people, captain: viewer),
             today: today, plan: plan(of: viewer, from: monday), checkIns: [])
-        return WidgetBoard(home: home, day: day, coach: sampleCoach)
+        return WidgetBoard(home: home, day: day, health: workout ? [run(on: day)] : [])
+    }
+
+    /// A 32 minute, 5.2 km run ending at noon on `day`, on the sample home's clock (GMT).
+    private static func run(on day: LocalDay) -> ImportedWorkout {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        let noon =
+            calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 12)) ?? Date()
+        let seconds = 32 * 60
+        return ImportedWorkout(
+            workout: Workout(
+                source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "sample-run"),
+                startedAt: Timestamp(noon.addingTimeInterval(-Double(seconds))), endedAt: Timestamp(noon),
+                summary: WorkoutSummary(durationSec: seconds, distanceM: 5200)),
+            activity: .sport("run"))
     }
 
     /// Mondays, Wednesdays, Fridays and Saturdays.
@@ -41,25 +58,3 @@ public enum SampleBoard {
         return plan
     }
 }
-
-#if canImport(SwiftUI)
-import DesignSystemUI
-
-extension SampleBoard {
-    /// 毛头 with a line for me and today's challenge, not yet accepted.
-    public static var coach: CoachFace {
-        CoachFace(
-            coach: CoachSpeaker(id: "xiaohun", name: String(localized: "毛头", bundle: .module.inAppLanguage)),
-            line: String(localized: "昨天腿练狠了，今天别上重量。", bundle: .module.inAppLanguage), hasNews: true,
-            challenge: CoachFace.Challenge(
-                squad: SquadID(UUID()), note: "1", title: String(localized: "拉伸 20 分钟", bundle: .module.inAppLanguage),
-                step: .open))
-    }
-
-    static var sampleCoach: CoachFace? { coach }
-}
-#else
-extension SampleBoard {
-    static var sampleCoach: CoachFace? { nil }
-}
-#endif

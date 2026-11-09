@@ -21,6 +21,9 @@ struct WidgetSession {
     let member: MemberID
     let api: WildcardAPI
 
+    /// The home over our API, keeping the widgets' own copy of it.
+    var backend: APICheckInBackend { APICheckInBackend(api: api, directory: Self.folders.folder(for: member)) }
+
     /// Where the widgets keep their own copy of the home, one folder per member.
     static let folders = MemberFolders(
         root: URL.applicationSupportDirectory.appending(path: "Widgets", directoryHint: .isDirectory))

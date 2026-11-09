@@ -5,18 +5,23 @@ import AvatarUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import HealthDomain
 import HomeWidgetDomain
 import SwiftUI
 
 /// 小队今天, the medium widget: the squad's week as the squad card's first page counts it, with
-/// 打卡 under it, and on the right who checked in today, ringed as on home, under the coach, who
-/// wears its ink dot while it has a card I haven't seen.
-public struct SquadWidget: View {
+/// 打卡 under it (or, while Health has a workout to post, its 打卡 capsule), and on the right who
+/// checked in today, ringed as on home, under the coach, who wears its ink dot while it has a
+/// card I haven't seen.
+public struct SquadWidget<Post: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
+    private let post: (ImportedWorkout) -> Post
 
-    public init(board: WidgetBoard) {
+    /// - Parameter post: the capsule's 打卡 for the board's workout.
+    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
         self.board = board
+        self.post = post
     }
 
     public var body: some View {
@@ -45,22 +50,30 @@ public struct SquadWidget: View {
             DayCells(filled: board.squad.trainedDays, total: board.squad.plannedDays)
                 .padding(.top, Space.xxs)
             Spacer(minLength: Space.xs)
-            Link(destination: WidgetLink.checkIn.url) {
-                Label {
-                    Text("打卡", bundle: .module)
-                } icon: {
-                    Image(systemName: "plus")
-                }
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                .padding(.horizontal, Space.s)
-                .frame(height: WidgetMetrics.button)
-                .background(Color(role: .bgInk, in: theme), in: Capsule())
+            if let workout = board.workout {
+                WorkoutCapsule(workout: workout) { post(workout) }
+            } else {
+                checkIn
             }
-            .accessibilityIdentifier("widget.checkIn")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
+    }
+
+    private var checkIn: some View {
+        Link(destination: WidgetLink.checkIn.url) {
+            Label {
+                Text("打卡", bundle: .module)
+            } icon: {
+                Image(systemName: "plus")
+            }
+            .typeStyle(TypeRamp.footnoteEmphasis)
+            .foregroundStyle(Color(role: .fgOnInk, in: theme))
+            .padding(.horizontal, Space.s)
+            .frame(height: WidgetMetrics.button)
+            .background(Color(role: .bgInk, in: theme), in: Capsule())
+        }
+        .accessibilityIdentifier("widget.checkIn")
     }
 
     private var today: some View {
@@ -90,10 +103,10 @@ public struct SquadWidget: View {
         .accessibilityLabel(Text("今天 \(board.checkedInToday)/\(board.mates.count)", bundle: .module))
     }
 
-    @ViewBuilder private func coachHead(_ coach: CoachFace) -> some View {
-        MemberHead(player: WidgetCoachFigure.player(of: coach.coach.id), size: WidgetMetrics.coachHead, figure: .coach)
+    @ViewBuilder private func coachHead(_ coach: CoachID) -> some View {
+        MemberHead(player: Self.player(of: coach), size: WidgetMetrics.coachHead, figure: .coach)
             .overlay(alignment: .topTrailing) {
-                if coach.hasNews {
+                if board.coachHasNews {
                     Circle()
                         .fill(Color(role: .fgDefault, in: theme))
                         .frame(width: WidgetMetrics.dot, height: WidgetMetrics.dot)
@@ -101,6 +114,13 @@ public struct SquadWidget: View {
                         .offset(x: 1, y: -1)
                 }
             }
+    }
+
+    /// The coach standing still; nil for a coach this build has no art for, an empty head.
+    private static func player(of coach: CoachID) -> CharacterPlayer? {
+        let id = coach.rawValue
+        guard CoachCharacter.exists(id) else { return nil }
+        return try? CharacterPlayer(figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
     }
 
     /// The squad, up to eight, four to a row.

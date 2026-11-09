@@ -1,6 +1,7 @@
 import CheckInDomain
 import Contracts
 import Foundation
+import HealthDomain
 import HomeWidgetDomain
 import Testing
 
@@ -97,6 +98,47 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
         #expect(WidgetLink(url: link.url) == link)
     }
     #expect(WidgetLink.checkIn.url.absoluteString == "wildcard://widget/check-in")
-    #expect(WidgetLink.coach.url.absoluteString == "wildcard://widget/coach")
     #expect(WidgetLink(url: URL(string: "https://wildcardsquad.com/join/K7M2QX9P") ?? WidgetLink.today.url) == nil)
+}
+
+/// A run in Health that ended `hoursBefore` Tuesday 10:00 in Los Angeles.
+private func run(_ id: String, endedHoursBefore hours: Double) -> ImportedWorkout {
+    let end = Timestamp(tuesdayMorning.addingTimeInterval(-hours * 3600))
+    return ImportedWorkout(
+        workout: Workout(
+            source: WorkoutSource(provider: WorkoutSource.appleHealth, id: id),
+            startedAt: Timestamp(millisecondsSince1970: end.millisecondsSince1970 - 1_920_000), endedAt: end,
+            summary: WorkoutSummary(durationSec: 1920, distanceM: 5200)),
+        activity: .sport("run"))
+}
+
+/// My 训练 posted from `workout` on Tuesday.
+private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) -> CheckIn {
+    let audience = try? Audience([squadID])
+    return CheckIn(
+        id: CheckInID(id(50)), member: member, day: tuesday, createdAt: Timestamp(tuesdayMorning),
+        audience: audience ?? { fatalError("one squad") }(),
+        entry: .trained(Training(activity: .sport("run"), minutes: workout.minutes, workout: workout.workout)))
+}
+
+@Test func offersTodaysNewestWorkoutNotPostedOrPutAway() {
+    let early = run("early", endedHoursBefore: 3)
+    let late = run("late", endedHoursBefore: 1)
+    // Monday evening in Los Angeles: yesterday's, never offered.
+    let yesterday = run("yesterday", endedHoursBefore: 14)
+    let offered = WidgetBoard(home: home(), day: tuesday, health: [early, yesterday, late])
+    #expect(offered.workout?.id.id == "late")
+    // Posted by me: the next one down; a teammate's post of the same id changes nothing.
+    #expect(
+        WidgetBoard(home: home(checkIns: [posted(late)]), day: tuesday, health: [early, late]).workout?.id.id == "early"
+    )
+    #expect(
+        WidgetBoard(home: home(checkIns: [posted(late, by: mate)]), day: tuesday, health: [late]).workout?.id.id
+            == "late")
+    // Put away from 今天's card on this phone.
+    #expect(WidgetBoard(home: home(), day: tuesday, health: [late], putAway: [late.id]).workout == nil)
+    #expect(WidgetBoard(home: home(), day: tuesday, health: [yesterday]).workout == nil)
+    // A sport the list has nothing like is picked by hand in the app.
+    let unlisted = ImportedWorkout(workout: late.workout, activity: nil)
+    #expect(WidgetBoard(home: home(), day: tuesday, health: [early, unlisted]).workout?.id.id == "early")
 }

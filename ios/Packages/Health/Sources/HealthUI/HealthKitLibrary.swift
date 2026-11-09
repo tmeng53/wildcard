@@ -24,14 +24,14 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
     public var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
 
     public func isConnected() async -> Bool {
-        isAvailable && defaults.bool(forKey: Self.connectedKey)
+        isAvailable && defaults.bool(forKey: HealthKeys.connected)
     }
 
     public func connect() async -> Bool {
         guard isAvailable else { return false }
         do {
             try await store.requestAuthorization(toShare: [], read: Self.readTypes)
-            defaults.set(true, forKey: Self.connectedKey)
+            defaults.set(true, forKey: HealthKeys.connected)
             return true
         } catch {
             return false
@@ -240,7 +240,6 @@ public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // on
         HKQuantityType(.estimatedWorkoutEffortScore), HKQuantityType(.activeEnergyBurned),
         HKQuantityType(.restingHeartRate),
     ]
-    private static let connectedKey = "health.connected"
     private static let workoutsMax = 20
     /// Enough for a smooth line on a card; keeps the post small.
     private static let routePoints = 600

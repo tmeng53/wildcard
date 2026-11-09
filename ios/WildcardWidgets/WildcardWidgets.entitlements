@@ -2,8 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Shared with the app: the sign-in (an app group is also a Keychain access group) and the
-	     language picked in the app. -->
+	<!-- Apple Health, read only, as the app reads it: today's workouts for the 打卡 capsule. The
+	     app asks for access; the widgets read with it. -->
+	<key>com.apple.developer.healthkit</key>
+	<true/>
+	<key>com.apple.developer.healthkit.access</key>
+	<array/>
+	<!-- Shared with the app: the sign-in (an app group is also a Keychain access group), the
+	     language picked in the app and what it keeps about Apple Health. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.wildcardsquad.wildcard</string>

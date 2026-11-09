@@ -76,6 +76,18 @@ public final class HealthConnection {
         recent.map { $0.withZones(birthday: birthday, in: timeZone) }.today(day, in: timeZone, posted: posted)
     }
 
+    /// Moves what this phone kept about Health (connected, what a post shares, what was put away
+    /// from 今天's card) from `old` to `shared`, once, so the home screen widgets read the same:
+    /// builds before the widgets kept it in the app's own defaults. Leaves `shared` as it is
+    /// once it holds any of it.
+    public static func share(from old: UserDefaults, to shared: UserDefaults) {
+        let keys = [HealthKeys.connected, sharingKey, putAwayKey]
+        guard keys.allSatisfy({ shared.object(forKey: $0) == nil }) else { return }
+        for key in keys {
+            if let value = old.object(forKey: key) { shared.set(value, forKey: key) }
+        }
+    }
+
     private func keep(_ sharing: HealthSharing) {
         if let data = try? JSONEncoder().encode(sharing) { defaults.set(data, forKey: Self.sharingKey) }
     }
@@ -89,4 +101,10 @@ public final class HealthConnection {
         let version: Int
         let workouts: [WorkoutSource]
     }
+}
+
+/// Where HealthKit's connection is kept on the phone, which `HealthConnection.share(from:to:)`
+/// moves too.
+enum HealthKeys {
+    static let connected = "health.connected"
 }
