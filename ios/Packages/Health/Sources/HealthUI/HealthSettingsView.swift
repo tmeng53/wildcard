@@ -83,6 +83,8 @@ public struct HealthSettingsView: View {
                     .accessibilityIdentifier("health.share.effort")
                 SwitchRow(Text("趟数（游泳、滑雪）", bundle: .module), isOn: $health.sharing.laps)
                     .accessibilityIdentifier("health.share.laps")
+                SwitchRow(Text("卡路里", bundle: .module), isOn: $health.sharing.calories)
+                    .accessibilityIdentifier("health.share.calories")
                 SwitchRow(Text("路线", bundle: .module), isOn: $health.sharing.route, showsDivider: false)
                     .accessibilityIdentifier("health.share.route")
             }

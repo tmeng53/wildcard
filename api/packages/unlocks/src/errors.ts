@@ -118,3 +118,25 @@ export class GiftMemberNotInSquadError extends AppError {
     super('The member is not in that squad now.');
   }
 }
+
+/** Thrown when an admin names a badge or voucher that isn't in its catalog. */
+export class RewardMissingError extends AppError {
+  override readonly name = 'RewardMissingError';
+  readonly reason = 'REWARD_MISSING';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly reward: string) {
+    super(`There is no ${reward} (put_badge or put_voucher adds one).`);
+  }
+}
+
+/** Thrown when an admin gives a reward that has no offered `team` trigger. */
+export class RewardNotTeamGivenError extends AppError {
+  override readonly name = 'RewardNotTeamGivenError';
+  readonly reason = 'REWARD_NOT_TEAM_GIVEN';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly reward: string) {
+    super(`${reward} is not one the team gives (put_reward_trigger with way team adds that).`);
+  }
+}

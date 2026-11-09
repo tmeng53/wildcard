@@ -131,12 +131,14 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
     public var elevationGainM: Double?
     /// Seconds per 100 metres, for an open-water swim.
     public var paceSecPer100m: Double?
+    /// Active energy burned, kilocalories (Tracy, 2026-11-08).
+    public var activeEnergyKcal: Double?
 
     public init(
         durationSec: Int? = nil, distanceM: Double? = nil, paceSecPerKm: Double? = nil, speedKmh: Double? = nil,
         avgHr: Int? = nil, maxHr: Int? = nil, effort: Double? = nil, laps: Int? = nil, poolLengthM: Double? = nil,
         runs: Int? = nil, descentM: Double? = nil, topSpeedKmh: Double? = nil, elevationGainM: Double? = nil,
-        paceSecPer100m: Double? = nil
+        paceSecPer100m: Double? = nil, activeEnergyKcal: Double? = nil
     ) {
         self.durationSec = durationSec
         self.distanceM = distanceM
@@ -152,6 +154,7 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
         self.topSpeedKmh = topSpeedKmh
         self.elevationGainM = elevationGainM
         self.paceSecPer100m = paceSecPer100m
+        self.activeEnergyKcal = activeEnergyKcal
     }
 
     /// Its cells on a 成绩条, in order: 时长 first, then each number it has.
@@ -175,6 +178,7 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
         case .averageHeartRate: avgHr != nil
         case .maxHeartRate: maxHr != nil
         case .effort: effort != nil
+        case .calories: activeEnergyKcal != nil
         }
     }
 
@@ -198,6 +202,7 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
             case .averageHeartRate: kept.avgHr = nil
             case .maxHeartRate: kept.maxHr = nil
             case .effort: kept.effort = nil
+            case .calories: kept.activeEnergyKcal = nil
             }
         }
         return kept
@@ -207,7 +212,7 @@ public struct WorkoutSummary: Hashable, Sendable, Codable {
 /// One cell of a 成绩条, in the order the strip shows them.
 public enum WorkoutCell: String, CaseIterable, Hashable, Sendable, Codable {
     case duration, laps, runs, distance, descent, elevationGain, pace, swimPace, speed, topSpeed
-    case averageHeartRate, maxHeartRate, effort
+    case averageHeartRate, maxHeartRate, effort, calories
 }
 
 /// What a workout's chart draws.
@@ -216,15 +221,19 @@ public struct WorkoutSeries: Hashable, Sendable, Codable {
     public let heartRate: [HeartRatePoint]?
     /// Each lap's time in seconds, in order, for a swim.
     public let laps: [Double]?
+    /// Where the poster's heart-rate zones start, which the chart marks; nil when their phone
+    /// didn't know their age, and with no heart rate.
+    public let zones: HeartRateZones?
 
-    public init(heartRate: [HeartRatePoint]? = nil, laps: [Double]? = nil) {
+    public init(heartRate: [HeartRatePoint]? = nil, laps: [Double]? = nil, zones: HeartRateZones? = nil) {
         self.heartRate = heartRate
         self.laps = laps
+        self.zones = heartRate == nil ? nil : zones
     }
 
     private enum CodingKeys: String, CodingKey {
         case heartRate = "hr"
-        case laps
+        case laps, zones
     }
 
     /// Laps make the chart when there are any; else heart rate, with two points at least.

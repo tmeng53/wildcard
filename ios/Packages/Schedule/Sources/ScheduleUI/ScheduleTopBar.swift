@@ -31,23 +31,16 @@ extension ScheduleView {
                 saveButton
             }
         }
-        .sharedBackgroundVisibility(.hidden)
     }
 
     private var saveButton: some View {
         Button {
             save()
         } label: {
-            Label {
-                Text("存图", bundle: .module)
-            } icon: {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: Sizing.smallIcon + 2, weight: .medium))
-            }
+            Image(systemName: "square.and.arrow.up")
         }
-        // The navigation bar shows a label's icon alone unless told otherwise.
-        .labelStyle(.titleAndIcon)
-        .buttonStyle(SecondaryButtonStyle())
+        // An icon only, in the bar's round glass like the back button across from it.
+        .accessibilityLabel(Text("存图", bundle: .module))
         .disabled(store.sheet == nil || model.saving != .idle && model.saving != .failed)
         .accessibilityIdentifier("schedule.save")
     }

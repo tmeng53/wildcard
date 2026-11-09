@@ -38,6 +38,7 @@ import {
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
+  noRewards,
   unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
@@ -99,6 +100,7 @@ const app = createApp({
   weeklyAwards: unusedWeeklyAwards,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
+  rewards: noRewards,
   weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
@@ -1363,7 +1365,7 @@ describe('a 训练 from Apple Health', () => {
     expect(posted.status).toBe(201);
   });
 
-  it('keeps a ski day’s runs, drop and top speed, a hike’s climb and a swim’s pace per 100 m', async () => {
+  it('keeps a ski day’s runs, drop and top speed, a hike’s climb, a swim’s pace per 100 m and active calories', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -1398,6 +1400,9 @@ describe('a 训练 from Apple Health', () => {
     expect(await post('hike', hike)).toStrictEqual(hike);
     const swim = { durationSec: 2520, distanceM: 1800, paceSecPer100m: 140, avgHr: 136 };
     expect(await post('swim', swim)).toStrictEqual(swim);
+    const strength = { durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 312 };
+    expect(await post('strength', strength)).toStrictEqual(strength);
+    expect(await post('strength', { activeEnergyKcal: -1 })).toBe(400);
     expect(await post('ski', { runs: 0 })).toBe(400);
     expect(await post('ski', { topSpeedKmh: 400 })).toBe(400);
   });
@@ -1437,6 +1442,48 @@ describe('a 训练 from Apple Health', () => {
         },
       }),
     ).toStrictEqual([201, 'saved']);
+  });
+
+  it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = [
+      { t: 0, bpm: 90 },
+      { t: 60, bpm: 150 },
+    ];
+    const zones = { light: 107, moderate: 119, vigorous: 144, peak: 175 };
+    const put = async (series: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', workout: workout(randomUUID(), { route: undefined, series }) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    expect(await put({ laps: [50, 52], zones })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ hr, zones: { ...zones, moderate: 100 } })).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+
+    const id = randomUUID();
+    expect(await put({ hr, zones }, id)).toStrictEqual([201, 'saved']);
+    const { body } = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    const shown = z
+      .object({
+        checkIn: z.object({ training: z.object({ workout: z.object({ series: z.unknown() }) }) }),
+      })
+      .parse(body).checkIn.training.workout.series;
+    expect(shown).toStrictEqual({ hr, zones });
   });
 
   it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {

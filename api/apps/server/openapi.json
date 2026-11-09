@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone) or `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -183,6 +183,15 @@
             "minimum": 1,
             "maximum": 7,
             "description": "The goal suggested, 人均 N 天 (`goalSuggestion`)."
+          },
+          "feedback": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The feedback we used (`thanks`): the id the app sent it with."
+          },
+          "adopted": {
+            "type": "string",
+            "description": "What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -1435,10 +1444,15 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "maximum": 86400
+          },
+          "activeEnergyKcal": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20000
           }
         },
         "additionalProperties": false,
-        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike)."
+        "description": "The numbers the member posted, as the provider gave them. Each is left out when the provider had none or the member struck it out. Pace is seconds per kilometre (run, walk), speed km/h (bike), effort 1 to 10, laps with the pool length in metres (swim), pace per 100 m (open-water swim), runs with metres skied down and top speed in km/h (ski, snowboard: worked out on the phone from the route), metres climbed (hike), active energy in kilocalories."
       },
       "WorkoutSeries": {
         "type": "object",
@@ -1462,6 +1476,9 @@
             "minItems": 1,
             "maxItems": 1000,
             "description": "Each lap’s time in seconds, in order."
+          },
+          "zones": {
+            "$ref": "#/components/schemas/HeartRateZones"
           }
         },
         "additionalProperties": false,
@@ -1487,6 +1504,39 @@
           "bpm"
         ],
         "additionalProperties": false
+      },
+      "HeartRateZones": {
+        "type": "object",
+        "properties": {
+          "light": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "moderate": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "vigorous": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          },
+          "peak": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 250
+          }
+        },
+        "required": [
+          "light",
+          "moderate",
+          "vigorous",
+          "peak"
+        ],
+        "additionalProperties": false,
+        "description": "Where the poster’s 轻松, 适中, 剧烈 and 峰值 heart-rate zones start, in bpm, worked out on their phone from their age and resting heart rate; never the age itself. Only with `hr`."
       },
       "RoutePoint": {
         "type": "object",
@@ -6580,6 +6630,13 @@
               1
             ]
           },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -6598,7 +6655,52 @@
         },
         "required": [
           "version",
+          "teamBadges",
           "titles"
+        ],
+        "additionalProperties": false
+      },
+      "TeamBadge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The badge’s id.",
+            "example": "bug-hunter"
+          },
+          "name": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "glyph": {
+            "type": "string",
+            "description": "The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.",
+            "example": "ladybug.fill"
+          },
+          "tone": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$",
+            "description": "Its colour, as #RRGGBB.",
+            "example": "#E65345"
+          },
+          "times": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many times the member got it: ×N."
+          },
+          "latestAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they got it the last time.",
+            "example": "2026-11-09T18:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "glyph",
+          "tone",
+          "times",
+          "latestAt"
         ],
         "additionalProperties": false
       },
@@ -6783,6 +6885,13 @@
             "additionalProperties": false,
             "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
           },
+          "teamBadges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamBadge"
+            },
+            "description": "The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge."
+          },
           "titles": {
             "type": "array",
             "items": {
@@ -6803,6 +6912,7 @@
           "healthyMeals",
           "cheatMeals",
           "disclaimers",
+          "teamBadges",
           "titles"
         ],
         "additionalProperties": false
@@ -7024,6 +7134,13 @@
             },
             "description": "Every piece a squad’s coach gave the member, the earliest first. No store sells these: they belong in the member’s wardrobe."
           },
+          "teamPieces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamPiece"
+            },
+            "description": "Every piece the Wildcard team gave the member (for feedback we used, say), the earliest first. No store sells these, and no coach gives them: they belong in the member’s wardrobe, worn without 领取."
+          },
           "shelf": {
             "$ref": "#/components/schemas/Shelf"
           }
@@ -7035,6 +7152,7 @@
           "lockedPieces",
           "claimed",
           "gifts",
+          "teamPieces",
           "shelf"
         ],
         "additionalProperties": false
@@ -7165,6 +7283,34 @@
           "id",
           "sports",
           "checkInsToGo"
+        ],
+        "additionalProperties": false
+      },
+      "TeamPiece": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$",
+            "description": "The piece’s id in the app’s art.",
+            "example": "thanks-bulb"
+          },
+          "givenAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the team gave it.",
+            "example": "2026-11-09T18:30:00.000Z"
+          },
+          "event": {
+            "type": "string",
+            "description": "What gave it: `bug-adopted` (a bug the member reported that we confirmed) or `idea-adopted` (an idea of theirs that shipped). More may come. Left out for one the team gave by hand.",
+            "example": "bug-adopted"
+          }
+        },
+        "required": [
+          "id",
+          "givenAt"
         ],
         "additionalProperties": false
       },
