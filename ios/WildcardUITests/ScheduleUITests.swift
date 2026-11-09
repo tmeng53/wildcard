@@ -34,9 +34,12 @@ final class ScheduleUITests: XCTestCase {
         settle()
         keepScreenshot(named: "60-schedule-this-week")
 
-        // The days before today stay as they are: a tap plays their sport but opens no picks.
+        // The days before today stay as they are: a tap plays their sport but opens no picks, and
+        // lets go of a day held.
+        lane(app, 4).tap()
+        XCTAssertTrue(app.buttons["schedule.pick.more"].waitForExistence(timeout: 10), "Friday's picks didn't open")
         lane(app, 1).tap()
-        XCTAssertFalse(app.buttons["schedule.pick.more"].waitForExistence(timeout: 2), "Tuesday can still change")
+        waitFor(app.buttons["schedule.pick.more"], "exists == false", "Tuesday can still change", timeout: 5)
         settle()
         keepScreenshot(named: "60-schedule-past-day-plays")
 

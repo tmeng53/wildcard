@@ -192,12 +192,16 @@ public final class ScheduleModel {
 
     // MARK: The board
 
-    /// Puts the character to the day's sport, any day, and picks the day up where it can change.
+    /// Puts the character to the day's sport, any day, and picks the day up where it can change;
+    /// a day that can't change lets go of the one held, so the picks never change a day the
+    /// character isn't playing.
     func tap(_ day: Int) {
         fuelOpen = false
         watchedDay = day
         dressPlayer()
-        Task { await store.tap(day) }
+        Task {
+            if await store.tap(day) == .locked { store.release() }
+        }
     }
 
     func pick(_ activity: Activity) {
