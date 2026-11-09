@@ -79,9 +79,19 @@ final class SignUpUITests: XCTestCase {
 
     private func pickSports(in app: XCUIApplication) {
         let run = app.buttons["sports.run"]
-        XCTAssertTrue(run.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
+        XCTAssertTrue(run.waitForExistence(timeout: Self.wait), "关于你 never appeared")
         let next = app.buttons["sports.done"]
         XCTAssertFalse(next.isEnabled, "下一步 is on with nothing picked")
+        // The birthday opens on 2000-01-01, never a day from Apple Health, and a drag turns it.
+        let year = app.descendants(matching: .any)["sports.birthday.year"]
+        XCTAssertEqual(year.value as? String, "2000", "the birthday doesn't open on 2000")
+        XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.month"].value as? String, "01")
+        XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.day"].value as? String, "01")
+        year.swipeDown()
+        XCTAssertNotEqual(year.value as? String, "2000", "a drag down doesn't turn the year back")
+        XCTAssertLessThanOrEqual(
+            app.descendants(matching: .any)["sports.birthday.day"].frame.maxX, app.frame.maxX,
+            "the day's card runs off the screen")
         run.tap()
         app.buttons["sports.climb"].tap()
         waitFor(next, "isEnabled == true", "下一步 stays off with sports picked")
@@ -187,7 +197,7 @@ final class SignUpUITests: XCTestCase {
         pickSquadTimeZone(searching: "Taipei", in: app)
         squadDone.tap()
         let skipSports = app.buttons["sports.skip"]
-        XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "平时练什么？ never appeared")
+        XCTAssertTrue(skipSports.waitForExistence(timeout: Self.wait), "关于你 never appeared")
         skipSports.tap()
         skipHealthAndLocation(in: app)
         let skipWeek = app.buttons["week.skip"]

@@ -42,6 +42,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case strayCustomSport
     /// A player card number outside `JerseyNumber.range`.
     case jerseyNumberOutOfRange(Int)
+    /// A birthday before 1900 or after today.
+    case birthdayOutOfRange(String)
     /// A comment that is empty or longer than `CommentText.maxLength` characters.
     case commentLength(Int)
     /// Feedback that is empty or longer than `FeedbackText.maxLength` characters.

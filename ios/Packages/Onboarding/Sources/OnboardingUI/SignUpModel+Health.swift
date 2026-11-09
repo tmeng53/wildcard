@@ -2,7 +2,7 @@
 import HealthUI
 import OnboardingDomain
 
-/// 连上 Apple 健康 (Tracy, 2026-11-06), between 平时练什么？ and 打开大概位置.
+/// 连上 Apple 健康 (Tracy, 2026-11-06), between 关于你 and 打开大概位置.
 extension SignUpModel {
     /// Whether this phone has Apple Health, so 连上 Apple 健康 shows.
     var hasHealth: Bool { health?.isAvailable ?? false }

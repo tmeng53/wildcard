@@ -10,6 +10,8 @@ public protocol MeService: Sendable {
     func save(_ character: MeCharacter) async throws(MeError)
     /// Saves the number the member picked for their player card.
     func save(jerseyNumber: JerseyNumber) async throws(MeError)
+    /// Saves the birthday the member chose to give, or forgets it (nil).
+    func save(birthday: Birthday?) async throws(MeError)
     func setDailyPush(_ isOn: Bool) async throws(MeError)
     /// Turns the coach's pushes (教练消息) on or off; 通知 keeps what it says either way.
     func setCoachPush(_ isOn: Bool) async throws(MeError)

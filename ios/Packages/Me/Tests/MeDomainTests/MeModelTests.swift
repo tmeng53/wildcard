@@ -47,6 +47,11 @@ actor FakeService: MeService {
         current.jerseyNumber = jerseyNumber
     }
 
+    func save(birthday: Birthday?) async throws(MeError) {
+        if let failing { throw failing }
+        current.birthday = birthday
+    }
+
     func setDailyPush(_ isOn: Bool) async throws(MeError) {
         pushSaves.append(isOn)
         if let failing { throw failing }
