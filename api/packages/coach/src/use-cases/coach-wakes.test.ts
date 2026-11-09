@@ -793,6 +793,25 @@ describe('the coach', () => {
           mentions: [],
         },
       ]);
+
+      // Its answer is something it said here, so a reply to that is answered too, though it
+      // never replied to the check-in itself.
+      const { mia } = fixture;
+      const back = await commentOn(fixture, {
+        member: mia,
+        text: '那她呢',
+        at: new Date(now.getTime() + 3 * 60_000),
+        toCoach: 'xiaohun',
+      });
+      const withBack: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, comments: [asked, back] })),
+      };
+      await wakes(
+        { ...fixture, week: withBack },
+        { agent, answered, at: new Date(now.getTime() + 4 * 60_000) },
+      ).answer({ checkIn, comment: back.id, coach: 'xiaohun', squads: [squad] });
+      expect(told.map(({ comment }) => comment)).toStrictEqual([asked.id, back.id]);
     });
   });
 
