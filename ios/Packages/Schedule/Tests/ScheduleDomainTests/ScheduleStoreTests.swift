@@ -117,6 +117,33 @@ struct ScheduleStoreTests {
         #expect(resting.todaysActivity == nil)
     }
 
+    /// A tapped day's character trains at the sport its lane shows, in any week or the
+    /// 我的每周计划, past days included; a rest day has none.
+    @Test func shownActivityIsTheTappedLanesSport() async throws {
+        let trained = FakeBackend()
+        await trained.set(
+            try WeekSheet(
+                weekStart: thisWeek.adding(days: -7), plan: Fixtures.plan,
+                marks: [.none, .none, .trained([.sport("climb")]), .none, .none, .none, .none]))
+        let store = store(trained)
+        #expect(store.shownActivity(on: 0) == nil, "nothing before the week loads")
+        await store.load()
+        #expect(store.shownActivity(on: 1) == .sport("tennis"))
+        #expect(store.shownActivity(on: 2) == nil, "a rest day")
+        #expect(store.shownActivity(on: 9) == nil)
+        await store.tap(5)
+        await store.pick(.sport("swim"))
+        #expect(store.shownActivity(on: 5) == .sport("swim"), "a pick plays at once")
+
+        await store.show(thisWeek.adding(days: -7))
+        #expect(store.shownActivity(on: 0) == .sport("run"), "a past day plays though it can't change")
+        #expect(store.shownActivity(on: 2) == .sport("climb"), "a rest day trained anyway plays what was trained")
+
+        await store.showTemplate()
+        #expect(store.shownActivity(on: 3) == .sport("strength"))
+        #expect(store.shownActivity(on: 5) == nil)
+    }
+
     @Test func aPastWeekCantChange() async {
         let backend = FakeBackend()
         let store = store(backend)
