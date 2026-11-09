@@ -677,7 +677,8 @@ describe('the coach', () => {
       const seen = runs.length;
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const hers = runs.slice(seen);
-      expect(hers.length).toBeGreaterThan(0);
+      // Its daily wake, which is told the lines it wrote lately, is among them.
+      expect(hers.some(({ task }) => task.includes('新的一天'))).toBe(true);
       for (const run of hers) {
         expect(run.task).not.toContain('我最会偷懒');
         expect(run.task).not.toContain('我先把沙发热好');

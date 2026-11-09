@@ -241,7 +241,7 @@ export function toolbox({
       description:
         '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+        path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
@@ -406,7 +406,7 @@ export function toolbox({
         name: 'rewrite_file',
         description: `把记性里的一个文件整个换成新写的内容：留下的照写，删掉的不写。body 为空就是清空。不超过 ${String(FILE_LIMIT)} 字。`,
         parameters: z.object({
-          path: z.string().describe('文件路径，如 memory.md、people/队员1.md'),
+          path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
           body: z.string().describe('这个文件的全部新内容，用队员N称呼人'),
         }),
         kept: ({ path, body }) => ({ path, body: `（${String(body.length)} 字）` }),
