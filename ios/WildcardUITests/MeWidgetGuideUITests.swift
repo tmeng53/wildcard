@@ -18,15 +18,15 @@ extension MeUITests {
         XCTAssertTrue(window.contains(previews.frame), "the widgets spill out of the screen: \(previews.frame)")
         settle()
         keepScreenshot(named: "49-me-widget-guide")
-        let last = app.descendants(matching: .any)["widgetGuide.step3"]
-        XCTAssertTrue(last.waitForExistence(timeout: 10), "no third step")
-        if !last.isHittable { app.swipeUp() }
+        // Each step on screen and clear of the tab bar once scrolled to, one at a time.
         let tabBar = app.tabBars.firstMatch
         for number in 1...3 {
             let step = app.descendants(matching: .any)["widgetGuide.step\(number)"]
-            XCTAssertTrue(step.exists, "no step \(number)")
+            XCTAssertTrue(step.waitForExistence(timeout: 10), "no step \(number)")
+            if !step.isHittable { app.swipeUp() }
+            XCTAssertTrue(step.isHittable, "step \(number) can't be scrolled to")
             XCTAssertTrue(window.contains(step.frame), "step \(number) spills out: \(step.frame)")
-            if tabBar.exists {
+            if tabBar.exists && tabBar.isHittable {
                 XCTAssertFalse(step.frame.intersects(tabBar.frame), "step \(number) is under the tab bar")
             }
         }

@@ -50,8 +50,12 @@ public struct WidgetGuide: View {
     /// The small and the medium widget, scaled to fit the page, on the home screen's grey.
     private var previews: some View {
         VStack(spacing: Space.s) {
-            scaled(.small) { WeekWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
-            scaled(.medium) { SquadWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
+            Group {
+                scaled(.small) { WeekWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
+                scaled(.medium) { SquadWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
+            }
+            // The widgets always wear the gym's colours on the home screen, whatever the squad's scene.
+            .environment(\.sceneTheme, .gym)
             Text("小号、中号都有", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))

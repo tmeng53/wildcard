@@ -39,7 +39,7 @@ struct SettingsView: View {
                 BirthdayView(model: model)
             }
             .navigationDestination(isPresented: $isWidgetGuideOpen) {
-                destinations.widgetGuide
+                if let guide = destinations.widgetGuide { guide }
             }
             .navigationDestination(isPresented: $isHealthOpen) {
                 if let health = destinations.health { HealthSettingsView(health: health) }
