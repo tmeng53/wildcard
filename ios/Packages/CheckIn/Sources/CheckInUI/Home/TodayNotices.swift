@@ -112,7 +112,8 @@ private struct TodayNotices: ViewModifier {
         case .sendFailed: model.resendFirst()
         case .more: model.openDestination?(.notices)
         case .moved: model.openDestination?(.today)
-        case .told(let told): model.openDestination?(told.destination)
+        case .told(let told):
+            if let destination = told.destination { model.openDestination?(destination) }
         }
     }
 
