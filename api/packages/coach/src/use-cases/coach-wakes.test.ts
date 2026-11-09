@@ -1989,4 +1989,73 @@ describe('the coach', () => {
       expect((await stores.memory.files(squad)).size).toBe(0);
     });
   });
+  it('previews a member’s day without saving or sending anything but its tokens', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const given: unknown[] = [];
+      const gifting: CoachGifting = {
+        options: ({ members }) =>
+          Promise.resolve({
+            pool: [{ id: 'gift-scarf', description: '红围巾' }],
+            open: new Map(members.map((each) => [each, []])),
+          }),
+        give: (input) => {
+          given.push(input);
+          return Promise.resolve(undefined);
+        },
+      };
+      const { agent, runs } = scriptedAgent(() => [
+        { tool: 'post_note', input: { text: '周日歇好' } },
+        {
+          tool: 'note_to',
+          input: {
+            member: '队员1',
+            text: '今天多喝水',
+            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+          },
+        },
+        // Only the member previewed gets a note or a gift.
+        { tool: 'note_to', input: { member: '队员2', text: '走走' } },
+        { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
+        { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
+      ]);
+      const preview = await wakes(fixture, { agent, gifting }).preview({ squad, member: mia });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.answers).toStrictEqual([
+        '已写上战术板。',
+        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+        '不能给 队员2 写便条；能写的是：队员1。',
+        'gift-scarf 送给 队员1 了。',
+        '记下了，在 people/队员1.md。',
+      ]);
+      expect(runs[0]?.task).toContain('今天给这些人各写一张便条');
+      expect(preview).toMatchObject({
+        ran: true,
+        day: '2026-11-01',
+        board: '周日歇好',
+        note: {
+          text: '今天多喝水',
+          challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
+        },
+        gift: { piece: 'gift-scarf', line: '天冷了' },
+        costMicros: 4600,
+      });
+      expect(preview.ran && preview.files.map(({ path }) => path)).toContain(`people/${mia}.md`);
+      expect(given).toStrictEqual([]);
+      const saved = await sql<{ notes: string; board: string; wakes: string; usage: string }>`
+        select
+          (select count(*) from public.coach_member_notes where squad_id = ${squad}) as notes,
+          (select count(*) from public.coach_notes where squad_id = ${squad}) as board,
+          (select count(*) from public.coach_wakes where squad_id = ${squad}) as wakes,
+          (select count(*) from public.coach_usage where squad_id = ${squad} and wake_id is null) as usage
+      `.execute(trx);
+      expect(saved.rows).toStrictEqual([{ notes: '0', board: '0', wakes: '0', usage: '1' }]);
+      expect(
+        await wakes(fixture, { agent, gifting }).preview({ squad, member: randomUUID() }),
+      ).toStrictEqual({
+        ran: false,
+        why: 'the member is not in the squad',
+      });
+    });
+  });
 });

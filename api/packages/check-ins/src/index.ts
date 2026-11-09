@@ -40,6 +40,8 @@ export {
   type PostCursor,
 } from './domain/post-cursor.js';
 export type { CheckInTotals, TopSport, TrainedCheckIn, TrainingDay } from './domain/totals.js';
+export type { MemberRecords, SportDays, SquadFirst, Streak } from './domain/records.js';
+export type { Records } from './use-cases/check-ins/records.js';
 export { Emoji, type Reaction, type SaveOutcome } from './domain/reaction.js';
 export { CommentId, MAX_MENTIONS, type Comment } from './domain/comment.js';
 export { COMMENT_MAX_CHARACTERS, CommentText } from './domain/text.js';

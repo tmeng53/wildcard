@@ -359,6 +359,95 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       }));
     },
 
+    async recordRows({ member, squad, mates }) {
+      const trainingRows = await db
+        .selectFrom('check_ins')
+        .select([
+          'member_id',
+          sql<string>`check_ins.day::text`.as('day'),
+          sql<string>`check_ins.posted_day::text`.as('posted_day'),
+          'created_at',
+          sql<string>`payload ->> 'sport'`.as('sport'),
+          sql<string | null>`payload ->> 'customSport'`.as('customSport'),
+          sql<string | null>`payload ->> 'minutes'`.as('minutes'),
+        ])
+        .select(
+          sql<boolean>`exists (
+            select 1 from check_in_squads
+            where check_in_squads.check_in_id = check_ins.id
+              and check_in_squads.squad_id = ${squad ?? null}
+          )`.as('in_squad'),
+        )
+        .where('kind', '=', 'trained')
+        .where((eb) =>
+          squad === undefined || mates.length === 0
+            ? eb('member_id', '=', member)
+            : eb.or([
+                eb('member_id', '=', member),
+                eb.and([
+                  eb('member_id', 'in', mates),
+                  eb.exists(
+                    eb
+                      .selectFrom('check_in_squads')
+                      .select('check_in_squads.check_in_id')
+                      .whereRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+                      .where('check_in_squads.squad_id', '=', squad),
+                  ),
+                ]),
+              ]),
+        )
+        .orderBy('created_at')
+        .orderBy('id')
+        .execute();
+      const meals = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`check_ins.day::text`.as('day'))
+        .distinct()
+        .where('member_id', '=', member)
+        .where('kind', '=', 'healthyMeal')
+        .execute();
+      const reactionCounts = async (author: 'member' | 'mates') => {
+        if (mates.length === 0) return new Map<MemberId, number>();
+        const rows = await db
+          .selectFrom('check_in_reactions')
+          .innerJoin('check_ins', 'check_ins.id', 'check_in_reactions.check_in_id')
+          .select([
+            author === 'member'
+              ? 'check_in_reactions.member_id as mate'
+              : 'check_ins.member_id as mate',
+            sql<string>`count(*)`.as('count'),
+          ])
+          .where(
+            author === 'member' ? 'check_ins.member_id' : 'check_in_reactions.member_id',
+            '=',
+            member,
+          )
+          .where(
+            author === 'member' ? 'check_in_reactions.member_id' : 'check_ins.member_id',
+            'in',
+            mates,
+          )
+          .groupBy(author === 'member' ? 'check_in_reactions.member_id' : 'check_ins.member_id')
+          .execute();
+        return new Map(rows.map((row) => [MemberId.parse(row.mate), Number(row.count)]));
+      };
+      return {
+        trainings: trainingRows.map((row) => ({
+          member: MemberId.parse(row.member_id),
+          day: row.day,
+          postedDay: row.posted_day,
+          madeAt: new Date(row.created_at),
+          sport: SportKey.parse(row.sport),
+          ...(row.customSport === null ? {} : { customSport: row.customSport }),
+          ...(row.minutes === null ? {} : { minutes: Number(row.minutes) }),
+          inSquad: row.in_squad,
+        })),
+        healthyMealDays: meals.map((row) => row.day),
+        received: await reactionCounts('member'),
+        given: await reactionCounts('mates'),
+      };
+    },
+
     async listForMember({ member, from, to }) {
       const rows = await db
         .selectFrom('check_ins')

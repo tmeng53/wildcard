@@ -14,6 +14,8 @@ struct TrainingRecordView: View {
     let record: TrainingRecord
     let trainedDays: Int
     let openPost: (CheckInID) -> Void
+    /// 全部数据: opens 外卡记录.
+    let openRecords: () -> Void
     @State private var selected: LocalDay?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.locale) private var locale
@@ -30,6 +32,23 @@ struct TrainingRecordView: View {
             }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(alignment: .trailing) {
+                Button(action: openRecords) {
+                    HStack(spacing: Self.chevronGap) {
+                        Text("全部数据", bundle: .module)
+                            .typeStyle(TypeRamp.callout)
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: Self.chevron, weight: .semibold))
+                            .accessibilityHidden(true)
+                    }
+                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .frame(minHeight: Sizing.minimumTapTarget)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("me.records")
+            }
             HStack(alignment: .top, spacing: Self.gap) {
                 ForEach(Array(record.columns.enumerated()), id: \.offset) { _, week in
                     VStack(spacing: Self.gap) {
@@ -163,6 +182,9 @@ struct TrainingRecordView: View {
     /// The selected day's ring, white then graphite.
     private static var ringWidth: Double { 2 }
     private static var monthRow: Double { 14 }
+    /// 全部数据's chevron and the gap before it.
+    private static var chevron: Double { 12 }
+    private static var chevronGap: Double { 3 }
 }
 
 /// What a tapped day's popover says: 10月22日 · 跑步 45′ ›, opening its post, or 10月22日 · 没训练.

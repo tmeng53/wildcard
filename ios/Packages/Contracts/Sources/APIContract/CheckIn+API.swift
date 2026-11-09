@@ -186,6 +186,11 @@ extension Activity {
         try self.init(sport: sport, customSport: wire.customSport)
     }
 
+    /// A sport on 外卡记录's 最常练.
+    public init(_ wire: Components.Schemas.RecordSport) throws(ContractsError) {
+        try self.init(sport: wire.sport, customSport: wire.customSport)
+    }
+
     init(sport: Components.Schemas.Sport, customSport: String?) throws(ContractsError) {
         switch (sport, customSport) {
         case ("custom", let name?): self = .custom(try CustomSport(name))

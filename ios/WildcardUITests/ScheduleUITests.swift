@@ -74,11 +74,17 @@ final class ScheduleUITests: XCTestCase {
         let nextWeek = app.buttons["下周"]
         waitFor(nextWeek, "hittable == true", "下周 isn't in view", timeout: 10)
         XCTAssertLessThanOrEqual(
-            nextWeek.frame.maxX, app.buttons["schedule.save"].frame.minX, "下周 is hidden under 存图")
+            nextWeek.frame.maxX, app.windows.firstMatch.frame.maxX, "下周 runs off the screen")
+        // 存图 sits in the navigation bar, above the weeks.
+        XCTAssertLessThanOrEqual(
+            app.buttons["schedule.save"].frame.maxY, nextWeek.frame.minY, "存图 isn't above the weeks")
         nextWeek.tap()
         waitFor(nextWeek, "isSelected == true", "下周 didn't open", timeout: 10)
         let countdown = find(app, "schedule.countdown")
         XCTAssertTrue(countdown.waitForExistence(timeout: 10), "no countdown on next week")
+        // The poster scrolls under the title and the weeks; its foot clears the tab bar.
+        app.swipeUp()
+        settle()
         XCTAssertLessThanOrEqual(countdown.frame.maxY, tabBar.frame.minY, "the countdown sits under the tab bar")
         settle()
         keepScreenshot(named: "63-schedule-next-week")

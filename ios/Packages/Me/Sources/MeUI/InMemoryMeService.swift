@@ -1,4 +1,5 @@
 import AvatarArt
+import AvatarDomain
 import Contracts
 import DesignSystemUI
 import Foundation
@@ -67,6 +68,45 @@ public actor InMemoryMeService: MeService {
             day = day.adding(days: 1)
         }
         return TrainingRecord(today: today, trainings: trainings)
+    }
+
+    /// The sample's 外卡记录, the approved design's numbers: 27 days, mostly at 7pm and on
+    /// Tuesdays, a 6-day run, 32 days of 健康餐 to today, and Coco as the best partner.
+    static var sampleRecords: WildcardRecords {
+        func day(_ month: Int, _ day: Int) -> LocalDay {
+            (try? LocalDay(year: 2026, month: month, day: day)) ?? LocalDay(at: .now, in: .current)
+        }
+        let coco = RecordMate(
+            member: MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000c0c0") ?? UUID()),
+            character: MeCharacter(
+                nickname: "Coco",
+                outfit: Outfit([
+                    "body": "lop", "eyes": "happy", "mouth": "cat", "cheeks": "rosy", "hat": "warmup-headband",
+                    "top": "warmup-hoodie", "bottom": "warmup-joggers", "shoes": "warmup-canvas",
+                ]), persona: .shy))
+        var hours = Array(repeating: 0, count: 24)
+        for (hour, count) in [6: 2, 7: 3, 8: 3, 9: 1, 12: 2, 13: 1, 17: 2, 18: 4, 19: 7, 20: 5, 21: 3, 22: 1] {
+            hours[hour] = count
+        }
+        return WildcardRecords(
+            trainedDays: 27, minutes: 1290, longestMinutes: 95,
+            longestStreak: .init(days: 6, first: day(10, 20), last: day(10, 25)),
+            mealStreak: .init(days: 32, first: day(10, 6), last: day(11, 5)),
+            hours: hours, weekdays: [5, 6, 3, 4, 4, 3, 2],
+            sports: [
+                .init(activity: .sport("run"), days: 11), .init(activity: .sport("strength"), days: 8),
+                .init(activity: .sport("tennis"), days: 5),
+            ],
+            sportCount: 5,
+            squad: SquadStanding(
+                partner: .init(mate: coco, count: 12),
+                cheersReceived: .init(count: 86, top: .init(mate: coco, count: 23)),
+                cheersGiven: .init(count: 41, top: .init(mate: coco, count: 14)),
+                firsts: [.latestTrainer, .topSport]))
+    }
+
+    public func records() async throws(MeError) -> WildcardRecords {
+        Self.sampleRecords
     }
 
     public func overview() async throws(MeError) -> MeOverview {

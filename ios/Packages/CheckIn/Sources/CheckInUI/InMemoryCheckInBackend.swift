@@ -322,9 +322,10 @@ extension InMemoryCheckInBackend {
         return dayChallenge?.challenge.completedBy ?? .member
     }
 
-    /// 毛头 takes a few seconds over its letter to 帕帕, as the model would, so 「交接中」 shows.
+    /// 毛头 takes a few seconds over its letter to 帕帕, as the model would, so 「交接中」 shows long
+    /// enough for a UI test to find it after the pages pop back to 今天.
     public func writeLetter(in squad: SquadID) async throws(CheckInError) -> CoachLetter? {
-        try? await Task.sleep(for: .seconds(3))
+        try? await Task.sleep(for: .seconds(8))
         let letter = Self.sampleLetter(in: squad, now: .now)
         sidelineCoach = SidelineCoach(coach: letter.recipient, note: nil, letter: letter)
         return letter

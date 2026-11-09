@@ -44,6 +44,11 @@ public final class MeModel {
         self.signOutHere = signOut
     }
 
+    /// 外卡记录's model, reading through the same service.
+    public func recordsModel() -> RecordsModel {
+        RecordsModel(service: service)
+    }
+
     public var overview: MeOverview? {
         if case .loaded(let overview) = load { overview } else { nil }
     }

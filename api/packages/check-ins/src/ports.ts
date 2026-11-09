@@ -1,4 +1,5 @@
-import type { CheckInId, CheckInRecord, MemberId, SquadId } from './domain/check-in.js';
+import type { CheckInId, CheckInRecord, LocalDay, MemberId, SquadId } from './domain/check-in.js';
+import type { RecordTraining } from './domain/records.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
 import type { DayRange } from './domain/day-range.js';
 import type { CheckInKind, PostCursor } from './domain/post-cursor.js';
@@ -19,6 +20,20 @@ export type InsertOutcome =
  */
 export type UpdateOutcome =
   { readonly saved: true } | { readonly saved: false; readonly taken: 'photo' | 'workout' };
+
+/** The rows 外卡记录 reads, as `CheckInStore.recordRows` gives them. */
+export interface RecordRows {
+  /** The member's every 练了, and squadmates' shared with the squad; `inSquad` when shared with it. */
+  readonly trainings: readonly (RecordTraining & {
+    readonly member: MemberId;
+    readonly inSquad: boolean;
+  })[];
+  readonly healthyMealDays: readonly LocalDay[];
+  /** Reactions on the member's check-ins, by squadmate. */
+  readonly received: ReadonlyMap<MemberId, number>;
+  /** The member's reactions on squadmates' check-ins, by squadmate. */
+  readonly given: ReadonlyMap<MemberId, number>;
+}
 
 /** Where check-ins are kept. */
 export interface CheckInStore {
@@ -65,6 +80,16 @@ export interface CheckInStore {
     readonly from: string;
     readonly to: string;
   }): Promise<TrainingDay[]>;
+  /**
+   * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
+   * to `squad`; the days the member logged a 健康餐; and the reactions between the member and
+   * each squadmate, counted by squadmate.
+   */
+  recordRows(query: {
+    readonly member: MemberId;
+    readonly squad?: SquadId;
+    readonly mates: readonly MemberId[];
+  }): Promise<RecordRows>;
   /** A member's own check-ins, newest day first. */
   listForMember(query: DayRange & { readonly member: MemberId }): Promise<CheckInRecord[]>;
   /**

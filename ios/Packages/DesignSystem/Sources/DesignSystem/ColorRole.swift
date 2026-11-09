@@ -187,6 +187,8 @@ public enum ColorRole: String, CaseIterable, Sendable {
     case bgBrand
     /// Labels and icons on `bgBrand`.
     case fgOnBrand
+    /// Secondary words on `bgBrand`: units and captions on a graphite tile (外卡记录).
+    case fgOnBrandMuted
 
     /// The scene's accent: primary buttons and selection on scene screens, nothing else.
     case bgAccent
@@ -253,6 +255,7 @@ public enum ColorRole: String, CaseIterable, Sendable {
         case .fgLimited: .fixed(Palette.limited)
         case .bgBrand: .fixed(Palette.brand)
         case .fgOnBrand: .fixed(Palette.onBrand)
+        case .fgOnBrandMuted: .fixed(Palette.brandPen)
         case .bgAccent: .scene(\.accent)
         case .bgAccentSubtle: .scene(\.accentSubtle)
         case .fgOnAccent: .scene(\.onAccent)

@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarArt
 import AvatarDomain
 import CheckInDomain
 import Contracts

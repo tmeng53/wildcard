@@ -4341,6 +4341,268 @@ extension Components {
                 case checkIns
             }
         }
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MemberRecords`.
+        public struct MemberRecords: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/version`.
+            public var version: Components.Schemas.MemberRecords.VersionPayload
+            /// Days with a 练了.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/trainedDays`.
+            public var trainedDays: Swift.Int
+            /// Minutes of every 练了 that says how long it took.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/minutes`.
+            public var minutes: Swift.Int
+            /// The longest single 练了; left out when none says how long.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/longestMinutes`.
+            public var longestMinutes: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/longestStreak`.
+            public var longestStreak: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
+            public var mealStreak: Components.Schemas.RecordStreak?
+            /// 练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
+            public var hours: [Swift.Int]
+            /// Days trained by weekday, Monday first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/weekdays`.
+            public var weekdays: [Swift.Int]
+            /// The sports trained on the most days, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/sports`.
+            public var sports: [Components.Schemas.RecordSport]
+            /// How many different sports the member trained.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/sportCount`.
+            public var sportCount: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/squad`.
+            public var squad: Components.Schemas.SquadRecords?
+            /// Creates a new `MemberRecords`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - trainedDays: Days with a 练了.
+            ///   - minutes: Minutes of every 练了 that says how long it took.
+            ///   - longestMinutes: The longest single 练了; left out when none says how long.
+            ///   - longestStreak:
+            ///   - mealStreak:
+            ///   - hours: 练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            ///   - weekdays: Days trained by weekday, Monday first.
+            ///   - sports: The sports trained on the most days, most first.
+            ///   - sportCount: How many different sports the member trained.
+            ///   - squad:
+            public init(
+                version: Components.Schemas.MemberRecords.VersionPayload,
+                trainedDays: Swift.Int,
+                minutes: Swift.Int,
+                longestMinutes: Swift.Int? = nil,
+                longestStreak: Components.Schemas.RecordStreak? = nil,
+                mealStreak: Components.Schemas.RecordStreak? = nil,
+                hours: [Swift.Int],
+                weekdays: [Swift.Int],
+                sports: [Components.Schemas.RecordSport],
+                sportCount: Swift.Int,
+                squad: Components.Schemas.SquadRecords? = nil
+            ) {
+                self.version = version
+                self.trainedDays = trainedDays
+                self.minutes = minutes
+                self.longestMinutes = longestMinutes
+                self.longestStreak = longestStreak
+                self.mealStreak = mealStreak
+                self.hours = hours
+                self.weekdays = weekdays
+                self.sports = sports
+                self.sportCount = sportCount
+                self.squad = squad
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case trainedDays
+                case minutes
+                case longestMinutes
+                case longestStreak
+                case mealStreak
+                case hours
+                case weekdays
+                case sports
+                case sportCount
+                case squad
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RecordStreak`.
+        public struct RecordStreak: Codable, Hashable, Sendable {
+            /// Days in the run.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/days`.
+            public var days: Swift.Int
+            /// Its first day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/from`.
+            public var from: Swift.String
+            /// Its last day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/to`.
+            public var to: Swift.String
+            /// Creates a new `RecordStreak`.
+            ///
+            /// - Parameters:
+            ///   - days: Days in the run.
+            ///   - from: Its first day.
+            ///   - to: Its last day.
+            public init(
+                days: Swift.Int,
+                from: Swift.String,
+                to: Swift.String
+            ) {
+                self.days = days
+                self.from = from
+                self.to = to
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+                case from
+                case to
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RecordSport`.
+        public struct RecordSport: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RecordSport/sport`.
+            public var sport: Components.Schemas.Sport
+            /// The name of a `custom` sport; a listed sport has none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordSport/customSport`.
+            public var customSport: Swift.String?
+            /// Days the member trained it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordSport/days`.
+            public var days: Swift.Int
+            /// Creates a new `RecordSport`.
+            ///
+            /// - Parameters:
+            ///   - sport:
+            ///   - customSport: The name of a `custom` sport; a listed sport has none.
+            ///   - days: Days the member trained it.
+            public init(
+                sport: Components.Schemas.Sport,
+                customSport: Swift.String? = nil,
+                days: Swift.Int
+            ) {
+                self.sport = sport
+                self.customSport = customSport
+                self.days = days
+            }
+            public enum CodingKeys: String, CodingKey {
+                case sport
+                case customSport
+                case days
+            }
+        }
+        /// How the member stands in their squad, from what squadmates shared with it; left out outside a squad. `partner` is the squadmate who trained on the same days as the member the most.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SquadRecords`.
+        public struct SquadRecords: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadRecords/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SquadRecords/partner`.
+            public var partner: Components.Schemas.RecordMateCount?
+            /// - Remark: Generated from `#/components/schemas/SquadRecords/cheersReceived`.
+            public var cheersReceived: Components.Schemas.RecordCheers
+            /// - Remark: Generated from `#/components/schemas/SquadRecords/cheersGiven`.
+            public var cheersGiven: Components.Schemas.RecordCheers
+            /// What the member alone is first at in the squad: `latestTrainer`, `earliestTrainer`, `topSport` (their most trained sport) or `mostDays`. Never a tie, never a last place; more may come, so skip an unknown one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadRecords/firsts`.
+            public var firsts: [Swift.String]
+            /// Creates a new `SquadRecords`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - partner:
+            ///   - cheersReceived:
+            ///   - cheersGiven:
+            ///   - firsts: What the member alone is first at in the squad: `latestTrainer`, `earliestTrainer`, `topSport` (their most trained sport) or `mostDays`. Never a tie, never a last place; more may come, so skip an unknown one.
+            public init(
+                id: Swift.String,
+                partner: Components.Schemas.RecordMateCount? = nil,
+                cheersReceived: Components.Schemas.RecordCheers,
+                cheersGiven: Components.Schemas.RecordCheers,
+                firsts: [Swift.String]
+            ) {
+                self.id = id
+                self.partner = partner
+                self.cheersReceived = cheersReceived
+                self.cheersGiven = cheersGiven
+                self.firsts = firsts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case partner
+                case cheersReceived
+                case cheersGiven
+                case firsts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RecordMateCount`.
+        public struct RecordMateCount: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/RecordMateCount/memberId`.
+            public var memberId: Swift.String
+            /// Shared days, or reactions.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordMateCount/count`.
+            public var count: Swift.Int
+            /// Creates a new `RecordMateCount`.
+            ///
+            /// - Parameters:
+            ///   - memberId:
+            ///   - count: Shared days, or reactions.
+            public init(
+                memberId: Swift.String,
+                count: Swift.Int
+            ) {
+                self.memberId = memberId
+                self.count = count
+            }
+            public enum CodingKeys: String, CodingKey {
+                case memberId
+                case count
+            }
+        }
+        /// Reactions and the squadmate with the most (`top`, none at 0).
+        ///
+        /// - Remark: Generated from `#/components/schemas/RecordCheers`.
+        public struct RecordCheers: Codable, Hashable, Sendable {
+            /// Reactions, all time, between the member and their squadmates.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordCheers/count`.
+            public var count: Swift.Int
+            /// - Remark: Generated from `#/components/schemas/RecordCheers/top`.
+            public var top: Components.Schemas.RecordMateCount?
+            /// Creates a new `RecordCheers`.
+            ///
+            /// - Parameters:
+            ///   - count: Reactions, all time, between the member and their squadmates.
+            ///   - top:
+            public init(
+                count: Swift.Int,
+                top: Components.Schemas.RecordMateCount? = nil
+            ) {
+                self.count = count
+                self.top = top
+            }
+            public enum CodingKeys: String, CodingKey {
+                case count
+                case top
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/TrainingRecord`.
         public struct TrainingRecord: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/TrainingRecord/version`.
