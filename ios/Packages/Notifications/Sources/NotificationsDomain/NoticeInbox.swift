@@ -71,6 +71,8 @@ public final class NoticeInbox {
     /// Notices told while the app was in front and 通知 wasn't open, for its banner to drop in
     /// (`takeToldLive()`), the earliest first.
     public private(set) var toldLive: [Notice] = []
+    /// Every notice ever put in `toldLive`, so the stream and a push's `catchUp()` tell each once.
+    private var toldIDs: Set<NoticeID> = []
 
     /// The most pages one load or one scroll reads in a row while none of them has anything this
     /// build can show, before waiting for the member to scroll again.
@@ -160,8 +162,7 @@ public final class NoticeInbox {
         let newest = notices.first?.id
         await load()
         guard !isOpen, let newest else { return }
-        let known = Set(toldLive.map(\.id))
-        toldLive += notices.filter { $0.id > newest && !known.contains($0.id) }.reversed()
+        for notice in notices.filter({ $0.id > newest }).reversed() { tellLive(notice) }
     }
 
     /// The notices heard since the last call, the earliest first: each is given once.
@@ -225,8 +226,13 @@ public final class NoticeInbox {
             guard let notice, !notices.contains(where: { $0.id == notice.id }) else { return }
             notices.insert(notice, at: notices.firstIndex { $0.id < notice.id } ?? notices.endIndex)
             // On the open page it shows bold, and is read; anywhere else its banner drops in.
-            if isOpen { await markNewestSeen() } else { toldLive.append(notice) }
+            if isOpen { await markNewestSeen() } else { tellLive(notice) }
         }
+    }
+
+    private func tellLive(_ notice: Notice) {
+        guard toldIDs.insert(notice.id).inserted else { return }
+        toldLive.append(notice)
     }
 
     /// The open page pulled: loads the newest notices and marks them read, keeping the rows that

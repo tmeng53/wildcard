@@ -111,8 +111,9 @@ struct AppRoot: View {
         }
         .onAppear {
             // A push while the tabs are up drops in as their banner, not iOS's.
-            delegate.arrived = { [app, $pushesInFront] in
-                guard app.showsTabs else { return false }
+            // Only a push 通知 keeps (not an admin's 战报-stuck or test push) becomes its banner.
+            delegate.arrived = { [app, $pushesInFront] category in
+                guard app.showsTabs, Push.toldInNotices.contains(category) else { return false }
                 $pushesInFront.wrappedValue += 1
                 return true
             }

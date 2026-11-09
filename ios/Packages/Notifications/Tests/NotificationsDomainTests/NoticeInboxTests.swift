@@ -1,6 +1,6 @@
 import Contracts
 import Foundation
-import NotificationsDomain
+@testable import NotificationsDomain
 import Testing
 
 /// A member's notices on the server, a page of `size` at a time, newest first.
@@ -20,6 +20,10 @@ private actor FakeNotices: NoticeSource {
 
     func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage {
         reads += 1
+        if let duringRead {
+            self.duringRead = nil
+            await duringRead()
+        }
         if unreachable { throw .unavailable }
         let older = all.filter { notice in before.map { notice.id < $0 } ?? true }.sorted { $0.id > $1.id }
         let page = Array(older.prefix(size))
@@ -54,6 +58,9 @@ private actor FakeNotices: NoticeSource {
     func set(refusals: [NotificationsError]) { self.refusals = refusals }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
     func add(_ notice: Notice) { all.append(notice) }
+    /// Runs once while the next page is on its way, as the live stream may tell a notice then.
+    var duringRead: (@Sendable () async -> Void)?
+    func set(duringRead: @escaping @Sendable () async -> Void) { self.duringRead = duringRead }
 }
 
 @Test @MainActor func theBellShowsItsDotOnlyForANoticeNewerThanTheSeenOne() async {
@@ -379,6 +386,20 @@ private actor FakeNotices: NoticeSource {
     await inbox.catchUp()
     #expect(inbox.takeToldLive().map(\.id.rawValue) == [3, 4])
     // A second push finds nothing newer.
+    await inbox.catchUp()
+    #expect(inbox.takeToldLive().isEmpty)
+}
+
+@Test @MainActor func aNoticeToldLiveWhileAPushReadsThePageIsToldOnce() async {
+    let server = FakeNotices([notice(1)])
+    let inbox = NoticeInbox(source: server)
+    await inbox.load()
+    await server.add(notice(2))
+    // The stream tells 2, and its banner takes it, while the push's read is on its way.
+    await server.set(duringRead: { @MainActor in
+        await inbox.hear(.told(notice(2)))
+        #expect(inbox.takeToldLive().map(\.id.rawValue) == [2])
+    })
     await inbox.catchUp()
     #expect(inbox.takeToldLive().isEmpty)
 }

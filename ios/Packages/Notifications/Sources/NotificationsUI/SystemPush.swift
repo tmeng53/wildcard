@@ -30,16 +30,16 @@ public struct SystemPush: PushSystem {
 /// Shows a notification that arrives while the app is open, and tells the app when the member
 /// taps one. iOS keeps its delegate weakly, so the app delegate holds this.
 public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate, Sendable {
-    private let arrived: @MainActor @Sendable () -> Bool
+    private let arrived: @MainActor @Sendable (String) -> Bool
     private let opened: @MainActor @Sendable (OpenedNotification) -> Void
 
     /// - Parameters:
-    ///   - arrived: a notification arrived while the app is in front; true when the app tells it
-    ///     in its own banner (the one that drops in over any page), so iOS shows only it in
-    ///     Notification Center, false for iOS's banner.
+    ///   - arrived: a notification of a category arrived while the app is in front; true when
+    ///     the app tells it in its own banner (the one that drops in over any page), so iOS shows
+    ///     only it in Notification Center, false for iOS's banner.
     ///   - opened: the member tapped a notification, which opened the app.
     public init(
-        arrived: @escaping @MainActor @Sendable () -> Bool,
+        arrived: @escaping @MainActor @Sendable (String) -> Bool,
         opened: @escaping @MainActor @Sendable (OpenedNotification) -> Void
     ) {
         (self.arrived, self.opened) = (arrived, opened)
@@ -54,8 +54,9 @@ public final class NotificationTaps: NSObject, UNUserNotificationCenterDelegate,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let done = PresentationCompletion(call: completionHandler)
+        let category = notification.request.content.categoryIdentifier
         Task { @MainActor [arrived] in
-            done.call(arrived() ? [.list] : [.banner, .list, .sound])
+            done.call(arrived(category) ? [.list] : [.banner, .list, .sound])
         }
     }
 
