@@ -44,7 +44,7 @@ final class NoticeUITests: XCTestCase {
     }
 
     /// A teammate comments while I'm on 我: its banner drops in there, on glass with its 查看,
-    /// whole on screen, and 查看 opens the post on 动态.
+    /// whole on screen, and 查看 opens the post's own page.
     func testACommentToldWhileTheAppIsOpenDropsInOnAnyPage() {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -72,7 +72,11 @@ final class NoticeUITests: XCTestCase {
         }
 
         banner.tap()
-        waitFor(tabButton("tab.feed", in: app), "isSelected == true", "查看 didn't open 动态", timeout: Self.wait)
+        // 查看 opens the comment's post, its own page over 动态, which hides the tab bar. The sample
+        // notice's post isn't in the sample feed, so that page says it is gone.
+        let post = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == 'post.field' OR label == '这条动态不见了'")).firstMatch
+        XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "查看 didn't open the comment's post")
         waitFor(banner, "exists == false", "the banner stayed after its tap", timeout: Self.wait)
     }
 

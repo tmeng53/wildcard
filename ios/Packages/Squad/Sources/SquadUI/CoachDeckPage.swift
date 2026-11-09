@@ -7,8 +7,10 @@ import SwiftUI
 
 /// The coach's page (the approved deck, 2026-11-08), pushed from a tap on the coach on 今天: what
 /// the coach has for the member that they haven't seen, a stack of cards, one thing each, oldest
-/// on top. Swiped right, a card flies into 以前 (the clock, top right, which gives a nudge; no
-/// count); nothing turns by itself. Top right, from the left: 招聘会, 简历, 以前. Once all are seen,
+/// on top. Swiped right, a card flies into 以前 (the clock, top right, which gives a nudge);
+/// nothing turns by itself. Under the stack a line says how many are left and that a swipe right
+/// puts the top one away, and on opening the top card leans right and back once to show it
+/// (Tracy, 2026-11-09). Top right, from the left: 招聘会, 简历, 以前. Once all are seen,
 /// the last card says so with 看以前的.
 public struct CoachDeckPage: View {
     private let deck: CoachDeck
@@ -19,6 +21,8 @@ public struct CoachDeckPage: View {
     /// The top card's drag, and where it flies once let go far enough.
     @State private var drag: CGSize = .zero
     @State private var flying: CoachPageCard.Key?
+    /// The top card has leaned right and back once since the page opened.
+    @State private var nudged = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -53,7 +57,24 @@ public struct CoachDeckPage: View {
             // A swipe right on a card puts it away; going back is the edge swipe or the button.
             .backSwipeFromEdgeOnly()
             .haptic(.tick, trigger: deck.putAway)
-            .task { await deck.reload() }
+            .task {
+                await deck.reload()
+                await nudge()
+            }
+    }
+
+    /// Once a page opening, the top card leans right and springs back, as a swipe would start.
+    private func nudge() async {
+        guard !nudged, !reduceMotion, !deck.stack.isEmpty else { return }
+        try? await Task.sleep(for: .seconds(DeckMetrics.nudgeDelay))
+        guard !Task.isCancelled, !nudged, drag == .zero, flying == nil else { return }
+        nudged = true
+        withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) {
+            drag = CGSize(width: DeckMetrics.nudge, height: 0)
+        }
+        try? await Task.sleep(for: .seconds(Motion.sheet.response))
+        guard drag.width == DeckMetrics.nudge else { return }
+        withAnimation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion)) { drag = .zero }
     }
 
     @ViewBuilder private var content: some View {
@@ -63,8 +84,32 @@ public struct CoachDeckPage: View {
         case .failed:
             StateView.offline(retryIdentifier: "coachDeck.retry") { Task { await deck.reload() } }
         default:
-            stack
+            VStack(spacing: Space.xs) {
+                stack
+                if !deck.stack.isEmpty { hint(left: deck.stack.count - 1) }
+            }
         }
+    }
+
+    /// 「还有 3 张 · 右滑收起 →」, or 「最后一张 · 右滑收起 →」 on the last one.
+    private func hint(left: Int) -> some View {
+        HStack(spacing: Space.xxs) {
+            if left > 0 {
+                Text(copy: "还有 \(left) 张 · 右滑收起", bundle: .module)
+            } else {
+                Text(copy: "最后一张 · 右滑收起", bundle: .module)
+            }
+            Image(systemName: "arrow.right").accessibilityHidden(true)
+        }
+        .typeStyle(TypeRamp.caption)
+        .foregroundStyle(Color(role: .fgMuted, in: theme))
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("coachDeck.hint")
+        .contentTransition(.numericText())
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: left)
     }
 
     /// The top card over the next two, which peek out under it.

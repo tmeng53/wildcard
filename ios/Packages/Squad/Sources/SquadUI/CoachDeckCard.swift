@@ -317,5 +317,9 @@ enum DeckMetrics {
     static let squash: Double = 0.08
     /// Seconds 接受挑战's stamp shows before the card goes into 以前.
     static let stampHold: Double = 0.6
+    /// How far right the top card leans when the page opens, to show it swipes.
+    static let nudge: Double = 30
+    /// Seconds after the page opens before the top card leans.
+    static let nudgeDelay: Double = 0.6
 }
 #endif

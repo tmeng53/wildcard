@@ -8,7 +8,7 @@ import FeedDomain
 import SwiftUI
 
 /// What the member's 「…」 on their own post opens, around the feed or a post's own page: the
-/// compose page to edit it, full screen, and deleting it once the menu's question was answered. Only the surface
+/// compose page to edit it, full screen, 存成绩卡's page, and deleting it once the menu's question was answered. Only the surface
 /// on top (`isActive`) presents them, as with the emoji bar.
 struct PostManaging: ViewModifier {
     @Environment(\.sceneTheme) private var theme
@@ -25,6 +25,10 @@ struct PostManaging: ViewModifier {
                         .environment(\.sceneTheme, theme)
                         .accentTone(.brand)
                 }
+            }
+            .sheet(item: scoreCard) { card in
+                ScoreCardSheet(model: card, store: model.store) { model.scoreCard = nil }
+                    .environment(\.sceneTheme, theme)
             }
             .onChange(of: model.deleting) { _, post in
                 guard isActive, let post else { return }
@@ -46,6 +50,14 @@ struct PostManaging: ViewModifier {
             isActive && model.editing != nil
         } set: {
             if !$0 { model.editing = nil }
+        }
+    }
+
+    private var scoreCard: Binding<ScoreCardModel?> {
+        Binding {
+            isActive ? model.scoreCard : nil
+        } set: {
+            if $0 == nil { model.scoreCard = nil }
         }
     }
 
