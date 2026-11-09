@@ -2,8 +2,8 @@
 import DesignSystem
 import SwiftUI
 
-/// My week: what I trained, my count against my plan, and Monday to Sunday, each day with what it
-/// holds. No calories or body numbers.
+/// My week: what I trained, my count against my plan (the folded capsule says it), and Monday to
+/// Sunday, each day with what it holds. No calories or body numbers.
 public struct MyWeek: Sendable, Hashable {
     public let done: Int
     public let planned: Int
@@ -14,7 +14,7 @@ public struct MyWeek: Sendable, Hashable {
     /// Monday first, seven days: what each day shows once picked; empty for a week whose days
     /// can't be picked.
     public let details: [WeekDayDetail]
-    /// Today's challenge from the coach, once accepted: a row under today's line.
+    /// Today's challenge from the coach, once accepted: the squad page's last row.
     public let challenge: WeekChallenge?
 
     public init(
@@ -44,10 +44,12 @@ public struct WeekChallenge: Sendable, Hashable {
     }
 }
 
-/// Under today's line on my week, past a hairline: the flag in a graphite disc, the challenge and
-/// who set it, then 我完成了 (graphite) or 「✓ 已完成」.
+/// The squad page's last row, past a hairline: the flag in a graphite disc, the challenge and
+/// who set it, then 我完成了 (graphite) or 「✓ 已完成」. Done, the flag turns into a check with a
+/// success haptic (Tracy, 2026-11-09: a check, no stamp).
 struct ChallengeRow: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let challenge: WeekChallenge
     let complete: (() -> Void)?
 
@@ -57,7 +59,8 @@ struct ChallengeRow: View {
                 .fill(Color(role: .borderDefault, in: theme))
                 .frame(height: Sizing.hairline)
             HStack(spacing: Space.s) {
-                Image(systemName: "flag.fill")
+                Image(systemName: challenge.isDone ? "checkmark" : "flag.fill")
+                    .contentTransition(.symbolEffect(.replace))
                     .font(.system(size: Sizing.smallIcon * 0.75, weight: .semibold))
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                     .frame(width: Sizing.smallIcon * 1.6, height: Sizing.smallIcon * 1.6)
@@ -90,6 +93,8 @@ struct ChallengeRow: View {
             }
         }
         .padding(.top, Space.s)
+        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: challenge.isDone)
+        .haptic(.done, trigger: challenge.isDone) { wasDone, isDone in !wasDone && isDone }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squadcard.challenge")
     }
