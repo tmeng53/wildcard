@@ -122,7 +122,8 @@ struct DayCircle: View {
     }
 }
 /// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right. A day
-/// with more than one session lists each on its own line under the first, so none is cut off.
+/// with more than one session shows the first and how many more (「玩耍 60 分钟 +2」, Tracy
+/// 2026-11-09), so the line never runs into the meals.
 struct DayLine: View {
     @Environment(\.sceneTheme) private var theme
     let detail: WeekDayDetail
@@ -138,12 +139,16 @@ struct DayLine: View {
                 }
                 .typeStyle(TypeRamp.footnoteEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
-                VStack(alignment: .leading, spacing: Space.xxs) {
-                    ForEach(Array(detail.lines.enumerated()), id: \.offset) { _, line in
-                        Text(verbatim: line)
-                            .typeStyle(detail.isPlan ? TypeRamp.footnote : TypeRamp.footnoteEmphasis)
-                            .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
-                    }
+                .layoutPriority(1)
+                Text(verbatim: detail.lines.first ?? "")
+                    .typeStyle(detail.isPlan ? TypeRamp.footnote : TypeRamp.footnoteEmphasis)
+                    .foregroundStyle(Color(role: detail.isPlan ? .fgMuted : .fgDefault, in: theme))
+                    .accessibilityLabel(Text(verbatim: detail.lines.joined(separator: " · ")))
+                if detail.lines.count > 1 {
+                    InkTag(Text(verbatim: "+\(detail.lines.count - 1)"))
+                        .padding(.leading, Space.xs)
+                        .accessibilityHidden(true)
+                        .accessibilityIdentifier("squadcard.dayLine.more")
                 }
             }
             .lineLimit(1)
