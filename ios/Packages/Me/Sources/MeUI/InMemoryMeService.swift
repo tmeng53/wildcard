@@ -189,8 +189,8 @@ extension MateSchedule {
             weekStart: day.weekStart,
             days: [tennis, .rest, run, tennis, strength, tennis, .rest],
             marks: [
-                .trained(.sport("tennis")), .none, .trained(.sport("run")), .disclaimer,
-                .trained(.sport("strength")), .none, .none,
+                .trained([.sport("tennis")]), .none, .trained([.sport("run")]), .disclaimer,
+                .trained([.sport("strength")]), .none, .none,
             ],
             fuel: [.suggested(.veggies), .suggested(.lessBubbleTea)],
             firstWeek: day.weekStart.adding(days: -14), today: day)

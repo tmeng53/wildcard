@@ -152,7 +152,7 @@ describe('when a count of days trained was reached', () => {
 });
 
 describe('a day’s mark on the 出赛表', () => {
-  it('names the latest 练了’s sport, wins over a 请假条, and is none without either', () => {
+  it('names the latest 练了’s sport and every sport trained, wins over a 请假条, and is none without either', () => {
     const swim = {
       ...checkIn('trained', { day: '2026-11-03', createdAt: '2026-11-03T20:00:00.000Z' }),
       training: Training.parse({ sport: 'swim' }),
@@ -164,7 +164,11 @@ describe('a day’s mark on the 出赛表', () => {
       checkIn('disclaimer', { day: '2026-11-04' }),
       checkIn('healthyMeal', { day: '2026-11-05' }),
     ];
-    expect(markOn(checkIns, '2026-11-03')).toStrictEqual({ status: 'trained', sport: 'swim' });
+    expect(markOn(checkIns, '2026-11-03')).toStrictEqual({
+      status: 'trained',
+      sport: 'swim',
+      sports: [{ sport: 'run' }, { sport: 'swim' }],
+    });
     expect(markOn(checkIns, '2026-11-04')).toStrictEqual({ status: 'disclaimer' });
     expect(markOn(checkIns, '2026-11-05')).toStrictEqual({ status: 'none' });
   });

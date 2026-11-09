@@ -55,11 +55,6 @@ public struct ScheduleDayRow: View {
         (self.fadesRest, self.marksAtEnd) = (fadesRest, marksAtEnd)
     }
 
-    /// What a day says: the sport logged on a day trained, else the plan.
-    public static func shown(plan: PlanDay, mark: DayMark) -> PlanDay {
-        if case .trained(let activity) = mark { .train(activity) } else { plan }
-    }
-
     private var isFaded: Bool { fadesRest && shown == .rest }
 
     public var body: some View {

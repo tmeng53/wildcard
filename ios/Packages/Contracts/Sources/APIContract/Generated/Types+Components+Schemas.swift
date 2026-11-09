@@ -10433,25 +10433,62 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DayMark/customSport`.
             public var customSport: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/DayMark/SportsPayload`.
+            public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/DayMark/SportsPayload/sport`.
+                public var sport: Components.Schemas.Sport
+                /// The custom sport’s name, for `sport: "custom"`.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DayMark/SportsPayload/customSport`.
+                public var customSport: Swift.String?
+                /// Creates a new `SportsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - sport:
+                ///   - customSport: The custom sport’s name, for `sport: "custom"`.
+                public init(
+                    sport: Components.Schemas.Sport,
+                    customSport: Swift.String? = nil
+                ) {
+                    self.sport = sport
+                    self.customSport = customSport
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case sport
+                    case customSport
+                }
+            }
+            /// Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DayMark/sports`.
+            public typealias SportsPayload = [Components.Schemas.DayMark.SportsPayloadPayload]
+            /// Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DayMark/sports`.
+            public var sports: Components.Schemas.DayMark.SportsPayload?
             /// Creates a new `DayMark`.
             ///
             /// - Parameters:
             ///   - status:
             ///   - sport: The 训练’s sport; only for `trained`.
             ///   - customSport: The custom sport’s name, for `sport: "custom"`.
+            ///   - sports: Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers.
             public init(
                 status: Components.Schemas.DayMark.StatusPayload,
                 sport: Swift.String? = nil,
-                customSport: Swift.String? = nil
+                customSport: Swift.String? = nil,
+                sports: Components.Schemas.DayMark.SportsPayload? = nil
             ) {
                 self.status = status
                 self.sport = sport
                 self.customSport = customSport
+                self.sports = sports
             }
             public enum CodingKeys: String, CodingKey {
                 case status
                 case sport
                 case customSport
+                case sports
             }
         }
         /// - Remark: Generated from `#/components/schemas/OpenedGift`.

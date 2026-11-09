@@ -34,7 +34,7 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
             let marks = (0..<WeeklyPlan.dayCount).map { index -> DayMark in
                 let day = weekStart.adding(days: index)
                 guard day <= today, case .train(let planned) = plan[index] else { return .none }
-                let trained = DayMark.trained(planned ?? .sport("run"))
+                let trained = DayMark.trained([planned ?? .sport("run")])
                 if day == today { return trained }
                 // Most planned days trained; now and then a 请假条 or a day missed.
                 switch (index + offset * 3 + 21) % 7 {

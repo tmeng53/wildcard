@@ -140,6 +140,21 @@ const DayMarkBody = z
     customSport: z.string().optional().meta({
       description: 'The custom sport’s name, for `sport: "custom"`.',
     }),
+    sports: z
+      .array(
+        z.strictObject({
+          sport: SportKey,
+          customSport: z.string().optional().meta({
+            description: 'The custom sport’s name, for `sport: "custom"`.',
+          }),
+        }),
+      )
+      .optional()
+      .meta({
+        description:
+          'Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by ' +
+          'older servers.',
+      }),
   })
   .openapi('DayMark');
 
@@ -372,7 +387,9 @@ export function titles(deps: {
           week: {
             ...week,
             days: [...week.days],
-            marks: [...week.marks],
+            marks: week.marks.map((mark) =>
+              mark.status === 'trained' ? { ...mark, sports: [...mark.sports] } : mark,
+            ),
           },
           ...wireBoard(
             { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle },
