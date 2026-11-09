@@ -146,7 +146,9 @@ struct PostCard: View {
     private var scoreCardItem: [GlassMenuItem] {
         guard model.canSaveScoreCard(post) else { return [] }
         return [
-            GlassMenuItem(Text(copy: "存成绩卡", bundle: .module), systemImage: "square.and.arrow.down", id: "post.scoreCard") {
+            GlassMenuItem(
+                Text(copy: "存成绩卡", bundle: .module), systemImage: "square.and.arrow.down", id: "post.scoreCard"
+            ) {
                 model.openScoreCard(post)
             }
         ]
