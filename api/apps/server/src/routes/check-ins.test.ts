@@ -1439,6 +1439,48 @@ describe('a 训练 from Apple Health', () => {
     ).toStrictEqual([201, 'saved']);
   });
 
+  it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const hr = [
+      { t: 0, bpm: 90 },
+      { t: 60, bpm: 150 },
+    ];
+    const zones = { light: 107, moderate: 119, vigorous: 144, peak: 175 };
+    const put = async (series: Record<string, unknown>, id = randomUUID()) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: { sport: 'run', workout: workout(randomUUID(), { route: undefined, series }) },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    expect(await put({ laps: [50, 52], zones })).toStrictEqual([400, 'REQUEST_INVALID']);
+    expect(await put({ hr, zones: { ...zones, moderate: 100 } })).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+
+    const id = randomUUID();
+    expect(await put({ hr, zones }, id)).toStrictEqual([201, 'saved']);
+    const { body } = await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token });
+    const shown = z
+      .object({
+        checkIn: z.object({ training: z.object({ workout: z.object({ series: z.unknown() }) }) }),
+      })
+      .parse(body).checkIn.training.workout.series;
+    expect(shown).toStrictEqual({ hr, zones });
+  });
+
   it('keeps a map and a chart together, each in its place, and an older build’s edit keeps both', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

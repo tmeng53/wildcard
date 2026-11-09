@@ -73,3 +73,21 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     sharing.laps = false
     #expect(sharing.keptTiles(of: swim) == [])
 }
+
+@Test func zonesArePlacedFromTheBirthdayAndRestingRateOnly() throws {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = try #require(TimeZone(identifier: "UTC"))
+    let curve = [HeartRatePoint(seconds: 0, bpm: 100), HeartRatePoint(seconds: 60, bpm: 150)]
+    // 2026-11-08 12:00 UTC.
+    let workout = Workout(
+        source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "HR"),
+        startedAt: Timestamp(millisecondsSince1970: 1_794_139_200_000),
+        endedAt: Timestamp(millisecondsSince1970: 1_794_139_260_000), summary: WorkoutSummary(avgHr: 125),
+        series: WorkoutSeries(heartRate: curve), tilePosition: 1)
+    let imported = ImportedWorkout(workout: workout, activity: nil, restingBpm: 60)
+    let zoned = imported.withZones(birthday: DateComponents(year: 1992, month: 3, day: 1), calendar: calendar)
+    #expect(zoned.series?.zones == HeartRateZones(age: 34, restingBpm: 60))
+    #expect(zoned.series?.heartRate == curve)
+    #expect(zoned.tilePosition == 1)
+    #expect(imported.withZones(birthday: nil, calendar: calendar) == workout)
+}
