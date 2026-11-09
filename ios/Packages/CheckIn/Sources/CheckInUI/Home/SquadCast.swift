@@ -55,6 +55,8 @@ final class SquadCast {
     private(set) var handover: CoachHandover?
     /// Where the coach would stand while the squad has none: an empty spot that opens 教练招聘会.
     private(set) var vacancy: StagePoint?
+    /// Until when the coach's last move plays, so its whistle for news doesn't cut one short.
+    @ObservationIgnored private var coachBusyUntil = Date.distantPast
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
     /// What the coach last saw on the home, for its next cue, and whose eyes they were.
@@ -230,9 +232,18 @@ final class SquadCast {
         }
     }
 
-    private func play(_ move: CoachCharacter.Move) {
-        guard let coach else { return }
-        try? coach.player.play(CoachCharacter.clip(move, coach: coach.speaker.id.rawValue))
+    /// The coach whistles because its page has news, unless another of its moves is still playing
+    /// or the coaches are changing places.
+    func coachWhistlesForNews(now: Date = .now) {
+        guard handover == nil, now >= coachBusyUntil else { return }
+        play(.whistle, now: now)
+    }
+
+    private func play(_ move: CoachCharacter.Move, now: Date = .now) {
+        guard let coach, let clip = try? CoachCharacter.clip(move, coach: coach.speaker.id.rawValue),
+            (try? coach.player.play(clip, now: now)) != nil
+        else { return }
+        coachBusyUntil = now.addingTimeInterval(clip.duration)
     }
 
     /// The member's character, made again when what they wear or their persona changes (a kit
