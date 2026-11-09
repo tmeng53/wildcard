@@ -716,6 +716,91 @@ describe('PUT /me/profile', () => {
   });
 });
 
+describe('PUT and DELETE /me/birthday', () => {
+  const putBirthday = (token: string, body: unknown) =>
+    send('/me/birthday', {
+      method: 'PUT',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  const deleteBirthday = (token: string) =>
+    send('/me/birthday', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+  const birthdayOnMe = async (token: string) => {
+    const [, me] = await getMe({ authorization: `Bearer ${token}` });
+    return z.object({ profile: z.object({ birthday: z.string().optional() }) }).parse(me).profile
+      .birthday;
+  };
+  const zone = 'America/New_York';
+
+  it('saves it, keeps it through profile saves, removes it, and logs each change once', async () => {
+    const { token, userId } = await signUp();
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: null });
+    expect(await birthdayOnMe(token)).toBeUndefined();
+
+    const april = { version: 1, birthday: '1996-04-18' };
+    expect(await putBirthday(token, april)).toStrictEqual([200, april]);
+    expect(await putBirthday(token, april)).toStrictEqual([200, april]);
+    expect(await birthdayOnMe(token)).toBe('1996-04-18');
+    // A profile save, from any build, keeps the birthday and doesn't send it back.
+    expect(
+      await putProfile(token, { version: 1, timeZone: zone, catchphrase: '冲' }),
+    ).toStrictEqual([200, { version: 1, timeZone: zone, catchphrase: '冲', jerseyNumber: null }]);
+    expect(await birthdayOnMe(token)).toBe('1996-04-18');
+
+    expect(await deleteBirthday(token)).toStrictEqual([204, null]);
+    expect(await deleteBirthday(token)).toStrictEqual([204, null]);
+    expect(await birthdayOnMe(token)).toBeUndefined();
+
+    const db = createDatabase(config.databaseUrl);
+    try {
+      const { rows } = await sql`select birthday::text, catchphrase from public.profile_events
+        where member_id = ${userId} order by id`.execute(db);
+      expect(rows).toStrictEqual([
+        { birthday: null, catchphrase: null },
+        { birthday: '1996-04-18', catchphrase: null },
+        { birthday: '1996-04-18', catchphrase: '冲' },
+        { birthday: null, catchphrase: '冲' },
+      ]);
+    } finally {
+      await db.destroy();
+    }
+  });
+
+  it.each([
+    ['not a date', '1996-02-30'],
+    ['not a calendar day', '19960418'],
+    ['before 1900', '1899-12-31'],
+    ['after today', '2999-01-01'],
+  ])('refuses one %s', async (...[, birthday]) => {
+    const { token } = await signUp();
+    await putProfile(token, { version: 1, timeZone: zone, catchphrase: null });
+    const [status, body] = await putBirthday(token, { version: 1, birthday });
+    expect([status, z.object({ reason: z.string() }).parse(body).reason]).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+  });
+
+  it('refuses one before the member has a profile', async () => {
+    const { token } = await signUp();
+    const [status, body] = await putBirthday(token, { version: 1, birthday: '1996-04-18' });
+    expect([status, z.object({ reason: z.string() }).parse(body).reason]).toStrictEqual([
+      400,
+      'PROFILE_MISSING',
+    ]);
+  });
+
+  it('asks a caller with no token to sign in', async () => {
+    expect(
+      await send('/me/birthday', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ version: 1, birthday: '1996-04-18' }),
+      }),
+    ).toStrictEqual([401, problem('AUTH_TOKEN_MISSING', 'Sign in to do this.')]);
+  });
+});
+
 describe('PUT and DELETE /me/location', () => {
   const putLocation = (token: string, body: unknown) =>
     send('/me/location', {
