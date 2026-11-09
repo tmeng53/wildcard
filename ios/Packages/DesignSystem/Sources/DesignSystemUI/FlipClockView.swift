@@ -90,8 +90,9 @@ public struct FlipClockView: View {
 }
 
 extension FlipClockView {
-    /// 年 · 月 · 日 on regular cards, each named under its card: the year stops at `years`' ends, the month and day wrap, and
-    /// the day runs to its month's length. Identifiers are `<prefix>.year`, `.month` and `.day`.
+    /// 年 · 月 · 日 on regular cards, each named under its card: the year stops at `years`' ends,
+    /// the month and day wrap, and the day runs to its month's length. Identifiers are
+    /// `<prefix>.year`, `.month` and `.day`.
     public static func date(values: Binding<[Int]>, years: ClosedRange<Int>, identifier prefix: String) -> Self {
         FlipClockView(
             .date(years: years), values: values,
