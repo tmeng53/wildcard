@@ -63,6 +63,12 @@ export const unusedUnlocks = {
 /** What coaches gave members, for an app whose test never reads it. */
 export const unusedGifts = { of: unused, open: unused };
 
+/** The team's rewards for an app whose test gives none: every member holds nothing of them. */
+export const noRewards = {
+  badgesOf: () => Promise.resolve([]),
+  teamPiecesOf: () => Promise.resolve([]),
+};
+
 /**
  * What members were told, and their live events, for an app whose test never reads them: notices
  * told are dropped, since keeping them never decides what a request answers.
