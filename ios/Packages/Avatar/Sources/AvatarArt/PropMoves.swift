@@ -8,6 +8,15 @@ extension PlaceholderCharacter {
         guard let prop = outfit.variants["prop"], let data = try? file("moves/props/\(prop).json") else { return nil }
         return try Clip.decode(data)
     }
+
+    /// What a character holding a prop plays while it stands: the prop's move, looping at
+    /// `persona`'s tempo (a yoga mat's tree pose, a dumbbell's presses), as on its player card.
+    /// Each move ends at rest, so it loops without a jump. Nil when it holds none with a move.
+    public static func heldMove(wearing outfit: Outfit, persona: Persona) throws(AvatarError) -> Clip? {
+        guard var move = try propMove(for: outfit) else { return nil }
+        move.loops = true
+        return try move.atTempo(persona.accentTempo)
+    }
 }
 
 extension PlaceholderCharacter {

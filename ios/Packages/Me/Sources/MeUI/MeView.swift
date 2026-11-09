@@ -193,12 +193,13 @@ struct SaveFailed: View {
     }
 }
 
-/// The member's character on a little floor shadow: its persona's idle on the card, typing at
+/// The member's character on a little floor shadow: on the card, the move of the prop it holds
+/// (a yoga mat's tree pose), else its persona's idle; typing at
 /// its laptop on 设置, near tears on 注销账号, at its persona's pace. It changes clothes in
 /// place when the character is edited.
 struct MeStage: View {
     enum Mood {
-        /// Standing and playing its persona's idle.
+        /// Standing and playing its held prop's move, or its persona's idle holding none.
         case idle
         /// At a small desk behind a laptop, typing and peeking over the screen now and then.
         case typing
@@ -247,7 +248,10 @@ struct MeStage: View {
             let figure = try PlaceholderCharacter.figure(wearing: look)
             let idle: Clip
             switch mood {
-            case .idle: idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
+            case .idle:
+                idle =
+                    try PlaceholderCharacter.heldMove(wearing: character.outfit, persona: character.persona)
+                    ?? PlaceholderCharacter.clip("idle", persona: character.persona)
             case .typing: idle = try PlaceholderCharacter.typing(persona: character.persona)
             case .writing: idle = try PlaceholderCharacter.writing(persona: character.persona)
             case .teary: idle = try PlaceholderCharacter.teary(persona: character.persona)

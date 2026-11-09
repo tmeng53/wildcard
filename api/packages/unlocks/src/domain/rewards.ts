@@ -21,6 +21,8 @@ export type TriggerKind = (typeof TRIGGER_KINDS)[number];
 export type Trigger =
   | {
       readonly kind: 'training';
+      /** False retires the rule: it opens nothing more, and who it opened for keeps it. */
+      readonly offered: boolean;
       readonly sports: readonly SportId[];
       readonly after: number;
       readonly countsFrom: Date;

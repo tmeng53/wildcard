@@ -203,7 +203,7 @@ async function train({
 }
 
 describe('GET /me/unlocks', () => {
-  it('opens DEUCE CLUB after 3 网球类 练了, the racket on the first and each piece on its own', async () => {
+  it('opens DEUCE CLUB after 3 网球类 练了 and each piece on its own, and no prop (they are everyone’s)', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me);
     const unlocked = async (member: { readonly token: string }) =>
@@ -253,7 +253,7 @@ describe('GET /me/unlocks', () => {
       checkInsToGo: 1,
     });
     expect(shelf.pieces.some(({ storeId }) => storeId === 'deuce')).toBe(false);
-    const first = await train({ member: me, squad, sport: 'tennis' });
+    await train({ member: me, squad, sport: 'tennis' });
     const run = await train({ member: me, squad, sport: 'run' });
     const squash = await train({ member: me, squad, sport: 'squash' });
     const three = z
@@ -278,12 +278,6 @@ describe('GET /me/unlocks', () => {
     expect(three).toMatchObject({
       version: 1,
       unlocks: [
-        {
-          kind: 'prop',
-          id: 'racket',
-          unlockedAt: first.at,
-          reason: { sports: ['tennis', 'squash'], checkIns: 1 },
-        },
         // The run counts for HALF MOON, any sport, but not for DEUCE CLUB.
         {
           kind: 'store',
@@ -297,13 +291,7 @@ describe('GET /me/unlocks', () => {
     const after = z
       .object({ unlocks: z.array(z.object({ id: z.string(), unlockedAt: z.string() })) })
       .parse((await unlocked(me)).body);
-    expect(after.unlocks.map(({ id }) => id)).toStrictEqual([
-      'racket',
-      'halfmoon',
-      // Both by the same check-in: props first.
-      'pickleball',
-      'deuce',
-    ]);
+    expect(after.unlocks.map(({ id }) => id)).toStrictEqual(['halfmoon', 'deuce']);
     expect(after.unlocks.find(({ id }) => id === 'deuce')?.unlockedAt).toBe(third.at);
 
     expect(z.unknown().parse((await unlocked(me)).body)).toMatchObject(after);

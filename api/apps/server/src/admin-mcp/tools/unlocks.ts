@@ -56,7 +56,8 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
       'countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may give it, one a ' +
       'member a week; offered and the description its model reads; change with put_gift_piece) ' +
       'or team (only the Wildcard team gives it; no coach or rule ever does). give_unlocks gives ' +
-      'what has a training trigger. Starter pieces and the tumbler and dumbbell need none.',
+      'what has a training trigger. A training trigger with offered false is retired and opens ' +
+      'nothing more (every prop’s, since props are everyone’s). Starter pieces need none.',
     changes: false,
     input: z.strictObject({}),
     run: async () => ({
@@ -79,11 +80,11 @@ export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
     name: 'get_unlock_rules',
     title: 'Read the unlock rules',
     description:
-      'Shows how each store on the character editor’s 商店街, each prop and each clothing ' +
-      'piece with a rule unlocks: kind (store, prop or piece), id, sports (empty = any sport), ' +
+      'Shows how each store on the character editor’s 商店街 and each clothing piece with a ' +
+      'rule unlocks (props are everyone’s and need none): kind (store, prop or piece), id, sports (empty = any sport), ' +
       'after (训练 check-ins needed) and countsFrom (only check-ins made from then count). A rule ' +
       'counts only check-ins made while its store’s and piece’s switches are on (get_stores, ' +
-      'get_pieces). Starter pieces (get_pieces) and the tumbler and dumbbell need no rule.',
+      'get_pieces). Starter pieces (get_pieces) need no rule.',
     changes: false,
     input: z.strictObject({}),
     run: async () => shown(await unlocks.rules()),
@@ -99,7 +100,8 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
       'Adds a rule for a store, prop or piece, or changes the sports or count of one. A piece ' +
       'with a rule stays locked in its store until earned; when it is out follows its store and ' +
       'piece (put_store, put_piece). A new rule counts check-ins made ' +
-      'from now; a changed one keeps its start. Members who already unlocked it keep it. Only ' +
+      'from now; a changed one keeps its start, and a retired one comes back. Members who ' +
+      'already unlocked it keep it. Only ' +
       'the id’s shape is checked, and a rule is never deleted, so use an id the app’s art has ' +
       '(one it doesn’t is ignored by the app). Returns every rule now.',
     changes: true,

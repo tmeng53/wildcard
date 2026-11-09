@@ -50,25 +50,11 @@ function unlocksWith(trained: Map<MemberId, Trained[]>, told: string[] = []) {
 }
 
 describe('unlocks', () => {
-  it('starts with a rule for each store and prop that is not a starter', async () => {
+  it('starts with a rule for each store that is not a starter, and none for props', async () => {
     // Other tests add rules of their own, named test….
     const all = (await unlocksWith(new Map()).rules()).filter(({ id }) => !id.startsWith('test'));
     const rules = all.filter(({ kind }) => kind !== 'piece');
     expect(rules.map(({ kind, id, sports, after }) => [kind, id, sports, after])).toStrictEqual([
-      ['prop', 'badminton', ['badminton'], 1],
-      ['prop', 'basketball', ['basketball'], 1],
-      ['prop', 'chalkbag', ['climb'], 1],
-      ['prop', 'gloves', ['boxing', 'kickboxing', 'jiuJitsu', 'martialArts'], 1],
-      ['prop', 'goggles', ['swim'], 1],
-      ['prop', 'helmet', ['roadCycling', 'mountainBiking', 'spin', 'bikeCommute'], 1],
-      ['prop', 'kettlebell', ['kettlebell', 'crossfit', 'hyrox'], 1],
-      ['prop', 'pickleball', ['pickleball'], 1],
-      ['prop', 'pingpong', ['tableTennis'], 1],
-      ['prop', 'racket', ['tennis', 'squash'], 1],
-      ['prop', 'skis', ['ski', 'crossCountrySki'], 1],
-      ['prop', 'snowboard', ['snowboard'], 1],
-      ['prop', 'soccerball', ['soccer'], 1],
-      ['prop', 'yogamat', ['yoga', 'matPilates', 'reformerPilates', 'barre', 'stretching'], 1],
       ['store', 'deuce', ['tennis', 'pickleball', 'squash'], 3],
       ['store', 'halfmoon', [], 3],
       ['store', 'lap', ['run', 'walk'], 3],
@@ -265,17 +251,13 @@ describe('unlocks', () => {
       sport: 'tennis',
       madeAt: new Date(now + minutes * 60_000),
     }));
+    // Props are everyone's: no 练了 opens the racket, whose rule is retired.
     trained.set(me, tennis.slice(0, 1));
-    expect((await unlocks.of(me)).map(({ kind, id }) => [kind, id])).toStrictEqual([
-      ['prop', 'racket'],
-    ]);
+    expect(await unlocks.of(me)).toStrictEqual([]);
     trained.set(me, tennis.slice(0, 2));
     const { unlocks: two, locked } = await unlocks.standing(me);
     // WARM-UP's headphones open on the 2nd 练了 of any sport; the rest show how far they are.
-    expect(two.map(({ kind, id }) => [kind, id])).toStrictEqual([
-      ['prop', 'racket'],
-      ['piece', 'warmup-headphones'],
-    ]);
+    expect(two.map(({ kind, id }) => [kind, id])).toStrictEqual([['piece', 'warmup-headphones']]);
     expect(locked.find(({ id }) => id === 'warmup-stripe')).toStrictEqual({
       kind: 'piece',
       id: 'warmup-stripe',
@@ -288,25 +270,19 @@ describe('unlocks', () => {
     trained.set(me, tennis);
     const all = await unlocks.of(me);
     expect(all.map(({ kind, id, by }) => [kind, id, by])).toStrictEqual([
-      ['prop', 'racket', { checkIn: tennis[0]?.id }],
       ['piece', 'warmup-headphones', { checkIn: tennis[1]?.id }],
       ['store', 'deuce', { checkIn: tennis[2]?.id }],
       // HALF MOON opens after 3 of any sport.
       ['store', 'halfmoon', { checkIn: tennis[2]?.id }],
     ]);
-    expect(all[2]?.unlockedAt).toStrictEqual(tennis[2]?.madeAt);
+    expect(all[1]?.unlockedAt).toStrictEqual(tennis[2]?.madeAt);
     // Each one told once, when it was new.
-    expect(told).toStrictEqual([
-      'prop:racket',
-      'piece:warmup-headphones',
-      'store:deuce',
-      'store:halfmoon',
-    ]);
+    expect(told).toStrictEqual(['piece:warmup-headphones', 'store:deuce', 'store:halfmoon']);
 
     // The posts are deleted: what they unlocked stays.
     trained.set(me, []);
     expect(await unlocks.of(me)).toStrictEqual(all);
-    expect(told).toHaveLength(4);
+    expect(told).toHaveLength(3);
     await expect(
       sql`delete from public.grants where member_id = ${me}`.execute(db),
     ).rejects.toThrow('append-only');
@@ -316,13 +292,19 @@ describe('unlocks', () => {
     const unlocks = unlocksWith(new Map());
     const rewards = await unlocks.rewards();
     expect(rewards.find(({ kind, id }) => kind === 'store' && id === 'lap')).toMatchObject({
-      triggers: [{ kind: 'training', sports: ['run', 'walk'], after: 3 }],
+      triggers: [{ kind: 'training', offered: true, sports: ['run', 'walk'], after: 3 }],
+    });
+    // A prop's rule is retired (props are everyone's), so it is no rule.
+    expect(rewards.find(({ kind, id }) => kind === 'prop' && id === 'racket')).toMatchObject({
+      triggers: [{ kind: 'training', offered: false }],
     });
     const rules = await unlocks.rules();
     expect(
       rewards
         .flatMap(({ kind, id, triggers }) =>
-          triggers.filter((each) => each.kind === 'training').map(() => `${kind}:${id}`),
+          triggers
+            .filter((each) => each.kind === 'training' && each.offered)
+            .map(() => `${kind}:${id}`),
         )
         .sort(),
     ).toStrictEqual(rules.map(({ kind, id }) => `${kind}:${id}`).sort());
@@ -366,8 +348,13 @@ describe('unlocks', () => {
     const trained = new Map<MemberId, Trained[]>();
     const told: string[] = [];
     const unlocks = unlocksWith(trained, told);
-    const racket = { id: randomUUID(), sport: 'tennis', madeAt: new Date(Date.now() + 60_000) };
-    trained.set(me, [racket]);
+    // Two 练了 open WARM-UP's headphones.
+    const tennis = [1, 2].map((minutes) => ({
+      id: randomUUID(),
+      sport: 'tennis',
+      madeAt: new Date(Date.now() + minutes * 60_000),
+    }));
+    trained.set(me, tennis);
     expect(await unlocks.of(me)).toHaveLength(1);
 
     const picked = await unlocks.give(
@@ -375,17 +362,17 @@ describe('unlocks', () => {
         member: me,
         items: [
           { kind: 'store', id: 'deuce' },
-          { kind: 'prop', id: 'racket' },
+          { kind: 'piece', id: 'warmup-headphones' },
         ],
       },
       admin,
     );
     expect(picked.map(({ kind, id, by }) => [kind, id, by])).toStrictEqual([
       ['store', 'deuce', { admin }],
-      ['prop', 'racket', { checkIn: racket.id }],
+      ['piece', 'warmup-headphones', { checkIn: tennis[1]?.id }],
     ]);
     // A gift is told too, but not what the member held already.
-    expect(told).toStrictEqual(['prop:racket', 'store:deuce']);
+    expect(told).toStrictEqual(['piece:warmup-headphones', 'store:deuce']);
     await expect(
       unlocks.give({ member: me, items: [{ kind: 'store', id: 'nowhere' }] }, admin),
     ).rejects.toBeInstanceOf(UnlockItemMissingError);

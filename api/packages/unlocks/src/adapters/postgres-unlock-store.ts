@@ -47,6 +47,7 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
         .selectFrom('reward_triggers')
         .select(['reward_kind', 'reward_id', 'sports', 'after', 'counts_from'])
         .where('kind', '=', 'training')
+        .where('offered', '=', true)
         .orderBy('reward_kind')
         .orderBy('reward_id')
         .execute();
@@ -60,7 +61,8 @@ export function createPostgresUnlockStore(db: Kysely<UnlockTables>): UnlockStore
     },
 
     async putRule({ kind, id, sports, after }) {
-      const changed = { sports: [...sports], after };
+      // Putting a retired rule again brings it back.
+      const changed = { sports: [...sports], after, offered: true };
       // A reward row stays once added, so it needs no transaction with its trigger (and the
       // caller may already hold one).
       await db
@@ -259,6 +261,7 @@ function triggerOf(row: {
     case 'training':
       return {
         kind: 'training',
+        offered: row.offered,
         sports: (row.sports ?? []).map((sport) => SportId.parse(sport)),
         after: trainingAfter(row.after),
         countsFrom: new Date(trainingStart(row.counts_from)),
