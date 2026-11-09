@@ -10,7 +10,9 @@ public enum ArtTree {
     /// The rig this build draws. Downloaded art that needs a newer one is left out
     /// (`rigVersion` in the catalog), so new rig parts never break an older build. 2: the coaches'
     /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
-    public static let rigVersion = 2
+    /// 3: the biceps (`muscleL`/`muscleR`) are drawn on the arm itself, in its rest frame, and the
+    /// flexed sprite arms (`flexL`/`flexR`) are gone.
+    public static let rigVersion = 3
 
     /// Where the downloaded files stand, mirroring the tree's paths: Application Support's
     /// `Art/current`, swapped whole for a newer generation once all of it is downloaded.

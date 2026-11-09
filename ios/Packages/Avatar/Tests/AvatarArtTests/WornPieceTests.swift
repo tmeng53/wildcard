@@ -23,7 +23,7 @@ func everySleeveCoversTheShoulder(top: String) throws {
     var look = PlaceholderCharacter.lifter
     look.variants["top"] = top
     let figure = try PlaceholderCharacter.figure(wearing: look)
-    for id: PartID in ["armL", "armR", "flexL", "flexR"] {
+    for id: PartID in ["armL", "armR"] {
         let part = try figure.part(id)
         guard let sleeve = part.slots.firstIndex(of: "top") else { continue }
         let shoulder = try #require(part.art[part.slots.firstIndex(of: "body") ?? -1].shapes.first)

@@ -9,6 +9,26 @@ import Testing
     #expect(track.value(at: 2) == 30)
 }
 
+/// An arm's depth is keyed held, but crosses over in a short fade before each key, so its front
+/// copy fades in over the copy behind instead of popping over the body, and is all the way there
+/// at the key.
+@Test func armDepthCrossesOverEachKey() {
+    let depth = track("arm", .front, [(0, 0), (1, 1), (2, 0)], easing: .hold)
+    #expect(Clip.depthFade == 0.05)
+    #expect(depth.value(at: 0.5) == 0)
+    #expect(depth.value(at: 0.95) == 0)
+    #expect(abs(depth.value(at: 0.975) - 0.5) < 1e-9)
+    #expect(depth.value(at: 1) == 1)
+    #expect(depth.value(at: 1.5) == 1)
+    #expect(abs(depth.value(at: 1.9625) - 0.75) < 1e-9)
+    #expect(depth.value(at: 2) == 0)
+    #expect(depth.value(at: 3) == 0)
+    // A change keyed sooner than a fade after the key ahead fades over just that gap.
+    let quick = track("arm", .front, [(0, 0), (0.02, 1)], easing: .hold)
+    #expect(quick.value(at: 0) == 0)
+    #expect(abs(quick.value(at: 0.01) - 0.5) < 1e-9)
+}
+
 @Test func easingShapesTheMoveIntoAKey() {
     #expect(Easing.linear.progress(0.25) == 0.25)
     #expect(Easing.hold.progress(0.99) == 0)

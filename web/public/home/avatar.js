@@ -54,6 +54,19 @@
     return last.v;
   }
 
+  // An arm's depth crosses over in the DEPTH_FADE seconds before each key (Clip.depthFade).
+  const DEPTH_FADE = 0.05;
+  function depthValue(keys, t) {
+    let v = keys[0].v;
+    for (let i = 1; i < keys.length; i++) {
+      if (keys[i].v === keys[i - 1].v) continue;
+      const fade = Math.min(DEPTH_FADE, keys[i].t - keys[i - 1].t);
+      const f = (t - (keys[i].t - fade)) / fade;
+      v += (keys[i].v - keys[i - 1].v) * Math.max(0, Math.min(1, f));
+    }
+    return Math.max(0, Math.min(1, v));
+  }
+
   const rest = () =>
     PARTS.map((p) => ({
       rotation: 0,
@@ -72,7 +85,9 @@
       : Math.max(0, Math.min(clip.duration, time));
     const poses = rest();
     for (const track of clip.tracks)
-      if (track.part in INDEX) poses[INDEX[track.part]][track.channel] = value(track.keys, t);
+      if (track.part in INDEX)
+        poses[INDEX[track.part]][track.channel] =
+          track.channel === 'front' ? depthValue(track.keys, t) : value(track.keys, t);
     PARTS.forEach((part, i) => {
       if (!part.elbow) return;
       const mine = clip.tracks.filter((track) => track.part === part.id);
@@ -129,10 +144,11 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
-  // An arm's front copy (the part a twin names) shows only while its `front` is 1; every other part,
-  // the copy behind the body too, always shows (Figure.depth). The head covers both.
+  // An arm's front copy (the part a twin names) shows as much as its `front`, fading in over the copy
+  // behind as the arm crosses the body; every other part, the copy behind the body too, always shows
+  // (Figure.depth). The head covers both.
   const FRONT = new Set(PARTS.filter((part) => part.twin).map((part) => part.twin));
-  const depth = (part, q) => (FRONT.has(part.id) && !(q.front >= 0.5) ? 0 : 1);
+  const depth = (part, q) => (FRONT.has(part.id) ? Math.max(0, Math.min(1, q.front)) : 1);
 
   function layout(poses) {
     const matrices = new Array(PARTS.length);

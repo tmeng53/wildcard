@@ -5,7 +5,8 @@ import Foundation
 /// at an arm's elbow (`Rig.Elbow`): only a part with one bends.
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
     // `front` is 1 while an arm is in front of the body (still under the head), and 0 (its rest)
-    // while it is behind (`Rig.Part.twin`), as an animator keys it; held, never eased.
+    // while it is behind (`Rig.Part.twin`), as an animator keys it: held keys, which play as a
+    // short fade of the front copy (`Clip.depthFade`), so an arm never pops over the body.
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
     case rotation, x, y, scaleX, scaleY, opacity, bend, front
 
@@ -132,9 +133,11 @@ public struct Clip: Hashable, Sendable {
         }
 
         /// The value at a time in the clip. Before the first key it is the first key's
-        /// value, after the last the last's.
+        /// value, after the last the last's. An arm's depth (`front`) crosses over in the
+        /// `Clip.depthFade` before each key, rather than jumping.
         public func value(at time: Double) -> Double {
             guard let first = keys.first, let last = keys.last else { return 0 }
+            if channel == .front { return depth(at: time, from: first.value) }
             if time <= first.time { return first.value }
             if time >= last.time { return last.value }
             // Few keys per track, so a scan beats a binary search.
@@ -145,7 +148,24 @@ public struct Clip: Hashable, Sendable {
             }
             return last.value
         }
+
+        /// Each change of depth ramps in over the fade before its key (never before the key
+        /// ahead of it), so the arm is all the way in front (or behind) at the key, as a held
+        /// key has it.
+        private func depth(at time: Double, from start: Double) -> Double {
+            var value = start
+            for (previous, next) in zip(keys, keys.dropFirst()) where next.value != previous.value {
+                let fade = min(Clip.depthFade, next.time - previous.time)
+                let fraction = (time - (next.time - fade)) / fade
+                value += (next.value - previous.value) * min(max(fraction, 0), 1)
+            }
+            return min(max(value, 0), 1)
+        }
     }
+
+    /// Seconds an arm takes to cross from behind the body to in front of it, or back: its
+    /// front copy fades over the copy behind, three frames at 60 fps.
+    public static let depthFade = 0.05
 
     public struct Keyframe: Hashable, Sendable {
         /// Seconds from the start of the clip.
