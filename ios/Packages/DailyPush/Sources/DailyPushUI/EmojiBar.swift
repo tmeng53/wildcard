@@ -38,6 +38,7 @@ struct EmojiBarLayer: View {
                         model.pick(emoji, on: open, from: from)
                     }
                     .frame(height: Self.panelHeight)
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(DailyPushView.space))
                     } action: {
@@ -59,6 +60,8 @@ struct EmojiBarLayer: View {
                     }
                     .fixedSize()
                     .accessibilityIdentifier("dailyPush.emojiBar")
+                    // VoiceOver can't tap outside: its two-finger scrub closes it instead.
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(DailyPushView.space))
                     } action: {

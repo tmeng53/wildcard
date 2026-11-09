@@ -177,6 +177,8 @@ struct CoachLetterOverlay: View {
                 }
             }
             .haptic(.unseal, trigger: opening.opened)
+            // Over 今天 as a card popup is: VoiceOver stays on the envelope until it is opened.
+            .accessibilityAddTraits(.isModal)
         } else {
             ZStack {
                 Color(role: .bgBrand, in: theme).opacity(Scrim.dimOpacity)
@@ -192,6 +194,9 @@ struct CoachLetterOverlay: View {
                         .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
                 }
             }
+            // As a card popup: VoiceOver stays on the letter, and its scrub puts it away.
+            .accessibilityAddTraits(.isModal)
+            .accessibilityAction(.escape, putAway)
         }
     }
 
