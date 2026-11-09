@@ -126,17 +126,19 @@ const lettersIn = (prompt: string) =>
 /** The model's answer for a squad's members by letter, one title each. */
 const titlesFor = (letters: readonly string[]) => ({
   version: 1,
-  awards: letters.map((letter, index) => ({
-    member: letter,
-    titles: [
-      {
-        title: `狠人${String(index)}号`,
-        speech: '周三下着雨还去跑了。',
-        move: 'pump',
-        badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
-      },
-    ],
-  })),
+  awards: Object.fromEntries(
+    letters.map((letter, index) => [
+      letter,
+      [
+        {
+          title: `狠人${String(index)}号`,
+          speech: '周三下着雨还去跑了。',
+          move: 'pump',
+          badge: { shape: 'circle', colour: 'gym', glyph: 'flame.fill' },
+        },
+      ],
+    ]),
+  ),
   ending: { headline: '稳了', line: '三天全拿下，计划都不够用。' },
 });
 
@@ -672,7 +674,7 @@ describe('weekly awards', () => {
     const pending = Story.parse((await read({ token: ana.token, squad })).body);
     expect(pending.stuck).toBe(true);
     // The page's words wait with the titles: the app says how far the squad got meanwhile.
-    expect(pending.ending).toStrictEqual({ done: 1, plan: 0 });
+    expect(pending.ending).toStrictEqual({ done: 1, plan: 6 });
     expect([pending.status, pending.titles, pending.hottest?.checkIn]).toStrictEqual([
       'pending',
       undefined,
@@ -802,9 +804,10 @@ describe('weekly awards', () => {
     expect(first.scene).toBe('gym');
     expect(first.members.map(({ member: id }) => id)).toStrictEqual([ana.userId, bo.userId]);
     expect(first.titles).toHaveLength(2);
+    // Against the squad's weekly goal: 人均 3 天 (the default) times its 2 members.
     expect(first.ending).toStrictEqual({
       done: 3,
-      plan: 0,
+      plan: 6,
       headline: '稳了',
       line: '三天全拿下，计划都不够用。',
     });

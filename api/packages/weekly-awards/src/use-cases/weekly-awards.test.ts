@@ -13,6 +13,8 @@ import {
   type WeeklyAwardTables,
 } from '../adapters/postgres-awards-store.js';
 import { MemberId, SquadId, type MemberWeek, type ModelReply } from '../domain/awards.js';
+
+type ReplyTitle = NonNullable<ModelReply['awards'][string]>[number];
 import type { SportGlyph } from '../domain/badges.js';
 import type { PromptMeme } from '../domain/prompt.js';
 import { WeekStart } from '../domain/schedule.js';
@@ -36,18 +38,26 @@ const badge = { shape: 'shield', colour: 'track', glyph: 'sun.max.fill' };
 
 const reply: ModelReply = {
   version: 1,
-  awards: [
-    {
-      member: 'A',
-      titles: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump', badge }],
-    },
-    {
-      member: 'B',
-      titles: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat', badge }],
-    },
-  ],
+  awards: {
+    A: [{ title: '雨中狠人', speech: '周三下着雨还去跑了。', move: 'pump', badge }],
+    B: [{ title: '请假条文豪', speech: '周四的请假条写成了连载。', move: 'flat', badge }],
+  },
   ending: { headline: '差一点', line: ' 再练三天，\n 计划就满了 ' },
 };
+
+/** `reply` with each title changed by `change`. */
+const retitled = (change: (title: ReplyTitle) => ReplyTitle): ModelReply => ({
+  ...reply,
+  awards: Object.fromEntries(
+    Object.entries(reply.awards).map(([key, titles]) => [key, titles?.map(change) ?? null]),
+  ),
+});
+
+/** `reply` for A alone. */
+const onlyA: ModelReply = { ...reply, awards: { A: reply.awards.A ?? [] } };
+
+/** `reply` with A's title blank once trimmed: it passes the schema, not the checks. */
+const blankTitle: ModelReply = retitled((title) => ({ ...title, title: ' ' }));
 
 function setup(
   answers: (() => Promise<unknown>)[] = [() => Promise.resolve(reply)],
@@ -218,10 +228,9 @@ describe('createWeeklyAwards', () => {
     expect(given.ending).toBeUndefined();
   });
 
-  it('asks once more when the last page’s line comes back blank', async () => {
+  it('keeps the titles when the last page’s line comes back blank, leaving the page its own words', async () => {
     const { awards, asked } = setup([
       () => Promise.resolve({ ...reply, ending: { headline: '稳了', line: '   ' } }),
-      () => Promise.resolve(reply),
     ]);
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     const given = await awards.give({
@@ -230,8 +239,9 @@ describe('createWeeklyAwards', () => {
       members: weekOf([ana, bo, cy]),
       ending: { done: 23, plan: 22 },
     });
-    expect(asked).toHaveLength(2);
-    expect(given.ending?.headline).toBe('差一点');
+    expect(asked).toHaveLength(1);
+    expect(given.ending).toBeUndefined();
+    expect(given.members).toHaveLength(2);
   });
 
   it('hands the model the badge catalog and keeps the badge it picks on each title', async () => {
@@ -259,16 +269,10 @@ describe('createWeeklyAwards', () => {
   });
 
   it('offers every sport’s icon as a glyph, and keeps a badge that wears one', async () => {
-    const running = {
-      ...reply,
-      awards: reply.awards.map((award) => ({
-        ...award,
-        titles: award.titles.map((title) => ({
-          ...title,
-          badge: { ...badge, glyph: 'figure.outdoor.cycle' },
-        })),
-      })),
-    };
+    const running = retitled((title) => ({
+      ...title,
+      badge: { ...badge, glyph: 'figure.outdoor.cycle' },
+    }));
     const { awards, asked } = setup([() => Promise.resolve(running)], {
       sportGlyphs: [{ id: 'figure.outdoor.cycle', meaning: '骑行（运动）' }],
     });
@@ -280,13 +284,7 @@ describe('createWeeklyAwards', () => {
   });
 
   it('refuses a badge the catalog doesn’t offer, asking once more', async () => {
-    const offCatalog = {
-      ...reply,
-      awards: reply.awards.map((award) => ({
-        ...award,
-        titles: award.titles.map((title) => ({ ...title, badge: { ...badge, glyph: 'gear' } })),
-      })),
-    };
+    const offCatalog = retitled((title) => ({ ...title, badge: { ...badge, glyph: 'gear' } }));
     const { awards, asked } = setup([
       () => Promise.resolve(offCatalog),
       () => Promise.resolve(reply),
@@ -299,10 +297,9 @@ describe('createWeeklyAwards', () => {
 
   it('sends the model only the weeks of members who agreed to AI use, and awards only them', async () => {
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
-    const { awards, asked, consentAsked } = setup(
-      [() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })],
-      { agreed: (each) => each === ana },
-    );
+    const { awards, asked, consentAsked } = setup([() => Promise.resolve(onlyA)], {
+      agreed: (each) => each === ana,
+    });
     const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
     expect(consentAsked).toStrictEqual([[ana, bo]]);
     expect(given.members.map(({ member: each }) => each)).toStrictEqual([ana]);
@@ -346,8 +343,9 @@ describe('createWeeklyAwards', () => {
     expect(asked).toHaveLength(0);
   });
 
-  it('asks once more when the first answer fails the checks', async () => {
-    const bad = { ...reply, awards: reply.awards.slice(0, 1) };
+  it('asks once more when the first answer is off its schema', async () => {
+    // A letter nobody in the prompt goes by.
+    const bad = { ...reply, awards: { ...reply.awards, C: reply.awards.A } };
     const { awards, asked } = setup([() => Promise.resolve(bad), () => Promise.resolve(reply)]);
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
     expect(
@@ -384,13 +382,7 @@ describe('createWeeklyAwards', () => {
   });
 
   it('keeps one set of awards when two runs write at once', async () => {
-    const other = {
-      ...reply,
-      awards: reply.awards.map((award) => ({
-        ...award,
-        titles: award.titles.map((title) => ({ ...title, title: `${title.title.slice(0, 4)}二` })),
-      })),
-    };
+    const other = retitled((title) => ({ ...title, title: `${title.title.slice(0, 4)}二` }));
     const first = setup();
     const second = setup([() => Promise.resolve(other)]);
     const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
@@ -441,7 +433,7 @@ describe('createWeeklyAwards', () => {
     await expect(awards.give({ squad, weekStart: week, members })).rejects.toThrow();
     expect(await awards.find({ squad, weekStart: week })).toBeUndefined();
     const fresh = members.filter(({ member: each }) => each !== bo);
-    const alone = setup([() => Promise.resolve({ ...reply, awards: reply.awards.slice(0, 1) })]);
+    const alone = setup([() => Promise.resolve(onlyA)]);
     const given = await alone.awards.give({ squad, weekStart: week, members: fresh });
     expect(given.members.map((each) => each.member)).toStrictEqual([ana]);
   });
@@ -491,19 +483,28 @@ describe('createWeeklyAwards', () => {
     expect(await nudge()).toBeUndefined();
   });
 
-  it('keeps an answer that failed the checks as FailedChecks, even after an error', async () => {
-    const bad = { ...reply, awards: reply.awards.slice(0, 1) };
-    const { awards } = setup([
-      () => Promise.reject(Object.assign(new Error('timed out'), { name: 'Timeout' })),
-      () => Promise.resolve(bad),
+  it('drops a blank title and leaves out whoever the model gives none, never failing for it', async () => {
+    const { awards, asked } = setup([() => Promise.resolve(blankTitle)]);
+    const [squad, ana, bo, cy] = [await newSquad(), await member(), await member(), await member()];
+    const given = await awards.give({ squad, weekStart: week, members: weekOf([ana, bo, cy]) });
+    expect(asked).toHaveLength(1);
+    expect(given.members).toStrictEqual([]);
+
+    const { awards: other } = setup([
+      () => Promise.resolve({ ...reply, awards: { ...reply.awards, A: null } }),
     ]);
-    const squad = await newSquad();
-    const members = weekOf([await member(), await member(), await member()]);
-    await reasonOf(awards.give({ squad, weekStart: week, members }));
-    expect(await awards.find({ squad, weekStart: week })).toStrictEqual({
-      status: 'failing',
-      failures: { count: 1, lastError: 'FailedChecks' },
+    const [squad2, di, ed, fay] = [
+      await newSquad(),
+      await member(),
+      await member(),
+      await member(),
+    ];
+    const some = await other.give({
+      squad: squad2,
+      weekStart: week,
+      members: weekOf([di, ed, fay]),
     });
+    expect(some.members.map((each) => each.member)).toStrictEqual([ed]);
   });
 });
 
