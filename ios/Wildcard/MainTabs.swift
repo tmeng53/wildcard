@@ -108,8 +108,7 @@ struct MainTabs: View {
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
-            // A teammate's @ tag pops up their card, as on the home, on any tab a post opens on.
-            feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) }
+            feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) }  // @ tag → card
             today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
