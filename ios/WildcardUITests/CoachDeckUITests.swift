@@ -38,24 +38,19 @@ final class CoachDeckUITests: XCTestCase {
 
         openAndWear(in: app)
         accept(in: app)
-        // 回复了你的训练: 回他.
-        let reply = card("reply", in: app)
-        XCTAssertTrue(reply.waitForExistence(timeout: Self.wait), "the reply isn't next")
-        assertOnScreen(reply, app.buttons["coachDeck.reply"], in: app)
-        keepScreenshot(named: "112-coach-deck-reply")
-        putAway(reply, in: app)
+        // The coach's lines to my check-ins stay under the posts in 动态, never here.
 
         // All seen: 看以前的 opens 以前, newest first.
         let allSeen = element("coachDeck.allSeen", in: app)
-        XCTAssertTrue(allSeen.waitForExistence(timeout: Self.wait), "the last card isn't 今天的都看过了")
+        XCTAssertTrue(allSeen.waitForExistence(timeout: Self.wait), "the last card isn't 暂时没有新消息")
         let earlier = app.buttons["coachDeck.earlier"]
         assertOnScreen(allSeen, earlier, in: app)
         keepScreenshot(named: "113-coach-deck-all-seen")
         earlier.tap()
         let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "coachEarlier.row."))
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: Self.wait), "以前 didn't open")
-        XCTAssertEqual(rows.count, 5, "以前 doesn't list every card seen")
-        XCTAssertEqual(rows.firstMatch.identifier, "coachEarlier.row.reply", "以前 isn't newest first")
+        XCTAssertEqual(rows.count, 4, "以前 doesn't list every card seen")
+        XCTAssertEqual(rows.firstMatch.identifier, "coachEarlier.row.challenge", "以前 isn't newest first")
         keepScreenshot(named: "114-coach-earlier")
     }
 

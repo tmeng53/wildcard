@@ -633,11 +633,11 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
     },
 
     async cards({ squad, member, since }) {
-      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines,
-      // the member's notes (and their challenges) once delivered, the coach's lines to the
-      // member's check-ins, and its answers to the member's replies.
+      // Each kind from its own table, for this member in this squad: the squad's 战术板 lines and
+      // the member's notes (and their challenges) once delivered. The coach's lines to their
+      // check-ins and replies show only under the posts in 动态 (Tracy, 2026-11-09).
       const rows = await sql<{
-        kind: 'board' | 'note' | 'challenge' | 'challengeDone' | 'reply' | 'answer';
+        kind: 'board' | 'note' | 'challenge' | 'challengeDone';
         id: string;
         day: string | null;
         text: string | null;
@@ -690,24 +690,11 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           join public.coach_challenge_completions done on done.note_id = m.id
           where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
             and done.by = 'coach' and done.at >= ${since}
-          union all
-          select 'reply', r.id::text, null, r.text, r.check_in_id, null, null, null, null, null,
-            null, null, null, null, r.at, r.coach_id
-          from public.coach_replies r
-          join public.check_ins c on c.id = r.check_in_id
-          where r.squad_id = ${squad}::uuid and c.member_id = ${member}::uuid
-            and r.text is not null and r.at >= ${since}
-          union all
-          select 'answer', a.id::text, null, a.text, a.check_in_id, a.comment_id, null, null,
-            null, null, null, null, null, null, a.at, a.coach_id
-          from public.coach_answers a
-          join public.check_in_comments cc on cc.id = a.comment_id
-          where a.squad_id = ${squad}::uuid and cc.member_id = ${member}::uuid and a.at >= ${since}
         )
         select mine.*, coaches.name, coaches.look
         from mine join public.coaches on coaches.id = mine.coach_id
         order by mine.at,
-          array_position(array['board', 'note', 'challenge', 'challengeDone', 'reply', 'answer'], mine.kind),
+          array_position(array['board', 'note', 'challenge', 'challengeDone'], mine.kind),
           mine.id`.execute(db);
       return rows.rows.map((row) => {
         const base = {
@@ -735,21 +722,6 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
               kind: row.kind,
               day: row.day ?? '',
               challenge: challengeOfRow(row) ?? { title: '' },
-            };
-          case 'reply':
-            return {
-              ...base,
-              kind: row.kind,
-              checkIn: row.check_in_id ?? '',
-              text: row.text ?? '',
-            };
-          case 'answer':
-            return {
-              ...base,
-              kind: row.kind,
-              checkIn: row.check_in_id ?? '',
-              comment: row.comment_id ?? '',
-              text: row.text ?? '',
             };
         }
       });

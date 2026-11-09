@@ -12,18 +12,18 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var photoCount = 0
     private var squadPokes: SquadPokes
     private var sidelineCoach: SidelineCoach?
-    private var memberNotes: [CoachMemberNote]
+    private var unseenCoachCards: Bool
     private var dayChallenge: DayChallenge?
     private var openedLetterID: Int?
 
     public init(
-        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, notes: [CoachMemberNote] = [],
+        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, unseenCoachCards: Bool = false,
         challenge: DayChallenge? = nil
     ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
-        memberNotes = notes
+        self.unseenCoachCards = unseenCoachCards
         dayChallenge = challenge
     }
 
@@ -93,7 +93,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
             coach: sideline(coach || coachNote || challenge, coachLetter, now, squadID),
-            notes: sampleNotes(coachNote, now, squadID),
+            unseenCoachCards: coachNote,
             challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
@@ -101,18 +101,6 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// everyone `reached` it together.
     private static func squadWeek(of members: Int, reached: Bool) -> WeekCount {
         WeekCount(trainedDays: reached ? 3 * members : 14, plannedDays: 3 * members)
-    }
-
-    /// 毛头's morning note to me, as the approved 便条 shows it, when `shown`.
-    private static func sampleNotes(_ shown: Bool, _ now: Date, _ squad: SquadID) -> [CoachMemberNote] {
-        guard shown else { return [] }
-        let words = Bundle.module.inAppLanguage
-        return [
-            CoachMemberNote(
-                id: 1, squad: squad, day: LocalDay(at: now, in: CoachNote.timeZone),
-                text: words.localizedString(forKey: "今天出赛表写的是力量。病刚好，重量先打八折，我在场边数着。", value: nil, table: nil),
-                coach: CoachSpeaker(id: "xiaohun", name: words.localizedString(forKey: "毛头", value: nil, table: nil)))
-        ]
     }
 
     /// A sample title, its words from the catalog.
@@ -289,9 +277,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? { sidelineCoach }
 
-    public func coachNotes(in squads: [SquadID]) async throws(CheckInError) -> [CoachMemberNote] {
-        squads.compactMap { squad in memberNotes.first { $0.squad == squad } }
-    }
+    public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool { unseenCoachCards }
 }
 
 extension InMemoryCheckInBackend {
