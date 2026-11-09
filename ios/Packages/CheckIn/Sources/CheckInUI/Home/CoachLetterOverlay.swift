@@ -211,11 +211,15 @@ struct CoachLetterOverlay: View {
             Tween.mix(frame.envelopeTop + 18 * zoom, frame.envelopeTop - 150 * zoom, rise), frame.letterTop, place)
         let height = Tween.mix(300 * zoom, frame.height, grow)
         let flown = moment >= opening.shown
+        // Once dropped off the screen the envelope is gone, so the popup's frame is the letter's.
+        let envelope = opening.showsEnvelope(at: moment)
         return ZStack(alignment: .topLeading) {
-            EnvelopeBack(backFlap: opening.backFlap(at: moment))
-                .frame(width: frame.envelope.width, height: frame.envelope.height)
-                .modifier(Flying(frame: frame, flight: flight, drop: drop))
-                .opacity(flown ? 1 : 0)
+            if envelope {
+                EnvelopeBack(backFlap: opening.backFlap(at: moment))
+                    .frame(width: frame.envelope.width, height: frame.envelope.height)
+                    .modifier(Flying(frame: frame, flight: flight, drop: drop))
+                    .opacity(flown ? 1 : 0)
+            }
             if opening.showsLetter(at: moment) {
                 CoachLetterSheet(letter: shown.letter, button: opening.button(at: moment), putAway: putAway)
                     .frame(width: frame.width, height: frame.height)
@@ -232,21 +236,23 @@ struct CoachLetterOverlay: View {
                                     ? frame.envelopeTop + frame.envelope.height : frame.screen.height * 2)
                     }
             }
-            EnvelopeFront(
-                letter: shown.letter, frontFlap: opening.frontFlap(at: moment),
-                // Under Reduce Motion the seal holds still.
-                seal: reduceMotion && opening.opened == nil ? (1, 1) : opening.seal(at: moment), scale: zoom
-            )
-            .frame(width: frame.envelope.width, height: frame.envelope.height)
-            .modifier(Flying(frame: frame, flight: flight, drop: drop))
-            .opacity(flown ? 1 : 0)
-            .onTapGesture(perform: openSeal)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("开信", bundle: .module))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHidden(opening.opened != nil)
-            .accessibilityIdentifier("today.letter.seal")
-            .accessibilityAction { openSeal() }
+            if envelope {
+                EnvelopeFront(
+                    letter: shown.letter, frontFlap: opening.frontFlap(at: moment),
+                    // Under Reduce Motion the seal holds still.
+                    seal: reduceMotion && opening.opened == nil ? (1, 1) : opening.seal(at: moment), scale: zoom
+                )
+                .frame(width: frame.envelope.width, height: frame.envelope.height)
+                .modifier(Flying(frame: frame, flight: flight, drop: drop))
+                .opacity(flown ? 1 : 0)
+                .onTapGesture(perform: openSeal)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text("开信", bundle: .module))
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHidden(opening.opened != nil)
+                .accessibilityIdentifier("today.letter.seal")
+                .accessibilityAction { openSeal() }
+            }
         }
         .frame(width: frame.screen.width, height: frame.screen.height, alignment: .topLeading)
     }
