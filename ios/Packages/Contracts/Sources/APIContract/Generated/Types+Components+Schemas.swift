@@ -4736,15 +4736,15 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/MemberRecords/version`.
             public var version: Components.Schemas.MemberRecords.VersionPayload
-            /// Days with a 练了.
+            /// Days with a 训练.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/trainedDays`.
             public var trainedDays: Swift.Int
-            /// Minutes of every 练了 that says how long it took.
+            /// Minutes of every 训练 that says how long it took.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/minutes`.
             public var minutes: Swift.Int
-            /// The longest single 练了; left out when none says how long.
+            /// The longest single 训练; left out when none says how long.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/longestMinutes`.
             public var longestMinutes: Swift.Int?
@@ -4752,7 +4752,7 @@ extension Components {
             public var longestStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
             public var mealStreak: Components.Schemas.RecordStreak?
-            /// 练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            /// 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
             public var hours: [Swift.Int]
@@ -4774,12 +4774,12 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - trainedDays: Days with a 练了.
-            ///   - minutes: Minutes of every 练了 that says how long it took.
-            ///   - longestMinutes: The longest single 练了; left out when none says how long.
+            ///   - trainedDays: Days with a 训练.
+            ///   - minutes: Minutes of every 训练 that says how long it took.
+            ///   - longestMinutes: The longest single 训练; left out when none says how long.
             ///   - longestStreak:
             ///   - mealStreak:
-            ///   - hours: 练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            ///   - hours: 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///   - weekdays: Days trained by weekday, Monday first.
             ///   - sports: The sports trained on the most days, most first.
             ///   - sportCount: How many different sports the member trained.

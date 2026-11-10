@@ -2713,17 +2713,17 @@
           "trainedDays": {
             "type": "integer",
             "minimum": 0,
-            "description": "Days with a 练了."
+            "description": "Days with a 训练."
           },
           "minutes": {
             "type": "integer",
             "minimum": 0,
-            "description": "Minutes of every 练了 that says how long it took."
+            "description": "Minutes of every 训练 that says how long it took."
           },
           "longestMinutes": {
             "type": "integer",
             "minimum": 0,
-            "description": "The longest single 练了; left out when none says how long."
+            "description": "The longest single 训练; left out when none says how long."
           },
           "longestStreak": {
             "$ref": "#/components/schemas/RecordStreak"
@@ -2736,11 +2736,11 @@
             "items": {
               "type": "integer",
               "minimum": 0,
-              "description": "练了 posted in this hour."
+              "description": "训练 posted in this hour."
             },
             "minItems": 24,
             "maxItems": 24,
-            "description": "练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out."
+            "description": "训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out."
           },
           "weekdays": {
             "type": "array",

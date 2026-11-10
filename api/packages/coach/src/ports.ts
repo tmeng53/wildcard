@@ -184,7 +184,7 @@ export interface MemberNote {
   readonly squad: SquadId;
   readonly member: string;
   readonly coach: CoachId;
-  /** The squad's day it was written for, `YYYY-MM-DD` (New York). */
+  /** The squad's day it was written for, `YYYY-MM-DD`, on the squad's clock. */
   readonly day: string;
   readonly text: string;
   /** The day's challenge (今日挑战) the note sets, if any. */
