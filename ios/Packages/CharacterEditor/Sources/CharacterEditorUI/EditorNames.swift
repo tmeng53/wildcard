@@ -44,7 +44,7 @@ enum EditorNames {
         return Text(copyKey: key, bundle: .module)
     }
 
-    /// A clothing slot's name, over its pieces in 我的衣橱.
+    /// A clothing slot's name, over its pieces in 我的衣橱, and a prop's, on a squadmate's card.
     static func slot(_ slot: Slot) -> Text {
         switch slot.rawValue {
         case "top": Text(copy: "上衣", bundle: .module)
@@ -52,6 +52,7 @@ enum EditorNames {
         case "shoes": Text(copy: "鞋子", bundle: .module)
         case "hat": Text(copy: "头饰", bundle: .module)
         case "acc": Text(copy: "配饰", bundle: .module)
+        case "prop": Text(copy: "道具", bundle: .module)
         default: Text(verbatim: slot.rawValue)
         }
     }

@@ -24,8 +24,9 @@ struct PlayerCard: View {
     /// Spans the width it is given at the card's proportions (我), instead of its own 300 points.
     var fillsWidth = false
     @State private var opened: OpenedBadge?
-    /// A squadmate's card's back shows their badge board in place of their 出赛表.
-    @State private var showsBoard = false
+    /// What a squadmate's card's back shows: their 出赛表, or in its place their badge board or
+    /// what they wear.
+    @State private var backSide = BackSide.schedule
     static var size: CGSize { TradingCard.size }
 
     var body: some View {
@@ -34,7 +35,7 @@ struct PlayerCard: View {
         } back: {
             // Turned over again, a squadmate's back opens on their 出赛表. The stack keeps one
             // identity while the back switches sides inside it, so only the turn resets it.
-            ZStack { back }.onDisappear { showsBoard = false }
+            ZStack { back }.onDisappear { backSide = .schedule }
         }
         .sheet(item: $opened) { badge in
             BadgeCard(
@@ -60,16 +61,27 @@ struct PlayerCard: View {
     }
 
     /// A squadmate's card turns over to their 出赛表 this week, whose badges turn the same side to
-    /// their badge board and 出赛表 back again (Tracy, 2026-11-08, A); the member's own (and one
-    /// from an older server) to the board itself.
+    /// their badge board and 出赛表 back again (Tracy, 2026-11-08, A), and whose 穿搭 to what they
+    /// wear (2026-11-10, A); the member's own (and one from an older server) to the board itself.
     @ViewBuilder private var back: some View {
-        if let schedule = face.schedule, !showsBoard {
-            ScheduleBack(face: face, schedule: schedule) { showsBoard = true }
-        } else if face.schedule != nil {
-            CardBack(face: face, toSchedule: { showsBoard = false }, open: open)
+        if let schedule = face.schedule {
+            switch backSide {
+            case .schedule:
+                ScheduleBack(
+                    face: face, schedule: schedule, openBoard: { backSide = .board },
+                    openOutfit: { backSide = .outfit })
+            case .board:
+                CardBack(face: face, toSchedule: { backSide = .schedule }, open: open)
+            case .outfit:
+                OutfitBack(face: face) { backSide = .schedule }
+            }
         } else {
             CardBack(face: face, news: marks?.news(on: face.board) ?? [], open: open)
         }
+    }
+
+    private enum BackSide {
+        case schedule, board, outfit
     }
 }
 

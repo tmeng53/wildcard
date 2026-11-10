@@ -363,23 +363,27 @@ enum StoreLook {
 struct LimitedTag: View {
     let word: Text
     let color: RGBAColor?
+    /// On the ink of a player card, where the limit's colour is too dark to read as words: white
+    /// words on the colour itself.
+    var onInk = false
     @Environment(\.sceneTheme) private var theme
 
-    init?(store: String) {
+    init?(store: String, onInk: Bool = false) {
         guard let word = StoreCopy.limited(store) else { return nil }
-        (self.word, color) = (word, StoreLook.limited(store))
+        (self.word, color, self.onInk) = (word, StoreLook.limited(store), onInk)
     }
 
     var body: some View {
         let ink = color.map { Color($0) } ?? Color(role: .fgLimited, in: theme)
         word
             .typeStyle(TypeRamp.label)
-            .foregroundStyle(ink)
+            .foregroundStyle(onInk ? Color(role: .fgOnInk, in: theme) : ink)
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, Space.xs - Space.xxs / 2)
             .frame(height: CoachTag.Size.small.height)
-            .background(ink.opacity(0.12), in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
+            .background(
+                ink.opacity(onInk ? 1 : 0.12), in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
     }
 }
 #endif

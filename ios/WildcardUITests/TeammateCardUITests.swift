@@ -2,7 +2,7 @@ import XCTest
 
 /// A teammate's player card, the way a member finds it: a tap on 小米 on the home opens her card
 /// with her today over it, wearing her title, which turns over to her 出赛表 this week, whose
-/// badges open her badge board and a badge with no 装备; and from 小队's member list, where it pops up over the dimmed page and a
+/// badges open her badge board and a badge with no 装备, and whose 穿搭 lists what she wears; and from 小队's member list, where it pops up over the dimmed page and a
 /// tap off it closes it. Screenshots are kept for review.
 @MainActor
 final class TeammateCardUITests: XCTestCase {
@@ -44,6 +44,7 @@ final class TeammateCardUITests: XCTestCase {
         let openBoard = app.buttons["me.cardBadges"]
         XCTAssertTrue(openBoard.exists, "no badges on her card's back")
         XCTAssertTrue(back.frame.contains(openBoard.frame), "her badges run off her card: \(openBoard.frame)")
+        assertOutfit(on: back, besides: openBoard, schedule: schedule, in: app)
         // Her badges turn the same side to her badge board, on her card, with no 周日揭晓 slot.
         openBoard.tap()
         let badges = app.buttons.matching(identifier: "me.badge")
@@ -57,6 +58,29 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertFalse(app.buttons["me.badgeCard.equip"].exists, "a teammate's badge offers 装备")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "58-teammate-badge-card")
+    }
+
+    /// Beside her badges, 穿搭 turns her card's back to what she wears, a row a piece, all on her
+    /// card, and 「‹ 穿搭」 brings her 出赛表 back.
+    private func assertOutfit(
+        on back: XCUIElement, besides openBoard: XCUIElement, schedule: XCUIElement, in app: XCUIApplication
+    ) {
+        let openOutfit = app.buttons["me.cardOutfitRow"]
+        XCTAssertTrue(openOutfit.exists, "no 穿搭 on her card's back")
+        XCTAssertTrue(back.frame.contains(openOutfit.frame), "her 穿搭 runs off her card: \(openOutfit.frame)")
+        XCTAssertLessThanOrEqual(openBoard.frame.maxX, openOutfit.frame.minX, "her badges cover her 穿搭")
+        openOutfit.tap()
+        let pieces = app.descendants(matching: .any).matching(identifier: "card.outfitPiece")
+        XCTAssertTrue(pieces.firstMatch.waitForExistence(timeout: 5), "what she wears didn't open")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "57a-teammate-outfit")
+        XCTAssertGreaterThanOrEqual(pieces.count, 3, "her outfit lists fewer than a top, bottom and shoes")
+        for index in 0..<pieces.count where pieces.element(boundBy: index).isHittable {
+            let piece = pieces.element(boundBy: index).frame
+            XCTAssertTrue(back.frame.contains(piece), "a piece runs off her card: \(piece)")
+        }
+        app.buttons["me.cardOutfitBack"].tap()
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5), "「‹ 穿搭」 didn't bring her 出赛表 back")
     }
 
     /// A tap on a teammate's ring in the squad card's 今天 row opens their card too, with their today
