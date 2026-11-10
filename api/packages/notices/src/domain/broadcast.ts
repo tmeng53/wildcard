@@ -35,11 +35,14 @@ export type Destination = z.infer<typeof Destination>;
 export const BroadcastStyle = z.enum(['banner', 'celebration']);
 export type BroadcastStyle = z.infer<typeof BroadcastStyle>;
 
-/** A store, prop or piece given with it, by kind and id as the unlocks module names them. */
-export const BroadcastGift = z.strictObject({
+/** A store, prop or piece the app draws, by kind and id as the unlocks module names them. */
+const ArtItem = z.strictObject({
   kind: z.enum(['store', 'prop', 'piece']),
   id: z.string().min(1).max(48),
 });
+
+/** A store or piece given with it. Props need no gift: every member holds every one. */
+export const BroadcastGift = ArtItem.extend({ kind: z.enum(['store', 'piece']) });
 export type BroadcastGift = z.infer<typeof BroadcastGift>;
 
 /** What a broadcast says and when it runs, as an admin writes it and it is stored. */
@@ -62,7 +65,7 @@ export const BroadcastValue = z
       '`banner`: the home’s notice banner. `celebration`: the full-screen opening (a build ' +
         'without it shows the banner).',
     ),
-    icon: BroadcastGift.optional().describe(
+    icon: ArtItem.optional().describe(
       'A store’s sign, a prop or a piece the app already draws, beside its words (such as ' +
         '`{ "kind": "store", "id": "powder" }`); left out, a sparkle. A build without it shows the sparkle.',
     ),
@@ -70,7 +73,7 @@ export const BroadcastValue = z
       .array(BroadcastGift)
       .max(10)
       .describe(
-        'Stores, props or pieces unlocked for each member when they are told (they show as ' +
+        'Stores or pieces unlocked for each member when they are told (they show as ' +
           'NEW in the 商店街); may be empty.',
       ),
     members: z

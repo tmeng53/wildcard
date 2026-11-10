@@ -19,6 +19,12 @@ export type TimeZone = z.infer<typeof TimeZone>;
 /** The zone every squad-wide moment kept before squads had their own, and still keeps without one. */
 export const NEW_YORK = 'America/New_York';
 
+/**
+ * The zone of a member who never saved one: the app saves the phone's right after the first
+ * sign-in, so this is only for a moment before that.
+ */
+export const UNSAVED_MEMBER_ZONE = 'UTC';
+
 /** Whether this runtime knows the zone, so it can tell its wall clock. */
 export function isKnownTimeZone(zone: string): boolean {
   try {

@@ -174,11 +174,10 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// When they signed up: the year on the card.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
-    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (an older server, or no plan this week).
+    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
-    /// A squadmate's 出赛表 this week, on their card's back; nil on the member's own card and from
-    /// an older server.
+    /// A squadmate's 出赛表 this week, on their card's back; nil on the member's own card.
     public var schedule: MateSchedule?
 
     public init(
@@ -213,31 +212,29 @@ public struct MateSchedule: Hashable, Sendable {
     public let marks: [DayMark]
     /// Empty when they set none, and then the card says nothing about them.
     public let fuel: [FuelGoal]
-    /// The week the card counts as W1: their squad's first week (else, from older servers, the
-    /// week they joined); nil before they saved a profile.
-    public let firstWeek: LocalDay?
-    /// Today on the squad's clock (on theirs from older servers); nil from older servers.
-    public let today: LocalDay?
+    /// The week the card counts as W1: their squad's first week.
+    public let firstWeek: LocalDay
+    /// Today on the squad's clock.
+    public let today: LocalDay
 
     public init(
-        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay?,
-        today: LocalDay? = nil
+        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay,
+        today: LocalDay
     ) throws(MeError) {
         guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
         (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
         (self.firstWeek, self.today) = (firstWeek, today)
     }
 
-    /// The row shaded as 今天, Monday 0: their today on their calendar, else `fallback` (the
-    /// viewer's, for older servers); nil when that day isn't in this week.
-    public func todayIndex(else fallback: LocalDay) -> Int? {
-        let day = today ?? fallback
-        return day.weekStart == weekStart ? day.weekday - 1 : nil
+    /// The row shaded as 今天, Monday 0: their today on the squad's clock; nil when that day isn't
+    /// in this week.
+    public var todayIndex: Int? {
+        today.weekStart == weekStart ? today.weekday - 1 : nil
     }
 
     /// The week's number on the card (W3): the squad's week, the same on every squadmate's card
-    /// and 出赛表; W1 without it.
+    /// and 出赛表.
     public var weekNumber: Int {
-        firstWeek.map { weekStart.weekNumber(since: $0) } ?? 1
+        weekStart.weekNumber(since: firstWeek)
     }
 }

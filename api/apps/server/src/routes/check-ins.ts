@@ -186,14 +186,6 @@ const MyPostQuery = z.strictObject({
 /** One check-in with what teammates left on it: a post's own page. */
 const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi('Post');
 
-/**
- * Installed builds from before the replies were removed (#180) still require `replies` on each
- * post and fail to read the whole feed without it, so every post keeps an empty one. It stays out
- * of the contract: newer builds ignore keys they don't know. Remove it once no installed build
- * predates #180.
- */
-const installedBuildsReplies: { readonly replies: readonly never[] } = { replies: [] };
-
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
@@ -281,15 +273,15 @@ const Cheers = z
 const MemberRecords = z
   .strictObject({
     version: bodyVersion(1),
-    trainedDays: count('Days with a 练了.'),
-    minutes: count('Minutes of every 练了 that says how long it took.'),
-    longestMinutes: count('The longest single 练了; left out when none says how long.').optional(),
+    trainedDays: count('Days with a 训练.'),
+    minutes: count('Minutes of every 训练 that says how long it took.'),
+    longestMinutes: count('The longest single 训练; left out when none says how long.').optional(),
     // Described on the object: a described reference becomes a wrapper type in generated clients.
     longestStreak: Streak.optional(),
     mealStreak: Streak.optional(),
-    hours: z.array(count('练了 posted in this hour.')).min(24).max(24).meta({
+    hours: z.array(count('训练 posted in this hour.')).min(24).max(24).meta({
       description:
-        '练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
+        '训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
     }),
     weekdays: z
       .array(count('Days trained on this weekday.'))
@@ -714,7 +706,6 @@ export function checkIns(deps: {
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
             comments: comments.map(wireComment),
-            ...installedBuildsReplies,
           })),
         },
         200,

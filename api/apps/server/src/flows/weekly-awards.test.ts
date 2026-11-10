@@ -200,7 +200,6 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
     rewards: noRewards,
-    weekSummaryWords: () => Promise.reject(new Error('unused')),
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
@@ -616,34 +615,6 @@ describe('weekly awards', () => {
     await run();
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(1);
-  });
-
-  it('counts every title a member won, in all their squads, for their player card', async () => {
-    const { run, app } = setup();
-    const [ana, bo] = [await member(), await member()];
-    const totals = async (token: string) => {
-      const response = await app.request('/me/award-totals', {
-        headers: { authorization: `Bearer ${token}` },
-      });
-      return [response.status, await response.json()];
-    };
-    expect(await totals(ana.token)).toStrictEqual([200, { version: 1, titles: 0 }]);
-    // Ana is first in both squads, so the model names her 狠人0号 in each.
-    const [first, second] = [await squadOf(ana, bo), await squadOf(ana)];
-    await trained(ana, { squad: first });
-    await trained(ana, { squad: second });
-    await trained(bo, { squad: first });
-
-    await run();
-    expect(await totals(ana.token)).toStrictEqual([
-      200,
-      { version: 1, titles: 2, latest: { title: '狠人0号', times: 2 } },
-    ]);
-    expect(await totals(bo.token)).toStrictEqual([
-      200,
-      { version: 1, titles: 1, latest: { title: '狠人1号', times: 1 } },
-    ]);
-    expect((await app.request('/me/award-totals')).status).toBe(401);
   });
 
   it('leaves out of the prompt and the awards a member who hasn’t agreed to AI use', async () => {

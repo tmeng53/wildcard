@@ -44,7 +44,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                         member: MemberID(try #require(UUID(uuidString: myID))), catchphrase: nil, character: nil,
                         day: day, training: .notCheckedIn, latestMeal: nil, plannedRest: true, firstCheckInAt: nil),
                 ],
-                today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: true),
+                today: TodayCounts(trained: 1, disclaimer: 0, resting: 1),
                 myWeek: MyWeek(
                     firstDay: day, lastDay: try LocalDay("2026-10-25"), week: WeekCount(trainedDays: 2, plannedDays: 5)),
                 squadWeek: WeekCount(trainedDays: 14, plannedDays: 15), squadDaysPerMember: 5))
@@ -63,18 +63,6 @@ private let squad = "33333333-3333-3333-3333-333333333333"
         plan.days == [
             .train(.sport("run")), .train(nil), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .train(nil),
             .rest,
-        ])
-}
-
-@Test func reactionsRead() throws {
-    let wire = try decode(
-        Components.Schemas.ReactionList.self,
-        #"{"version":1,"reactions":[{"member":"\#(mate)","emoji":"😂","reactedAt":"2026-10-19T15:00:00.000Z"}]}"#)
-    #expect(
-        try wire.reactions.map(Reaction.init) == [
-            Reaction(
-                member: MemberID(try #require(UUID(uuidString: mate))), emoji: try Emoji("😂"),
-                reactedAt: Timestamp(millisecondsSince1970: 1_792_422_000_000))
         ])
 }
 
@@ -99,10 +87,17 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 }
 
 @Test func aReactionThatIsNotOneEmojiIsRefused() throws {
+    let checkIn =
+        #"{"version":1,"id":"66666666-6666-6666-6666-666666666666","member":"\#(myID)","day":"2026-10-19","#
+        + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"kind":"disclaimer","#
+        + #""disclaimer":{"text":"下雨了"}}"#
     let wire = try decode(
-        Components.Schemas.ReactionList.self,
-        #"{"version":1,"reactions":[{"member":"\#(mate)","emoji":"lol","reactedAt":"2026-10-19T15:00:00.000Z"}]}"#)
-    #expect(throws: ContractsError.notAnEmoji("lol")) { try wire.reactions.map(Reaction.init) }
+        Components.Schemas.SquadPostList.self,
+        #"{"version":1,"posts":[{"checkIn":\#(checkIn),"#
+            + #""reactions":[{"member":"\#(mate)","emoji":"lol","reactedAt":"2026-10-19T15:00:00.000Z"}],"#
+            + #""comments":[]}]}"#)
+    let post = try #require(wire.posts.first)
+    #expect(throws: ContractsError.notAnEmoji("lol")) { try post.reactions.map(Reaction.init) }
 }
 
 @Test func aReactionDraftCarriesItsEmoji() {

@@ -31,12 +31,18 @@ const Moment = z.iso
   .transform((text) => new Date(Math.floor(Date.parse(text))));
 
 /**
- * The squads a check-in is shared to, in the order the member picked: up to 3, no repeats.
- * A post is the member's own; one shared to no squad only they see.
+ * The most squads one post lists. A member is in one squad at a time, but posts made before that
+ * may list up to this many, and their edits and events still carry them.
+ */
+export const AUDIENCE_MAX = 3;
+
+/**
+ * The squads a check-in is shared to, in the order the member picked: up to `AUDIENCE_MAX`, no
+ * repeats. A post is the member's own; one shared to no squad only they see.
  */
 export const Audience = z
   .array(SquadId)
-  .max(3)
+  .max(AUDIENCE_MAX)
   .refine((squads) => new Set(squads).size === squads.length, {
     message: 'Must not list a squad twice',
   });

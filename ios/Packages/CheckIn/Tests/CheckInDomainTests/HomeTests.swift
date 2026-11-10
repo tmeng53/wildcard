@@ -58,7 +58,7 @@ private func checkIn(_ number: Int, by member: MemberID, on day: LocalDay = tues
     #expect(rolled.mine?.day == monday)
     #expect(rolled.mine?.training == .notCheckedIn)
     #expect(rolled.mine?.plannedRest == false)
-    #expect(rolled.today.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false))
+    #expect(rolled.today.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1))
     #expect(rolled.today.myWeek.firstDay == monday)
     #expect(rolled.today.myWeek.week == WeekCount(trainedDays: 0, plannedDays: 5))
     #expect(rolled.today.squadWeek == WeekCount(trainedDays: 0, plannedDays: 22))

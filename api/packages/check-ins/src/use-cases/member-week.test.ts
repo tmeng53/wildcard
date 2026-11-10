@@ -42,14 +42,6 @@ describe('memberWeek', () => {
     });
   });
 
-  it('keeps the member’s own clock without the squad’s', async () => {
-    const week = await memberWeek(deps, { member, viewer, squad });
-    expect({ weekStart: week.weekStart, today: week.today }).toStrictEqual({
-      weekStart: '2026-11-02',
-      today: '2026-11-08',
-    });
-  });
-
   it('shows a day a 练了 the squad can’t see turned as the member planned it', async () => {
     const lift = { kind: 'train', sport: 'strength' } as const;
     const swim = { kind: 'train', sport: 'swim' } as const;

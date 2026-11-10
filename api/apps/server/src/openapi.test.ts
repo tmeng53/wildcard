@@ -29,7 +29,6 @@ import {
 } from './test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from './test-kit/public-routes.js';
 import {
-  unusedWeekSummaryWords,
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
@@ -100,7 +99,6 @@ describe('openapi.json', () => {
       unlocks: unusedUnlocks,
       gifts: unusedGifts,
       rewards: noRewards,
-      weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
       coachLetters: unusedCoachLetters,

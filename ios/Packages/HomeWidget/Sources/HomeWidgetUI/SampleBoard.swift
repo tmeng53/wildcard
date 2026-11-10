@@ -31,7 +31,7 @@ public enum SampleBoard {
             members: [
                 row(people[1], .trained), row(people[2], .trained), row(viewer, .notCheckedIn),
             ] + people[3...].map { row($0, .notCheckedIn) },
-            today: TodayCounts(trained: 2, disclaimer: 0, resting: 0, everyoneTrained: false),
+            today: TodayCounts(trained: 2, disclaimer: 0, resting: 0),
             myWeek: MyWeek(
                 firstDay: monday, lastDay: monday.adding(days: 6), week: WeekCount(trainedDays: 2, plannedDays: 4)),
             squadWeek: WeekCount(trainedDays: 7, plannedDays: 12))

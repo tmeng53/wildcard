@@ -396,18 +396,18 @@ describe('unlocks', () => {
     const unlocks = unlocksWith(new Map());
     const before = await unlocks.rules();
     const id = `test${randomUUID().slice(0, 8)}`;
-    const added = await unlocks.putRule({ kind: 'prop', id, sports: ['testOne'], after: 2 });
+    const added = await unlocks.putRule({ kind: 'store', id, sports: ['testOne'], after: 2 });
     const rule = added.find((each) => each.id === id);
-    expect(rule).toMatchObject({ kind: 'prop', id, sports: ['testOne'], after: 2 });
+    expect(rule).toMatchObject({ kind: 'store', id, sports: ['testOne'], after: 2 });
     // No check-in names these sports, so the rule never opens for another test's members.
-    const changed = await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
+    const changed = await unlocks.putRule({ kind: 'store', id, sports: ['testTwo'], after: 4 });
     expect(changed.find((each) => each.id === id)).toStrictEqual({
       ...rule,
       sports: ['testTwo'],
       after: 4,
     });
     // The same again changes nothing, so it logs nothing.
-    await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
+    await unlocks.putRule({ kind: 'store', id, sports: ['testTwo'], after: 4 });
     const events = await sql<{ op: string; value: { after: number } }>`
       select op, value from public.reward_trigger_events where value ->> 'reward_id' = ${id} order by id
     `.execute(db);

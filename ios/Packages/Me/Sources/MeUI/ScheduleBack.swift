@@ -27,11 +27,6 @@ struct ScheduleBack: View {
     private var ink: Color { Color(role: .fgOnInk, in: theme) }
     private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
 
-    /// Their today's place in the week, Monday 0, on their calendar.
-    private var todayIndex: Int? {
-        schedule.todayIndex(else: LocalDay(at: Date(), in: .current))
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
@@ -95,7 +90,7 @@ struct ScheduleBack: View {
     }
 
     private func row(_ index: Int) -> some View {
-        let isToday = index == todayIndex
+        let isToday = index == schedule.todayIndex
         let face = schedule.marks[index].face(of: schedule.days[index])
         let dayRow = ScheduleDayRow(
             day: schedule.weekStart.adding(days: index), isToday: isToday,

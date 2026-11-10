@@ -5,7 +5,7 @@ import { addDays } from './weekly-plan.js';
 // 外卡记录: a member's records since they joined, worked out from their check-ins and plans when
 // asked, never stored. Pure: the caller loads the rows and passes the day and time zone.
 
-/** One 练了 as the records read it. */
+/** One 训练 as the records read it. */
 export interface RecordTraining {
   /** The day it counts for. */
   readonly day: LocalDay;
@@ -32,17 +32,17 @@ export interface SportDays {
 }
 
 export interface MemberRecords {
-  /** Days with a 练了. */
+  /** Days with a 训练. */
   readonly trainedDays: number;
-  /** Minutes of every 练了 that says how long it took. */
+  /** Minutes of every 训练 that says how long it took. */
   readonly minutes: number;
-  /** The longest single 练了, when one says how long it took. */
+  /** The longest single 训练, when one says how long it took. */
   readonly longestMinutes?: number;
   /** Most days trained in a row; a planned rest day between them neither breaks nor adds. */
   readonly longestStreak?: Streak;
   /** Most days in a row with a 健康餐. */
   readonly mealStreak?: Streak;
-  /** 练了 by the hour of the member's clock they were posted at, 0 to 23; 补打卡 left out. */
+  /** 训练 by the hour of the member's clock they were posted at, 0 to 23; 补打卡 left out. */
   readonly hours: readonly number[];
   /** Days trained by weekday, Monday first. */
   readonly weekdays: readonly number[];

@@ -82,14 +82,10 @@ public struct TodayCounts: Hashable, Sendable {
     public var disclaimer: Int
     /// On a planned rest day, with no 练了 or 请假条.
     public var resting: Int
-    /// 全员上场: someone trained, and everyone who didn't is on a planned rest day.
-    public var everyoneTrained: Bool
-
-    public init(trained: Int, disclaimer: Int, resting: Int, everyoneTrained: Bool) {
+    public init(trained: Int, disclaimer: Int, resting: Int) {
         self.trained = trained
         self.disclaimer = disclaimer
         self.resting = resting
-        self.everyoneTrained = everyoneTrained
     }
 }
 

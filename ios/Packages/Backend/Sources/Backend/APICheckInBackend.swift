@@ -109,18 +109,6 @@ public struct APICheckInBackend: CheckInBackend {
         do { try await api.delete(checkIn) } catch { throw CheckInError(error) }
     }
 
-    public func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
-        do { return try await api.reactions(to: checkIn) } catch { throw CheckInError(error) }
-    }
-
-    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
-        do { try await api.react(emoji, to: checkIn) } catch { throw CheckInError(error) }
-    }
-
-    public func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
-        do { try await api.removeReaction(from: checkIn) } catch { throw CheckInError(error) }
-    }
-
     public func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes {
         do { return try await api.pokes(in: squad) } catch { throw CheckInError(error) }
     }

@@ -19,12 +19,12 @@ public struct SceneID: RawRepresentable, Hashable, Sendable {
     public static let ski = SceneID(known: "ski")
 }
 
-/// A squad's scene this week (小队设置): last week's crown winners pick it once a week, or the
+/// A squad's scene this week (小队设置): last week's crown winner picks it once a week, or the
 /// captain when nobody won. A squad keeps its latest pick until the next.
 public struct SquadScene: Hashable, Sendable {
     /// Who picks this week's scene.
     public enum Pickers: Hashable, Sendable {
-        /// Last week's crown winners (any of them on a tie), in the order they joined.
+        /// Last week's crown winner: one, since a tie goes to whoever reached those days first.
         case crown([MemberID])
         /// Nobody won the crown: the captain.
         case captain(MemberID?)

@@ -16,9 +16,7 @@ import {
   createPostgresCheckInStore,
   createPostgresCommentStore,
   createPostgresReactionStore,
-  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
-  createWeekSummaryWords,
   createWeeklyPlans,
   createPostgresQuickReactions,
   createQuickReactions,
@@ -69,7 +67,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { NEW_YORK } from '@wildcard/time-zones';
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -152,7 +150,6 @@ import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
-import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
@@ -166,7 +163,6 @@ import { minimumBuildTools } from './admin-mcp/tools/minimum-build.js';
 import { quickReactionTools } from './admin-mcp/tools/quick-reactions.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
-import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
@@ -330,12 +326,15 @@ const squads = createSquads({
   aiConsent: hasAiConsent,
 });
 // A coach's gift week runs on its squad's clock, as the coach's day does.
-const giftWeekStart = squadWeekStart((ids, moment) =>
-  squads.timeZonesAt(
+// Each squad's zone (小队时区) for the modules that name squads by plain ids.
+const squadZonesAt = async (ids: readonly string[], moment: Date) => {
+  const zones = await squads.timeZonesAt(
     ids.map((squad) => SquadsSquad.parse(squad)),
     moment,
-  ),
-);
+  );
+  return (squad: string) => zones(SquadsSquad.parse(squad));
+};
+const giftWeekStart = squadWeekStart(squadZonesAt);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
@@ -388,14 +387,14 @@ const unlockSources = (scope: Database) => ({
   // follows; a previewer also counts those in preview, on their pretend day.
   switches: async (member: string) => {
     const was = await switchesOn(scope).historyFor(member);
-    return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+    return (id: string, at: Date) => was(id, { at, day: wallClockAt(at, NEW_YORK).day });
   },
   // A previewer keeps only what the switches as really set give them, so a preview ends clean.
   keptSwitches: async (member: string) => {
     const was = await switchesOn(scope).keptHistoryFor(member);
     return was === undefined
       ? undefined
-      : (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+      : (id: string, at: Date) => was(id, { at, day: wallClockAt(at, NEW_YORK).day });
   },
 });
 /**
@@ -570,11 +569,7 @@ const coachWakes =
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
-        timeZonesAt: (ids, moment) =>
-          squads.timeZonesAt(
-            ids.map((squad) => SquadsSquad.parse(squad)),
-            moment,
-          ),
+        timeZonesAt: squadZonesAt,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
@@ -781,11 +776,7 @@ const app = createApp({
     aiConsented: coachConsented,
     clock: () => new Date(),
     ...(coachAgent === undefined ? {} : { agent: coachAgent }),
-    timeZonesAt: (ids, moment) =>
-      squads.timeZonesAt(
-        ids.map((squad) => SquadsSquad.parse(squad)),
-        moment,
-      ),
+    timeZonesAt: squadZonesAt,
     // Every member finds the letter in 通知, to read again.
     lettered: async (letter, told) => {
       await tellAfter(db, {
@@ -807,7 +798,6 @@ const app = createApp({
     },
   }),
   coachActivity,
-  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
@@ -865,9 +855,6 @@ const app = createApp({
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
-      }),
-      ...weekSummaryWordTools({
-        words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),

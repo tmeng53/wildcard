@@ -74,12 +74,6 @@ public struct PostEdit: Hashable, Sendable {
         photos.compactMap { if case .new(let photo) = $0 { photo } else { nil } }
     }
 
-    /// Whether it can be saved: a 请假条 needs its text.
-    public var isSavable: Bool {
-        guard case .disclaimer = original.entry else { return true }
-        return (try? Disclaimer(line)) != nil
-    }
-
     /// The check-in as edited, once each new photo is uploaded (`uploaded`, by
     /// `PreparedPhoto.id`). Throws `.refused` for one that breaks a rule `Contracts` checks.
     public func checkIn(uploaded: [UUID: PhotoRef]) throws(CheckInError) -> CheckIn {
