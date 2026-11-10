@@ -73,17 +73,15 @@ struct StreakTile: View {
     /// 现在连续 N 天, or 正在刷新纪录 N 天 while the run still going is the record; 0 once broken.
     private func currentRow(ongoing: Bool) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Group {
-                if ongoing {
-                    Text(copy: "正在刷新纪录", bundle: .module)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
-                } else {
-                    Text(copy: "现在连续", bundle: .module)
-                        .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
-                }
+            if ongoing {
+                Text(copy: "正在刷新纪录", bundle: .module)
+                    .typeStyle(TypeRamp.captionEmphasis)
+                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+            } else {
+                Text(copy: "现在连续", bundle: .module)
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
             }
-            .typeStyle(TypeRamp.caption)
             Spacer(minLength: Space.xs)
             HStack(alignment: .firstTextBaseline, spacing: Self.unitGap) {
                 Text(verbatim: "\(current?.days ?? 0)")
