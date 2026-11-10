@@ -188,6 +188,18 @@ public struct APICheckInBackend: CheckInBackend {
     }
 }
 
+/// The squad's coach as last loaded, by its id and name. Stored JSON, so it carries a `version`.
+struct KeptCoach: Codable {
+    struct Speaker: Codable {
+        let id: String
+        let name: String
+    }
+
+    let version: Int
+    let squad: String
+    let coach: Speaker?
+}
+
 /// The newest coach's letter opened on this phone, by its id. Stored JSON, so it carries a `version`.
 struct OpenedCoachLetter: Codable {
     let version: Int
