@@ -11,6 +11,7 @@ private actor FakeLibrary: HealthLibrary {
     private let connected: Bool
     private var held: [ImportedWorkout] = []
     private(set) var stoppedListening = false
+    private(set) var listens = 0
 
     init(connected: Bool) {
         self.connected = connected
@@ -23,8 +24,10 @@ private actor FakeLibrary: HealthLibrary {
     func workouts(endingFrom start: Date, to end: Date) -> [ImportedWorkout] { held }
     func hold(_ workouts: [ImportedWorkout]) { held = workouts }
     func stop() { stoppedListening = true }
+    func listened() { listens += 1 }
 
     nonisolated func workoutChanges() -> AsyncStream<Void> {
+        Task { await listened() }
         teller.onTermination = { [weak self] _ in Task { await self?.stop() } }
         return changes
     }
@@ -72,6 +75,7 @@ private func run(_ id: String) throws -> ImportedWorkout {
     following.cancel()
     await following.value
     await settle { await library.stoppedListening }
+    #expect(await library.listens == 1)
 }
 
 @MainActor @Test func followingReturnsAtOnceWhileHealthIsNotConnected() async throws {
@@ -80,5 +84,7 @@ private func run(_ id: String) throws -> ImportedWorkout {
     await health.followChanges()
     library.teller.yield()
     #expect(health.recent.isEmpty)
-    #expect(await library.stoppedListening == false)
+    // Give a stray listen the turns it would need to be counted.
+    for _ in 0..<100 { await Task.yield() }
+    #expect(await library.listens == 0)
 }

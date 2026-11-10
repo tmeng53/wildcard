@@ -11,7 +11,7 @@ extension HealthKitLibrary {
         let (changes, teller) = AsyncStream.makeStream(of: Void.self, bufferingPolicy: .bufferingNewest(1))
         let since = Date().addingTimeInterval(-healthLookBackHours * 3600)
         let watching = Task { [store] in
-            await withTaskGroup { group in
+            await withTaskGroup(of: Void.self) { group in
                 group.addTask {
                     let recent = HKQuery.predicateForSamples(withStart: since, end: nil)
                     await Self.tell(
@@ -32,7 +32,8 @@ extension HealthKitLibrary {
     }
 
     /// Yields to `teller` for each change `query` sees after its first answer, until it fails or
-    /// is cancelled.
+    /// is cancelled. Once both fail the stream finishes, and 今天 follows again on its next
+    /// connect; a return to the app reads Health anyway.
     private static func tell<Sample: HKSample>(
         _ query: HKAnchoredObjectQueryDescriptor<Sample>, in store: HKHealthStore,
         to teller: AsyncStream<Void>.Continuation
