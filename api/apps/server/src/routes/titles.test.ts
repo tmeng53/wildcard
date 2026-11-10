@@ -63,7 +63,6 @@ import {
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
-  unusedWeekSummaryWords,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
@@ -142,7 +141,6 @@ const app = createApp({
     }),
     clock: () => new Date(),
   },
-  weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards,
@@ -198,7 +196,7 @@ async function squadOf(captain: { token: string }, ...others: { token: string }[
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团' },
+    body: { version: 1, name: '早八跑团', timeZone: 'America/New_York' },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);

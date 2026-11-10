@@ -1,7 +1,8 @@
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
-import type { CheckIns, WeekSummaryWords, WeeklyPlans } from '@wildcard/check-ins';
+import type { CheckIns, WeeklyPlans } from '@wildcard/check-ins';
 import type { CoachActivity, CoachHiring, CoachLetters, CoachWakes } from '@wildcard/coach';
 import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/disclaimer-drafts';
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
@@ -44,7 +45,6 @@ import type {
 import { problemResponse } from './problem.js';
 import { rememberReaderLanguage } from './reader-language.js';
 import { requestTrace } from './request-trace.js';
-import { awardTotals } from './routes/award-totals.js';
 import { unlocks } from './routes/unlocks.js';
 import { aiConsent } from './routes/ai-consent.js';
 import { catalog, type CatalogSection } from './routes/catalog.js';
@@ -72,11 +72,9 @@ import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { coachCards } from './routes/coach-cards.js';
 import { squadScene } from './routes/squad-scene.js';
-import { newYorkDay } from './new-york-day.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
 import { weekStory } from './routes/week-story.js';
-import { weekSummary } from './routes/week-summary.js';
 import { weeklyPlans } from './routes/weekly-plans.js';
 
 export interface AppDependencies {
@@ -121,8 +119,6 @@ export interface AppDependencies {
   readonly disclaimerDrafts: DisclaimerDrafts;
   readonly push: Push;
   readonly weather: Weather;
-  /** The Sunday summary's words now, kept in the database. */
-  readonly weekSummaryWords: () => Promise<WeekSummaryWords>;
   /** Each squad's weekly awards, and the clock that says when they are due. */
   readonly weeklyAwards: { readonly awards: WeeklyAwards; readonly clock: () => Date };
   /** The stores, props and pieces members unlock by training. */
@@ -210,7 +206,10 @@ export function createApp(deps: AppDependencies) {
       clock: deps.weeklyAwards.clock,
       takeoverFor: async (member) => {
         const { on } = await deps.switches.statesFor(member);
-        return deps.scenes.takeover({ day: newYorkDay(deps.weeklyAwards.clock()), switchOn: on });
+        return deps.scenes.takeover({
+          day: wallClockAt(deps.weeklyAwards.clock(), NEW_YORK).day,
+          switchOn: on,
+        });
       },
     }),
   );
@@ -224,11 +223,9 @@ export function createApp(deps: AppDependencies) {
   app.route('/', feedback(deps));
   app.route('/', notices(deps));
   app.route('/', events(deps));
-  app.route('/', weekSummary({ ...deps, words: deps.weekSummaryWords }));
   app.route('/', disclaimerDrafts(deps));
   app.route('/', weeklyPlans(deps));
   app.route('/', weekStory({ ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) }));
-  app.route('/', awardTotals({ ...deps, ...deps.weeklyAwards }));
   app.route('/', titles({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route('/', unlocks(deps));
   // Not part of the app's contract, so not in openapi.json: a scheduler calls it.

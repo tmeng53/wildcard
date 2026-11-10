@@ -58,7 +58,7 @@ export function putBroadcast({ broadcasts, unlocks, clock }: BroadcastToolDepend
       'Chinese. A change (such as a typo fix) shows to members already told; members told it ' +
       'are never told again, so a new message needs a new id. Gifts are unlocked for each ' +
       'member when they are told, quietly (the words say the 商店街 has something new); each ' +
-      'must have an unlock rule (get_unlock_rules). An icon picks a store’s sign or a piece or prop the app draws. Name members to try it on yourselves first, then save it again without them to tell everyone. Returns the broadcast now, and whether this save changed it.',
+      'must have a training trigger (get_rewards). An icon picks a store’s sign or a piece or prop the app draws. Name members to try it on yourselves first, then save it again without them to tell everyone. Returns the broadcast now, and whether this save changed it.',
     changes: true,
     input: z.strictObject({
       id: BroadcastId.describe('A short slug of your choosing, such as `thanksgiving-soon`.'),

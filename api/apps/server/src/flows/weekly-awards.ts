@@ -1,3 +1,4 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import {
   CheckInId,
   MemberId as CheckInMember,
@@ -157,9 +158,7 @@ async function awardsTimeFor(
   { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<Date> {
   const id = SquadsSquad.parse(squad);
-  const zone = (await deps.squads.timeZonesFor([id], weekStart)).get(id);
-  if (zone === undefined) throw new Error(`No time zone for squad ${squad}`);
-  return awardsTimeOf(weekStart, zone);
+  return awardsTimeOf(weekStart, (await deps.squads.timeZonesFor([id], weekStart))(id));
 }
 
 /** One week's awards for every squad that checked in before them, as `giveWeeklyAwards`. */
@@ -566,8 +565,8 @@ async function memberWeeks(
       const profile = await deps.members.findProfile(member);
       return {
         member: MemberId.parse(member),
-        // A member who checked in has saved a time zone; UTC only for one who never did.
-        timeZone: profile?.timeZone ?? 'UTC',
+        // A member who checked in has saved a time zone.
+        timeZone: profile?.timeZone ?? UNSAVED_MEMBER_ZONE,
         checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek)),
       };
     }),

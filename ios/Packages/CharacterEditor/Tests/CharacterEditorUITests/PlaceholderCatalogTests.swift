@@ -13,8 +13,6 @@ private let powderLocked = Dictionary(
         "salmonhelmet",
     ].enumerated().map { ("powder-\($1)", $0 + 1) })
 
-private let unlockedAt = Date(timeIntervalSince1970: 1_800_000_000)
-
 /// The 商店街 as the server sends it: every store, `closed` ones shut; the pieces of each store
 /// in `earned` that is open, boxed when in `locked` and owned when in `owned`, otherwise available;
 /// and what is owned in a closed store.
@@ -156,16 +154,11 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     }
 }
 
-/// A store the member unlocked opens on the street with its rack, and the rest stay shut; a prop
-/// unlocked before every prop was open is held once, not twice.
+/// A store the member unlocked opens on the street with its rack, and the rest stay shut; every
+/// prop is held once.
 @Test func unlocksOpenTheirStoresAndProps() throws {
     let catalog = try Catalog.placeholder(
-        unlocks: [
-            Unlock(
-                kind: .store, id: "deuce", unlockedAt: unlockedAt, sports: ["tennis", "pickleball", "squash"],
-                checkIns: 3),
-            Unlock(kind: .prop, id: "racket", unlockedAt: unlockedAt, sports: ["tennis", "squash"], checkIns: 1),
-        ], stock: try stock(earned: ["warmup", "deuce", "powder"], locked: powderLocked))
+        stock: try stock(earned: ["warmup", "deuce", "powder"], locked: powderLocked))
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "deuce", "powder"])
     #expect(catalog.props.filter { $0 == "racket" }.count == 1)
     #expect(

@@ -184,7 +184,7 @@ export interface MemberNote {
   readonly squad: SquadId;
   readonly member: string;
   readonly coach: CoachId;
-  /** The squad's day it was written for, `YYYY-MM-DD` (New York). */
+  /** The squad's day it was written for, `YYYY-MM-DD`, on the squad's clock. */
   readonly day: string;
   readonly text: string;
   /** The day's challenge (今日挑战) the note sets, if any. */
@@ -477,6 +477,12 @@ export type AiConsented = (members: readonly string[]) => Promise<readonly strin
  * the coach's own calendar in its settings.
  */
 export type CoachOccasions = (day: string) => Promise<readonly string[]>;
+
+/** Each squad's time zone at a moment (小队时区): a lookup that has one for every squad. */
+export type CoachTimeZones = (
+  squads: readonly SquadId[],
+  moment: Date,
+) => Promise<(squad: SquadId) => string>;
 
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {

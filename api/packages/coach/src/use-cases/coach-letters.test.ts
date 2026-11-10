@@ -164,6 +164,7 @@ function letters(
         ? Promise.reject(new Error('The consents can’t be read.'))
         : Promise.resolve(members.filter((member) => consented.includes(member))),
     clock: () => at,
+    timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
     ...(agent === undefined ? {} : { agent }),
     ...(lettered === undefined ? {} : { lettered }),
   });

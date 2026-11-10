@@ -43,7 +43,6 @@ import {
   unusedGifts,
   noRewards,
   unusedUnlocks,
-  unusedWeekSummaryWords,
   unusedWeeklyAwards,
 } from '../test-kit/weekly-awards.js';
 
@@ -144,7 +143,6 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
     rewards: noRewards,
-    weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,

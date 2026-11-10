@@ -1,4 +1,4 @@
-import { NEW_YORK, isKnownTimeZone } from '@wildcard/time-zones';
+import { isKnownTimeZone } from '@wildcard/time-zones';
 
 import type { InviteCodes } from '../../domain/invite-code.js';
 import type { SceneWeek } from '../../domain/scene.js';
@@ -25,8 +25,8 @@ export interface CreateSquadInput {
   readonly name: SquadName;
   /** The squad's weekly goal, 人均 N 次; the default when the creator didn't pick one. */
   readonly daysPerMember?: DaysPerMember | undefined;
-  /** The squad's time zone (小队时区), which the creator picks; New York when left out. */
-  readonly timeZone?: string | undefined;
+  /** The squad's time zone (小队时区), which the creator picks. */
+  readonly timeZone: string;
   /** The creator's week now (its Monday): the goal counts from it. */
   readonly week: SceneWeek;
   /**
@@ -64,15 +64,7 @@ export async function createSquad(
     readonly inviteCodes: InviteCodes;
     readonly aiConsent: AiConsentCheck;
   },
-  {
-    id,
-    creator,
-    name,
-    daysPerMember,
-    timeZone = NEW_YORK,
-    week,
-    timeZoneWeek = week,
-  }: CreateSquadInput,
+  { id, creator, name, daysPerMember, timeZone, week, timeZoneWeek = week }: CreateSquadInput,
 ): Promise<CreatedSquad> {
   // A retry of a squad already made is answered as before, whatever the consent is now.
   if ((await store.find(id)) !== undefined)

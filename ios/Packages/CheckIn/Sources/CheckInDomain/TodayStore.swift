@@ -48,8 +48,6 @@ public final class TodayStore {
     public internal(set) var pending: [PendingCheckIn] = []
     /// Posts dropped because the server refused them while they went out late.
     public internal(set) var refused: [Refused] = []
-    /// Reactions on check-ins loaded with `loadReactions(to:)`, by check-in.
-    public private(set) var reactions: [CheckInID: [Reaction]] = [:]
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
@@ -181,47 +179,6 @@ public final class TodayStore {
             phase = .signedOut
         } catch {
             phase = .offline
-        }
-    }
-
-    // MARK: - Reactions
-
-    /// Loads who reacted to a check-in.
-    public func loadReactions(to checkIn: CheckInID) async throws(CheckInError) {
-        reactions[checkIn] = try await backend.reactions(to: checkIn)
-    }
-
-    /// The member's own reaction on a check-in, if any.
-    public func myReaction(on checkIn: CheckInID) -> Emoji? {
-        guard let member = savedHome?.member else { return nil }
-        return reactions[checkIn]?.first { $0.member == member }?.emoji
-    }
-
-    /// Sets the member's reaction, shown at once and taken back if the server says no.
-    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
-        guard let member = savedHome?.member else { throw .notSent }
-        let before = reactions[checkIn]
-        var after = (before ?? []).filter { $0.member != member }
-        after.append(Reaction(member: member, emoji: emoji, reactedAt: Timestamp(now())))
-        reactions[checkIn] = after
-        do {
-            try await backend.react(emoji, to: checkIn)
-        } catch {
-            reactions[checkIn] = before
-            throw error
-        }
-    }
-
-    /// Takes the member's reaction back, at once, and restores it if the server says no.
-    public func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
-        guard let member = savedHome?.member else { throw .notSent }
-        let before = reactions[checkIn]
-        reactions[checkIn] = before?.filter { $0.member != member }
-        do {
-            try await backend.removeReaction(from: checkIn)
-        } catch {
-            reactions[checkIn] = before
-            throw error
         }
     }
 

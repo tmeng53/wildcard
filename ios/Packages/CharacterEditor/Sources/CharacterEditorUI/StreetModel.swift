@@ -62,7 +62,7 @@ public final class StreetModel {
         look: Outfit, standing: UnlockStanding, marks: any WardrobeMarks = MemoryWardrobeMarks(),
         noticeHold: Double? = nil, claim: @escaping (String) async -> Bool, tryOn: @escaping (String) -> Void
     ) throws(AvatarError) -> StreetModel {
-        let catalog = try Catalog.placeholder(unlocks: standing.unlocks, stock: standing.stock)
+        let catalog = try Catalog.placeholder(stock: standing.stock)
         return StreetModel(
             draft: CharacterDraft(catalog: catalog, look: look, persona: .energetic, nickname: ""),
             unlocks: standing.unlocks, stock: standing.stock, claimed: standing.claimed, marks: marks,

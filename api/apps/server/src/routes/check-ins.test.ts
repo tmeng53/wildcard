@@ -39,7 +39,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -101,7 +100,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -161,7 +159,7 @@ async function squadOf(
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: creator.token,
-    body: { version: 1, name: 'squad' },
+    body: { version: 1, name: 'squad', timeZone: 'America/New_York' },
   });
   const { id, inviteCode } = z.object({ id: z.uuid(), inviteCode: z.string() }).parse(created.body);
   for (const member of others) {
@@ -419,8 +417,6 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
             checkIn: { ...saved, audience: [squad] },
             reactions: [{ member: me.userId, emoji: '🤤', reactedAt }],
             comments: [],
-            // Kept for installed builds from before #180, which fail to read the feed without it.
-            replies: [],
           },
         ],
       },

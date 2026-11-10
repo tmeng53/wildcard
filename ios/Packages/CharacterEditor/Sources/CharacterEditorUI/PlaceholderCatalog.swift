@@ -5,19 +5,18 @@ import Contracts
 
 extension Catalog {
     /// What the placeholder character's bundled art offers a member whose 商店街 is `stock` (the
-    /// server's, or the starter street while it isn't known yet) and who unlocked `unlocks`: the
-    /// species in its `editor.json`, the stores the stock lists that the art has, in the stock's
-    /// order, the pieces the member owns or may take, the locked ones hanging as 「？」 boxes, the
-    /// props they hold (the starters, with nothing unlocked), every bundled hair and face part,
+    /// server's, or the starter street while it isn't known yet): the species in its
+    /// `editor.json`, the stores the stock lists that the art has, in the stock's order, the
+    /// pieces the member owns or may take, the locked ones hanging as 「？」 boxes, every prop
+    /// (props never need unlocking, Tracy 2026-11-09), every bundled hair and face part,
     /// and their preset colors. A closed store (its switch off) stays on the street only as the
     /// member's own rack, when they own something there.
     public static func placeholder(
-        unlocks: [Unlock] = [], stock: StreetStock? = nil, gifts: [String] = []
+        stock: StreetStock? = nil, gifts: [String] = []
     ) throws(AvatarError) -> Catalog {
         let stock = stock ?? StarterStock.shared.current
         let choices = try PlaceholderCharacter.editorChoices()
-        let unlockedProps = Set(unlocks.filter { $0.kind == .prop }.map(\.id))
-        var props = choices.props.filter { $0.isOpen || unlockedProps.contains($0.id) }.map(\.id)
+        var props = choices.props.map(\.id)
         let owned = Set(stock.pieces.filter { $0.state == .owned }.map(\.id))
         let boxed: [(String, Int)] = stock.pieces.compactMap { piece in
             guard case .locked(let left) = piece.state, !owned.contains(piece.id) else { return nil }

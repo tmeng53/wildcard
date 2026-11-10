@@ -178,8 +178,8 @@ const DayMarkBody = z
       .optional()
       .meta({
         description:
-          'Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by ' +
-          'older servers.',
+          'Every sport the day’s 训练 logged, oldest first; only for `trained`, where it is ' +
+          'always sent.',
       }),
   })
   .openapi('DayMark');
@@ -210,53 +210,41 @@ const PlayerCardBody = z
           description: 'Days their plan trains this week, from the day they joined on.',
         }),
         // The card's back, their 出赛表: this week only, never another week's.
-        weekStart: WeekStart.optional().meta({
+        weekStart: WeekStart.meta({
           description:
-            'This week’s Monday on the squad’s clock (小队时区), the same week for every ' +
-            'squadmate. Left out by older servers.',
+            'This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate.',
           example: '2026-11-02',
         }),
-        days: planDays.optional(),
+        days: planDays,
         marks: z
           .array(DayMarkBody)
           .min(7)
           .max(7)
-          .optional()
           .meta({
             description:
               'How each day of this week went, Monday first: `trained` with the sport of the ' +
               'day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` ' +
-              'for neither yet, from only the check-ins shared to this squad. Left out by older ' +
-              'servers.',
+              'for neither yet, from only the check-ins shared to this squad.',
           }),
         fuelGoals: fuelGoalsBody.optional(),
         firstWeek: WeekStart.optional().meta({
           description:
-            'The Monday of the week they joined, in their time zone, which their 出赛表 counts ' +
-            'as W1 before servers send `squadFirstWeek`. Missing before they save a profile, ' +
-            'and from older servers.',
+            'The Monday of the week they joined, in their time zone, which builds from before ' +
+            '`squadFirstWeek` count their 出赛表 from. Missing before they save a profile.',
           example: '2026-10-12',
         }),
-        squadFirstWeek: WeekStart.optional().meta({
+        squadFirstWeek: WeekStart.meta({
           description:
             'The Monday of the week this squad was made, on its clock: the week every 出赛表 in ' +
-            'the squad counts as W1, so every card shows the same week number. Left out by older ' +
-            'servers.',
+            'the squad counts as W1, so every card shows the same week number.',
           example: '2026-10-05',
         }),
-        today: LocalDay.optional().meta({
-          description:
-            'Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older ' +
-            'servers.',
+        today: LocalDay.meta({
+          description: 'Today on the squad’s clock, which their 出赛表 shades as 今天.',
           example: '2026-10-29',
         }),
       })
-      .optional()
-      .meta({
-        description:
-          'Their own 本周 x/y, in their time zone. Left out by older servers; the app then ' +
-          'shows no week.',
-      }),
+      .meta({ description: 'Their own 本周 x/y and this week’s 出赛表, on the card’s back.' }),
     ...boardFields,
   })
   .openapi('PlayerCard');
@@ -422,7 +410,7 @@ export function titles(deps: {
       });
       const place = squad.members.findIndex(({ member }) => member === memberId);
       if (place < 0) throw new SquadMemberUnknownError(memberId);
-      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date())).get(squad.id);
+      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date()))(squad.id);
       const viewer = MemberId.parse(c.var.caller.userId);
       const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
         deps.awards.boards([memberId]),
@@ -436,7 +424,7 @@ export function titles(deps: {
           member: memberId,
           viewer: MemberId.parse(c.var.caller.userId),
           squad: squadId,
-          ...(squadZone === undefined ? {} : { squadZone }),
+          squadZone,
         }),
         deps.rewards.badgesOf(RewardMember.parse(memberId)),
         squadFirstWeek(deps.squads, squad),

@@ -53,8 +53,7 @@ extension SquadToday {
             squad: try SquadID(wire: wire.squad),
             members: try wire.members.map { member throws(ContractsError) in try SquadmateToday(member) },
             today: TodayCounts(
-                trained: wire.today.trained, disclaimer: wire.today.disclaimer, resting: wire.today.resting,
-                everyoneTrained: wire.today.everyoneTrained),
+                trained: wire.today.trained, disclaimer: wire.today.disclaimer, resting: wire.today.resting),
             myWeek: MyWeek(
                 firstDay: try LocalDay(wire.me.week.from), lastDay: try LocalDay(wire.me.week.to),
                 week: WeekCount(trainedDays: wire.me.week.trainedDays, plannedDays: wire.me.week.plannedDays)),

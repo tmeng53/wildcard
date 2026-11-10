@@ -17,7 +17,7 @@ import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
 import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, wakesDue, weekStartOf, weeksAround } from './wake.js';
+import { costMicros, wakesDue, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -209,11 +209,6 @@ describe('the memory files', () => {
 });
 
 describe('when the coach wakes', () => {
-  it('finds the Monday of a day’s week', () => {
-    expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
-    expect(weekStartOf('2026-10-26')).toBe('2026-10-26');
-  });
-
   it('looks in every week a member’s own day can be in', () => {
     // 10am Sunday in New York is already Monday east of UTC+10.
     expect(weeksAround(new Date('2026-11-01T15:00:00Z'))).toStrictEqual([
@@ -372,10 +367,10 @@ describe('when the coach wakes', () => {
         said: [{ by: { member: mia }, text: '你看看我吃了啥', answering: true }],
       },
     } as const;
-    expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
+    expect(taskOf(asked)?.split('\n\n')).toContain(
       '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
     );
-    expect(taskOf(asked)).not.toContain('look_at_photos');
+    expect(taskOf({ ...asked, week })).not.toContain('look_at_photos');
     // On a holiday the coach is told, after the talk and before its files.
     expect(
       taskOf({

@@ -92,7 +92,7 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     _ = try await today.post(.disclaimer(try Disclaimer("累")), shared: false)
     _ = try await today.post(run)
     #expect(today.myStatus == .trained)
-    #expect(today.home?.today.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(today.home?.today.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1))
     #expect(today.home?.today.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
     #expect(today.home?.today.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
 }
@@ -105,7 +105,6 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
 
     #expect(try await today.post(run, shared: false) == .queued)
     #expect(today.home?.today.squadWeek.trainedDays == 14)
-    #expect(today.home?.today.today.everyoneTrained == false)
     #expect(try await today.post(run) == .queued)
     #expect(today.home?.today.today.trained == 2)
     #expect(today.home?.today.squadWeek.trainedDays == 15)
@@ -241,29 +240,6 @@ private let run = CheckInDraft.trained(.sport("run"), nil, PostBody(photos: [], 
     #expect(today.suggestedActivity == nil)
     await today.load()
     #expect(today.suggestedActivity == .sport("yoga"))
-}
-
-@MainActor @Test func reactionsShowAtOnceAndComeBackOnFailure() async throws {
-    let backend = ScriptedBackend()
-    let today = store(backend)
-    await today.load()
-    let checkIn = CheckInID(id(50))
-    let laughing = try Emoji("😂")
-
-    try await today.react(laughing, to: checkIn)
-    #expect(today.myReaction(on: checkIn) == laughing)
-
-    await backend.set(failure: .notSent)
-    await #expect(throws: CheckInError.notSent) { try await today.react(.heart, to: checkIn) }
-    #expect(today.myReaction(on: checkIn) == laughing)
-    await #expect(throws: CheckInError.notSent) { try await today.removeReaction(from: checkIn) }
-    #expect(today.myReaction(on: checkIn) == laughing)
-
-    await backend.set(failure: nil)
-    try await today.removeReaction(from: checkIn)
-    #expect(today.myReaction(on: checkIn) == nil)
-    try await today.loadReactions(to: checkIn)
-    #expect(today.reactions[checkIn] == [])
 }
 
 @MainActor @Test func onANewDayTheHomeKeptFromYesterdayStartsTheMemberAfresh() async throws {

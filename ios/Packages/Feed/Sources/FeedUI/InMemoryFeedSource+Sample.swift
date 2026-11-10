@@ -73,7 +73,7 @@ extension InMemoryFeedSource {
     private static func sampleCoach(on posts: [FeedPost], now: Date, mia: MemberID) -> CoachActivity {
         let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
         let note = CoachNote(
-            day: LocalDay(at: now, in: CoachNote.timeZone), text: localized("今天谁先动，谁就是队长"),
+            day: LocalDay(at: now, in: SquadTimeZone.newYorkClock), text: localized("今天谁先动，谁就是队长"),
             coach: maotou, writtenAt: now.addingTimeInterval(-3600))
         func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?, mentioning: [MemberID] = []) -> CoachReply? {
             guard let post else { return nil }

@@ -149,14 +149,6 @@ public struct WildcardAPI: Sendable {
 
     // MARK: - Reactions
 
-    /// Who reacted to a check-in, and with which emoji.
-    public func reactions(to checkIn: CheckInID) async throws(APIError) -> [Reaction] {
-        let list = try await call {
-            try await client.listCheckInReactions(path: .init(checkInId: checkIn.description)).ok.body.json
-        }
-        return try read { () throws(ContractsError) in try list.reactions.map(Reaction.init) }
-    }
-
     /// Sets the member's one reaction on a teammate's check-in, replacing any earlier one.
     public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(APIError) {
         try await call {

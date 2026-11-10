@@ -53,15 +53,6 @@ extension SquadToday {
     private enum Kind {
         /// A 休息: no 请假条, it makes the day a rest day in the plan.
         case trained, disclaimer, rest, healthyMeal, cheatMeal
-
-        /// The member's day as the squad sees it once this is shared, after `saw`.
-        func after(_ saw: TrainingStatus) -> TrainingStatus {
-            switch self {
-            case .trained: .trained
-            case .disclaimer: saw == .notCheckedIn ? .disclaimer : saw
-            case .rest, .healthyMeal, .cheatMeal: saw
-            }
-        }
     }
 
     /// Which counts a check-in adds to, besides the member's own row.
@@ -99,12 +90,6 @@ extension SquadToday {
             let after = counted.members.lastIndex { $0.firstCheckInAt != nil }.map { $0 + 1 } ?? 0
             counted.members.insert(member, at: after)
         }
-        // The squad sees only what was shared to it.
-        guard case .squadAndMine(let saw) = counts else { return counted }
-        let sees = kind.after(saw)
-        counted.today.everyoneTrained =
-            counted.today.trained > 0
-            && counted.members.allSatisfy { ($0.member == author ? sees : $0.training) == .trained || $0.plannedRest }
         return counted
     }
 
