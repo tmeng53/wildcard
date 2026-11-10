@@ -20,22 +20,7 @@ final class HomeScreenWidgetUITests: XCTestCase {
         XCUIDevice.shared.press(.home)
         Thread.sleep(forTimeInterval: 2)
 
-        // Jiggle mode: long-press an empty part of the home screen.
-        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62)).press(forDuration: 2)
-        log("after long press")
-        let edit = springboard.buttons["Edit"]
-        if edit.waitForExistence(timeout: Self.wait) {
-            edit.tap()
-            let add = springboard.buttons["Add Widget"]
-            XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "no Add Widget:\n\(tree)")
-            add.tap()
-        } else {
-            let add = springboard.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Add")).firstMatch
-            XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "no Edit or Add button:\n\(tree)")
-            add.tap()
-        }
-        Thread.sleep(forTimeInterval: 2)
-        log("gallery")
+        openGallery()
 
         let search = springboard.searchFields.firstMatch
         XCTAssertTrue(search.waitForExistence(timeout: Self.wait), "no gallery search:\n\(tree)")
@@ -70,6 +55,26 @@ final class HomeScreenWidgetUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 12)
         keepScreenshot(named: "70-home-widget-added")
         log("home screen")
+    }
+
+    /// The widget gallery: 长按桌面 until the icons jiggle, then 编辑 › 添加小组件.
+    private func openGallery() {
+        // Jiggle mode: long-press an empty part of the home screen.
+        springboard.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62)).press(forDuration: 2)
+        log("after long press")
+        let edit = springboard.buttons["Edit"]
+        if edit.waitForExistence(timeout: Self.wait) {
+            edit.tap()
+            let add = springboard.buttons["Add Widget"]
+            XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "no Add Widget:\n\(tree)")
+            add.tap()
+        } else {
+            let add = springboard.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Add")).firstMatch
+            XCTAssertTrue(add.waitForExistence(timeout: Self.wait), "no Edit or Add button:\n\(tree)")
+            add.tap()
+        }
+        Thread.sleep(forTimeInterval: 2)
+        log("gallery")
     }
 
     private var tree: String { String(springboard.debugDescription.prefix(6000)) }
