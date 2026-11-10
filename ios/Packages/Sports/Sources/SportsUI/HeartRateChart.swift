@@ -18,6 +18,8 @@ struct HeartRateChart: View {
     private let isDetailed: Bool
     /// The reading under the finger while it scrubs; nil once it lifts or the scrub is cancelled.
     @State private var picked: HeartRatePoint?
+    /// The chart's height, so close zone starts don't print their numbers over each other.
+    @State private var chartHeight = 0.0
 
     init(points: [HeartRatePoint], zones: HeartRateZones?, startedAt: Date?, isDetailed: Bool) {
         trace = HeartRateTrace(points: points, zones: zones)
@@ -104,11 +106,16 @@ struct HeartRateChart: View {
         .chartYScale(domain: trace.bpmRange.lowerBound...trace.bpmRange.upperBound)
         .chartXAxis(.hidden)
         .chartYAxis {
-            AxisMarks(position: .trailing, values: isDetailed ? (trace.zones?.starts ?? []) : []) { value in
+            AxisMarks(position: .trailing, values: axisStarts) { value in
                 AxisValueLabel {
                     if let bpm = value.as(Int.self) { zoneStart(bpm) }
                 }
             }
+        }
+        .onGeometryChange(for: Double.self) {
+            $0.size.height
+        } action: {
+            chartHeight = $0
         }
         .chartOverlay { proxy in
             GeometryReader { geometry in
@@ -122,6 +129,10 @@ struct HeartRateChart: View {
                 }
             }
         }
+    }
+
+    private var axisStarts: [Int] {
+        isDetailed ? trace.labelledStarts(height: chartHeight, labelHeight: Self.startLabelHeight) : []
     }
 
     private func zoneStart(_ bpm: Int) -> some View {
@@ -217,6 +228,8 @@ struct HeartRateChart: View {
     private static let headerHeight = Sizing.control
     private static let belowZones = 0.4
     private static let dot = 12.0
+    /// A zone start's number on the axis, `TypeRamp.scoreCaption`, with a little air.
+    private static let startLabelHeight = 16.0
     fileprivate static let hold = 0.15
     /// How far the finger may wander before the hold counts, as a swipe that pages the cover.
     fileprivate static let slop = 10.0

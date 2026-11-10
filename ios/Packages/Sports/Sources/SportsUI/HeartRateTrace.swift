@@ -57,5 +57,20 @@ public struct HeartRateTrace: Equatable, Sendable {
         return HeartRateZone.allCases.map { ($0, Int(((spent[$0] ?? 0) / 60).rounded())) }
     }
 
+    /// The zone starts the axis can label on a plot `height` points tall without two labels,
+    /// each `labelHeight` tall, overlapping: from 轻松's start up, a start too close to the last
+    /// one kept is left unlabelled (its colour still shows where it begins). Empty without zones.
+    public func labelledStarts(height: Double, labelHeight: Double) -> [Int] {
+        guard let starts = zones?.starts, height > 0 else { return [] }
+        let range = bpmRange
+        let pointsPerBeat = height / Double(range.upperBound - range.lowerBound)
+        var kept: [Int] = []
+        for start in starts.sorted() {
+            if let last = kept.last, Double(start - last) * pointsPerBeat < labelHeight { continue }
+            kept.append(start)
+        }
+        return kept
+    }
+
     static let margin = 6
 }
