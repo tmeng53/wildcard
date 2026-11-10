@@ -95,7 +95,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     _ = try await author.api.save(backfill)
 
     await today.load()
-    #expect(today.postedWorkouts == [source])
+    #expect(today.postedTrainings.map(\.workout?.source) == [source])
 }
 
 @MainActor @Test func aMemberInNoSquadHasNoHome() async throws {

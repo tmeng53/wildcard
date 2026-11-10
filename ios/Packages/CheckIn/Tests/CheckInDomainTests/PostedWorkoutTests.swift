@@ -14,23 +14,23 @@ import Testing
     let backend = ScriptedBackend()
     let today = store(backend)
     await today.load()
-    #expect(today.postedWorkouts.isEmpty)
+    #expect(today.postedTrainings.isEmpty)
 
     await backend.set(failure: .notSent)
     _ = try await today.post(fromHealth)
-    #expect(today.postedWorkouts == [workout.source])
+    #expect(today.postedTrainings.map(\.workout) == [workout])
 
     await backend.set(failure: nil)
     await today.load()
     #expect(today.pending.isEmpty)
-    #expect(today.postedWorkouts == [workout.source])
+    #expect(today.postedTrainings.map(\.workout) == [workout])
     #expect(
         await backend.saves.last.flatMap { checkIn in
             if case .trained(let training) = checkIn.entry { training.workout } else { nil }
         } == workout)
 }
 
-@MainActor @Test func postedWorkoutsAreKnownOnlyOnceTheServersHomeIsIn() async throws {
+@MainActor @Test func postedTrainingsAreKnownOnlyOnceTheServersHomeIsIn() async throws {
     // The phone's copy is from before the post; the server's has it.
     let workout = Workout(
         source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "A1"),
@@ -44,12 +44,17 @@ import Testing
     await backend.set(failure: .notSent)
     let today = store(backend)
     await today.load()
-    #expect(today.postedWorkouts.isEmpty)
-    #expect(today.postedWorkoutsKnown == nil)
+    #expect(today.postedTrainings.isEmpty)
+    #expect(today.postedTrainingsKnown == nil)
 
     await backend.set(failure: nil)
     await today.load()
-    #expect(today.postedWorkoutsKnown == [workout.source])
+    #expect(
+        today.postedTrainingsKnown
+            == [
+                PostedTraining(
+                    activity: .sport("strength"), day: tuesday, madeAt: Timestamp(tuesdayMorning), workout: workout)
+            ])
 }
 
 @MainActor @Test func aTrainingPostedByHandIsKeptWithItsSportAndTime() async throws {
@@ -61,18 +66,20 @@ import Testing
     let today = store(backend)
     await today.load()
     #expect(
-        today.trainedByHand(on: tuesday)
-            == [HandPostedTraining(activity: .sport("pickleball"), madeAt: Timestamp(tuesdayMorning))])
-    #expect(today.trainedByHand(on: tuesday.adding(days: -1)).isEmpty)
+        today.postedTrainings
+            == [
+                PostedTraining(
+                    activity: .sport("pickleball"), day: tuesday, madeAt: Timestamp(tuesdayMorning), workout: nil)
+            ])
 
     // One still waiting to go out counts too.
     await backend.set(failure: .notSent)
     _ = try await today.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
-    #expect(today.trainedByHand(on: tuesday).map(\.activity) == [.sport("pickleball"), .sport("run")])
+    #expect(today.postedTrainings.map(\.activity) == [.sport("pickleball"), .sport("run")])
 
     // Saved on the server but not yet out of the outbox, it still counts once.
     let waiting = try #require(try today.pending.first?.checkIn())
     today.fold(waiting)
     #expect(today.pending.count == 1)
-    #expect(today.trainedByHand(on: tuesday).map(\.activity) == [.sport("pickleball"), .sport("run")])
+    #expect(today.postedTrainings.map(\.activity) == [.sport("pickleball"), .sport("run")])
 }
