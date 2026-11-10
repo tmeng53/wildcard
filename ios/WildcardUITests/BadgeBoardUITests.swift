@@ -69,9 +69,9 @@ final class BadgeBoardUITests: XCTestCase {
         XCTAssertTrue(back.waitForExistence(timeout: 5), "the card didn't turn over")
         let ticket = app.buttons["me.teamBadge"]
         XCTAssertTrue(ticket.waitForExistence(timeout: 5), "the board has no team badge")
-        let new = app.descendants(matching: .any).matching(identifier: "me.badgeNew").firstMatch
-        XCTAssertTrue(new.exists, "the team badge given just now isn't NEW")
-        XCTAssertTrue(back.frame.contains(new.frame), "NEW runs off the card: \(new.frame)")
+        // NEW is drawn inside the badge, which reads as one element: its value says it.
+        XCTAssertEqual(ticket.value as? String, "NEW", "the team badge given just now isn't NEW")
+        XCTAssertTrue(back.frame.contains(ticket.frame), "the team badge runs off the card: \(ticket.frame)")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "44-me-team-badge-new")
 
@@ -85,7 +85,6 @@ final class BadgeBoardUITests: XCTestCase {
         app.buttons["me.badgeCard.equip"].tap()
         XCTAssertTrue(detail.waitForNonExistence(timeout: 5), "the badge card stayed open after 装备")
         waitFor(ticket, "value == '已装备'", "the tick didn't move to 点子王")
-        XCTAssertFalse(new.exists, "the team badge is still NEW after it was opened")
 
         back.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
         XCTAssertTrue(card.waitForExistence(timeout: 5), "the card didn't turn back")

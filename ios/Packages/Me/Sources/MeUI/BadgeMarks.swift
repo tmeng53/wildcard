@@ -25,8 +25,7 @@ public final class BadgeMarks {
     /// The badges on `board` that wear NEW. The first look takes what came before the last week
     /// as seen.
     public func news(on board: TitleBoard, now: Date = .now) -> Set<String> {
-        let seen = seen ?? firstLook(board, now: now)
-        return BadgeNews.unseen(on: board, seen: seen)
+        BadgeNews.unseen(on: board, seen: seen ?? settled(board, now: now))
     }
 
     /// Turns 我's player card to its badge board.
@@ -34,9 +33,22 @@ public final class BadgeMarks {
 
     /// A badge on `board` opened: no longer NEW.
     public func see(_ mark: String, on board: TitleBoard, now: Date = .now) {
-        let marks = (seen ?? firstLook(board, now: now)).union([mark])
+        let marks = (seen ?? settled(board, now: now)).union([mark])
         seen = marks
         defaults?.set(marks.sorted(), forKey: key)
+    }
+
+    /// The first look, worked out once and kept, so a badge not yet opened stays NEW past the
+    /// week. Kept apart from `seen`, since a view's body asks for it and must not change what it
+    /// observes.
+    @ObservationIgnored private var firstLookSeen: Set<String>?
+
+    private func settled(_ board: TitleBoard, now: Date) -> Set<String> {
+        if let firstLookSeen { return firstLookSeen }
+        let marks = firstLook(board, now: now)
+        firstLookSeen = marks
+        defaults?.set(marks.sorted(), forKey: key)
+        return marks
     }
 
     /// Everything but what came in the last week, as of `now`.

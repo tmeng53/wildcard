@@ -43,9 +43,21 @@ struct BadgeCell: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: title.title))
-        .accessibilityValue(
-            isWorn ? Text(copy: "已装备", bundle: .module) : Text(verbatim: title.times > 1 ? "×\(title.times)" : ""))
+        .accessibilityValue(badgeValue(isWorn: isWorn, times: title.times, isNew: isNew))
     }
+}
+
+/// What VoiceOver (and a UI test) reads of a badge's marks: 已装备 when worn, else ×N when got
+/// more than once, then NEW. The marks themselves are drawn inside the cell, which reads as one.
+private func badgeValue(isWorn: Bool, times: Int, isNew: Bool) -> Text {
+    var parts: [String] = []
+    if isWorn {
+        parts.append(String(copy: "已装备", bundle: .module))
+    } else if times > 1 {
+        parts.append("×\(times)")
+    }
+    if isNew { parts.append("NEW") }
+    return Text(verbatim: parts.joined(separator: ", "))
 }
 
 extension View {
@@ -71,14 +83,12 @@ private struct BadgeMarksOverlay: ViewModifier {
                         .frame(width: BoardMetrics.chip - 2, height: BoardMetrics.chip - 2)
                         .background(Color(role: .bgCanvas, in: theme), in: Circle())
                         .offset(x: Space.xxs / 2, y: Space.xxs / 2)
-                        .accessibilityIdentifier("me.badgeWorn")
                 }
             }
             .overlay(alignment: .topLeading) {
                 if isNew {
                     InkTag.newOnInk
                         .offset(x: -Space.xxs / 2, y: -Space.xxs / 2)
-                        .accessibilityIdentifier("me.badgeNew")
                 }
             }
     }
@@ -122,8 +132,7 @@ struct TeamBadgeCell: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: badge.name.localized))
-        .accessibilityValue(
-            isWorn ? Text(copy: "已装备", bundle: .module) : Text(verbatim: badge.times > 1 ? "×\(badge.times)" : ""))
+        .accessibilityValue(badgeValue(isWorn: isWorn, times: badge.times, isNew: isNew))
     }
 }
 
