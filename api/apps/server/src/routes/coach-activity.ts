@@ -128,6 +128,9 @@ const CoachDayChallengeBody = z
         }),
         day: z.iso.date().meta({ description: 'Its day, on the squad’s clock.' }),
         challenge: CoachChallengeBody,
+        // The coach who set it, named as the squad calls it; still that coach after the squad
+        // changes coach. Without a description of its own, which would wrap it in an `allOf`.
+        coach: CoachSpeakerBody,
       })
       .nullable()
       .meta({
@@ -553,13 +556,22 @@ export function coachActivity(deps: {
             today: await todayOf(squadId),
           })
         : undefined;
+      const named =
+        today === undefined
+          ? undefined
+          : await deps.coachNames([{ coach: today.coach.id, squad: squadId }]);
       return c.json(
         {
           version: 1 as const,
           today:
-            today === undefined
+            today === undefined || named === undefined
               ? null
-              : { noteId: today.note, day: today.day, challenge: wireChallenge(today) },
+              : {
+                  noteId: today.note,
+                  day: today.day,
+                  challenge: wireChallenge(today),
+                  coach: speakerIn((coach) => named(coach, squadId))(today.coach),
+                },
         },
         200,
       );

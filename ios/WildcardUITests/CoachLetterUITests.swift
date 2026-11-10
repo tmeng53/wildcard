@@ -38,7 +38,7 @@ final class CoachLetterUITests: XCTestCase {
 
         seal.tap()
         let putAway = app.buttons["today.letter.putAway"]
-        waitFor(putAway, "isHittable == true", "the opened letter has no 收下")
+        waitForHittable(putAway, "the opened letter has no 收下")
         settle()
         assertInside(putAway, app)
         assertInside(app.descendants(matching: .any)["today.letter"], app)
@@ -84,7 +84,7 @@ final class CoachLetterUITests: XCTestCase {
         keepScreenshot(named: "91f-coach-letter-mate")
         seal.tap()
         let putAway = app.buttons["today.letter.putAway"]
-        waitFor(putAway, "isHittable == true", "the opened letter has no 收下")
+        waitForHittable(putAway, "the opened letter has no 收下")
         putAway.tap()
         let coach = app.descendants(matching: .any)["today.coach"]
         waitFor(coach, "label == '帕帕'", "帕帕 isn't on the sideline")
@@ -101,7 +101,7 @@ final class CoachLetterUITests: XCTestCase {
         XCTAssertTrue(seal.waitForExistence(timeout: 30), "the mate's 今天 shows no envelope")
         seal.tap()
         let putAway = app.buttons["today.letter.putAway"]
-        waitFor(putAway, "isHittable == true", "收下 is out of reach at the largest type")
+        waitForHittable(putAway, "收下 is out of reach at the largest type")
         settle()
         assertInside(putAway, app)
         let text = app.descendants(matching: .any)["today.letter.text"]

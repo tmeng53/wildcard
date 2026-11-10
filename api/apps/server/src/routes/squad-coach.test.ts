@@ -560,9 +560,17 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       day: today,
       challenge: { title: '喝水', amount: 8, unit: '杯' },
     });
+    // It names the coach who set it, as the squad calls it.
+    const anyLook: unknown = expect.any(String);
+    const setter = { id: 'xiaohun', name: '小混', look: anyLook };
     expect(await todays(mate.token)).toStrictEqual({
       version: 1,
-      today: { noteId: water, day: today, challenge: { title: '喝水', amount: 8, unit: '杯' } },
+      today: {
+        noteId: water,
+        day: today,
+        challenge: { title: '喝水', amount: 8, unit: '杯' },
+        coach: setter,
+      },
     });
     // Only on its own day.
     const late = await complete(mate.token, old);
@@ -580,6 +588,9 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     expect(await todays(mate.token)).toMatchObject({
       today: { noteId: water, challenge: { completedAt: at, completedBy: 'member' } },
     });
+    // Still that coach once the squad has none (or another): the note keeps who set it.
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
+    expect(await todays(mate.token)).toMatchObject({ today: { noteId: water, coach: setter } });
     // Only the member it was written to; a note without a challenge has nothing to do.
     expect((await complete(captain.token, water)).status).toBe(404);
     const plain = await note(captain.userId, { day: today });

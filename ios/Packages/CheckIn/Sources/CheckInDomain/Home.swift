@@ -83,7 +83,7 @@ public struct Home: Hashable, Sendable {
         init(_ draft: CheckInDraft) {
             switch draft {
             case .trained: self = .trained
-            case .disclaimer(let note): self = note.restDay ? .other : .disclaimer
+            case .disclaimer(let note, _): self = note.restDay ? .other : .disclaimer
             case .healthyMeal, .cheatMeal: self = .other
             }
         }

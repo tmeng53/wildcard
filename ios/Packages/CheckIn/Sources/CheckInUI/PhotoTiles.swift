@@ -10,12 +10,14 @@ import SwiftUI
 import UIKit
 
 /// The post's photos on the ticket's stub, the cover first and marked 封面, then 「+ 照片」
-/// while there is room for another (up to three). A 训练's are small 3:4 tiles in a row with the
-/// ticket's W at the end (the row slides sideways and the W makes way once it holds more than
+/// while there is room for another (up to three). A 训练's and a 请假条's are small 3:4 tiles in
+/// a row with the ticket's W at the end (the row slides sideways and the W makes way once it holds more than
 /// four); a meal's three fill the stub. A 训练 from Health has its map and chart among them,
 /// which don't count toward the three. + asks 拍照 or 从相册选 (straight to the album on a phone
 /// without a camera); × takes a tile off, the map too; a long press drags a tile to another
-/// place, and the first is the cover; tapping a photo shows the photos whole, full screen.
+/// place, and the first is the cover; tapping a tile shows the tiles whole, full screen, in the
+/// row's order: the photos to zoom, the map and the chart large (the chart's heart rate scrubbed by
+/// press-and-hold, as on 动态).
 struct PhotoTiles: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -32,7 +34,9 @@ struct PhotoTiles: View {
             if isWide { wide } else { strip }
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.tiles)
-        .photoViewer(isPresented: $isViewing, count: model.photos.count, page: $page, load: jpeg)
+        .pageViewer(isPresented: $isViewing, count: model.tiles.count, page: $page) { index, isShowing in
+            ComposeViewerPage(model: model, index: index, isShowing: isShowing)
+        }
         .photosPicker(
             isPresented: $isPickingFromLibrary, selection: $picked,
             maxSelectionCount: Photos.maxCount - model.photos.count, selectionBehavior: .ordered, matching: .images,
@@ -87,11 +91,7 @@ struct PhotoTiles: View {
         ForEach(Array(model.tiles.enumerated()), id: \.element.id) { index, tile in
             ComposeTile(
                 tile: tile, number: index + 1, isCover: index == 0, model: model,
-                view: {
-                    if case .photo(let photo) = tile, let page = model.photos.firstIndex(of: photo) {
-                        view(page)
-                    }
-                },
+                view: { view(index) },
                 remove: { model.remove(tile) }
             )
             .modifier(TileFrame(isWide: isWide))
@@ -107,7 +107,7 @@ struct PhotoTiles: View {
         }
     }
 
-    private var isWide: Bool { model.kind != .trained }
+    private var isWide: Bool { model.kind == .healthyMeal || model.kind == .cheatMeal }
 
     /// The tiles 「+ 照片」 included.
     private var slots: Int { model.tiles.count + (model.canAddPhoto ? 1 : 0) }
@@ -158,20 +158,7 @@ struct PhotoTiles: View {
             ])
     }
 
-    /// Photo `index` as it will be posted, while it's still one of them.
-    private var jpeg: @Sendable (Int) async -> Data? {
-        let photos = model.photos
-        let load = model.loadPhoto
-        return { index in
-            guard photos.indices.contains(index) else { return nil }
-            switch photos[index] {
-            case .new(let photo): return photo.jpeg
-            case .saved(let ref): return await load(ref)
-            }
-        }
-    }
-
-    /// Opens on photo `index`.
+    /// Opens on tile `index`.
     private func view(_ index: Int) {
         page = index
         isViewing = true
@@ -231,6 +218,8 @@ private struct ComposeTile: View {
             Color.clear
                 .overlay { face }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.pick, style: .continuous))
+                // The whole tile opens, whatever its face takes touches on.
+                .contentShape(.rect)
                 .overlay {
                     if isCover {
                         RoundedRectangle(cornerRadius: Radius.pick, style: .continuous)
@@ -251,9 +240,7 @@ private struct ComposeTile: View {
         .buttonStyle(PressableButtonStyle())
         .haptic(.pick, trigger: isCover)
         .accessibilityLabel(label)
-        .accessibilityHint(
-            isWorkout ? Text(copy: "长按拖动换位置", bundle: .module) : Text(copy: "全屏看，长按拖动换位置", bundle: .module)
-        )
+        .accessibilityHint(Text(copy: "全屏看，长按拖动换位置", bundle: .module))
         .accessibilityAddTraits(isCover ? .isSelected : [])
         .accessibilityIdentifier(
             tile == .workout(.chart)

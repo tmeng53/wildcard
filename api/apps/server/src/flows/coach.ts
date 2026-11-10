@@ -177,6 +177,12 @@ export function coachMemberFacts(deps: {
           }),
           deps.awards.titlesWon(AwardsMember.parse(member)),
         ]);
+        // The plan's days as the squad sees them: a day a 仅自己可见 训练 turned reads as planned.
+        const days = await deps.checkIns.planSharedTo({
+          member: CheckInMember.parse(member),
+          squad: CheckInSquad.parse(squad),
+          weekStart: CheckInWeek.parse(weekStart),
+        });
         const top = totals.topSport;
         const topName = top === undefined ? undefined : nameOf(top.sport, top.customSport);
         return {
@@ -190,7 +196,7 @@ export function coachMemberFacts(deps: {
             : { topSport: { name: topName, checkIns: top.checkIns } }),
           titles: won.count,
           ...(won.latest === undefined ? {} : { latestTitle: won.latest.title }),
-          plan: plan.days.map((day): PlanDayFacts => {
+          plan: days.map((day): PlanDayFacts => {
             if (day.kind === 'rest') return { kind: 'rest' };
             const sport = nameOf(day.sport, day.customSport);
             return sport === undefined ? { kind: 'train' } : { kind: 'train', sport };

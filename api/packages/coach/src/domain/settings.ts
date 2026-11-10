@@ -56,6 +56,17 @@ export function holidaysOn(calendar: readonly CoachHoliday[], day: string): stri
     .map(({ name }) => name);
 }
 
+/**
+ * How hard the model thinks before it answers: more reads a member's tone better and costs more
+ * output tokens, which the usage counts at the output price.
+ */
+export const CoachReasoning = z
+  .enum(['none', 'minimal', 'low', 'medium', 'high'])
+  .describe(
+    'How hard the model thinks before answering: none, minimal, low, medium or high. Thinking is billed as output tokens.',
+  );
+export type CoachReasoning = z.infer<typeof CoachReasoning>;
+
 /** US dollars in millionths, per million tokens. */
 const MicrosPerMillion = z.int().min(0).max(2_000_000_000);
 
@@ -66,6 +77,7 @@ const fields = {
       'Whether coaches wake at all. On, every squad that hired a coach has one; off, none does and nothing is sent.',
     ),
   model: CoachModel,
+  reasoning: CoachReasoning,
   rules: z
     .string()
     .min(1)

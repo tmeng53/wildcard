@@ -17,7 +17,7 @@ extension CheckInDraft {
     var line: String? {
         switch self {
         case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body): body.caption
-        case .disclaimer(let disclaimer): disclaimer.text
+        case .disclaimer(let disclaimer, _): disclaimer.text
         }
     }
 }

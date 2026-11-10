@@ -410,6 +410,12 @@
           "pieces": {
             "$ref": "#/components/schemas/PiecesCatalog"
           },
+          "appBuild": {
+            "$ref": "#/components/schemas/AppBuildCatalog"
+          },
+          "reactions": {
+            "$ref": "#/components/schemas/ReactionsCatalog"
+          },
           "art": {
             "$ref": "#/components/schemas/ArtCatalog"
           }
@@ -815,6 +821,41 @@
         },
         "required": [
           "pieces"
+        ],
+        "additionalProperties": {}
+      },
+      "AppBuildCatalog": {
+        "type": "object",
+        "properties": {
+          "minimumBuild": {
+            "type": "string",
+            "description": "The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared number by number; an older app shows only 有新版本 and a button to the App Store. Left out while every build may run.",
+            "example": "190"
+          }
+        },
+        "additionalProperties": {}
+      },
+      "ReactionsCatalog": {
+        "type": "object",
+        "properties": {
+          "quick": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.",
+            "example": [
+              "❤️",
+              "💪",
+              "😂",
+              "🤤",
+              "😮",
+              "😡"
+            ]
+          }
+        },
+        "required": [
+          "quick"
         ],
         "additionalProperties": {}
       },
@@ -4492,12 +4533,16 @@
               },
               "challenge": {
                 "$ref": "#/components/schemas/CoachChallenge"
+              },
+              "coach": {
+                "$ref": "#/components/schemas/CoachSpeaker"
               }
             },
             "required": [
               "noteId",
               "day",
-              "challenge"
+              "challenge",
+              "coach"
             ],
             "additionalProperties": false,
             "description": "The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off."

@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -19,23 +19,23 @@ public struct WidgetGuide: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("桌面小组件", bundle: .module)
+                Text(copy: "桌面小组件", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                Text("不用打开 App，也能看到这周练了几天、小队今天谁练了。", bundle: .module)
+                Text(copy: "不用打开 App，也能看到这周练了几天、小队今天谁练了。", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, Space.xxs)
                 previews
                     .padding(.top, Space.l)
-                SectionLabel(Text("怎么加", bundle: .module))
+                SectionLabel(Text(copy: "怎么加", bundle: .module))
                     .padding(.top, Space.l)
                     .padding(.bottom, Space.xxs)
-                stepRow(number: 1, Text("回到桌面，长按空白处，直到图标开始晃", bundle: .module))
-                stepRow(number: 2, Text("点左上角「编辑」，再点「添加小组件」", bundle: .module))
-                stepRow(number: 3, Text("搜「外卡」，选大小，点「添加小组件」", bundle: .module), isLast: true)
+                stepRow(number: 1, Text(copy: "回到桌面，长按空白处，直到图标开始晃", bundle: .module))
+                stepRow(number: 2, Text(copy: "点左上角「编辑」，再点「添加小组件」", bundle: .module))
+                stepRow(number: 3, Text(copy: "搜「外卡」，选大小，点「添加小组件」", bundle: .module), isLast: true)
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.xs)
@@ -56,7 +56,7 @@ public struct WidgetGuide: View {
             }
             // The widgets always wear the gym's colours on the home screen, whatever the squad's scene.
             .environment(\.sceneTheme, .gym)
-            Text("小号、中号都有", bundle: .module)
+            Text(copy: "小号、中号都有", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
         }
@@ -66,7 +66,7 @@ public struct WidgetGuide: View {
         .padding(.vertical, Space.m)
         .background(Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.menu))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("小号、中号都有", bundle: .module))
+        .accessibilityLabel(Text(copy: "小号、中号都有", bundle: .module))
         .accessibilityIdentifier("widgetGuide.previews")
     }
 

@@ -320,27 +320,37 @@ describe('when the coach wakes', () => {
     ]);
   });
 
-  it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {
+  it('gives a reply’s wake the whole comment section, every coach named, the reply to answer marked', () => {
     const task = taskOf({
       reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
       week,
       files: new Map([['memory.md', undefined]]),
       recentNotes: [],
       thread: {
-        reply: '腿废了也算练',
+        now: '10-28 周三 09:30',
         said: [
-          { member: leo, text: '教练你也跑吗' },
-          { member: undefined, text: '我负责喊' },
-          { member: mia, text: '那你喊大声点', answering: true },
+          { by: { coach: '鸭梨娜' }, text: '第一次跑就跑完了' },
+          { by: { member: leo }, text: '强', when: '10-27 周二 20:01' },
+          { by: { member: leo }, text: '谢谢', to: { kind: 'reply', coach: '鸭梨娜' } },
+          { by: { coach: '鸭梨娜' }, text: '不客气' },
+          { by: { member: leo }, text: '教练你也跑吗', to: { kind: 'mention', coach: '你' } },
+          { by: 'you', text: '我负责喊' },
+          {
+            by: { member: mia },
+            text: '那你喊大声点',
+            to: { kind: 'reply', coach: '你' },
+            answering: true,
+          },
         ],
       },
     });
     expect(task).toBe(
       [
         '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
-        // The rest of the post's comments, so the coach knows what was said around it.
-        '这条下面别人的评论（先后顺序）：\n- 队员2：「强」',
-        '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
+        // Everything said under the post, another coach's lines too, so nothing is hidden.
+        '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
+        // The time now, so an old @ isn't taken for one just written.
+        '现在是 10-28 周三 09:30。',
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
@@ -357,7 +367,10 @@ describe('when the coach wakes', () => {
       week: withPhotos,
       files: new Map(),
       recentNotes: [],
-      thread: { said: [{ member: mia, text: '你看看我吃了啥', answering: true }] },
+      thread: {
+        now: '10-28 周三 09:30',
+        said: [{ by: { member: mia }, text: '你看看我吃了啥', answering: true }],
+      },
     } as const;
     expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
       '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',

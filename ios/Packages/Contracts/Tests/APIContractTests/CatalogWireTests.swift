@@ -107,3 +107,31 @@ private let newer = #"""
         #expect(board.isOn(feature, at: Date(timeIntervalSince1970: 1_800_000_000)), "\(feature)")
     }
 }
+
+/// The lowest build that may run and the quick reactions: read when sent, left to the fallback
+/// when the section isn't there, and a section with no minimum lets every build run.
+@Test func theMinimumBuildAndQuickReactionsAreRead() throws {
+    let sent = #"""
+        {"version": 1, "appBuild": {"minimumBuild": "190.1"},
+         "reactions": {"quick": ["🔥", "not an emoji", "👏"]}}
+        """#
+    let fallback = AppCatalog(
+        sports: .empty, diceLines: [], minimumBuild: AppBuild("100"), quickReactions: [try Emoji("❤️")])
+    let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(sent.utf8))
+    let catalog = AppCatalog(wire, otherwise: fallback)
+    #expect(catalog.minimumBuild == AppBuild("190.1"))
+    #expect(catalog.quickReactions.map(\.text) == ["🔥", "👏"])
+
+    let none = try JSONDecoder().decode(
+        Components.Schemas.Catalog.self, from: Data(#"{"version": 1, "appBuild": {}}"#.utf8))
+    #expect(AppCatalog(none, otherwise: fallback).minimumBuild == nil)
+    #expect(AppCatalog(none, otherwise: fallback).quickReactions.map(\.text) == ["❤️"])
+
+    let bundled = try JSONDecoder().decode(
+        Components.Schemas.Catalog.self,
+        from: Data(
+            contentsOf: URL(filePath: #filePath).deletingLastPathComponent()
+                .appending(path: "../../../Backend/Sources/Backend/Resources/catalog.json")))
+    #expect(AppCatalog(bundled, otherwise: .empty).minimumBuild == nil)
+    #expect(AppCatalog(bundled, otherwise: .empty).quickReactions.map(\.text) == ["❤️", "💪", "😂", "🤤", "😮", "😡"])
+}

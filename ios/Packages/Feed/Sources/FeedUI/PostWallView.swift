@@ -133,15 +133,17 @@ public struct PostWallView: View {
         case only(PostKind)
     }
 
-    private static let filters: [CategoryBarItem<Filter>] =
+    /// Read each time, so the names follow a language picked while the app runs.
+    private static var filters: [CategoryBarItem<Filter>] {
         [
             CategoryBarItem(
                 id: .all, title: Text(copy: "全部", bundle: .module), accessibilityIdentifier: "wall.filter.all")
         ]
-        + PostKind.allCases.map {
-            CategoryBarItem(
-                id: .only($0), title: $0.chipName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
-        }
+            + PostKind.allCases.map {
+                CategoryBarItem(
+                    id: .only($0), title: $0.chipName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
+            }
+    }
 
     private var kind: Binding<Filter> {
         Binding {

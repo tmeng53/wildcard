@@ -838,7 +838,7 @@ describe('the coach', () => {
       const answering = runs.find(({ task }) => task.includes('要回的这句'));
       expect(answering?.task).toContain('有人在评论里 @ 你。');
       expect(answering?.task).toContain(
-        '你们在下面的对话：\n- 队员2：「@小混 下雨还练吗」（要回的这句）',
+        '这条下面的评论区（先后顺序）：\n- 11-01 周日 10:01 队员2（@你）：「@小混 下雨还练吗」（要回的这句）',
       );
       expect(told).toStrictEqual([
         {
@@ -984,9 +984,11 @@ describe('the coach', () => {
         'answer',
         'answer',
       ]);
-      expect(runs[2]?.task).toContain('- 你：「周日也跑？」\n- 队员2：「你也跑吗」（要回的这句）');
+      expect(runs[2]?.task).toContain(
+        '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」（要回的这句）',
+      );
       expect(runs[3]?.task).toContain(
-        '- 你：「周日也跑？」\n- 队员2：「你也跑吗」\n- 你：「你也来跑」\n- 队员1：「那你喊大声点」（要回的这句）',
+        '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n- 11-01 周日 10:03 队员1（回复你）：「那你喊大声点」（要回的这句）',
       );
       // Only `answer` on a reply's wake; it may not name 队员N, as any line members read.
       expect(runs[2]?.answers).toStrictEqual([

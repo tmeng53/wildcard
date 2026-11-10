@@ -12,8 +12,8 @@ struct ButtonSection: View {
 
     private var tabs: [TabBarItem<Int>] {
         [
-            TabBarItem(id: 0, title: Text(copy: "今天", bundle: .module), systemImage: "sun.max"),
-            TabBarItem(id: 1, title: Text(copy: "动态", bundle: .module), systemImage: "bubble.left.and.bubble.right"),
+            TabBarItem(id: 0, title: Text(copy: "今天", bundle: .module), systemImage: "person.3"),
+            TabBarItem(id: 1, title: Text(copy: "动态", bundle: .module), systemImage: "square.stack"),
             TabBarItem(id: 2, title: Text(copy: "出赛表", bundle: .module), systemImage: "calendar"),
             TabBarItem(id: 3, title: Text(copy: "我", bundle: .module), systemImage: "person.crop.circle"),
         ]

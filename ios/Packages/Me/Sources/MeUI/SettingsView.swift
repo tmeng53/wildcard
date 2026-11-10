@@ -151,7 +151,7 @@ struct SettingsView: View {
                 .task { await location.refresh() }
             }
             if destinations.widgetGuide != nil {
-                ListRow(Text("桌面小组件", bundle: .module)) {
+                ListRow(Text(copy: "桌面小组件", bundle: .module)) {
                     isWidgetGuideOpen = true
                 }
                 .accessibilityIdentifier("me.widgets")

@@ -24,6 +24,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         version: 1,
         coaching: row.coaching,
         model: row.model,
+        reasoning: row.reasoning,
         rules: row.rules,
         wakes: row.wakes,
         inputMicrosPerMillion: row.input_micros_per_million,
@@ -40,6 +41,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
       const columns = {
         coaching: settings.coaching,
         model: settings.model,
+        reasoning: settings.reasoning,
         rules: settings.rules,
         wakes: settings.wakes,
         input_micros_per_million: settings.inputMicrosPerMillion,
@@ -58,7 +60,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
             .updateTable('coach_settings')
             .set(columns)
             .where(
-              sql<boolean>`(coaching, model, rules, wakes, input_micros_per_million, cached_input_micros_per_million, output_micros_per_million, note_hour, squad_daily_cap_micros, daily_cap_micros, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.rules}, ${columns.wakes}, ${columns.input_micros_per_million}::integer, ${columns.cached_input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer, ${columns.note_hour}::integer, ${columns.squad_daily_cap_micros}::integer, ${columns.daily_cap_micros}::integer, ${columns.holidays}::jsonb)`,
+              sql<boolean>`(coaching, model, reasoning, rules, wakes, input_micros_per_million, cached_input_micros_per_million, output_micros_per_million, note_hour, squad_daily_cap_micros, daily_cap_micros, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.reasoning}, ${columns.rules}, ${columns.wakes}, ${columns.input_micros_per_million}::integer, ${columns.cached_input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer, ${columns.note_hour}::integer, ${columns.squad_daily_cap_micros}::integer, ${columns.daily_cap_micros}::integer, ${columns.holidays}::jsonb)`,
             )
             .returning('only_row'),
         )

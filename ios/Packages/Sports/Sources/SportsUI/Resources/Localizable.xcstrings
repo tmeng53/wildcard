@@ -721,6 +721,22 @@
           }
         }
       }
+    },
+    "仅自己可见": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only me"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅自己可見"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

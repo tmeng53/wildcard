@@ -43,10 +43,10 @@ export interface SavedCheckIn {
 /**
  * Saves a member's check-in under the id the app made, so a retry is safe: the same check-in
  * again is a success, different contents under a saved id are refused. A retry is recognised
- * before the time checks, so a late retry of a saved check-in still succeeds. A 训练 on a day the
- * member's plan has as a rest day makes it a training day of that sport, on a retry too, so a
- * save that stopped between the two still ends with both. A 休息 makes its day a rest day the
- * same way.
+ * before the time checks, so a late retry of a saved check-in still succeeds. A 训练 makes its
+ * day in the member's plan show its sport when the plan had it as a rest day, named no sport or
+ * named one the day's 训练 didn't log (`planTrainedDay`), on a retry too, so a save that stopped
+ * between the two still ends with both. A 休息 makes its day a rest day the same way.
  */
 export async function saveCheckIn(
   {
@@ -75,7 +75,7 @@ export async function saveCheckIn(
   );
   if (saved.checkIn.kind === 'trained') {
     await planTrainedDay(
-      { store: plans },
+      { store: plans, checkIns: store },
       {
         member,
         day: saved.checkIn.day,

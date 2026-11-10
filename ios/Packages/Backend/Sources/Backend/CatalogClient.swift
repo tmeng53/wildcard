@@ -42,6 +42,8 @@ public actor CatalogClient {
         catalog.sports != before.sports || catalog.diceLines != before.diceLines
             || catalog.starterStock != before.starterStock || catalog.scenes != before.scenes
             || catalog.switches != before.switches || catalog.copy != before.copy
+            || catalog.minimumBuild != before.minimumBuild
+            || catalog.quickReactions != before.quickReactions
     }
 
     /// The catalog this build ships with.

@@ -69,8 +69,8 @@ struct FeedLayer: View {
                         EmojiBar.common, text: \.text, mine: post.reactions.kind(of: model.viewer),
                         hovered: model.hovering, identifier: "feed.emoji"
                     ) { index in
-                        guard let from = model.slotCenter(index) else { return }
-                        model.react(.pick(EmojiBar.common[index]), on: post, from: from)
+                        guard let from = model.slotCenter(index), let emoji = Emoji.quick(at: index) else { return }
+                        model.react(.pick(emoji), on: post, from: from)
                     } more: {
                         withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { grid = post.id }
                     }
@@ -148,7 +148,7 @@ struct FeedLayer: View {
 
 /// The bar's emoji, in the approved order.
 enum EmojiBar {
-    static let common = Emoji.quick
+    static var common: [Emoji] { Emoji.quick }
     static let height = ReactionBarMetrics.height
     static var width: Double { ReactionBarMetrics.width(count: common.count) }
 }

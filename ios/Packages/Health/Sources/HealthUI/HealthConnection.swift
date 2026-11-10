@@ -92,9 +92,10 @@ public final class HealthConnection {
         await refresh()
     }
 
-    /// Today's workouts for the member's `day`, newest first, each marked posted when `posted`
-    /// holds it, with its heart-rate zones placed when the member gave their birthday.
-    public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
+    /// Today's workouts for the member's `day`, newest first, each marked posted when one of
+    /// `posted` is of its session or a 训练 posted by hand covers it, with its heart-rate zones
+    /// placed when the member gave their birthday.
+    public func today(_ day: LocalDay, in timeZone: TimeZone, posted: [PostedTraining]) -> [TodaysWorkout] {
         recent.map { $0.withZones(birthday: birthday, in: timeZone) }.today(day, in: timeZone, posted: posted)
     }
 

@@ -149,6 +149,7 @@ final class SignUpUITests: XCTestCase {
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         XCTAssertEqual(signIn.label, "Continue with Apple")
+        waitForHittable(signIn, "Continue with Apple never came up")
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "the editor never appeared")
@@ -263,6 +264,8 @@ final class SignUpUITests: XCTestCase {
     private func makeCharacter(named name: String, in app: XCUIApplication) {
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        // The button fades in once WILDCARD has sprinted in; a tap before then hits nothing.
+        waitForHittable(signIn, "通过 Apple 继续 never came up")
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")

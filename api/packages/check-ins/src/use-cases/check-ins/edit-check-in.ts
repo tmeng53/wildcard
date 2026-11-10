@@ -94,21 +94,21 @@ export async function editCheckIn(
 
   const added = photosOf(edited).filter(({ path }) => !kept.has(path));
   await checkPhotos(deps.photos, { member, paths: added.map(({ path }) => path) });
-  if (
+  const sportChanged =
     edited.kind === 'trained' &&
     saved.kind === 'trained' &&
     (edited.training.sport !== saved.training.sport ||
-      edited.training.customSport !== saved.training.customSport)
-  ) {
-    await checkSport(deps.sports, edited.training.sport);
-  }
+      edited.training.customSport !== saved.training.customSport);
+  if (sportChanged) await checkSport(deps.sports, edited.training.sport);
   const outcome = await deps.store.update(edited);
   if (!outcome.saved) {
     throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();
   }
-  if (edited.kind === 'trained') {
+  // Only a new sport moves the plan: an edit of the words or photos keeps a day the member
+  // changed after posting.
+  if (sportChanged) {
     await planTrainedDay(
-      { store: deps.plans },
+      { store: deps.plans, checkIns: deps.store },
       { member, day: edited.day, training: edited.training, checkIn: edited.id },
     );
   }
