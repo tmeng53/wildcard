@@ -90,15 +90,18 @@ export function createAiUsage(deps: {
     if (!capped) return undefined;
     const now = deps.clock();
     const squad = await squadOf(payer);
-    if (squad !== undefined) {
-      const zone = (await deps.timeZonesAt([squad], now))(squad);
-      const spent = await deps.ledger.spent({ squad, since: dayStart(now, zone) });
-      if (spent >= settings.squadDailyCapMicros) {
-        return {
-          kind: 'spent',
-          why: `the squad spent ${String(spent)} of its ${String(settings.squadDailyCapMicros)} micros today`,
-        };
-      }
+    // A member in no squad has no squad's budget to spend: their capped calls wait until they
+    // join one, so no one can spend everyone's budget alone.
+    if (squad === undefined) {
+      return { kind: 'spent', why: 'the member is in no squad, whose budget would pay' };
+    }
+    const zone = (await deps.timeZonesAt([squad], now))(squad);
+    const spent = await deps.ledger.spent({ squad, since: dayStart(now, zone) });
+    if (spent >= settings.squadDailyCapMicros) {
+      return {
+        kind: 'spent',
+        why: `the squad spent ${String(spent)} of its ${String(settings.squadDailyCapMicros)} micros today`,
+      };
     }
     const everyone = await deps.ledger.spent({ since: dayStart(now, NEW_YORK) });
     if (everyone >= settings.dailyCapMicros) {

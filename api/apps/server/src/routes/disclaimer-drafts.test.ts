@@ -88,7 +88,8 @@ function metered(provider: ProviderModel, { dailyCapMicros = 2_000_000_000 } = {
     },
     ledger: createPostgresAiUsageLedger(db),
     timeZonesAt: () => Promise.resolve(() => NEW_YORK),
-    squadOf: () => Promise.resolve(undefined),
+    // Every member here counts to one squad, with no rows of its own: only its budget matters.
+    squadOf: () => Promise.resolve('00000000-0000-4000-8000-0000000000aa'),
     clock: () => new Date(),
   }).meter(provider, { feature: 'disclaimer-drafts', capped: true });
 }

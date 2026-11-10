@@ -126,8 +126,10 @@ describe('the AI budget', () => {
     expect(await later.blockedWhy({ ...capped, payer: { member: mia } })).toBe(
       'the squad spent 100 of its 100 micros today',
     );
-    // A member without a squad pays from no squad's budget.
-    expect(await later.blockedWhy({ ...capped, payer: { member: loner } })).toBeUndefined();
+    // A member in no squad has no squad budget to spend: a capped call waits until they join one.
+    expect(await later.blockedWhy({ ...capped, payer: { member: loner } })).toBe(
+      'the member is in no squad, whose budget would pay',
+    );
     // An uncapped feature (the weekly awards) is counted but never held back.
     expect(
       await later.blockedWhy({ model: 'openai/gpt-6-luna', capped: false, payer: { squad } }),
@@ -148,9 +150,9 @@ describe('the AI budget', () => {
     ]);
     const { usage } = usageAt('2026-11-10T12:00:00Z', { ledger, zone: 'America/New_York' });
     const capped = { model: 'openai/gpt-6-luna', capped: true };
-    expect(await usage.blockedWhy({ ...capped, payer: { member: loner } })).toBeUndefined();
+    expect(await usage.blockedWhy({ ...capped, payer: { member: mia } })).toBeUndefined();
     ledger.entries.push(spending(1, { at: '2026-11-10T06:00:00Z', of: other }));
-    expect(await usage.blockedWhy({ ...capped, payer: { member: loner } })).toBe(
+    expect(await usage.blockedWhy({ ...capped, payer: { member: mia } })).toBe(
       'every squad spent 1000 of the 1000 micros today',
     );
     expect(await usage.blockedWhy({ ...capped, payer: { squad } })).toBe(
