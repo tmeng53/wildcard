@@ -10,16 +10,18 @@ extension TodayModel {
     /// Health isn't connected.
     var todaysWorkouts: [TodaysWorkout] {
         guard let health, health.isConnected, let day = store.day else { return [] }
-        return health.today(day, in: timeZone, posted: store.postedWorkouts)
+        return health.today(day, in: timeZone, posted: store.postedWorkouts, byHand: store.trainedByHand(on: day))
     }
 
-    /// The workout the home's card offers: today's newest not posted or put away yet. None until
+    /// The workout the home's card offers: today's newest not posted (from Health, or as a 训练 of
+    /// its sport posted by hand) or put away yet. None until
     /// the server's home is in hand, since the copy kept on the phone may be from before a post.
     var workoutToPost: ImportedWorkout? {
         guard let health, health.isConnected, let day = store.day, let posted = store.postedWorkoutsKnown else {
             return nil
         }
-        return health.today(day, in: timeZone, posted: posted).newestToPost(skipping: health.putAway)
+        return health.today(day, in: timeZone, posted: posted, byHand: store.trainedByHand(on: day))
+            .newestToPost(skipping: health.putAway)
     }
 
     /// Takes the home card's workout off it; 打卡 › 训练 still offers it.

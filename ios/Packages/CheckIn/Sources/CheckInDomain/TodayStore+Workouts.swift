@@ -1,4 +1,5 @@
 import Contracts
+import HealthDomain
 
 extension TodayStore {
     /// The workouts the member posted, saved or still waiting to go out: a workout is posted
@@ -26,5 +27,31 @@ extension TodayStore {
     /// post, so it can't say a workout is still to post: the home's card waits for this.
     public var postedWorkoutsKnown: Set<WorkoutSource>? {
         phase == .current ? postedWorkouts : nil
+    }
+}
+
+extension Home {
+    /// The member's 训练 on `day` posted by hand, without a workout from Health: each counts
+    /// as posting one of that day's Health workouts of its sport.
+    public func trainedByHand(on day: LocalDay) -> [HandPostedTraining] {
+        checkIns.compactMap { checkIn -> HandPostedTraining? in
+            guard checkIn.member == member, checkIn.day == day, case .trained(let training) = checkIn.entry,
+                training.workout == nil
+            else { return nil }
+            return HandPostedTraining(activity: training.activity, madeAt: checkIn.createdAt)
+        }
+    }
+}
+
+extension TodayStore {
+    /// The member's 训练 on `day` posted by hand, saved or still waiting to go out.
+    public func trainedByHand(on day: LocalDay) -> [HandPostedTraining] {
+        (savedHome?.trainedByHand(on: day) ?? [])
+            + pending.compactMap { post -> HandPostedTraining? in
+                guard post.member == savedHome?.member, post.day == day,
+                    case .trained(let activity, _, let body) = post.draft, body.workout == nil
+                else { return nil }
+                return HandPostedTraining(activity: activity, madeAt: post.createdAt)
+            }
     }
 }

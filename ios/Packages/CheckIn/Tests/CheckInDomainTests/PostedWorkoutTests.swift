@@ -1,6 +1,7 @@
 import CheckInDomain
 import Contracts
 import Foundation
+import HealthDomain
 import Testing
 
 @MainActor @Test func aPostedWorkoutStaysPostedWhetherSavedOrWaiting() async throws {
@@ -48,4 +49,23 @@ import Testing
     await backend.set(failure: nil)
     await today.load()
     #expect(today.postedWorkoutsKnown == [workout.source])
+}
+
+@MainActor @Test func aTrainingPostedByHandIsKeptWithItsSportAndTime() async throws {
+    let byHand = CheckIn(
+        id: CheckInID(UUID()), member: myID, day: tuesday, postedDay: tuesday,
+        createdAt: Timestamp(tuesdayMorning), audience: try Audience([squadID]),
+        entry: .trained(Training(activity: .sport("pickleball"), minutes: try WorkoutMinutes(30))))
+    let backend = ScriptedBackend(server: sampleHome(checkIns: [byHand]))
+    let today = store(backend)
+    await today.load()
+    #expect(
+        today.trainedByHand(on: tuesday)
+            == [HandPostedTraining(activity: .sport("pickleball"), madeAt: Timestamp(tuesdayMorning))])
+    #expect(today.trainedByHand(on: tuesday.adding(days: -1)).isEmpty)
+
+    // One still waiting to go out counts too.
+    await backend.set(failure: .notSent)
+    _ = try await today.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
+    #expect(today.trainedByHand(on: tuesday).map(\.activity) == [.sport("pickleball"), .sport("run")])
 }

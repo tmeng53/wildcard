@@ -5,14 +5,16 @@ import Testing
 
 private let newYork = TimeZone(identifier: "America/New_York") ?? .gmt
 
-private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920) throws -> ImportedWorkout {
+private func imported(
+    _ id: String, endingAt moment: String, seconds: Int = 1920, sport: Sport = "run"
+) throws -> ImportedWorkout {
     let end = try Timestamp(moment)
     return ImportedWorkout(
         workout: Workout(
             source: WorkoutSource(provider: WorkoutSource.appleHealth, id: id),
             startedAt: Timestamp(millisecondsSince1970: end.millisecondsSince1970 - Int64(seconds) * 1000),
             endedAt: end, summary: WorkoutSummary(durationSec: seconds, avgHr: 140)),
-        activity: .sport("run"))
+        activity: .sport(sport))
 }
 
 @Test func todayIsTheMembersDayNewestFirstWithPostedMarked() throws {
@@ -30,6 +32,30 @@ private func imported(_ id: String, endingAt moment: String, seconds: Int = 1920
     // Put away from the home's card, B gives way to the one before it, and then to none.
     #expect(today.newestToPost(skipping: [today[1].imported.id])?.id.id == "A")
     #expect(today.newestToPost(skipping: [today[1].imported.id, today[2].imported.id]) == nil)
+}
+
+@Test func aTrainingPostedByHandCoversTheWorkoutOfItsSport() throws {
+    // Pickleball 6:00–6:30pm in New York, posted by hand at 7:12pm; a run later that night.
+    let pickleball = try imported("P", endingAt: "2026-11-09T23:30:00Z", seconds: 1800, sport: "pickleball")
+    let run = try imported("R", endingAt: "2026-11-10T02:00:00Z", sport: "run")
+    let posted = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-10T00:12:00Z"))
+    let day = try LocalDay("2026-11-09")
+    let today = [pickleball, run].today(day, in: newYork, posted: [], byHand: [posted])
+    #expect(today.map(\.imported.id.id) == ["R", "P"])
+    #expect(today.map(\.isPosted) == [false, true])
+    #expect(today.newestToPost(skipping: [run.id]) == nil)
+    // A post of another sport, or one made before the workout started, covers nothing.
+    let other = HandPostedTraining(activity: .sport("run"), madeAt: try Timestamp("2026-11-10T00:12:00Z"))
+    #expect([pickleball, run].today(day, in: newYork, posted: [], byHand: [other]).map(\.isPosted) == [false, false])
+    let early = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-09T20:00:00Z"))
+    #expect([pickleball].today(day, in: newYork, posted: [], byHand: [early]).map(\.isPosted) == [false])
+    // Each post covers one workout, the earliest: a second game still waits.
+    let second = try imported("P2", endingAt: "2026-11-10T01:00:00Z", seconds: 1800, sport: "pickleball")
+    let late = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-10T01:30:00Z"))
+    #expect(
+        [pickleball, second].today(day, in: newYork, posted: [], byHand: [late]).map(\.isPosted) == [false, true])
+    let both = [pickleball, second].today(day, in: newYork, posted: [pickleball.id], byHand: [late])
+    #expect(both.map(\.isPosted) == [true, true])
 }
 
 @Test func minutesRoundAndStayInTheAPIsRange() throws {
