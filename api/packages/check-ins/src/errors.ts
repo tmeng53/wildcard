@@ -92,6 +92,21 @@ export class SquadNotJoinedError extends AppError {
   }
 }
 
+/**
+ * Thrown for a 训练 naming someone it was done with (一起练) who isn't in a squad it is shared
+ * to, or the member themselves. Tags go to squadmates only, so a post shared to no squad names
+ * no one. The app offers only the squad's members: read the squad again.
+ */
+export class TrainedWithNotSquadmateError extends AppError {
+  override readonly name = 'TrainedWithNotSquadmateError';
+  readonly reason = 'TRAINED_WITH_NOT_SQUADMATE';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly memberId: string) {
+    super(`Member ${memberId} isn’t a squadmate this 训练 is shared with.`);
+  }
+}
+
 /** Thrown for a photo in another member's folder: a member only uses photos they uploaded. */
 export class PhotoNotYoursError extends AppError {
   override readonly name = 'PhotoNotYoursError';

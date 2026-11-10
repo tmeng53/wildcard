@@ -28,6 +28,7 @@ function app(answer: EventHandlers['coach-answer']) {
       answered.push(event);
       await answer(event);
     },
+    'trained-with-push': () => Promise.resolve(),
   };
   const routes = eventPushes({
     isScheduler: jobsTokenScheduler(token),

@@ -41,6 +41,11 @@ public enum OpenedNotification: Hashable, Sendable {
             return Notice(
                 id: NoticeID(rawValue: 0), toldAt: told, squad: nil,
                 subject: .comment(PushAlert(key: ""), checkIn: CheckInID(checkIn)))
+        case "trainedWith":
+            guard let checkIn = event["checkIn"].flatMap(UUID.init(uuidString:)) else { return nil }
+            return Notice(
+                id: NoticeID(rawValue: 0), toldAt: told, squad: nil,
+                subject: .trainedWith(PushAlert(key: ""), checkIn: CheckInID(checkIn)))
         default:
             return nil
         }

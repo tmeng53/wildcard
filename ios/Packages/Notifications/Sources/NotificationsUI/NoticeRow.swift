@@ -154,6 +154,13 @@ struct NoticeWords {
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
                     ?? Text(copy: "队友评论了你的动态", bundle: .module),
                 detail: nil, icon: AnyView(NoticeSymbol(systemImage: "bubble.left.fill")))
+        case .trainedWith(let alert, _):
+            // 「阿杰说你们一起练了」 over 「也发一条」: the row opens their own 训练, filled in.
+            return Words(
+                title: alert.args.first.map { Text(copy: "\($0)说你们一起练了", bundle: .module) }
+                    ?? Text(copy: "队友说你们一起练了", bundle: .module),
+                detail: Text(copy: "也发一条", bundle: .module),
+                icon: AnyView(NoticeSymbol(systemImage: "figure.2")))
         case .broadcast(let broadcast):
             return Words(
                 title: Text(verbatim: broadcast.title.localized(in: [AppLanguage.current.rawValue])),
@@ -253,6 +260,7 @@ public struct ToldNoticeBanner: View {
     private var action: Text {
         switch notice.subject {
         case .unlocked, .sceneMoved: Text(copy: "去看看", bundle: .module)
+        case .trainedWith: Text(copy: "我也发", bundle: .module)
         default: Text(copy: "查看", bundle: .module)
         }
     }

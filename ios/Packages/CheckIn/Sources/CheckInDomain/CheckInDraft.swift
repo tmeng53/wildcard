@@ -28,15 +28,22 @@ public struct PostBody: Hashable, Sendable {
     public let workout: Workout?
     /// When a 训练 made by hand started, if the member picked it; nil on the other kinds.
     public let startTime: StartTime?
+    /// Squadmates a 训练 was done with (一起练); none on the other kinds. A post shared to no
+    /// squad names no one, whatever this says.
+    public let trainedWith: TrainedWith
 
     /// Keeps at most `Photos.maxCount` photos, and the caption trimmed, on one line and cut to
     /// `Caption.maxLength`; an empty caption is none.
-    public init(photos: [PreparedPhoto], caption: String, workout: Workout? = nil, startTime: StartTime? = nil) {
+    public init(
+        photos: [PreparedPhoto], caption: String, workout: Workout? = nil, startTime: StartTime? = nil,
+        trainedWith: TrainedWith = .none
+    ) {
         self.photos = Array(photos.prefix(Photos.maxCount))
         let line = Self.fitCaption(caption).trimmingCharacters(in: .whitespaces)
         self.caption = line.isEmpty ? nil : line
         self.workout = workout
         self.startTime = startTime
+        self.trainedWith = trainedWith
     }
 
     public var cover: PreparedPhoto? { photos.first }

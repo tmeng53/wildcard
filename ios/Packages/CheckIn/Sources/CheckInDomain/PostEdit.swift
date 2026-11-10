@@ -55,12 +55,15 @@ public struct PostEdit: Hashable, Sendable {
     /// A 训练's workout as it is to be: numbers struck out since are gone, and its tile placed
     /// among the photos or taken off.
     public let workout: Workout?
+    /// The squadmates a 练了 was done with (一起练), as they are to be.
+    public let trainedWith: TrainedWith
 
     public init(
         original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
-        workout: Workout? = nil, startTime: StartTime? = nil
+        workout: Workout? = nil, startTime: StartTime? = nil, trainedWith: TrainedWith = .none
     ) {
         self.original = original
+        self.trainedWith = trainedWith
         self.activity = activity
         self.minutes = minutes
         self.startTime = startTime
@@ -101,7 +104,8 @@ public struct PostEdit: Hashable, Sendable {
                     .trained(
                         Training(
                             activity: activity, minutes: minutes, startTime: startTime, photos: photos,
-                            caption: caption, workout: workout))
+                            caption: caption, workout: workout,
+                            trainedWith: original.audience.squads.isEmpty ? .none : trainedWith))
                 case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
                 case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
                 case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))

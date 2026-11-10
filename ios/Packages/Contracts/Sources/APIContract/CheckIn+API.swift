@@ -63,7 +63,7 @@ extension CheckIn {
             .trained(
                 .init(
                     version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .trained,
-                    training: training.wire))
+                    training: training.wire(naming: training.trainedWith.isEmpty ? nil : training.trainedWith)))
         case .healthyMeal(let meal):
             .healthyMeal(
                 .init(
@@ -86,7 +86,9 @@ extension CheckIn {
     /// photos, all of them. The day, time and audience stay as posted, so they aren't in it.
     public var edit: Components.Schemas.CheckInEdit {
         switch entry {
-        case .trained(let training): .trained(.init(version: ._1, kind: .trained, training: training.wire))
+        case .trained(let training):
+            // Always sent on an edit, `[]` for no one: leaving it out keeps the saved ones.
+            .trained(.init(version: ._1, kind: .trained, training: training.wire(naming: training.trainedWith)))
         case .healthyMeal(let meal): .healthyMeal(.init(version: ._1, kind: .healthyMeal, meal: meal.wire))
         case .cheatMeal(let meal): .cheatMeal(.init(version: ._1, kind: .cheatMeal, meal: meal.wire))
         case .disclaimer(let disclaimer):
@@ -96,10 +98,13 @@ extension CheckIn {
 }
 
 extension Training {
-    var wire: Components.Schemas.Training {
+    /// The training on the wire, naming `trainedWith` (nil leaves the field out).
+    func wire(naming trainedWith: TrainedWith?) -> Components.Schemas.Training {
         .init(
             sport: activity.wireSport, customSport: activity.wireCustomSport, minutes: minutes?.value,
-            startTime: startTime?.wire, caption: caption?.text, photos: photos?.wire, workout: workout?.wire)
+            startTime: startTime?.wire, caption: caption?.text,
+            trainedWith: trainedWith.map { $0.members.map(\.description) }, photos: photos?.wire,
+            workout: workout?.wire)
     }
 }
 
@@ -118,7 +123,17 @@ extension Training {
             minutes: try wire.minutes.map(WorkoutMinutes.init),
             startTime: try wire.startTime.map { (text) throws(ContractsError) in try StartTime(wire: text) },
             photos: try Photos(wire: wire.photos, postedAt: postedAt),
-            caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
+            caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init),
+            trainedWith: try TrainedWith(wire: wire.trainedWith))
+    }
+}
+
+extension TrainedWith {
+    /// From a 训练's `trainedWith`, none when it is left out.
+    init(wire: [String]?) throws(ContractsError) {
+        var ids: [MemberID] = []
+        for member in wire ?? [] { ids.append(try MemberID(wire: member)) }
+        try self.init(ids)
     }
 }
 

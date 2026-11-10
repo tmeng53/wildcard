@@ -41,6 +41,7 @@ function noting(fail?: keyof EventHandlers) {
     'coach-look': run('coach-look'),
     'comment-push': run('comment-push'),
     'coach-answer': run('coach-answer'),
+    'trained-with-push': run('trained-with-push'),
   };
   return { ran, handlers };
 }
@@ -49,6 +50,7 @@ describe('events', () => {
   it('go to a topic named after their kind', () => {
     expect(topicOf('check-in.created')).toBe('check-in-created');
     expect(topicOf('comment.created')).toBe('comment-created');
+    expect(topicOf('check-in.trained-with')).toBe('check-in-trained-with');
   });
 
   it('reach only the subscribers of their kind', async () => {

@@ -28,6 +28,12 @@ extension MainTabs {
             selection = .profile
             closeProfilePages()
             wardrobe.openShop()
+        case .trainAlong(let post):
+            // 我也发: the member's own 训练, started from the squadmate's, over 今天.
+            showsNotices = false
+            selection = .today
+            todayPages = []
+            Task { await today.trainAlong(post) }
         default:
             showsNotices = false
             openTab(for: destination)
@@ -91,7 +97,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store:
+        case .post, .unlock, .stores, .store, .trainAlong:
             break
         }
     }
@@ -161,7 +167,7 @@ extension MainTabs {
                 sceneMoved()
             case .comment(_, let post), .coachReply(let post, _, _, _, _):
                 if !isOnScreen(post) { tell(notice) }
-            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter:
+            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter, .trainedWith:
                 tell(notice)
             }
         }

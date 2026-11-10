@@ -3,6 +3,7 @@ import {
   isSameCheckIn,
   photosOf,
   recordFromDraft,
+  trainedWithOf,
   type CheckInDraft,
   type CheckInId,
   type CheckInRecord,
@@ -26,6 +27,7 @@ import type {
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
+import { checkTrainedWith } from '../check-trained-with.js';
 import { planRestDay, planTrainedDay } from '../weekly-plans.js';
 
 export interface SaveCheckInInput {
@@ -140,6 +142,11 @@ async function insertCheckIn(
     paths: photosOf(checkIn).map(({ path }) => path),
   });
   if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
+  await checkTrainedWith(membership, {
+    member,
+    audience: checkIn.audience,
+    added: trainedWithOf(checkIn),
+  });
 
   if (checkIn.kind === 'disclaimer') await checkNotTrained(store, checkIn);
 

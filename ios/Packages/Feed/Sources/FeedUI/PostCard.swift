@@ -194,6 +194,10 @@ struct PostCard: View {
                 byline
                 if post.checkIn.audience.isOnlyMe { OnlyMeTag() }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
+                if case .trained(let training) = post.checkIn.entry, !training.trainedWith.isEmpty {
+                    TrainedWithTag(model: model, members: training.trainedWith.members)
+                        .padding(.top, Space.xxs)
+                }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {
                     if hasReactions {

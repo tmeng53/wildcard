@@ -1840,6 +1840,54 @@
           }
         }
       }
+    },
+    "和 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@"
+          }
+        }
+      }
+    },
+    "和 %@、%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %1$@ and %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %1$@、%2$@"
+          }
+        }
+      }
+    },
+    "和 %@ 等 %lld 人" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %1$@ and others, %2$lld in all"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %1$@ 等 %2$lld 人"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

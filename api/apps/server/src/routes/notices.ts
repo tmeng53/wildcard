@@ -43,6 +43,7 @@ export const NoticeEntry = z
         'caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that ' +
         'left wrote the next a letter), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
+        '`trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), ' +
         '`broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
         'one) or `thanks` (we used feedback the caller sent, so they got its thank-you ' +
@@ -440,6 +441,7 @@ function wireNotice(
     case 'unlocked':
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
     case 'comment':
+    case 'trainedWith':
       return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
     case 'thanks':
       return { ...common, feedback: notice.subject.feedback, adopted: notice.subject.adopted };

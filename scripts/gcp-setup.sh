@@ -138,7 +138,7 @@ grant_project "$runtime" roles/pubsub.publisher
 # Pub/Sub signs each push's ID token as `wildcard-scheduler`.
 gcloud iam service-accounts add-iam-policy-binding "$scheduler" \
   --member "serviceAccount:$pubsub_agent" --role roles/iam.serviceAccountTokenCreator >/dev/null
-for topic in check-in-created comment-created events-dead-letter; do
+for topic in check-in-created check-in-trained-with comment-created events-dead-letter; do
   exists gcloud pubsub topics describe "$topic" || gcloud pubsub topics create "$topic" >/dev/null
 done
 gcloud pubsub topics add-iam-policy-binding events-dead-letter \
@@ -164,6 +164,8 @@ subscribe coach-look check-in-created
 subscribe comment-push comment-created
 # The coach a comment replies to or @s answers it.
 subscribe coach-answer comment-created
+# The squadmates a 训练 names it was done with (一起练) are told.
+subscribe trained-with-push check-in-trained-with
 
 # Alerts, by email to whoever runs this in Cloud Shell, unless ALERT_EMAIL names someone else.
 alert_email="${ALERT_EMAIL:-$(gcloud config get account 2>/dev/null)}"

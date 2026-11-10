@@ -13,6 +13,7 @@ export const PUSH_COPY = {
   'push.comment.reply': ['commenter', 'text'],
   'push.coach.note': ['coach', 'text'],
   'push.comment.mention': ['commenter', 'text'],
+  'push.trainedWith': ['teammate'],
   'push.weeklyAwards.ready': [],
   'push.weeklyAwards.stuck': ['squad', 'failures', 'lastError'],
 } as const satisfies Record<string, readonly string[]>;

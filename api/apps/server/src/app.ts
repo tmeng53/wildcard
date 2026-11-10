@@ -192,7 +192,11 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
-  const handlers = eventHandlers({ coach: deps.jobs.coach, commentPush: deps });
+  const handlers = eventHandlers({
+    coach: deps.jobs.coach,
+    commentPush: deps,
+    trainedWithPush: deps,
+  });
   const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
   app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));

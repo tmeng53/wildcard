@@ -59,6 +59,20 @@ export const StartTime = z
   .meta({ description: "When it started, on the member's clock on its day, as HH:mm." });
 export type StartTime = z.infer<typeof StartTime>;
 
+/**
+ * Squadmates the member trained with (一起练), in the order picked: up to 7, never themselves,
+ * no repeats. Each is told once and may post their own 训练 from it; a tag never counts for them.
+ * On an edit, left out keeps the saved ones (as builds from before tags do) and `[]` clears them.
+ */
+export const TrainedWith = z
+  .array(MemberId)
+  .max(7)
+  .refine((members) => new Set(members).size === members.length, {
+    message: 'Must not list a member twice',
+  })
+  .meta({ description: 'Squadmates the member trained with (一起练), in the order picked.' });
+export type TrainedWith = z.infer<typeof TrainedWith>;
+
 // The fields kept in `check_ins.payload`, and with photos, the fields the app sends.
 export const storedTrainingFields = {
   sport: SportKey,
@@ -66,6 +80,7 @@ export const storedTrainingFields = {
   minutes: WorkoutMinutes.optional(),
   startTime: StartTime.optional(),
   caption: Caption.optional(),
+  trainedWith: TrainedWith.optional(),
 };
 const trainingFields = {
   ...storedTrainingFields,
@@ -232,13 +247,26 @@ export function recordFromDraft(
   const base = { id, member, day: draft.day, createdAt: draft.createdAt, audience: draft.audience };
   switch (draft.kind) {
     case 'trained':
-      return { ...base, kind: draft.kind, training: draft.training };
+      return { ...base, kind: draft.kind, training: withoutNoOne(draft.training) };
     case 'healthyMeal':
     case 'cheatMeal':
       return { ...base, kind: draft.kind, meal: draft.meal };
     case 'disclaimer':
       return { ...base, kind: draft.kind, disclaimer: draft.disclaimer };
   }
+}
+
+/** A 训练 that names no one it trained with leaves `trainedWith` out, as one that never did. */
+function withoutNoOne(training: Training): Training {
+  if (training.trainedWith === undefined || training.trainedWith.length > 0) return training;
+  const rest = { ...training };
+  delete rest.trainedWith;
+  return rest;
+}
+
+/** The squadmates a 训练 names it was done with; none for other kinds. */
+export function trainedWithOf(entry: Entry): readonly MemberId[] {
+  return entry.kind === 'trained' ? (entry.training.trainedWith ?? []) : [];
 }
 
 /**

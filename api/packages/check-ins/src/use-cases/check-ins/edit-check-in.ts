@@ -2,6 +2,7 @@ import {
   isSameCheckIn,
   photosOf,
   recordFromDraft,
+  trainedWithOf,
   type CheckInEdit,
   type CheckInId,
   type CheckInRecord,
@@ -24,6 +25,7 @@ import type {
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
 import { checkSport } from '../check-sport.js';
+import { checkTrainedWith } from '../check-trained-with.js';
 import { planTrainedDay } from '../weekly-plans.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
 import { planRestPost } from './save-check-in.js';
@@ -74,7 +76,7 @@ export async function editCheckIn(
     {
       ...recordFromDraft(
         {
-          ...keepingWorkout(edit, saved),
+          ...keepingTrainedWith(keepingWorkout(edit, saved), saved),
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
@@ -100,6 +102,12 @@ export async function editCheckIn(
     (edited.training.sport !== saved.training.sport ||
       edited.training.customSport !== saved.training.customSport);
   if (sportChanged) await checkSport(deps.sports, edited.training.sport);
+  const before = new Set(trainedWithOf(saved));
+  await checkTrainedWith(deps.membership, {
+    member,
+    audience: edited.audience,
+    added: trainedWithOf(edited).filter((each) => !before.has(each)),
+  });
   const outcome = await deps.store.update(edited);
   if (!outcome.saved) {
     throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();
@@ -163,6 +171,18 @@ function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
       },
     },
   };
+}
+
+/**
+ * The edit with the saved post's squadmates (一起练) when it leaves `trainedWith` out, as builds
+ * from before tags do, so editing there never drops them. A build that knows tags always sends
+ * them, `[]` for none.
+ */
+function keepingTrainedWith(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
+  if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
+  const tagged = saved.training.trainedWith;
+  if (edit.training.trainedWith !== undefined || tagged === undefined) return edit;
+  return { ...edit, training: { ...edit.training, trainedWith: tagged } };
 }
 
 /** The record with its photos mapped, left out when there are none. */

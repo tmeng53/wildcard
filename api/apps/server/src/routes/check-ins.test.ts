@@ -1483,6 +1483,80 @@ describe('a 训练 from Apple Health', () => {
     expect(await shown()).toBeUndefined();
   });
 
+  it('names the squadmates a 训练 was done with, and an edit keeps, changes or clears them', async () => {
+    const [me, mia, coco, stranger] = [
+      await signUp(),
+      await signUp(),
+      await signUp(),
+      await signUp(),
+    ];
+    const squad = await squadOf(me, mia, coco);
+    await squadOf(stranger);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const put = async (
+      trainedWith: readonly string[],
+      { at = id, audience = [squad] }: { at?: string; audience?: string[] } = {},
+    ) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${at}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience,
+          kind: 'trained',
+          training: { sport: 'run', trainedWith },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    const refused = [400, 'TRAINED_WITH_NOT_SQUADMATE'];
+    expect(await put([stranger.userId], { at: randomUUID() })).toStrictEqual(refused);
+    expect(await put([me.userId], { at: randomUUID() })).toStrictEqual(refused);
+    // A post only the member sees names no one.
+    expect(await put([mia.userId], { at: randomUUID(), audience: [] })).toStrictEqual(refused);
+    expect(await put([mia.userId, mia.userId], { at: randomUUID() })).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+    // None named is a 训练 like any other.
+    expect(await put([], { at: randomUUID() })).toStrictEqual([201, 'saved']);
+    expect(await put([mia.userId, coco.userId])).toStrictEqual([201, 'saved']);
+    expect(await put([mia.userId, coco.userId])).toStrictEqual([200, 'saved']);
+
+    const shown = async () =>
+      z
+        .object({
+          checkIn: z.object({
+            training: z.object({ trainedWith: z.array(z.string()).optional() }),
+          }),
+        })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: mia.token })).body)
+        .checkIn.training.trainedWith;
+    expect(await shown()).toStrictEqual([mia.userId, coco.userId]);
+
+    const edit = async (training: Record<string, unknown>) => {
+      const { status, body } = await call({
+        method: 'PATCH',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: { version: 1, kind: 'trained', training },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    // Builds from before tags leave it out: the post keeps them.
+    expect(await edit({ sport: 'run', caption: '一起跑' })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toStrictEqual([mia.userId, coco.userId]);
+    expect(await edit({ sport: 'run', trainedWith: [coco.userId] })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toStrictEqual([coco.userId]);
+    expect(await edit({ sport: 'run', trainedWith: [stranger.userId] })).toStrictEqual(refused);
+    expect(await edit({ sport: 'run', trainedWith: [] })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toBeUndefined();
+  });
+
   it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

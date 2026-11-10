@@ -40,6 +40,9 @@ extension Notice {
         case "comment":
             guard let alert, let checkIn else { return nil }
             return .comment(alert, checkIn: checkIn)
+        case "trainedWith":
+            guard let alert, let checkIn else { return nil }
+            return .trainedWith(alert, checkIn: checkIn)
         default:
             return toldInApp(wire)
         }

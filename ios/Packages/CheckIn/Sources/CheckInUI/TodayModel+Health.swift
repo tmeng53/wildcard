@@ -34,6 +34,9 @@ extension TodayModel {
             postableDays: store.postableDays, suggestedActivity: suggestedActivity,
             recentActivities: recentActivities, healthWorkouts: kind == .trained ? todaysWorkouts : [],
             sharing: health?.sharing ?? HealthSharing(),
+            together: { [weak self] day, workout, startTime in
+                self?.store.home?.together(on: day, workout: workout, startTime: startTime) ?? .none
+            },
             save: { [weak self] model in
                 await self?.post(model.draft, shared: model.isShared, on: model.day) ?? false
             },
