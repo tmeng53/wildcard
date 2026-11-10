@@ -100,6 +100,32 @@ final class PostManageUITests: XCTestCase {
         XCTAssertTrue(preview.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the card")
     }
 
+    /// My 练腿日's second page is its heart rate in zones on graphite: the warm-up and cool-down
+    /// under 轻松 dimmed, and the zones' axis under the 「…」, not behind it.
+    func testHeartRateCover() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
+        let feed = app.scrollViews.firstMatch
+        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        var drags = 0
+        while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY + 240 <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(manage.isHittable, "my post isn't on screen")
+        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
+            .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
+        XCTAssertNotNil(photos, "my post's cover isn't under its 「…」")
+        photos?.swipeLeft()
+        let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
+        XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
+        settle()
+        keepScreenshot(named: "52-feed-heart-rate-cover")
+    }
+
     /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.
     @discardableResult
     private func openMenuOnMyPost(in app: XCUIApplication) -> XCUIElement {
