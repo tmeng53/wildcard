@@ -14,7 +14,7 @@ struct LocationStep: View {
 
     var body: some View {
         StepPage(
-            step: .location, title: Text("下雨天也有安排", bundle: .module), character: model.myCharacter,
+            step: .location, title: Text(copy: "下雨天也有安排", bundle: .module), character: model.myCharacter,
             onBack: model.back
         ) {
             VStack(alignment: .leading, spacing: Space.m) {
@@ -22,7 +22,7 @@ struct LocationStep: View {
                     allowed
                 } else {
                     SampleRainyDay()
-                    Text("只用到大概在哪个城市，队友看不到。", bundle: .module)
+                    Text(copy: "只用到大概在哪个城市，队友看不到。", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .fixedSize(horizontal: false, vertical: true)
@@ -32,18 +32,18 @@ struct LocationStep: View {
         } actions: {
             if isAllowed {
                 StepButton(
-                    title: Text("下一步", bundle: .module), isWorking: false, isEnabled: true,
+                    title: Text(copy: "下一步", bundle: .module), isWorking: false, isEnabled: true,
                     action: model.finishLocation
                 )
                 .accessibilityIdentifier("location.done")
             } else {
                 StepButton(
-                    title: Text("允许", bundle: .module), isWorking: model.isAskingLocation, isEnabled: true,
+                    title: Text(copy: "允许", bundle: .module), isWorking: model.isAskingLocation, isEnabled: true,
                     action: model.allowLocation
                 )
                 .accessibilityIdentifier("location.allow")
                 Button(action: model.finishLocation) {
-                    Text("以后再说", bundle: .module)
+                    Text(copy: "以后再说", bundle: .module)
                 }
                 .buttonStyle(TextButtonStyle())
                 .accessibilityIdentifier("location.skip")
@@ -57,7 +57,7 @@ struct LocationStep: View {
     /// 已打开大概位置: a line with a check, as 已连接 Apple 健康 is.
     private var allowed: some View {
         Label {
-            Text("已打开大概位置", bundle: .module)
+            Text(copy: "已打开大概位置", bundle: .module)
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
         } icon: {
@@ -80,17 +80,17 @@ private struct SampleRainyDay: View {
                     .typeStyle(TypeRamp.title)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                    Text("今天下午 小雨", bundle: .module)
+                    Text(copy: "今天下午 小雨", bundle: .module)
                         .typeStyle(TypeRamp.calloutEmphasis)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    Text("8–13°C · 降水 80%", bundle: .module)
+                    Text(copy: "8–13°C · 降水 80%", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }
             }
             Divider()
-            row(Text("原计划", bundle: .module), Text("跑步 5 公里", bundle: .module), emphasis: false)
-            row(Text("可以改成", bundle: .module), Text("早上跑，或者室内练", bundle: .module), emphasis: true)
+            row(Text(copy: "原计划", bundle: .module), Text(copy: "跑步 5 公里", bundle: .module), emphasis: false)
+            row(Text(copy: "可以改成", bundle: .module), Text(copy: "早上跑，或者室内练", bundle: .module), emphasis: true)
         }
         .padding(Space.m)
         .overlay {

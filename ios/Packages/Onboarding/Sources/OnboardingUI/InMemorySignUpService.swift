@@ -30,7 +30,7 @@ public actor InMemorySignUpService: SignUpService {
         return InMemorySignUpService(
             sample: JoinedSquad(
                 id: SquadID(UUID()),
-                name: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                name: String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module),
                 teammates: teammates.map { name, body, persona in
                     Squadmate(
                         id: MemberID(UUID()), nickname: name,

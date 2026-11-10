@@ -119,13 +119,13 @@ final class PatStage {
     func welcome(_ joined: [SquadCast.Mate], cast: SquadCast, phase: DayPhase, now: Date = .now) {
         guard pat == nil, let first = joined.first else { return }
         _ = hop(first, cast: cast, phase: phase, now: now)
-        let mate = String(localized: "队友", bundle: .module.inAppLanguage)
+        let mate = String(copy: "队友", bundle: .module)
         show(
             Bubble(
                 mate: first.id, kind: .joined,
-                title: String(localized: "新队友 \(first.name ?? mate) 上场", bundle: .module.inAppLanguage),
+                title: String(copy: "新队友 \(first.name ?? mate) 上场", bundle: .module),
                 detail: joined.dropFirst().first.map {
-                    String(localized: "\($0.name ?? mate) 也上场了", bundle: .module.inAppLanguage)
+                    String(copy: "\($0.name ?? mate) 也上场了", bundle: .module)
                 },
                 id: nextBubble()), for: hold)
     }
@@ -178,15 +178,15 @@ final class PatStage {
             self?.landedOnMe += 1
         } finished: { [weak self] in
             guard let self else { return }
-            let name = mate.name ?? String(localized: "队友", bundle: .module.inAppLanguage)
+            let name = mate.name ?? String(copy: "队友", bundle: .module)
             show(
                 Bubble(
                     mate: mate.id, kind: .pattedMe,
-                    title: String(localized: "\(name)拍了拍你", bundle: .module.inAppLanguage),
+                    title: String(copy: "\(name)拍了拍你", bundle: .module),
                     detail: others.first.map {
                         String(
-                            localized: "\($0.name ?? String(localized: "队友", bundle: .module.inAppLanguage)) 也拍了拍你",
-                            bundle: .module.inAppLanguage)
+                            copy: "\($0.name ?? String(copy: "队友", bundle: .module)) 也拍了拍你",
+                            bundle: .module)
                     },
                     id: nextBubble()), for: hold)
         }
@@ -236,31 +236,31 @@ final class PatStage {
     static func status(
         _ status: StageStatus, eating: MealKind?, caption: String?, disclaimer: String?, asleep: Bool
     ) -> (title: String, detail: String?) {
-        if asleep { return (String(localized: "睡着了", bundle: .module.inAppLanguage), nil) }
+        if asleep { return (String(copy: "睡着了", bundle: .module), nil) }
         switch (eating, status) {
         case (.healthyMeal?, _):
-            return (String(localized: "在吃健康餐", bundle: .module.inAppLanguage), caption)
+            return (String(copy: "在吃健康餐", bundle: .module), caption)
         case (.cheatMeal?, _):
-            return (String(localized: "在吃放纵餐", bundle: .module.inAppLanguage), caption)
+            return (String(copy: "在吃放纵餐", bundle: .module), caption)
         case (nil, .trained(let activity?)):
             return (
-                String(localized: "\(activity.localizedName) 中", bundle: .module.inAppLanguage),
-                caption ?? String(localized: "今天训练", bundle: .module.inAppLanguage)
+                String(copy: "\(activity.localizedName) 中", bundle: .module),
+                caption ?? String(copy: "今天训练", bundle: .module)
             )
         case (nil, .trained(nil)):
-            return (String(localized: "今天训练", bundle: .module.inAppLanguage), caption)
+            return (String(copy: "今天训练", bundle: .module), caption)
         case (nil, .disclaimer):
             return (
-                String(localized: "请假条", bundle: .module.inAppLanguage),
-                disclaimer ?? String(localized: "请假了", bundle: .module.inAppLanguage)
+                String(copy: "请假条", bundle: .module),
+                disclaimer ?? String(copy: "请假了", bundle: .module)
             )
         case (nil, .restDay):
             return (
-                String(localized: "休息日", bundle: .module.inAppLanguage),
-                String(localized: "按计划休息", bundle: .module.inAppLanguage)
+                String(copy: "休息日", bundle: .module),
+                String(copy: "按计划休息", bundle: .module)
             )
         case (nil, .notYet):
-            return (String(localized: "今天还没打卡", bundle: .module.inAppLanguage), nil)
+            return (String(copy: "今天还没打卡", bundle: .module), nil)
         }
     }
 }

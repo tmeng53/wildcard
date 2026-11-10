@@ -104,7 +104,7 @@ extension Home {
             case .trained(let activity, let minutes, _): (post.createdAt, .trained(activity, minutes))
             case .healthyMeal: (post.createdAt, .healthyMeal)
             case .cheatMeal: (post.createdAt, .cheatMeal)
-            case .disclaimer(let note): (post.createdAt, .disclaimer(note.text))
+            case .disclaimer(let note, _): (post.createdAt, .disclaimer(note.text))
             }
         }
         return (saved + waiting).sorted { $0.at < $1.at }

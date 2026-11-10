@@ -288,14 +288,9 @@ public final class TodayModel {
     func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
         payoff = nil
-        switch kind {
-        case .disclaimer:
-            step = .disclaimer
-        case .trained, .healthyMeal, .cheatMeal:
-            // Straight to the page: photos are added there, with its 「+ 照片」.
-            compose = newPost(kind, from: workout)
-            step = .composing(kind)
-        }
+        // Straight to the page: photos are added there, with its 「+ 照片」 (the 请假条's too).
+        compose = newPost(kind, from: workout)
+        step = kind == .disclaimer ? .disclaimer : .composing(kind)
     }
 
     /// The compose page for a post the server refused, with its photos, words, sport, workout and
@@ -362,7 +357,7 @@ public final class TodayModel {
         switch draft {
         case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
-        case .disclaimer(let disclaimer):
+        case .disclaimer(let disclaimer, _):
             line = disclaimer.text
         }
         posts += 1

@@ -18,7 +18,7 @@ extension TodayModel {
         guard !news.isEmpty else { return }
         let joined = news.joined.compactMap { id in cast.mates.first { $0.id == id } }
         pats.welcome(joined, cast: cast, phase: stagePhase)
-        if news.madeCaptain { pats.say(String(localized: "你现在是队长了", bundle: .module.inAppLanguage)) }
+        if news.madeCaptain { pats.say(String(copy: "你现在是队长了", bundle: .module)) }
         // A pat on me waits until the news has been read.
         try? await Task.sleep(for: .seconds(pats.hold))
     }

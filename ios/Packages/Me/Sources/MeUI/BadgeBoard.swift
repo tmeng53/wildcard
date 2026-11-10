@@ -53,7 +53,7 @@ struct BadgeCell: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: title.title))
         .accessibilityValue(
-            isWorn ? Text("已装备", bundle: .module) : Text(verbatim: title.times > 1 ? "×\(title.times)" : ""))
+            isWorn ? Text(copy: "已装备", bundle: .module) : Text(verbatim: title.times > 1 ? "×\(title.times)" : ""))
     }
 }
 
@@ -110,7 +110,7 @@ struct NextBadgeCell: View {
                 )
                 .frame(width: BoardMetrics.badge, height: BoardMetrics.badge)
                 .frame(width: BoardMetrics.slot, height: BoardMetrics.slot)
-            Text("周日揭晓", bundle: .module)
+            Text(copy: "周日揭晓", bundle: .module)
                 .typeStyle(TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .lineLimit(1)

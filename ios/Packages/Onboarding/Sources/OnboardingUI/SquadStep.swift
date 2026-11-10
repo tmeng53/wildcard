@@ -15,9 +15,11 @@ struct SquadStep: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        StepPage(step: .squad, title: Text("你的小队", bundle: .module), character: model.myCharacter, onBack: model.back) {
+        StepPage(
+            step: .squad, title: Text(copy: "你的小队", bundle: .module), character: model.myCharacter, onBack: model.back
+        ) {
             VStack(alignment: .leading, spacing: Space.xs) {
-                PickRow(Text("加入小队", bundle: .module), systemImage: "person.2", isSelected: isJoining) {
+                PickRow(Text(copy: "加入小队", bundle: .module), systemImage: "person.2", isSelected: isJoining) {
                     model.choose(.join)
                 }
                 .accessibilityIdentifier("squad.join")
@@ -25,7 +27,7 @@ struct SquadStep: View {
                     JoinPanel(model: model)
                         .transition(panelTransition)
                 }
-                PickRow(Text("建一个小队", bundle: .module), systemImage: "plus", isSelected: !isJoining) {
+                PickRow(Text(copy: "建一个小队", bundle: .module), systemImage: "plus", isSelected: !isJoining) {
                     model.choose(.create)
                 }
                 .accessibilityIdentifier("squad.create")
@@ -40,7 +42,7 @@ struct SquadStep: View {
         } actions: {
             FailureLine(failure: model.failure)
             StepButton(
-                title: isJoining ? Text("加入小队", bundle: .module) : Text("建小队", bundle: .module),
+                title: isJoining ? Text(copy: "加入小队", bundle: .module) : Text(copy: "建小队", bundle: .module),
                 isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
             )
             .accessibilityIdentifier("squad.done")
@@ -66,13 +68,13 @@ private struct JoinPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("邀请码", bundle: .module))
+            SectionLabel(Text(copy: "邀请码", bundle: .module))
             ZStack {
                 TextField(
                     text: Binding(get: { model.squad.typedCode }, set: { model.typeCode($0) }),
                     prompt: Text(verbatim: "")
                 ) {
-                    Text("邀请码", bundle: .module)
+                    Text(copy: "邀请码", bundle: .module)
                 }
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
@@ -148,7 +150,7 @@ private struct SquadFound: View {
                 // The card says what is happening, so its dots show at once.
                 LoadingDots(delay: 0)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("正在找这个小队", bundle: .module)
+                Text(copy: "正在找这个小队", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }
@@ -166,9 +168,9 @@ private struct SquadFound: View {
                     }
                     Group {
                         if squad.isFull {
-                            Text("\(squad.memberCount) 人 · 满员了", bundle: .module)
+                            Text(copy: "\(squad.memberCount) 人 · 满员了", bundle: .module)
                         } else {
-                            Text("\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 次", bundle: .module)
+                            Text(copy: "\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 次", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.footnote)
@@ -204,8 +206,7 @@ private struct AIConsentLine: View {
     }
 
     private var line: AttributedString {
-        var line = AttributedString(
-            localized: "继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module.inAppLanguage)
+        var line = AppCopyLines.attributed("继续即表示同意把你写的文字发给第三方 AI · [隐私政策](privacy:)", bundle: .module)
         for (link, range) in line.runs[\.link] where link != nil {
             line[range].link = privacyPolicy
             line[range].underlineStyle = .single
@@ -223,31 +224,31 @@ private struct CreatePanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text("小队名", bundle: .module))
+            SectionLabel(Text(copy: "小队名", bundle: .module))
             InputField(
                 text: Binding(get: { model.squad.typedName }, set: { model.typeName($0) }),
-                label: Text("小队名", bundle: .module), limit: SquadName.maxLength
+                label: Text(copy: "小队名", bundle: .module), limit: SquadName.maxLength
             )
             .accessibilityIdentifier("squad.name")
-            SectionLabel(Text("小队目标 · 每人每周练几次", bundle: .module))
+            SectionLabel(Text(copy: "小队目标 · 每人每周练几次", bundle: .module))
                 .padding(.top, Space.s)
             HStack(spacing: Space.xxs) {
                 ForEach(Array(SquadWeeklyGoal.choices), id: \.self) { days in
                     PickPill(Text(verbatim: "\(days)"), isSelected: days == model.squad.daysPerMember) {
                         model.pickDaysPerMember(days)
                     }
-                    .accessibilityLabel(Text("人均 \(days) 次", bundle: .module))
+                    .accessibilityLabel(Text(copy: "人均 \(days) 次", bundle: .module))
                     .accessibilityAddTraits(days == model.squad.daysPerMember ? .isSelected : [])
                     .accessibilityIdentifier("squad.goal.pick.\(days)")
                 }
             }
-            SectionLabel(Text("比赛时区", bundle: .module))
+            SectionLabel(Text(copy: "比赛时区", bundle: .module))
                 .padding(.top, Space.s)
             ListRow(Text(verbatim: zone.region), value: Text(verbatim: zone.city), showsDivider: false) {
                 isChoosingZone = true
             }
             .accessibilityIdentifier("squad.timeZone")
-            Text("用于全队都能看到的内容，比如周日晚 8 点的战报", bundle: .module)
+            Text(copy: "用于全队都能看到的内容，比如周日晚 8 点的战报", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .fixedSize(horizontal: false, vertical: true)
@@ -285,7 +286,7 @@ extension SignUpModel {
 
     /// 「Tracy 的小队」.
     static func suggestedName(for nickname: String) -> String {
-        String(localized: "\(nickname) 的小队", bundle: .module.inAppLanguage)
+        String(copy: "\(nickname) 的小队", bundle: .module)
     }
 }
 

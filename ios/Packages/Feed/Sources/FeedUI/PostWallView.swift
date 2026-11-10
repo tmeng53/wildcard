@@ -33,12 +33,12 @@ public struct PostWallView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: Space.s, pinnedViews: []) {
                 VStack(alignment: .leading, spacing: Space.xxs) {
-                    Text("我的动态", bundle: .module)
+                    Text(copy: "我的动态", bundle: .module)
                         .typeStyle(TypeRamp.largeTitle)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
                         .accessibilityAddTraits(.isHeader)
                     if let counts = store.counts {
-                        Text("发过 \(counts.posts) 条 · 收到 \(counts.reactions) 个表情", bundle: .module)
+                        Text(copy: "发过 \(counts.posts) 条 · 收到 \(counts.reactions) 个表情", bundle: .module)
                             .typeStyle(TypeRamp.footnote)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .accessibilityIdentifier("wall.counts")
@@ -54,7 +54,7 @@ public struct PostWallView: View {
             .padding(.bottom, Space.l)
         }
         .scrollIndicators(.hidden)
-        .barTitleOnScroll(Text("我的动态", bundle: .module))
+        .barTitleOnScroll(Text(copy: "我的动态", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .refreshable { await store.load() }
         .pushedPage()
@@ -98,7 +98,7 @@ public struct PostWallView: View {
                     HStack(alignment: .firstTextBaseline) {
                         SectionLabel(month.title)
                         Spacer()
-                        Text("\(month.posts.count) 张", bundle: .module)
+                        Text(copy: "\(month.posts.count) 张", bundle: .module)
                             .typeStyle(TypeRamp.footnote)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .monospacedDigit()
@@ -110,7 +110,7 @@ public struct PostWallView: View {
                 Button {
                     Task { await store.loadMore() }
                 } label: {
-                    Text("再试一次", bundle: .module)
+                    Text(copy: "再试一次", bundle: .module)
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .padding(.vertical, Space.m)
@@ -133,12 +133,17 @@ public struct PostWallView: View {
         case only(PostKind)
     }
 
-    private static let filters: [CategoryBarItem<Filter>] =
-        [CategoryBarItem(id: .all, title: Text("全部", bundle: .module), accessibilityIdentifier: "wall.filter.all")]
-        + PostKind.allCases.map {
+    /// Read each time, so the names follow a language picked while the app runs.
+    private static var filters: [CategoryBarItem<Filter>] {
+        [
             CategoryBarItem(
-                id: .only($0), title: $0.chipName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
-        }
+                id: .all, title: Text(copy: "全部", bundle: .module), accessibilityIdentifier: "wall.filter.all")
+        ]
+            + PostKind.allCases.map {
+                CategoryBarItem(
+                    id: .only($0), title: $0.chipName, accessibilityIdentifier: "wall.filter.\($0.rawValue)")
+            }
+    }
 
     private var kind: Binding<Filter> {
         Binding {
@@ -158,10 +163,10 @@ extension PostKind {
     /// The filter chip's name: the word the tiles carry in their corner.
     var chipName: Text {
         switch self {
-        case .trained: Text("训练", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("放纵餐", bundle: .module)
-        case .disclaimer: Text("请假条", bundle: .module)
+        case .trained: Text(copy: "训练", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
+        case .disclaimer: Text(copy: "请假条", bundle: .module)
         }
     }
 }
@@ -188,12 +193,12 @@ private struct EmptyWall: View {
     var body: some View {
         VStack(spacing: Space.m) {
             if kind == nil {
-                Text("第一条动态，从今天开始", bundle: .module)
+                Text(copy: "第一条动态，从今天开始", bundle: .module)
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Button(action: checkIn) {
                     Label {
-                        Text("去打卡", bundle: .module)
+                        Text(copy: "去打卡", bundle: .module)
                     } icon: {
                         Image(systemName: "plus")
                     }
@@ -201,7 +206,7 @@ private struct EmptyWall: View {
                 .buttonStyle(PrimaryButtonStyle(.regular))
                 .accessibilityIdentifier("wall.checkIn")
             } else {
-                Text("这一类还没发过", bundle: .module)
+                Text(copy: "这一类还没发过", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
             }

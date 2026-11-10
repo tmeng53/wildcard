@@ -193,6 +193,22 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(feed.characters == [jay: jays])
 }
 
+/// A post of mine shared to no squad, opened from 我的动态, draws me from my own squad.
+@MainActor @Test func myPostSharedToNoSquadOpensWithMyCharacter() async throws {
+    let solo = FeedPost(
+        checkIn: CheckIn(
+            id: checkInID(7), member: coco, day: day("2026-10-22"), createdAt: at(300), audience: try Audience([]),
+            entry: .trained(Training(activity: .sport("run")))))
+    let source = FakeSource([solo])
+    let mine = MemberCharacter(
+        nickname: try Nickname("可可"), look: CharacterLook(persona: "energetic", variants: ["body": "peach"]))
+    await source.setCharacters([coco: mine])
+    let page = store(source).store(of: solo.id)
+    await page.load()
+    #expect(page.post(solo.id)?.checkIn.audience.isOnlyMe == true)
+    #expect(page.characters == [coco: mine])
+}
+
 @MainActor @Test func myNewPostShowsBeforeTheServerListsItAndOnce() async {
     let source = FakeSource([jaysRun])
     let feed = store(source)

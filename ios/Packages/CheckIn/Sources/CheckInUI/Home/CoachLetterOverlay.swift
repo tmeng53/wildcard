@@ -53,7 +53,7 @@ public struct CoachLetterSheet: View {
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Color(role: .borderDefault, in: theme)).frame(height: Sizing.hairline)
             }
-            Text("各位和\(letter.recipient.name)：", bundle: .module)
+            Text(copy: "各位和\(letter.recipient.name)：", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.top, Space.s)
@@ -78,7 +78,7 @@ public struct CoachLetterSheet: View {
             }
             .padding(.top, Space.xs)
             Button(action: putAway) {
-                Text("收下", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "收下", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .accentTone(.brand)
@@ -211,11 +211,15 @@ struct CoachLetterOverlay: View {
             Tween.mix(frame.envelopeTop + 18 * zoom, frame.envelopeTop - 150 * zoom, rise), frame.letterTop, place)
         let height = Tween.mix(300 * zoom, frame.height, grow)
         let flown = moment >= opening.shown
+        // Once dropped off the screen the envelope is gone, so the popup's frame is the letter's.
+        let envelope = opening.showsEnvelope(at: moment)
         return ZStack(alignment: .topLeading) {
-            EnvelopeBack(backFlap: opening.backFlap(at: moment))
-                .frame(width: frame.envelope.width, height: frame.envelope.height)
-                .modifier(Flying(frame: frame, flight: flight, drop: drop))
-                .opacity(flown ? 1 : 0)
+            if envelope {
+                EnvelopeBack(backFlap: opening.backFlap(at: moment))
+                    .frame(width: frame.envelope.width, height: frame.envelope.height)
+                    .modifier(Flying(frame: frame, flight: flight, drop: drop))
+                    .opacity(flown ? 1 : 0)
+            }
             if opening.showsLetter(at: moment) {
                 CoachLetterSheet(letter: shown.letter, button: opening.button(at: moment), putAway: putAway)
                     .frame(width: frame.width, height: frame.height)
@@ -232,21 +236,23 @@ struct CoachLetterOverlay: View {
                                     ? frame.envelopeTop + frame.envelope.height : frame.screen.height * 2)
                     }
             }
-            EnvelopeFront(
-                letter: shown.letter, frontFlap: opening.frontFlap(at: moment),
-                // Under Reduce Motion the seal holds still.
-                seal: reduceMotion && opening.opened == nil ? (1, 1) : opening.seal(at: moment), scale: zoom
-            )
-            .frame(width: frame.envelope.width, height: frame.envelope.height)
-            .modifier(Flying(frame: frame, flight: flight, drop: drop))
-            .opacity(flown ? 1 : 0)
-            .onTapGesture(perform: openSeal)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("开信", bundle: .module))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHidden(opening.opened != nil)
-            .accessibilityIdentifier("today.letter.seal")
-            .accessibilityAction { openSeal() }
+            if envelope {
+                EnvelopeFront(
+                    letter: shown.letter, frontFlap: opening.frontFlap(at: moment),
+                    // Under Reduce Motion the seal holds still.
+                    seal: reduceMotion && opening.opened == nil ? (1, 1) : opening.seal(at: moment), scale: zoom
+                )
+                .frame(width: frame.envelope.width, height: frame.envelope.height)
+                .modifier(Flying(frame: frame, flight: flight, drop: drop))
+                .opacity(flown ? 1 : 0)
+                .onTapGesture(perform: openSeal)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(copy: "开信", bundle: .module))
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHidden(opening.opened != nil)
+                .accessibilityIdentifier("today.letter.seal")
+                .accessibilityAction { openSeal() }
+            }
         }
         .frame(width: frame.screen.width, height: frame.screen.height, alignment: .topLeading)
     }
@@ -360,7 +366,7 @@ private struct EnvelopeFront: View {
                     path.addLine(to: CGPoint(x: size.width - 1, y: size.height - 1))
                 }
                 .stroke(Color(role: .bgBrandLamp, in: theme), lineWidth: Sizing.selectionStroke)
-                Text("给小队和 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
+                Text(copy: "给小队和 \(letter.recipient.name) · \(letter.from.name)", bundle: .module)
                     .typeStyle(TypeRamp.footnoteEmphasis)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme).opacity(0.9))
                     .lineLimit(1)

@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
 import AvatarUI
@@ -50,10 +50,10 @@ public struct WeekWidget<Post: View>: View {
     /// The week as one element; the capsule stays its own, with its 打卡.
     private var summary: some View {
         VStack(alignment: .leading, spacing: 0) {
-            SectionLabel(Text("我的一周", bundle: .module))
+            SectionLabel(Text(copy: "我的一周", bundle: .module))
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
                 Score(count: board.mine.trainedDays, goal: board.mine.plannedDays, size: .card)
-                Text("天", bundle: .module)
+                Text(copy: "天", bundle: .module)
                     .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
             }
@@ -64,16 +64,16 @@ public struct WeekWidget<Post: View>: View {
                 .lineLimit(1)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("我的一周", bundle: .module))
+        .accessibilityLabel(Text(copy: "我的一周", bundle: .module))
         .accessibilityValue(
-            Text("\(board.mine.trainedDays)/\(board.mine.plannedDays) 天，\(status)", bundle: .module))
+            Text(copy: "\(board.mine.trainedDays)/\(board.mine.plannedDays) 天，\(status)", bundle: .module))
     }
 
     private var status: Text {
         switch board.myStatus {
-        case .trained: Text("今天练了", bundle: .module)
-        case .disclaimer: Text("今天请假", bundle: .module)
-        case .notCheckedIn: Text("今天还没练", bundle: .module)
+        case .trained: Text(copy: "今天练了", bundle: .module)
+        case .disclaimer: Text(copy: "今天请假", bundle: .module)
+        case .notCheckedIn: Text(copy: "今天还没练", bundle: .module)
         }
     }
 
@@ -81,22 +81,12 @@ public struct WeekWidget<Post: View>: View {
     private var days: [WeekDayStatus] {
         zip(board.week.days, board.week.activities).map { status, activity in
             switch status {
-            case .trained: .trained(symbol: activity.flatMap(Self.symbol))
+            case .trained: .trained(symbol: activity?.symbol)
             case .disclaimer: .excused
             case .restDay: .restDay
             case .open: .open
             }
         }
-    }
-
-    /// A trained day's sport icon. SportsUI draws sports on iOS only, so the macOS build of this
-    /// package (`swift test`) leaves the icon out.
-    private static func symbol(_ activity: Activity) -> String? {
-        #if os(iOS)
-        return activity.symbol
-        #else
-        return nil
-        #endif
     }
 }
 
@@ -138,5 +128,9 @@ enum WidgetMetrics {
     static let capsule: Double = 36
     static let capsuleButton: Double = 28
     static let heart: Double = 10
+    /// An iPhone's small widget is 170 points square on a 6.1" to 6.3" phone, a medium one 364
+    /// by 170, with 16 points of margin inside.
+    static let small: Double = 170
+    static let medium: Double = 364
 }
 #endif

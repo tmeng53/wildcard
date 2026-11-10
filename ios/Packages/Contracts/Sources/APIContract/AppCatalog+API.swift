@@ -17,7 +17,8 @@ extension AppCatalog {
             // A section that is there but names no minimum lets every build run; one the server
             // didn't send keeps the fallback's.
             minimumBuild: wire.appBuild.map { $0.minimumBuild.flatMap(AppBuild.init) } ?? fallback.minimumBuild,
-            quickReactions: wire.reactions.map { $0.quick.compactMap { try? Emoji($0) } } ?? fallback.quickReactions)
+            quickReactions: wire.reactions.map { $0.quick.compactMap { try? Emoji($0) } } ?? fallback.quickReactions,
+            copy: wire.appCopy.map(AppCopy.init) ?? fallback.copy)
     }
 
     /// The switches; a mode this build doesn't know, or a schedule without a window it can read,
@@ -63,6 +64,16 @@ extension AppCatalog {
             stores: open.map { StreetStock.Store(id: $0, isOpen: true) },
             pieces: pieces.pieces.filter { $0.starter && $0.switchId == nil && open.contains($0.storeId) }.map {
                 StreetStock.Piece(id: $0.id, store: $0.storeId, state: .available)
+            })
+    }
+}
+
+extension AppCopy {
+    /// The `appCopy` section of `GET /public/catalog`.
+    public init(_ wire: Components.Schemas.AppCopyCatalog) {
+        self.init(
+            entries: wire.entries.additionalProperties.mapValues {
+                Words(simplifiedChinese: $0.zhHans, english: $0.en, traditionalChinese: $0.zhHant)
             })
     }
 }

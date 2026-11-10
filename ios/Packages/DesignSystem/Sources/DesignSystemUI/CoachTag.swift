@@ -27,7 +27,7 @@ public struct CoachTag: View {
     }
 
     public var body: some View {
-        InkTag(Text("教练", bundle: .module), height: size.height)
+        InkTag(Text(copy: "教练", bundle: .module), height: size.height)
     }
 }
 
@@ -44,7 +44,7 @@ public struct InkTag: View {
     }
 
     /// 「NEW」.
-    public static var new: InkTag { InkTag(Text("NEW", bundle: .module)) }
+    public static var new: InkTag { InkTag(Text(copy: "NEW", bundle: .module)) }
 
     public var body: some View {
         word

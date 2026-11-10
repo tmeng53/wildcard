@@ -51,14 +51,14 @@ struct FeedbackView: View {
                 header
                 ratingCard
                     .padding(.top, Space.m)
-                SectionLabel(Text("写给我们", bundle: .module))
+                SectionLabel(Text(copy: "写给我们", bundle: .module))
                     .padding(.top, Space.l)
                     .padding(.bottom, Space.xs)
                 kinds
                 FeedbackTicket(model: model, isWriting: $isWriting) { isPicking = true }
                     .padding(.top, Space.s)
                 failure
-                Text("也可以发邮件到 [support@wildcardsquad.com](mailto:support@wildcardsquad.com)", bundle: .module)
+                Text(copy: "也可以发邮件到 [support@wildcardsquad.com](mailto:support@wildcardsquad.com)", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .tint(Color(role: .fgDefault, in: theme))
@@ -72,13 +72,13 @@ struct FeedbackView: View {
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
-        .barTitleOnScroll(Text("意见反馈", bundle: .module))
+        .barTitleOnScroll(Text(copy: "意见反馈", bundle: .module))
         .actionBar {
             Button {
                 isWriting = false
                 Task { await model.send() }
             } label: {
-                Text("发送", bundle: .module)
+                Text(copy: "发送", bundle: .module)
                     .frame(maxWidth: .infinity)
                     .loadingLabel(model.phase == .sending)
             }
@@ -102,16 +102,16 @@ struct FeedbackView: View {
     private var header: some View {
         HStack(alignment: .bottom, spacing: Space.s) {
             VStack(alignment: .leading, spacing: Space.xxs) {
-                Text("意见反馈", bundle: .module)
+                Text(copy: "意见反馈", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                Text("每一条我们都会看", bundle: .module)
+                Text(copy: "每一条我们都会看", bundle: .module)
                     .typeStyle(TypeRamp.callout)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                 // Only while the beta's reward runs: its switch is turned off on the server.
                 if Switchboard.shared.isOn(.feedbackReward, at: .now) {
-                    Text("公测期间提出反馈，领取神秘奖励", bundle: .module)
+                    Text(copy: "公测期间提出反馈，领取神秘奖励", bundle: .module)
                         .typeStyle(TypeRamp.callout)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .accessibilityIdentifier("feedback.betaReward")
@@ -134,7 +134,7 @@ struct FeedbackView: View {
                     }
                 }
                 .accessibilityHidden(true)
-                Text("喜欢外卡吗？", bundle: .module)
+                Text(copy: "喜欢外卡吗？", bundle: .module)
                     .typeStyle(TypeRamp.headline)
             }
             .foregroundStyle(Color(role: .fgOnBrand, in: theme))
@@ -142,7 +142,7 @@ struct FeedbackView: View {
             Button {
                 openURL(writeReview)
             } label: {
-                Text("写评价", bundle: .module)
+                Text(copy: "写评价", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .bgBrand, in: theme))
                     .padding(.horizontal, Space.m)
@@ -163,12 +163,12 @@ struct FeedbackView: View {
     private var kinds: some View {
         HStack(spacing: Space.xs) {
             PickPill(
-                Text("出问题了", bundle: .module), systemImage: "ladybug", look: .solid,
+                Text(copy: "出问题了", bundle: .module), systemImage: "ladybug", look: .solid,
                 isSelected: model.kind == .problem
             ) { model.kind = .problem }
             .accessibilityIdentifier("feedback.problem")
             PickPill(
-                Text("提个建议", bundle: .module), systemImage: "lightbulb", look: .solid,
+                Text(copy: "提个建议", bundle: .module), systemImage: "lightbulb", look: .solid,
                 isSelected: model.kind == .idea
             ) { model.kind = .idea }
             .accessibilityIdentifier("feedback.idea")
@@ -181,8 +181,8 @@ struct FeedbackView: View {
         if case .failed(let error) = model.phase {
             Group {
                 switch error {
-                case .limit: Text("今天已经发了 10 条，明天再发", bundle: .module)
-                case .unavailable, .signedOut: Text("网络开小差了，没发出去", bundle: .module)
+                case .limit: Text(copy: "今天已经发了 10 条，明天再发", bundle: .module)
+                case .unavailable, .signedOut: Text(copy: "网络开小差了，没发出去", bundle: .module)
                 }
             }
             .typeStyle(TypeRamp.footnote)
@@ -198,12 +198,12 @@ struct FeedbackView: View {
     private var sent: some View {
         VStack {
             Spacer()
-            TicketCheck(label: Text("已发送", bundle: .module)) {
+            TicketCheck(label: Text(copy: "已发送", bundle: .module)) {
                 VStack(spacing: Space.xs - 2) {
-                    Text("谢谢你的反馈", bundle: .module)
+                    Text(copy: "谢谢你的反馈", bundle: .module)
                         .typeStyle(TypeRamp.taskTitle)
                         .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    Text("我们很快处理", bundle: .module)
+                    Text(copy: "我们很快处理", bundle: .module)
                         .typeStyle(TypeRamp.callout)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                 }

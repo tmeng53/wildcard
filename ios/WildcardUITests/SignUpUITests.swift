@@ -87,9 +87,9 @@ final class SignUpUITests: XCTestCase {
         XCTAssertEqual(year.value as? String, "2000", "the birthday doesn't open on 2000")
         XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.month"].value as? String, "01")
         XCTAssertEqual(app.descendants(matching: .any)["sports.birthday.day"].value as? String, "01")
-        // The column's down chevron, at its foot: a swipe on the card is taken by the page's scroll.
-        year.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.92)).tap()
-        waitFor(year, "value != '2000'", "the down chevron doesn't turn the year back")
+        // The column's up chevron, at its top (its name, 年, sits under the down chevron).
+        year.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.09)).tap()
+        waitFor(year, "value != '2000'", "the up chevron doesn't turn the year")
         XCTAssertLessThanOrEqual(
             app.descendants(matching: .any)["sports.birthday.day"].frame.maxX, app.frame.maxX,
             "the day's card runs off the screen")
@@ -149,6 +149,7 @@ final class SignUpUITests: XCTestCase {
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         XCTAssertEqual(signIn.label, "Continue with Apple")
+        waitForHittable(signIn, "Continue with Apple never came up")
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "the editor never appeared")
@@ -263,6 +264,8 @@ final class SignUpUITests: XCTestCase {
     private func makeCharacter(named name: String, in app: XCUIApplication) {
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        // The button fades in once WILDCARD has sprinted in; a tap before then hits nothing.
+        waitForHittable(signIn, "通过 Apple 继续 never came up")
         signIn.tap()
         let editorDone = app.buttons["editor.done"]
         XCTAssertTrue(editorDone.waitForExistence(timeout: Self.wait), "角色和昵称 never appeared")

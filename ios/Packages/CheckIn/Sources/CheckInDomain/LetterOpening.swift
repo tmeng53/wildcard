@@ -113,6 +113,12 @@ public struct LetterOpening: Hashable, Sendable {
         part(date, from: Self.drops, lasting: Self.drop) { Tween.cubicBezier(x1: 0.5, y1: 0, x2: 0.8, y2: 0.4, $0) }
     }
 
+    /// Whether the envelope is still there to draw: until it has dropped off the bottom of the
+    /// screen, after which it is gone, so nothing off screen stays on the page or its accessibility.
+    public func showsEnvelope(at date: Date) -> Bool {
+        opened.map { date.timeIntervalSince($0) < Self.drops + Self.drop } ?? true
+    }
+
     /// How far the letter has moved to its full place and size, and how far it has grown to its
     /// full height.
     public func unfold(at date: Date) -> (place: Double, height: Double) {

@@ -9,18 +9,20 @@ struct GlassMenuSample: View {
     var body: some View {
         HStack {
             Spacer()
-            HeaderButton(Text("编辑", bundle: .module), systemImage: "ellipsis") { isOpen = true }
+            HeaderButton(Text(copy: "编辑", bundle: .module), systemImage: "ellipsis") { isOpen = true }
                 .glassMenu(isPresented: $isOpen, items: items)
         }
     }
 
     private var items: [GlassMenuItem] {
         [
-            GlassMenuItem(Text("编辑", bundle: .module), systemImage: "pencil", id: "styleguide.menu.edit") {},
+            GlassMenuItem(Text(copy: "编辑", bundle: .module), systemImage: "pencil", id: "styleguide.menu.edit") {},
             GlassMenuItem(
-                Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "styleguide.menu.delete",
+                Text(copy: "删除", bundle: .module), systemImage: "trash", role: .destructive,
+                id: "styleguide.menu.delete",
                 confirm: .init(
-                    Text("删除这条？", bundle: .module), label: Text("删除", bundle: .module), id: "styleguide.menu.confirm")
+                    Text(copy: "删除这条？", bundle: .module), label: Text(copy: "删除", bundle: .module),
+                    id: "styleguide.menu.confirm")
             ) {},
         ]
     }

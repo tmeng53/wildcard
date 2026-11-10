@@ -2,6 +2,7 @@
 import AvatarArt
 import AvatarUI
 import Contracts
+import DesignSystemUI
 import FeedDomain
 import Foundation
 
@@ -36,7 +37,7 @@ extension FeedModel {
     func displayName(of target: ReplyTarget) -> String {
         switch target {
         case .member(let member): displayName(of: member)
-        case .coach(let id): coach?.speaker(id)?.name ?? String(localized: "教练", bundle: .module.inAppLanguage)
+        case .coach(let id): coach?.speaker(id)?.name ?? String(copy: "教练", bundle: .module)
         }
     }
 

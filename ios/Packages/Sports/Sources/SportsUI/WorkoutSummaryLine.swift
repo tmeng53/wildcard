@@ -20,10 +20,10 @@ public struct WorkoutSummaryLine: View {
 
     public var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-            (activity?.name ?? Text("运动", bundle: .module))
+            (activity?.name ?? Text(copy: "运动", bundle: .module))
             if let minutes {
                 Text(verbatim: "\(minutes.value)").typeStyle(TypeRamp.scoreSmall)
-                Text("分钟", bundle: .module)
+                Text(copy: "分钟", bundle: .module)
             }
             if let distance = ScoreCell.cells(of: summary).first(where: { $0.cell == .distance }) {
                 Text(verbatim: "·")

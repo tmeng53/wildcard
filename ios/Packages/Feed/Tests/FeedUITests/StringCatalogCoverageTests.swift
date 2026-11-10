@@ -29,7 +29,7 @@ struct StringCatalogCoverageTests {
         let keys = pattern.matches(in: source, range: NSRange(source.startIndex..., in: source)).compactMap {
             Range($0.range(at: 1), in: source).map { String(source[$0]) }
         }
-        #expect(keys.count == 16)
+        #expect(keys.count == 17)
         for key in keys {
             let english = try #require(try Self.english(for: key), "\(key) has no English")
             #expect(english.count <= 80, "\(english)")
@@ -68,7 +68,7 @@ struct StringCatalogCoverageTests {
     /// with each `\(…)` read as `%lld`.
     private static func localizedKeys() throws -> Set<String> {
         let pattern = try NSRegularExpression(
-            pattern: #"(?:Text|String)\((?:localized: )?"((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
+            pattern: #"(?:Text|String)\(copy: "((?:[^"\\]|\\.)*)", bundle: \.module\)"#)
         let interpolation = try NSRegularExpression(pattern: #"\\\([^)]*\)"#)
         let files = try FileManager.default.contentsOfDirectory(at: sources, includingPropertiesForKeys: nil)
             .filter { $0.pathExtension == "swift" }

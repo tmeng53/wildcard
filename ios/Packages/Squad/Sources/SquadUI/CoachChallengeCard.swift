@@ -23,7 +23,7 @@ struct ChallengeAnswers: View {
     var body: some View {
         VStack(spacing: Space.s) {
             Button(action: accept) {
-                Text("接受挑战", bundle: .module).frame(maxWidth: .infinity)
+                Text(copy: "接受挑战", bundle: .module).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.large))
             .accentTone(.scene)
@@ -40,7 +40,7 @@ struct ChallengeAnswers: View {
             .accessibilityIdentifier("coachDeck.accept")
             HStack(spacing: Space.xs) {
                 reasonField
-                Button(action: decline) { Text("不接挑战", bundle: .module) }
+                Button(action: decline) { Text(copy: "不接挑战", bundle: .module) }
                     .buttonStyle(SecondaryButtonStyle(.onInk))
                     .overlay {
                         Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
@@ -52,7 +52,7 @@ struct ChallengeAnswers: View {
 
     /// 「告诉毛头为什么（可选）」: one line, as long as the API takes.
     private var reasonField: some View {
-        let prompt = Text("告诉\(coachName)为什么（可选）", bundle: .module)
+        let prompt = Text(copy: "告诉\(coachName)为什么（可选）", bundle: .module)
         return TextField(text: $reason, prompt: prompt.foregroundStyle(Color(role: .fgSubtle, in: theme))) {
             prompt
         }
@@ -153,7 +153,7 @@ struct ChallengeStamp: View {
 
     var body: some View {
         let ink = Color(role: .fgAccent, in: theme)
-        Text("挑战", bundle: .module)
+        Text(copy: "挑战", bundle: .module)
             .typeStyle(TypeRamp.title)
             .tracking(2)
             .foregroundStyle(ink)

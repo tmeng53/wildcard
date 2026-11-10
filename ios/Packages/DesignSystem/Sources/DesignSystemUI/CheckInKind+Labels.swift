@@ -10,12 +10,12 @@ extension SceneTheme {
             return Text(verbatim: listed.name(in: AppLanguage.current))
         }
         return switch base {
-        case .pool: Text("游泳池", bundle: .module)
-        case .track: Text("跑道", bundle: .module)
-        case .gym: Text("健身房", bundle: .module)
-        case .tennis: Text("网球场", bundle: .module)
-        case .climbing: Text("攀岩馆", bundle: .module)
-        case .ski: Text("雪场", bundle: .module)
+        case .pool: Text(copy: "游泳池", bundle: .module)
+        case .track: Text(copy: "跑道", bundle: .module)
+        case .gym: Text(copy: "健身房", bundle: .module)
+        case .tennis: Text(copy: "网球场", bundle: .module)
+        case .climbing: Text(copy: "攀岩馆", bundle: .module)
+        case .ski: Text(copy: "雪场", bundle: .module)
         }
     }
 }
@@ -35,20 +35,20 @@ extension CheckInKind {
     /// The short label on a kind button or a check-in capsule.
     public var shortName: Text {
         switch self {
-        case .trained: Text("训练", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("放纵餐", bundle: .module)
-        case .disclaimer: Text("请假", bundle: .module)
+        case .trained: Text(copy: "训练", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
+        case .disclaimer: Text(copy: "请假", bundle: .module)
         }
     }
 
     /// The full name, for titles.
     public var fullName: Text {
         switch self {
-        case .trained: Text("训练", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("坦白放纵餐", bundle: .module)
-        case .disclaimer: Text("今日请假条", bundle: .module)
+        case .trained: Text(copy: "训练", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "坦白放纵餐", bundle: .module)
+        case .disclaimer: Text(copy: "今日请假条", bundle: .module)
         }
     }
 

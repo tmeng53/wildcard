@@ -50,18 +50,23 @@ public actor InMemoryCoachCardSource: CoachCardSource {
 
     /// A sample's words in the app's language.
     private static func word(_ key: String) -> String {
-        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
+        String(copyKey: key, bundle: Bundle.module)
     }
 
     public func cards(in squad: SquadID) async throws(SquadError) -> CoachPageCards {
         CoachPageCards(stack: stack, earlier: earlier)
     }
 
-    /// 以前 as the API pages it, newest first, a page of 20.
-    public func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
-        -> CoachEarlierCards
+    /// 以前 as the API pages it, newest first, a page of 20; 挑战 counts the stack's too.
+    public func earlier(in squad: SquadID, from cursor: String?, showing filter: CoachDeck.EarlierFilter)
+        async throws(SquadError) -> CoachEarlierCards
     {
-        let listed = earlier.filter { !unseenOnly || !$0.isSeen }
+        let listed =
+            switch filter {
+            case .all: earlier
+            case .unseen: earlier.filter { !$0.isSeen }
+            case .challenges: (stack.reversed() + earlier).filter { $0.kind == .challenge }
+            }
         let start =
             cursor.flatMap { after in listed.firstIndex { "\($0.kind.rawValue):\($0.id)" == after } }
             .map { $0 + 1 } ?? 0

@@ -82,9 +82,9 @@ struct MysteryBox: View {
                         .frame(width: 72, height: 60)
                         .frame(maxHeight: .infinity, alignment: .bottom)
                 },
-                name: Text("神秘款", bundle: .module), muted: true,
+                name: Text(copy: "神秘款", bundle: .module), muted: true,
                 status: {
-                    Text("再练 \(toGo) 次", bundle: .module)
+                    Text(copy: "再练 \(toGo) 次", bundle: .module)
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
@@ -94,7 +94,7 @@ struct MysteryBox: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("神秘款，再练 \(toGo) 次解锁", bundle: .module))
+        .accessibilityLabel(Text(copy: "神秘款，再练 \(toGo) 次解锁", bundle: .module))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("editor.mystery.\(slot.rawValue)")
     }
@@ -131,7 +131,9 @@ struct RackPiece: View {
         .accessibilityLabel(EditorNames.variant(variant, in: slot))
         // What the card's line says, which sits outside the button.
         .accessibilityValue(
-            isNew ? Text("领取", bundle: .module) : shelf == .owned ? Text("已拥有", bundle: .module) : Text(verbatim: "")
+            isNew
+                ? Text(copy: "领取", bundle: .module)
+                : shelf == .owned ? Text(copy: "已拥有", bundle: .module) : Text(verbatim: "")
         )
         .accessibilityIdentifier("editor.tile.\(slot.rawValue).\(variant)")
         // NEW and the line under the name sit over the card, outside its button, so each is its
@@ -155,7 +157,7 @@ struct RackPiece: View {
     @ViewBuilder
     private func status(_ shelf: StreetModel.Shelf, isNew: Bool) -> some View {
         if isNew {
-            Text("领取", bundle: .module)
+            Text(copy: "领取", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                 .lineLimit(1)
@@ -164,7 +166,7 @@ struct RackPiece: View {
                 .background(Color(role: .bgBrand, in: theme), in: Capsule())
                 .padding(.top, Space.xxs / 2)
         } else if shelf == .owned {
-            Text("已拥有", bundle: .module)
+            Text(copy: "已拥有", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .lineLimit(1)
@@ -186,12 +188,12 @@ struct SportsTip: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
-            Text("练这些运动解锁", bundle: .module)
+            Text(copy: "练这些运动解锁", bundle: .module)
                 .typeStyle(TypeRamp.label)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
             FlowRow(spacing: Space.xs) {
                 if sports.isEmpty {
-                    SportPill(word: Text("什么运动都行", bundle: .module))
+                    SportPill(word: Text(copy: "什么运动都行", bundle: .module))
                 } else {
                     ForEach(sports, id: \.self) { SportPill(word: $0.name) }
                 }

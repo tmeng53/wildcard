@@ -35,9 +35,9 @@ public struct NoticeBell: View {
                 }
             }
             .accessibilityIdentifier("notices.bell")
-            .accessibilityValue(inbox.hasUnread ? Text("有新通知", bundle: .module) : Text(verbatim: ""))
+            .accessibilityValue(inbox.hasUnread ? Text(copy: "有新通知", bundle: .module) : Text(verbatim: ""))
     }
 
-    private var label: Text { Text("通知", bundle: .module) }
+    private var label: Text { Text(copy: "通知", bundle: .module) }
 }
 #endif

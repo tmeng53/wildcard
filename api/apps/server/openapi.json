@@ -12261,7 +12261,7 @@
       "get": {
         "operationId": "getEarlierCoachCards",
         "summary": "The coach page’s 以前, a page at a time",
-        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).",
         "security": [
           {
             "bearer": []
@@ -12301,6 +12301,20 @@
             "required": false,
             "description": "`true` keeps only the cards not seen yet.",
             "name": "unseen",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "description": "`true` keeps only the challenges, from when the caller joined (not only the last 30 days)."
+            },
+            "required": false,
+            "description": "`true` keeps only the challenges, from when the caller joined (not only the last 30 days).",
+            "name": "challenges",
             "in": "query"
           }
         ],

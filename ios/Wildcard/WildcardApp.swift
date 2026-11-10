@@ -77,11 +77,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
-        CrashReports.start()
-        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
-        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
-        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        AppModel.show(CatalogClient.bundled)
+        Self.startUp()
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
         _editor = State(initialValue: CharacterEditorDemo.model())
         LaunchOptions.forgetTodayStateIfAsked()
@@ -133,6 +129,18 @@ struct WildcardApp: App {
         _myPosts = State(initialValue: feedSource)
     }
 
+    /// What every launch does first, before any model or screen is made.
+    private static func startUp() {
+        CrashReports.start()
+        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
+        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
+        // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
+        // the newest for the next one), before anything shows.
+        AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        AppModel.show(CatalogClient.bundled, keepsCopy: false)
+    }
+
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
     static let sampleLocation = LocationSharing.sample()
 
@@ -173,7 +181,9 @@ struct WildcardApp: App {
             service: RecapSample.Service(),
             squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
             seen: .onlyThisLaunch(),
-            scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
+            scenePicker: { _ in
+                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
+            },
             scenePicked: { scene in today.scene = scene })
     }
 
@@ -205,8 +215,9 @@ struct WildcardApp: App {
         let feed = FeedModel(
             store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
             now: LaunchOptions.now)
-        // 成绩卡's 小队名: the squad's name as 今天 has it.
-        feed.squadName = { [weak today] in today?.home?.squad.name }
+        // 成绩卡's 小队名: the squad's name as 今天 has it, or the sample's own before 今天 first
+        // loads (a launch straight into 动态 never opens 今天).
+        feed.squadName = { [weak today] in today?.home?.squad.name ?? InMemoryCheckInBackend.sampleSquadName }
         return feed
     }
 

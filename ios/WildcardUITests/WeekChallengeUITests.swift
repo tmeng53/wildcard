@@ -1,7 +1,7 @@
 import XCTest
 
 /// The challenge I accepted from 毛头 shows on the squad card's first page (Tracy, 2026-11-09):
-/// what to do, who set it and 我完成了, which turns it into 「✓ 已完成」. Screenshots are kept for review.
+/// what to do, who set it and 我完成了, which turns its flag into a check and 已完成. Screenshots are kept for review.
 @MainActor
 final class WeekChallengeUITests: XCTestCase {
     private static let wait: TimeInterval = 30
@@ -18,7 +18,8 @@ final class WeekChallengeUITests: XCTestCase {
 
         let row = app.descendants(matching: .any).matching(identifier: "squadcard.challenge").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "the squad page doesn't show today's challenge")
-        XCTAssertTrue(app.staticTexts["拉伸 5 分钟"].exists, "the challenge doesn't read 拉伸 5 分钟")
+        let title = app.descendants(matching: .any).matching(identifier: "squadcard.challenge.title").firstMatch
+        XCTAssertEqual(title.label, "拉伸 5 分钟", "the challenge doesn't read 拉伸 5 分钟")
         XCTAssertTrue(app.staticTexts["毛头 · 今日挑战"].exists, "the challenge doesn't say who set it")
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertTrue(card.frame.contains(row.frame), "the challenge runs off the card: \(row.frame)")

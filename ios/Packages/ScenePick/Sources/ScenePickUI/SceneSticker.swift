@@ -6,9 +6,9 @@ import SwiftUI
 
 /// 冠军专属: the sticker on the 战报's last page where last week's crown winner (or, with no
 /// crown, the captain) picks where the squad trains next week (approved 2026-10-22). A white
-/// card tilted 2° left: the five scenes as tiles, a line saying when the squad last trained at
-/// the one chosen, and 「确认」. It is the page's only interactive piece and never part of
-/// 存图. `onPicked` gets the reveal to play once the pick is saved.
+/// card tilted 2° left: the scenes as tiles (scrolling sideways past five), a line saying when
+/// the squad last trained at the one chosen, and 「确认」. It is the page's only interactive piece
+/// and never part of 存图. `onPicked` gets the reveal to play once the pick is saved.
 public struct SceneSticker: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -43,7 +43,7 @@ public struct SceneSticker: View {
                     if let reveal = await picker.confirm(), let scene = picker.selection { onPicked(reveal, scene) }
                 }
             } label: {
-                Text("确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
+                Text(copy: "确认", bundle: .module).loadingLabel(picker.phase == .saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.regular))
             .disabled(!picker.canConfirm)
@@ -68,12 +68,12 @@ public struct SceneSticker: View {
                     .stroke(style: StrokeStyle(lineWidth: 2.2, lineJoin: .round))
                     .frame(width: 13, height: 13)
                     .accessibilityHidden(true)
-                Text("冠军专属", bundle: .module)
+                Text(copy: "冠军专属", bundle: .module)
                     .typeStyle(TypeRamp.tabSelected)
             }
             .foregroundStyle(Color(role: .fgAccent, in: theme))
             .frame(height: Self.lineHeight)
-            Text("下周去哪练？", bundle: .module)
+            Text(copy: "下周去哪练？", bundle: .module)
                 .typeStyle(TypeRamp.headline)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .frame(height: 24)
@@ -98,28 +98,54 @@ public struct SceneSticker: View {
 }
 
 /// The picker's scenes side by side, a tap choosing one: on the sticker, and on sign-up's
-/// 这周在哪练？. `height` is each face's.
+/// 这周在哪练？. Up to five share the row; with more (a limited scene like the winter 雪场 on
+/// top of the five) the row scrolls sideways, five and a half tiles across so the half tile
+/// says there is more (Tracy, 2026-11-10). `height` is each face's.
 public struct SceneTileRow: View {
     private let picker: ScenePicker
     private let height: Double
     private let spacing: Double
+
+    /// The tiles that fit the row before it scrolls.
+    static let fitting = 5
+    /// Room around a scrolling row for a chosen tile's lift (raised 4, ringed 4, scaled 1.06 and
+    /// tilted 4°), which a scroll view would otherwise clip.
+    private static let liftRoom = 12.0
 
     public init(picker: ScenePicker, height: Double, spacing: Double) {
         (self.picker, self.height, self.spacing) = (picker, height, spacing)
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: spacing) {
-            ForEach(picker.options) { option in
-                SceneTile(
-                    scene: option.scene, name: option.scene.name, isOpened: option.isOpened,
-                    isSelected: picker.selection == option.scene, height: height
-                ) {
-                    picker.select(option.scene)
+        if picker.options.count <= Self.fitting {
+            HStack(alignment: .top, spacing: spacing) { tiles }
+        } else {
+            ScrollView(.horizontal) {
+                HStack(alignment: .top, spacing: spacing) {
+                    // Each tile two elevenths of the row: five and a half across.
+                    tiles.containerRelativeFrame(.horizontal, count: Self.fitting * 2 + 1, span: 2, spacing: spacing)
                 }
-                .accessibilityLabel(option.isOpened ? option.scene.name : SceneName.boxed(option.scene))
-                .accessibilityIdentifier("scenePick.\(option.scene.rawValue)")
+                .scrollTargetLayout()
+                .padding(.vertical, Self.liftRoom)
             }
+            .contentMargins(.horizontal, Self.liftRoom, for: .scrollContent)
+            .scrollIndicators(.hidden)
+            .scrollTargetBehavior(.viewAligned)
+            .padding(-Self.liftRoom)
+            .accessibilityIdentifier("scenePick.row")
+        }
+    }
+
+    private var tiles: some View {
+        ForEach(picker.options) { option in
+            SceneTile(
+                scene: option.scene, name: option.scene.name, isOpened: option.isOpened,
+                isSelected: picker.selection == option.scene, height: height
+            ) {
+                picker.select(option.scene)
+            }
+            .accessibilityLabel(option.isOpened ? option.scene.name : SceneName.boxed(option.scene))
+            .accessibilityIdentifier("scenePick.\(option.scene.rawValue)")
         }
     }
 }
@@ -137,14 +163,14 @@ public struct LastTrainedLine: View {
     public var body: some View {
         Group {
             switch last {
-            case .thisWeek: Text("这周就在这儿练", bundle: .module)
-            case .never: Text("小队还没来过", bundle: .module)
+            case .thisWeek: Text(copy: "这周就在这儿练", bundle: .module)
+            case .never: Text(copy: "小队还没来过", bundle: .module)
             case .weeksAgo(let weeks):
                 // Text's own modifiers, so the number stays a Text to interpolate.
                 let style = TypeRamp.scoreCaption
                 let number = Text(verbatim: "\(weeks)").font(.wildcard(style)).tracking(style.tracking)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text("小队 \(number) 周前在这里练过", bundle: .module)
+                Text(copy: "小队 \(number) 周前在这里练过", bundle: .module)
             }
         }
         .typeStyle(TypeRamp.caption)
@@ -168,7 +194,7 @@ struct Crown: Shape {
 /// A carton's name for VoiceOver, which says it is still closed.
 enum SceneName {
     static func boxed(_ scene: SceneTheme) -> Text {
-        Text("\(scene.name)，还没开过", bundle: .module)
+        Text(copy: "\(scene.name)，还没开过", bundle: .module)
     }
 }
 #endif

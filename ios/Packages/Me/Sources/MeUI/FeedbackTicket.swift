@@ -40,7 +40,7 @@ struct FeedbackTicket: View {
                                 .allowsHitTesting(false)
                         }
                     }
-                    .accessibilityLabel(Text("写给我们", bundle: .module))
+                    .accessibilityLabel(Text(copy: "写给我们", bundle: .module))
                     .accessibilityIdentifier("feedback.text")
                 Text(verbatim: "\(model.count)/\(FeedbackText.maxLength)")
                     .typeStyle(TypeRamp.caption)
@@ -57,7 +57,7 @@ struct FeedbackTicket: View {
 
     private var placeholder: Text {
         model.kind == .problem
-            ? Text("哪里出问题了？", bundle: .module) : Text("你的建议", bundle: .module)
+            ? Text(copy: "哪里出问题了？", bundle: .module) : Text(copy: "你的建议", bundle: .module)
     }
 
     private var stub: some View {
@@ -83,13 +83,13 @@ struct FeedbackTicket: View {
                         }
                 }
                 .buttonStyle(PressableButtonStyle())
-                .accessibilityLabel(Text("加截图", bundle: .module))
+                .accessibilityLabel(Text(copy: "加截图", bundle: .module))
                 .accessibilityIdentifier("feedback.addScreenshot")
             }
             Spacer(minLength: 0)
             VStack(alignment: .trailing, spacing: Space.xs - 2) {
                 TicketStamp()
-                Text("截图最多 3 张", bundle: .module)
+                Text(copy: "截图最多 3 张", bundle: .module)
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .multilineTextAlignment(.trailing)
@@ -130,10 +130,10 @@ private struct Thumbnail: View {
                     .contentShape(Rectangle().inset(by: -8))
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("去掉截图", bundle: .module))
+            .accessibilityLabel(Text(copy: "去掉截图", bundle: .module))
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(Text("截图", bundle: .module))
+        .accessibilityLabel(Text(copy: "截图", bundle: .module))
     }
 }
 #endif

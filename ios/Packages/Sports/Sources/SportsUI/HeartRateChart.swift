@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import Foundation
 import SwiftUI
+import UIKit
 
 /// A heart-rate curve on the brand's graphite (Tracy, 2026-11-08), coloured by zone when the post
 /// carries the poster's zones. Detailed, as a post's cover: each zone's start on the right, the
@@ -15,8 +16,8 @@ struct HeartRateChart: View {
     private let trace: HeartRateTrace
     private let startedAt: Date?
     private let isDetailed: Bool
-    /// Gesture state, so a scrub the pager cancels lets go of the reading too.
-    @GestureState private var picked: HeartRatePoint?
+    /// The reading under the finger while it scrubs; nil once it lifts or the scrub is cancelled.
+    @State private var picked: HeartRatePoint?
 
     init(points: [HeartRatePoint], zones: HeartRateZones?, startedAt: Date?, isDetailed: Bool) {
         trace = HeartRateTrace(points: points, zones: zones)
@@ -37,7 +38,7 @@ struct HeartRateChart: View {
         .foregroundStyle(Color(ZoneColors.ink))
         .haptic(.zone, trigger: pickedZone) { old, new in old != new && new != nil }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("心率曲线", bundle: .module))
+        .accessibilityLabel(Text(copy: "心率曲线", bundle: .module))
         .accessibilityValue(accessibilityMinutes)
         .accessibilityIdentifier("workout.chart")
     }
@@ -55,13 +56,13 @@ struct HeartRateChart: View {
                 if let zone = pickedZone { tag(zone) }
             }
             .lineLimit(1)
-            .frame(height: Self.headerHeight, alignment: .bottomLeading)
+            .frame(height: Self.headerHeight, alignment: .leading)
             .accessibilityIdentifier("workout.chart.reading")
         } else {
-            Text("心率曲线", bundle: .module)
+            Text(copy: "心率曲线", bundle: .module)
                 .typeStyle(TypeRamp.caption)
                 .opacity(0.85)
-                .frame(height: Self.headerHeight, alignment: .bottomLeading)
+                .frame(height: Self.headerHeight, alignment: .leading)
         }
     }
 
@@ -114,7 +115,10 @@ struct HeartRateChart: View {
                 if isDetailed {
                     Color.clear
                         .contentShape(Rectangle())
-                        .gesture(scrub(proxy: proxy, geometry: geometry))
+                        .gesture(
+                            HoldToScrub { location in
+                                picked = location.flatMap { reading(at: $0, proxy: proxy, geometry: geometry) }
+                            })
                 }
             }
         }
@@ -131,15 +135,12 @@ struct HeartRateChart: View {
         }
     }
 
-    /// A hold, then a drag: the hold lets a quick swipe page the cover instead.
-    private func scrub(proxy: ChartProxy, geometry: GeometryProxy) -> some Gesture {
-        LongPressGesture(minimumDuration: Self.hold)
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .updating($picked) { value, picked, _ in
-                guard case .second(true, let drag?) = value, let plot = proxy.plotFrame else { return }
-                let across = drag.location.x - geometry[plot].origin.x
-                if let seconds: Double = proxy.value(atX: across) { picked = trace.reading(at: seconds) }
-            }
+    /// The reading at `location`, in the chart's overlay.
+    private func reading(at location: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) -> HeartRatePoint? {
+        guard let plot = proxy.plotFrame else { return nil }
+        let across = location.x - geometry[plot].origin.x
+        guard let seconds: Double = proxy.value(atX: across) else { return nil }
+        return trace.reading(at: seconds)
     }
 
     /// The curve's first to last reading, at least a second wide so a flat series still draws.
@@ -181,7 +182,7 @@ struct HeartRateChart: View {
                         .fill(Color(ZoneColors.zone(entry.zone.rawValue)))
                         .frame(width: 6, height: 6)
                     if named { entry.zone.name.typeStyle(TypeRamp.caption).opacity(0.7) }
-                    Text("\(entry.minutes) 分", bundle: .module).typeStyle(TypeRamp.scoreSmall)
+                    Text(copy: "\(entry.minutes) 分", bundle: .module).typeStyle(TypeRamp.scoreSmall)
                 }
                 .fixedSize()
                 .opacity(isLit(entry.zone) ? 1 : 0.35)
@@ -192,8 +193,11 @@ struct HeartRateChart: View {
 
     private func isLit(_ zone: HeartRateZone) -> Bool { picked == nil || pickedZone == zone }
 
+    /// A zone's colour; below 轻松 the line dims, so it reads as outside every zone (as warming up
+    /// and cooling down are), and without zones the whole line is white.
     private func color(of zone: HeartRateZone?) -> Color {
-        zone.map { Color(ZoneColors.zone($0.rawValue)) } ?? Color(ZoneColors.ink)
+        if let zone { return Color(ZoneColors.zone(zone.rawValue)) }
+        return Color(ZoneColors.ink).opacity(trace.zones == nil ? 1 : Self.belowZones)
     }
 
     /// The reading's clock time, in the app's language; nil without the workout's start.
@@ -204,24 +208,52 @@ struct HeartRateChart: View {
 
     private var accessibilityMinutes: Text {
         trace.minutes.reduce(Text(verbatim: "")) { words, entry in
-            words + entry.zone.name + Text(verbatim: " ") + Text("\(entry.minutes) 分", bundle: .module)
+            words + entry.zone.name + Text(verbatim: " ") + Text(copy: "\(entry.minutes) 分", bundle: .module)
                 + Text(verbatim: "  ")
         }
     }
 
-    private static let headerHeight = 26.0
+    /// As tall as the post's 「…」 over the cover's corner, so the zones' axis starts below it.
+    private static let headerHeight = Sizing.control
+    private static let belowZones = 0.4
     private static let dot = 12.0
-    private static let hold = 0.15
+    fileprivate static let hold = 0.15
+    /// How far the finger may wander before the hold counts, as a swipe that pages the cover.
+    fileprivate static let slop = 10.0
+}
+
+/// Press and hold the curve, then slide along it. A UIKit long press, not a SwiftUI one: a SwiftUI
+/// gesture with a drag in it keeps the cover's pager from paging when a swipe starts on the chart.
+/// This one fails once the finger moves first, so the swipe pages, and once it holds the pager
+/// can't start, so the slide only scrubs. Its hold is shorter than the card's emoji bar's, so a
+/// hold on the curve scrubs.
+private struct HoldToScrub: UIGestureRecognizerRepresentable {
+    /// Where the finger is, in the view it's on, while it scrubs; nil once it lifts.
+    let scrubbed: (CGPoint?) -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let recognizer = UILongPressGestureRecognizer()
+        recognizer.minimumPressDuration = HeartRateChart.hold
+        recognizer.allowableMovement = HeartRateChart.slop
+        return recognizer
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        switch recognizer.state {
+        case .began, .changed: scrubbed(context.converter.localLocation)
+        default: scrubbed(nil)
+        }
+    }
 }
 
 extension HeartRateZone {
     /// 轻松, 适中, 剧烈 or 峰值.
     var name: Text {
         switch self {
-        case .light: Text("轻松", bundle: .module)
-        case .moderate: Text("适中", bundle: .module)
-        case .vigorous: Text("剧烈", bundle: .module)
-        case .peak: Text("峰值", bundle: .module)
+        case .light: Text(copy: "轻松", bundle: .module)
+        case .moderate: Text(copy: "适中", bundle: .module)
+        case .vigorous: Text(copy: "剧烈", bundle: .module)
+        case .peak: Text(copy: "峰值", bundle: .module)
         }
     }
 }

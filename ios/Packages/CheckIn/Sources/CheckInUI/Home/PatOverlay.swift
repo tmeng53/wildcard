@@ -66,7 +66,7 @@ struct PatOverlay: View {
         let head = position.point.x * unit
         let patted = !canPat(bubble.mate)
         let button = SpeechBubble.StatusButton(
-            patted ? Text("拍过了", bundle: .module) : Text("拍一拍", bundle: .module),
+            patted ? Text(copy: "拍过了", bundle: .module) : Text(copy: "拍一拍", bundle: .module),
             isDone: patted, identifier: "today.pat"
         ) { pat(bubble.mate) }
         return Color.clear

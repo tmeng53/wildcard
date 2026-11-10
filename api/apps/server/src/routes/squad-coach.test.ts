@@ -926,6 +926,54 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(odd.status).toBe(400);
   });
 
+  it('lists only the challenges when asked, every one since the caller joined, done ones marked', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
+    // Joined 60 days ago, so a challenge from 40 days ago is past 以前's 30 days but still theirs.
+    await sql`update public.squad_members set joined_at = now() - interval '60 days'
+      where squad_id = ${squad} and member_id = ${mate.userId}`.execute(db);
+    const challenge = async (daysAgo: number, title: string) => {
+      const written = await sql<{ id: string }>`
+        insert into public.coach_member_notes
+          (squad_id, member_id, coach_id, day, text, challenge_title, at)
+        values (${squad}, ${mate.userId}, 'xiaohun', current_date - ${daysAgo}::int, '动一动', ${title},
+          now() - make_interval(days => ${daysAgo}))
+        returning id`.execute(db);
+      const id = String(written.rows[0]?.id);
+      // A card is dated by its delivery, so it is delivered then too.
+      await sql`insert into public.coach_member_note_deliveries (note_id, at)
+        values (${id}, now() - make_interval(days => ${daysAgo}))`.execute(db);
+      return id;
+    };
+    const old = await challenge(40, '拉伸');
+    await challenge(0, '喝水');
+    await coachSaid(squad, { day: new Date().toISOString().slice(0, 10), text: '今天谁先动' });
+    await sql`insert into public.coach_challenge_answers (note_id, answer) values (${old}, 'accepted')`.execute(
+      db,
+    );
+    await sql`insert into public.coach_challenge_completions (note_id, by, at)
+      values (${old}, 'member', now() - interval '40 days')`.execute(db);
+
+    const Page = z.object({
+      cards: z.array(z.object({ kind: z.string(), challenge: z.unknown().optional() }).loose()),
+    });
+    const path = `/squads/${squad}/coach/cards/earlier`;
+    const only = Page.parse(
+      (await call({ method: 'GET', path: `${path}?challenges=true`, token: mate.token })).body,
+    );
+    // Today's, still in the stack, and the one from 40 days ago, newest first; no 战术板 line.
+    expect(only.cards.map((card) => card.kind)).toStrictEqual(['challenge', 'challenge']);
+    expect(only.cards).toMatchObject([
+      { challenge: { title: '喝水' } },
+      { challenge: { title: '拉伸', completedBy: 'member' } },
+    ]);
+    // 以前 itself keeps to its 30 days and leaves the stack out.
+    const all = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(all.cards.filter((card) => card.kind === 'challenge')).toStrictEqual([]);
+    await fire(captain, squad);
+  });
+
   it('keeps its place in 未读 when the card it ended on is seen, beside cards of the same moment', async () => {
     const mate = await signUp();
     const squad = await squadOf(mate);

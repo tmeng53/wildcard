@@ -33,14 +33,18 @@ public struct MeDestinations {
     public var health: HealthConnection?
     /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
     public var location: LocationSharing?
+    /// 设置 › 桌面小组件, how to put the home screen widgets on; nil shows no row.
+    public var widgetGuide: AnyView?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
+        widgetGuide: AnyView? = nil
     ) {
         self.previewSignUp = previewSignUp
+        self.widgetGuide = widgetGuide
         self.health = health
         self.location = location
         self.editCharacter = editCharacter
@@ -103,9 +107,9 @@ public struct MeView<PostsTile: View>: View {
     private var header: some View {
         HStack(spacing: Space.xs) {
             Spacer()
-            HeaderButton(Text("换装", bundle: .module), systemImage: "tshirt", action: destinations.editCharacter)
+            HeaderButton(Text(copy: "换装", bundle: .module), systemImage: "tshirt", action: destinations.editCharacter)
                 .accessibilityIdentifier("me.editCharacter")
-            HeaderButton(Text("商店街", bundle: .module), systemImage: "bag", action: destinations.street)
+            HeaderButton(Text(copy: "商店街", bundle: .module), systemImage: "bag", action: destinations.street)
                 .overlay(alignment: .topTrailing) {
                     if destinations.streetHasNews {
                         Circle()
@@ -115,9 +119,11 @@ public struct MeView<PostsTile: View>: View {
                             .accessibilityIdentifier("me.street.dot")
                     }
                 }
-                .accessibilityValue(destinations.streetHasNews ? Text("有新货", bundle: .module) : Text(verbatim: ""))
+                .accessibilityValue(
+                    destinations.streetHasNews ? Text(copy: "有新货", bundle: .module) : Text(verbatim: "")
+                )
                 .accessibilityIdentifier("me.street")
-            HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
+            HeaderButton(Text(copy: "设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
                 .accessibilityIdentifier("me.settings")
         }
     }
@@ -176,10 +182,10 @@ struct ScheduleTile: View {
     var body: some View {
         GlanceTile(
             figure: Text(verbatim: glance.map { "W\($0.number)" } ?? "–"),
-            figureStyle: TypeRamp.scoreWeek, title: Text("出赛表", bundle: .module),
-            caption: glance?.daysLeft.map { Text("这周还有 \($0) 天", bundle: .module) }, action: open
+            figureStyle: TypeRamp.scoreWeek, title: Text(copy: "出赛表", bundle: .module),
+            caption: glance?.daysLeft.map { Text(copy: "这周还有 \($0) 天", bundle: .module) }, action: open
         ) {
-            GlanceAction(Text("编辑", bundle: .module), systemImage: "pencil")
+            GlanceAction(Text(copy: "编辑", bundle: .module), systemImage: "pencil")
         }
         .accessibilityIdentifier("me.schedule")
     }

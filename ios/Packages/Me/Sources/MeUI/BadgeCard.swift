@@ -48,7 +48,7 @@ struct BadgeCard: View {
                 Spacer(minLength: Space.m)
                 if let equip {
                     Button(action: equip) {
-                        Text(isWorn ? "已装备" : "装备", bundle: .module)
+                        Text(copy: isWorn ? "已装备" : "装备", bundle: .module)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(OnInkButtonStyle())
@@ -80,9 +80,9 @@ struct BadgeCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: Space.s) {
                     Group {
                         if let squad = title.latestSquadName {
-                            Text("badge.from \(squad)", bundle: .module)
+                            Text(copy: "badge.from \(squad)", bundle: .module)
                         } else {
-                            Text("每周战报", bundle: .module)
+                            Text(copy: "每周战报", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.label)

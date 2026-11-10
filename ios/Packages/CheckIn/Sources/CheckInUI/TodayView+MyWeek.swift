@@ -34,15 +34,15 @@ extension TodayView {
     }
 
     /// The challenge I accepted from the coach for today, the squad page's last row (Tracy, 2026-11-09):
-    /// what to do then how much (「拉伸 5 分钟」), and who set it.
+    /// what to do and how much (「拉伸」 5 分钟), and who set it.
     func weekChallenge(_ today: DayChallenge?, coach: CoachSpeaker?) -> WeekChallenge? {
         guard let today else { return nil }
         let challenge = today.challenge
-        let amount = challenge.amount.map { amount in [String(amount), challenge.unit].compactMap(\.self) } ?? []
         let coach = coach?.name ?? ""
         return WeekChallenge(
-            title: ([challenge.title] + amount).joined(separator: " "),
-            byline: String(localized: "\(coach) · 今日挑战", bundle: .module.inAppLanguage),
+            title: challenge.title, amount: challenge.amount.map { String($0) },
+            unit: challenge.amount == nil ? nil : challenge.unit,
+            byline: String(copy: "\(coach) · 今日挑战", bundle: .module),
             isDone: challenge.completedBy != nil)
     }
 
@@ -55,7 +55,7 @@ extension TodayView {
         case .trained:
             let lines = log.sessions.map { session in
                 if let minutes = session.minutes {
-                    String(localized: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module.inAppLanguage)
+                    String(copy: "\(session.activity.localizedName) \(minutes) 分钟", bundle: .module)
                 } else {
                     session.activity.localizedName
                 }
@@ -63,13 +63,13 @@ extension TodayView {
             return WeekDayDetail(lines: lines, isPlan: false, meals: meals)
         case .disclaimer:
             return WeekDayDetail(
-                line: String(localized: "请假了", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+                line: String(copy: "请假了", bundle: .module), isPlan: false, meals: meals)
         case .restDay:
             return WeekDayDetail(
-                line: String(localized: "休息日", bundle: .module.inAppLanguage), isPlan: false, meals: meals)
+                line: String(copy: "休息日", bundle: .module), isPlan: false, meals: meals)
         case .open:
             return WeekDayDetail(
-                line: activity?.localizedName ?? String(localized: "训练日", bundle: .module.inAppLanguage), isPlan: true,
+                line: activity?.localizedName ?? String(copy: "训练日", bundle: .module), isPlan: true,
                 meals: meals)
         }
     }

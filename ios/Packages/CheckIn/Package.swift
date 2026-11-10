@@ -23,7 +23,10 @@ let package = Package(
     targets: [
         .target(
             name: "CheckInDomain",
-            dependencies: ["Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
+            dependencies: [
+                "Contracts", .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "HealthDomain", package: "Health"),
+            ]),
         .target(
             name: "CheckInUI",
             dependencies: [
@@ -39,7 +42,9 @@ let package = Package(
             ],
             resources: [.process("Resources/Localizable.xcstrings"), .process("Resources/Scenes")]
         ),
-        .testTarget(name: "CheckInDomainTests", dependencies: ["CheckInDomain", "Contracts"]),
+        .testTarget(
+            name: "CheckInDomainTests",
+            dependencies: ["CheckInDomain", "Contracts", .product(name: "HealthDomain", package: "Health")]),
         // The screen's non-visual parts, and its String Catalog read as a file; runs on Linux too.
         .testTarget(
             name: "CheckInUITests",

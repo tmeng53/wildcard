@@ -272,6 +272,118 @@
           }
         }
       }
+    },
+    "桌面小组件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home Screen Widgets"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主畫面小工具"
+          }
+        }
+      }
+    },
+    "不用打开 App，也能看到这周练了几天、小队今天谁练了。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See your week and who in your squad trained today without opening the app."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不用打開 App，也能看到這週練了幾天、小隊今天誰練了。"
+          }
+        }
+      }
+    },
+    "怎么加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How to add"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "怎麼加"
+          }
+        }
+      }
+    },
+    "回到桌面，长按空白处，直到图标开始晃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On your Home Screen, touch and hold an empty spot until the apps jiggle"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回到主畫面，長按空白處，直到圖示開始晃動"
+          }
+        }
+      }
+    },
+    "点左上角「编辑」，再点「添加小组件」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap Edit in the top-left corner, then Add Widget"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點左上角「編輯」，再點「加入小工具」"
+          }
+        }
+      }
+    },
+    "搜「外卡」，选大小，点「添加小组件」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search for “Wildcard”, pick a size, then tap Add Widget"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋「外卡」，選大小，點「加入小工具」"
+          }
+        }
+      }
+    },
+    "小号、中号都有": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small and medium"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小型、中型都有"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

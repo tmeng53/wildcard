@@ -23,9 +23,9 @@ public struct PastRecaps: View {
         if !shelf.past.isEmpty {
             VStack(alignment: .leading, spacing: Space.labelGap) {
                 HStack {
-                    SectionLabel(Text("往期战报", bundle: .module))
+                    SectionLabel(Text(copy: "往期战报", bundle: .module))
                     Spacer(minLength: Space.xs)
-                    SectionLabel(Text("\(shelf.past.count) 期", bundle: .module))
+                    SectionLabel(Text(copy: "\(shelf.past.count) 期", bundle: .module))
                 }
                 ScrollView(.horizontal) {
                     LazyHStack(spacing: Space.xs) {
@@ -73,7 +73,7 @@ struct RecapCover: View {
             .environment(\.sceneTheme, theme)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(accessibilityLabel)
-            .accessibilityValue(isNew ? Text("未读", bundle: .module) : Text(verbatim: ""))
+            .accessibilityValue(isNew ? Text(copy: "未读", bundle: .module) : Text(verbatim: ""))
             .accessibilityAddTraits(.isButton)
             .accessibilityIdentifier("squad.pastRecap")
             .task(id: story.week.monday) { heads = podium.map { cast?.player(of: $0) } }
@@ -91,7 +91,7 @@ struct RecapCover: View {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 Spacer(minLength: 0)
                 if isNew {
-                    Text("新", bundle: .module)
+                    Text(copy: "新", bundle: .module)
                         .typeStyle(TypeRamp.label)
                         .foregroundStyle(Color(role: .fgOnAccent, in: theme))
                         .padding(.horizontal, Space.xxs)
@@ -110,7 +110,7 @@ struct RecapCover: View {
                     if ending.done >= ending.plan {
                         Image(systemName: "checkmark.circle.fill").accessibilityHidden(true)
                     }
-                    Text("全队 \(ending.done)/\(ending.plan) 次", bundle: .module)
+                    Text(copy: "全队 \(ending.done)/\(ending.plan) 次", bundle: .module)
                 }
                 .typeStyle(TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgAccent, in: theme))
@@ -178,9 +178,9 @@ struct RecapCover: View {
     private var accessibilityLabel: Text {
         let week = story.week.label
         guard let podium = story.podium, let name = cast?.nickname(of: podium.champion), !name.isEmpty else {
-            return Text("每周战报，\(week)", bundle: .module)
+            return Text(copy: "每周战报，\(week)", bundle: .module)
         }
-        return Text("每周战报，\(week)，冠军 \(name)", bundle: .module)
+        return Text(copy: "每周战报，\(week)，冠军 \(name)", bundle: .module)
     }
 
     static let width: Double = 104

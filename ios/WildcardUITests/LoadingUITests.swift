@@ -37,6 +37,8 @@ final class LoadingUITests: XCTestCase {
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
+        // The button fades in once WILDCARD has sprinted in; a tap before then hits nothing.
+        waitForHittable(signIn, "通过 Apple 继续 never came up")
         signIn.tap()
         let cover = app.descendants(matching: .any).matching(identifier: "loading.cover").firstMatch
         XCTAssertTrue(cover.waitForExistence(timeout: Self.wait), "a slow sign-in showed no loader")

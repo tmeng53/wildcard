@@ -14,11 +14,12 @@ public struct APICoachCardSource: CoachCardSource {
         try await coach { () throws(APIError) in try await api.coachCards(in: squad) }
     }
 
-    public func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
-        -> CoachEarlierCards
+    public func earlier(in squad: SquadID, from cursor: String?, showing filter: CoachDeck.EarlierFilter)
+        async throws(SquadError) -> CoachEarlierCards
     {
         try await coach { () throws(APIError) in
-            try await api.earlierCoachCards(in: squad, from: cursor, unseenOnly: unseenOnly)
+            try await api.earlierCoachCards(
+                in: squad, from: cursor, unseenOnly: filter == .unseen, challengesOnly: filter == .challenges)
         }
     }
 

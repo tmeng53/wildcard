@@ -398,7 +398,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。 用简体中文写。\n- 队员2：这周已经练了 0 天。 用简体中文写。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天；这周发过的：周日跑步。 用简体中文写。\n- 队员2：这周已经练了 0 天；这周还没发过动态。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
@@ -1409,10 +1409,10 @@ describe('the coach', () => {
       });
       expect(daily?.task).toContain('新的一天：2026-11-01，周日。');
       expect(daily?.task).toContain(
-        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水；这周已经练了 1 天。',
+        '- 队员1：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳；这周的饮食小目标：喝够水；这周已经练了 1 天；这周发过的：周日跑步。',
       );
       // A member whose plan it couldn't read still gets a note.
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周发过的：周六健康餐。');
       expect(daily?.task).toContain(
         '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
@@ -1433,9 +1433,9 @@ describe('the coach', () => {
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '- 队员1：这周已经练了 1 天；当地今天雨，8–13°C，降水概率 80%。',
+        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步；当地今天雨，8–13°C，降水概率 80%。',
       );
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周还没发过动态。');
     });
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => []);
@@ -1444,7 +1444,7 @@ describe('the coach', () => {
         weatherOf: () => Promise.reject(new Error('no weather')),
       }).run();
       expect(runs.find(({ task }) => task.includes('新的一天'))?.task).toContain(
-        '- 队员1：这周已经练了 1 天。',
+        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步。',
       );
     });
   });
@@ -1668,7 +1668,9 @@ describe('the coach', () => {
       );
       expect(daily?.task).not.toContain('没同意的人');
       // Only the consented member gets a note.
-      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天。');
+      expect(daily?.task).toContain(
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天；这周还没发过动态。',
+      );
       expect(daily?.task).not.toContain('- 队员2：');
     });
   });

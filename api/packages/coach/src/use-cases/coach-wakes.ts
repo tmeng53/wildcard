@@ -17,12 +17,13 @@ import {
 } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
-import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
+import { factsText, type NoteBrief } from '../domain/member-facts.js';
 import {
   consentedOnly,
   languageOf,
   rosterOf,
   saidTo,
+  postWhat,
   weekText,
   type SquadWeek,
 } from '../domain/squad-week.js';
@@ -768,9 +769,10 @@ function factsFor(
 }
 
 /**
- * What the daily wake tells the coach about each member it writes a morning note to: today's
- * plan, this week's 饮食小目标 and how many days they trained so far, so it needn't look them up.
- * Without the plans (no `memberFacts`, or they can't be read), only the days trained.
+ * What the daily wake tells the coach about each member it writes a morning note to: this week's
+ * whole plan and 饮食小目标, what they posted to the squad so far and how many days they trained,
+ * so it needn't look them up. Without the plans (no `memberFacts`, or they can't be read), only
+ * the posts and days trained.
  */
 async function briefsOf(
   deps: CoachWakesDependencies,
@@ -792,7 +794,6 @@ async function briefsOf(
     members.length === 0 || deps.memberFacts === undefined
       ? []
       : await deps.memberFacts({ squad, members, weekStart: week.weekStart }).catch(() => []);
-  const today = planIndexOf(day);
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
     members.length === 0 || deps.weatherOf === undefined
@@ -807,16 +808,22 @@ async function briefsOf(
         .map((each) => each.day),
     ).size;
     const mine = facts.find((each) => each.member === member);
-    const planned = mine?.plan[today];
+    const posts = week.checkIns
+      .filter((each) => each.member === member && each.day <= day)
+      .toSorted(
+        (a, b) => a.day.localeCompare(b.day) || a.createdAt.getTime() - b.createdAt.getTime(),
+      )
+      .map((each) => ({ day: each.day, what: postWhat(each) }));
     return [
       {
         name,
         language: languageOf(week, member),
         trainedDays,
+        posts,
         ...(weather.has(member) ? { weather: weather.get(member) } : {}),
-        ...(mine === undefined || planned === undefined
+        ...(mine === undefined || mine.plan.length === 0
           ? {}
-          : { plan: { today: planned, fuelGoals: mine.fuelGoals } }),
+          : { plan: { week: mine.plan, fuelGoals: mine.fuelGoals } }),
       },
     ];
   });

@@ -52,7 +52,9 @@ struct PageDots: View {
                         .contentShape(Self.tapArea)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(item == .squad ? Text("小队", bundle: .module) : Text("我这周", bundle: .module))
+                .accessibilityLabel(
+                    item == .squad ? Text(copy: "小队", bundle: .module) : Text(copy: "我这周", bundle: .module)
+                )
                 .accessibilityAddTraits(item == page ? .isSelected : [])
                 .accessibilityIdentifier("squadcard.page.\(item == .squad ? "squad" : "mine")")
             }

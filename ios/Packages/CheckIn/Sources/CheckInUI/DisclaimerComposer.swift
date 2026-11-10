@@ -14,7 +14,8 @@ import SwiftUI
 /// a time, so only every third 换一句 (or a new style or new words) asks it again, and typing and
 /// picking a style cost nothing. Under the ticket the 日期 strip (补打卡), whose days with a 练了
 /// can't be picked; the title follows the day picked: 今日请假条 or 今日休息 for today, 请假条 or
-/// 休息 before.
+/// 休息 before. Under 帮我编一句, the photos (up to three, the cover first) in a row with the W,
+/// as a 训练's.
 struct DisclaimerComposer: View {
 
     @Environment(\.sceneTheme) private var theme
@@ -52,17 +53,17 @@ struct DisclaimerComposer: View {
     var body: some View {
         VStack(spacing: 0) {
             ComposeBar(
-                title: title, finish: Text("发布", bundle: .module), isWorking: model.isSending,
-                canFinish: !model.isSending && disclaimer != nil,
+                title: title, finish: Text(copy: "发布", bundle: .module), isWorking: model.isSending,
+                canFinish: !model.isSending && disclaimer != nil && !(model.compose?.isPreparingPhotos ?? false),
                 cancelID: "disclaimer.close", finishID: "disclaimer.post",
                 cancel: { model.cancel() }, done: post)
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
                     Picker(selection: $restDay) {
-                        Text("请假", bundle: .module).tag(false)
-                        Text("休息", bundle: .module).tag(true)
+                        Text(copy: "请假", bundle: .module).tag(false)
+                        Text(copy: "休息", bundle: .module).tag(true)
                     } label: {
-                        Text("请假还是休息", bundle: .module)
+                        Text(copy: "请假还是休息", bundle: .module)
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("disclaimer.kind")
@@ -77,7 +78,7 @@ struct DisclaimerComposer: View {
                     }
                     if let today = model.disclaimerDays.last, model.disclaimerDays.count > 1 {
                         VStack(alignment: .leading, spacing: Space.xxs) {
-                            SectionLabel(Text("日期", bundle: .module))
+                            SectionLabel(Text(copy: "日期", bundle: .module))
                             DayPick(
                                 days: model.disclaimerDays, blocked: model.blockedForDisclaimer,
                                 picked: Binding {
@@ -89,7 +90,7 @@ struct DisclaimerComposer: View {
                         .padding(.top, Space.xs)
                     }
                     if model.sendFailed {
-                        Text("没发出去，再点一次发布", bundle: .module)
+                        Text(copy: "没发出去，再点一次发布", bundle: .module)
                             .typeStyle(TypeRamp.footnote)
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                     }
@@ -119,10 +120,10 @@ struct DisclaimerComposer: View {
 
     private var title: Text {
         switch (day == nil, restDay) {
-        case (true, false): Text("今日请假条", bundle: .module)
-        case (false, false): Text("请假条", bundle: .module)
-        case (true, true): Text("今日休息", bundle: .module)
-        case (false, true): Text("休息", bundle: .module)
+        case (true, false): Text(copy: "今日请假条", bundle: .module)
+        case (false, false): Text(copy: "请假条", bundle: .module)
+        case (true, true): Text(copy: "今日休息", bundle: .module)
+        case (false, true): Text(copy: "休息", bundle: .module)
         }
     }
 
@@ -130,8 +131,13 @@ struct DisclaimerComposer: View {
     private var disclaimer: Disclaimer? { entry.disclaimer(restDay: restDay) }
 
     private func post() {
-        guard let disclaimer, !model.isSending else { return }
-        Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
+        guard let disclaimer, !model.isSending, !(model.compose?.isPreparingPhotos ?? false) else { return }
+        Task { await model.post(.disclaimer(disclaimer, photos: photos), shared: isShared, on: day) }
+    }
+
+    /// The photos picked for it, the cover first.
+    private var photos: [PreparedPhoto] {
+        (model.compose?.photos ?? []).compactMap { if case .new(let photo) = $0 { photo } else { nil } }
     }
 
     /// The excuse, on the ticket's face: room for its four lines from the start, so the ticket
@@ -141,9 +147,9 @@ struct DisclaimerComposer: View {
         VStack(alignment: .leading, spacing: Space.xs) {
             TextField(text: $text, axis: .vertical) {
                 if restDay {
-                    Text("今天怎么歇？", bundle: .module)
+                    Text(copy: "今天怎么歇？", bundle: .module)
                 } else {
-                    Text("为什么没练？", bundle: .module)
+                    Text(copy: "为什么没练？", bundle: .module)
                 }
             }
             .typeStyle(TypeRamp.field)
@@ -173,7 +179,7 @@ struct DisclaimerComposer: View {
                         text = entry.text
                     } label: {
                         Label {
-                            Text("用回我写的", bundle: .module)
+                            Text(copy: "用回我写的", bundle: .module)
                         } icon: {
                             Image(systemName: "arrow.uturn.backward")
                         }
@@ -195,14 +201,20 @@ struct DisclaimerComposer: View {
     /// The excuse's room on the ticket, in lines.
     private static let lines = 4
 
-    /// Below the tear: 帮我编一句 over the styles and the button that puts a line up, and the W.
+    /// Below the tear: 帮我编一句 over the styles and the button that puts a line up, then the
+    /// photos with the W.
     private var stub: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
-            SectionLabel(Text("帮我编一句", bundle: .module))
+            SectionLabel(Text(copy: "帮我编一句", bundle: .module))
             choices
-            HStack {
-                Spacer()
-                TicketStamp()
+            if let compose = model.compose {
+                PhotoTiles(model: compose)
+                    .padding(.top, Space.xs)
+            } else {
+                HStack {
+                    Spacer()
+                    TicketStamp()
+                }
             }
         }
     }
@@ -231,7 +243,7 @@ struct DisclaimerComposer: View {
                 option.label.tag(option)
             }
         } label: {
-            Text("风格", bundle: .module)
+            Text(copy: "风格", bundle: .module)
         }
         .pickerStyle(.segmented)
         .disabled(isWriting)
@@ -317,9 +329,9 @@ private struct WriteButton: View {
         Button(action: action) {
             Label {
                 if isAgain {
-                    Text("换一句", bundle: .module)
+                    Text(copy: "换一句", bundle: .module)
                 } else {
-                    Text("编一句", bundle: .module)
+                    Text(copy: "编一句", bundle: .module)
                 }
             } icon: {
                 // While the writer works, 三拍 in the icon's place (loader design A).
@@ -339,10 +351,10 @@ extension DisclaimerStyle {
     /// The style's tab label.
     var label: Text {
         switch self {
-        case .funny: Text("搞笑", bundle: .module)
-        case .unhinged: Text("发疯", bundle: .module)
-        case .heroic: Text("中二", bundle: .module)
-        case .stubborn: Text("嘴硬", bundle: .module)
+        case .funny: Text(copy: "搞笑", bundle: .module)
+        case .unhinged: Text(copy: "发疯", bundle: .module)
+        case .heroic: Text(copy: "中二", bundle: .module)
+        case .stubborn: Text(copy: "嘴硬", bundle: .module)
         }
     }
 }

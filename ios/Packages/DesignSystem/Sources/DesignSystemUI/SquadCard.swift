@@ -113,7 +113,9 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private var openSquad: (() -> Void)?
     private var collapse: (() -> Void)?
     private var morph: GlassMorph?
-    private var completeChallenge: (() -> Void)?
+    /// Today's challenge row's 我完成了 and coach's head (`challenge(complete:coach:)`).
+    var completeChallenge: (() -> Void)?
+    var challengeCoach: AnyView?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -135,8 +137,8 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     SquadPage(
-                        squad: squad, challenge: mine.challenge, avatar: avatar, footer: footer,
-                        openSquad: openSquad, completeChallenge: completeChallenge
+                        squad: squad, challenge: mine.challenge, challengeCoach: challengeCoach, avatar: avatar,
+                        footer: footer, openSquad: openSquad, completeChallenge: completeChallenge
                     )
                     .squadCardPage()
                     .id(SquadCardPage.squad)
@@ -155,7 +157,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             PageDots(page: $page)
                 .padding(.bottom, Space.xs).zIndex(1)  // Over the grabber's tap area, which reaches up here.
             if let collapse {
-                Grabber(label: Text("收起小队卡片", bundle: .module), action: collapse)
+                Grabber(label: Text(copy: "收起小队卡片", bundle: .module), action: collapse)
                     .padding(.bottom, Space.xs)
                     .accessibilityIdentifier("squadcard.collapse")
             }
@@ -198,13 +200,6 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     public func collapses(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.collapse = action
-        return card
-    }
-
-    /// 我完成了 on today's challenge, the squad page's last row (`MyWeek.challenge`).
-    public func completesChallenge(_ action: @escaping () -> Void) -> Self {
-        var card = self
-        card.completeChallenge = action
         return card
     }
 
@@ -279,7 +274,7 @@ private struct PageHeader: View {
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
-                        .accessibilityLabel(Text("多练 \(count - goal) 次", bundle: .module))
+                        .accessibilityLabel(Text(copy: "多练 \(count - goal) 次", bundle: .module))
                         .accessibilityIdentifier("squadcard.extra")
                 }
             }
@@ -298,6 +293,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
     /// Today's accepted challenge, under everything else, so it is seen first (Tracy, 2026-11-09).
     let challenge: WeekChallenge?
+    let challengeCoach: AnyView?
     let avatar: (SquadMember) -> Avatar
     let footer: Footer?
     let openSquad: (() -> Void)?
@@ -308,8 +304,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
-                label: Text("小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
-                unit: Text("次", bundle: .module), open: openSquad)
+                label: Text(copy: "小队本周目标", bundle: .module), title: squad.name, count: squad.done, goal: squad.goal,
+                unit: Text(copy: "次", bundle: .module), open: openSquad)
             Spacer(minLength: gap)
             DayCells(filled: squad.done, total: squad.goal)
             Spacer(minLength: gap)
@@ -323,7 +319,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
                 footer
             }
             if let challenge {
-                ChallengeRow(challenge: challenge, complete: completeChallenge)
+                ChallengeRow(challenge: challenge, coach: challengeCoach, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)
@@ -332,7 +328,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     /// Everyone's ring, which shows their today, after a 今天 label.
     private func todayRings(avatarSize: Double, spacing: Double) -> some View {
         HStack(spacing: Space.xs) {
-            SectionLabel(Text("今天", bundle: .module))
+            SectionLabel(Text(copy: "今天", bundle: .module))
                 .fixedSize()
             rings(avatarSize: avatarSize, spacing: spacing)
         }
@@ -357,7 +353,7 @@ private struct MyWeekPage: View {
         VStack(alignment: .leading, spacing: 0) {
             // Only its label: the week's circles say how it stands, so the page keeps no big
             // number and the card stays compact (Tracy, 2026-11-09).
-            SectionLabel(Text("我的一周", bundle: .module))
+            SectionLabel(Text(copy: "我的一周", bundle: .module))
             Spacer(minLength: Space.s)
             HStack(spacing: 0) {
                 ForEach(Array(mine.days.enumerated()), id: \.offset) { index, status in

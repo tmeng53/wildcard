@@ -236,13 +236,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
-                    .completesChallenge(model.completeChallenge)
+                    .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.sidelineCoach) }
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
-                        .completesChallenge(model.completeChallenge)
+                        .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.sidelineCoach) }
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
@@ -304,7 +304,7 @@ public struct TodayView: View {
         if model.phase == .night {
             let isOn = model.lightsOn
             let chain = short ? PullCordMotion.shortLength : PullCordMotion.length
-            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn, chain: chain) {
+            PullCord(Text(copy: isOn ? "关灯" : "开灯", bundle: .module), isOn: isOn, chain: chain) {
                 model.pullCord(reduceMotion: reduceMotion)
             }
             .accessibilityIdentifier("today.lights")

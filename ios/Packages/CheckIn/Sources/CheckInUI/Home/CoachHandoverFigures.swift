@@ -60,7 +60,7 @@ private struct HandoverChip: View {
 
     var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: Space.xxs / 2) {
-            Text("交接中", bundle: .module)
+            Text(copy: "交接中", bundle: .module)
                 .typeStyle(TypeRamp.footnoteEmphasis)
             // The prototype's dots, half the size of a line's.
             LoadingDots(delay: 0)
@@ -73,7 +73,7 @@ private struct HandoverChip: View {
         .background(Capsule().fill(Color(role: .bgCanvas, in: theme)))
         .shadow(color: Color(role: .bgBrand, in: theme).opacity(0.15), radius: 4, y: 2)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("交接中", bundle: .module))
+        .accessibilityLabel(Text(copy: "交接中", bundle: .module))
         .accessibilityIdentifier("today.handover")
     }
 }

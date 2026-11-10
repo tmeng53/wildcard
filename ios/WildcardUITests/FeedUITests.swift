@@ -8,7 +8,7 @@ import XCTest
 final class FeedUITests: XCTestCase {
     private static let wait: TimeInterval = 30
     /// More than the sample squad's posts need to reach the end.
-    private static let maxSwipes = 12
+    private static let maxSwipes = 24
     /// The 成绩条 under a cover, with room to spare.
     private static let stripHeight = 80.0
 
