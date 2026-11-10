@@ -67,7 +67,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -579,8 +579,7 @@ const coachWakes =
             ids.map(async (member) => ({
               member: WeatherMember.parse(member),
               timeZone:
-                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ??
-                UNSAVED_MEMBER_ZONE,
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
             })),
           );
           const days = await weather.dayFor({ members: zoned, day });
@@ -590,7 +589,7 @@ const coachWakes =
               member,
               weatherWords(today, {
                 ...(yesterday === undefined ? {} : { yesterday }),
-                timeZone: zones.get(member) ?? UNSAVED_MEMBER_ZONE,
+                timeZone: zones.get(member) ?? NEW_YORK,
               }),
             ]),
           );
