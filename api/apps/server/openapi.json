@@ -12442,7 +12442,7 @@
       "post": {
         "operationId": "writeDisclaimerDrafts",
         "summary": "Three AI drafts for a disclaimer",
-        "description": "Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.",
+        "description": "Each batch counts toward the AI budget of the member’s squad for the day. On any failure, show the dice suggestions instead of an error.",
         "security": [
           {
             "bearer": []
@@ -12500,7 +12500,7 @@
             }
           },
           "429": {
-            "description": "The member has used today’s batches",
+            "description": "The squad’s AI budget for today, or everyone’s, is spent",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -10354,7 +10354,7 @@ internal struct Client: APIProtocol {
     }
     /// Three AI drafts for a disclaimer
     ///
-    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    /// Each batch counts toward the AI budget of the member’s squad for the day. On any failure, show the dice suggestions instead of an error.
     ///
     /// - Remark: HTTP `POST /disclaimer-drafts`.
     /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
