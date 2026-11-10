@@ -18,7 +18,8 @@ public struct OnlyMeTag: View {
             Text(copy: "仅自己可见", bundle: .module), systemImage: showsIcon ? "lock.fill" : nil, style: .rest,
             size: .small
         )
-        .fixedSize()
+        // Smaller rather than cut off where text is large: a tile is about 93 points wide.
+        .minimumScaleFactor(0.5)
         .accessibilityIdentifier("post.onlyMe")
     }
 }
