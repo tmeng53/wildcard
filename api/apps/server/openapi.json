@@ -3036,28 +3036,6 @@
         ],
         "additionalProperties": false
       },
-      "ReactionList": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "reactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ReactionEntry"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "reactions"
-        ],
-        "additionalProperties": false
-      },
       "Comment": {
         "type": "object",
         "properties": {
@@ -3165,28 +3143,6 @@
         "required": [
           "version",
           "text"
-        ],
-        "additionalProperties": false
-      },
-      "CommentList": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "comments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CommentEntry"
-            }
-          }
-        },
-        "required": [
-          "version",
-          "comments"
         ],
         "additionalProperties": false
       },
@@ -3426,13 +3382,14 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their own profile’s zone when left out. The captain changes it later with `PUT /squads/{squadId}/time-zone`.",
+            "description": "The squad’s time zone (小队时区), the creator’s pick, counting from their week now. The captain changes it later with `PUT /squads/{squadId}/time-zone`.",
             "example": "Asia/Taipei"
           }
         },
         "required": [
           "version",
-          "name"
+          "name",
+          "timeZone"
         ],
         "additionalProperties": false
       },
@@ -4727,26 +4684,6 @@
         ],
         "additionalProperties": false
       },
-      "CoachNotePutAway": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "noteId": {
-            "type": "integer",
-            "exclusiveMinimum": 0
-          }
-        },
-        "required": [
-          "version",
-          "noteId"
-        ],
-        "additionalProperties": false
-      },
       "CoachActivity": {
         "type": "object",
         "properties": {
@@ -4945,7 +4882,7 @@
           "id": {
             "type": "integer",
             "exclusiveMinimum": 0,
-            "description": "The note’s id, which putting it away (收下) and `coachNote` notices name."
+            "description": "The note’s id, which its card on the coach’s page and `coachNote` notices name."
           },
           "day": {
             "type": "string",
@@ -5433,243 +5370,6 @@
         "required": [
           "version",
           "through"
-        ],
-        "additionalProperties": false
-      },
-      "WeekSummary": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "language": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The language the words are in: today `zh-Hans`, `en` or `zh-Hant`. More may come without an app release."
-          },
-          "squad": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "week": {
-            "type": "object",
-            "properties": {
-              "from": {
-                "type": "string",
-                "format": "date"
-              },
-              "to": {
-                "type": "string",
-                "format": "date"
-              }
-            },
-            "required": [
-              "from",
-              "to"
-            ],
-            "additionalProperties": false
-          },
-          "final": {
-            "type": "boolean",
-            "description": "Every member’s own Sunday is over: the week has been played and the card can show. Numbers can still change after that: a check-in sent up to 48 hours late, a reaction left, changed or taken off later, or a member joining or leaving, since the week is read for the squad as it is now. Before that the week is still being played."
-          },
-          "awards": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WeekAward"
-            },
-            "description": "The awards someone won this week; one nobody won is left out."
-          },
-          "squadTotals": {
-            "type": "object",
-            "properties": {
-              "stats": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/WeekStat"
-                },
-                "description": "Each count added up over the members."
-              },
-              "reactions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "emoji": {
-                      "type": "string",
-                      "description": "Any one emoji.",
-                      "example": "❤️"
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "Reactions with this emoji."
-                    }
-                  },
-                  "required": [
-                    "emoji",
-                    "count"
-                  ],
-                  "additionalProperties": false
-                },
-                "description": "Teammates’ reactions on the week’s check-ins, one entry an emoji someone left, most-used first."
-              }
-            },
-            "required": [
-              "stats",
-              "reactions"
-            ],
-            "additionalProperties": false
-          },
-          "me": {
-            "type": "object",
-            "properties": {
-              "stats": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/WeekStat"
-                },
-                "description": "The signed-in member’s own counts."
-              },
-              "reactions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "emoji": {
-                      "type": "string",
-                      "description": "Any one emoji.",
-                      "example": "❤️"
-                    },
-                    "received": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "Reactions with this emoji on their check-ins."
-                    },
-                    "given": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "Reactions with this emoji they left on teammates’ check-ins."
-                    }
-                  },
-                  "required": [
-                    "emoji",
-                    "received",
-                    "given"
-                  ],
-                  "additionalProperties": false
-                },
-                "description": "One entry an emoji they got or left: those they got first, most-received first, then those they only left, most-left first."
-              }
-            },
-            "required": [
-              "stats",
-              "reactions"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "version",
-          "language",
-          "squad",
-          "week",
-          "final",
-          "awards",
-          "squadTotals",
-          "me"
-        ],
-        "additionalProperties": false
-      },
-      "WeekAward": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Today `planCompleted` (练够计划: trained at least as many days as planned, and at least one), `crown` (皇冠: the most days trained, at least one, plan finished or not; the earliest to join on a tie) and `bestDisclaimer` (本周最佳请假条: the most reactions, at least one, the earliest on a tie). New kinds come without an app release, so show any kind from its words."
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Its name, in the language asked for."
-          },
-          "symbol": {
-            "type": "string",
-            "minLength": 1,
-            "description": "An SF Symbol name to show with it; fall back to a plain one if it is unknown.",
-            "example": "crown.fill"
-          },
-          "winners": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "member": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "value": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "description": "What they won it by, in the award’s own unit."
-                },
-                "text": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "What they won it by, in words, in the language asked for."
-                },
-                "checkIn": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The check-in that won it, for an award a check-in wins."
-                }
-              },
-              "required": [
-                "member",
-                "value",
-                "text"
-              ],
-              "additionalProperties": false
-            },
-            "minItems": 1,
-            "description": "Who won it, in the order members joined the squad."
-          }
-        },
-        "required": [
-          "kind",
-          "title",
-          "symbol",
-          "winners"
-        ],
-        "additionalProperties": false
-      },
-      "WeekStat": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Today `trainedDays`, `plannedDays`, `checkIns`, `disclaimers`, `healthyMeals`, `cheatMeals` and `reactionsReceived`. New kinds come without an app release, so show any kind from its words."
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Its name, in the language asked for."
-          },
-          "value": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "The count."
-          }
-        },
-        "required": [
-          "kind",
-          "label",
-          "value"
         ],
         "additionalProperties": false
       },
@@ -6713,54 +6413,6 @@
         ],
         "additionalProperties": false
       },
-      "AwardTotals": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "titles": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Every title (周奖) the member has won, in all their squads and weeks.",
-            "example": 3
-          },
-          "latest": {
-            "$ref": "#/components/schemas/LatestTitle"
-          }
-        },
-        "required": [
-          "version",
-          "titles"
-        ],
-        "additionalProperties": false
-      },
-      "LatestTitle": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "description": "The title, at most 6 characters.",
-            "example": "早八战神"
-          },
-          "times": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "How many times the member has won this title.",
-            "example": 2
-          }
-        },
-        "required": [
-          "title",
-          "times"
-        ],
-        "additionalProperties": false,
-        "description": "The latest title they won. Left out before the first."
-      },
       "TitleBoard": {
         "type": "object",
         "properties": {
@@ -6987,7 +6639,7 @@
               "weekStart": {
                 "type": "string",
                 "format": "date",
-                "description": "This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate. Left out by older servers.",
+                "description": "This week’s Monday on the squad’s clock (小队时区), the same week for every squadmate.",
                 "example": "2026-11-02"
               },
               "days": {
@@ -7000,7 +6652,7 @@
                 },
                 "minItems": 7,
                 "maxItems": 7,
-                "description": "How each day of this week went, Monday first: `trained` with the sport of the day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad. Left out by older servers."
+                "description": "How each day of this week went, Monday first: `trained` with the sport of the day’s latest 训练 (a 训练 wins over a 请假条), `disclaimer` for a 请假条, `none` for neither yet, from only the check-ins shared to this squad."
               },
               "fuelGoals": {
                 "$ref": "#/components/schemas/FuelGoals"
@@ -7008,28 +6660,33 @@
               "firstWeek": {
                 "type": "string",
                 "format": "date",
-                "description": "The Monday of the week they joined, in their time zone, which their 出赛表 counts as W1 before servers send `squadFirstWeek`. Missing before they save a profile, and from older servers.",
+                "description": "The Monday of the week they joined, in their time zone, which builds from before `squadFirstWeek` count their 出赛表 from. Missing before they save a profile.",
                 "example": "2026-10-12"
               },
               "squadFirstWeek": {
                 "type": "string",
                 "format": "date",
-                "description": "The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number. Left out by older servers.",
+                "description": "The Monday of the week this squad was made, on its clock: the week every 出赛表 in the squad counts as W1, so every card shows the same week number.",
                 "example": "2026-10-05"
               },
               "today": {
                 "type": "string",
                 "format": "date",
-                "description": "Today on the squad’s clock, which their 出赛表 shades as 今天. Left out by older servers.",
+                "description": "Today on the squad’s clock, which their 出赛表 shades as 今天.",
                 "example": "2026-10-29"
               }
             },
             "required": [
               "trainedDays",
-              "plannedDays"
+              "plannedDays",
+              "weekStart",
+              "days",
+              "marks",
+              "squadFirstWeek",
+              "today"
             ],
             "additionalProperties": false,
-            "description": "Their own 本周 x/y, in their time zone. Left out by older servers; the app then shows no week."
+            "description": "Their own 本周 x/y and this week’s 出赛表, on the card’s back."
           },
           "teamBadges": {
             "type": "array",
@@ -7058,6 +6715,7 @@
           "healthyMeals",
           "cheatMeals",
           "disclaimers",
+          "week",
           "teamBadges",
           "titles"
         ],
@@ -7101,7 +6759,7 @@
               ],
               "additionalProperties": false
             },
-            "description": "Every sport the day’s 训练 logged, oldest first; only for `trained`. Left out by older servers."
+            "description": "Every sport the day’s 训练 logged, oldest first; only for `trained`, where it is always sent."
           }
         },
         "required": [
@@ -9117,81 +8775,6 @@
         }
       }
     },
-    "/check-ins/{checkInId}/reactions": {
-      "get": {
-        "operationId": "listCheckInReactions",
-        "summary": "A check-in’s reactions",
-        "description": "Oldest first, for its author and the teammates who can see it.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "checkInId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The reactions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReactionList"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a check-in id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/check-ins/{checkInId}/comments/{commentId}": {
       "put": {
         "operationId": "commentOnCheckIn",
@@ -9370,81 +8953,6 @@
           },
           "403": {
             "description": "Someone else’s comment (`NOT_YOUR_COMMENT`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/check-ins/{checkInId}/comments": {
-      "get": {
-        "operationId": "listCheckInComments",
-        "summary": "A check-in’s comments",
-        "description": "Oldest first, for its author and the teammates who can see it.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "checkInId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The comments",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentList"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a check-in id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -12007,99 +11515,6 @@
         }
       }
     },
-    "/squads/{squadId}/coach/notes/{noteId}/put-away": {
-      "put": {
-        "operationId": "putAwayCoachMemberNote",
-        "summary": "Put the caller’s morning note away (收下)",
-        "description": "The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "integer"
-            },
-            "required": true,
-            "name": "noteId",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Put away",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CoachNotePutAway"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid squad or note id",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/squads/{squadId}/coach/activity": {
       "get": {
         "operationId": "getSquadCoachActivity",
@@ -13001,93 +12416,6 @@
         }
       }
     },
-    "/squads/{squadId}/weeks/{weekStart}/summary": {
-      "get": {
-        "operationId": "getSquadWeekSummary",
-        "summary": "A squad’s week: its awards and counts (周日战报)",
-        "description": "From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "squadId",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "description": "The week’s Monday.",
-              "example": "2026-10-19"
-            },
-            "required": true,
-            "description": "The week’s Monday.",
-            "name": "weekStart",
-            "in": "path"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The week",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WeekSummary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a Monday, or a week that hasn’t started yet (`WEEK_NOT_STARTED`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The member isn’t in this squad",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/disclaimer-drafts": {
       "post": {
         "operationId": "writeDisclaimerDrafts",
@@ -13761,50 +13089,6 @@
           },
           "404": {
             "description": "Before the week’s awards on Sunday at 8pm on the squad’s clock (小队时区) (`WEEK_STORY_NOT_READY`)",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/award-totals": {
-      "get": {
-        "operationId": "getMyAwardTotals",
-        "summary": "The weekly titles the signed-in member has won",
-        "description": "Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The titles",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AwardTotals"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

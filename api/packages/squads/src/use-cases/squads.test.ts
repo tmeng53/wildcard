@@ -1,3 +1,4 @@
+import { NEW_YORK } from '@wildcard/time-zones';
 import { randomUUID } from 'node:crypto';
 
 import { Kysely, PostgresDialect, sql } from 'kysely';
@@ -47,6 +48,7 @@ const name = (text: string) => SquadName.parse(text);
 
 async function newSquad(creator: MemberId, text = '早八跑团') {
   const { squad } = await squads.create({
+    timeZone: NEW_YORK,
     week: '2026-11-02',
     id: SquadId.parse(randomUUID()),
     creator,
@@ -60,6 +62,7 @@ describe('creating a squad', () => {
     const creator = await newMember();
     const id = SquadId.parse(randomUUID());
     const { squad, created } = await squads.create({
+      timeZone: NEW_YORK,
       week: '2026-11-02',
       id,
       creator,
@@ -81,16 +84,34 @@ describe('creating a squad', () => {
   it('answers a retry with the squad already made, and refuses another name or member', async () => {
     const creator = await newMember();
     const id = SquadId.parse(randomUUID());
-    const first = await squads.create({ week: '2026-11-02', id, creator, name: name('早八跑团') });
-    const retry = await squads.create({ week: '2026-11-02', id, creator, name: name('早八跑团') });
+    const first = await squads.create({
+      timeZone: NEW_YORK,
+      week: '2026-11-02',
+      id,
+      creator,
+      name: name('早八跑团'),
+    });
+    const retry = await squads.create({
+      timeZone: NEW_YORK,
+      week: '2026-11-02',
+      id,
+      creator,
+      name: name('早八跑团'),
+    });
     expect([retry.created, retry.squad]).toStrictEqual([false, first.squad]);
     await expect(
-      squads.create({ week: '2026-11-02', id, creator, name: name('夜跑团') }),
+      squads.create({ timeZone: NEW_YORK, week: '2026-11-02', id, creator, name: name('夜跑团') }),
     ).rejects.toMatchObject({
       reason: 'SQUAD_ID_CONFLICT',
     });
     await expect(
-      squads.create({ week: '2026-11-02', id, creator: await newMember(), name: name('早八跑团') }),
+      squads.create({
+        timeZone: NEW_YORK,
+        week: '2026-11-02',
+        id,
+        creator: await newMember(),
+        name: name('早八跑团'),
+      }),
     ).rejects.toMatchObject({ reason: 'SQUAD_ID_CONFLICT' });
   });
 
@@ -105,6 +126,7 @@ describe('creating a squad', () => {
       aiConsent,
     });
     const { squad } = await retrying.create({
+      timeZone: NEW_YORK,
       week: '2026-11-02',
       id: SquadId.parse(randomUUID()),
       creator: await newMember(),
@@ -124,6 +146,7 @@ describe('creating a squad', () => {
     const squad = await newSquad(creator);
     consented.delete(creator);
     const again = await squads.create({
+      timeZone: NEW_YORK,
       week: '2026-11-02',
       id: squad.id,
       creator,
@@ -459,6 +482,7 @@ describe('the weekly goal', () => {
     );
     const bo = await newMember();
     const { squad: picked } = await squads.create({
+      timeZone: NEW_YORK,
       week: thisWeek,
       id: SquadId.parse(randomUUID()),
       creator: bo,

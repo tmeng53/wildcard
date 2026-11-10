@@ -77,30 +77,13 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
   });
 }
 
-/** `get_unlock_rules`: every rule now. */
-export function getUnlockRules({ unlocks }: UnlockToolDependencies) {
-  return adminTool({
-    name: 'get_unlock_rules',
-    title: 'Read the unlock rules',
-    description:
-      'Shows how each store on the character editor’s 商店街 and each clothing piece with a ' +
-      'rule unlocks (props are everyone’s and need none): kind (store, prop or piece), id, sports (empty = any sport), ' +
-      'after (days with 训练 needed, many on one day counting once) and countsFrom (only check-ins made from then count). A rule ' +
-      'counts only check-ins made while its store’s and piece’s switches are on (get_stores, ' +
-      'get_pieces). Starter pieces (get_pieces) need no rule.',
-    changes: false,
-    input: z.strictObject({}),
-    run: async () => shown(await unlocks.rules()),
-  });
-}
-
 /** `put_unlock_rule`: adds a rule, or changes the sports or count of one. */
 export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
   return adminTool({
     name: 'put_unlock_rule',
     title: 'Add or change an unlock rule',
     description:
-      'Adds a rule for a store, prop or piece, or changes the sports or count of one. A piece ' +
+      'Adds a rule for a store or piece, or changes the sports or count of one. A piece ' +
       'with a rule stays locked in its store until earned; when it is out follows its store and ' +
       'piece (put_store, put_piece). A new rule counts check-ins made ' +
       'from now; a changed one keeps its start, and a retired one comes back. Members who ' +
@@ -113,13 +96,13 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
   });
 }
 
-/** `give_unlocks`: opens stores, props and pieces for one member, whatever they trained. */
+/** `give_unlocks`: opens stores and pieces for one member, whatever they trained. */
 export function giveUnlocks({ unlocks }: UnlockToolDependencies) {
   return adminTool({
     name: 'give_unlocks',
-    title: 'Give a member stores, props and pieces',
+    title: 'Give a member stores and pieces',
     description:
-      'Opens the named stores, props and pieces (each one with an unlock rule) for one member now, as ' +
+      'Opens the named stores and pieces (each one with an unlock rule) for one member now, as ' +
       'if they had earned them, or every one when items is left out; for testing, or to make ' +
       'up for check-ins that could not count. What they already hold stays. An unlock is never ' +
       'taken back. Returns everything the member holds.',
@@ -143,7 +126,7 @@ export function getStores({ unlocks }: UnlockToolDependencies) {
       'Shows every store on the character editor’s 商店街, in its order: id, position, switchId ' +
       '(open only while that switch is on, see get_switches; none for always) and offered. A ' +
       'closed store shows each member only the pieces they own. Whether a member has earned a ' +
-      'store is its unlock rule (get_unlock_rules).',
+      'store is its training trigger (get_rewards).',
     changes: false,
     input: z.strictObject({}),
     run: async () => ({ version: 1, stores: await unlocks.stores() }),
@@ -270,7 +253,6 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
 
 export const unlockTools = (deps: UnlockToolDependencies) => [
   getRewards(deps),
-  getUnlockRules(deps),
   putUnlockRule(deps),
   giveUnlocks(deps),
   getStores(deps),

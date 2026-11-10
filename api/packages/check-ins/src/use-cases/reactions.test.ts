@@ -120,10 +120,12 @@ describe('reacting to a check-in', () => {
       { member: ann, emoji: heart, reactedAt: new Date('2026-10-18T20:05:00.000Z') },
       { member: bo, emoji: muscle, reactedAt: new Date('2026-10-18T20:06:00.000Z') },
     ];
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual(
-      expected,
-    );
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: bo })).toStrictEqual(expected);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ reactions }) => reactions),
+    ).toStrictEqual(expected);
+    expect(
+      await checkIns.post({ id: run.id, viewer: bo }).then(({ reactions }) => reactions),
+    ).toStrictEqual(expected);
   });
 
   it('keeps one reaction per member: a different one replaces it, the same one changes nothing', async () => {
@@ -141,7 +143,9 @@ describe('reacting to a check-in', () => {
     now = new Date('2026-10-18T20:09:00.000Z');
     const changed = await checkIns.react({ checkIn: run.id, member: ann, emoji: laughing });
     expect(changed.outcome).toBe('changed');
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ reactions }) => reactions),
+    ).toStrictEqual([
       { member: ann, emoji: laughing, reactedAt: new Date('2026-10-18T20:09:00.000Z') },
     ]);
   });
@@ -153,7 +157,9 @@ describe('reacting to a check-in', () => {
 
     await checkIns.removeReaction({ checkIn: run.id, member: ann });
     await checkIns.removeReaction({ checkIn: run.id, member: ann });
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ reactions }) => reactions),
+    ).toStrictEqual([]);
   });
 
   it('refuses a reaction on your own check-in', async () => {
@@ -175,7 +181,7 @@ describe('reacting to a check-in', () => {
     for (const attempt of [
       () => checkIns.react({ checkIn: run.id, member: stranger, emoji: heart }),
       () => checkIns.removeReaction({ checkIn: run.id, member: stranger }),
-      () => checkIns.listReactions({ checkIn: run.id, viewer: stranger }),
+      () => checkIns.post({ id: run.id, viewer: stranger }).then(({ reactions }) => reactions),
     ]) {
       await expect(attempt()).rejects.toStrictEqual(new CheckInNotFoundError(run.id));
     }
@@ -223,22 +229,21 @@ describe('who sees which reactions', () => {
       emoji: laughing,
       reactedAt: new Date('2026-10-18T20:06:00.000Z'),
     };
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: ann })).toStrictEqual([
-      annsReaction,
-    ]);
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: bo })).toStrictEqual([
-      bosReaction,
-    ]);
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
-      annsReaction,
-      bosReaction,
-    ]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: ann }).then(({ reactions }) => reactions),
+    ).toStrictEqual([annsReaction]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: bo }).then(({ reactions }) => reactions),
+    ).toStrictEqual([bosReaction]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ reactions }) => reactions),
+    ).toStrictEqual([annsReaction, bosReaction]);
 
     // Once Bo leaves the climbers, his reaction no longer shows, even to Tracy.
     await leave(climbers, bo);
-    expect(await checkIns.listReactions({ checkIn: run.id, viewer: tracy })).toStrictEqual([
-      annsReaction,
-    ]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ reactions }) => reactions),
+    ).toStrictEqual([annsReaction]);
   });
 
   it('lists each post in a squad’s feed with the reactions its viewer may see', async () => {
@@ -281,7 +286,7 @@ describe('who sees which reactions', () => {
         days,
       })) {
         expect(reactions).toStrictEqual(
-          await checkIns.listReactions({ checkIn: checkIn.id, viewer }),
+          (await checkIns.post({ id: checkIn.id, viewer })).reactions,
         );
       }
     }

@@ -40,7 +40,7 @@ extension CoachNote {
     public init(_ wire: Components.Schemas.CoachNote) throws(ContractsError) {
         self.init(
             day: try LocalDay(wire.day), text: wire.text, coach: try CoachSpeaker(wire.coach), writtenAt: wire.at,
-            timeZone: TimeZone(identifier: wire.timeZone) ?? CoachNote.timeZone)
+            timeZone: TimeZone(identifier: wire.timeZone) ?? SquadTimeZone.newYorkClock)
     }
 }
 

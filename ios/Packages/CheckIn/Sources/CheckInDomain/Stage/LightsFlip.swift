@@ -89,12 +89,6 @@ public struct LightsFlip: Hashable, Sendable {
         return max(0, 1 - seconds / 0.2)
     }
 
-    /// Whether the first sleeper's line is up: from `lineAt` for `hold` seconds, only when the
-    /// lights came on with motion.
-    public func showsLine(at seconds: Double, hold: Double) -> Bool {
-        isOn && !reduceMotion && seconds >= Self.lineAt && seconds < Self.lineAt + hold
-    }
-
     /// Reduce Motion's crossfade.
     static let reducedFade = 0.2
 

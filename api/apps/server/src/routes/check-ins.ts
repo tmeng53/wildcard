@@ -186,14 +186,6 @@ const MyPostQuery = z.strictObject({
 /** One check-in with what teammates left on it: a post's own page. */
 const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi('Post');
 
-/**
- * Installed builds from before the replies were removed (#180) still require `replies` on each
- * post and fail to read the whole feed without it, so every post keeps an empty one. It stays out
- * of the contract: newer builds ignore keys they don't know. Remove it once no installed build
- * predates #180.
- */
-const installedBuildsReplies: { readonly replies: readonly never[] } = { replies: [] };
-
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
@@ -714,7 +706,6 @@ export function checkIns(deps: {
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
             comments: comments.map(wireComment),
-            ...installedBuildsReplies,
           })),
         },
         200,

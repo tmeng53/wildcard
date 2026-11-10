@@ -16,9 +16,7 @@ import {
   createPostgresCheckInStore,
   createPostgresCommentStore,
   createPostgresReactionStore,
-  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
-  createWeekSummaryWords,
   createWeeklyPlans,
   createPostgresQuickReactions,
   createQuickReactions,
@@ -152,7 +150,6 @@ import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
-import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
@@ -802,7 +799,6 @@ const app = createApp({
     },
   }),
   coachActivity,
-  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
@@ -860,9 +856,6 @@ const app = createApp({
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
-      }),
-      ...weekSummaryWordTools({
-        words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),

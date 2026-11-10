@@ -562,12 +562,15 @@ describe('the coach', () => {
       expect(
         (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
       ).toBeUndefined();
-      // Put away on one phone, it shows on none; only its own member can.
-      await expect(
-        activity.putAway({ squad, member: leo, note: miaNote.id }),
-      ).rejects.toBeInstanceOf(CoachNoteNotFoundError);
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
+      // Seen on one phone (its card swiped away), it shows on none; another member's swipe
+      // does nothing to it.
+      const seen = { squad, kind: 'note', id: String(miaNote.id) } as const;
+      await activity.markSeen({ ...seen, member: leo });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote?.id,
+      ).toBe(miaNote.id);
+      await activity.markSeen({ ...seen, member: fixture.mia });
+      await activity.markSeen({ ...seen, member: fixture.mia });
       expect(
         (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote,
       ).toBeUndefined();

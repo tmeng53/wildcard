@@ -94,14 +94,11 @@ public struct CoachNote: Hashable, Sendable {
     public let timeZone: TimeZone
 
     public init(
-        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date, timeZone: TimeZone = CoachNote.timeZone
+        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date, timeZone: TimeZone = SquadTimeZone.newYorkClock
     ) {
         (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
         self.timeZone = timeZone
     }
-
-    /// The clock of a squad that never picked one: New York's.
-    public static let timeZone = TimeZone(identifier: "America/New_York") ?? .gmt
 
     /// Whether it is still the line's day at `moment` on the squad's clock, so the home shows it.
     public func isCurrent(at moment: Date) -> Bool {

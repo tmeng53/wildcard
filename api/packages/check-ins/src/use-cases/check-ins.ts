@@ -8,8 +8,7 @@ import type {
 import type { DayRange, Unshared } from '../domain/day-range.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from '../domain/totals.js';
 import type { PlanDays, WeekStart } from '../domain/weekly-plan.js';
-import type { Comment, CommentId } from '../domain/comment.js';
-import type { Reaction } from '../domain/reaction.js';
+import type { CommentId } from '../domain/comment.js';
 import type {
   CheckInStore,
   Clock,
@@ -40,7 +39,7 @@ import {
   type ReactToCheckInInput,
   type Reacted,
 } from './check-ins/react-to-check-in.js';
-import { listResponses, removeResponse } from './check-ins/responses.js';
+import { removeResponse } from './check-ins/responses.js';
 import { responsesReceived } from './check-ins/reactions-received.js';
 import {
   commentOnCheckIn,
@@ -110,10 +109,6 @@ export interface CheckIns {
   records(member: MemberId): Promise<Records>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
-  listReactions(input: {
-    readonly checkIn: CheckInId;
-    readonly viewer: MemberId;
-  }): Promise<Reaction[]>;
   /** Teammates who reacted to the member's check-ins in `[since, until)`, with any emoji. */
   reactionsReceived(input: {
     readonly member: MemberId;
@@ -132,10 +127,6 @@ export interface CheckIns {
     readonly id: CommentId;
     readonly member: MemberId;
   }): Promise<void>;
-  listComments(input: {
-    readonly checkIn: CheckInId;
-    readonly viewer: MemberId;
-  }): Promise<Comment[]>;
   /** The home screen's squad: each member's today and the week's counts, for one of them. */
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
   /**
@@ -224,8 +215,6 @@ export function createCheckIns(deps: {
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),
-    listReactions: (input) =>
-      listResponses({ ...deps, list: (checkIn) => deps.reactions.list(checkIn) }, input),
     reactionsReceived: (input) =>
       responsesReceived(
         { ...deps, receivedBy: (query) => deps.reactions.receivedBy(query) },
@@ -235,8 +224,6 @@ export function createCheckIns(deps: {
       responsesReceived({ ...deps, receivedBy: (query) => deps.comments.receivedBy(query) }, input),
     comment: (input) => commentOnCheckIn(deps, input),
     deleteComment: (input) => deleteComment(deps, input),
-    listComments: (input) =>
-      listResponses({ ...deps, list: (checkIn) => deps.comments.list(checkIn) }, input),
     squadToday: (input) => squadToday(deps, input),
     memberWeek: (input) => memberWeek(deps, input),
     planSharedTo: (input) => planSharedTo(deps, input),

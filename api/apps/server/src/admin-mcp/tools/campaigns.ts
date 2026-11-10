@@ -238,7 +238,7 @@ export function putCampaign(deps: CampaignToolDependencies) {
             stores.every(follows) &&
             pieces.every((piece) => follows(piece) || ownStores.has(piece.storeId)) &&
             unlockRules.every(({ kind, id }) =>
-              kind === 'piece' ? ownPieces.has(id) : kind === 'store' && ownStores.has(id),
+              kind === 'piece' ? ownPieces.has(id) : ownStores.has(id),
             )
           );
         },

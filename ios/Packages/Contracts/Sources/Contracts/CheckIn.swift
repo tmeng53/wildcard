@@ -172,18 +172,14 @@ public struct Caption: Hashable, Sendable {
     }
 }
 
-/// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
-/// member's own; one shared to no squad only they see.
+/// The squads a check-in is shared to, no repeats: the member's squad, or none for a post only
+/// they see. A member is in one squad at a time; posts made earlier may list several, and the
+/// API keeps the limit.
 public struct Audience: Hashable, Sendable {
-    /// The most squads one post can be shared to, as the API allows. A member is in one squad at a time now, but
-    /// posts made earlier may list several, and they must still read.
-    public static let maxSquads = 3
-
     /// In the order the member picked them.
     public let squads: [SquadID]
 
     public init(_ squads: [SquadID]) throws(ContractsError) {
-        guard squads.count <= Self.maxSquads else { throw .audienceSize(squads.count) }
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }

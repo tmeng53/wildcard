@@ -16,10 +16,8 @@ import {
   createPostgresCommentStore,
   createPostgresQuickReactions,
   createPostgresReactionStore,
-  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
   createQuickReactions,
-  createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
 import { createMinimumBuilds, createPostgresMinimumBuild } from '@wildcard/switches';
@@ -100,7 +98,6 @@ import { sportTools } from './tools/sports.js';
 import { rewardTools } from './tools/rewards.js';
 import { unlockTools } from './tools/unlocks.js';
 import { broadcastTools } from './tools/broadcasts.js';
-import { weekSummaryWordTools } from './tools/week-summary-words.js';
 import { giveGiftAsAdmin } from '../flows/coach-gifts.js';
 import { adoptFeedback } from '../flows/feedback-adoption.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -109,7 +106,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -196,7 +192,6 @@ beforeAll(async () => {
           unlocks: unusedUnlocks,
           gifts: unusedGifts,
           rewards: noRewards,
-          weekSummaryWords: unusedWeekSummaryWords,
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
           coachLetters: unusedCoachLetters,
@@ -246,9 +241,6 @@ beforeAll(async () => {
                 settings: createDailyPushSettings({
                   store: createPostgresDailyPushSettings(scope),
                 }),
-              }),
-              ...weekSummaryWordTools({
-                words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
               ...unlockTools({
@@ -484,14 +476,11 @@ describe('the admin MCP server', () => {
       ['change_app_copy', false],
       ['get_daily_push_settings', true],
       ['change_daily_push_settings', false],
-      ['get_week_summary_words', true],
-      ['change_week_summary_words', false],
       ['get_sports', true],
       ['put_sport', false],
       ['put_sport_category', false],
       ['set_sport_picks', false],
       ['get_rewards', true],
-      ['get_unlock_rules', true],
       ['put_unlock_rule', false],
       ['give_unlocks', false],
       ['get_stores', true],
@@ -927,74 +916,6 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('reads and changes the 战报 words, logging each change once', async () => {
-    const admin = await member({ admin: true });
-    const client = await connect(clientSignedInAs(admin));
-    const call = async (name: string, args: Record<string, unknown> = {}) => {
-      const result = await client.callTool({ name, arguments: args });
-      return { isError: result.isError === true, text: textOf(result) };
-    };
-    const Words = z.object({
-      awards: z.record(z.string(), z.json()),
-      stats: z.record(z.string(), z.json()),
-    });
-    const before = Words.parse(JSON.parse((await call('get_week_summary_words')).text));
-    // Words saved before Traditional Chinese came may have none until an admin gives them theirs.
-    const beforeCheckIns = z
-      .strictObject({ 'zh-Hans': z.string(), en: z.string(), 'zh-Hant': z.string().optional() })
-      .parse(before.stats.checkIns);
-    expect(beforeCheckIns).toMatchObject({ 'zh-Hans': '打卡', en: 'Check-ins' });
-    const restored = { 'zh-Hant': '打卡', ...beforeCheckIns };
-    const logged = async () =>
-      (
-        await sql<{ words: unknown }>`
-          select words from public.week_summary_word_events
-          where changed_by = ${admin.userId} order by id
-        `.execute(db)
-      ).rows.map(({ words }) => words);
-
-    try {
-      const checkIns = { 'zh-Hans': '打卡次数', en: 'Check-ins logged', 'zh-Hant': '打卡次數' };
-      const changed = Words.parse(
-        JSON.parse((await call('change_week_summary_words', { stats: { checkIns } })).text),
-      );
-      expect(changed).toStrictEqual({ ...before, stats: { ...before.stats, checkIns } });
-      await call('change_week_summary_words', { stats: { checkIns } });
-      expect(await logged()).toStrictEqual([{ version: 1, ...changed }]);
-
-      // An award or count the API doesn't have, a winner's words without the number, or nothing.
-      for (const args of [
-        { stats: { laps: checkIns } },
-        // A count without its Traditional Chinese.
-        { stats: { checkIns: { 'zh-Hans': '打卡', en: 'Check-ins' } } },
-        {
-          awards: {
-            crown: {
-              symbol: 'crown.fill',
-              title: { 'zh-Hans': '皇冠', en: 'Crown', 'zh-Hant': '皇冠' },
-              winner: {
-                'zh-Hans': { one: '练了几天', other: '练了 {n} 天' },
-                en: { one: '{n} day', other: '{n} days' },
-                'zh-Hant': { one: '練了 {n} 天', other: '練了 {n} 天' },
-              },
-            },
-          },
-        },
-        {},
-      ]) {
-        expect((await call('change_week_summary_words', args)).isError).toBe(true);
-      }
-      expect(await logged()).toHaveLength(1);
-    } finally {
-      await call('change_week_summary_words', { stats: { checkIns: restored } });
-    }
-    expect(Words.parse(JSON.parse((await call('get_week_summary_words')).text))).toStrictEqual({
-      ...before,
-      stats: { ...before.stats, checkIns: restored },
-    });
-    await client.close();
-  });
-
   it('puts the app’s copy by key and takes it back, logging each change once', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
@@ -1251,28 +1172,13 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('reads the unlock rules and logs a change, refusing a sport the list lacks', async () => {
+  it('puts an unlock rule and logs it, refusing a prop and a sport the list lacks', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
     const call = async (name: string, args: Record<string, unknown> = {}) => {
       const result = await client.callTool({ name, arguments: args });
       return { isError: result.isError === true, text: textOf(result) };
     };
-    const before = await call('get_unlock_rules');
-    const Rules = z.object({
-      version: z.literal(1),
-      rules: z.array(
-        z
-          .object({ kind: z.string(), id: z.string(), sports: z.array(z.string()), after: z.int() })
-          .loose(),
-      ),
-    });
-    const deuce = Rules.parse(JSON.parse(before.text)).rules.find(({ id }) => id === 'deuce');
-    expect(deuce).toMatchObject({
-      kind: 'store',
-      sports: ['tennis', 'pickleball', 'squash'],
-      after: 3,
-    });
     // Putting a rule back as it is changes nothing, but the call is still logged.
     const same = await call('put_unlock_rule', {
       kind: 'store',
@@ -1281,7 +1187,28 @@ describe('the admin MCP server', () => {
       after: 3,
     });
     expect(same.isError).toBe(false);
-    expect(JSON.parse(same.text)).toStrictEqual(JSON.parse(before.text));
+    const Rules = z.object({
+      version: z.literal(1),
+      rules: z.array(
+        z
+          .object({ kind: z.string(), id: z.string(), sports: z.array(z.string()), after: z.int() })
+          .loose(),
+      ),
+    });
+    const deuce = Rules.parse(JSON.parse(same.text)).rules.find(({ id }) => id === 'deuce');
+    expect(deuce).toMatchObject({
+      kind: 'store',
+      sports: ['tennis', 'pickleball', 'squash'],
+      after: 3,
+    });
+    const props = await call('put_unlock_rule', {
+      kind: 'prop',
+      id: 'racket',
+      sports: ['tennis'],
+      after: 1,
+    });
+    // Props need no rule: every member holds every one.
+    expect(props.isError).toBe(true);
     const refused = await call('put_unlock_rule', {
       kind: 'store',
       id: 'deuce',

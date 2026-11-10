@@ -55,12 +55,6 @@ private let picked = PreparedPhoto(
         try PostEdit(original: saved, activity: .sport("run"), minutes: nil, line: "", photos: [.new(picked)])
             .checkIn(uploaded: [:])
     }
-    let disclaimer = CheckIn(
-        id: saved.id, member: myID, day: tuesday, createdAt: saved.createdAt, audience: saved.audience,
-        entry: .disclaimer(try Disclaimer("下雨了")))
-    let empty = PostEdit(original: disclaimer, activity: .sport("run"), minutes: nil, line: " ", photos: [])
-    #expect(!empty.isSavable)
-    #expect(PostEdit(original: disclaimer, activity: .sport("run"), minutes: nil, line: "还在下", photos: []).isSavable)
 }
 
 @MainActor @Test func editingUploadsTheNewPhotosThenSavesAndDeletingRemovesThePost() async throws {

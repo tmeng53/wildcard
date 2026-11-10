@@ -112,9 +112,9 @@ extension WildcardAPI {
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
                     }),
-                week: card.week.map { WeekCount(trainedDays: $0.trainedDays, plannedDays: $0.plannedDays) },
+                week: WeekCount(trainedDays: card.week.trainedDays, plannedDays: card.week.plannedDays),
                 board: try TitleBoard(card),
-                schedule: try card.week.flatMap(MateSchedule.init))
+                schedule: try MateSchedule(card.week))
         }
     }
 
@@ -240,19 +240,18 @@ public struct SquadmateCard: Hashable, Sendable {
     /// When they signed up; nil before they saved a profile.
     public let joinedAt: Date?
     public let totals: CheckInTotals
-    /// Their own 本周 x/y; nil from a server that doesn't send it.
-    public let week: WeekCount?
+    /// Their own 本周 x/y.
+    public let week: WeekCount
     public let board: TitleBoard
-    /// Their 出赛表 this week; nil from a server that doesn't send it.
-    public let schedule: MateSchedule?
+    /// Their 出赛表 this week.
+    public let schedule: MateSchedule
 }
 
 extension MateSchedule {
-    /// A squadmate's 出赛表 this week as the API sends it on their card; nil from a server that
-    /// sends only the week's count.
-    init?(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
-        guard let start = wire.weekStart, let days = wire.days, let marks = wire.marks else { return nil }
-        let planned = try [PlanDay](wire: days)
+    /// A squadmate's 出赛表 this week as the API sends it on their card.
+    init(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
+        let (start, marks) = (wire.weekStart, wire.marks)
+        let planned = try [PlanDay](wire: wire.days)
         guard planned.count == WeeklyPlan.dayCount else { throw .planLength(planned.count) }
         // A day's mark for each of the plan's days.
         guard marks.count == WeeklyPlan.dayCount else { throw .planLength(marks.count) }
@@ -268,9 +267,9 @@ extension MateSchedule {
         // A goal this build can't read is left out rather than the whole week.
         let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
         let weekStart = try LocalDay(start)
-        // The squad's W1 when the server sends it, so every card shows the squad's week number.
-        let first = try (wire.squadFirstWeek ?? wire.firstWeek).map { day throws(ContractsError) in try LocalDay(day) }
-        let today = try wire.today.map { day throws(ContractsError) in try LocalDay(day) }
+        // The squad's W1, so every card shows the squad's week number.
+        let first = try LocalDay(wire.squadFirstWeek)
+        let today = try LocalDay(wire.today)
         // Seven of each, checked above, is all it refuses.
         guard
             let schedule = try? MateSchedule(

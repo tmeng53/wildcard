@@ -1,3 +1,4 @@
+import { NEW_YORK } from '@wildcard/time-zones';
 import { randomUUID } from 'node:crypto';
 
 import { Kysely, PostgresDialect, sql } from 'kysely';
@@ -61,6 +62,7 @@ async function squadOf(count: number) {
   const people = await Promise.all(Array.from({ length: count }, () => newMember()));
   const [captain, rest] = [nth(people, 0), people.slice(1)];
   const { squad } = await squads.create({
+    timeZone: NEW_YORK,
     week: '2026-11-02',
     id: SquadId.parse(randomUUID()),
     creator: captain,

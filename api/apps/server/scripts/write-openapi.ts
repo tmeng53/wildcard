@@ -142,7 +142,6 @@ const app = createApp({
   coachHiring: { hire: unused, fire: unused, change: unused, current: unused, offered: unused },
   coachActivity: {
     squad: unused,
-    putAway: unused,
     answerChallenge: unused,
     challenge: unused,
     completeChallenge: unused,
@@ -151,7 +150,6 @@ const app = createApp({
     spoke: unused,
   },
   coachLetters: { write: unused },
-  weekSummaryWords: () => Promise.reject(new Error('unused')),
   scenes: createScenes({
     store: createPostgresSceneStore(db),
     switches: () => createSwitches({ store: createPostgresSwitchStore(db) }).states(),

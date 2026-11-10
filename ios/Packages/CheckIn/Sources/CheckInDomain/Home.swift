@@ -151,8 +151,6 @@ public struct Home: Hashable, Sendable {
                 week: WeekCount(trainedDays: 0, plannedDays: today.myWeek.week.plannedDays))
             home.today.squadWeek.trainedDays = 0
         }
-        home.today.today.everyoneTrained =
-            home.today.today.trained > 0 && home.today.members.allSatisfy { $0.training == .trained || $0.plannedRest }
         return home
     }
 

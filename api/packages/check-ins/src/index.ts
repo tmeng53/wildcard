@@ -8,10 +8,10 @@ export {
 export { createPostgresCommentStore } from './adapters/postgres-comment-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
 export { createPostgresQuickReactions } from './adapters/postgres-quick-reactions.js';
-export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary-words.js';
 
 export {
   Audience,
+  AUDIENCE_MAX,
   CheckInDraft,
   CheckInEdit,
   CheckInId,
@@ -96,7 +96,6 @@ export type {
   SportList,
   SquadMembership,
   WeeklyPlanStore,
-  WeekSummaryWordsStore,
   QuickReactionsStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
@@ -105,19 +104,8 @@ export type { TrainingStatus, Week } from './domain/days.js';
 export { createCheckIns, type CheckIns } from './use-cases/check-ins.js';
 export type { SquadPost } from './use-cases/check-ins/list-squad-check-ins.js';
 export type { MyPostsPage } from './use-cases/check-ins/list-my-posts.js';
-export {
-  Language,
-  WeekSummaryWords,
-  WeekSummaryWordsChange,
-  inLanguage,
-  winnerText,
-} from './domain/week-summary-words.js';
 export { QuickReactions } from './domain/quick-reactions.js';
 export { createQuickReactions, type QuickReactionsAdmin } from './use-cases/quick-reactions.js';
-export {
-  createWeekSummaryWords,
-  type WeekSummaryWordsAdmin,
-} from './use-cases/week-summary-words.js';
 export type { SquadMemberToday, SquadToday } from './use-cases/check-ins/squad-today.js';
 export type { MemberWeek } from './use-cases/check-ins/member-week.js';
 export {

@@ -683,9 +683,6 @@ importers:
 
   packages/weather:
     dependencies:
-      '@wildcard/errors':
-        specifier: workspace:*
-        version: link:../errors
       '@wildcard/time-zones':
         specifier: workspace:*
         version: link:../time-zones
