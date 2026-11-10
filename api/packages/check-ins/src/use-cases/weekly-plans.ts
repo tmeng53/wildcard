@@ -106,8 +106,8 @@ export async function findWeeklyPlan(
 /**
  * Makes `day` show what the member trained (`trainedOnDay`): a planned rest day, a day with no
  * sport or a day planned as a sport none of that day's 训练 logged becomes a training day of this
- * 训练's sport. A rest day it turned notes which 训练 did it, so a squadmate's card can tell it
- * from a day the member planned. Safe to repeat.
+ * 训练's sport. The day notes which 训练 turned it and what it was planned as, so a squadmate who
+ * can't see that 训练 sees the day as planned. Safe to repeat.
  */
 export async function planTrainedDay(
   {
@@ -145,7 +145,11 @@ export async function planTrainedDay(
     member,
     weekStart: plan.weekStart,
     days,
-    trainedBy: plan.days[index]?.kind === 'rest' ? { ...trainedBy, [index]: checkIn } : trainedBy,
+    // The day as the member planned it stays with the turn, however many 训练 turn it again.
+    trainedBy: {
+      ...trainedBy,
+      [index]: { checkIn, from: trainedBy[index]?.from ?? plan.days[index] ?? { kind: 'rest' } },
+    },
   });
 }
 

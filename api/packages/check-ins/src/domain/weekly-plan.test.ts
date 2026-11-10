@@ -12,7 +12,10 @@ import {
   localDayAt,
   plannedTrainingDays,
   restedOnDay,
+  StoredPlan,
+  storedPlan,
   trainedByKept,
+  trainedByOf,
   trainedOnDay,
   weekStartOf,
   type PlanDays as Days,
@@ -363,11 +366,39 @@ describe('plannedTrainingDays', () => {
   });
 });
 
+describe('storedPlan', () => {
+  const id = '00000000-0000-4000-8000-000000000001';
+  const days: Days = [train, run, rest, train, train, train, rest];
+
+  it('stores a turned rest day as before, and what a turned training day was planned as', () => {
+    expect(storedPlan(days, {})).toStrictEqual({ version: 1, days });
+    expect(storedPlan(days, { '1': { checkIn: id, from: rest } })).toStrictEqual({
+      version: 1,
+      days,
+      trainedBy: { '1': id },
+    });
+    const lift = { kind: 'train', sport: 'strength' } as const;
+    const stored = storedPlan(days, { '1': { checkIn: id, from: lift } });
+    expect(stored).toStrictEqual({
+      version: 1,
+      days,
+      trainedBy: { '1': id },
+      turnedFrom: { '1': lift },
+    });
+    expect(trainedByOf(StoredPlan.parse(stored))).toStrictEqual({
+      '1': { checkIn: id, from: lift },
+    });
+    expect(
+      trainedByOf(StoredPlan.parse({ version: 1, days, trainedBy: { '1': id } })),
+    ).toStrictEqual({ '1': { checkIn: id, from: rest } });
+  });
+});
+
 describe('trainedByKept', () => {
   it('keeps the days a 练了 turned only while the member leaves them as they are', () => {
     const run = { kind: 'train', sport: 'run' } as const;
     const current: Days = [train, run, rest, train, train, train, rest];
-    const trainedBy = { '1': '00000000-0000-4000-8000-000000000001' };
+    const trainedBy = { '1': { checkIn: '00000000-0000-4000-8000-000000000001', from: rest } };
     expect(trainedByKept({ current, next: [...current], trainedBy })).toStrictEqual(trainedBy);
     const next: Days = [rest, run, rest, train, train, train, rest];
     expect(trainedByKept({ current, next, trainedBy })).toStrictEqual(trainedBy);

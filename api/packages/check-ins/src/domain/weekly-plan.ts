@@ -69,17 +69,61 @@ export const plannedTrainingDays = (
     return joined?.joinedOn === undefined || date === undefined || date >= joined.joinedOn;
   }).length;
 
+const DayKey = z.string().regex(/^[0-6]$/);
+
 /**
- * Which days of a week's plan a 训练 turned from rest into training, by the day's index (0 is
- * Monday) and that 训练's id, so a squadmate's card can tell them from days the member planned.
+ * Which days of a week's plan a 训练 changed, by the day's index (0 is Monday), as stored: that
+ * 训练's id (`trainedBy`) and, where the day wasn't a rest day, what it was planned as before
+ * (`turnedFrom`), so a squadmate who can't see the 训练 sees the day as it was planned.
  */
-export const TrainedBy = z.record(z.string().regex(/^[0-6]$/), z.uuid());
-export type TrainedBy = Readonly<Record<string, string>>;
+const StoredTrainedBy = z.record(DayKey, z.uuid());
+const StoredTurnedFrom = z.record(DayKey, PlanDay);
+
+/** A day a 训练 changed: which 训练, and what the day was planned as before it. */
+export interface Turn {
+  readonly checkIn: string;
+  readonly from: PlanDay;
+}
+
+/** The days of a week's plan a 训练 changed, by the day's index (0 is Monday). */
+export type TrainedBy = Readonly<Record<string, Turn>>;
 
 /** The stored plan JSON (`weekly_plans.payload`), versioned like every stored shape. */
 export const StoredPlan = z.discriminatedUnion('version', [
-  z.strictObject({ version: z.literal(1), days: PlanDays, trainedBy: TrainedBy.optional() }),
+  z.strictObject({
+    version: z.literal(1),
+    days: PlanDays,
+    trainedBy: StoredTrainedBy.optional(),
+    turnedFrom: StoredTurnedFrom.optional(),
+  }),
 ]);
+export type StoredPlan = z.infer<typeof StoredPlan>;
+
+/** The stored plan's turned days; a day without `turnedFrom` was a rest day. */
+export function trainedByOf(stored: StoredPlan): TrainedBy {
+  return Object.fromEntries(
+    Object.entries(stored.trainedBy ?? {}).map(([day, checkIn]) => [
+      day,
+      { checkIn, from: stored.turnedFrom?.[day] ?? { kind: 'rest' } },
+    ]),
+  );
+}
+
+/** The plan to store: a rest day turned needs no `turnedFrom`, so older payloads stay as they were. */
+export function storedPlan(days: PlanDays, trainedBy: TrainedBy): StoredPlan {
+  const entries = Object.entries(trainedBy);
+  const turnedFrom = entries.filter(([, { from }]) => from.kind !== 'rest');
+  return {
+    version: 1,
+    days,
+    ...(entries.length === 0
+      ? {}
+      : { trainedBy: Object.fromEntries(entries.map(([day, { checkIn }]) => [day, checkIn])) }),
+    ...(turnedFrom.length === 0
+      ? {}
+      : { turnedFrom: Object.fromEntries(turnedFrom.map(([day, { from }]) => [day, from])) }),
+  };
+}
 
 /**
  * The days a 训练 turned into training that `next` keeps as they were: a day the member changed
