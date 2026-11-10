@@ -742,6 +742,9 @@ describe('GET /me/records', () => {
       training: { sport: 'run', minutes: 30 },
     });
     await put(me, { day: today, kind: 'healthyMeal', meal: {} });
+    // A 坦白放纵餐 keeps the card's meal 外卡 going, but 健康餐连续 counts 健康餐 only.
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    await put(me, { day: yesterday, kind: 'cheatMeal', meal: {} });
     const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
     const react = async (who: { readonly token: string }, id: string) => {
       expect(
@@ -774,6 +777,8 @@ describe('GET /me/records', () => {
       longestMinutes: 45,
       longestStreak: { days: 1, from: today, to: today },
       mealStreak: { days: 1, from: today, to: today },
+      currentStreak: { days: 1, from: today, to: today },
+      currentMealStreak: { days: 1, from: today, to: today },
       hours,
       weekdays,
       sports: [{ sport: 'run', days: 2 }],

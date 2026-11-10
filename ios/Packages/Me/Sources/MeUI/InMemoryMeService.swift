@@ -93,6 +93,8 @@ public actor InMemoryMeService: MeService {
             trainedDays: 27, minutes: 1290, longestMinutes: 95,
             longestStreak: .init(days: 6, first: day(10, 20), last: day(10, 25)),
             mealStreak: .init(days: 32, first: day(10, 6), last: day(11, 5)),
+            currentStreak: .init(days: 3, first: day(11, 3), last: day(11, 5)),
+            currentMealStreak: .init(days: 32, first: day(10, 6), last: day(11, 5)),
             hours: hours, weekdays: [5, 6, 3, 4, 4, 3, 2],
             sports: [
                 .init(activity: .sport("run"), days: 11), .init(activity: .sport("strength"), days: 8),

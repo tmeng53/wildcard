@@ -150,11 +150,11 @@ struct RecordsContent: View {
             }
             HStack(alignment: .top, spacing: Space.cardGap) {
                 StreakTile(
-                    label: Text(copy: "最长连续训练", bundle: .module), streak: records.longestStreak, today: today,
-                    order: 0, intro: intro)
+                    label: Text(copy: "最长连续训练", bundle: .module), streak: records.longestStreak,
+                    current: records.currentStreak, today: today, order: 0, intro: intro)
                 StreakTile(
-                    label: Text(copy: "健康餐连续", bundle: .module), streak: records.mealStreak, today: today,
-                    order: 1, intro: intro)
+                    label: Text(copy: "健康餐连续", bundle: .module), streak: records.mealStreak,
+                    current: records.currentMealStreak, today: today, order: 1, intro: intro)
             }
             .fixedSize(horizontal: false, vertical: true)
             if records.hasTrained {

@@ -17,6 +17,8 @@ import SwiftUI
 struct StreakTile: View {
     let label: Text
     let streak: WildcardRecords.Streak?
+    /// The run still going, for the 现在连续 row; nil once broken.
+    let current: WildcardRecords.Streak?
     let today: LocalDay
     /// Which streak tile it is, for when its tickets punch in.
     let order: Int
@@ -53,30 +55,69 @@ struct StreakTile: View {
             .frame(height: LogoTicket.size.height)
             .accessibilityHidden(true)
             if let streak {
-                RecordsDays(streak: streak, today: today)
+                let ongoing = WildcardRecords.breaksRecord(current: current, longest: streak)
+                RecordsDays(streak: streak, today: today, ongoing: ongoing)
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                     .lineLimit(1)
+                Rectangle()
+                    .fill(Color(role: .fgOnBrand, in: theme).opacity(0.14))
+                    .frame(height: Self.hairline)
+                    .accessibilityHidden(true)
+                currentRow(ongoing: ongoing)
             }
         }
         .accessibilityElement(children: .combine)
     }
 
+    /// 现在连续 N 天, or 正在刷新纪录 N 天 while the run still going is the record; 0 once broken.
+    private func currentRow(ongoing: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Group {
+                if ongoing {
+                    Text(copy: "正在刷新纪录", bundle: .module)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                } else {
+                    Text(copy: "现在连续", bundle: .module)
+                        .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
+                }
+            }
+            .typeStyle(TypeRamp.caption)
+            Spacer(minLength: Space.xs)
+            HStack(alignment: .firstTextBaseline, spacing: Self.unitGap) {
+                Text(verbatim: "\(current?.days ?? 0)")
+                    .typeStyle(TypeRamp.scoreSmall)
+                    .monospacedDigit()
+                Text(copy: "天", bundle: .module)
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
+            }
+        }
+        .lineLimit(1)
+    }
+
     private static let ticketGap = 5.0
     private static let moreHeight = 24.0
+    private static let hairline = 1.0
+    private static let unitGap = 3.0
 }
 
-/// 10.20 – 10.25, or 10.6 – 今天 when it runs to today.
+/// 10.20 – 10.25, 10.6 – 今天 when it runs to today, or 10.6 – 至今 while it is still going.
 struct RecordsDays: View {
     let streak: WildcardRecords.Streak
     let today: LocalDay
+    var ongoing = false
 
     var body: some View {
         let (month, day) = (streak.first.month, streak.first.day)
         let first = Text(copy: "\(month).\(day)", bundle: .module)
         let last =
-            streak.last == today
-            ? Text(copy: "今天", bundle: .module) : Text(copy: "\(streak.last.month).\(streak.last.day)", bundle: .module)
+            ongoing
+            ? Text(copy: "至今", bundle: .module)
+            : streak.last == today
+                ? Text(copy: "今天", bundle: .module)
+                : Text(copy: "\(streak.last.month).\(streak.last.day)", bundle: .module)
         Text(copy: "\(first) – \(last)", bundle: .module)
     }
 }
