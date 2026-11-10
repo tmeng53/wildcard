@@ -3,11 +3,12 @@ import Contracts
 
 extension TodayModel {
     /// The member saved their character in 我's editor: they wear it on the scene at once, and
-    /// if the save failed the home is read again, so the server's look comes back.
-    public func wear(_ character: MemberCharacter, saved: @escaping @MainActor () async -> Bool) async {
+    /// once `save` is done the home is read again, so the server's look stands (the new one, or
+    /// the old one back if the save failed) whatever a read already on its way brought.
+    public func wear(_ character: MemberCharacter, save: @escaping @MainActor () async -> Void) async {
         store.wear(character)
         placeSquad()
-        guard await saved() == false else { return }
+        await save()
         await store.refresh()
         placeSquad()
     }

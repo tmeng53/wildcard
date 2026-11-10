@@ -25,16 +25,13 @@ struct ProfileEditor: View {
                     close()
                     let character = MeCharacter(
                         nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona)
-                    let save: @MainActor () async -> Bool = {
-                        await profile.save(character)
-                        return !profile.saveFailed
-                    }
+                    let save: @MainActor () async -> Void = { await profile.save(character) }
                     Task {
                         if let nickname = try? Nickname(edited.nickname) {
                             let look = CharacterLook(outfit: edited.outfit, persona: edited.persona)
-                            await today.wear(MemberCharacter(nickname: nickname, look: look), saved: save)
+                            await today.wear(MemberCharacter(nickname: nickname, look: look), save: save)
                         } else {
-                            _ = await save()
+                            await save()
                         }
                     }
                 },
