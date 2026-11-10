@@ -5,12 +5,14 @@ public struct DayChallenge: Hashable, Sendable {
     public let note: String
     public let day: LocalDay
     public let challenge: CoachPageCard.Challenge
+    /// The coach who set it, still that coach after the squad changes coach.
+    public let coach: CoachSpeaker
 
-    public init(note: String, day: LocalDay, challenge: CoachPageCard.Challenge) {
-        (self.note, self.day, self.challenge) = (note, day, challenge)
+    public init(note: String, day: LocalDay, challenge: CoachPageCard.Challenge, coach: CoachSpeaker) {
+        (self.note, self.day, self.challenge, self.coach) = (note, day, challenge, coach)
     }
 
     public func completed(by completer: CoachChallengeCompleter) -> DayChallenge {
-        DayChallenge(note: note, day: day, challenge: challenge.completed(by: completer))
+        DayChallenge(note: note, day: day, challenge: challenge.completed(by: completer), coach: coach)
     }
 }

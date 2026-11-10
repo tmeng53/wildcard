@@ -34,11 +34,12 @@ extension TodayView {
     }
 
     /// The challenge I accepted from the coach for today, the squad page's last row (Tracy, 2026-11-09):
-    /// what to do and how much (「拉伸」 5 分钟), and who set it.
-    func weekChallenge(_ today: DayChallenge?, coach: CoachSpeaker?) -> WeekChallenge? {
+    /// what to do and how much (「拉伸」 5 分钟), and the coach who set it, even after the squad changed
+    /// coach (Tracy, 2026-11-10).
+    func weekChallenge(_ today: DayChallenge?) -> WeekChallenge? {
         guard let today else { return nil }
         let challenge = today.challenge
-        let coach = coach?.name ?? ""
+        let coach = today.coach.name
         return WeekChallenge(
             title: challenge.title, amount: challenge.amount.map { String($0) },
             unit: challenge.amount == nil ? nil : challenge.unit,
