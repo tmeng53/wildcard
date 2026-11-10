@@ -420,7 +420,21 @@ const Story = z.object({
     .array(
       z.object({
         member: z.string(),
-        titles: z.array(z.object({ title: z.string(), speech: z.string(), move: z.string() })),
+        titles: z.array(
+          z.strictObject({
+            title: z.string(),
+            speech: z.string(),
+            move: z.string(),
+            badge: z
+              .strictObject({
+                shape: z.string(),
+                colour: z.string(),
+                tone: z.string().optional(),
+                glyph: z.string(),
+              })
+              .optional(),
+          }),
+        ),
       }),
     )
     .optional(),
@@ -525,8 +539,14 @@ describe('weekly awards', () => {
     expect(forCy.squad).toStrictEqual({ id: squad, name: 'squad' });
     expect(forCy.week).toStrictEqual({ from: WEEK, to: '2026-10-25' });
     expect(forCy.titles?.map((each) => each.member)).toStrictEqual([ana.userId, bo.userId]);
+    // Each title comes with its badge as the badge board draws it, in its colour's tone.
     expect(forCy.titles?.[0]?.titles).toStrictEqual([
-      { title: '狠人0号', speech: '周三下着雨还去跑了。', move: 'pump' },
+      {
+        title: '狠人0号',
+        speech: '周三下着雨还去跑了。',
+        move: 'pump',
+        badge: { shape: 'circle', colour: 'gym', tone: '#4A6C8C', glyph: 'flame.fill' },
+      },
     ]);
     // Cy's only check-in came after the awards: nothing of theirs is hottest.
     expect(forCy.hottest).toBeUndefined();

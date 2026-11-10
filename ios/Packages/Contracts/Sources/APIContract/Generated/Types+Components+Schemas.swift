@@ -10476,25 +10476,31 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/StoryTitle/move`.
             public var move: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryTitle/badge`.
+            public var badge: Components.Schemas.TitleBadge?
             /// Creates a new `StoryTitle`.
             ///
             /// - Parameters:
             ///   - title: The title (头衔), at most 6 characters.
             ///   - speech: Its award line (颁奖词), at most 24 characters, citing something real from the week.
             ///   - move: The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.
+            ///   - badge:
             public init(
                 title: Swift.String,
                 speech: Swift.String,
-                move: Swift.String
+                move: Swift.String,
+                badge: Components.Schemas.TitleBadge? = nil
             ) {
                 self.title = title
                 self.speech = speech
                 self.move = move
+                self.badge = badge
             }
             public enum CodingKeys: String, CodingKey {
                 case title
                 case speech
                 case move
+                case badge
             }
         }
         /// - Remark: Generated from `#/components/schemas/AwardTotals`.
