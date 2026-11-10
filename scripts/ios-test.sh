@@ -88,15 +88,11 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
 
-# What the widgets' extension and WidgetKit said during the run: a widget that draws nothing
-# shows in a UI test only as a blank box, so its own errors are the evidence.
-if [[ " ${ONLY_TESTING:-} " == *HomeScreenWidget* ]]; then
-  echo "----- widget log begin -----"
-  xcrun simctl spawn "$udid" log show --last 30m --style compact --info --debug \
-    --predicate 'process == "WildcardWidgets" OR (process == "chronod" AND eventMessage CONTAINS[c] "wildcard")' |
-    tail -400 || true
-  echo "----- widget log end -----"
-fi
+# The widgets' extension stopping on its own (a WidgetKit fatal error leaves no crash report in
+# the UI test, only a blank widget or an app missing from the widget gallery): its last words.
+xcrun simctl spawn "$udid" log show --last 2h --style compact \
+  --predicate 'process == "WildcardWidgets" AND eventMessage CONTAINS "Fatal error"' 2>/dev/null |
+  grep "Fatal error" | tail -20 | sed 's/^/widget extension: /' || true
 
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then
