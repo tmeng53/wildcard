@@ -381,7 +381,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       async ofCheckIn(squad, checkIn) {
         const rows = await db
           .selectFrom('coach_answers')
-          .select(['comment_id', 'text', 'at'])
+          .select(['comment_id', 'coach_id', 'text', 'at'])
           .where('squad_id', '=', squad)
           .where('check_in_id', '=', checkIn)
           .orderBy('at')
@@ -389,6 +389,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .execute();
         return rows.map((row) => ({
           comment: row.comment_id,
+          coach: CoachId.parse(row.coach_id),
           text: row.text,
           at: new Date(row.at),
         }));

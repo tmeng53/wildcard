@@ -291,11 +291,18 @@ export interface CoachAnswerStore {
     readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
-  /** The squad's answers under a check-in, oldest first. */
+  /** The squad's answers under a check-in, whichever coach wrote them, oldest first. */
   ofCheckIn(
     squad: SquadId,
     checkIn: string,
-  ): Promise<readonly { readonly comment: string; readonly text: string; readonly at: Date }[]>;
+  ): Promise<
+    readonly {
+      readonly comment: string;
+      readonly coach: CoachId;
+      readonly text: string;
+      readonly at: Date;
+    }[]
+  >;
 }
 
 /** A 战术板 line as members read it, with the coach who wrote it. */
