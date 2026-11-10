@@ -177,3 +177,49 @@ private func overlap(of arm: PartID, in figure: Figure, _ pose: Pose) throws -> 
 
 /// How long `Performance` may hold a clip back (`DepthSwap.reach`, internal to the engine).
 private let engineReach = 0.45
+
+/// Picking a sport changes kits with a hop (`Performance.change`), from whatever kit's move is on
+/// screen. Each swap from the squash, through the new kit's hop in, to its move stays clear of the
+/// body too.
+@Test(arguments: Persona.allCases)
+func everyArmDepthSwapThroughAKitHopHappensClearOfTheBody(persona: Persona) throws {
+    let kits = try PlaceholderCharacter.sportKits().kits
+    let hop = try PlaceholderCharacter.kitHop()
+    let base = Outfit(["body": "peach", "top": "warmup-tee", "bottom": "warmup-shorts"])
+    var swaps = 0
+    for kit in kits {
+        let figure = try PlaceholderCharacter.figure(wearing: kit.dress(base))
+        let idle = try figure.bind(PlaceholderCharacter.move(for: kit, persona: persona))
+        for next in kits where next.id != kit.id {
+            let dressed = try PlaceholderCharacter.figure(wearing: next.dress(base))
+            let move = try dressed.bind(PlaceholderCharacter.move(for: next, persona: persona))
+            for start in [0.37, 0.66, 1.24] {
+                var performance = Performance(figure: figure, idle: idle)
+                performance.change(
+                    into: dressed, idle: move, leaving: try figure.bind(hop.out), arriving: try dressed.bind(hop.in),
+                    at: start)
+                let first = Int((start * 60).rounded(.down))
+                var before = performance.pose(at: Double(first) / 60)
+                for frame in first + 1...Int(((start + hop.out.duration + hop.in.duration + 0.8) * 60).rounded(.up)) {
+                    let time = Double(frame) / 60
+                    let (after, drawn) = (performance.pose(at: time), performance.figure(at: time))
+                    // The outfit goes on between these two frames: compare each in its own drawing.
+                    let was = performance.figure(at: Double(frame - 1) / 60)
+                    for arm: PartID in ["armL", "armR"] {
+                        let index = try drawn.index(arm)
+                        guard (after.parts[index].front >= 0.5) != (before.parts[index].front >= 0.5) else { continue }
+                        swaps += 1
+                        let shown = try max(
+                            drawn.depthSwapShows(index, in: after), was.depthSwapShows(was.index(arm), in: before))
+                        #expect(
+                            shown <= 16,
+                            "\(kit.id) to \(next.id) as \(persona) from \(start)s swaps \(arm) at frame \(frame) over \(shown) pt²"
+                        )
+                    }
+                    before = after
+                }
+            }
+        }
+    }
+    #expect(swaps > 0)
+}

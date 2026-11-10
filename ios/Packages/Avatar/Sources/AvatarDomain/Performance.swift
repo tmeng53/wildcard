@@ -34,6 +34,8 @@ public struct Performance: Sendable {
         var start: Double
         /// The pose on screen when this clip began, to blend from.
         var from: Pose?
+        /// Whether the outfit went on as it began, so the frame before showed another drawing.
+        var dressed = false
         /// When each arm that changes depth as the clip blends in does, in seconds since it began.
         var swaps: [DepthSwap] = []
         /// The same for a one-shot handing back to idle, in seconds since it ended.
@@ -120,13 +122,16 @@ public struct Performance: Sendable {
     ) {
         // The hop starts on time, so the swap lands on its last frame.
         play(leaving, at: time, blending: true, waiting: false)
+        // `leaving` hands over to `arriving`, never back to this idle.
+        current.handBack = []
         let swap = time + leaving.clip.duration
         var next = Performance(figure: figure, idle: idle, startingAt: swap, blendDuration: blendDuration)
         // Where `leaving` ends up on screen, its blend in included.
         let end = self.figure.pose(leaving, at: leaving.clip.duration)
         let handOver = current.from.map { blend(from: $0, to: end, since: leaving.clip.duration) } ?? end
         next.current = Playing(
-            clip: arriving, start: swap, from: handOver.parts.count == figure.parts.count ? handOver : nil)
+            clip: arriving, start: swap, from: handOver.parts.count == figure.parts.count ? handOver : nil,
+            dressed: true)
         next.plan()
         change = Change(swap: swap, performance: next)
     }
@@ -210,7 +215,9 @@ public struct Performance: Sendable {
         // A one-shot's changes land before it ends; handing back plans the rest.
         let latest =
             clip.clip.loops ? blendDuration + DepthSwap.reach : min(blendDuration + DepthSwap.reach, clip.clip.duration)
-        current.swaps = performance.depthSwaps(from: from, earliest: 0, latest: latest) { time in
+        current.swaps = performance.depthSwaps(
+            from: from, earliest: 0, latest: latest, soonest: current.dressed ? 2 : 1
+        ) { time in
             let pose = performance.figure.pose(clip, at: time)
             return (performance.blend(from: from, to: pose, since: time), pose.parts)
         }
@@ -221,7 +228,10 @@ public struct Performance: Sendable {
         guard !clip.clip.loops else { return }
         let length = clip.clip.duration
         let last = figure.pose(clip, at: length)
-        current.handBack = performance.depthSwaps(from: last, earliest: -min(DepthSwap.reach, length)) { time in
+        // From after the blend in and its changes, which the hand-back mustn't undo.
+        let blendIn = current.swaps.map(\.closes).reduce(current.from == nil ? 0 : blendDuration, max)
+        let earliest = -max(min(DepthSwap.reach, length - blendIn), 0)
+        current.handBack = performance.depthSwaps(from: last, earliest: earliest) { time in
             if time < 0 {
                 let pose = performance.figure.pose(clip, at: length + time)
                 return (pose, pose.parts)
@@ -234,9 +244,9 @@ public struct Performance: Sendable {
     /// For each arm whose depth in `start` differs from the one keyed once the blend is over,
     /// when it changes. `frame(t)` gives the pose on screen `t` seconds after the blend starts,
     /// and the poses the clips key then, whose depths bound where the change may go; it looks no
-    /// later than `latest`.
+    /// later than `latest`, nor sooner than frame `soonest` of the blend.
     private func depthSwaps(
-        from start: Pose, earliest: Double, latest: Double = .infinity,
+        from start: Pose, earliest: Double, latest: Double = .infinity, soonest: Int = 1,
         frame: (Double) -> (pose: Pose, keyed: [PartPose])
     ) -> [DepthSwap] {
         guard start.parts.count == figure.parts.count, blendDuration > 0 else { return [] }
@@ -256,7 +266,10 @@ public struct Performance: Sendable {
             let (before, after) = (start.parts[part].front >= 0.5, keyed[settle])
             guard before != after else { continue }
             let (open, close) = Self.window(keyed, before: before, after: after, origin: origin, settle: settle)
-            guard open + 1 < close else { continue }
+            // Not before `soonest`: where the frame before a clip shows another outfit, two frames in,
+            // so the screen frame before the change shows this one too.
+            let soonest = max(open + 1, soonest)
+            guard soonest < close else { continue }
             var shows: [Int: Double] = [:]
             func shown(_ index: Int) -> Double {
                 if let known = shows[index] { return known }
@@ -264,7 +277,7 @@ public struct Performance: Sendable {
                 shows[index] = area
                 return area
             }
-            let order = (open + 1..<close).sorted { abs($0 - origin) < abs($1 - origin) }
+            let order = (soonest..<close).sorted { abs($0 - origin) < abs($1 - origin) }
             var best = (index: order[0], shows: Double.infinity)
             for index in order {
                 // A screen frame either side of it, wherever the screen's frames fall.
