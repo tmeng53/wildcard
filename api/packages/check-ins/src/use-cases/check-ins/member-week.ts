@@ -85,6 +85,33 @@ export async function memberWeek(
 }
 
 /**
+ * A member's plan for a week as `squad` may see it (`daysSeenBy`): a day a 训练 the squad can't
+ * see turned reads as the member planned it, so a 仅自己可见 post never reaches the squad, or its
+ * coach, through the plan.
+ */
+export async function planSharedTo(
+  deps: {
+    readonly store: Pick<CheckInStore, 'listForMember'>;
+    readonly plans: Pick<WeeklyPlanStore, 'savedFor' | 'templateFor' | 'trainedBy'>;
+  },
+  {
+    member,
+    squad,
+    weekStart,
+  }: { readonly member: MemberId; readonly squad: SquadId; readonly weekStart: WeekStart },
+): Promise<PlanDays> {
+  const week = weekOf(weekStart);
+  const [plan, trainedBy, theirs] = await Promise.all([
+    findWeeklyPlan({ store: deps.plans }, { member, weekStart }),
+    deps.plans.trainedBy(member, weekStart),
+    deps.store.listForMember({ member, from: week.from, to: week.to }),
+  ]);
+  const shared = theirs.filter(({ audience }) => audience.includes(squad));
+  const marks = week.days.map((day) => markOn(shared, day));
+  return daysSeenBy({ plan: plan.days, trainedBy, marks, shared });
+}
+
+/**
  * The plan's days as the squad may see them. A 训练 turns its day into a training day of its
  * sport (`trainedOnDay`), so a day a 训练 turned that the squad can't see (sent elsewhere, or
  * deleted) shows as the sport of a 训练 that did come to this squad, else as the member planned it.

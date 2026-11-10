@@ -3,7 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 
 import { MemberId, SquadId } from '../domain/check-in.js';
-import { memberWeek } from './check-ins/member-week.js';
+import { WeekStart } from '../domain/weekly-plan.js';
+import { memberWeek, planSharedTo } from './check-ins/member-week.js';
 
 // Monday 2026-11-09 at 00:13 in New York: still Sunday the 8th in Los Angeles.
 const now = new Date('2026-11-09T05:13:00Z');
@@ -71,5 +72,24 @@ describe('memberWeek', () => {
       { member, viewer, squad, squadZone: 'America/New_York' },
     );
     expect(week.days.slice(1, 3)).toStrictEqual([lift, rest]);
+  });
+
+  it('gives the plan as the squad sees it, for the coach', async () => {
+    const lift = { kind: 'train', sport: 'strength' } as const;
+    const swim = { kind: 'train', sport: 'swim' } as const;
+    const train = { kind: 'train' } as const;
+    const rest = { kind: 'rest' } as const;
+    const days = await planSharedTo(
+      {
+        store: deps.store,
+        plans: {
+          ...deps.plans,
+          savedFor: () => Promise.resolve([train, swim, rest, train, train, train, rest]),
+          trainedBy: () => Promise.resolve({ '1': { checkIn: randomUUID(), from: lift } }),
+        },
+      },
+      { member, squad, weekStart: WeekStart.parse('2026-11-09') },
+    );
+    expect(days[1]).toStrictEqual(lift);
   });
 });
