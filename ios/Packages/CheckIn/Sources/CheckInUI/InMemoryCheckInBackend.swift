@@ -207,6 +207,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func savedHome() async -> Home? { current }
 
+    public func savedCoach() async -> SavedCoach? {
+        current.map { SavedCoach(squad: $0.squad.id, coach: sidelineCoach?.coach) }
+    }
+
     public func home() async throws(CheckInError) -> Home? { current }
 
     public func upload(_ photo: PreparedPhoto) async throws(CheckInError) -> PhotoRef {
