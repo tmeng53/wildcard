@@ -58,6 +58,7 @@ extension WildcardAPI {
             return WildcardRecords(
                 trainedDays: wire.trainedDays, minutes: wire.minutes, longestMinutes: wire.longestMinutes,
                 longestStreak: try streak(wire.longestStreak), mealStreak: try streak(wire.mealStreak),
+                currentStreak: try streak(wire.currentStreak), currentMealStreak: try streak(wire.currentMealStreak),
                 hours: wire.hours, weekdays: wire.weekdays,
                 sports: try wire.sports.map { sport throws(ContractsError) in
                     .init(activity: try Activity(sport), days: sport.days)

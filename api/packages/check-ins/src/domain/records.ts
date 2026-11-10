@@ -81,9 +81,13 @@ export function hourAt(moment: Date, timeZone: string): number {
   return Number(hour ?? 0) % 24;
 }
 
+/** Rest days in a row a run outlasts: a whole week without one breaks it, whatever the plan says. */
+export const MAX_BRIDGED_DAYS = 6;
+
 /**
  * The longest run of `days` in a row. A day in `bridges` (a planned rest day) that isn't in
- * `days` neither breaks the run nor adds to it. The latest run wins a tie.
+ * `days` neither breaks the run nor adds to it, up to `MAX_BRIDGED_DAYS` of them in a row, as
+ * `currentRun` counts. The latest run wins a tie.
  */
 export function longestRun(
   days: ReadonlySet<LocalDay>,
@@ -95,22 +99,22 @@ export function longestRun(
   if (first === undefined || last === undefined) return undefined;
   let best: Streak | undefined;
   let run: { days: number; from: LocalDay; to: LocalDay } | undefined;
+  let bridged = 0;
   for (let day = first; day <= last; day = addDays(day, 1)) {
     if (days.has(day)) {
+      bridged = 0;
       run =
         run === undefined
           ? { days: 1, from: day, to: day }
           : { ...run, days: run.days + 1, to: day };
       if (best === undefined || run.days >= best.days) best = { ...run };
-    } else if (!bridges.has(day)) {
+    } else if (!bridges.has(day) || ++bridged > MAX_BRIDGED_DAYS) {
       run = undefined;
+      bridged = 0;
     }
   }
   return best;
 }
-
-/** Rest days in a row a run outlasts: a whole week without one breaks it, whatever the plan says. */
-export const MAX_BRIDGED_DAYS = 6;
 
 /**
  * The run of `days` still going on `today` (外卡 on the player card): it ends on today or, while

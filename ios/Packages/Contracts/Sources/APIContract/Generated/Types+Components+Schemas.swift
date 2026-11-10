@@ -4792,7 +4792,7 @@ extension Components {
                 case checkIns
             }
         }
-        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first.
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
@@ -4818,6 +4818,10 @@ extension Components {
             public var longestStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
             public var mealStreak: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/currentStreak`.
+            public var currentStreak: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/currentMealStreak`.
+            public var currentMealStreak: Components.Schemas.RecordStreak?
             /// 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
@@ -4845,6 +4849,8 @@ extension Components {
             ///   - longestMinutes: The longest single 训练; left out when none says how long.
             ///   - longestStreak:
             ///   - mealStreak:
+            ///   - currentStreak:
+            ///   - currentMealStreak:
             ///   - hours: 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///   - weekdays: Days trained by weekday, Monday first.
             ///   - sports: The sports trained on the most days, most first.
@@ -4857,6 +4863,8 @@ extension Components {
                 longestMinutes: Swift.Int? = nil,
                 longestStreak: Components.Schemas.RecordStreak? = nil,
                 mealStreak: Components.Schemas.RecordStreak? = nil,
+                currentStreak: Components.Schemas.RecordStreak? = nil,
+                currentMealStreak: Components.Schemas.RecordStreak? = nil,
                 hours: [Swift.Int],
                 weekdays: [Swift.Int],
                 sports: [Components.Schemas.RecordSport],
@@ -4869,6 +4877,8 @@ extension Components {
                 self.longestMinutes = longestMinutes
                 self.longestStreak = longestStreak
                 self.mealStreak = mealStreak
+                self.currentStreak = currentStreak
+                self.currentMealStreak = currentMealStreak
                 self.hours = hours
                 self.weekdays = weekdays
                 self.sports = sports
@@ -4882,6 +4892,8 @@ extension Components {
                 case longestMinutes
                 case longestStreak
                 case mealStreak
+                case currentStreak
+                case currentMealStreak
                 case hours
                 case weekdays
                 case sports

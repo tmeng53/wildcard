@@ -4,7 +4,7 @@ import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import { currentRun, type Streak } from '../../domain/records.js';
 import { addDays, localDayAt, weekStartOf } from '../../domain/weekly-plan.js';
 import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
-import { restDays } from './records.js';
+import { restDays } from './rest-days.js';
 
 /** The streaks still going that the player card's 外卡 show; each left out once broken. */
 export interface CurrentStreaks {
