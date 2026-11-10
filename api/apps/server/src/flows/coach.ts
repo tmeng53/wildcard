@@ -86,7 +86,7 @@ export function coachSquadWeek(deps: {
         // author's.
         ...(record.inFeed
           ? { ...entryOf(record, sportNames), photos: photosOf(record).map(({ path }) => path) }
-          : { ...withoutWords(entryOf(record, sportNames)), unposted: true as const }),
+          : { ...withoutWords(entryOf(unnamed(record), sportNames)), unposted: true as const }),
         reactedBy: (week.reactions.get(record.id) ?? [])
           .toSorted((a, b) => a.reactedAt.getTime() - b.reactedAt.getTime())
           .map(({ member }) => member),
@@ -120,6 +120,12 @@ function postedTimeOf(createdAt: Date, zone: string | undefined): Pick<WeekCheck
   if (zone === undefined) return {};
   const { hour, minute } = wallClockAt(createdAt, zone);
   return { postedTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` };
+}
+
+/** A 训练 without the name the member gave their own sport, which is their words too. */
+function unnamed(record: CheckInRecord): CheckInRecord {
+  if (record.kind !== 'trained' || record.training.customSport === undefined) return record;
+  return { ...record, training: { ...record.training, customSport: undefined } };
 }
 
 /** An entry without its member's line. */

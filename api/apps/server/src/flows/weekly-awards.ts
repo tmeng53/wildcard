@@ -628,7 +628,8 @@ function unpostedWeekCheckIn(record: CheckInRecord): WeekCheckIn {
   };
   switch (record.kind) {
     case 'trained':
-      return { ...base, sport: record.training.customSport ?? record.training.sport };
+      // The name a member gave their own sport is their words: only the listed key goes.
+      return { ...base, sport: record.training.sport };
     case 'healthyMeal':
     case 'cheatMeal':
       return base;

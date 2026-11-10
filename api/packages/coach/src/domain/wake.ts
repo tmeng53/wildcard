@@ -74,6 +74,7 @@ export function wakesDue({
     )
     .map(({ id }) => ({ squad, reason: { kind: 'checkIn', checkIn: id } }));
   for (const checkIn of week.checkIns) {
+    if (checkIn.unposted === true) continue;
     for (const comment of checkIn.comments) {
       if (saidTo(comment) === undefined) continue;
       if (comment.at.getTime() <= since || comment.at > now) continue;

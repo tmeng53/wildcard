@@ -201,7 +201,9 @@ struct PostCard: View {
                     } else {
                         Spacer(minLength: 0)
                     }
-                    ReactionRow(model: model, post: post, part: .buttons)
+                    if post.checkIn.inFeed {
+                        ReactionRow(model: model, post: post, part: .buttons)
+                    }
                 }
             }
             .padding(.top, Space.xxs)

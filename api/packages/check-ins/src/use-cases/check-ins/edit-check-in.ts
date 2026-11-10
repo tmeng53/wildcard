@@ -78,6 +78,7 @@ export async function editCheckIn(
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
+          inFeed: saved.inFeed,
         },
         { id, member },
       ),

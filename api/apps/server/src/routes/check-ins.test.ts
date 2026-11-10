@@ -496,6 +496,28 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
         })
       ).status,
     ).toBe(404);
+    // No post to talk under, for its author either, so nobody is told and the coach never hears.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}/comments/${randomUUID()}`,
+          token: me.token,
+          body: { version: 1, text: `@${friend.userId}`, mentions: [friend.userId] },
+        })
+      ).status,
+    ).toBe(404);
+    // An edit keeps it out of 动态.
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: { sport: 'run', caption: '改一下' } },
+    });
+    expect([
+      edited.status,
+      z.object({ inFeed: z.boolean() }).parse(edited.body).inFeed,
+    ]).toStrictEqual([200, false]);
   });
 
   it('takes an older build’s 仅自己可见 as sent to the squad, off its 动态', async () => {

@@ -103,7 +103,7 @@ public struct PostEdit: Hashable, Sendable {
             return CheckIn(
                 id: original.id, member: original.member, day: original.day, postedDay: original.postedDay,
                 createdAt: original.createdAt,
-                audience: original.audience, entry: entry)
+                audience: original.audience, inFeed: original.inFeed, entry: entry)
         } catch {
             throw .refused
         }
