@@ -10,7 +10,7 @@
     {"part": "mouthOpen", "channel": "opacity", "keys": [{"t": 0, "v": 0}, {"t": 0.85, "v": 0, "ease": "hold"}, {"t": 0.89, "v": 1, "ease": "linear"}, {"t": 2.1, "v": 1, "ease": "hold"}, {"t": 2.14, "v": 0, "ease": "linear"}, {"t": 3.0, "v": 0, "ease": "easeInOut"}]},
     {"part": "mouthSmile", "channel": "opacity", "keys": [{"t": 0, "v": 1}, {"t": 0.85, "v": 1, "ease": "hold"}, {"t": 0.89, "v": 0, "ease": "linear"}, {"t": 2.1, "v": 0, "ease": "hold"}, {"t": 2.14, "v": 1, "ease": "linear"}, {"t": 3.0, "v": 1, "ease": "easeInOut"}]},
     {"part": "mouthOpen", "channel": "scaleY", "keys": [{"t": 0, "v": 0.8}, {"t": 0.95, "v": 1.2, "ease": "backOut"}, {"t": 2.1, "v": 1, "ease": "easeInOut"}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.367, "v": 1, "ease": "hold"}, {"t": 2.283, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.367, "v": 1, "ease": "hold"}, {"t": 2.283, "v": 0, "ease": "hold"}]}
+    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.367, "v": 1, "ease": "hold"}, {"t": 2.3, "v": 0, "ease": "hold"}]},
+    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.367, "v": 1, "ease": "hold"}, {"t": 2.3, "v": 0, "ease": "hold"}]}
   ]
 }
