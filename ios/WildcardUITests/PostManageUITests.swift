@@ -85,6 +85,10 @@ final class PostManageUITests: XCTestCase {
         app.buttons["scoreCard.character"].tap()
         app.buttons["scoreCard.backdrop.plain"].tap()
         XCTAssertTrue(app.buttons["scoreCard.backdrop.plain"].isSelected, "纯色 isn't picked")
+        // Back to the chart, whose thumbnail draws without taking touches itself.
+        app.buttons["scoreCard.backdrop.chart"].tap()
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].isSelected, "the chart can't be picked again")
+        app.buttons["scoreCard.backdrop.plain"].tap()
         let squad = app.descendants(matching: .any).matching(identifier: "scoreCard.squad").firstMatch
         XCTAssertTrue(squad.exists, "the squad's name isn't on the card")
         app.switches.firstMatch.tap()
