@@ -273,18 +273,18 @@
         }
       }
     },
-    "分享到 %@": {
+    "发布到动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share to %@"
+            "value": "Post to feed"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "分享到 %@"
+            "value": "發佈到動態"
           }
         }
       }
@@ -2017,18 +2017,18 @@
         }
       }
     },
-    "仅自己可见，不计入小队数据": {
+    "只记录，不出现在动态里": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only you can see this. It won't count for your squad."
+            "value": "Logged only, not posted to the feed."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "僅自己可見，不計入小隊資料"
+            "value": "只記錄，不出現在動態裡"
           }
         }
       }

@@ -315,11 +315,11 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the squad (or only to me when not `shared`) for `day`, today when left out.
+    /// Posts `draft` to the squad, in its 动态 unless not `inFeed`, for `day`, today when left out.
     /// The page closes and the payoff plays once it is queued; it goes out behind the scene
     /// (`deliver`). False when it can never be posted; the open page says so.
     @discardableResult
-    func post(_ draft: CheckInDraft, shared: Bool, on day: LocalDay? = nil) async -> Bool {
+    func post(_ draft: CheckInDraft, inFeed: Bool, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }
         isSending = true
         sendFailed = false
@@ -329,7 +329,7 @@ public final class TodayModel {
         let isBackfill = day.map { $0 != store.postableDays.last } ?? false
         let queued: PendingCheckIn
         do {
-            queued = try await store.queue(draft, shared: shared, on: day)
+            queued = try await store.queue(draft, inFeed: inFeed, on: day)
         } catch {
             sendFailed = true
             return false

@@ -2836,6 +2836,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/inFeed`.
+            public var inFeed: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/TrainedCheckIn/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case trained = "trained"
@@ -2854,6 +2858,7 @@ extension Components {
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
+            ///   - inFeed: 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
             ///   - kind:
             ///   - training:
             public init(
@@ -2864,6 +2869,7 @@ extension Components {
                 postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool,
                 kind: Components.Schemas.TrainedCheckIn.KindPayload,
                 training: Components.Schemas.TrainingView
             ) {
@@ -2874,6 +2880,7 @@ extension Components {
                 self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.training = training
             }
@@ -2885,6 +2892,7 @@ extension Components {
                 case postedDay
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case training
             }
@@ -3348,6 +3356,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/inFeed`.
+            public var inFeed: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckIn/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case healthyMeal = "healthyMeal"
@@ -3366,6 +3378,7 @@ extension Components {
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
+            ///   - inFeed: 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
             ///   - kind:
             ///   - meal:
             public init(
@@ -3376,6 +3389,7 @@ extension Components {
                 postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool,
                 kind: Components.Schemas.HealthyMealCheckIn.KindPayload,
                 meal: Components.Schemas.MealView
             ) {
@@ -3386,6 +3400,7 @@ extension Components {
                 self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.meal = meal
             }
@@ -3397,6 +3412,7 @@ extension Components {
                 case postedDay
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case meal
             }
@@ -3458,6 +3474,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/inFeed`.
+            public var inFeed: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case cheatMeal = "cheatMeal"
@@ -3476,6 +3496,7 @@ extension Components {
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
+            ///   - inFeed: 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
             ///   - kind:
             ///   - meal:
             public init(
@@ -3486,6 +3507,7 @@ extension Components {
                 postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool,
                 kind: Components.Schemas.CheatMealCheckIn.KindPayload,
                 meal: Components.Schemas.MealView
             ) {
@@ -3496,6 +3518,7 @@ extension Components {
                 self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.meal = meal
             }
@@ -3507,6 +3530,7 @@ extension Components {
                 case postedDay
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case meal
             }
@@ -3541,6 +3565,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/inFeed`.
+            public var inFeed: Swift.Bool
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckIn/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case disclaimer = "disclaimer"
@@ -3559,6 +3587,7 @@ extension Components {
             ///   - postedDay: The member’s local day when they posted it (their day at `createdAt`), which orders the squad’s feed. Before `day` when the check-in was made for an earlier day (补打卡). Always sent; optional only so copies saved before it existed still read.
             ///   - createdAt: When the member made it, in UTC with milliseconds.
             ///   - audience: The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed.
+            ///   - inFeed: 发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it.
             ///   - kind:
             ///   - disclaimer:
             public init(
@@ -3569,6 +3598,7 @@ extension Components {
                 postedDay: Swift.String? = nil,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool,
                 kind: Components.Schemas.DisclaimerCheckIn.KindPayload,
                 disclaimer: Components.Schemas.DisclaimerView
             ) {
@@ -3579,6 +3609,7 @@ extension Components {
                 self.postedDay = postedDay
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.disclaimer = disclaimer
             }
@@ -3590,6 +3621,7 @@ extension Components {
                 case postedDay
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case disclaimer
             }
@@ -3692,6 +3724,10 @@ extension Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/TrainedCheckInDraft/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainedCheckInDraft/inFeed`.
+            public var inFeed: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/TrainedCheckInDraft/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case trained = "trained"
@@ -3707,6 +3743,7 @@ extension Components {
             ///   - day:
             ///   - createdAt:
             ///   - audience:
+            ///   - inFeed: 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
             ///   - kind:
             ///   - training:
             public init(
@@ -3714,6 +3751,7 @@ extension Components {
                 day: Swift.String,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool? = nil,
                 kind: Components.Schemas.TrainedCheckInDraft.KindPayload,
                 training: Components.Schemas.Training
             ) {
@@ -3721,6 +3759,7 @@ extension Components {
                 self.day = day
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.training = training
             }
@@ -3729,6 +3768,7 @@ extension Components {
                 case day
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case training
             }
@@ -3910,6 +3950,10 @@ extension Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft/inFeed`.
+            public var inFeed: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/HealthyMealCheckInDraft/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case healthyMeal = "healthyMeal"
@@ -3925,6 +3969,7 @@ extension Components {
             ///   - day:
             ///   - createdAt:
             ///   - audience:
+            ///   - inFeed: 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
             ///   - kind:
             ///   - meal:
             public init(
@@ -3932,6 +3977,7 @@ extension Components {
                 day: Swift.String,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool? = nil,
                 kind: Components.Schemas.HealthyMealCheckInDraft.KindPayload,
                 meal: Components.Schemas.Meal
             ) {
@@ -3939,6 +3985,7 @@ extension Components {
                 self.day = day
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.meal = meal
             }
@@ -3947,6 +3994,7 @@ extension Components {
                 case day
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case meal
             }
@@ -3992,6 +4040,10 @@ extension Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckInDraft/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CheatMealCheckInDraft/inFeed`.
+            public var inFeed: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/CheatMealCheckInDraft/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case cheatMeal = "cheatMeal"
@@ -4007,6 +4059,7 @@ extension Components {
             ///   - day:
             ///   - createdAt:
             ///   - audience:
+            ///   - inFeed: 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
             ///   - kind:
             ///   - meal:
             public init(
@@ -4014,6 +4067,7 @@ extension Components {
                 day: Swift.String,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool? = nil,
                 kind: Components.Schemas.CheatMealCheckInDraft.KindPayload,
                 meal: Components.Schemas.Meal
             ) {
@@ -4021,6 +4075,7 @@ extension Components {
                 self.day = day
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.meal = meal
             }
@@ -4029,6 +4084,7 @@ extension Components {
                 case day
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case meal
             }
@@ -4047,6 +4103,10 @@ extension Components {
             public var createdAt: Foundation.Date
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInDraft/audience`.
             public var audience: [Swift.String]
+            /// 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInDraft/inFeed`.
+            public var inFeed: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/DisclaimerCheckInDraft/kind`.
             @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case disclaimer = "disclaimer"
@@ -4062,6 +4122,7 @@ extension Components {
             ///   - day:
             ///   - createdAt:
             ///   - audience:
+            ///   - inFeed: 发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted.
             ///   - kind:
             ///   - disclaimer:
             public init(
@@ -4069,6 +4130,7 @@ extension Components {
                 day: Swift.String,
                 createdAt: Foundation.Date,
                 audience: [Swift.String],
+                inFeed: Swift.Bool? = nil,
                 kind: Components.Schemas.DisclaimerCheckInDraft.KindPayload,
                 disclaimer: Components.Schemas.Disclaimer
             ) {
@@ -4076,6 +4138,7 @@ extension Components {
                 self.day = day
                 self.createdAt = createdAt
                 self.audience = audience
+                self.inFeed = inFeed
                 self.kind = kind
                 self.disclaimer = disclaimer
             }
@@ -4084,6 +4147,7 @@ extension Components {
                 case day
                 case createdAt
                 case audience
+                case inFeed
                 case kind
                 case disclaimer
             }

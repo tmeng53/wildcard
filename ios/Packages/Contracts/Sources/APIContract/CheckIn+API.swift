@@ -13,26 +13,27 @@ extension CheckIn {
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience, entry: .trained(Training(checkIn.training, postedAt: checkIn.createdAt)))
+                audience: checkIn.audience, inFeed: checkIn.inFeed,
+                entry: .trained(Training(checkIn.training, postedAt: checkIn.createdAt)))
         case .healthyMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience,
+                audience: checkIn.audience, inFeed: checkIn.inFeed,
                 entry: .healthyMeal(
                     Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .cheatMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience,
+                audience: checkIn.audience, inFeed: checkIn.inFeed,
                 entry: .cheatMeal(
                     Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
-                audience: checkIn.audience,
+                audience: checkIn.audience, inFeed: checkIn.inFeed,
                 entry: .disclaimer(
                     Disclaimer(
                         checkIn.disclaimer.text, restDay: checkIn.disclaimer.restDay == true,
@@ -42,13 +43,13 @@ extension CheckIn {
 
     private init(
         id: String, member: String, day: String, postedDay: String?, createdAt: Date, audience: [String],
-        entry: Entry
+        inFeed: Bool, entry: Entry
     ) throws(ContractsError) {
         let posted: LocalDay? = if let postedDay { try LocalDay(postedDay) } else { nil }
         self.init(
             id: try CheckInID(wire: id), member: try MemberID(wire: member), day: try LocalDay(day),
             postedDay: posted, createdAt: Timestamp(wire: createdAt),
-            audience: try Audience(audience.map(SquadID.init(wire:))),
+            audience: try Audience(audience.map(SquadID.init(wire:))), inFeed: inFeed,
             entry: entry)
     }
 
@@ -62,22 +63,23 @@ extension CheckIn {
         case .trained(let training):
             .trained(
                 .init(
-                    version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .trained,
+                    version: ._1, day: day, createdAt: createdAt, audience: audience, inFeed: inFeed, kind: .trained,
                     training: training.wire))
         case .healthyMeal(let meal):
             .healthyMeal(
                 .init(
-                    version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .healthyMeal,
+                    version: ._1, day: day, createdAt: createdAt, audience: audience, inFeed: inFeed,
+                    kind: .healthyMeal,
                     meal: meal.wire))
         case .cheatMeal(let meal):
             .cheatMeal(
                 .init(
-                    version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .cheatMeal,
+                    version: ._1, day: day, createdAt: createdAt, audience: audience, inFeed: inFeed, kind: .cheatMeal,
                     meal: meal.wire))
         case .disclaimer(let disclaimer):
             .disclaimer(
                 .init(
-                    version: ._1, day: day, createdAt: createdAt, audience: audience, kind: .disclaimer,
+                    version: ._1, day: day, createdAt: createdAt, audience: audience, inFeed: inFeed, kind: .disclaimer,
                     disclaimer: disclaimer.wire))
         }
     }

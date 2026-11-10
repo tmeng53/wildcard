@@ -81,9 +81,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     'check_ins.created_at',
     'check_ins.kind',
     'check_ins.payload',
+    'check_ins.in_feed',
   ] as const;
 
-  type Row = Pick<Selectable<CheckIns>, 'id' | 'member_id' | 'created_at' | 'kind' | 'payload'> & {
+  type Row = Pick<
+    Selectable<CheckIns>,
+    'id' | 'member_id' | 'created_at' | 'kind' | 'payload' | 'in_feed'
+  > & {
     day: string;
     posted_day: string;
   };
@@ -132,6 +136,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       postedDay: LocalDay.parse(row.posted_day),
       createdAt: row.created_at,
       audience: audiences.get(row.id) ?? [],
+      inFeed: row.in_feed,
       ...entryFromStored({
         ...row,
         photos: photos.get(row.id) ?? [],
@@ -164,6 +169,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
               created_at: checkIn.createdAt,
               kind: checkIn.kind,
               payload: JSON.stringify(storedPayload(checkIn)),
+              in_feed: checkIn.inFeed,
             })
             .execute();
           if (checkIn.audience.length > 0) {
@@ -461,7 +467,7 @@ async function totalsOf(
   db: Kysely<CheckInTables>,
   { member, squad }: { readonly member: MemberId; readonly squad?: SquadId },
 ): Promise<CheckInTotals> {
-  // Only what reached the squad, when asked for a squad's view: a 仅自己可见 post never counts.
+  // Only what reached the squad, when asked for a squad's view: nothing from before joining it.
   const shared =
     squad === undefined
       ? sql<boolean>`true`

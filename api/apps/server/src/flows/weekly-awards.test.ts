@@ -343,6 +343,7 @@ async function trained(
     member: CheckInMember.parse(author.userId),
     day: options.day ?? '2026-10-21',
     createdAt: options.createdAt ?? new Date('2026-10-21T14:00:00.000Z'),
+    inFeed: true,
     audience: [CheckInSquad.parse(options.squad)],
     kind: 'trained',
     training: {

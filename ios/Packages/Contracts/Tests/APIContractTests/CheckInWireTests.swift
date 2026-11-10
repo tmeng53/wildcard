@@ -39,7 +39,7 @@ private func checkIn(_ entry: CheckIn.Entry, audience: [SquadID] = [squadA]) thr
 
 /// A saved check-in as `GET /me/check-ins` lists it, with `kind` and its fields spliced in.
 private func saved(_ kindAndFields: String) -> String {
-    #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.123Z","audience":["33333333-3333-3333-3333-333333333333"],"#
+    #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.123Z","audience":["33333333-3333-3333-3333-333333333333"],"inFeed":true,"#
         + kindAndFields + "}"
 }
 
@@ -49,7 +49,7 @@ private func saved(_ kindAndFields: String) -> String {
         caption: try Caption("  雨中五公里 "))
     #expect(
         try encode(try checkIn(.trained(training), audience: [squadA, squadB]).draft)
-            == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","kind":"trained","training":{"caption":"雨中五公里","photos":[{"path":"22222222-2222-2222-2222-222222222222/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},{"path":"22222222-2222-2222-2222-222222222222/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],"sport":"run"},"version":1}"#
+            == #"{"audience":["33333333-3333-3333-3333-333333333333","44444444-4444-4444-4444-444444444444"],"createdAt":"2025-10-18T00:00:00.123Z","day":"2025-10-17","inFeed":true,"kind":"trained","training":{"caption":"雨中五公里","photos":[{"path":"22222222-2222-2222-2222-222222222222/bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"},{"path":"22222222-2222-2222-2222-222222222222/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"}],"sport":"run"},"version":1}"#
     )
 }
 
@@ -64,7 +64,7 @@ private func saved(_ kindAndFields: String) -> String {
         try encode(try checkIn(.cheatMeal(Meal())).draft).hasSuffix(#""kind":"cheatMeal","meal":{},"version":1}"#))
     #expect(
         try encode(try checkIn(.disclaimer(try Disclaimer("下雨了，跑道在哭"))).draft)
-            .hasSuffix(#""disclaimer":{"text":"下雨了，跑道在哭"},"kind":"disclaimer","version":1}"#))
+            .hasSuffix(#""disclaimer":{"text":"下雨了，跑道在哭"},"inFeed":true,"kind":"disclaimer","version":1}"#))
 }
 
 @Test func aSportListedAfterThisBuildReads() throws {
@@ -124,7 +124,7 @@ private func saved(_ kindAndFields: String) -> String {
     #expect(
         try encode(try checkIn(.disclaimer(try Disclaimer("躺平也是训练", photos: photos))).draft)
             .hasSuffix(
-                #""disclaimer":{"photos":[{"path":"\#(photoA)"}],"text":"躺平也是训练"},"kind":"disclaimer","version":1}"#
+                #""disclaimer":{"photos":[{"path":"\#(photoA)"}],"text":"躺平也是训练"},"inFeed":true,"kind":"disclaimer","version":1}"#
             ))
     let json = saved(
         #""kind":"disclaimer","disclaimer":{"text":"躺平也是训练","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a"}]}"#
@@ -176,7 +176,7 @@ private func saved(_ kindAndFields: String) -> String {
     }
     #expect(throws: ContractsError.invalidID("squad")) {
         try decode(
-            #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.123Z","audience":["squad"],"kind":"healthyMeal","meal":{}}"#
+            #"{"version":1,"id":"11111111-1111-1111-1111-111111111111","member":"22222222-2222-2222-2222-222222222222","day":"2025-10-17","createdAt":"2025-10-18T00:00:00.123Z","audience":["squad"],"inFeed":true,"kind":"healthyMeal","meal":{}}"#
         )
     }
     #expect(throws: ContractsError.invalidDay("2025-02-30")) {

@@ -82,8 +82,11 @@ export function coachSquadWeek(deps: {
         createdAt: record.createdAt,
         ...postedTimeOf(record.createdAt, timeZones.get(record.member)),
         kind: record.kind,
-        ...entryOf(record, sportNames),
-        photos: photosOf(record).map(({ path }) => path),
+        // A check-in only recorded (发布到动态 off) counts, but its words and photos stay its
+        // author's.
+        ...(record.inFeed
+          ? { ...entryOf(record, sportNames), photos: photosOf(record).map(({ path }) => path) }
+          : { ...withoutWords(entryOf(record, sportNames)), unposted: true as const }),
         reactedBy: (week.reactions.get(record.id) ?? [])
           .toSorted((a, b) => a.reactedAt.getTime() - b.reactedAt.getTime())
           .map(({ member }) => member),
@@ -117,6 +120,18 @@ function postedTimeOf(createdAt: Date, zone: string | undefined): Pick<WeekCheck
   if (zone === undefined) return {};
   const { hour, minute } = wallClockAt(createdAt, zone);
   return { postedTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` };
+}
+
+/** An entry without its member's line. */
+function withoutWords(
+  entry: Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay'>,
+): Pick<WeekCheckIn, 'sport' | 'minutes' | 'restDay'> {
+  const { sport, minutes, restDay } = entry;
+  return {
+    ...(sport === undefined ? {} : { sport }),
+    ...(minutes === undefined ? {} : { minutes }),
+    ...(restDay === undefined ? {} : { restDay }),
+  };
 }
 
 /** A check-in's sport, minutes and line, as the coach reads them. */
@@ -166,7 +181,7 @@ export function coachMemberFacts(deps: {
     return Promise.all(
       members.map(async (member): Promise<MemberFacts> => {
         const [totals, plan, won] = await Promise.all([
-          // Only what reached this squad: a 仅自己可见 post never reaches its coach.
+          // Only what reached this squad: nothing from before the member joined it.
           deps.checkIns.totalsSharedTo({
             member: CheckInMember.parse(member),
             squad: CheckInSquad.parse(squad),
@@ -177,7 +192,7 @@ export function coachMemberFacts(deps: {
           }),
           deps.awards.titlesWon(AwardsMember.parse(member)),
         ]);
-        // The plan's days as the squad sees them: a day a 仅自己可见 训练 turned reads as planned.
+        // The plan's days as the squad sees them: a day a 训练 sent elsewhere turned reads as planned.
         const days = await deps.checkIns.planSharedTo({
           member: CheckInMember.parse(member),
           squad: CheckInSquad.parse(squad),

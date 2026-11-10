@@ -12,8 +12,8 @@ import UIKit
 /// photos and a 训练's map or chart, swiped, the first being the cover), or without any the shared
 /// colour block with its words; the tear under it; on the stub a 训练's 成绩条 first, across the
 /// card's width; then the author's whole character standing at the left, its head level with
-/// their name, beside a column of their name, the time and what it was, 仅自己可见 on one shared to no
-/// squad, the caption under a cover, and
+/// their name, beside a column of their name, the time and what it was, 未发动态 on one only
+/// recorded (its author's own page), the caption under a cover, and
 /// at its foot who reacted with the comment and emoji buttons, so a reaction lands next to the
 /// character that answers it; then, under a hairline, the coach's line and the latest comments. A
 /// teammate reacts with the smiley button, by holding the card and sliding to an emoji, or with
@@ -192,7 +192,7 @@ struct PostCard: View {
                 .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
-                if post.checkIn.audience.isOnlyMe { OnlyMeTag() }
+                if !post.checkIn.inFeed { UnpostedTag() }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {
