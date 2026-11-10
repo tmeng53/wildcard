@@ -1,0 +1,190 @@
+{
+  "version": 1,
+  "stores": {
+    "warmup": {
+      "name": {
+        "zhHans": "WARM-UP",
+        "en": "WARM-UP",
+        "zhHant": "WARM-UP"
+      },
+      "local": {
+        "zhHans": "热身社",
+        "en": "Warm-up club",
+        "zhHant": "熱身社"
+      },
+      "sports": {
+        "zhHans": "什么运动都行",
+        "en": "Any sport",
+        "zhHant": "什麼運動都行"
+      },
+      "tagline": {
+        "zhHans": "热身做好，事半功倍。",
+        "en": "Warm up right, and the rest gets easy.",
+        "zhHant": "熱身做好，事半功倍。"
+      }
+    },
+    "lap": {
+      "name": {
+        "zhHans": "LAP NINE",
+        "en": "LAP NINE",
+        "zhHant": "LAP NINE"
+      },
+      "local": {
+        "zhHans": "第九圈",
+        "en": "Lap nine",
+        "zhHant": "第九圈"
+      },
+      "sports": {
+        "zhHans": "跑步 快走 徒步",
+        "en": "Running, walking, hiking",
+        "zhHant": "跑步 快走 健行"
+      },
+      "tagline": {
+        "zhHans": "操场第九圈，才是今天真正开始的地方。",
+        "en": "Lap nine is where today really starts.",
+        "zhHant": "操場第九圈，才是今天真正開始的地方。"
+      },
+      "unlock": {
+        "zhHans": "跑步、快走或徒步练满 3 天解锁",
+        "en": "Unlock: run, walk or hike on 3 days",
+        "zhHant": "跑步、快走或健行練滿 3 天解鎖"
+      }
+    },
+    "nolook": {
+      "name": {
+        "zhHans": "NO LOOK",
+        "en": "NO LOOK",
+        "zhHant": "NO LOOK"
+      },
+      "local": {
+        "zhHans": "不看传球",
+        "en": "No-look pass",
+        "zhHant": "不看人傳球"
+      },
+      "sports": {
+        "zhHans": "篮球 排球 足球",
+        "en": "Basketball, volleyball, soccer",
+        "zhHant": "籃球 排球 足球"
+      },
+      "tagline": {
+        "zhHans": "传丢了，就说是战术。",
+        "en": "Bad pass? Call it strategy.",
+        "zhHant": "傳丟了，就說是戰術。"
+      },
+      "unlock": {
+        "zhHans": "球类练满 3 天解锁",
+        "en": "Unlock: ball games on 3 days",
+        "zhHant": "球類練滿 3 天解鎖"
+      }
+    },
+    "moss": {
+      "name": {
+        "zhHans": "MOSSWAY",
+        "en": "MOSSWAY",
+        "zhHant": "MOSSWAY"
+      },
+      "local": {
+        "zhHans": "苔径",
+        "en": "Moss trail",
+        "zhHant": "苔徑"
+      },
+      "sports": {
+        "zhHans": "徒步 越野跑 攀岩",
+        "en": "Hiking, trail running, climbing",
+        "zhHant": "健行 越野跑 攀岩"
+      },
+      "tagline": {
+        "zhHans": "路不在地图上，在苔藓上。",
+        "en": "The trail isn't on the map. It's on the moss.",
+        "zhHant": "路不在地圖上，在青苔上。"
+      },
+      "unlock": {
+        "zhHans": "攀岩或徒步练满 3 天解锁",
+        "en": "Unlock: climb or hike on 3 days",
+        "zhHant": "攀岩或健行練滿 3 天解鎖"
+      }
+    },
+    "halfmoon": {
+      "name": {
+        "zhHans": "HALF MOON",
+        "en": "HALF MOON",
+        "zhHant": "HALF MOON"
+      },
+      "local": {
+        "zhHans": "半月",
+        "en": "Half moon",
+        "zhHant": "半月"
+      },
+      "sports": {
+        "zhHans": "什么运动都行",
+        "en": "Any sport",
+        "zhHant": "什麼運動都行"
+      },
+      "tagline": {
+        "zhHans": "动作做不到位，表情要到位。",
+        "en": "If the pose won't land, nail the face.",
+        "zhHant": "動作做不到位，表情要到位。"
+      },
+      "unlock": {
+        "zhHans": "随便练满 3 天解锁",
+        "en": "Unlock: work out on 3 days",
+        "zhHant": "隨便練滿 3 天解鎖"
+      }
+    },
+    "deuce": {
+      "name": {
+        "zhHans": "DEUCE CLUB",
+        "en": "DEUCE CLUB",
+        "zhHant": "DEUCE CLUB"
+      },
+      "local": {
+        "zhHans": "平分俱乐部",
+        "en": "Deuce club",
+        "zhHant": "平分俱樂部"
+      },
+      "sports": {
+        "zhHans": "网球 匹克球 羽毛球",
+        "en": "Tennis, pickleball, badminton",
+        "zhHant": "網球 匹克球 羽球"
+      },
+      "tagline": {
+        "zhHans": "平分？那就接着打。",
+        "en": "Deuce? Then keep playing.",
+        "zhHant": "平分？那就接著打。"
+      },
+      "unlock": {
+        "zhHans": "拍类运动练满 3 天解锁",
+        "en": "Unlock: racket sports on 3 days",
+        "zhHant": "拍類運動練滿 3 天解鎖"
+      }
+    },
+    "powder": {
+      "name": {
+        "zhHans": "POWDER DAY",
+        "en": "POWDER DAY",
+        "zhHant": "POWDER DAY"
+      },
+      "local": {
+        "zhHans": "粉雪日",
+        "en": "Powder day",
+        "zhHant": "粉雪日"
+      },
+      "sports": {
+        "zhHans": "冬季运动",
+        "en": "Winter sports",
+        "zhHant": "冬季運動"
+      },
+      "tagline": {
+        "zhHans": "粉雪，摔了也不疼。",
+        "en": "Fresh powder. Falls don't even hurt.",
+        "zhHant": "粉雪，摔了也不疼。"
+      },
+      "limited": {
+        "zhHans": "冬季限定",
+        "en": "Winter only",
+        "zhHant": "冬季限定"
+      },
+      "limitedColor": "#1E6A9E"
+    }
+  }
+}

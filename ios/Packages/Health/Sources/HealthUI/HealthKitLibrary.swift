@@ -13,7 +13,8 @@ import HealthKit
 /// (only the zones are posted). Their date of birth, weight and sleep are never read. Its two
 /// lets, `HKHealthStore` and `UserDefaults`, are thread-safe per Apple, and the rest are constants.
 public final class HealthKitLibrary: HealthLibrary, @unchecked Sendable {  // only thread-safe lets
-    private let store: HKHealthStore
+    /// Also read by `workoutChanges()`, in its own file.
+    let store: HKHealthStore
     private let defaults: UserDefaults
     private let detail: Detail
     private let asksForNewTypes: Bool

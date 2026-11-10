@@ -2,10 +2,11 @@ import AvatarDomain
 import Contracts
 import Foundation
 
-/// The names uploaded art carries (`avatar/names.json`), in each of the app's languages, so a
-/// piece or store added through the admin tools is named without an app release. Nothing is
-/// bundled: the app's own art is named in the String Catalog, and a name here stands in front
-/// of the catalog's for the same id.
+/// The names art carries (`avatar/names.json`), in each of the app's languages, so a piece or
+/// store is named, and renamed, without an app release. The bundled file names every store this
+/// build ships with; an uploaded one stands in front of it store by store and word by word, so it
+/// may carry only what it adds or changes. A variant named here stands in front of the String
+/// Catalog's name for the same id.
 public struct ArtNames: Hashable, Sendable {
     /// A store's words, as 商店街 shows them.
     public struct Store: Hashable, Sendable {
@@ -31,6 +32,14 @@ public struct ArtNames: Hashable, Sendable {
             (self.tagline, self.unlock, self.limited) = (tagline, unlock, limited)
             self.limitedColor = limitedColor
         }
+
+        /// `uploaded`'s words in front of these, each one it carries.
+        public func overlaid(by uploaded: Store) -> Store {
+            Store(
+                name: uploaded.name, local: uploaded.local, sports: uploaded.sports ?? sports,
+                tagline: uploaded.tagline ?? tagline, unlock: uploaded.unlock ?? unlock,
+                limited: uploaded.limited ?? limited, limitedColor: uploaded.limitedColor ?? limitedColor)
+        }
     }
 
     /// Each variant's name by its id (`trot-bib`), or by `<slot>/<id>` for a face part, since a
@@ -47,6 +56,13 @@ public struct ArtNames: Hashable, Sendable {
     /// The name of `variant` in `slot`, if the uploaded names have one.
     public func variant(_ variant: String, in slot: Slot) -> CatalogNames? {
         variants["\(slot)/\(variant)"] ?? variants[variant]
+    }
+
+    /// `uploaded`'s names in front of these: its variants by id, its stores word by word.
+    public func overlaid(by uploaded: ArtNames) -> ArtNames {
+        ArtNames(
+            variants: variants.merging(uploaded.variants) { _, new in new },
+            stores: stores.merging(uploaded.stores) { bundled, new in bundled.overlaid(by: new) })
     }
 
     /// The only `version` of `names.json` this build reads.
@@ -104,13 +120,19 @@ private struct ArtWords: Decodable {
 }
 
 extension PlaceholderCharacter {
-    /// The uploaded names; none when nothing was uploaded or the file can't be read. Read once
-    /// per launch, as the scene pictures are, so a view body never reads the disk; a newer
-    /// download names from the next launch.
-    public static func names() -> ArtNames { uploadedNames }
+    /// The bundled names with the uploaded ones in front. Read once per launch, as the scene
+    /// pictures are, so a view body never reads the disk; a newer download names from the next
+    /// launch.
+    public static func names() -> ArtNames { allNames }
 
-    private static let uploadedNames: ArtNames = {
-        let url = ArtTree.url("names.json", in: tree, bundled: folder)
-        return (try? ArtNames.decode(Data(contentsOf: url))) ?? .none
+    /// The names this build ships with.
+    static let bundledNames: ArtNames =
+        (try? ArtNames.decode(Data(contentsOf: folder.appending(path: "names.json")))) ?? .none
+
+    private static let allNames: ArtNames = {
+        guard let url = ArtTree.downloadedFile("names.json", in: tree),
+            let uploaded = try? ArtNames.decode(Data(contentsOf: url))
+        else { return bundledNames }
+        return bundledNames.overlaid(by: uploaded)
     }()
 }

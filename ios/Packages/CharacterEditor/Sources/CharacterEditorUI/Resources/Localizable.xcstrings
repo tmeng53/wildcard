@@ -18,102 +18,6 @@
         }
       }
     },
-    "DEUCE CLUB": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DEUCE CLUB"
-          }
-        }
-      }
-    },
-    "HALF MOON": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HALF MOON"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "HALF MOON"
-          }
-        }
-      }
-    },
-    "LAP NINE": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LAP NINE"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "LAP NINE"
-          }
-        }
-      }
-    },
-    "MOSSWAY": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MOSSWAY"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "MOSSWAY"
-          }
-        }
-      }
-    },
-    "NO LOOK": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NO LOOK"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "NO LOOK"
-          }
-        }
-      }
-    },
-    "WARM-UP": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "WARM-UP"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "WARM-UP"
-          }
-        }
-      }
-    },
     "三花": {
       "localizations": {
         "en": {
@@ -174,22 +78,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "不拿"
-          }
-        }
-      }
-    },
-    "不看传球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No-look pass"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不看人傳球"
           }
         }
       }
@@ -290,38 +178,6 @@
         }
       }
     },
-    "做完半月式，再去喝一杯燕麦拿铁。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Half moon pose first, oat latte after."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "做完半月式，再去喝一杯燕麥拿鐵。"
-          }
-        }
-      }
-    },
-    "先热身，再上场。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Warm up, then step up."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先熱身，再上場。"
-          }
-        }
-      }
-    },
     "兔子": {
       "localizations": {
         "en": {
@@ -382,22 +238,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "匹克球拍"
-          }
-        }
-      }
-    },
-    "半月": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Half moon"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "半月"
           }
         }
       }
@@ -850,54 +690,6 @@
         }
       }
     },
-    "平分之后，才是真的比赛。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "After deuce, the real match begins."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平分之後，才是真正的比賽。"
-          }
-        }
-      }
-    },
-    "平分俱乐部": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Deuce club"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平分俱樂部"
-          }
-        }
-      }
-    },
-    "徒步 越野跑 攀岩": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hiking, trail running, climbing"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "健行 越野跑 攀岩"
-          }
-        }
-      }
-    },
     "微笑": {
       "localizations": {
         "en": {
@@ -1006,22 +798,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "復原"
-          }
-        }
-      }
-    },
-    "操场第九圈，才是今天真正开始的地方。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lap nine is where today really starts."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "操場第九圈，才是今天真正開始的地方。"
           }
         }
       }
@@ -1314,22 +1090,6 @@
         }
       }
     },
-    "热身社": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Warm-up club"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "熱身社"
-          }
-        }
-      }
-    },
     "熊": {
       "localizations": {
         "en": {
@@ -1490,22 +1250,6 @@
         }
       }
     },
-    "眼睛看左边，球已经到右边了。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eyes left, ball already right."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "眼睛看左邊，球已經到右邊了。"
-          }
-        }
-      }
-    },
     "眼镜": {
       "localizations": {
         "en": {
@@ -1570,38 +1314,6 @@
         }
       }
     },
-    "第九圈": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lap nine"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第九圈"
-          }
-        }
-      }
-    },
-    "篮球 排球 足球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Basketball, volleyball, soccer"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "籃球 排球 足球"
-          }
-        }
-      }
-    },
     "红脸蛋": {
       "localizations": {
         "en": {
@@ -1630,22 +1342,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "什麼運動都行"
-          }
-        }
-      }
-    },
-    "网球 匹克球 羽毛球": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tennis, pickleball, badminton"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "網球 匹克球 羽球"
           }
         }
       }
@@ -1746,22 +1442,6 @@
         }
       }
     },
-    "苔径": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Moss trail"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "苔徑"
-          }
-        }
-      }
-    },
     "荷兰兔": {
       "localizations": {
         "en": {
@@ -1790,38 +1470,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "豆豆眼"
-          }
-        }
-      }
-    },
-    "跑步 快走 徒步": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Running, walking, hiking"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步 快走 健行"
-          }
-        }
-      }
-    },
-    "路不在地图上，在苔藓上。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The trail isn't on the map. It's on the moss."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "路不在地圖上，在青苔上。"
           }
         }
       }
@@ -2094,86 +1742,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "高能量"
-          }
-        }
-      }
-    },
-    "跑步、快走或徒步练满 3 天解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock: run, walk or hike on 3 days"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "跑步、快走或健行練滿 3 天解鎖"
-          }
-        }
-      }
-    },
-    "球类练满 3 天解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock: ball games on 3 days"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "球類練滿 3 天解鎖"
-          }
-        }
-      }
-    },
-    "攀岩或徒步练满 3 天解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock: climb or hike on 3 days"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "攀岩或健行練滿 3 天解鎖"
-          }
-        }
-      }
-    },
-    "随便练满 3 天解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock: work out on 3 days"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隨便練滿 3 天解鎖"
-          }
-        }
-      }
-    },
-    "拍类运动练满 3 天解锁": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unlock: racket sports on 3 days"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拍類運動練滿 3 天解鎖"
           }
         }
       }
@@ -3385,86 +2953,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "球衣背號 %@"
-          }
-        }
-      }
-    },
-    "POWDER DAY": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "POWDER DAY"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "POWDER DAY"
-          }
-        }
-      }
-    },
-    "粉雪日": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Powder day"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "粉雪日"
-          }
-        }
-      }
-    },
-    "冬季运动": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Winter sports"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "冬季運動"
-          }
-        }
-      }
-    },
-    "雪道见，压个弯。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "See you on the slope. Carve one."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "雪道見，壓個彎。"
-          }
-        }
-      }
-    },
-    "冬季限定": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Winter only"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "冬季限定"
           }
         }
       }
