@@ -94,7 +94,8 @@ public struct CoachNote: Hashable, Sendable {
     public let timeZone: TimeZone
 
     public init(
-        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date, timeZone: TimeZone = SquadTimeZone.newYorkClock
+        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date,
+        timeZone: TimeZone = SquadTimeZone.newYorkClock
     ) {
         (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
         self.timeZone = timeZone

@@ -27,7 +27,6 @@ struct ScheduleBack: View {
     private var ink: Color { Color(role: .fgOnInk, in: theme) }
     private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
 
-
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
