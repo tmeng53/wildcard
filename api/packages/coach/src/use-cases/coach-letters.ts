@@ -8,7 +8,6 @@ import { instructionsOf, memoryBlock } from '../domain/prompt.js';
 import { lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf } from '../domain/squad-week.js';
-import { costMicros } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -18,10 +17,9 @@ import type {
   CoachSettingsStore,
   CoachTimeZones,
   CoachTool,
-  CoachUsageStore,
+  CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
-import { offDutyWhy } from './off-duty.js';
 
 /**
  * How long after a change of coach its letter may still be written: the app asks at once, so a
@@ -48,7 +46,7 @@ export function createCoachLetters(deps: {
   readonly catalog: CoachCatalogStore;
   readonly letters: CoachLetterStore;
   readonly memory: CoachMemoryStore;
-  readonly usage: CoachUsageStore;
+  readonly usage: CoachUsage;
   readonly squadWeek: SquadWeekSource;
   readonly aiConsented: AiConsented;
   readonly clock: () => Date;
@@ -68,11 +66,9 @@ export function createCoachLetters(deps: {
       const { agent } = deps;
       const settings = await deps.settings.current();
       if (agent === undefined || !settings.coaching) return undefined;
-      const offDuty = await offDutyWhy(
-        { usage: deps.usage, clock: deps.clock, timeZonesAt: deps.timeZonesAt },
-        { squad, settings },
-      );
-      if (offDuty !== undefined) return undefined;
+      if ((await deps.usage.offDutyWhy({ squad, model: settings.model })) !== undefined) {
+        return undefined;
+      }
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
       const from = coaches.get(handover.from);
       const to = coaches.get(handover.to);
@@ -98,15 +94,8 @@ export function createCoachLetters(deps: {
         ],
         cacheKey: `coach:${from.id}`,
       });
-      // The tokens were spent whatever comes next: they count toward the squad's cap.
-      await deps.usage.record({
-        squad,
-        coach: from.id,
-        model: settings.model,
-        usage: run.usage,
-        costMicros: costMicros(run.usage, settings),
-        at: deps.clock(),
-      });
+      // The tokens were spent whatever comes next: they count toward the squad's budget.
+      await deps.usage.record({ squad, kind: 'letter', model: settings.model, usage: run.usage });
       // A letter handed in counts even if the run then ran out of time saying it was done.
       if (text === undefined) return undefined;
       await deps.letters.save({ handover, day, text });

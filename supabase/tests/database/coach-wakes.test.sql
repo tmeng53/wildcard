@@ -1,7 +1,7 @@
--- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files, notes and usage that only
+-- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files and notes that only
 -- grow, until the squad ends or (for a member's page) the member's account goes.
 begin;
-select plan(23);
+select plan(19);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -61,15 +61,6 @@ insert into public.coach_notes (squad_id, coach_id, day, text, wake_id)
 select throws_ok($$insert into public.coach_notes (squad_id, coach_id, day, text)
   values ('33333333-3333-4333-8333-333333333333', 'xiaohun', '2026-11-01', '再来一句')$$,
   '23505', null, 'one 战术板 line a squad a day');
-insert into public.coach_usage (squad_id, wake_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
-  values ('33333333-3333-4333-8333-333333333333', 1, 'xiaohun', 'openai/gpt-6-luna', 2, 12000, 800, 4600);
-select throws_ok($$insert into public.coach_usage (squad_id, coach_id, model, requests, input_tokens, cached_input_tokens, output_tokens, cost_micros)
-  values ('33333333-3333-4333-8333-333333333333', 'xiaohun', 'openai/gpt-6-luna', 1, 500, 501, 0, 0)$$,
-  '23514', null, 'never more cached input than input');
-select throws_ok($$insert into public.coach_usage (squad_id, coach_id, model, requests, input_tokens, cached_input_tokens, output_tokens, cost_micros)
-  values ('33333333-3333-4333-8333-333333333333', 'xiaohun', 'openai/gpt-6-luna', 1, 500, -1, 0, 0)$$,
-  '23514', null, 'cached input is never negative');
-select throws_ok($$delete from public.coach_usage$$, '42501', null, 'usage is never removed');
 insert into public.coach_wake_steps (squad_id, wake_id, step, tool, input, output) values
   ('33333333-3333-4333-8333-333333333333', 1, 1, 'squad_week', '{}', '（120 字）'),
   ('33333333-3333-4333-8333-333333333333', 2, 1, 'post_note', '{"text": "先动起来"}', '已写上战术板。');
@@ -79,7 +70,6 @@ select throws_ok($$delete from public.coach_wake_steps where wake_id = 2$$, '425
 -- The check-in's deletion takes its wake; what the wake wrote stays.
 delete from public.check_ins where id = '44444444-4444-4444-8444-444444444444';
 select is((select wake_id from public.coach_files where path = 'memory.md'), null, 'a file outlives its wake');
-select is((select count(*)::int from public.coach_usage), 1, 'usage outlives its wake');
 select is((select array_agg(tool) from public.coach_wake_steps), array['post_note'], 'a wake''s steps go with it');
 
 -- A member's deletion takes their page, and the squad's end everything else.
@@ -92,7 +82,7 @@ select is((select array_agg(path order by path) from public.coach_files),
 delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is(
   (select count(*)::int from public.coach_files) + (select count(*)::int from public.coach_notes)
-    + (select count(*)::int from public.coach_usage) + (select count(*)::int from public.coach_wakes)
+    + (select count(*)::int from public.coach_wakes)
     + (select count(*)::int from public.coach_wake_steps)
     + (select count(*)::int from public.squad_coaches) + (select count(*)::int from public.squad_coach_events),
   0, 'the squad''s end takes its coaching'

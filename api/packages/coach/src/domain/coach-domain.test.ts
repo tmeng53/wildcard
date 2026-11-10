@@ -17,7 +17,7 @@ import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
 import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, wakesDue, weeksAround } from './wake.js';
+import { wakesDue, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -390,34 +390,6 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBeUndefined();
-  });
-
-  it('counts a wake’s cost at the settings’ prices, cached input at its own, rounded up', () => {
-    const prices = {
-      inputMicrosPerMillion: 100_000,
-      cachedInputMicrosPerMillion: 10_000,
-      outputMicrosPerMillion: 500_000,
-    };
-    // GPT-6 Luna: 2,000 uncached in at $0.10, 10,000 cached at $0.01, 800 out at $0.50.
-    expect(
-      costMicros(
-        { requests: 3, inputTokens: 12_000, cachedInputTokens: 10_000, outputTokens: 800 },
-        prices,
-      ),
-    ).toBe(200 + 100 + 400);
-    // Nothing cached: every input token at the full price.
-    expect(
-      costMicros(
-        { requests: 3, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 },
-        prices,
-      ),
-    ).toBe(1_200 + 400);
-    expect(
-      costMicros(
-        { requests: 1, inputTokens: 1, cachedInputTokens: 0, outputTokens: 0 },
-        { inputMicrosPerMillion: 1, cachedInputMicrosPerMillion: 0, outputMicrosPerMillion: 0 },
-      ),
-    ).toBe(1);
   });
 
   it('puts the wakes setting after the soul, its limits filled in, and never the 口头禅', () => {

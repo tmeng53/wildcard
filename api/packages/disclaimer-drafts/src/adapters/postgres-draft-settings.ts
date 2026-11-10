@@ -4,6 +4,9 @@ import { DraftSettings, ModelName } from '../domain/settings.js';
 import type { DraftSettingsStore } from '../ports.js';
 import type { DB } from './tables.js';
 
+/** The tables this module reads and writes, as generated from the migrations. */
+export type DisclaimerDraftTables = DB;
+
 /** The draft settings on Postgres: one row, and its log (`supabase/migrations`). */
 export function createPostgresDraftSettings(db: Kysely<DB>): DraftSettingsStore {
   return {
@@ -18,7 +21,6 @@ export function createPostgresDraftSettings(db: Kysely<DB>): DraftSettingsStore 
         writing: row.writing,
         model: ModelName.parse(row.model),
         instructions: row.instructions,
-        batchesPerDay: row.batches_per_day,
         memeChance: row.meme_chance,
       });
     },
@@ -34,11 +36,10 @@ export function createPostgresDraftSettings(db: Kysely<DB>): DraftSettingsStore 
               writing: settings.writing,
               model: settings.model,
               instructions: settings.instructions,
-              batches_per_day: settings.batchesPerDay,
               meme_chance: settings.memeChance,
             })
             .where(
-              sql<boolean>`(writing, model, instructions, batches_per_day, meme_chance) is distinct from (${settings.writing}, ${settings.model}, ${settings.instructions}, ${settings.batchesPerDay}, ${settings.memeChance}::double precision)`,
+              sql<boolean>`(writing, model, instructions, meme_chance) is distinct from (${settings.writing}, ${settings.model}, ${settings.instructions}, ${settings.memeChance}::double precision)`,
             )
             .returning('only_row'),
         )

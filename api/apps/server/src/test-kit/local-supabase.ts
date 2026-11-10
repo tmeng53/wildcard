@@ -2,6 +2,11 @@ import { randomUUID } from 'node:crypto';
 
 import { createAdmins, createPostgresAdminStore } from '@wildcard/admins';
 import {
+  createAiUsage,
+  createPostgresAiUsageLedger,
+  createPostgresAiUsageSettings,
+} from '@wildcard/ai-usage';
+import {
   AI_CONSENT_COPY_VERSION,
   createAiConsent,
   createPostgresConsentStore,
@@ -22,7 +27,13 @@ import {
   type PushSender,
 } from '@wildcard/push';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  MemberId,
+  SquadId,
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+} from '@wildcard/squads';
 import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
 import {
   createPostgresPlaceStore,
@@ -96,6 +107,31 @@ export function aiConsentOn(db: Database) {
   return createAiConsent({
     store: createPostgresConsentStore(db),
     copyVersion: AI_CONSENT_COPY_VERSION,
+    clock: () => new Date(),
+  });
+}
+
+/**
+ * The AI usage ledger on local Supabase, as main.ts wires it: squads on their own clocks, each
+ * member counted to the squad they are in.
+ */
+export function aiUsageOn(db: Database) {
+  const squads = createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: () => Promise.resolve(true),
+  });
+  return createAiUsage({
+    settings: createPostgresAiUsageSettings(db),
+    ledger: createPostgresAiUsageLedger(db),
+    timeZonesAt: async (ids, at) => {
+      const zones = await squads.timeZonesAt(
+        ids.map((squad) => SquadId.parse(squad)),
+        at,
+      );
+      return (squad) => zones(SquadId.parse(squad));
+    },
+    squadOf: async (member) => [...(await squads.squadIdsOf(MemberId.parse(member)))][0],
     clock: () => new Date(),
   });
 }

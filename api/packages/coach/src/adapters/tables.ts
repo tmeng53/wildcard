@@ -177,33 +177,14 @@ export interface CoachSettingEvents {
 }
 
 export interface CoachSettings {
-  cached_input_micros_per_million: Generated<number>;
   coaching: boolean;
-  daily_cap_micros: Generated<number>;
   holidays: Generated<Json>;
-  input_micros_per_million: number;
   model: string;
   note_hour: Generated<number>;
   only_row: Generated<boolean>;
-  output_micros_per_million: number;
   reasoning: Generated<string>;
   rules: string;
-  squad_daily_cap_micros: Generated<number>;
   wakes: string;
-}
-
-export interface CoachUsage {
-  at: Generated<Timestamp>;
-  cached_input_tokens: Generated<Int8>;
-  coach_id: string;
-  cost_micros: Int8;
-  id: Generated<Int8>;
-  input_tokens: Int8;
-  model: string;
-  output_tokens: Int8;
-  requests: number;
-  squad_id: string;
-  wake_id: Int8 | null;
 }
 
 export interface CoachWakes {
@@ -265,7 +246,6 @@ export interface DB {
   coach_reply_mentions: CoachReplyMentions;
   coach_setting_events: CoachSettingEvents;
   coach_settings: CoachSettings;
-  coach_usage: CoachUsage;
   coach_wake_steps: CoachWakeSteps;
   coach_wakes: CoachWakes;
   coaches: Coaches;

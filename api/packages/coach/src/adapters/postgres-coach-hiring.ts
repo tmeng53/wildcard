@@ -30,10 +30,10 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
       );
     },
 
-    async backAgain(squad) {
+    async hiredBackAt(squad) {
       const row = await db
         .selectFrom('squad_coaches as now')
-        .select('now.squad_id')
+        .select('now.hired_at')
         .where('now.squad_id', '=', squad)
         .where((eb) =>
           eb.exists(
@@ -46,19 +46,8 @@ export function createPostgresCoachHiring(db: Kysely<DB>): CoachHiringStore {
               .whereRef('before.at', '<=', 'now.hired_at'),
           ),
         )
-        .where((eb) =>
-          eb.not(
-            eb.exists(
-              eb
-                .selectFrom('coach_usage as ran')
-                .select('ran.id')
-                .whereRef('ran.squad_id', '=', 'now.squad_id')
-                .whereRef('ran.at', '>=', 'now.hired_at'),
-            ),
-          ),
-        )
         .executeTakeFirst();
-      return row !== undefined;
+      return row === undefined ? undefined : new Date(row.hired_at);
     },
 
     async hire({ squad, coach, by }) {

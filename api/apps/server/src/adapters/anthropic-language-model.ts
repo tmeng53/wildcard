@@ -1,6 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
-import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
+import {
+  LanguageModelUnavailableError,
+  type ProviderModel,
+  type TokenUsage,
+} from '@wildcard/language-model';
 
 /**
  * A member is waiting with the button pressed: past this, the app's dice are the better answer.
@@ -14,7 +18,7 @@ const TIMEOUT_MS = 8_000;
  */
 const MAX_TOKENS = 4_096;
 
-/** The language model on Anthropic's Claude API, with structured output. */
+/** The language model on Anthropic's Claude API, with structured output, and the tokens it used. */
 export function createAnthropicLanguageModel(options: {
   readonly apiKey: string;
   /**
@@ -28,7 +32,7 @@ export function createAnthropicLanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): LanguageModel {
+}): ProviderModel {
   const client = new Anthropic({
     apiKey: options.apiKey,
     // Never the environment's: an ANTHROPIC_BASE_URL meant for another tool must not redirect
@@ -40,26 +44,55 @@ export function createAnthropicLanguageModel(options: {
   });
   return {
     answer: async ({ model, instructions, prompt, reply }) => {
+      const format = zodOutputFormat(reply);
       let message;
       try {
-        message = await client.messages.parse({
+        // Created, not parsed by the SDK: a cut-off answer would throw there, and its tokens,
+        // spent all the same, would be lost.
+        message = await client.messages.create({
           model,
           max_tokens: options.maxOutputTokens ?? MAX_TOKENS,
           system: instructions,
           messages: [{ role: 'user', content: prompt }],
           // Short, playful lines: low effort keeps the wait short.
-          output_config: { effort: 'low', format: zodOutputFormat(reply) },
+          output_config: { effort: 'low', format: { type: 'json_schema', schema: format.schema } },
         });
       } catch (error) {
         throw new LanguageModelUnavailableError({ cause: error });
       }
-      // A refusal or a cut-off answer has nothing to parse.
-      if (message.stop_reason !== 'end_turn' || message.parsed_output === null) {
+      const usage = usageOf(message.usage);
+      // A refusal or a cut-off answer has nothing to parse, but its tokens were spent.
+      const text = message.content.find((block) => block.type === 'text')?.text;
+      if (message.stop_reason !== 'end_turn' || text === undefined) {
         throw new LanguageModelUnavailableError({
           cause: new Error(`The model stopped with ${String(message.stop_reason)}`),
+          usage,
         });
       }
-      return message.parsed_output;
+      try {
+        return { reply: format.parse(text), usage };
+      } catch (error) {
+        throw new LanguageModelUnavailableError({ cause: error, usage });
+      }
     },
+  };
+}
+
+/**
+ * The tokens a message used. Anthropic counts the input read from its cache and written to it
+ * apart from the rest; all of it is input, the part read from the cache at the cheaper price.
+ */
+function usageOf(usage: {
+  readonly input_tokens: number;
+  readonly cache_read_input_tokens?: number | null;
+  readonly cache_creation_input_tokens?: number | null;
+  readonly output_tokens: number;
+}): TokenUsage {
+  const cached = usage.cache_read_input_tokens ?? 0;
+  return {
+    requests: 1,
+    inputTokens: usage.input_tokens + cached + (usage.cache_creation_input_tokens ?? 0),
+    cachedInputTokens: cached,
+    outputTokens: usage.output_tokens,
   };
 }

@@ -9,11 +9,7 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
-import {
-  createDisclaimerDrafts,
-  createPostgresDraftAllowance,
-  createPostgresDraftSettings,
-} from '@wildcard/disclaimer-drafts';
+import { createDisclaimerDrafts, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -107,9 +103,7 @@ const app = createApp({
     },
     settings: createPostgresDraftSettings(db),
     memes: () => Promise.resolve([]),
-    allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
-    clock: () => new Date(),
     random: () => 0,
   }),
   push: pushOn(db),

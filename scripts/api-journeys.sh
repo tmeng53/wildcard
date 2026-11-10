@@ -338,9 +338,9 @@ if want disclaimer-drafts; then
   expect 401 AUTH_TOKEN_MISSING
   echo "disclaimer-drafts: an unknown style refused (400), a signed-out caller refused (401)"
 
-  used="$(psql "$DB_URL" -tAc "select count(*) from public.disclaimer_draft_requests where member_id = '$me'")"
-  [ "$used" = 0 ] || fail "nothing was shown, so no batch should count: $used"
-  echo "disclaimer-drafts: no batch counted"
+  used="$(psql "$DB_URL" -tAc "select count(*) from public.ai_usage where member_id = '$me'")"
+  [ "$used" = 0 ] || fail "no model was called, so no AI usage should count: $used"
+  echo "disclaimer-drafts: no AI usage counted"
 fi
 
 if want weekly-plan; then
@@ -885,7 +885,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_ai_usage_settings,change_ai_usage_settings,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -918,7 +918,7 @@ if want admin-mcp; then
   echo "admin-mcp: the log holds the two changes, newest first, and no reads ($logged)"
 
   tool get_disclaimer_draft_settings '{}'
-  [ "$(jq -r '"\(.model) \(.writing) \(.batchesPerDay)"' <<<"$result")" = "openai/gpt-6-luna true 6" ] ||
+  [ "$(jq -r '"\(.model) \(.writing) \(.memeChance)"' <<<"$result")" = "openai/gpt-6-luna true 0.3" ] ||
     fail "get_disclaimer_draft_settings: $result"
   tool change_disclaimer_draft_settings '{"writing":false}'
   [ "$(jq -r .writing <<<"$result")" = false ] || fail "change_disclaimer_draft_settings: $result"

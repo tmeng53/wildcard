@@ -1,6 +1,6 @@
 import { NEW_YORK, mondayOf, wallClockAt } from '@wildcard/time-zones';
 
-import type { CoachSettings, SquadId } from './settings.js';
+import type { SquadId } from './settings.js';
 import { saidTo, type SquadWeek } from './squad-week.js';
 
 // When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
@@ -82,33 +82,6 @@ export function wakesDue({
   if (hour >= DREAM_HOUR) wakes.push({ squad, reason: { kind: 'dream', day } });
   if (hour >= DAILY_HOUR) wakes.push({ squad, reason: { kind: 'daily', day } });
   return wakes;
-}
-
-/** The tokens a wake used, as the model's provider counts them. */
-export interface TokenUsage {
-  readonly requests: number;
-  /** Every input token, cached ones included. */
-  readonly inputTokens: number;
-  /** Those of the input tokens the provider had cached, at its cheaper price. */
-  readonly cachedInputTokens: number;
-  readonly outputTokens: number;
-}
-
-/** What tokens cost at the settings' prices, in US dollars' millionths, rounded up. */
-export function costMicros(
-  usage: TokenUsage,
-  prices: Pick<
-    CoachSettings,
-    'inputMicrosPerMillion' | 'cachedInputMicrosPerMillion' | 'outputMicrosPerMillion'
-  >,
-): number {
-  const cached = Math.min(usage.cachedInputTokens, usage.inputTokens);
-  return Math.ceil(
-    ((usage.inputTokens - cached) * prices.inputMicrosPerMillion +
-      cached * prices.cachedInputMicrosPerMillion +
-      usage.outputTokens * prices.outputMicrosPerMillion) /
-      1_000_000,
-  );
 }
 
 /** One tool call of a wake's run, as the admins read it back. */

@@ -42,7 +42,13 @@ const Request = z.object({
 describe('createOpenAILanguageModel', () => {
   it('asks for the reply’s shape and returns the parsed reply', async () => {
     const { answer, requests } = modelAnswering(['drafts']);
-    const reply = await answer();
+    const { reply, usage } = await answer();
+    expect(usage).toStrictEqual({
+      requests: 1,
+      inputTokens: 812,
+      cachedInputTokens: 0,
+      outputTokens: 96,
+    });
     expect(reply.outcome).toBe('drafts');
     expect(reply.drafts).toHaveLength(3);
     expect(requests).toHaveLength(1);
@@ -67,17 +73,19 @@ describe('createOpenAILanguageModel', () => {
   });
 
   it.each<Fixture>(['refusal', 'max-tokens'])(
-    'answers %s as unavailable: there is nothing to show',
+    'answers %s as unavailable, with the tokens it spent: there is nothing to show',
     async (fixture) => {
-      await expect(modelAnswering([fixture]).answer()).rejects.toBeInstanceOf(
-        LanguageModelUnavailableError,
-      );
+      await expect(modelAnswering([fixture]).answer()).rejects.toMatchObject({
+        reason: 'LANGUAGE_MODEL_UNAVAILABLE',
+        // Its tokens were spent all the same, and are counted.
+        usage: { outputTokens: 96 },
+      });
     },
   );
 
   it('retries an overloaded API once, then answers', async () => {
     const { answer, requests } = modelAnswering(['overloaded', 'drafts']);
-    expect((await answer()).outcome).toBe('drafts');
+    expect((await answer()).reply.outcome).toBe('drafts');
     expect(requests).toHaveLength(2);
   });
 
