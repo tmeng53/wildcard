@@ -1,4 +1,5 @@
 #if os(iOS)
+import CharacterEditorUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -10,17 +11,21 @@ import SwiftUI
 /// A squadmate's card turned over (Tracy, 2026-11-07, design E1): their name and number, W6 出赛表
 /// with 本周 x/y, a row a day of this week (the day's sport in a disc, its name, a tick for a day
 /// trained, 请假 for a 请假条; today shaded), their 饮食小目标 when they set any, and along the
-/// bottom their newest badges and how many, which open the badge board.
+/// bottom their newest badges and how many, which open the badge board, beside 穿搭 and the first
+/// pieces they wear, which open what they wear (Tracy, 2026-11-10, A).
 struct ScheduleBack: View {
     let face: PlayerCardFace
     let schedule: MateSchedule
     let openBoard: () -> Void
+    let openOutfit: () -> Void
     @Environment(\.sceneTheme) private var theme
 
     // From the approved design.
     private static let rowHeight: Double = 38
     private static let todayShade = 0.1
-    private static let smallBadge: Double = 26
+    private static let smallBadge: Double = 22
+    /// The line between 徽章 and 穿搭, as faint as a hairline on ink.
+    private static let divider = 0.3
     /// Badges shown beside 徽章; the board has the rest.
     private static let badgesShown = 2
 
@@ -42,7 +47,17 @@ struct ScheduleBack: View {
             .accessibilityIdentifier("me.cardSchedule")
             if !schedule.fuel.isEmpty { fuel }
             Spacer(minLength: Space.xs)
-            badges
+            HStack(spacing: 0) {
+                badges
+                Rectangle()
+                    .fill(Color(role: .fgOnInkMuted, in: theme).opacity(Self.divider))
+                    .frame(width: 1)
+                    .padding(.vertical, Space.s)
+                    .accessibilityHidden(true)
+                outfit
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .overlay(alignment: .top) { Hairline(on: .ink) }
         }
         .padding(.horizontal, Space.xs)
         .padding(.top, Space.xs)
@@ -145,29 +160,55 @@ struct ScheduleBack: View {
                 Text(copy: "徽章", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(ink)
-                ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
-                    TitleBadgeView(
-                        shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
-                        glyph: title.badge.glyph,
-                        size: Self.smallBadge)
+                HStack(spacing: Space.xxs) {
+                    ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
+                        TitleBadgeView(
+                            shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
+                            glyph: title.badge.glyph,
+                            size: Self.smallBadge)
+                    }
                 }
-                Spacer(minLength: Space.xs)
+                Spacer(minLength: Space.xxs)
                 Text(verbatim: "\(face.board.count)")
                     .typeStyle(TypeRamp.scoreCaption)
                     .foregroundStyle(muted)
                     .monospacedDigit()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: Sizing.smallIcon * 0.8, weight: .semibold))
-                    .foregroundStyle(muted)
-                    .accessibilityHidden(true)
+                chevron
             }
             .padding(.horizontal, Space.xxs)
             .padding(.vertical, Space.s)
-            .overlay(alignment: .top) { Hairline(on: .ink) }
             .contentShape(Rectangle())
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("me.cardBadges")
+    }
+
+    /// 穿搭 and the first pieces they wear, opening what they wear.
+    private var outfit: some View {
+        Button(action: openOutfit) {
+            HStack(spacing: Space.xs) {
+                Text(copy: "穿搭", bundle: .module)
+                    .typeStyle(TypeRamp.label)
+                    .foregroundStyle(ink)
+                    .fixedSize()
+                WornOutfitPeek(outfit: face.character.outfit)
+                Spacer(minLength: Space.xxs)
+                chevron
+            }
+            .padding(.leading, Space.s)
+            .padding(.trailing, Space.xxs)
+            .padding(.vertical, Space.s)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityIdentifier("me.cardOutfitRow")
+    }
+
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: Sizing.smallIcon * 0.8, weight: .semibold))
+            .foregroundStyle(muted)
+            .accessibilityHidden(true)
     }
 }
 #endif
