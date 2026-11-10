@@ -3,12 +3,15 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The words the widget gallery shows for each widget, from this package's catalog.
+/// The words the widget gallery shows for each widget, from this package's catalog. Strings,
+/// not `Text`: WidgetKit's `configurationDisplayName` and `description` take only a `Text` made
+/// from a key or a literal and stop the extension on any other (`Text(copy:)` is made from an
+/// `AttributedString`), so no widget would draw at all.
 public enum WidgetCopy {
-    public static var weekName: Text { Text(copy: "我的一周", bundle: .module) }
-    public static var weekDescription: Text { Text(copy: "本周练了几天", bundle: .module) }
-    public static var squadName: Text { Text(copy: "小队今天", bundle: .module) }
-    public static var squadDescription: Text { Text(copy: "今天谁练了", bundle: .module) }
+    public static var weekName: String { String(copy: "我的一周", bundle: .module) }
+    public static var weekDescription: String { String(copy: "本周练了几天", bundle: .module) }
+    public static var squadName: String { String(copy: "小队今天", bundle: .module) }
+    public static var squadDescription: String { String(copy: "今天谁练了", bundle: .module) }
 }
 
 /// A widget with no board to show: who isn't signed in or isn't in a squad yet, or a squad it

@@ -88,6 +88,12 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
 
+# The widgets' extension stopping on its own (a WidgetKit fatal error leaves no crash report in
+# the UI test, only a blank widget or an app missing from the widget gallery): its last words.
+xcrun simctl spawn "$udid" log show --last 2h --style compact \
+  --predicate 'process == "WildcardWidgets" AND eventMessage CONTAINS "Fatal error"' 2>/dev/null |
+  grep "Fatal error" | tail -20 | sed 's/^/widget extension: /' || true
+
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then
   raw="$out/attachments"
