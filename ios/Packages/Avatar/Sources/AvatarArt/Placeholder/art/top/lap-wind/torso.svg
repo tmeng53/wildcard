@@ -5,4 +5,6 @@
   <path d="M 120 214 L 120 258" fill="none" stroke="#28467E" stroke-width="2.4" stroke-linecap="round"/>
   <rect x="117.6" y="236" width="4.8" height="8" rx="1.6" fill="#FFFFFF" stroke="#28467E" stroke-width="1.2"/>
   <path d="M 100.8 244 L 104.6 247.8 L 100.8 251.6 M 106 244 L 109.8 247.8 L 106 251.6" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="92.4" cy="222" r="10.8" fill="#F4F6FA"/>
+  <circle cx="147.6" cy="222" r="10.8" fill="#F4F6FA"/>
 </svg>

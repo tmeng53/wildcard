@@ -7,4 +7,6 @@
   <path d="M 142 248 Q 140 256 136.6 262 M 145 249 Q 147 257 150 262" fill="none" stroke="#6FAE9B" stroke-width="4.6" stroke-linecap="round"/>
   <path d="M 142 248 Q 140 256 136.6 262 M 145 249 Q 147 257 150 262" fill="none" stroke="#9ED9C8" stroke-width="2.4" stroke-linecap="round"/>
   <path d="M 104 240 Q 98.6 244 104 248 Q 101.8 244 104 240 Z" fill="#6FAE9B"/>
+  <circle cx="92.4" cy="222" r="10.8" fill="#9ED9C8"/>
+  <circle cx="147.6" cy="222" r="10.8" fill="#9ED9C8"/>
 </svg>

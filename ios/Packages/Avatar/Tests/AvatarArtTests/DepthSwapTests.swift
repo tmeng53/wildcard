@@ -12,8 +12,8 @@ import Testing
 /// every frame where an arm changes depth, and the frame before, the forearm may overlap what
 /// lies between its two copies by at most 16 square points: a sliver along an outline, where the
 /// two drawings already agree.
-@Test(arguments: ["cat", "bear"])
-func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
+@Test(arguments: [("cat", "warmup-tee"), ("bear", "warmup-tee"), ("cat", "warmup-long")])
+func everyArmDepthSwapHappensClearOfTheBody(body: String, top: String) throws {
     let root = URL(filePath: #filePath).deletingLastPathComponent()
         .appending(path: "../../Sources/AvatarArt/Placeholder")
     let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
@@ -35,7 +35,7 @@ func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
         let asDrawn =
             name.hasPrefix("/clips/") || name.contains("/checkins/") && !name.contains("doze")
             || file == "entrance"
-        var look: [Slot: String] = ["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]
+        var look: [Slot: String] = ["body": body, "top": top, "bottom": "warmup-shorts"]
         // A prop's move is played holding it.
         look["prop"] = name.contains("/props/") ? file : nil
         let outfit = Outfit(look)
@@ -65,10 +65,11 @@ func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
 }
 
 /// No idle, with any species' moves on top, holds a forearm over the body, so a move can bring an
-/// arm in front, or hand it back behind, right as it blends from or back to idle.
-@Test(arguments: ["peach", "cat", "corgi", "lop", "bear"])
-func noIdleHoldsAnArmOverTheBody(body: String) throws {
-    let outfit = Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"])
+/// arm in front, or hand it back behind, right as it blends from or back to idle. Long sleeves
+/// too: their tops carry the shoulder, and the idles hold the arms a little out from the body.
+@Test(arguments: ["peach", "cat", "corgi", "lop", "bear"], topsWithSleeves)
+func noIdleHoldsAnArmOverTheBody(body: String, top: String) throws {
+    let outfit = Outfit(["body": body, "top": top, "bottom": "warmup-shorts"])
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     for persona in Persona.allCases {
         let idle = try figure.bind(
@@ -79,7 +80,7 @@ func noIdleHoldsAnArmOverTheBody(body: String) throws {
                 let shown = try overlap(of: arm, in: figure, pose)
                 #expect(
                     shown <= 4,
-                    "\(persona)'s idle on \(body) holds \(arm) over the body at frame \(frame): \(shown) pt²")
+                    "\(persona)'s idle on \(body) in \(top) holds \(arm) over the body at frame \(frame): \(shown) pt²")
             }
         }
     }
@@ -228,3 +229,13 @@ func everyArmDepthSwapThroughAKitHopHappensClearOfTheBody(persona: Persona) thro
     }
     #expect(swaps > 0)
 }
+
+/// Every top with its own arms, short sleeves and long.
+private let topsWithSleeves: [String] = {
+    let tops = URL(filePath: #filePath).deletingLastPathComponent()
+        .appending(path: "../../Sources/AvatarArt/Placeholder/art/top").standardizedFileURL
+    let names = (try? FileManager.default.contentsOfDirectory(atPath: tops.path(percentEncoded: false))) ?? []
+    return names.filter {
+        FileManager.default.fileExists(atPath: tops.appending(path: "\($0)/armL.svg").path(percentEncoded: false))
+    }.sorted()
+}()

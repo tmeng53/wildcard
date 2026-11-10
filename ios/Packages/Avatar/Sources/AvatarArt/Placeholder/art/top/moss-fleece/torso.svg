@@ -42,4 +42,6 @@
   <path d="M 98.4 231.6 L 110.4 231.6" fill="none" stroke="#F6B92B" stroke-width="1.6" stroke-linecap="round"/>
   <path d="M 120 214 L 120 236" fill="none" stroke="#7A3D22" stroke-width="2.6" stroke-linecap="round"/>
   <rect x="117.4" y="234" width="5.2" height="8.4" rx="2" fill="#F6B92B" stroke="#B9851A" stroke-width="1.2"/>
+  <circle cx="92.4" cy="222" r="10.8" fill="#A2532F"/>
+  <circle cx="147.6" cy="222" r="10.8" fill="#A2532F"/>
 </svg>

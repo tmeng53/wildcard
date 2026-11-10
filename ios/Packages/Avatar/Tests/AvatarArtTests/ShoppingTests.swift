@@ -38,7 +38,8 @@ private let shoppers: [Outfit] =
         expectOnCanvas(figure, walking, for: walk.duration, "shopping walk")
         expectOnCanvas(figure, spotting, for: spot.duration, "shopping spot")
         #expect(
-            nearlyEqual(shown(figure.pose(spotting, at: spot.duration)), shown(figure.restPose)), "spot ends at rest")
+            nearlyEqual(armsBehind(shown(figure.pose(spotting, at: spot.duration))), shown(figure.restPose)),
+            "spot ends at rest")
     }
 }
 

@@ -34,10 +34,10 @@ func everyPropHasItsMove(prop: String) throws {
         #expect(move.name == prop)
         // Its own move turns the prop itself, so a prop that keeps level is left to it.
         #expect(move.holds == prop)
-        // Its arms may end in front: the crossfade keeps them there until back at rest.
-        var end = shown(figure.pose(bound, at: move.duration))
-        for index in end.parts.indices { end.parts[index].front = 0 }
-        #expect(nearlyEqual(end, shown(figure.restPose)), "\(prop) ends at rest")
+        // Its arms may end in front (`armsBehind`).
+        #expect(
+            nearlyEqual(armsBehind(shown(figure.pose(bound, at: move.duration))), shown(figure.restPose)),
+            "\(prop) ends at rest")
         expectOnCanvas(figure, bound, for: move.duration, "\(prop) \(move.name)")
     }
 }

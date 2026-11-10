@@ -4,4 +4,6 @@
   <path d="M 106.8 236 Q 120 247.0 133.2 236" fill="none" stroke="#E2703A" stroke-width="4.2" stroke-linecap="round"/>
   <path d="M 112.08 241.28 L 109.88 245.68 M 120 243.92 L 120 248.76 M 127.92 241.28 L 130.12 245.68" fill="none" stroke="#E2703A" stroke-width="3.1500000000000004" stroke-linecap="round"/>
   <path d="M 98 254 L 142 254" fill="none" stroke="#E2703A" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="92.4" cy="222" r="10.8" fill="#E2703A"/>
+  <circle cx="147.6" cy="222" r="10.8" fill="#E2703A"/>
 </svg>

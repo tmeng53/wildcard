@@ -24,6 +24,6 @@
     { "part": "drool", "channel": "scaleX", "keys": [ {"t": 0, "v": 1}, {"t": 0.58, "v": 1, "ease": "hold"}, {"t": 0.6, "v": 0, "ease": "linear"}, {"t": 0.9, "v": 1, "ease": "easeOut"}, {"t": 1.9, "v": 1, "ease": "hold"}, {"t": 1.92, "v": 1, "ease": "linear"} ] },
     { "part": "armR", "channel": "rotation", "keys": [ {"t": 0, "v": 0}, {"t": 1.66, "v": 0, "ease": "easeInOut"}, {"t": 1.86, "v": 138, "ease": "easeOut"}, {"t": 1.98, "v": 99, "ease": "easeInOut"}, {"t": 2.1, "v": 106, "ease": "easeInOut"}, {"t": 2.2, "v": 99, "ease": "easeInOut"}, {"t": 2.5, "v": 0, "ease": "easeInOut"} ] },
     { "part": "armL", "channel": "rotation", "keys": [ {"t": 0, "v": 0}, {"t": 1.66, "v": 0, "ease": "easeInOut"}, {"t": 1.86, "v": -8, "ease": "easeInOut"}, {"t": 2.5, "v": 0, "ease": "easeInOut"} ] },
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 1}, {"t": 2.6, "v": 0, "ease": "hold"}]}
+    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 1}]}
   ]
 }

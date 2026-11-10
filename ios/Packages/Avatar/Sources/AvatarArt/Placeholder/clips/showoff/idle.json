@@ -4,6 +4,8 @@
   "duration": 2,
   "loops": true,
   "tracks": [
+    { "part": "armL", "channel": "x", "keys": [ { "t": 0, "v": -3 }, { "t": 2, "v": -3 } ] },
+    { "part": "armR", "channel": "x", "keys": [ { "t": 0, "v": 3 }, { "t": 2, "v": 3 } ] },
     { "part": "root", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.5, "v": 3, "ease": "easeInOut" },
       { "t": 1.5, "v": -3, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
@@ -17,11 +19,11 @@
       { "t": 0, "v": 0 }, { "t": 0.5, "v": -7, "ease": "easeInOut" }, { "t": 1, "v": -7 },
       { "t": 1.5, "v": 7, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
     { "part": "armL", "channel": "rotation", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.5, "v": 12, "ease": "easeInOut" },
-      { "t": 1.5, "v": 1, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
+      { "t": 0, "v": 12 }, { "t": 0.5, "v": 24, "ease": "easeInOut" },
+      { "t": 1.5, "v": 13, "ease": "easeInOut" }, { "t": 2, "v": 12, "ease": "easeInOut" } ] },
     { "part": "armR", "channel": "rotation", "keys": [
-      { "t": 0, "v": 0 }, { "t": 0.5, "v": 2, "ease": "easeInOut" },
-      { "t": 1.5, "v": -12, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
+      { "t": 0, "v": -12 }, { "t": 0.5, "v": -10, "ease": "easeInOut" },
+      { "t": 1.5, "v": -24, "ease": "easeInOut" }, { "t": 2, "v": -12, "ease": "easeInOut" } ] },
     { "part": "propR", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.5, "v": 0 }, { "t": 1.5, "v": 0 }, { "t": 2, "v": 0 } ] },
     { "part": "tail", "channel": "rotation", "keys": [
