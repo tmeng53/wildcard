@@ -34,6 +34,35 @@ final class WeekChallengeUITests: XCTestCase {
         keepScreenshot(named: "118-week-challenge-done")
     }
 
+    /// A tap on the coach's head on the challenge row opens that challenge's card on the coach's
+    /// page, and 返回 lands on the coach's page (Tracy, 2026-11-10).
+    func testTheCoachsHeadOpensTheChallengesCard() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-today.cardPage", "0", "-today.cardCollapsed", "0", "-uitest-challenge", "-uitest-coach",
+            "-uitest-coach-seen",
+        ]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+
+        let head = app.buttons["squadcard.challenge.coach"]
+        XCTAssertTrue(head.waitForExistence(timeout: Self.wait), "the challenge's coach isn't a button")
+        XCTAssertTrue(head.isHittable, "the challenge's coach is covered")
+        head.tap()
+        let challenge = app.descendants(matching: .any).matching(identifier: "coachDeck.challenge").firstMatch
+        XCTAssertTrue(challenge.waitForExistence(timeout: Self.wait), "the challenge's card didn't open")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "119-week-challenge-card")
+        XCTAssertTrue(challenge.label.contains("拉伸"), "the card opened isn't today's challenge: \(challenge.label)")
+        XCTAssertTrue(
+            app.windows.firstMatch.frame.contains(challenge.frame), "the card runs off the screen: \(challenge.frame)")
+        app.navigationBars.buttons.firstMatch.tap()
+        let history = app.buttons["coachDeck.history"]
+        XCTAssertTrue(history.waitForExistence(timeout: Self.wait), "返回 didn't land on the coach's page")
+    }
+
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

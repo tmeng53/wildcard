@@ -360,7 +360,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = { openCoachDeck() }
+                opensCoachPagesFromToday()
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {

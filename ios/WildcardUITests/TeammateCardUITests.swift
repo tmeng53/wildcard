@@ -59,6 +59,23 @@ final class TeammateCardUITests: XCTestCase {
         keepScreenshot(named: "58-teammate-badge-card")
     }
 
+    /// A tap on a teammate's ring in the squad card's 今天 row opens their card too, with their today
+    /// over it, as a tap on them on the scene does (Tracy, 2026-11-10).
+    func testFromTheSquadCardsRing() {
+        let app = launch(["-uitest-noon", "-today.cardPage", "0", "-today.cardCollapsed", "0"])
+        let ring = app.buttons.matching(identifier: "today.mateRing").firstMatch
+        XCTAssertTrue(ring.waitForExistence(timeout: Self.wait), "no teammate's ring on the squad card")
+        XCTAssertTrue(ring.isHittable, "the teammate's ring is covered")
+        ring.tap()
+        let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "their today didn't open from their ring")
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "their card didn't open from their ring")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "56c-teammate-card-from-ring")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(card.frame), "the card runs off the screen: \(card.frame)")
+    }
+
     /// A teammate's badge board sits on her card's back, with no 周日揭晓 slot, and 「‹ 出赛表」
     /// brings her 出赛表 back; it ends with the board open again.
     private func assertBoardInPlace(

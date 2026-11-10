@@ -52,11 +52,15 @@ public struct WeekChallenge: Sendable, Hashable {
 
 extension SquadCard {
     /// Today's challenge, the squad page's last row (`MyWeek.challenge`): the head of the coach
-    /// who set it, and 我完成了.
-    public func challenge<Head: View>(complete: @escaping () -> Void, @ViewBuilder coach: () -> Head) -> Self {
+    /// who set it, and 我完成了. Given `open`, a tap on the coach's head opens the challenge's
+    /// card on the coach's page.
+    public func challenge<Head: View>(
+        complete: @escaping () -> Void, open: (() -> Void)? = nil, @ViewBuilder coach: () -> Head
+    ) -> Self {
         var card = self
         card.challengeCoach = AnyView(coach())
         card.completeChallenge = complete
+        card.openChallenge = open
         return card
     }
 }
@@ -78,6 +82,8 @@ struct ChallengeRow: View {
     /// The coach's head; without one, a graphite disc stands in.
     let coach: AnyView?
     let complete: (() -> Void)?
+    /// Opens the challenge's card on the coach's page, from a tap on the coach's head.
+    let open: (() -> Void)?
 
     /// The flag or check on the head's lower right, and the ring that cuts it from the head.
     private static let badge: Double = 16
@@ -89,7 +95,14 @@ struct ChallengeRow: View {
                 .fill(Color(role: .borderDefault, in: theme))
                 .frame(height: Sizing.hairline)
             HStack(spacing: Space.s) {
-                head
+                if let open {
+                    Button(action: open) { head }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityLabel(Text(verbatim: challenge.byline))
+                        .accessibilityIdentifier("squadcard.challenge.coach")
+                } else {
+                    head
+                }
                 VStack(alignment: .leading, spacing: 0) {
                     title
                     Text(verbatim: challenge.byline)
