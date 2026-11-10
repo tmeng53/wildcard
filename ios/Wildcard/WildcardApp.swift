@@ -181,7 +181,9 @@ struct WildcardApp: App {
             service: RecapSample.Service(),
             squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
             seen: .onlyThisLaunch(),
-            scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
+            scenePicker: { _ in
+                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
+            },
             scenePicked: { scene in today.scene = scene })
     }
 

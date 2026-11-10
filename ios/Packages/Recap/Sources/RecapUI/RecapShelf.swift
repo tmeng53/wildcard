@@ -274,10 +274,10 @@ extension RecapSample {
     }
 
     /// The sample reader picking next week's scene, as in the approved design: the squad trains
-    /// at the track this week, was at the pool 5 weeks ago, and has never opened the rest. The
-    /// pick always goes through.
+    /// at the track this week, was at the pool 5 weeks ago, and has never opened the rest. In
+    /// `winter` the 雪场 is open too, a sixth tile. The pick always goes through.
     @MainActor
-    public static func scenePicker() -> ScenePicker {
+    public static func scenePicker(winter: Bool = false) -> ScenePicker {
         ScenePicker(
             options: [
                 SceneOption(scene: .track, lastTrained: .thisWeek),
@@ -285,7 +285,7 @@ extension RecapSample {
                 SceneOption(scene: .gym, lastTrained: .never),
                 SceneOption(scene: .tennis, lastTrained: .never),
                 SceneOption(scene: .climbing, lastTrained: .never),
-            ],
+            ] + (winter ? [SceneOption(scene: .ski, lastTrained: .never)] : []),
             service: ScenePick())
     }
 
