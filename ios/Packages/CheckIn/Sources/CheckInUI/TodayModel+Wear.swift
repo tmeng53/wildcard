@@ -1,3 +1,4 @@
+#if os(iOS)
 import Contracts
 
 extension TodayModel {
@@ -11,3 +12,4 @@ extension TodayModel {
         placeSquad()
     }
 }
+#endif
