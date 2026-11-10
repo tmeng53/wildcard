@@ -9,6 +9,26 @@ extension XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: timeout), .completed, message)
     }
 
+    /// Waits until `element` is laid out on screen, then for it to be hittable. While a page is
+    /// still moving in, an element can exist with no frame yet, and asking it `isHittable` then
+    /// fails the test at once ("Failed to determine hittability") instead of waiting.
+    @MainActor
+    func waitForHittable(_ element: XCUIElement, _ message: String, timeout: TimeInterval = 30) {
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while !Self.isLaidOut(element), Date.now < deadline {
+            RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
+        }
+        XCTAssertTrue(Self.isLaidOut(element), message)
+        waitFor(element, "isHittable == true", message, timeout: timeout)
+    }
+
+    @MainActor
+    private static func isLaidOut(_ element: XCUIElement) -> Bool {
+        guard element.exists else { return false }
+        let frame = element.frame
+        return frame.minX.isFinite && frame.minY.isFinite && !frame.isEmpty
+    }
+
     /// Taps `element` until `target` meets `predicate`: a busy CI simulator now and then drops a
     /// tap that lands as a page finishes moving (the app did nothing, and the same tap works on the
     /// test's retry), so it taps once more if nothing came of the first within 10 s. Only for taps
