@@ -54,6 +54,11 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-recap-picker")
     }
 
+    /// `-recap-winter`: the 雪场 is open as well, so the sticker has six scenes and scrolls.
+    static var recapWinter: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-winter")
+    }
+
     /// `-recap-reveal pool 0.8`: open the sample story on its last page with the reveal of that
     /// scene held at that second, for UI tests' screenshots.
     static var recapReveal: (scene: SceneTheme, at: Double)? {
