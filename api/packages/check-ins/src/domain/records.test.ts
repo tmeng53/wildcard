@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  currentRun,
   longestRun,
   memberRecords,
   sportDays,
@@ -24,6 +25,39 @@ function training(
     ...extra,
   };
 }
+
+describe('currentRun', () => {
+  const days = new Set(['2026-11-02', '2026-11-03', '2026-11-05', '2026-11-06']);
+
+  it('counts back from today, or from yesterday while today has none yet', () => {
+    expect(currentRun(days, { today: '2026-11-06' })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+    expect(currentRun(days, { today: '2026-11-07' })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+  });
+
+  it('is broken once a whole day went by without one', () => {
+    expect(currentRun(days, { today: '2026-11-08' })).toEqual({ brokeOn: '2026-11-07' });
+  });
+
+  it('lets a planned rest day bridge, even the day before today', () => {
+    expect(currentRun(days, { today: '2026-11-06', bridges: new Set(['2026-11-04']) })).toEqual({
+      streak: { days: 4, from: '2026-11-02', to: '2026-11-06' },
+    });
+    expect(currentRun(days, { today: '2026-11-08', bridges: new Set(['2026-11-07']) })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+  });
+
+  it('has nothing without any day', () => {
+    expect(currentRun(new Set(), { today: '2026-11-06' })).toEqual({});
+  });
+});
 
 describe('longestRun', () => {
   it('counts days in a row, the latest run winning a tie', () => {

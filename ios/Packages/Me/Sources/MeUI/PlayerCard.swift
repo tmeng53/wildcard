@@ -94,14 +94,9 @@ private struct CardFront: View {
                     }
             }
             .clipShape(TradingCard.window)
-            HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
+            HStack(alignment: .center, spacing: Space.xs) {
                 nameAndSquad
-                if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
-                    Text(copy: "card.since \(year)", bundle: .module)
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                        .accessibilityIdentifier("me.since")
-                }
+                streakTickets
             }
             .padding(.horizontal, Space.xxs)
             .padding(.top, Space.s)
@@ -159,15 +154,42 @@ private struct CardFront: View {
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 .lineLimit(1)
                 .accessibilityIdentifier("me.nickname")
-            if let squad = face.squadName {
-                Text(squad)
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                    .lineLimit(1)
-                    .accessibilityIdentifier("me.squadName")
+            // The squad, then the year they joined, under the name: the 外卡 stand at the right.
+            HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
+                if let squad = face.squadName {
+                    Text(squad)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                        .lineLimit(1)
+                        .accessibilityIdentifier("me.squadName")
+                }
+                if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
+                    Text(copy: "card.since \(year)", bundle: .module)
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                        .fixedSize()
+                        .accessibilityIdentifier("me.since")
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The 外卡 for each streak still going (Tracy, 2026-11-10, A): days trained in a row, then
+    /// days with a meal, beside the name; a broken one isn't shown.
+    @ViewBuilder private var streakTickets: some View {
+        if face.streaks != .none {
+            HStack(spacing: Space.xxs) {
+                if face.streaks.training > 0 {
+                    StreakTicket(days: face.streaks.training, streak: .training, ink: .fgOnInk, on: .bgInk)
+                        .accessibilityIdentifier("me.streak.training")
+                }
+                if face.streaks.meals > 0 {
+                    StreakTicket(days: face.streaks.meals, streak: .meals, ink: .fgOnInk, on: .bgInk)
+                        .accessibilityIdentifier("me.streak.meals")
+                }
+            }
+        }
     }
 
     private var stats: some View {

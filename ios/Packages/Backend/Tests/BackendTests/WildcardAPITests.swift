@@ -1,6 +1,7 @@
 import AccountDomain
 import Contracts
 import Foundation
+import MeDomain
 import Testing
 
 @testable import Backend
@@ -272,12 +273,15 @@ private struct RefusedTokens: AuthProvider {
     let squad = try await stack.squad(of: member)
 
     #expect(try await member.api.checkInTotals().topSport == nil)
+    #expect(try await member.api.checkInTotals().streaks == .none)
     #expect(try await member.api.titleBoard() == .empty)
 
     for activity in [Activity.sport("run"), .custom(try CustomSport("飞盘")), .sport("run")] {
         _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(Training(activity: activity))))
     }
     #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
+    // All three on today: the 外卡's training streak is one day, and no meal yet.
+    #expect(try await member.api.checkInTotals().streaks == CardStreaks(training: 1, meals: 0))
 }
 
 @Test func tennisCheckInsUnlockDeuceClubAndHalfMoonAndPiecesOneByOne() async throws {

@@ -188,8 +188,31 @@ const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi(
 
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
+const Streak = z
+  .strictObject({
+    days: count('Days in the run.'),
+    from: LocalDay.meta({ description: 'Its first day.' }),
+    to: LocalDay.meta({ description: 'Its last day.' }),
+  })
+  .openapi('RecordStreak');
+
+const CurrentStreaks = z
+  .strictObject({
+    training: Streak.optional(),
+    meals: Streak.optional(),
+  })
+  .meta({
+    description:
+      'Streaks still going on the member’s clock, the player card’s 外卡: `training`, days ' +
+      'trained in a row, a planned rest day between them neither breaking nor adding; `meals`, ' +
+      'days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or ' +
+      'yesterday while today has none yet, and is left out once broken.',
+  })
+  .openapi('CurrentStreaks');
+
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
+  streaks: CurrentStreaks.optional(),
   trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
@@ -246,14 +269,6 @@ const customSport = z
   .string()
   .optional()
   .meta({ description: 'The name of a `custom` sport; a listed sport has none.' });
-
-const Streak = z
-  .strictObject({
-    days: count('Days in the run.'),
-    from: LocalDay.meta({ description: 'Its first day.' }),
-    to: LocalDay.meta({ description: 'Its last day.' }),
-  })
-  .openapi('RecordStreak');
 
 const MateCount = z
   .strictObject({
@@ -767,8 +782,12 @@ export function checkIns(deps: {
       );
     })
     .openapi(totals, async (c) => {
-      const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
-      return c.json({ version: 1 as const, ...counts }, 200);
+      const member = MemberId.parse(c.var.caller.userId);
+      const [counts, streaks] = await Promise.all([
+        deps.checkIns.totals(member),
+        deps.checkIns.currentStreaks({ member }),
+      ]);
+      return c.json({ version: 1 as const, ...counts, streaks }, 200);
     })
     .openapi(memberRecords, async (c) => {
       const found = await deps.checkIns.records(MemberId.parse(c.var.caller.userId));

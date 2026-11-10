@@ -479,9 +479,14 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       worn: '冷面杀手',
     });
     expect(JSON.stringify(card.body)).not.toContain('别的小队');
+    // The 外卡 too: the run went elsewhere, so this squad sees no streak.
+    const streaksOf = (body: unknown) => z.object({ streaks: z.unknown() }).parse(body).streaks;
+    expect(streaksOf(card.body)).toStrictEqual({});
     // The member's own card counts everything they posted, as 我 does.
     const mine = await call({ method: 'GET', path, token: mate.token });
     expect(z.object({ trainedDays: z.int() }).parse(mine.body).trainedDays).toBe(1);
+    const day = createdAt.toISOString().slice(0, 10);
+    expect(streaksOf(mine.body)).toStrictEqual({ training: { days: 1, from: day, to: day } });
     // Their week on the card is the one their own home counts.
     const theirToday = await call({
       method: 'GET',
@@ -549,6 +554,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     });
     expect(shared.status).toBe(201);
     const again = await call({ method: 'GET', path, token: me.token });
+    expect(streaksOf(again.body)).toStrictEqual({ training: { days: 1, from: day, to: day } });
     const { marks, days } = z
       .object({ week: z.object({ marks: z.array(z.unknown()), days: z.array(z.unknown()) }) })
       .parse(again.body).week;

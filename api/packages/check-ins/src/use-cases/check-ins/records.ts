@@ -22,8 +22,8 @@ export interface Records extends MemberRecords {
   readonly squad?: SquadRecords & { readonly id: SquadId };
 }
 
-/** The days the member's plans made rest days, over the weeks from `from` to `to`. */
-async function restDays(
+/** The days the member's plans made rest days, over the weeks from the first of `days` to the last. */
+export async function restDays(
   deps: { readonly plans: WeeklyPlanStore },
   { member, days }: { readonly member: MemberId; readonly days: readonly LocalDay[] },
 ): Promise<Set<LocalDay>> {
