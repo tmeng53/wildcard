@@ -102,6 +102,8 @@ public struct TodayView: View {
             }
         }
         .rereadsEachMinute(model)
+        // A workout that ends with 今天 open shows on its card as Health saves it.
+        .task(id: model.health?.isConnected) { await model.health?.followChanges() }
         // Back in the app, possibly on a new day or after posts went out from another phone.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }

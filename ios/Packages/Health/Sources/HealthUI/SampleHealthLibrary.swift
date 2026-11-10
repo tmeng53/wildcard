@@ -31,6 +31,11 @@ public actor SampleHealthLibrary: HealthLibrary {
         }
     }
 
+    /// The sample day never changes.
+    public nonisolated func workoutChanges() -> AsyncStream<Void> {
+        AsyncStream { $0.finish() }
+    }
+
     /// Six workouts, the newest ending a minute before `end`, the oldest about four hours before.
     public static func day(endingNear end: Date) -> [ImportedWorkout] {
         let samples = [

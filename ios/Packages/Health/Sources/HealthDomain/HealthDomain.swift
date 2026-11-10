@@ -111,6 +111,10 @@ public protocol HealthLibrary: Sendable {
     func connect() async -> Bool
     /// The workouts that ended from `start` to `end`, the newest first.
     func workouts(endingFrom start: Date, to end: Date) async -> [ImportedWorkout]
+    /// Yields each time Health saves or deletes a workout or a workout's route, from the moment
+    /// it is listened to until the listener stops; several close together may yield once. It says
+    /// only that something changed: read `workouts(endingFrom:to:)` again for what.
+    func workoutChanges() -> AsyncStream<Void>
 }
 
 /// Today's workouts as 打卡 shows them: each with whether it was posted already.

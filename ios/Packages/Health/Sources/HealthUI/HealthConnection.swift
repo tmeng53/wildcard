@@ -75,6 +75,17 @@ public final class HealthConnection {
         recent = await library.workouts(endingFrom: end.addingTimeInterval(-healthLookBackHours * 3600), to: end)
     }
 
+    /// Reads again each time Health saves or deletes a workout, until the caller's task is
+    /// cancelled: 今天 follows it while on screen, so a workout that ends with the app open shows
+    /// on its card in seconds instead of on the next return to the app. Returns at once while
+    /// Health isn't connected.
+    public func followChanges() async {
+        guard await library.isConnected() else { return }
+        for await _ in library.workoutChanges() {
+            await refresh()
+        }
+    }
+
     /// 连接: asks the system once, then reads.
     public func connect() async {
         _ = await library.connect()
