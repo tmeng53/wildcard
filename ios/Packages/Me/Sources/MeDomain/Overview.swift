@@ -20,6 +20,20 @@ public struct LifetimeCounts: Hashable, Sendable {
     public static let zero = LifetimeCounts(trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0)
 }
 
+/// The streaks still going that the player card's 外卡 show (Tracy, 2026-11-10): days trained in
+/// a row, a planned rest day neither breaking nor adding, and days in a row with a meal checked
+/// in (健康餐 or 坦白放纵餐). A broken one is 0, and its 外卡 isn't shown.
+public struct CardStreaks: Hashable, Sendable {
+    public var training: Int
+    public var meals: Int
+
+    public init(training: Int, meals: Int) {
+        (self.training, self.meals) = (max(training, 0), max(meals, 0))
+    }
+
+    public static let none = CardStreaks(training: 0, meals: 0)
+}
+
 /// The member's character as 我 shows it: how it looks and moves, and its name.
 public struct MeCharacter: Hashable, Sendable {
     public var nickname: String
@@ -94,6 +108,8 @@ public struct MeOverview: Hashable, Sendable {
     /// saved a profile.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
+    /// The streaks still going, on the card's 外卡.
+    public var streaks: CardStreaks
     /// 本周 x/y; nil while the member has no plan for the week.
     public var week: WeekCount?
     /// This week's days for the 出赛表 tile; nil when they couldn't be read (the tile then shows
@@ -133,8 +149,10 @@ public struct MeOverview: Hashable, Sendable {
         dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
         board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
-        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil
+        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil,
+        streaks: CardStreaks = .none
     ) {
+        self.streaks = streaks
         self.birthday = birthday
         self.gifts = gifts
         self.weekGlance = weekGlance
@@ -161,7 +179,8 @@ public struct MeOverview: Hashable, Sendable {
     public var card: PlayerCardFace {
         PlayerCardFace(
             character: character, number: cardNumber,
-            squadName: squadName, joinedAt: joinedAt, counts: counts, week: week, board: board)
+            squadName: squadName, joinedAt: joinedAt, counts: counts, week: week, board: board,
+            streaks: streaks)
     }
 }
 
@@ -174,6 +193,8 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// When they signed up: the year on the card.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
+    /// The streaks still going, on the card's 外卡; a squadmate's from what they shared with the squad.
+    public var streaks: CardStreaks
     /// 本周 x/y, theirs for a squadmate; nil when it isn't known (no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
@@ -182,8 +203,9 @@ public struct PlayerCardFace: Hashable, Sendable {
 
     public init(
         character: MeCharacter, number: JerseyNumber?, squadName: String?, joinedAt: Date?, counts: LifetimeCounts,
-        week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil
+        week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil, streaks: CardStreaks = .none
     ) {
+        self.streaks = streaks
         self.character = character
         self.number = number
         self.squadName = squadName

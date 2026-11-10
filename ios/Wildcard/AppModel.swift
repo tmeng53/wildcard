@@ -211,7 +211,9 @@ final class AppModel {
             Self.show(fresh)
             mustUpdate = Self.mustUpdate(fresh)
         }
-        await art.update(to: (fresh ?? catalog.kept()).art)
+        let artChanged = await art.update(to: (fresh ?? catalog.kept()).art)
+        // 今天 made its characters from the art before: it makes them again from the new.
+        if artChanged, case .tabs(let today, _, _, _, _, _) = screen { today.artChanged() }
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked

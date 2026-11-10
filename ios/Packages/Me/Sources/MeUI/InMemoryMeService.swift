@@ -40,7 +40,8 @@ public actor InMemoryMeService: MeService {
                     number: 3,
                     plan: [.train(nil), .rest, .train(nil), .train(nil), .train(nil), .train(nil), .rest],
                     trainedDays: [0, 2, 3], today: 3),
-                record: sampleRecord),
+                record: sampleRecord,
+                streaks: CardStreaks(training: 5, meals: 12)),
             failsSaving: failsSaving)
     }
 
@@ -92,6 +93,8 @@ public actor InMemoryMeService: MeService {
             trainedDays: 27, minutes: 1290, longestMinutes: 95,
             longestStreak: .init(days: 6, first: day(10, 20), last: day(10, 25)),
             mealStreak: .init(days: 32, first: day(10, 6), last: day(11, 5)),
+            currentStreak: .init(days: 3, first: day(11, 3), last: day(11, 5)),
+            currentMealStreak: .init(days: 32, first: day(10, 6), last: day(11, 5)),
             hours: hours, weekdays: [5, 6, 3, 4, 4, 3, 2],
             sports: [
                 .init(activity: .sport("run"), days: 11), .init(activity: .sport("strength"), days: 8),
@@ -143,9 +146,9 @@ public actor InMemoryMeService: MeService {
         current.coachPushOn = isOn
     }
 
-    public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
+    public func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
         if failsSaving { throw .unavailable }
-        current.board.worn = title ?? current.board.titles.first?.title
+        current.board.wear(wearable)
         return current.board
     }
 
@@ -179,7 +182,9 @@ public struct InMemorySquadmateCards: SquadmateCards {
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
             counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
             week: WeekCount(trainedDays: 3, plannedDays: 5),
-            board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)))
+            board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)),
+            // Their meals broke: only the training 外卡 shows.
+            streaks: CardStreaks(training: 12, meals: 0))
     }
 }
 
@@ -204,8 +209,15 @@ extension MateSchedule {
 
 extension TitleBoard {
     /// The approved badge board's titles, in its order, wearing the latest as the API does
-    /// before one is equipped.
-    static let sample = TitleBoard(titles: sampleTitles, worn: sampleTitles.first?.title)
+    /// before one is equipped, and a badge the team gave just now, NEW until it is opened.
+    static let sample = TitleBoard(
+        titles: sampleTitles, worn: sampleTitles.first?.title,
+        teamBadges: [
+            TeamBadge(
+                id: "idea-king",
+                name: CatalogNames(simplifiedChinese: "点子王", english: "Idea King", traditionalChinese: "點子王"),
+                glyph: "lightbulb.fill", tone: "#F2B33D", times: 1, latestAt: Date())
+        ])
 
     private static let sampleTitles: [BoardTitle] = [
         title("早八战神", "shield", "track", "sun.max.fill", weeks: ["2026-10-26": "连着五天七点前打卡。"]),

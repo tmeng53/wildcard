@@ -2,13 +2,36 @@
 import Contracts
 import DesignSystem
 import DesignSystemUI
+import MeDomain
 import SwiftUI
+
+/// Where a badge came from, on its card's top left.
+enum BadgeOrigin {
+    /// A week's 战报 in the squad of this name.
+    case squad(String)
+    /// A week's 战报, in no squad the API names.
+    case weekly
+    /// The Wildcard team.
+    case team
+}
 
 /// One badge opened from the board, as the approved design draws it: a dark collectible card
 /// whose top is the badge's colour, the badge large over the seam, the title, a chip for each week
-/// it was won, the latest 颁奖词, and 装备 on the member's own card.
+/// it was won, the latest 颁奖词, and 装备 on the member's own card. A badge the team gave shows
+/// the same card, from 外卡团队, with neither weeks nor 颁奖词.
 struct BadgeCard: View {
-    let title: BoardTitle
+    /// What the card shows of a title or a team badge.
+    struct Shown {
+        let name: String
+        let badge: TitleBadge
+        let times: Int
+        /// The Monday of each week it was won, the latest first.
+        let weeks: [LocalDay]
+        let speech: String?
+        let from: BadgeOrigin
+    }
+
+    let badge: Shown
     let isWorn: Bool
     /// Wears it; nil on a squadmate's card, which shows no button.
     let equip: (() -> Void)?
@@ -18,7 +41,7 @@ struct BadgeCard: View {
         VStack(spacing: 0) {
             top
             VStack(spacing: Space.s) {
-                Text(verbatim: title.title)
+                Text(verbatim: badge.name)
                     .typeStyle(TypeRamp.badgeTitle)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .lineLimit(1)
@@ -26,8 +49,8 @@ struct BadgeCard: View {
                     .accessibilityIdentifier("me.badgeCard.title")
                 FlowRow {
                     // By place, not date: one title won in two squads the same week is two chips.
-                    ForEach(Array(title.weeks.enumerated()), id: \.offset) { _, week in
-                        Text(verbatim: Self.range(of: week.weekStart))
+                    ForEach(Array(badge.weeks.enumerated()), id: \.offset) { _, week in
+                        Text(verbatim: Self.range(of: week))
                             .typeStyle(TypeRamp.scoreCaption)
                             .monospacedDigit()
                             .foregroundStyle(Color(role: .fgOnInk, in: theme))
@@ -36,7 +59,7 @@ struct BadgeCard: View {
                             .overlay(Capsule().stroke(Color(role: .borderOnInk, in: theme), lineWidth: Sizing.hairline))
                     }
                 }
-                if let speech = title.latestSpeech {
+                if let speech = badge.speech {
                     Text(verbatim: speech)
                         .typeStyle(TypeRamp.callout)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
@@ -73,16 +96,16 @@ struct BadgeCard: View {
     /// The top in the badge's colour, the squad it was last won in and 每周战报 on its left (just
     /// 每周战报 when the API names no squad), ×N on its right, and the badge sitting over the seam.
     private var top: some View {
-        TitleBadgeView.faceColor(colour: title.badge.colour, tone: title.badge.tone)
+        TitleBadgeView.faceColor(colour: badge.badge.colour, tone: badge.badge.tone)
             .frame(height: Self.topHeight)
             .overlay(alignment: .top) {
                 // One row, so a long squad name shrinks and stops before ×N instead of under it.
                 HStack(alignment: .firstTextBaseline, spacing: Space.s) {
                     Group {
-                        if let squad = title.latestSquadName {
-                            Text(copy: "badge.from \(squad)", bundle: .module)
-                        } else {
-                            Text(copy: "每周战报", bundle: .module)
+                        switch badge.from {
+                        case .squad(let squad): Text(copy: "badge.from \(squad)", bundle: .module)
+                        case .weekly: Text(copy: "每周战报", bundle: .module)
+                        case .team: Text(copy: "外卡团队", bundle: .module)
                         }
                     }
                     .typeStyle(TypeRamp.label)
@@ -91,8 +114,8 @@ struct BadgeCard: View {
                     .minimumScaleFactor(0.8)
                     .accessibilityIdentifier("me.badgeCard.from")
                     Spacer(minLength: 0)
-                    if title.times > 1 {
-                        Text(verbatim: "×\(title.times)")
+                    if badge.times > 1 {
+                        Text(verbatim: "×\(badge.times)")
                             .typeStyle(TypeRamp.scoreSmall)
                             .foregroundStyle(Color(role: .fgDefault, in: theme))
                             .padding(.horizontal, Space.xs)
@@ -106,8 +129,8 @@ struct BadgeCard: View {
             }
             .overlay(alignment: .bottom) {
                 TitleBadgeView(
-                    shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
-                    glyph: title.badge.glyph,
+                    shape: badge.badge.shape, colour: badge.badge.colour, tone: badge.badge.tone,
+                    glyph: badge.badge.glyph,
                     size: Self.badgeSize
                 )
                 .offset(y: Self.overlap)
@@ -143,6 +166,43 @@ private struct OnInkButtonStyle: ButtonStyle {
             )
             .contentShape(Capsule())
             .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+}
+
+/// A badge opened from the board: a weekly title or a badge the team gave.
+enum OpenedBadge: Identifiable {
+    case title(BoardTitle)
+    case team(TeamBadge)
+
+    var id: String { mark }
+
+    /// Its NEW mark.
+    var mark: String {
+        switch self {
+        case .title(let title): BadgeNews.key(title)
+        case .team(let badge): BadgeNews.key(badge)
+        }
+    }
+
+    var wearable: Wearable {
+        switch self {
+        case .title(let title): .title(title.title)
+        case .team(let badge): .teamBadge(badge.id)
+        }
+    }
+
+    /// What its card shows.
+    var card: BadgeCard.Shown {
+        switch self {
+        case .title(let title):
+            BadgeCard.Shown(
+                name: title.title, badge: title.badge, times: title.times, weeks: title.weeks.map(\.weekStart),
+                speech: title.latestSpeech, from: title.latestSquadName.map { BadgeOrigin.squad($0) } ?? .weekly)
+        case .team(let badge):
+            BadgeCard.Shown(
+                name: badge.name.localized(in: [AppLanguage.current.rawValue]), badge: badge.badge, times: badge.times,
+                weeks: [], speech: nil, from: .team)
+        }
     }
 }
 #endif

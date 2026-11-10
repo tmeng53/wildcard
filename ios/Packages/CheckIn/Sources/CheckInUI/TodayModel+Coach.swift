@@ -66,6 +66,12 @@ extension TodayModel {
         Task { await store.completeChallenge() }
     }
 
+    /// The coach's head on today's challenge row was tapped: the challenge's card on its page opens.
+    func openMyChallenge() {
+        guard let myChallenge else { return }
+        openChallenge(myChallenge)
+    }
+
     /// The squad on the home, whose coach's page opens.
     public var squadID: SquadID? { home?.squad.id }
 }

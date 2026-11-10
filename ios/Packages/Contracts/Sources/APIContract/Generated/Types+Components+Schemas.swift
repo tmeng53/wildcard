@@ -4640,6 +4640,8 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
             public var version: Components.Schemas.CheckInTotals.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/streaks`.
+            public var streaks: Components.Schemas.CurrentStreaks?
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
@@ -4662,6 +4664,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
+            ///   - streaks:
             ///   - trainedDays: Days with a 训练; several 训练 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
@@ -4669,6 +4672,7 @@ extension Components {
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
+                streaks: Components.Schemas.CurrentStreaks? = nil,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -4676,6 +4680,7 @@ extension Components {
                 topSport: Components.Schemas.TopSport? = nil
             ) {
                 self.version = version
+                self.streaks = streaks
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
@@ -4684,11 +4689,72 @@ extension Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case version
+                case streaks
                 case trainedDays
                 case healthyMeals
                 case cheatMeals
                 case disclaimers
                 case topSport
+            }
+        }
+        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CurrentStreaks`.
+        public struct CurrentStreaks: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CurrentStreaks/training`.
+            public var training: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/CurrentStreaks/meals`.
+            public var meals: Components.Schemas.RecordStreak?
+            /// Creates a new `CurrentStreaks`.
+            ///
+            /// - Parameters:
+            ///   - training:
+            ///   - meals:
+            public init(
+                training: Components.Schemas.RecordStreak? = nil,
+                meals: Components.Schemas.RecordStreak? = nil
+            ) {
+                self.training = training
+                self.meals = meals
+            }
+            public enum CodingKeys: String, CodingKey {
+                case training
+                case meals
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RecordStreak`.
+        public struct RecordStreak: Codable, Hashable, Sendable {
+            /// Days in the run.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/days`.
+            public var days: Swift.Int
+            /// Its first day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/from`.
+            public var from: Swift.String
+            /// Its last day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/to`.
+            public var to: Swift.String
+            /// Creates a new `RecordStreak`.
+            ///
+            /// - Parameters:
+            ///   - days: Days in the run.
+            ///   - from: Its first day.
+            ///   - to: Its last day.
+            public init(
+                days: Swift.Int,
+                from: Swift.String,
+                to: Swift.String
+            ) {
+                self.days = days
+                self.from = from
+                self.to = to
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+                case from
+                case to
             }
         }
         /// The sport with the most 训练 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 训练.
@@ -4726,7 +4792,7 @@ extension Components {
                 case checkIns
             }
         }
-        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first.
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
@@ -4752,6 +4818,10 @@ extension Components {
             public var longestStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/mealStreak`.
             public var mealStreak: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/currentStreak`.
+            public var currentStreak: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/MemberRecords/currentMealStreak`.
+            public var currentMealStreak: Components.Schemas.RecordStreak?
             /// 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
@@ -4779,6 +4849,8 @@ extension Components {
             ///   - longestMinutes: The longest single 训练; left out when none says how long.
             ///   - longestStreak:
             ///   - mealStreak:
+            ///   - currentStreak:
+            ///   - currentMealStreak:
             ///   - hours: 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
             ///   - weekdays: Days trained by weekday, Monday first.
             ///   - sports: The sports trained on the most days, most first.
@@ -4791,6 +4863,8 @@ extension Components {
                 longestMinutes: Swift.Int? = nil,
                 longestStreak: Components.Schemas.RecordStreak? = nil,
                 mealStreak: Components.Schemas.RecordStreak? = nil,
+                currentStreak: Components.Schemas.RecordStreak? = nil,
+                currentMealStreak: Components.Schemas.RecordStreak? = nil,
                 hours: [Swift.Int],
                 weekdays: [Swift.Int],
                 sports: [Components.Schemas.RecordSport],
@@ -4803,6 +4877,8 @@ extension Components {
                 self.longestMinutes = longestMinutes
                 self.longestStreak = longestStreak
                 self.mealStreak = mealStreak
+                self.currentStreak = currentStreak
+                self.currentMealStreak = currentMealStreak
                 self.hours = hours
                 self.weekdays = weekdays
                 self.sports = sports
@@ -4816,46 +4892,13 @@ extension Components {
                 case longestMinutes
                 case longestStreak
                 case mealStreak
+                case currentStreak
+                case currentMealStreak
                 case hours
                 case weekdays
                 case sports
                 case sportCount
                 case squad
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/RecordStreak`.
-        public struct RecordStreak: Codable, Hashable, Sendable {
-            /// Days in the run.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/days`.
-            public var days: Swift.Int
-            /// Its first day.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/from`.
-            public var from: Swift.String
-            /// Its last day.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/to`.
-            public var to: Swift.String
-            /// Creates a new `RecordStreak`.
-            ///
-            /// - Parameters:
-            ///   - days: Days in the run.
-            ///   - from: Its first day.
-            ///   - to: Its last day.
-            public init(
-                days: Swift.Int,
-                from: Swift.String,
-                to: Swift.String
-            ) {
-                self.days = days
-                self.from = from
-                self.to = to
-            }
-            public enum CodingKeys: String, CodingKey {
-                case days
-                case from
-                case to
             }
         }
         /// - Remark: Generated from `#/components/schemas/RecordSport`.
@@ -6132,7 +6175,7 @@ extension Components {
                 case squadWeek
             }
         }
-        /// The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest. Missing before their first.
+        /// The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest; or the team badge they chose, its name in the reader’s language on a `ticket`. Missing before their first.
         ///
         /// - Remark: Generated from `#/components/schemas/WornTitle`.
         public struct WornTitle: Codable, Hashable, Sendable {
@@ -6161,7 +6204,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/TitleBadge`.
         public struct TitleBadge: Codable, Hashable, Sendable {
-            /// The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.
+            /// The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today, and `ticket` for a team badge worn as one. An app that doesn’t know one draws a circle.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBadge/shape`.
             public var shape: Swift.String
@@ -6180,7 +6223,7 @@ extension Components {
             /// Creates a new `TitleBadge`.
             ///
             /// - Parameters:
-            ///   - shape: The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.
+            ///   - shape: The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today, and `ticket` for a team badge worn as one. An app that doesn’t know one draws a circle.
             ///   - colour: Its colour, by its id in the badge catalog (`track`). Builds before `tone` paint it by the scene of that id, and the gym’s for any other.
             ///   - tone: Its colour itself, as #RRGGBB, from the badge catalog: what the app paints it in. Left out by older servers and for a colour the catalog gives no tone, which the app then paints like `colour` for builds before `tone`.
             ///   - glyph: The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
@@ -10099,11 +10142,15 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBoard/titles`.
             public var titles: [Components.Schemas.BoardTitle]
-            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBoard/worn`.
             public var worn: Swift.String?
-            /// The title the member chose to wear. Left out until they choose one.
+            /// The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TitleBoard/wornTeamBadge`.
+            public var wornTeamBadge: Swift.String?
+            /// The title the member chose to wear. Left out until they choose one, and while they wear a team badge.
             ///
             /// - Remark: Generated from `#/components/schemas/TitleBoard/equipped`.
             public var equipped: Swift.String?
@@ -10113,19 +10160,22 @@ extension Components {
             ///   - version:
             ///   - teamBadges: The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
-            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
-            ///   - equipped: The title the member chose to wear. Left out until they choose one.
+            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn.
+            ///   - wornTeamBadge: The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.
+            ///   - equipped: The title the member chose to wear. Left out until they choose one, and while they wear a team badge.
             public init(
                 version: Components.Schemas.TitleBoard.VersionPayload,
                 teamBadges: [Components.Schemas.TeamBadge],
                 titles: [Components.Schemas.BoardTitle],
                 worn: Swift.String? = nil,
+                wornTeamBadge: Swift.String? = nil,
                 equipped: Swift.String? = nil
             ) {
                 self.version = version
                 self.teamBadges = teamBadges
                 self.titles = titles
                 self.worn = worn
+                self.wornTeamBadge = wornTeamBadge
                 self.equipped = equipped
             }
             public enum CodingKeys: String, CodingKey {
@@ -10133,6 +10183,7 @@ extension Components {
                 case teamBadges
                 case titles
                 case worn
+                case wornTeamBadge
                 case equipped
             }
         }
@@ -10273,25 +10324,33 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/EquipTitle/version`.
             public var version: Components.Schemas.EquipTitle.VersionPayload
-            /// A title the member has won, by its words, to wear on their card; null to wear the latest won again.
+            /// A title the member has won, by its words, to wear on their card; null to wear the latest won again, or with `teamBadge`.
             ///
             /// - Remark: Generated from `#/components/schemas/EquipTitle/title`.
             public var title: Swift.String?
+            /// A team badge the member holds, by its id, to wear instead of a title; `title` must then be null. Left out by builds before it, whose save takes a worn team badge off.
+            ///
+            /// - Remark: Generated from `#/components/schemas/EquipTitle/teamBadge`.
+            public var teamBadge: Swift.String?
             /// Creates a new `EquipTitle`.
             ///
             /// - Parameters:
             ///   - version:
-            ///   - title: A title the member has won, by its words, to wear on their card; null to wear the latest won again.
+            ///   - title: A title the member has won, by its words, to wear on their card; null to wear the latest won again, or with `teamBadge`.
+            ///   - teamBadge: A team badge the member holds, by its id, to wear instead of a title; `title` must then be null. Left out by builds before it, whose save takes a worn team badge off.
             public init(
                 version: Components.Schemas.EquipTitle.VersionPayload,
-                title: Swift.String? = nil
+                title: Swift.String? = nil,
+                teamBadge: Swift.String? = nil
             ) {
                 self.version = version
                 self.title = title
+                self.teamBadge = teamBadge
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case title
+                case teamBadge
             }
         }
         /// - Remark: Generated from `#/components/schemas/PlayerCard`.
@@ -10318,6 +10377,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/joinedAt`.
             public var joinedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/streaks`.
+            public var streaks: Components.Schemas.CurrentStreaks?
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/trainedDays`.
@@ -10429,10 +10490,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/titles`.
             public var titles: [Components.Schemas.BoardTitle]
-            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            /// The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/worn`.
             public var worn: Swift.String?
+            /// The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/wornTeamBadge`.
+            public var wornTeamBadge: Swift.String?
             /// Creates a new `PlayerCard`.
             ///
             /// - Parameters:
@@ -10442,6 +10507,7 @@ extension Components {
             ///   - jerseyNumber: The number they picked for their card. Left out until they pick one.
             ///   - squadPlace: Their place in this squad, the first to join being 1: the number shown without a pick.
             ///   - joinedAt: When they signed up, in UTC. Left out before they saved a profile.
+            ///   - streaks:
             ///   - trainedDays: Days with a 训练; several 训练 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
@@ -10450,7 +10516,8 @@ extension Components {
             ///   - week: Their own 本周 x/y and this week’s 出赛表, on the card’s back.
             ///   - teamBadges: The dedicated badges the Wildcard team gave the member (for feedback we used, say), the latest got first: tickets, shown apart from the titles. Never a title’s badge.
             ///   - titles: Every title won, in all the member’s squads, one per title by its words, the latest won first.
-            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first.
+            ///   - worn: The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn.
+            ///   - wornTeamBadge: The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.
             public init(
                 version: Components.Schemas.PlayerCard.VersionPayload,
                 member: Swift.String,
@@ -10458,6 +10525,7 @@ extension Components {
                 jerseyNumber: Swift.Int? = nil,
                 squadPlace: Swift.Int,
                 joinedAt: Foundation.Date? = nil,
+                streaks: Components.Schemas.CurrentStreaks? = nil,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -10466,7 +10534,8 @@ extension Components {
                 week: Components.Schemas.PlayerCard.WeekPayload,
                 teamBadges: [Components.Schemas.TeamBadge],
                 titles: [Components.Schemas.BoardTitle],
-                worn: Swift.String? = nil
+                worn: Swift.String? = nil,
+                wornTeamBadge: Swift.String? = nil
             ) {
                 self.version = version
                 self.member = member
@@ -10474,6 +10543,7 @@ extension Components {
                 self.jerseyNumber = jerseyNumber
                 self.squadPlace = squadPlace
                 self.joinedAt = joinedAt
+                self.streaks = streaks
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
@@ -10483,6 +10553,7 @@ extension Components {
                 self.teamBadges = teamBadges
                 self.titles = titles
                 self.worn = worn
+                self.wornTeamBadge = wornTeamBadge
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -10491,6 +10562,7 @@ extension Components {
                 case jerseyNumber
                 case squadPlace
                 case joinedAt
+                case streaks
                 case trainedDays
                 case healthyMeals
                 case cheatMeals
@@ -10500,6 +10572,7 @@ extension Components {
                 case teamBadges
                 case titles
                 case worn
+                case wornTeamBadge
             }
         }
         /// - Remark: Generated from `#/components/schemas/DayMark`.

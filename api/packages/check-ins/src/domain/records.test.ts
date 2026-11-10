@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  currentRun,
   longestRun,
   memberRecords,
   sportDays,
@@ -25,6 +26,59 @@ function training(
   };
 }
 
+describe('currentRun', () => {
+  const days = new Set(['2026-11-02', '2026-11-03', '2026-11-05', '2026-11-06']);
+
+  it('counts back from today, or from yesterday while today has none yet', () => {
+    expect(currentRun(days, { today: '2026-11-06' })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+    expect(currentRun(days, { today: '2026-11-07' })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+  });
+
+  it('is broken once a whole day went by without one', () => {
+    expect(currentRun(days, { today: '2026-11-08' })).toEqual({ brokeOn: '2026-11-07' });
+  });
+
+  it('lets a planned rest day bridge, even the day before today', () => {
+    expect(currentRun(days, { today: '2026-11-06', bridges: new Set(['2026-11-04']) })).toEqual({
+      streak: { days: 4, from: '2026-11-02', to: '2026-11-06' },
+    });
+    expect(currentRun(days, { today: '2026-11-08', bridges: new Set(['2026-11-07']) })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+  });
+
+  it('breaks once a whole week went by on rest days alone', () => {
+    const week = new Set([
+      '2026-11-07',
+      '2026-11-08',
+      '2026-11-09',
+      '2026-11-10',
+      '2026-11-11',
+      '2026-11-12',
+    ]);
+    expect(currentRun(days, { today: '2026-11-13', bridges: week })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+    expect(
+      currentRun(days, { today: '2026-11-14', bridges: new Set([...week, '2026-11-13']) }),
+    ).toEqual({
+      brokeOn: '2026-11-07',
+    });
+  });
+
+  it('has nothing without any day', () => {
+    expect(currentRun(new Set(), { today: '2026-11-06' })).toEqual({});
+  });
+});
+
 describe('longestRun', () => {
   it('counts days in a row, the latest run winning a tie', () => {
     const days = new Set(['2026-10-01', '2026-10-02', '2026-10-05', '2026-10-06']);
@@ -37,6 +91,24 @@ describe('longestRun', () => {
       days: 3,
       from: '2026-10-01',
       to: '2026-10-04',
+    });
+  });
+
+  it('breaks a run on a seventh planned rest day in a row, as the run still going does', () => {
+    const rests = (from: number, count: number) =>
+      new Set(
+        Array.from({ length: count }, (_, i) => `2026-10-${String(from + i).padStart(2, '0')}`),
+      );
+    const days = new Set(['2026-10-01', '2026-10-02', '2026-10-10']);
+    expect(longestRun(days, rests(3, 7))).toEqual({
+      days: 2,
+      from: '2026-10-01',
+      to: '2026-10-02',
+    });
+    expect(longestRun(new Set(['2026-10-01', '2026-10-08']), rests(2, 6))).toEqual({
+      days: 2,
+      from: '2026-10-01',
+      to: '2026-10-08',
     });
   });
 

@@ -251,6 +251,12 @@ final class SquadCast {
         coachBusyUntil = now.addingTimeInterval(clip.duration)
     }
 
+    /// Drops the characters made so far, so the next `update` makes each again from the art on the
+    /// phone now.
+    func forgetCharacters() {
+        players.removeAll()
+    }
+
     /// The member's character, made again when what they wear or their persona changes (a kit
     /// once they trained); when only their pose does, it carries on from the pose on screen
     /// into the new loop.

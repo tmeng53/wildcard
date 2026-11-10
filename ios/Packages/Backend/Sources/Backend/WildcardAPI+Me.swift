@@ -17,7 +17,7 @@ extension WildcardAPI {
         }
         return CheckInTotals(
             trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
-            disclaimers: totals.disclaimers, topSport: topSport)
+            disclaimers: totals.disclaimers, topSport: topSport, streaks: CardStreaks(totals.streaks))
     }
 
     /// The member's 练了 for days `from` through `last` (at most 371), by day, the earliest made
@@ -58,6 +58,7 @@ extension WildcardAPI {
             return WildcardRecords(
                 trainedDays: wire.trainedDays, minutes: wire.minutes, longestMinutes: wire.longestMinutes,
                 longestStreak: try streak(wire.longestStreak), mealStreak: try streak(wire.mealStreak),
+                currentStreak: try streak(wire.currentStreak), currentMealStreak: try streak(wire.currentMealStreak),
                 hours: wire.hours, weekdays: wire.weekdays,
                 sports: try wire.sports.map { sport throws(ContractsError) in
                     .init(activity: try Activity(sport), days: sport.days)
@@ -85,12 +86,16 @@ extension WildcardAPI {
         try await call { _ = try await client.deleteMyBirthday().noContent }
     }
 
-    /// Wears one of the member's titles on their card, or the latest won again for nil; answers
-    /// the board as it stands. Safe to repeat.
-    public func equip(title: String?) async throws(APIError) -> TitleBoard {
-        let board = try await call {
-            try await client.putMyEquippedTitle(body: .json(.init(version: ._1, title: title))).ok.body.json
-        }
+    /// Wears one of the member's titles or team badges on their card, or the latest title won
+    /// again for nil; answers the board as it stands. Safe to repeat.
+    public func equip(_ wearable: Wearable?) async throws(APIError) -> TitleBoard {
+        let body: Components.Schemas.EquipTitle =
+            switch wearable {
+            case .title(let title): .init(version: ._1, title: title)
+            case .teamBadge(let id): .init(version: ._1, title: nil, teamBadge: id)
+            case nil: .init(version: ._1, title: nil)
+            }
+        let board = try await call { try await client.putMyEquippedTitle(body: .json(body)).ok.body.json }
         return try read { () throws(ContractsError) in try TitleBoard(board) }
     }
 
@@ -111,7 +116,7 @@ extension WildcardAPI {
                     disclaimers: card.disclaimers,
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
-                    }),
+                    }, streaks: CardStreaks(card.streaks)),
                 week: WeekCount(trainedDays: card.week.trainedDays, plannedDays: card.week.plannedDays),
                 board: try TitleBoard(card),
                 schedule: try MateSchedule(card.week))
@@ -221,6 +226,15 @@ public struct CheckInTotals: Hashable, Sendable {
     public let disclaimers: Int
     /// The sport with the most 练了 (最常练); nil before the first.
     public let topSport: TopSport?
+    /// The streaks still going; none from an older server.
+    public let streaks: CardStreaks
+}
+
+extension CardStreaks {
+    /// The API's streaks still going, a left-out one (broken, or an older server) as 0.
+    init(_ streaks: Components.Schemas.CurrentStreaks?) {
+        self.init(training: streaks?.training?.days ?? 0, meals: streaks?.meals?.days ?? 0)
+    }
 }
 
 /// The sport a member logged the most 练了 for, and how many.

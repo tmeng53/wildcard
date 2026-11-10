@@ -48,6 +48,9 @@ private func entry(
     #expect(try entry(action: "me")?.destination == .profile)
     #expect(try entry(action: "notices")?.destination == .notices)
     #expect(try entry(action: "coaches")?.destination == .coaches)
+    #expect(try entry(action: "wardrobe")?.destination == .wardrobe(piece: nil))
+    #expect(try entry(action: "wardrobe/thanks-bulb")?.destination == .wardrobe(piece: "thanks-bulb"))
+    #expect(try entry(action: "badges")?.destination == .badges)
 }
 
 @Test func aPlaceThisBuildDoesntKnowShowsNoButtonAndAnUnknownStyleIsABanner() throws {

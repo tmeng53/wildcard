@@ -26066,7 +26066,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), or no profile saved yet (`PROFILE_MISSING`)
+            /// Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), a team badge they don’t hold or sent with a title (`BADGE_NOT_HELD`), or no profile saved yet (`PROFILE_MISSING`)
             ///
             /// - Remark: Generated from `#/paths//me/equipped-title/put(putMyEquippedTitle)/responses/400`.
             ///

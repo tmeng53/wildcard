@@ -1,6 +1,6 @@
 import type { ReaderLanguage } from '@wildcard/language-model';
 
-import type { Birthday, EquippedTitle, MemberId, Profile, Squadmate } from '../domain/profile.js';
+import type { Birthday, MemberId, Profile, Squadmate, Worn } from '../domain/profile.js';
 import { ProfileMissingError } from '../errors.js';
 import type { PastLocalHour, ProfileStore } from '../ports.js';
 import { findProfile } from './members/find-profile.js';
@@ -16,10 +16,10 @@ export interface Members {
    */
   squadmates(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, Squadmate>>;
   /**
-   * Wears `title` on the member's player card, or none for null. Which titles they may wear is
-   * the caller's to check. Throws `ProfileMissingError` before they have a profile.
+   * Wears a title or a team badge on the member's player card, or none for null. Which they may
+   * wear is the caller's to check. Throws `ProfileMissingError` before they have a profile.
    */
-  equipTitle(member: MemberId, title: EquippedTitle | null): Promise<void>;
+  wear(member: MemberId, worn: Worn | null): Promise<void>;
   /**
    * Saves the member's birthday, or removes it for null. Throws `ProfileMissingError` before they
    * have a profile.
@@ -55,8 +55,8 @@ export function createMembers(deps: { readonly store: ProfileStore }): Members {
     findProfile: (member) => findProfile(deps, member),
     saveProfile: (input) => saveProfile(deps, input),
     squadmates: (members) => deps.store.squadmates(members),
-    equipTitle: async (member, title) => {
-      if (!(await deps.store.equipTitle(member, title))) throw new ProfileMissingError();
+    wear: async (member, worn) => {
+      if (!(await deps.store.wear(member, worn))) throw new ProfileMissingError();
     },
     saveBirthday: async (member, birthday) => {
       if (!(await deps.store.saveBirthday(member, birthday))) throw new ProfileMissingError();
