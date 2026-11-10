@@ -188,6 +188,15 @@ public final class TodayStore {
         }
     }
 
+    /// The member saved their character in 我's editor: the home wears it at once, before the
+    /// server is read again.
+    public func wear(_ character: MemberCharacter) {
+        guard var home = savedHome, let index = home.today.members.firstIndex(where: { $0.member == home.member })
+        else { return }
+        home.today.members[index].character = character
+        savedHome = home
+    }
+
     // MARK: - 拍一拍
 
     /// Loads whom the member patted today and who patted them; keeps what was shown when the
