@@ -12,8 +12,11 @@ import {
   localDayAt,
   plannedTrainingDays,
   restedOnDay,
+  StoredPlan,
+  storedPlan,
   trainedByKept,
-  trainedOnRestDay,
+  trainedByOf,
+  trainedOnDay,
   weekStartOf,
   type PlanDays as Days,
   type WeeklyPlan,
@@ -200,32 +203,62 @@ describe('checkPlanChange', () => {
   });
 });
 
-describe('trainedOnRestDay', () => {
+describe('trainedOnDay', () => {
   const rest = { kind: 'rest' } as const;
   const train = { kind: 'train' } as const;
+  const lift = { kind: 'train', sport: 'strength' } as const;
   const plan: WeeklyPlan = {
     weekStart: '2026-10-19',
-    days: [train, train, rest, train, train, train, rest],
+    days: [train, lift, rest, train, train, train, rest],
     source: 'saved',
   };
+  const swim = { sport: 'swim' } as const;
 
   it('makes a planned rest day a training day of the 练了’s sport', () => {
     expect(
-      trainedOnRestDay({ plan, day: '2026-10-21', training: { sport: 'swim' } }),
-    ).toStrictEqual([train, train, { kind: 'train', sport: 'swim' }, train, train, train, rest]);
+      trainedOnDay({ plan, day: '2026-10-21', training: swim, trainedThatDay: [swim] }),
+    ).toStrictEqual([train, lift, { kind: 'train', sport: 'swim' }, train, train, train, rest]);
+    const frisbee = { sport: 'custom', customSport: '飞盘' } as const;
     expect(
-      trainedOnRestDay({
-        plan,
-        day: '2026-10-25',
-        training: { sport: 'custom', customSport: '飞盘' },
-      })?.[6],
+      trainedOnDay({ plan, day: '2026-10-25', training: frisbee, trainedThatDay: [frisbee] })?.[6],
     ).toStrictEqual({ kind: 'train', sport: 'custom', customSport: '飞盘' });
   });
 
-  it('leaves a training day as planned', () => {
+  it('names the sport on a training day that named none', () => {
     expect(
-      trainedOnRestDay({ plan, day: '2026-10-22', training: { sport: 'swim' } }),
+      trainedOnDay({ plan, day: '2026-10-22', training: swim, trainedThatDay: [swim] })?.[3],
+    ).toStrictEqual({ kind: 'train', sport: 'swim' });
+  });
+
+  it('swaps a planned sport the day didn’t train for the one it did', () => {
+    expect(
+      trainedOnDay({ plan, day: '2026-10-20', training: swim, trainedThatDay: [swim] })?.[1],
+    ).toStrictEqual({ kind: 'train', sport: 'swim' });
+  });
+
+  it('keeps a planned sport the day trained, whatever else it trained', () => {
+    expect(
+      trainedOnDay({
+        plan,
+        day: '2026-10-20',
+        training: swim,
+        trainedThatDay: [swim, { sport: 'strength' }],
+      }),
     ).toBeUndefined();
+  });
+
+  it('tells custom sports apart by name', () => {
+    const climbing = { kind: 'train', sport: 'custom', customSport: '攀岩' } as const;
+    const custom: WeeklyPlan = { ...plan, days: [climbing, lift, rest, train, train, train, rest] };
+    const frisbee = { sport: 'custom', customSport: '飞盘' } as const;
+    expect(
+      trainedOnDay({
+        plan: custom,
+        day: '2026-10-19',
+        training: frisbee,
+        trainedThatDay: [frisbee],
+      })?.[0],
+    ).toStrictEqual({ kind: 'train', sport: 'custom', customSport: '飞盘' });
   });
 });
 
@@ -333,11 +366,39 @@ describe('plannedTrainingDays', () => {
   });
 });
 
+describe('storedPlan', () => {
+  const id = '00000000-0000-4000-8000-000000000001';
+  const days: Days = [train, run, rest, train, train, train, rest];
+
+  it('stores a turned rest day as before, and what a turned training day was planned as', () => {
+    expect(storedPlan(days, {})).toStrictEqual({ version: 1, days });
+    expect(storedPlan(days, { '1': { checkIn: id, from: rest } })).toStrictEqual({
+      version: 1,
+      days,
+      trainedBy: { '1': id },
+    });
+    const lift = { kind: 'train', sport: 'strength' } as const;
+    const stored = storedPlan(days, { '1': { checkIn: id, from: lift } });
+    expect(stored).toStrictEqual({
+      version: 1,
+      days,
+      trainedBy: { '1': id },
+      turnedFrom: { '1': lift },
+    });
+    expect(trainedByOf(StoredPlan.parse(stored))).toStrictEqual({
+      '1': { checkIn: id, from: lift },
+    });
+    expect(
+      trainedByOf(StoredPlan.parse({ version: 1, days, trainedBy: { '1': id } })),
+    ).toStrictEqual({ '1': { checkIn: id, from: rest } });
+  });
+});
+
 describe('trainedByKept', () => {
   it('keeps the days a 练了 turned only while the member leaves them as they are', () => {
     const run = { kind: 'train', sport: 'run' } as const;
     const current: Days = [train, run, rest, train, train, train, rest];
-    const trainedBy = { '1': '00000000-0000-4000-8000-000000000001' };
+    const trainedBy = { '1': { checkIn: '00000000-0000-4000-8000-000000000001', from: rest } };
     expect(trainedByKept({ current, next: [...current], trainedBy })).toStrictEqual(trainedBy);
     const next: Days = [rest, run, rest, train, train, train, rest];
     expect(trainedByKept({ current, next, trainedBy })).toStrictEqual(trainedBy);

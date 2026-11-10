@@ -93,7 +93,7 @@ const PLANNED_REST = '计划休息';
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
 /** `10-27 周二`, for a `YYYY-MM-DD` day. */
-function dayWords(day: string): string {
+export function dayWords(day: string): string {
   return `${day.slice(5)} ${WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay()] ?? ''}`;
 }
 

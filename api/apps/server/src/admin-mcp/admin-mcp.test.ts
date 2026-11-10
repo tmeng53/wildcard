@@ -14,12 +14,15 @@ import {
   createCheckIns,
   createPostgresCheckInStore,
   createPostgresCommentStore,
+  createPostgresQuickReactions,
   createPostgresReactionStore,
   createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
+  createQuickReactions,
   createWeekSummaryWords,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import { createMinimumBuilds, createPostgresMinimumBuild } from '@wildcard/switches';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
 import {
@@ -89,6 +92,8 @@ import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
 import { appCopyTools } from './tools/app-copy.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
+import { minimumBuildTools } from './tools/minimum-build.js';
+import { quickReactionTools } from './tools/quick-reactions.js';
 import { memeTools } from './tools/memes.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
@@ -229,6 +234,12 @@ beforeAll(async () => {
               }),
               ...disclaimerDiceTools({
                 dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
+              }),
+              ...minimumBuildTools({
+                minimum: createMinimumBuilds({ store: createPostgresMinimumBuild(scope) }),
+              }),
+              ...quickReactionTools({
+                reactions: createQuickReactions({ store: createPostgresQuickReactions(scope) }),
               }),
               ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
               ...dailyPushTools({
@@ -465,6 +476,10 @@ describe('the admin MCP server', () => {
       ['change_weekly_award_settings', false],
       ['get_disclaimer_dice', true],
       ['change_disclaimer_dice', false],
+      ['get_minimum_build', true],
+      ['set_minimum_build', false],
+      ['get_quick_reactions', true],
+      ['change_quick_reactions', false],
       ['get_app_copy', true],
       ['change_app_copy', false],
       ['get_daily_push_settings', true],
@@ -1088,6 +1103,65 @@ describe('the admin MCP server', () => {
       await call('change_disclaimer_dice', { lines: before.lines });
     }
     expect(Dice.parse(JSON.parse((await call('get_disclaimer_dice')).text))).toStrictEqual(before);
+    await client.close();
+  });
+
+  it('sets the minimum build and the quick reactions, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const logged = async (table: 'minimum_build_events' | 'quick_reaction_events') =>
+      (
+        await sql<{ value: unknown }>`
+          select to_jsonb(t) - 'id' - 'at' - 'changed_by' as value from ${sql.table(table)} t
+          where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ value }) => value);
+
+    expect(JSON.parse((await call('get_minimum_build')).text)).toStrictEqual({
+      version: 1,
+      build: null,
+    });
+    try {
+      expect(JSON.parse((await call('set_minimum_build', { build: '190.1' })).text)).toStrictEqual({
+        version: 1,
+        build: '190.1',
+      });
+      await call('set_minimum_build', { build: '190.1' });
+      for (const build of ['v190', '190.', '1.2.3.4']) {
+        expect((await call('set_minimum_build', { build })).isError).toBe(true);
+      }
+      expect(await logged('minimum_build_events')).toStrictEqual([
+        { minimum: { version: 1, build: '190.1' } },
+      ]);
+    } finally {
+      await call('set_minimum_build', { build: null });
+    }
+
+    const shipped = ['❤️', '💪', '😂', '🤤', '😮', '😡'];
+    expect(JSON.parse((await call('get_quick_reactions')).text)).toStrictEqual({
+      version: 1,
+      emoji: shipped,
+    });
+    try {
+      const emoji = ['🔥', '👏', '❤️'];
+      expect(JSON.parse((await call('change_quick_reactions', { emoji })).text)).toStrictEqual({
+        version: 1,
+        emoji,
+      });
+      await call('change_quick_reactions', { emoji });
+      for (const args of [{ emoji: [] }, { emoji: ['🔥', '🔥'] }, { emoji: ['ok'] }, {}]) {
+        expect((await call('change_quick_reactions', args)).isError).toBe(true);
+      }
+      expect(await logged('quick_reaction_events')).toStrictEqual([
+        { reactions: { version: 1, emoji } },
+      ]);
+    } finally {
+      await call('change_quick_reactions', { emoji: shipped });
+    }
     await client.close();
   });
 

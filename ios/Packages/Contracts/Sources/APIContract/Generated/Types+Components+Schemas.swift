@@ -620,6 +620,10 @@ extension Components {
             public var stores: Components.Schemas.StoresCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/pieces`.
             public var pieces: Components.Schemas.PiecesCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/appBuild`.
+            public var appBuild: Components.Schemas.AppBuildCatalog?
+            /// - Remark: Generated from `#/components/schemas/Catalog/reactions`.
+            public var reactions: Components.Schemas.ReactionsCatalog?
             /// - Remark: Generated from `#/components/schemas/Catalog/art`.
             public var art: Components.Schemas.ArtCatalog?
             /// A container of undocumented properties.
@@ -635,6 +639,8 @@ extension Components {
             ///   - switches:
             ///   - stores:
             ///   - pieces:
+            ///   - appBuild:
+            ///   - reactions:
             ///   - art:
             ///   - additionalProperties: A container of undocumented properties.
             public init(
@@ -646,6 +652,8 @@ extension Components {
                 switches: Components.Schemas.SwitchesCatalog? = nil,
                 stores: Components.Schemas.StoresCatalog? = nil,
                 pieces: Components.Schemas.PiecesCatalog? = nil,
+                appBuild: Components.Schemas.AppBuildCatalog? = nil,
+                reactions: Components.Schemas.ReactionsCatalog? = nil,
                 art: Components.Schemas.ArtCatalog? = nil,
                 additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
             ) {
@@ -657,6 +665,8 @@ extension Components {
                 self.switches = switches
                 self.stores = stores
                 self.pieces = pieces
+                self.appBuild = appBuild
+                self.reactions = reactions
                 self.art = art
                 self.additionalProperties = additionalProperties
             }
@@ -669,6 +679,8 @@ extension Components {
                 case switches
                 case stores
                 case pieces
+                case appBuild
+                case reactions
                 case art
             }
             public init(from decoder: any Swift.Decoder) throws {
@@ -705,6 +717,14 @@ extension Components {
                     Components.Schemas.PiecesCatalog.self,
                     forKey: .pieces
                 )
+                self.appBuild = try container.decodeIfPresent(
+                    Components.Schemas.AppBuildCatalog.self,
+                    forKey: .appBuild
+                )
+                self.reactions = try container.decodeIfPresent(
+                    Components.Schemas.ReactionsCatalog.self,
+                    forKey: .reactions
+                )
                 self.art = try container.decodeIfPresent(
                     Components.Schemas.ArtCatalog.self,
                     forKey: .art
@@ -718,6 +738,8 @@ extension Components {
                     "switches",
                     "stores",
                     "pieces",
+                    "appBuild",
+                    "reactions",
                     "art"
                 ])
             }
@@ -754,6 +776,14 @@ extension Components {
                 try container.encodeIfPresent(
                     self.pieces,
                     forKey: .pieces
+                )
+                try container.encodeIfPresent(
+                    self.appBuild,
+                    forKey: .appBuild
+                )
+                try container.encodeIfPresent(
+                    self.reactions,
+                    forKey: .reactions
                 )
                 try container.encodeIfPresent(
                     self.art,
@@ -2046,6 +2076,90 @@ extension Components {
                 try container.encode(
                     self.pieces,
                     forKey: .pieces
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/AppBuildCatalog`.
+        public struct AppBuildCatalog: Codable, Hashable, Sendable {
+            /// The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared number by number; an older app shows only 有新版本 and a button to the App Store. Left out while every build may run.
+            ///
+            /// - Remark: Generated from `#/components/schemas/AppBuildCatalog/minimumBuild`.
+            public var minimumBuild: Swift.String?
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `AppBuildCatalog`.
+            ///
+            /// - Parameters:
+            ///   - minimumBuild: The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared number by number; an older app shows only 有新版本 and a button to the App Store. Left out while every build may run.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                minimumBuild: Swift.String? = nil,
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.minimumBuild = minimumBuild
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case minimumBuild
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.minimumBuild = try container.decodeIfPresent(
+                    Swift.String.self,
+                    forKey: .minimumBuild
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "minimumBuild"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encodeIfPresent(
+                    self.minimumBuild,
+                    forKey: .minimumBuild
+                )
+                try encoder.encodeAdditionalProperties(additionalProperties)
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReactionsCatalog`.
+        public struct ReactionsCatalog: Codable, Hashable, Sendable {
+            /// The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReactionsCatalog/quick`.
+            public var quick: [Swift.String]
+            /// A container of undocumented properties.
+            public var additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer]
+            /// Creates a new `ReactionsCatalog`.
+            ///
+            /// - Parameters:
+            ///   - quick: The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.
+            ///   - additionalProperties: A container of undocumented properties.
+            public init(
+                quick: [Swift.String],
+                additionalProperties: [String: OpenAPIRuntime.OpenAPIValueContainer] = .init()
+            ) {
+                self.quick = quick
+                self.additionalProperties = additionalProperties
+            }
+            public enum CodingKeys: String, CodingKey {
+                case quick
+            }
+            public init(from decoder: any Swift.Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                self.quick = try container.decode(
+                    [Swift.String].self,
+                    forKey: .quick
+                )
+                additionalProperties = try decoder.decodeAdditionalProperties(knownKeys: [
+                    "quick"
+                ])
+            }
+            public func encode(to encoder: any Swift.Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(
+                    self.quick,
+                    forKey: .quick
                 )
                 try encoder.encodeAdditionalProperties(additionalProperties)
             }

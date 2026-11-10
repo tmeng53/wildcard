@@ -95,6 +95,13 @@ final class TogetherStage {
         return true
     }
 
+    /// Whether `figure` plays a part that leaves its canvas far behind (叠罗汉's top one, up on
+    /// the other's head), so it is drawn with the room `PlaceholderCharacter.stackReachAbove` asks.
+    func reachesHigh(_ figure: PatStage.Figure) -> Bool {
+        guard let playing, playing.kind == .stack else { return false }
+        return playing.parts.contains { $0.figure == figure }
+    }
+
     /// Where `figure` stands at `date`: on its own spot (`home`, where it would be now), or on
     /// its way to or from its place in the celebration, bobbing with each step (`bob`, in the
     /// stage's points at its scale, as `Placed.hop` takes it).

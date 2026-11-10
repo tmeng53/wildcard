@@ -1,12 +1,14 @@
 -- The AI coach: one row of settings, never deleted; coaches never deleted and keeping their
 -- ids; and logs that only grow.
 begin;
-select plan(12);
+select plan(14);
 
 select is((select count(*)::int from public.coach_settings), 1, 'the coach starts with its settings');
 select is((select coaching from public.coach_settings), false, 'coaching starts off');
 select throws_ok($$delete from public.coach_settings$$, '42501', null, 'the coach settings keep their row');
 select throws_ok($$update public.coach_settings set model = 'anthropic/claude-haiku-5-5'$$, '23514', null, 'the coach runs on an OpenAI model');
+select is((select reasoning from public.coach_settings), 'low', 'the coach thinks a little before it answers');
+select throws_ok($$update public.coach_settings set reasoning = 'loads'$$, '23514', null, 'the coach thinks at a level the model knows');
 select throws_ok($$delete from public.coaches where id = 'xiaohun'$$, '42501', null, 'a coach is never deleted');
 select throws_ok($$update public.coaches set id = 'xiaohun2' where id = 'xiaohun'$$, '42501', null, 'a coach keeps its id');
 select throws_ok($$update public.coach_catalog_events set coach = '{"version": 2}'$$, '42501', null, 'the coaches'' log refuses an update');

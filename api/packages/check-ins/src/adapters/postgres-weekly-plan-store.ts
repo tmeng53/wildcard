@@ -1,7 +1,7 @@
 import { sql, type Kysely } from 'kysely';
 
 import { StoredFuelGoals } from '../domain/fuel-goal.js';
-import { StoredPlan, WeekStart } from '../domain/weekly-plan.js';
+import { StoredPlan, WeekStart, storedPlan, trainedByOf } from '../domain/weekly-plan.js';
 import type { WeeklyPlanStore } from '../ports.js';
 import type { DB } from './tables.js';
 
@@ -83,15 +83,11 @@ export function createPostgresWeeklyPlanStore(db: Kysely<DB>): WeeklyPlanStore {
         .where('member_id', '=', member)
         .where('week_start', '=', weekStart)
         .executeTakeFirst();
-      return row === undefined ? {} : (StoredPlan.parse(row.payload).trainedBy ?? {});
+      return row === undefined ? {} : trainedByOf(StoredPlan.parse(row.payload));
     },
 
     async save({ member, weekStart, days, trainedBy = {} }) {
-      const payload = JSON.stringify(
-        Object.keys(trainedBy).length === 0
-          ? { version: 1, days }
-          : { version: 1, days, trainedBy },
-      );
+      const payload = JSON.stringify(storedPlan(days, trainedBy));
       // One statement: the plan and its log entry are saved together, and a save that
       // changes nothing writes neither.
       await db

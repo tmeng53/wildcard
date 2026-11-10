@@ -185,13 +185,17 @@ private struct SamplePosts {
                 series: WorkoutSeries(laps: laps), tilePosition: tile)
         }
         if sport == "strength" {
-            // No route indoors: the heart rate through the hour, sets and rests.
+            // No route indoors: the heart rate through the hour, sets and rests, with a warm-up
+            // and a cool-down under the zones of a 32-year-old resting at 62.
             let beats = (0...60).map { (minute: Int) -> HeartRatePoint in
-                HeartRatePoint(seconds: Double(minute) * 60, bpm: 110 + (minute * 13) % 46)
+                let easy = minute < 6 || minute > 55
+                return HeartRatePoint(
+                    seconds: Double(minute) * 60, bpm: easy ? 86 + minute % 6 : 110 + (minute * 13) % 46)
             }
             return Workout(
                 source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
-                series: WorkoutSeries(heartRate: beats), tilePosition: tile)
+                series: WorkoutSeries(heartRate: beats, zones: HeartRateZones(age: 32, restingBpm: 62)),
+                tilePosition: tile)
         }
         let route: [RoutePoint] = (0...80).map { (step: Int) -> RoutePoint in
             let turn: Double = Double(step) / 80 * 1.7 * Double.pi
