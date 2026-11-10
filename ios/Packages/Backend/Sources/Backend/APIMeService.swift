@@ -149,9 +149,9 @@ public struct APIMeService: MeService {
         }
     }
 
-    /// Wears one of the member's titles (nil: the latest won again).
-    public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
-        try await me { () throws(APIError) in try await api.equip(title: title) }
+    /// Wears one of the member's titles or team badges (nil: the latest title won again).
+    public func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
+        try await me { () throws(APIError) in try await api.equip(wearable) }
     }
 
     public func claim(piece: String) async throws(MeError) {

@@ -46,6 +46,7 @@ const LOGGED = [
   'jersey_number',
   'birthday',
   'equipped_title',
+  'equipped_team_badge',
   'language',
 ] as const;
 
@@ -88,6 +89,7 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
           'jersey_number',
           'created_at',
           'equipped_title',
+          'equipped_team_badge',
         ])
         .where('member_id', 'in', members)
         .execute();
@@ -100,21 +102,26 @@ export function createPostgresProfileStore(db: Kysely<MemberTables>): ProfileSto
             jerseyNumber: row.jersey_number,
             joinedAt: new Date(row.created_at),
             equippedTitle: row.equipped_title,
+            equippedTeamBadge: row.equipped_team_badge,
           },
         ]),
       );
     },
 
-    async equipTitle(member, title) {
-      // One statement, like a save: the change and its log entry together, neither when the
-      // title is the one worn already.
+    async wear(member, worn) {
+      // One statement, like a save: the change and its log entry together, neither when it is
+      // the one worn already. Wearing one takes the other off.
+      const title = worn?.title ?? null;
+      const teamBadge = worn?.teamBadge ?? null;
       await db
         .with('saved', (cte) =>
           cte
             .updateTable('profiles')
-            .set({ equipped_title: title })
+            .set({ equipped_title: title, equipped_team_badge: teamBadge })
             .where('member_id', '=', member)
-            .where(sql<boolean>`equipped_title is distinct from ${title}::text`)
+            .where(
+              sql<boolean>`(equipped_title, equipped_team_badge) is distinct from (${title}::text, ${teamBadge}::text)`,
+            )
             .returning(LOGGED),
         )
         .insertInto('profile_events')

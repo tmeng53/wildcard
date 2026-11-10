@@ -13,36 +13,50 @@ import SwiftUI
 /// (`equip`); a squadmate's can't.
 struct PlayerCard: View {
     let face: PlayerCardFace
-    /// Wears a title (nil: the latest again); nil on a squadmate's card, which shows no 装备.
-    var equip: ((String) -> Void)?
+    /// Wears a title or team badge; nil on a squadmate's card, which shows no 装备.
+    var equip: ((Wearable) -> Void)?
+    /// What this phone saw of the member's own board, for NEW and the turns to it a notice asks
+    /// for; nil on a squadmate's card.
+    var marks: BadgeMarks?
     /// The colour of the 轻点翻面 line under the card: muted on a page, on-ink over a dim; nil
     /// leaves the line out (我, where tiles follow the card).
     var hint: ColorRole? = .fgMuted
     /// Spans the width it is given at the card's proportions (我), instead of its own 300 points.
     var fillsWidth = false
-    @State private var opened: BoardTitle?
+    @State private var opened: OpenedBadge?
     /// A squadmate's card's back shows their badge board in place of their 出赛表.
     @State private var showsBoard = false
     static var size: CGSize { TradingCard.size }
 
     var body: some View {
-        FlippingCard(hint: hint, fillsWidth: fillsWidth, identifier: "me.card") {
+        FlippingCard(hint: hint, fillsWidth: fillsWidth, identifier: "me.card", backRequested: boardRequested) {
             CardFront(face: face)
         } back: {
             // Turned over again, a squadmate's back opens on their 出赛表. The stack keeps one
             // identity while the back switches sides inside it, so only the turn resets it.
             ZStack { back }.onDisappear { showsBoard = false }
         }
-        .sheet(item: $opened) { title in
+        .sheet(item: $opened) { badge in
             BadgeCard(
-                title: title, isWorn: face.board.worn == title.title,
+                badge: badge.card, isWorn: face.board.wears(badge.wearable),
                 equip: equip.map { equip in
                     {
-                        equip(title.title)
+                        equip(badge.wearable)
                         opened = nil
                     }
                 })
         }
+    }
+
+    /// A notice's turn to the board, on the member's own card.
+    private var boardRequested: Binding<Bool> {
+        Binding(get: { marks?.boardRequested ?? false }, set: { marks?.boardRequested = $0 })
+    }
+
+    /// Opens a badge's card, and it is no longer NEW.
+    private func open(_ badge: OpenedBadge) {
+        marks?.see(badge.mark, on: face.board)
+        opened = badge
     }
 
     /// A squadmate's card turns over to their 出赛表 this week, whose badges turn the same side to
@@ -52,9 +66,9 @@ struct PlayerCard: View {
         if let schedule = face.schedule, !showsBoard {
             ScheduleBack(face: face, schedule: schedule) { showsBoard = true }
         } else if face.schedule != nil {
-            CardBack(face: face, toSchedule: { showsBoard = false }, open: { opened = $0 })
+            CardBack(face: face, toSchedule: { showsBoard = false }, open: open)
         } else {
-            CardBack(face: face, open: { opened = $0 })
+            CardBack(face: face, news: marks?.news(on: face.board) ?? [], open: open)
         }
     }
 }
@@ -66,6 +80,9 @@ private struct CardFront: View {
     let face: PlayerCardFace
     @Environment(\.sceneTheme) private var theme
 
+    /// What the front wears: a title, or a team badge in the app's language.
+    private var worn: WornTitle? { face.board.wornTitle(in: [AppLanguage.current.rawValue]) }
+
     var body: some View {
         VStack(spacing: 0) {
             GeometryReader { window in
@@ -75,7 +92,7 @@ private struct CardFront: View {
             }
             .overlay(alignment: .topLeading) { numberAndTitle }
             .overlay(alignment: .topTrailing) {
-                if let worn = face.board.wornTitle {
+                if let worn {
                     TitleBadgeView(
                         shape: worn.badge.shape, colour: worn.badge.colour, tone: worn.badge.tone,
                         glyph: worn.badge.glyph,
@@ -128,7 +145,7 @@ private struct CardFront: View {
                     .accessibilityLabel(Text(copy: "card.number \(number.text)", bundle: .module))
                     .accessibilityIdentifier("me.cardNumber")
             }
-            if let worn = face.board.wornTitle {
+            if let worn {
                 Capsule()
                     .fill(TitleBadgeView.faceColor(colour: worn.badge.colour, tone: worn.badge.tone))
                     .frame(width: Self.bar.width, height: Self.bar.height)
@@ -242,7 +259,9 @@ private struct CardBack: View {
     let face: PlayerCardFace
     /// Back to a squadmate's 出赛表; nil on the member's own card.
     var toSchedule: (() -> Void)?
-    let open: (BoardTitle) -> Void
+    /// The badges that wear NEW, by `BadgeNews`' marks; empty on a squadmate's card.
+    var news: Set<String> = []
+    let open: (OpenedBadge) -> Void
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -301,12 +320,24 @@ private struct CardBack: View {
             ScrollView {
                 LazyVGrid(columns: Self.columns, spacing: Space.s) {
                     // The team's tickets first: few, and given by hand.
-                    ForEach(face.board.teamBadges) { badge in TeamBadgeCell(badge: badge) }
+                    ForEach(face.board.teamBadges) { badge in
+                        Button {
+                            open(.team(badge))
+                        } label: {
+                            TeamBadgeCell(
+                                badge: badge, isWorn: face.board.wears(.teamBadge(badge.id)),
+                                isNew: news.contains(BadgeNews.key(badge)))
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .accessibilityIdentifier("me.teamBadge")
+                    }
                     ForEach(face.board.titles) { title in
                         Button {
-                            open(title)
+                            open(.title(title))
                         } label: {
-                            BadgeCell(title: title, isWorn: face.board.worn == title.title)
+                            BadgeCell(
+                                title: title, isWorn: face.board.wears(.title(title.title)),
+                                isNew: news.contains(BadgeNews.key(title)))
                         }
                         .buttonStyle(PressableButtonStyle())
                         .accessibilityIdentifier("me.badge")

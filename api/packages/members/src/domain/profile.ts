@@ -142,6 +142,21 @@ export const EQUIPPED_TITLE_MAX = 40;
 export const EquippedTitle = z.string().min(1).max(EQUIPPED_TITLE_MAX);
 export type EquippedTitle = z.infer<typeof EquippedTitle>;
 
+/** A dedicated badge the team gave (点子王), by its id, worn on the card instead of a title. */
+export const EquippedTeamBadge = z
+  .string()
+  .max(48)
+  .regex(/^[a-z][a-z0-9]*(-[a-z0-9]+){0,3}$/);
+export type EquippedTeamBadge = z.infer<typeof EquippedTeamBadge>;
+
+/**
+ * What a member chose to wear on their card: a weekly title by its words, or a team badge by its
+ * id; never both.
+ */
+export type Worn =
+  | { readonly title: EquippedTitle; readonly teamBadge?: never }
+  | { readonly teamBadge: EquippedTeamBadge; readonly title?: never };
+
 /** What squadmates see of a member besides their check-ins: also what their player card shows. */
 export interface Squadmate {
   readonly catchphrase: Catchphrase | null;
@@ -154,4 +169,9 @@ export interface Squadmate {
    * hold it is the awards' to say.
    */
   readonly equippedTitle: EquippedTitle | null;
+  /**
+   * The team badge they chose to wear instead, by its id; null unless they chose one. Whether
+   * they still hold it is the rewards' to say.
+   */
+  readonly equippedTeamBadge: EquippedTeamBadge | null;
 }

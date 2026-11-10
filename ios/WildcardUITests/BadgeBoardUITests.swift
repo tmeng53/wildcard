@@ -52,6 +52,48 @@ final class BadgeBoardUITests: XCTestCase {
         keepScreenshot(named: "43-me-card-equipped")
     }
 
+    /// A badge the team gave: NEW until opened, its card from 外卡团队, and 装备 wears it on the
+    /// front in place of a title.
+    func testTeamBadgeIsNewAndWearable() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-tab", "me", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
+        ]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+        let card = app.buttons["me.card"]
+        XCTAssertTrue(card.waitForExistence(timeout: 30), "我 never showed")
+        card.tap()
+        let back = app.descendants(matching: .any).matching(identifier: "me.cardBack").firstMatch
+        XCTAssertTrue(back.waitForExistence(timeout: 5), "the card didn't turn over")
+        let ticket = app.buttons["me.teamBadge"]
+        XCTAssertTrue(ticket.waitForExistence(timeout: 5), "the board has no team badge")
+        let new = app.descendants(matching: .any).matching(identifier: "me.badgeNew").firstMatch
+        XCTAssertTrue(new.exists, "the team badge given just now isn't NEW")
+        XCTAssertTrue(back.frame.contains(new.frame), "NEW runs off the card: \(new.frame)")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "44-me-team-badge-new")
+
+        ticket.tap()
+        let detail = app.descendants(matching: .any).matching(identifier: "me.badgeCard").firstMatch
+        XCTAssertTrue(detail.waitForExistence(timeout: 5), "the team badge didn't open")
+        XCTAssertTrue(app.staticTexts["点子王"].exists, "the team badge's card has no name")
+        XCTAssertTrue(app.staticTexts["外卡团队"].exists, "the team badge's card doesn't say who gave it")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "45-me-team-badge-card")
+        app.buttons["me.badgeCard.equip"].tap()
+        XCTAssertTrue(detail.waitForNonExistence(timeout: 5), "the badge card stayed open after 装备")
+        waitFor(ticket, "value == '已装备'", "the tick didn't move to 点子王")
+        XCTAssertFalse(new.exists, "the team badge is still NEW after it was opened")
+
+        back.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)).tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "the card didn't turn back")
+        waitFor(card, "label CONTAINS '点子王'", "the front doesn't wear the team badge")
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "46-me-card-team-badge")
+    }
+
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

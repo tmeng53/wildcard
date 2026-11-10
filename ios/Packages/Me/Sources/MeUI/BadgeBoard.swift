@@ -5,11 +5,12 @@ import DesignSystemUI
 import SportsUI
 import SwiftUI
 
-/// One badge on the board: the badge, ×N when won more than once, a tick on the one worn, and
-/// its title under it.
+/// One badge on the board: the badge, ×N when won more than once, a tick on the one worn, NEW
+/// until it is opened on this phone, and its title under it.
 struct BadgeCell: View {
     let title: BoardTitle
     let isWorn: Bool
+    var isNew = false
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -30,17 +31,7 @@ struct BadgeCell: View {
                         .offset(x: Space.xxs / 2, y: -Space.xxs / 2)
                 }
             }
-            .overlay(alignment: .bottomTrailing) {
-                if isWorn {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: BoardMetrics.tick, weight: .bold))
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .frame(width: BoardMetrics.chip - 2, height: BoardMetrics.chip - 2)
-                        .background(Color(role: .bgCanvas, in: theme), in: Circle())
-                        .offset(x: Space.xxs / 2, y: Space.xxs / 2)
-                        .accessibilityIdentifier("me.badgeWorn")
-                }
-            }
+            .badgeMarks(isWorn: isWorn, isNew: isNew)
             Text(verbatim: title.title)
                 .typeStyle(isWorn ? TypeRamp.footnoteEmphasis : TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
@@ -57,10 +48,48 @@ struct BadgeCell: View {
     }
 }
 
+extension View {
+    /// A badge's tick when it is worn, at its bottom right, and NEW when it is new, at its top
+    /// left.
+    fileprivate func badgeMarks(isWorn: Bool, isNew: Bool) -> some View {
+        modifier(BadgeMarksOverlay(isWorn: isWorn, isNew: isNew))
+    }
+}
+
+private struct BadgeMarksOverlay: ViewModifier {
+    let isWorn: Bool
+    let isNew: Bool
+    @Environment(\.sceneTheme) private var theme
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(alignment: .bottomTrailing) {
+                if isWorn {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: BoardMetrics.tick, weight: .bold))
+                        .foregroundStyle(Color(role: .fgDefault, in: theme))
+                        .frame(width: BoardMetrics.chip - 2, height: BoardMetrics.chip - 2)
+                        .background(Color(role: .bgCanvas, in: theme), in: Circle())
+                        .offset(x: Space.xxs / 2, y: Space.xxs / 2)
+                        .accessibilityIdentifier("me.badgeWorn")
+                }
+            }
+            .overlay(alignment: .topLeading) {
+                if isNew {
+                    InkTag.newOnInk
+                        .offset(x: -Space.xxs / 2, y: -Space.xxs / 2)
+                        .accessibilityIdentifier("me.badgeNew")
+                }
+            }
+    }
+}
+
 /// A badge the Wildcard team gave (捉虫队, 点子王): a ticket in its own colour, ×N when given more
-/// than once, its name under it. Never worn as a title, so it carries no tick and opens nothing.
+/// than once, a tick when worn, NEW until it is opened on this phone, and its name under it.
 struct TeamBadgeCell: View {
     let badge: TeamBadge
+    let isWorn: Bool
+    var isNew = false
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -81,6 +110,7 @@ struct TeamBadgeCell: View {
                         .offset(x: Space.xxs / 2, y: -Space.xxs / 2)
                 }
             }
+            .badgeMarks(isWorn: isWorn, isNew: isNew)
             Text(verbatim: badge.name.localized)
                 .typeStyle(TypeRamp.caption)
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
@@ -92,8 +122,8 @@ struct TeamBadgeCell: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: badge.name.localized))
-        .accessibilityValue(Text(verbatim: badge.times > 1 ? "×\(badge.times)" : ""))
-        .accessibilityIdentifier("me.teamBadge")
+        .accessibilityValue(
+            isWorn ? Text(copy: "已装备", bundle: .module) : Text(verbatim: badge.times > 1 ? "×\(badge.times)" : ""))
     }
 }
 

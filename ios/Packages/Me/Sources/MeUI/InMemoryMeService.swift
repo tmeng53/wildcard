@@ -144,9 +144,9 @@ public actor InMemoryMeService: MeService {
         current.coachPushOn = isOn
     }
 
-    public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
+    public func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
         if failsSaving { throw .unavailable }
-        current.board.worn = title ?? current.board.titles.first?.title
+        current.board.wear(wearable)
         return current.board
     }
 
@@ -207,8 +207,15 @@ extension MateSchedule {
 
 extension TitleBoard {
     /// The approved badge board's titles, in its order, wearing the latest as the API does
-    /// before one is equipped.
-    static let sample = TitleBoard(titles: sampleTitles, worn: sampleTitles.first?.title)
+    /// before one is equipped, and a badge the team gave just now, NEW until it is opened.
+    static let sample = TitleBoard(
+        titles: sampleTitles, worn: sampleTitles.first?.title,
+        teamBadges: [
+            TeamBadge(
+                id: "idea-king",
+                name: CatalogNames(simplifiedChinese: "点子王", english: "Idea King", traditionalChinese: "點子王"),
+                glyph: "lightbulb.fill", tone: "#F2B33D", times: 1, latestAt: Date())
+        ])
 
     private static let sampleTitles: [BoardTitle] = [
         title("早八战神", "shield", "track", "sun.max.fill", weeks: ["2026-10-26": "连着五天七点前打卡。"]),

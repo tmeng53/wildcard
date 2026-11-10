@@ -2,11 +2,11 @@ import type { ReaderLanguage } from '@wildcard/language-model';
 
 import type {
   Birthday,
-  EquippedTitle,
   MemberId,
   Profile,
   ProfileSave,
   Squadmate,
+  Worn,
 } from './domain/profile.js';
 
 /** Where members' profiles are kept. */
@@ -21,11 +21,11 @@ export interface ProfileStore {
   /** What squadmates see of these members, by member. Members without a profile are left out. */
   squadmates(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, Squadmate>>;
   /**
-   * Saves the title the member wears (null for none), logged with the rest of the profile;
-   * nothing is saved or logged when it is the one worn already. Returns `false` when the member
-   * has no profile.
+   * Saves the title or team badge the member wears (null for none), logged with the rest of the
+   * profile; nothing is saved or logged when it is the one worn already. Returns `false` when the
+   * member has no profile.
    */
-  equipTitle(member: MemberId, title: EquippedTitle | null): Promise<boolean>;
+  wear(member: MemberId, worn: Worn | null): Promise<boolean>;
   /**
    * Saves the member's birthday (null removes it), logged with the rest of the profile; nothing is
    * saved or logged when it is the one saved already. Returns `false` when the member has no
