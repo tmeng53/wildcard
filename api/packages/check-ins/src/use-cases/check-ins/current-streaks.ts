@@ -1,3 +1,5 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
+
 import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import { currentRun, type Streak } from '../../domain/records.js';
 import { addDays, localDayAt, weekStartOf } from '../../domain/weekly-plan.js';
@@ -32,7 +34,7 @@ export async function currentStreaks(
     deps.store.streakDays({ member, ...(squad === undefined ? {} : { squad }) }),
     deps.calendarOf(member),
   ]);
-  const today = localDayAt(deps.clock(), calendar?.timeZone ?? 'UTC');
+  const today = localDayAt(deps.clock(), calendar?.timeZone ?? UNSAVED_MEMBER_ZONE);
   const meals = currentRun(new Set(days.meals), { today }).streak;
   const trained = new Set(days.trained);
   // Rest days only as far back as the run reaches: read more weeks while it breaks before them.

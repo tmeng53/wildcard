@@ -54,6 +54,26 @@ describe('currentRun', () => {
     });
   });
 
+  it('breaks once a whole week went by on rest days alone', () => {
+    const week = new Set([
+      '2026-11-07',
+      '2026-11-08',
+      '2026-11-09',
+      '2026-11-10',
+      '2026-11-11',
+      '2026-11-12',
+    ]);
+    expect(currentRun(days, { today: '2026-11-13', bridges: week })).toEqual({
+      streak: { days: 2, from: '2026-11-05', to: '2026-11-06' },
+      brokeOn: '2026-11-04',
+    });
+    expect(
+      currentRun(days, { today: '2026-11-14', bridges: new Set([...week, '2026-11-13']) }),
+    ).toEqual({
+      brokeOn: '2026-11-07',
+    });
+  });
+
   it('has nothing without any day', () => {
     expect(currentRun(new Set(), { today: '2026-11-06' })).toEqual({});
   });

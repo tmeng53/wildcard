@@ -3752,7 +3752,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Meals logged %lld days in a row"
+            "value": "Meal streak: %lld"
           }
         },
         "zh-Hans": {
@@ -3774,7 +3774,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trained %lld days in a row"
+            "value": "Training streak: %lld"
           }
         },
         "zh-Hans": {

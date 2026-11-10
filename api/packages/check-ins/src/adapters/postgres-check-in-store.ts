@@ -472,13 +472,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
   };
 }
 
-/** The counts of everything `member` checked in, or of only what they shared to `squad`. */
 /** Only what reached `squad`, when asked for a squad's view: a 仅自己可见 post never counts. */
 const sharedTo = (squad: SquadId | undefined) =>
   squad === undefined
     ? sql<boolean>`true`
     : sql<boolean>`exists (select 1 from check_in_squads where check_in_squads.check_in_id = check_ins.id and check_in_squads.squad_id = ${squad})`;
 
+/** The counts of everything `member` checked in, or of only what they shared to `squad`. */
 async function totalsOf(
   db: Kysely<CheckInTables>,
   { member, squad }: { readonly member: MemberId; readonly squad?: SquadId },
