@@ -4,7 +4,7 @@ import { z } from 'zod';
 // The day's challenge (今日挑战) a coach may set a member on their morning note (Tracy,
 // 2026-11-08): one doable thing that makes today better, taken from their plan, 饮食小目标 and
 // recent training. A title, and a number with its unit when it has one (「喝水 8 杯」, 「拉伸 10
-// 分钟」, or just 「早点睡」). The member accepts it (接受挑战) or lets it go (算了), and it is
+// 分钟」, 「早睡 1 小时」). The member accepts it (接受挑战) or lets it go (算了), and it is
 // done once the member says so (我完成了) or the coach sees it in that day's check-ins, only on
 // its own day; the first one stands.
 
