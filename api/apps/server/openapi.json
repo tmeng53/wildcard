@@ -3765,14 +3765,14 @@
           "badge"
         ],
         "additionalProperties": false,
-        "description": "The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest. Missing before their first."
+        "description": "The weekly title they wear (头衔), shown beside their name: the one they equipped, else their latest; or the team badge they chose, its name in the reader’s language on a `ticket`. Missing before their first."
       },
       "TitleBadge": {
         "type": "object",
         "properties": {
           "shape": {
             "type": "string",
-            "description": "The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that doesn’t know one draws a circle.",
+            "description": "The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today, and `ticket` for a team badge worn as one. An app that doesn’t know one draws a circle.",
             "example": "shield"
           },
           "colour": {
@@ -6463,11 +6463,16 @@
           },
           "worn": {
             "type": "string",
-            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first."
+            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn."
+          },
+          "wornTeamBadge": {
+            "type": "string",
+            "description": "The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.",
+            "example": "idea-king"
           },
           "equipped": {
             "type": "string",
-            "description": "The title the member chose to wear. Left out until they choose one."
+            "description": "The title the member chose to wear. Left out until they choose one, and while they wear a team badge."
           }
         },
         "required": [
@@ -6584,7 +6589,14 @@
             ],
             "minLength": 1,
             "maxLength": 40,
-            "description": "A title the member has won, by its words, to wear on their card; null to wear the latest won again."
+            "description": "A title the member has won, by its words, to wear on their card; null to wear the latest won again, or with `teamBadge`."
+          },
+          "teamBadge": {
+            "type": "string",
+            "maxLength": 48,
+            "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+){0,3}$",
+            "description": "A team badge the member holds, by its id, to wear instead of a title; `title` must then be null. Left out by builds before it, whose save takes a worn team badge off.",
+            "example": "idea-king"
           }
         },
         "required": [
@@ -6732,7 +6744,12 @@
           },
           "worn": {
             "type": "string",
-            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first."
+            "description": "The title worn on the card’s front: the one equipped, else the latest won. Left out before the first, and while a team badge is worn."
+          },
+          "wornTeamBadge": {
+            "type": "string",
+            "description": "The team badge worn on the card’s front instead of a title, by its id. Left out unless the member chose one they hold.",
+            "example": "idea-king"
           }
         },
         "required": [
@@ -13214,7 +13231,7 @@
             }
           },
           "400": {
-            "description": "Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), or no profile saved yet (`PROFILE_MISSING`)",
+            "description": "Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), a team badge they don’t hold or sent with a title (`BADGE_NOT_HELD`), or no profile saved yet (`PROFILE_MISSING`)",
             "content": {
               "application/problem+json": {
                 "schema": {

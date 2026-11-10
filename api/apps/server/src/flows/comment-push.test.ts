@@ -59,6 +59,7 @@ describe('a comment push', () => {
     jerseyNumber: null,
     joinedAt: new Date(0),
     equippedTitle: null,
+    equippedTeamBadge: null,
   };
   const comment = { checkIn: other, comment: other, commenter: writer, text: '加油', author };
 

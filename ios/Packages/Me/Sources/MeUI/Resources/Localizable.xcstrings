@@ -1661,6 +1661,22 @@
         }
       }
     },
+    "外卡团队" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wildcard team"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外卡團隊"
+          }
+        }
+      }
+    },
     "badge.from %@" : {
       "localizations" : {
         "en" : {

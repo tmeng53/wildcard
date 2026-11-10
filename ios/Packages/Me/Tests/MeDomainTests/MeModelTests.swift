@@ -65,9 +65,9 @@ actor FakeService: MeService {
         current.coachPushOn = isOn
     }
 
-    func equip(_ title: String?) async throws(MeError) -> TitleBoard {
+    func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
         if let failing { throw failing }
-        current.board.worn = title ?? current.board.titles.first?.title
+        current.board.wear(wearable)
         return current.board
     }
 
@@ -321,13 +321,13 @@ struct MeModelTests {
     @Test func theBoardCountsEveryWinAndWearsItsWornTitle() throws {
         let board = try board()
         #expect(board.count == 3)
-        #expect(board.wornTitle == WornTitle(title: "早八战神", badge: shield))
+        #expect(board.wornTitle(in: ["zh-Hans"]) == WornTitle(title: "早八战神", badge: shield))
         #expect(board.titles[1].times == 2)
         #expect(board.titles[1].latestSpeech == "一句话不说")
         // The squad named is the one the shown award line was won in, not another squad's week.
         #expect(board.titles[1].latestSquadName == "早八跑团")
         #expect(board.titles[0].latestSquadName == nil)
-        #expect(TitleBoard.empty.wornTitle == nil)
+        #expect(TitleBoard.empty.wornTitle(in: ["zh-Hans"]) == nil)
     }
 
     @Test func equippingWearsTheTitleAtOnce() async throws {
@@ -336,11 +336,11 @@ struct MeModelTests {
         let service = FakeService(overview)
         let page = model(service)
         await page.reload()
-        await page.equip("冷面杀手")
+        await page.equip(.title("冷面杀手"))
         #expect(page.overview?.board.worn == "冷面杀手")
-        #expect(page.overview?.card.board.wornTitle?.badge == hexagon)
+        #expect(page.overview?.card.board.wornTitle(in: ["zh-Hans"])?.badge == hexagon)
         #expect(await service.current.board.worn == "冷面杀手")
-        await page.equip(String?.none)
+        await page.equip(nil)
         #expect(page.overview?.board.worn == "早八战神")
         #expect(!page.saveFailed)
     }
@@ -352,7 +352,7 @@ struct MeModelTests {
         let page = model(service)
         await page.reload()
         await service.fail(with: .unavailable)
-        await page.equip("冷面杀手")
+        await page.equip(.title("冷面杀手"))
         #expect(page.overview?.board.worn == "早八战神")
         #expect(page.saveFailed)
     }

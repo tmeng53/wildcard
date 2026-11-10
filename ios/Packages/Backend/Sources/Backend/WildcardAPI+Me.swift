@@ -86,12 +86,16 @@ extension WildcardAPI {
         try await call { _ = try await client.deleteMyBirthday().noContent }
     }
 
-    /// Wears one of the member's titles on their card, or the latest won again for nil; answers
-    /// the board as it stands. Safe to repeat.
-    public func equip(title: String?) async throws(APIError) -> TitleBoard {
-        let board = try await call {
-            try await client.putMyEquippedTitle(body: .json(.init(version: ._1, title: title))).ok.body.json
-        }
+    /// Wears one of the member's titles or team badges on their card, or the latest title won
+    /// again for nil; answers the board as it stands. Safe to repeat.
+    public func equip(_ wearable: Wearable?) async throws(APIError) -> TitleBoard {
+        let body: Components.Schemas.EquipTitle =
+            switch wearable {
+            case .title(let title): .init(version: ._1, title: title)
+            case .teamBadge(let id): .init(version: ._1, title: nil, teamBadge: id)
+            case nil: .init(version: ._1, title: nil)
+            }
+        let board = try await call { try await client.putMyEquippedTitle(body: .json(body)).ok.body.json }
         return try read { () throws(ContractsError) in try TitleBoard(board) }
     }
 

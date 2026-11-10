@@ -32,30 +32,36 @@ public struct CoachTag: View {
 }
 
 /// A word on a graphite tag, in `CoachTag`'s shape: 「教练」 by the coach's name, 「NEW」 on a
-/// piece the member hasn't tapped since it came in.
+/// piece the member hasn't tapped since it came in. On graphite itself (the player card's back)
+/// the tag is white with graphite type.
 public struct InkTag: View {
     @Environment(\.sceneTheme) private var theme
     private let word: Text
     private let height: Double
+    private let onInk: Bool
 
     /// The small tag, as among a post's comments, unless `height` says otherwise.
-    public init(_ word: Text, height: Double = CoachTag.Size.small.height) {
-        (self.word, self.height) = (word, height)
+    public init(_ word: Text, height: Double = CoachTag.Size.small.height, onInk: Bool = false) {
+        (self.word, self.height, self.onInk) = (word, height, onInk)
     }
 
     /// 「NEW」.
     public static var new: InkTag { InkTag(Text(copy: "NEW", bundle: .module)) }
 
+    /// 「NEW」 on graphite.
+    public static var newOnInk: InkTag { InkTag(Text(copy: "NEW", bundle: .module), onInk: true) }
+
     public var body: some View {
         word
             .typeStyle(TypeRamp.label)
-            .foregroundStyle(Color(role: .fgOnInk, in: theme))
+            .foregroundStyle(Color(role: onInk ? .fgDefault : .fgOnInk, in: theme))
             .lineLimit(1)
             .fixedSize()
             .padding(.horizontal, Space.xs - Space.xxs / 2)
             .frame(height: height)
             .background(
-                Color(role: .bgInk, in: theme), in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous)
+                Color(role: onInk ? .bgCanvas : .bgInk, in: theme),
+                in: RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous)
             )
     }
 }
