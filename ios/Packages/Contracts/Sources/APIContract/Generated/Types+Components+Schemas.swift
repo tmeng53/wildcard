@@ -4640,6 +4640,8 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
             public var version: Components.Schemas.CheckInTotals.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/CheckInTotals/streaks`.
+            public var streaks: Components.Schemas.CurrentStreaks?
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
@@ -4662,6 +4664,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
+            ///   - streaks:
             ///   - trainedDays: Days with a 训练; several 训练 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
@@ -4669,6 +4672,7 @@ extension Components {
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
+                streaks: Components.Schemas.CurrentStreaks? = nil,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -4676,6 +4680,7 @@ extension Components {
                 topSport: Components.Schemas.TopSport? = nil
             ) {
                 self.version = version
+                self.streaks = streaks
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
@@ -4684,11 +4689,72 @@ extension Components {
             }
             public enum CodingKeys: String, CodingKey {
                 case version
+                case streaks
                 case trainedDays
                 case healthyMeals
                 case cheatMeals
                 case disclaimers
                 case topSport
+            }
+        }
+        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CurrentStreaks`.
+        public struct CurrentStreaks: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CurrentStreaks/training`.
+            public var training: Components.Schemas.RecordStreak?
+            /// - Remark: Generated from `#/components/schemas/CurrentStreaks/meals`.
+            public var meals: Components.Schemas.RecordStreak?
+            /// Creates a new `CurrentStreaks`.
+            ///
+            /// - Parameters:
+            ///   - training:
+            ///   - meals:
+            public init(
+                training: Components.Schemas.RecordStreak? = nil,
+                meals: Components.Schemas.RecordStreak? = nil
+            ) {
+                self.training = training
+                self.meals = meals
+            }
+            public enum CodingKeys: String, CodingKey {
+                case training
+                case meals
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/RecordStreak`.
+        public struct RecordStreak: Codable, Hashable, Sendable {
+            /// Days in the run.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/days`.
+            public var days: Swift.Int
+            /// Its first day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/from`.
+            public var from: Swift.String
+            /// Its last day.
+            ///
+            /// - Remark: Generated from `#/components/schemas/RecordStreak/to`.
+            public var to: Swift.String
+            /// Creates a new `RecordStreak`.
+            ///
+            /// - Parameters:
+            ///   - days: Days in the run.
+            ///   - from: Its first day.
+            ///   - to: Its last day.
+            public init(
+                days: Swift.Int,
+                from: Swift.String,
+                to: Swift.String
+            ) {
+                self.days = days
+                self.from = from
+                self.to = to
+            }
+            public enum CodingKeys: String, CodingKey {
+                case days
+                case from
+                case to
             }
         }
         /// The sport with the most 训练 (最常练; a custom sport counts by its name), the latest one on a tie. Left out before the first 训练.
@@ -4821,41 +4887,6 @@ extension Components {
                 case sports
                 case sportCount
                 case squad
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/RecordStreak`.
-        public struct RecordStreak: Codable, Hashable, Sendable {
-            /// Days in the run.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/days`.
-            public var days: Swift.Int
-            /// Its first day.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/from`.
-            public var from: Swift.String
-            /// Its last day.
-            ///
-            /// - Remark: Generated from `#/components/schemas/RecordStreak/to`.
-            public var to: Swift.String
-            /// Creates a new `RecordStreak`.
-            ///
-            /// - Parameters:
-            ///   - days: Days in the run.
-            ///   - from: Its first day.
-            ///   - to: Its last day.
-            public init(
-                days: Swift.Int,
-                from: Swift.String,
-                to: Swift.String
-            ) {
-                self.days = days
-                self.from = from
-                self.to = to
-            }
-            public enum CodingKeys: String, CodingKey {
-                case days
-                case from
-                case to
             }
         }
         /// - Remark: Generated from `#/components/schemas/RecordSport`.
@@ -10318,6 +10349,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/joinedAt`.
             public var joinedAt: Foundation.Date?
+            /// - Remark: Generated from `#/components/schemas/PlayerCard/streaks`.
+            public var streaks: Components.Schemas.CurrentStreaks?
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/trainedDays`.
@@ -10442,6 +10475,7 @@ extension Components {
             ///   - jerseyNumber: The number they picked for their card. Left out until they pick one.
             ///   - squadPlace: Their place in this squad, the first to join being 1: the number shown without a pick.
             ///   - joinedAt: When they signed up, in UTC. Left out before they saved a profile.
+            ///   - streaks:
             ///   - trainedDays: Days with a 训练; several 训练 on one day count once.
             ///   - healthyMeals: 健康餐 check-ins.
             ///   - cheatMeals: 坦白放纵餐 check-ins.
@@ -10458,6 +10492,7 @@ extension Components {
                 jerseyNumber: Swift.Int? = nil,
                 squadPlace: Swift.Int,
                 joinedAt: Foundation.Date? = nil,
+                streaks: Components.Schemas.CurrentStreaks? = nil,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -10474,6 +10509,7 @@ extension Components {
                 self.jerseyNumber = jerseyNumber
                 self.squadPlace = squadPlace
                 self.joinedAt = joinedAt
+                self.streaks = streaks
                 self.trainedDays = trainedDays
                 self.healthyMeals = healthyMeals
                 self.cheatMeals = cheatMeals
@@ -10491,6 +10527,7 @@ extension Components {
                 case jerseyNumber
                 case squadPlace
                 case joinedAt
+                case streaks
                 case trainedDays
                 case healthyMeals
                 case cheatMeals

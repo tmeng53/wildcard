@@ -876,11 +876,23 @@ describe('GET /me/check-in-totals', () => {
         cheatMeals: 1,
         disclaimers: 1,
         topSport: { sport: 'run', checkIns: 2 },
+        // Yesterday's 健康餐 and today's two meals: any meal keeps the meal streak going.
+        streaks: {
+          training: { days: 2, from: yesterday, to: today },
+          meals: { days: 2, from: yesterday, to: today },
+        },
       },
     });
     expect(
       (await call({ method: 'GET', path: '/me/check-in-totals', token: friend.token })).body,
-    ).toStrictEqual({ version: 1, trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0 });
+    ).toStrictEqual({
+      version: 1,
+      trainedDays: 0,
+      healthyMeals: 0,
+      cheatMeals: 0,
+      disclaimers: 0,
+      streaks: {},
+    });
     expect((await call({ method: 'GET', path: '/me/check-in-totals' })).status).toBe(401);
   });
 

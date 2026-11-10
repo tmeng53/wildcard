@@ -33,6 +33,7 @@ import {
 } from './check-ins/list-squad-check-ins.js';
 import { memberWeek, planSharedTo, type MemberWeek } from './check-ins/member-week.js';
 import { records, type Records } from './check-ins/records.js';
+import { currentStreaks, type CurrentStreaks } from './check-ins/current-streaks.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
   reactToCheckIn,
@@ -107,6 +108,11 @@ export interface CheckIns {
   }): Promise<TrainingDay[]>;
   /** 外卡记录: the member's records since they joined, and how they stand in their squad. */
   records(member: MemberId): Promise<Records>;
+  /** The member's streaks still going, for the player card; with `squad`, as squadmates see them. */
+  currentStreaks(query: {
+    readonly member: MemberId;
+    readonly squad?: SquadId;
+  }): Promise<CurrentStreaks>;
   react(input: ReactToCheckInInput): Promise<Reacted>;
   removeReaction(input: { readonly checkIn: CheckInId; readonly member: MemberId }): Promise<void>;
   /** Teammates who reacted to the member's check-ins in `[since, until)`, with any emoji. */
@@ -212,6 +218,7 @@ export function createCheckIns(deps: {
     trainedSince: (query) => deps.store.trainedSince(query),
     trainings: (query) => deps.store.trainingsForMember(query),
     records: (member) => records(deps, member),
+    currentStreaks: (query) => currentStreaks(deps, query),
     react: (input) => reactToCheckIn(deps, input),
     removeReaction: (input) =>
       removeResponse({ ...deps, remove: (...at) => deps.reactions.remove(...at) }, input),

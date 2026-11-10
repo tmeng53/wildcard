@@ -17,7 +17,7 @@ extension WildcardAPI {
         }
         return CheckInTotals(
             trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
-            disclaimers: totals.disclaimers, topSport: topSport)
+            disclaimers: totals.disclaimers, topSport: topSport, streaks: CardStreaks(totals.streaks))
     }
 
     /// The member's 练了 for days `from` through `last` (at most 371), by day, the earliest made
@@ -111,7 +111,7 @@ extension WildcardAPI {
                     disclaimers: card.disclaimers,
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
-                    }),
+                    }, streaks: CardStreaks(card.streaks)),
                 week: WeekCount(trainedDays: card.week.trainedDays, plannedDays: card.week.plannedDays),
                 board: try TitleBoard(card),
                 schedule: try MateSchedule(card.week))
@@ -221,6 +221,15 @@ public struct CheckInTotals: Hashable, Sendable {
     public let disclaimers: Int
     /// The sport with the most 练了 (最常练); nil before the first.
     public let topSport: TopSport?
+    /// The streaks still going; none from an older server.
+    public let streaks: CardStreaks
+}
+
+extension CardStreaks {
+    /// The API's streaks still going, a left-out one (broken, or an older server) as 0.
+    init(_ streaks: Components.Schemas.CurrentStreaks?) {
+        self.init(training: streaks?.training?.days ?? 0, meals: streaks?.meals?.days ?? 0)
+    }
 }
 
 /// The sport a member logged the most 练了 for, and how many.

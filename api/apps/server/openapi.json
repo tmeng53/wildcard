@@ -2645,6 +2645,9 @@
               1
             ]
           },
+          "streaks": {
+            "$ref": "#/components/schemas/CurrentStreaks"
+          },
           "trainedDays": {
             "type": "integer",
             "minimum": 0,
@@ -2675,6 +2678,45 @@
           "healthyMeals",
           "cheatMeals",
           "disclaimers"
+        ],
+        "additionalProperties": false
+      },
+      "CurrentStreaks": {
+        "type": "object",
+        "properties": {
+          "training": {
+            "$ref": "#/components/schemas/RecordStreak"
+          },
+          "meals": {
+            "$ref": "#/components/schemas/RecordStreak"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken."
+      },
+      "RecordStreak": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Days in the run."
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "description": "Its first day."
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "description": "Its last day."
+          }
+        },
+        "required": [
+          "days",
+          "from",
+          "to"
         ],
         "additionalProperties": false
       },
@@ -2781,32 +2823,6 @@
         ],
         "additionalProperties": false,
         "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first."
-      },
-      "RecordStreak": {
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Days in the run."
-          },
-          "from": {
-            "type": "string",
-            "format": "date",
-            "description": "Its first day."
-          },
-          "to": {
-            "type": "string",
-            "format": "date",
-            "description": "Its last day."
-          }
-        },
-        "required": [
-          "days",
-          "from",
-          "to"
-        ],
-        "additionalProperties": false
       },
       "RecordSport": {
         "type": "object",
@@ -6602,6 +6618,9 @@
             "type": "string",
             "format": "date-time",
             "description": "When they signed up, in UTC. Left out before they saved a profile."
+          },
+          "streaks": {
+            "$ref": "#/components/schemas/CurrentStreaks"
           },
           "trainedDays": {
             "type": "integer",

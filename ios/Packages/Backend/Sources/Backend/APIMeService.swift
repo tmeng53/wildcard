@@ -58,7 +58,7 @@ public struct APIMeService: MeService {
                 board: board,
                 unlocks: standing.unlocks,
                 stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
-                record: record, birthday: member.birthday)
+                record: record, birthday: member.birthday, streaks: totals.streaks)
         }
     }
 
@@ -205,7 +205,7 @@ public struct APISquadmateCards: SquadmateCards {
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
                 week: card.week, board: card.board,
-                schedule: card.schedule)
+                schedule: card.schedule, streaks: card.totals.streaks)
         }
     }
 }
