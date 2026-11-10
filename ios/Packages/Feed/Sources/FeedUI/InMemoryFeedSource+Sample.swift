@@ -7,7 +7,8 @@ extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
     /// two photos and its route from Apple Health, emoji and three comments, a 请假条, a salad and
     /// a run from Health with only its map; yesterday a swim with its laps and my own leg day;
-    /// two days ago a tennis serve without a photo and a confessed burger. `photos` are the sample photos by
+    /// two days ago a tennis serve without a photo and a confessed burger; and my own run this morning,
+    /// shared to no squad, which only 我的动态 shows. `photos` are the sample photos by
     /// their names in `samplePhotoSizes`; without them the photos' places stay grey. With `coach`,
     /// 毛头 coaches the squad: today's 战术板 line, a word and 🔥 on the run, 🫡 on the 请假条 and
     /// a word on the swim.
@@ -42,7 +43,10 @@ extension InMemoryFeedSource {
                     WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50)),
                 reactions: [(jay, "🔥"), (mia, "😮")]),
             write.post(
-                viewer, 1, 19, 20, .trained(write.training("strength", minutes: 60, "gym", "练腿日，明天下楼梯靠扶手")),
+                viewer, 1, 19, 20,
+                write.fromHealth(
+                    "strength", ["gym"], "练腿日，明天下楼梯靠扶手", tile: 2,
+                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420)),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
@@ -60,7 +64,7 @@ extension InMemoryFeedSource {
         ])
         let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
         return InMemoryFeedSource(
-            viewer: viewer, posts: posts, characters: characters, photos: byPath,
+            viewer: viewer, posts: posts + [write.runOnMyOwn(viewer)], characters: characters, photos: byPath,
             coach: coach ? sampleCoach(on: posts, now: now, mia: mia) : nil)
     }
 
@@ -135,7 +139,7 @@ extension InMemoryFeedSource {
     ]
 
     static func localized(_ key: String) -> String {
-        Bundle.module.inAppLanguage.localizedString(forKey: key, value: nil, table: nil)
+        String(copyKey: key, bundle: Bundle.module)
     }
 }
 
@@ -155,7 +159,7 @@ private struct SamplePosts {
     }
 
     /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
-    /// the 17th the fastest, or a loop through a park.
+    /// the 17th the fastest, an hour of sets' heart rate indoors, or a loop through a park.
     func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
         -> CheckIn.Entry
     {
@@ -180,6 +184,19 @@ private struct SamplePosts {
                 source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
                 series: WorkoutSeries(laps: laps), tilePosition: tile)
         }
+        if sport == "strength" {
+            // No route indoors: the heart rate through the hour, sets and rests, with a warm-up
+            // and a cool-down under the zones of a 32-year-old resting at 62.
+            let beats = (0...60).map { (minute: Int) -> HeartRatePoint in
+                let easy = minute < 6 || minute > 55
+                return HeartRatePoint(
+                    seconds: Double(minute) * 60, bpm: easy ? 86 + minute % 6 : 110 + (minute * 13) % 46)
+            }
+            return Workout(
+                source: source, startedAt: start, endedAt: Timestamp(ended), summary: summary,
+                series: WorkoutSeries(heartRate: beats, zones: HeartRateZones(age: 32, restingBpm: 62)),
+                tilePosition: tile)
+        }
         let route: [RoutePoint] = (0...80).map { (step: Int) -> RoutePoint in
             let turn: Double = Double(step) / 80 * 1.7 * Double.pi
             let angle: Double = turn + Double(minutes) * 0.1
@@ -196,6 +213,13 @@ private struct SamplePosts {
         training(sport, minutes: minutes, [photo], caption)
     }
 
+    /// My run this morning, shared to no squad: only 我的动态 shows it, saying 仅自己可见.
+    func runOnMyOwn(_ viewer: MemberID) -> FeedPost {
+        post(
+            viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")),
+            audience: try? Audience([]))
+    }
+
     func meal(_ photo: String, _ caption: String) -> Meal {
         Meal(photos: photos([photo]), caption: line(caption))
     }
@@ -203,14 +227,15 @@ private struct SamplePosts {
     func post(
         _ author: MemberID, _ daysAgo: Int, _ hour: Int, _ minute: Int, _ entry: CheckIn.Entry,
         reactions: [(MemberID, String)] = [],
-        comments: [(MemberID, MemberID?, String)] = []
+        comments: [(MemberID, MemberID?, String)] = [], audience: Audience? = nil
     ) -> FeedPost {
         let day = today.adding(days: -daysAgo)
         let made = time(on: day, hour, minute)
         func after(_ index: Int) -> Timestamp { Timestamp(made.addingTimeInterval(Double(index + 1) * 600)) }
         return FeedPost(
             checkIn: CheckIn(
-                id: CheckInID(UUID()), member: author, day: day, createdAt: Timestamp(made), audience: audience,
+                id: CheckInID(UUID()), member: author, day: day, createdAt: Timestamp(made),
+                audience: audience ?? self.audience,
                 entry: entry),
             reactions: Responses(
                 reactions.enumerated().compactMap { index, pair in

@@ -12,7 +12,8 @@ import UIKit
 /// photos and a 训练's map or chart, swiped, the first being the cover), or without any the shared
 /// colour block with its words; the tear under it; on the stub a 训练's 成绩条 first, across the
 /// card's width; then the author's whole character standing at the left, its head level with
-/// their name, beside a column of their name, the time and what it was, the caption under a cover, and
+/// their name, beside a column of their name, the time and what it was, 仅自己可见 on one shared to no
+/// squad, the caption under a cover, and
 /// at its foot who reacted with the comment and emoji buttons, so a reaction lands next to the
 /// character that answers it; then, under a hairline, the coach's line and the latest comments. A
 /// teammate reacts with the smiley button, by holding the card and sliding to an emoji, or with
@@ -105,7 +106,7 @@ struct PostCard: View {
                     Button {
                         model.react(.pick(emoji), on: post)
                     } label: {
-                        Text("回应 \(emoji.text)", bundle: .module)
+                        Text(copy: "回应 \(emoji.text)", bundle: .module)
                     }
                 }
             }
@@ -113,7 +114,7 @@ struct PostCard: View {
                 Button {
                     model.listing = post.id
                 } label: {
-                    Text("看谁回应了", bundle: .module)
+                    Text(copy: "看谁回应了", bundle: .module)
                 }
             }
         }
@@ -123,23 +124,35 @@ struct PostCard: View {
     /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
     private var manageMenu: some View {
         HeaderMenu(
-            Text("编辑或删除", bundle: .module), on: .ink,
-            items: [
-                GlassMenuItem(Text("编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
+            Text(copy: "编辑或删除", bundle: .module), on: .ink,
+            items: scoreCardItem + [
+                GlassMenuItem(Text(copy: "编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
                     model.edit(post)
                 },
                 GlassMenuItem(
-                    Text("删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.delete",
+                    Text(copy: "删除", bundle: .module), systemImage: "trash", role: .destructive, id: "post.delete",
                     confirm: .init(
-                        Text("删掉这条动态？", bundle: .module),
-                        message: Text("队友的回应和评论也会一起删掉", bundle: .module),
-                        label: Text("删除", bundle: .module), id: "post.delete.confirm")
+                        Text(copy: "删掉这条动态？", bundle: .module),
+                        message: Text(copy: "队友的回应和评论也会一起删掉", bundle: .module),
+                        label: Text(copy: "删除", bundle: .module), id: "post.delete.confirm")
                 ) {
                     model.deleting = post.id
                 },
             ]
         )
         .accessibilityIdentifier("post.manage")
+    }
+
+    /// 存成绩卡, first, on one of the member's own 训练.
+    private var scoreCardItem: [GlassMenuItem] {
+        guard model.canSaveScoreCard(post) else { return [] }
+        return [
+            GlassMenuItem(
+                Text(copy: "存成绩卡", bundle: .module), systemImage: "square.and.arrow.down", id: "post.scoreCard"
+            ) {
+                model.openScoreCard(post)
+            }
+        ]
     }
 
     /// Held on the card: the bar opens over it, and the finger's place picks the slot under it.
@@ -155,8 +168,10 @@ struct PostCard: View {
     /// Let go on an emoji to pick it; anywhere else (or cancelled) leaves the bar open for a tap.
     private func letGo(at location: CGPoint?) {
         model.hovering = nil
-        guard let location, let index = model.slot(at: location), let from = model.slotCenter(index) else { return }
-        model.react(.pick(EmojiBar.common[index]), on: post, from: from)
+        guard let location, let index = model.slot(at: location), let from = model.slotCenter(index),
+            let emoji = Emoji.quick(at: index)
+        else { return }
+        model.react(.pick(emoji), on: post, from: from)
     }
 
     /// A post without a cover: the shared colour block in its place, with its words on it. A
@@ -177,6 +192,7 @@ struct PostCard: View {
                 .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
+                if post.checkIn.audience.isOnlyMe { OnlyMeTag() }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {
@@ -220,17 +236,17 @@ struct PostCard: View {
     }
 
     private var authorName: Text {
-        if post.author == model.viewer { return Text("我", bundle: .module) }
-        return model.name(of: post.author).map { Text(verbatim: $0) } ?? Text("队友", bundle: .module)
+        if post.author == model.viewer { return Text(copy: "我", bundle: .module) }
+        return model.name(of: post.author).map { Text(verbatim: $0) } ?? Text(copy: "队友", bundle: .module)
     }
 
     private var kindTitle: Text {
         switch post.checkIn.entry {
-        case .trained(let training): Text("训练 · \(training.activity.name)", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("坦白放纵餐", bundle: .module)
+        case .trained(let training): Text(copy: "训练 · \(training.activity.name)", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "坦白放纵餐", bundle: .module)
         case .disclaimer(let note):
-            if note.restDay { Text("休息", bundle: .module) } else { Text("请假条", bundle: .module) }
+            if note.restDay { Text(copy: "休息", bundle: .module) } else { Text(copy: "请假条", bundle: .module) }
         }
     }
 
@@ -263,21 +279,21 @@ struct BackfillLabel: View {
 
     var body: some View {
         switch day {
-        case .yesterday: Text("补昨天的", bundle: .module)
-        case .weekday(1): Text("补周一的", bundle: .module)
-        case .weekday(2): Text("补周二的", bundle: .module)
-        case .weekday(3): Text("补周三的", bundle: .module)
-        case .weekday(4): Text("补周四的", bundle: .module)
-        case .weekday(5): Text("补周五的", bundle: .module)
-        case .weekday(6): Text("补周六的", bundle: .module)
-        case .weekday: Text("补周日的", bundle: .module)
-        case .weekdayLastWeek(1): Text("补上周一的", bundle: .module)
-        case .weekdayLastWeek(2): Text("补上周二的", bundle: .module)
-        case .weekdayLastWeek(3): Text("补上周三的", bundle: .module)
-        case .weekdayLastWeek(4): Text("补上周四的", bundle: .module)
-        case .weekdayLastWeek(5): Text("补上周五的", bundle: .module)
-        case .weekdayLastWeek(6): Text("补上周六的", bundle: .module)
-        case .weekdayLastWeek: Text("补上周日的", bundle: .module)
+        case .yesterday: Text(copy: "补昨天的", bundle: .module)
+        case .weekday(1): Text(copy: "补周一的", bundle: .module)
+        case .weekday(2): Text(copy: "补周二的", bundle: .module)
+        case .weekday(3): Text(copy: "补周三的", bundle: .module)
+        case .weekday(4): Text(copy: "补周四的", bundle: .module)
+        case .weekday(5): Text(copy: "补周五的", bundle: .module)
+        case .weekday(6): Text(copy: "补周六的", bundle: .module)
+        case .weekday: Text(copy: "补周日的", bundle: .module)
+        case .weekdayLastWeek(1): Text(copy: "补上周一的", bundle: .module)
+        case .weekdayLastWeek(2): Text(copy: "补上周二的", bundle: .module)
+        case .weekdayLastWeek(3): Text(copy: "补上周三的", bundle: .module)
+        case .weekdayLastWeek(4): Text(copy: "补上周四的", bundle: .module)
+        case .weekdayLastWeek(5): Text(copy: "补上周五的", bundle: .module)
+        case .weekdayLastWeek(6): Text(copy: "补上周六的", bundle: .module)
+        case .weekdayLastWeek: Text(copy: "补上周日的", bundle: .module)
         }
     }
 }

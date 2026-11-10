@@ -8,7 +8,7 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     case character
     /// 你的小队: join by invite code or make one.
     case squad
-    /// 平时练什么？
+    /// 关于你: the birthday, if given, and the sports the member usually does.
     case sports
     /// 连上 Apple 健康 (Tracy, 2026-11-06): HealthKit's own sheet picks what the app reads; a
     /// Fitbit, WHOOP or Oura wearer learns there how theirs reaches Apple Health first. Skipped

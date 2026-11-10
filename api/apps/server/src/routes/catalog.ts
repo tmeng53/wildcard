@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
 
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import type { AppCopyAdmin } from '@wildcard/app-copy';
 import type { Art } from '@wildcard/art';
+import type { QuickReactionsAdmin } from '@wildcard/check-ins';
 import type { DiceLinesAdmin } from '@wildcard/disclaimer-drafts';
 import type { Scenes } from '@wildcard/scenes';
 import type { SportCatalog, Sports } from '@wildcard/sports';
-import type { Switches } from '@wildcard/switches';
+import type { MinimumBuilds, Switches } from '@wildcard/switches';
 import type { UnlocksAdmin } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
@@ -131,6 +133,40 @@ export function disclaimerDiceSection(
     name: 'disclaimerDice',
     schema: DisclaimerDiceCatalog,
     load: async () => ({ lines: (await dice.current()).lines.map((line) => ({ ...line })) }),
+  };
+}
+
+export const AppCopyCatalog = z
+  .looseObject({
+    entries: z
+      .record(
+        z.string(),
+        z
+          .looseObject({
+            zhHans: z.string().optional().meta({ description: 'Simplified Chinese.' }),
+            en: z.string().optional().meta({ description: 'English.' }),
+            zhHant: z.string().optional().meta({ description: 'Traditional Chinese (Taiwan).' }),
+          })
+          .openapi('AppCopyWords'),
+      )
+      .meta({
+        description:
+          'Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). ' +
+          'A language left out, or a key not here, keeps the build’s own words. Each keeps its ' +
+          'key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).',
+        example: { '还有 %lld 次开门': { zhHans: '再练 %lld 次就开门' } },
+      }),
+  })
+  .openapi('AppCopyCatalog');
+
+/** The `appCopy` section: lines put over the app's own words, for screens and pushes alike. */
+export function appCopySection(
+  copy: Pick<AppCopyAdmin, 'current'>,
+): CatalogSection<typeof AppCopyCatalog> {
+  return {
+    name: 'appCopy',
+    schema: AppCopyCatalog,
+    load: async () => ({ entries: structuredClone((await copy.current()).entries) }),
   };
 }
 
@@ -295,6 +331,56 @@ export function switchesSection(
         ...(window === undefined ? {} : { window: { ...window } }),
       })),
     }),
+  };
+}
+
+export const AppBuildCatalog = z
+  .looseObject({
+    minimumBuild: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared ' +
+          'number by number; an older app shows only 有新版本 and a button to the App Store. ' +
+          'Left out while every build may run.',
+        example: '190',
+      }),
+  })
+  .openapi('AppBuildCatalog');
+
+/** The `appBuild` section: the lowest build of the app that may still run. */
+export function appBuildSection(
+  minimum: Pick<MinimumBuilds, 'current'>,
+): CatalogSection<typeof AppBuildCatalog> {
+  return {
+    name: 'appBuild',
+    schema: AppBuildCatalog,
+    load: async () => {
+      const { build } = await minimum.current();
+      return build === null ? {} : { minimumBuild: build };
+    },
+  };
+}
+
+export const ReactionsCatalog = z
+  .looseObject({
+    quick: z.array(z.string()).meta({
+      description:
+        'The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.',
+      example: ['❤️', '💪', '😂', '🤤', '😮', '😡'],
+    }),
+  })
+  .openapi('ReactionsCatalog');
+
+/** The `reactions` section: the reaction bar's quick emoji. */
+export function reactionsSection(
+  reactions: Pick<QuickReactionsAdmin, 'current'>,
+): CatalogSection<typeof ReactionsCatalog> {
+  return {
+    name: 'reactions',
+    schema: ReactionsCatalog,
+    load: async () => ({ quick: [...(await reactions.current()).emoji] }),
   };
 }
 

@@ -73,6 +73,40 @@ final class ComposePhotoUITests: XCTestCase {
         XCTAssertTrue(caption.waitForNonExistence(timeout: Self.wait), "放弃 didn't close the compose page")
     }
 
+    /// A 请假条 takes photos as a 训练 does: under 帮我编一句 with the W, the first the cover, all
+    /// in view; posted, 动态 shows it with its words under them.
+    func testDisclaimerPhotos() {
+        let app = launch()
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
+        checkIn.tap()
+        let capsule = app.buttons["today.capsule.disclaimer"]
+        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no 请假 capsule")
+        capsule.tap()
+        let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: Self.wait), "the 请假条 page never opened")
+        // Return finishes typing, so the keyboard leaves the photos in view.
+        field.typeText("下大雨，在家给猫当沙发\n")
+        settle()
+        let window = app.windows.firstMatch.frame
+        for id in ["compose.cover", "compose.photo.2", "compose.photo.3"] {
+            let tile = app.buttons[id]
+            XCTAssertTrue(tile.exists, "\(id) isn't on the 请假条")
+            XCTAssertTrue(window.contains(tile.frame), "\(id) is cut off: \(tile.frame)")
+        }
+        XCTAssertFalse(app.buttons["compose.addPhoto"].exists, "「+ 照片」 shows with three photos")
+        keepScreenshot(named: "18-disclaimer-photos")
+
+        app.buttons["disclaimer.post"].tap()
+        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
+        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
+        bubble.tap()
+        let words = app.staticTexts.matching(NSPredicate(format: "label == %@", "下大雨，在家给猫当沙发")).firstMatch
+        XCTAssertTrue(words.waitForExistence(timeout: Self.wait), "the 请假条 isn't in 动态")
+        settle()
+        keepScreenshot(named: "48-feed-disclaimer-photos")
+    }
+
     private func launch() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()

@@ -107,7 +107,7 @@ public struct SquadSettingsView<PastRecaps: View>: View {
         .refreshable { await model.reload() }
         .disabled(model.isSaving)
         .accessibilityIdentifier("squad.page")
-        .alert(Text("改队名", bundle: .module), isPresented: isRenaming) {
+        .alert(Text(copy: "改队名", bundle: .module), isPresented: isRenaming) {
             renameAlert
         }
         .navigationDestination(isPresented: $isPreferencesOpen) {
@@ -127,16 +127,18 @@ public struct SquadSettingsView<PastRecaps: View>: View {
                 InlineFailure()
                     .accessibilityIdentifier("squad.changeFailed")
             }
-            section(Text("每周目标", bundle: .module)) {
+            section(Text(copy: "每周目标", bundle: .module)) {
                 SquadGoalCard(goal: settings.goal, canChange: model.canChangeGoal) { days in
                     Task { await model.setGoal(days) }
                 }
             }
-            section(Text("教练", bundle: .module)) { coachCard }
-            section(Text("本周场地", bundle: .module)) { sceneCard }
+            section(Text(copy: "教练", bundle: .module)) { coachCard }
+            section(Text(copy: "本周场地", bundle: .module)) { sceneCard }
             pastRecaps
-            section(Text("邀请队友", bundle: .module)) { InviteCard(squad: settings.squad, openSpots: model.openSpots) }
-            section(Text("队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
+            section(Text(copy: "邀请队友", bundle: .module)) {
+                InviteCard(squad: settings.squad, openSpots: model.openSpots)
+            }
+            section(Text(copy: "队员 \(settings.squad.members.count)/\(SquadSize.memberLimit)", bundle: .module)) {
                 memberRows
             }
         }
@@ -144,13 +146,13 @@ public struct SquadSettingsView<PastRecaps: View>: View {
 
     @ViewBuilder private var renameAlert: some View {
         TextField(text: Binding(get: { renaming ?? "" }, set: { renaming = $0 })) {
-            Text("队名", bundle: .module)
+            Text(copy: "队名", bundle: .module)
         }
         .accessibilityIdentifier("squad.rename.field")
         Button(role: .cancel) {
             renaming = nil
         } label: {
-            Text("取消", bundle: .module)
+            Text(copy: "取消", bundle: .module)
         }
         Button {
             let typed = renaming ?? ""
@@ -158,7 +160,7 @@ public struct SquadSettingsView<PastRecaps: View>: View {
             working = .rename
             Task { await model.rename(to: typed) }
         } label: {
-            Text("保存", bundle: .module)
+            Text(copy: "保存", bundle: .module)
         }
         .accessibilityIdentifier("squad.rename.save")
     }
@@ -206,7 +208,7 @@ extension SquadSettingsView {
                 .frame(maxWidth: .infinity, alignment: .leading)
             if model.isCaptain {
                 LoadingSwap(isSaving(.rename)) {
-                    HeaderButton(Text("改队名", bundle: .module), systemImage: "pencil") {
+                    HeaderButton(Text(copy: "改队名", bundle: .module), systemImage: "pencil") {
                         renaming = settings.squad.name
                     }
                     .accessibilityIdentifier("squad.rename")
@@ -215,7 +217,7 @@ extension SquadSettingsView {
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
-            HeaderButton(Text("小队设置", bundle: .module), systemImage: "gearshape") {
+            HeaderButton(Text(copy: "小队设置", bundle: .module), systemImage: "gearshape") {
                 isPreferencesOpen = true
             }
             .accessibilityIdentifier("squad.preferences.open")
@@ -254,7 +256,7 @@ extension SquadSettingsView {
                         Button {
                             withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { model.openPicker() }
                         } label: {
-                            Text("换场地", bundle: .module)
+                            Text(copy: "换场地", bundle: .module)
                         }
                         .buttonStyle(SecondaryButtonStyle(.onInk))
                         .fixedSize()

@@ -25,7 +25,7 @@ struct SquadPreferencesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
-                Text("小队设置", bundle: .module)
+                Text(copy: "小队设置", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
@@ -44,7 +44,7 @@ struct SquadPreferencesView: View {
             .padding(.bottom, Space.xl)
         }
         .scrollIndicators(.hidden)
-        .barTitleOnScroll(Text("小队设置", bundle: .module))
+        .barTitleOnScroll(Text(copy: "小队设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .disabled(model.isSaving)
         .pushedPage()
@@ -57,11 +57,11 @@ struct SquadPreferencesView: View {
     /// shows only while its switch (`BetaFeature.freePlan`) is on.
     private var subscription: some View {
         HStack(spacing: Space.s) {
-            Text("订阅", bundle: .module)
+            Text(copy: "订阅", bundle: .module)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
             Spacer(minLength: 0)
-            InkTag(Text("限时免费", bundle: .module))
+            InkTag(Text(copy: "限时免费", bundle: .module))
         }
         .frame(minHeight: Sizing.pickRow)
         .accessibilityElement(children: .combine)
@@ -78,11 +78,11 @@ struct SquadPreferencesView: View {
     private var timeZone: some View {
         Group {
             if model.canChangeTimeZone {
-                ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false) {
+                ListRow(Text(copy: "比赛时区", bundle: .module), value: zoneValue, showsDivider: false) {
                     isChoosingZone = true
                 }
             } else {
-                ListRow(Text("比赛时区", bundle: .module), value: zoneValue, showsDivider: false)
+                ListRow(Text(copy: "比赛时区", bundle: .module), value: zoneValue, showsDivider: false)
             }
         }
         .accessibilityIdentifier("squad.timeZone")
@@ -108,21 +108,21 @@ struct SquadPreferencesView: View {
         VStack(alignment: .leading, spacing: 0) {
             Group {
                 if model.canChangeLanguage {
-                    ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false) {
+                    ListRow(Text(copy: "小队语言", bundle: .module), value: languageValue, showsDivider: false) {
                         isChoosingLanguage = true
                     }
                 } else {
-                    ListRow(Text("小队语言", bundle: .module), value: languageValue, showsDivider: false)
+                    ListRow(Text(copy: "小队语言", bundle: .module), value: languageValue, showsDivider: false)
                 }
             }
             .accessibilityIdentifier("squad.language")
-            Text("教练和战报用这个语言", bundle: .module)
+            Text(copy: "教练和战报用这个语言", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .accessibilityIdentifier("squad.language.use")
         }
         .glassMenu(
-            isPresented: $isChoosingLanguage, title: Text("小队语言", bundle: .module),
+            isPresented: $isChoosingLanguage, title: Text(copy: "小队语言", bundle: .module),
             items: SquadLanguage.Language.allCases.map { choice in
                 GlassMenuItem(
                     Text(verbatim: name(of: choice)), isSelected: choice == settings?.language.language,
@@ -148,7 +148,7 @@ struct SquadPreferencesView: View {
         Button {
             isLeaving = true
         } label: {
-            Text("退出小队", bundle: .module)
+            Text(copy: "退出小队", bundle: .module)
                 .loadingLabel(isLeavingNow && model.isSaving)
         }
         .buttonStyle(TextButtonStyle(.danger))
@@ -157,11 +157,12 @@ struct SquadPreferencesView: View {
         .glassConfirm(
             isPresented: $isLeaving,
             GlassMenuItem(
-                Text("退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right", role: .destructive,
+                Text(copy: "退出小队", bundle: .module), systemImage: "rectangle.portrait.and.arrow.right",
+                role: .destructive,
                 id: "squad.leave.menu",
                 confirm: .init(
-                    Text("退出小队？", bundle: .module), message: leaveMessage,
-                    label: Text("退出小队", bundle: .module), id: "squad.leave.confirm")
+                    Text(copy: "退出小队？", bundle: .module), message: leaveMessage,
+                    label: Text(copy: "退出小队", bundle: .module), id: "squad.leave.confirm")
             ) {
                 isLeavingNow = true
                 Task { await model.leave() }
@@ -171,8 +172,8 @@ struct SquadPreferencesView: View {
 
     /// What leaving does beyond the member's own seat, when it does more.
     private var leaveMessage: Text? {
-        if settings?.squad.members.count == 1 { return Text("小队会解散", bundle: .module) }
-        if model.isCaptain { return Text("队长会交给最早加入的队友", bundle: .module) }
+        if settings?.squad.members.count == 1 { return Text(copy: "小队会解散", bundle: .module) }
+        if model.isCaptain { return Text(copy: "队长会交给最早加入的队友", bundle: .module) }
         return nil
     }
 }

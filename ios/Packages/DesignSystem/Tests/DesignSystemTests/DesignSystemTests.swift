@@ -306,8 +306,8 @@ struct TypographyTests {
             return false
         }
         let names = [
-            "scoreStory", "scoreEnding", "scoreHero", "scoreCard", "scoreWeek", "scoreInline", "scoreSmall",
-            "scoreCaption", "ticketDate", "ticketStamp", "posterWeek", "launchWord",
+            "scoreStory", "scoreEnding", "scoreHero", "scoreCardHero", "scoreCard", "scoreWeek", "scoreInline",
+            "scoreSmall", "scoreCaption", "ticketDate", "ticketStamp", "posterWeek", "launchWord",
         ]
         #expect(scoreboard.map(\.name) == names)
         #expect(TypeRamp.scoreCaption.size == 14 && TypeRamp.scoreCaption.face == .scoreboard(.semibold))
@@ -325,7 +325,7 @@ struct HapticTests {
         #expect(
             Haptic.allCases.map(\.rawValue) == [
                 "pick", "appear", "refuse", "tick", "checkIn", "score", "land", "reaction", "crown", "poke", "unbox",
-                "lights", "unseal", "zone",
+                "lights", "unseal", "zone", "done",
             ])
         #expect(Haptic.ringTicks == 3)
     }

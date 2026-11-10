@@ -3,10 +3,12 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import Foundation
+import SwiftUI
 
-/// News nobody on the scene can tell, in a `NoticeBanner` at the top of 今天: a teammate moving
-/// the squad to another scene, a store or prop the member's training unlocked, and a notice we sent
-/// every member (群发通知).
+/// News, in a `NoticeBanner` at the top of whatever page is open (2026-11-08): a teammate moving
+/// the squad to another scene, a store or prop the member's training unlocked, a notice we sent
+/// every member (群发通知), and whatever else 通知 is told while the app is open (a comment, the
+/// coach's reply, the 战报), in place of iOS's banner.
 extension TodayModel {
     /// What a notice tells.
     enum NoticeNews: Equatable {
@@ -26,6 +28,9 @@ extension TodayModel {
         case sendFailed(canResend: Bool)
         /// What waited after two in a row, in one banner that opens 通知 (approved C, 2026-11-05).
         case more
+        /// A notice told while the app was open, in its 通知 words; its button opens what its row
+        /// opens.
+        case told(Contracts.Notice)
     }
 
     /// One notice on the home.
@@ -42,7 +47,7 @@ extension TodayModel {
             case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
             case .goalSuggestion: true
             case .sendFailed: true
-            case .moved, .unlocked, .more: false
+            case .moved, .unlocked, .more, .told: false
             }
         }
     }
@@ -76,6 +81,12 @@ extension TodayModel {
     public func tellUnlocks(with notices: UnlockNotices) {
         unlockNotices = notices
         tellUnlocks()
+    }
+
+    /// 通知 was told of an unlock while the app is open: reads which the home hasn't told yet, and
+    /// tells them.
+    public func checkUnlocks() async {
+        await store.checkUnlocks()
     }
 
     /// The stores and props the member's training opened that the home hasn't told, one banner
@@ -157,19 +168,31 @@ extension TodayModel {
         Task { await showNextNotice() }
     }
 
+    /// Tells `notice`, which 通知 was just told while the app is open, in a banner after any
+    /// already waiting; nothing without `toldBanner` to draw it.
+    public func tell(_ notice: Contracts.Notice, banner: @escaping (Contracts.Notice) -> AnyView) {
+        toldBanner = banner
+        let news = NoticeNews.told(notice)
+        guard self.notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
+        pendingNotices.append(Notice(news: news))
+        Task { await showNextNotice() }
+    }
+
     /// How long `notice` stays: one with a button stays until it is tapped or swiped away.
     func hold(_ notice: Notice) -> Double? {
         notice.hasButton ? nil : noticeHold
     }
 
-    /// The next notice waiting, once the squad has landed and the scene is in view: not while a
-    /// check-in is being written or the burst is open, when it waits for the next load.
+    /// The next notice waiting, once the squad has landed: not while a check-in is being written
+    /// or the burst is open, when it waits for the next load. A celebration waits for 今天, and
+    /// the banners after it go first.
     func showNextNotice() async {
         await untilArrived()
-        guard isFreeForNotices, !pendingNotices.isEmpty else { return }
+        guard isFreeForNotices, pendingNotices.contains(where: canShowNow) else { return }
         // Two in a row, then whatever else waits without a button in one banner.
         if shownInRow >= Self.shownBeforeMore { foldTheRest() }
-        let next = pendingNotices.removeFirst()
+        guard let index = pendingNotices.firstIndex(where: canShowNow) else { return }
+        let next = pendingNotices.remove(at: index)
         shownInRow = pendingNotices.isEmpty ? 0 : shownInRow + 1
         if case .broadcast(let broadcast) = next.news, broadcast.style == .celebration {
             celebration = broadcast
@@ -179,15 +202,21 @@ extension TodayModel {
         bannerShown.removeValue(forKey: next.id)?()
     }
 
-    /// Whether the home can tell the next notice: nothing told is on screen, the scene is in
-    /// view and settled, and no check-in, burst, opening or other screen is over it.
+    /// Whether the next notice can be told: nothing told is on screen, and no check-in, burst,
+    /// opening or screen over the tabs is in front.
     var isFreeForNotices: Bool {
-        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && isHomeInFront
+        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && !isCovered
+    }
+
+    /// A celebration is a card on 今天's scene; every other notice drops in over any page.
+    private func canShowNow(_ waiting: Notice) -> Bool {
+        guard case .broadcast(let broadcast) = waiting.news, broadcast.style == .celebration else { return true }
+        return isHomeInFront
     }
 
     /// The member answered the celebration's card: its button (`opening`) opens its place and
     /// reads its 通知 row, as the banner's does; 先不了, or a tap off the card, just puts it away.
-    /// The next notice follows once the home is free again (`HomeNotices`), so a place it opened
+    /// The next notice follows once the home is free again (`todayNotices`), so a place it opened
     /// is never covered.
     public func closeCelebration(opening: Bool) {
         guard let shown = celebration else { return }

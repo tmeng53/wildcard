@@ -1553,22 +1553,6 @@
         }
       }
     },
-    "还有新通知 · 去看看": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "More notifications · Take a look"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "還有新通知 · 去看看"
-          }
-        }
-      }
-    },
     "收下": {
       "localizations": {
         "en": {
@@ -1709,22 +1693,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "全螢幕看，長按拖動換位置"
-          }
-        }
-      }
-    },
-    "长按拖动换位置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touch and hold to move it"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "長按拖動換位置"
           }
         }
       }
@@ -2065,18 +2033,18 @@
         }
       }
     },
-    "仅自己可见": {
+    "仅自己可见，不计入小队数据": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only you can see this"
+            "value": "Only you can see this. It won't count for your squad."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "僅自己可見"
+            "value": "僅自己可見，不計入小隊資料"
           }
         }
       }
@@ -2157,6 +2125,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "沒網，連上自動發"
+          }
+        }
+      }
+    },
+    "去看看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take a look"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去看看"
+          }
+        }
+      }
+    },
+    "知道了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "知道了"
+          }
+        }
+      }
+    },
+    "还有新通知": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More notifications"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還有新通知"
           }
         }
       }
@@ -2285,6 +2301,70 @@
           "stringUnit": {
             "state": "translated",
             "value": "伸展"
+          }
+        }
+      }
+    },
+    "开始 · 时长": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start · Length"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始 · 時長"
+          }
+        }
+      }
+    },
+    "开始时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start time"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始時間"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
+        }
+      }
+    },
+    "小时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hour"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小時"
           }
         }
       }

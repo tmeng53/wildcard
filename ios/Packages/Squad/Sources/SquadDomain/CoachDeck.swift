@@ -8,8 +8,10 @@ public protocol CoachCardSource: Sendable {
     /// The member's stack (unseen, oldest first) and 以前 (newest first) in `squad`.
     func cards(in squad: SquadID) async throws(SquadError) -> CoachPageCards
     /// A page of 以前 in `squad`, newest first, from `cursor` (the page before's `next`, nil for
-    /// the first); only the cards not seen yet when `unseenOnly`.
-    func earlier(in squad: SquadID, from cursor: String?, unseenOnly: Bool) async throws(SquadError)
+    /// the first), narrowed by `filter`: every card, the ones not seen yet, or every challenge
+    /// since the member joined.
+    func earlier(in squad: SquadID, from cursor: String?, showing filter: CoachDeck.EarlierFilter)
+        async throws(SquadError)
         -> CoachEarlierCards
     /// Marks a card seen, so it is in 以前 on every phone; a seen note is also put away on 今天.
     /// Safe to repeat.
@@ -34,9 +36,10 @@ public final class CoachDeck {
         case failed(SquadError)
     }
 
-    /// What 以前 lists (Tracy, 2026-11-09): every card, or only the ones not seen yet.
+    /// What 以前 lists (Tracy, 2026-11-09): every card, only the ones not seen yet, or every
+    /// challenge since the member joined, those still in the stack too, the done ones marked.
     public enum EarlierFilter: Hashable, Sendable, CaseIterable {
-        case all, unseen
+        case all, unseen, challenges
     }
 
     public private(set) var load: Load = .loading
@@ -97,7 +100,7 @@ public final class CoachDeck {
         await readEarlier(from: nil)
     }
 
-    /// 全部 or 未读: 以前 starts again from its newest card.
+    /// 全部, 未读 or 挑战: 以前 starts again from its newest card.
     public func showEarlier(_ filter: EarlierFilter) async {
         guard filter != earlierFilter else { return }
         earlierFilter = filter
@@ -127,7 +130,7 @@ public final class CoachDeck {
         isLoadingEarlier = true
         defer { isLoadingEarlier = false }
         let filter = earlierFilter
-        guard let page = try? await source.earlier(in: squad, from: cursor, unseenOnly: filter == .unseen),
+        guard let page = try? await source.earlier(in: squad, from: cursor, showing: filter),
             filter == earlierFilter
         else { return }
         if cursor == nil {

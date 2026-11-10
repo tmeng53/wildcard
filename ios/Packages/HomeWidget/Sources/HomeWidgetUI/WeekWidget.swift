@@ -1,0 +1,136 @@
+#if os(iOS)
+import AvatarArt
+import AvatarDomain
+import AvatarUI
+import CheckInDomain
+import Contracts
+import DesignSystem
+import DesignSystemUI
+import HealthDomain
+import HomeWidgetDomain
+import SportsUI
+import SwiftUI
+
+/// 我的一周, the small widget: my week's x/y, whether I trained today, my character standing in
+/// the corner and the week's days along the bottom, as the squad card's second page draws them;
+/// while Health has a workout to post, its 打卡 capsule stands in for the days, and stays with
+/// 已打卡 once it is posted.
+public struct WeekWidget<Post: View>: View {
+    @Environment(\.sceneTheme) private var theme
+    private let board: WidgetBoard
+    private let post: (ImportedWorkout) -> Post
+
+    /// - Parameter post: the capsule's 打卡 for the board's workout.
+    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
+        self.board = board
+        self.post = post
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            summary
+            Spacer(minLength: Space.xs)
+            if let workout = board.workout {
+                WorkoutCapsule(workout: workout) { post(workout) }
+            } else if let posted = board.postedWorkout {
+                WorkoutCapsule(workout: posted) { PostedWorkoutLabel() }
+            } else {
+                WeekDayRow(days: days, today: board.week.today, size: .tiny)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(alignment: .topTrailing) {
+            WidgetCharacter(look: board.mates.first(where: \.isMe)?.look)
+                .frame(width: WidgetMetrics.figureWidth)
+                .offset(x: Space.xs, y: -Space.xxs)
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    /// The week as one element; the capsule stays its own, with its 打卡.
+    private var summary: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionLabel(Text(copy: "我的一周", bundle: .module))
+            HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
+                Score(count: board.mine.trainedDays, goal: board.mine.plannedDays, size: .card)
+                Text(copy: "天", bundle: .module)
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreCard))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+            }
+            .lineLimit(1)
+            status
+                .typeStyle(TypeRamp.label)
+                .foregroundStyle(Color(role: board.myStatus == .notCheckedIn ? .fgMuted : .fgAccent, in: theme))
+                .lineLimit(1)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(copy: "我的一周", bundle: .module))
+        .accessibilityValue(
+            Text(copy: "\(board.mine.trainedDays)/\(board.mine.plannedDays) 天，\(status)", bundle: .module))
+    }
+
+    private var status: Text {
+        switch board.myStatus {
+        case .trained: Text(copy: "今天练了", bundle: .module)
+        case .disclaimer: Text(copy: "今天请假", bundle: .module)
+        case .notCheckedIn: Text(copy: "今天还没练", bundle: .module)
+        }
+    }
+
+    /// Each day as the squad card's calendar draws it.
+    private var days: [WeekDayStatus] {
+        zip(board.week.days, board.week.activities).map { status, activity in
+            switch status {
+            case .trained: .trained(symbol: activity?.symbol)
+            case .disclaimer: .excused
+            case .restDay: .restDay
+            case .open: .open
+            }
+        }
+    }
+}
+
+/// A member standing still, in their look; the default character before they made one.
+struct WidgetCharacter: View {
+    let look: CharacterLook?
+
+    var body: some View {
+        if let player = Self.player(look) {
+            let frame = player.restFrame
+            CharacterCanvas(drawing: frame.drawing, placements: frame.placements)
+                .aspectRatio(player.drawing.width / player.drawing.height, contentMode: .fit)
+                .accessibilityHidden(true)
+        }
+    }
+
+    static func player(_ look: CharacterLook?) -> CharacterPlayer? {
+        guard
+            let figure = try? PlaceholderCharacter.figure(wearing: look.map(Outfit.init) ?? PlaceholderCharacter.lifter)
+        else { return nil }
+        return try? CharacterPlayer(figure: figure, idle: .still)
+    }
+}
+
+/// Sizes that belong to the widgets only.
+enum WidgetMetrics {
+    /// My character in the small widget's corner.
+    static let figureWidth: Double = 64
+    /// A head on the medium widget, four to a row, and its width with today's ring around it.
+    static let head: Double = 24
+    static let ringed = head + 2 * (Sizing.ringGap + Sizing.ringWidth)
+    /// The coach's head on the medium widget.
+    static let coachHead: Double = 26
+    /// The coach's ink dot.
+    static let dot: Double = 8
+    /// The medium widget's 打卡.
+    static let button: Double = 32
+    /// The workout's 打卡 capsule, its button and its heart.
+    static let capsule: Double = 36
+    static let capsuleButton: Double = 28
+    static let heart: Double = 10
+    /// An iPhone's small widget is 170 points square on a 6.1" to 6.3" phone, a medium one 364
+    /// by 170, with 16 points of margin inside.
+    static let small: Double = 170
+    static let medium: Double = 364
+}
+#endif

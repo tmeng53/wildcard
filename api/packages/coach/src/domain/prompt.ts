@@ -9,19 +9,19 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
+import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
   checkInLine,
   languageOf,
   rosterOf,
-  saidTo,
   type SquadWeek,
   type WeekCheckIn,
 } from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's
-// identity and soul, and how each kind of wake goes) and each wake's task. Chinese, as the coach
+// identity and soul, and how each kind of wake goes, each from the settings) and each wake's task. Chinese, as the coach
 // speaks. The instructions are the same for every wake of a coach and come first, and each task
 // holds only what changes, so the model's provider can cache that beginning (OpenAI does for a
 // beginning of 1024 tokens or more) and charge less for it.
@@ -40,38 +40,45 @@ export interface GiftOptions {
 }
 
 /** The standing instructions for a coach. */
-export function instructionsOf(settings: Pick<CoachSettings, 'rules'>, coach: Coach): string {
+export function instructionsOf(
+  settings: Pick<CoachSettings, 'rules' | 'wakes'>,
+  coach: Coach,
+): string {
   return [
     settings.rules,
     `你的人设：\n名字：${coach.name}\n风格：${coach.style}`,
     coach.soul,
-    WAKES,
+    wakesOf(settings.wakes),
   ].join('\n\n');
 }
 
-/** How each kind of wake goes: the same for every squad, so it is part of the instructions. */
-const WAKES = [
-  '你会在四种时候醒来，任务会告诉你是哪一种：',
-  '- 有人打卡。',
-  '- 有人回复你或 @ 你。',
-  '- 夜里：整理你的记性，什么都不说。',
-  '- 新的一天：给全队写今天的战术板，给任务里列出的每个人各写一张只有他看得到的便条。一张便条只说一件事，每个人不一样。',
-  '做什么、用哪个工具，你自己判断。',
-  '你每次醒来都会忘掉以前的一切，只有任务里「你的记性」留得住。',
-  '队员看得到的话里用昵称称呼人，不写队员N。',
-  '队员看得到的话用任务说的语言写。',
-].join('\n');
+/**
+ * How each kind of wake goes, as the settings word it: the same for every squad, so it is part of
+ * the instructions, with the limits the API holds the coach to put in.
+ */
+function wakesOf(wakes: string): string {
+  return wakes
+    .replaceAll('{replyLimit}', String(REPLY_LIMIT))
+    .replaceAll('{noteLimit}', String(NOTE_LIMIT));
+}
 
-/** What was said to and by the coach under one check-in, oldest first. */
+/**
+ * The whole comment section under one check-in, up to the comment this wake answers, oldest
+ * first: every member's comment and every coach's line, this coach's and any other's (Tracy,
+ * 2026-11-10: a coach reads the whole section, never only what was said to it).
+ */
 export interface CoachThread {
-  /** The coach's own reply to the check-in, when it wrote one. */
-  readonly reply?: string;
-  /** Members' replies to and @s of the coach and its answers since, oldest first. */
+  /** The time now on the squad's clock, `11-09 周一 22:46`. */
+  readonly now: string;
   readonly said: readonly {
-    /** The member who wrote it, or `undefined` for the coach. */
-    readonly member: string | undefined;
+    /** Who said it: a member by id, this coach, or another coach by its name. */
+    readonly by: { readonly member: string } | 'you' | { readonly coach: string };
     readonly text: string;
-    /** The reply this wake answers. */
+    /** When a member wrote it, on the squad's clock, `11-09 周一 22:44`. */
+    readonly when?: string;
+    /** Which coach a member's comment replies to or @s, by its name, `你` for this one. */
+    readonly to?: { readonly kind: 'reply' | 'mention'; readonly coach: string };
+    /** The comment this wake answers. */
     readonly answering?: boolean;
   }[];
 }
@@ -177,16 +184,18 @@ export function taskOf({
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined || thread === undefined) return undefined;
     const roster = rosterOf(week);
-    const said = thread.said.map(
-      ({ member, text, answering }) =>
-        `- ${member === undefined ? '你' : (roster.get(member) ?? '队员')}：「${text}」${answering === true ? '（要回的这句）' : ''}`,
-    );
-    // The rest of the post's comments too, so the coach knows what the squad said around it.
-    const others = checkIn.comments
-      .filter((comment) => saidTo(comment) === undefined)
-      .map(({ member, text }) => `- ${roster.get(member) ?? '队员'}：「${text}」`);
+    const said = thread.said.map(({ by, text, when, to, answering }) => {
+      const who =
+        by === 'you'
+          ? '你'
+          : 'member' in by
+            ? (roster.get(by.member) ?? '队员')
+            : `${by.coach}（教练）`;
+      const toWhom =
+        to === undefined ? '' : to.kind === 'reply' ? `（回复${to.coach}）` : `（@${to.coach}）`;
+      return `- ${when === undefined ? '' : `${when} `}${who}${toWhom}：「${text}」${answering === true ? '（要回的这句）' : ''}`;
+    });
     const answering = checkIn.comments.find(({ id }) => id === reason.comment);
-    const ownReply = thread.reply === undefined ? [] : [`- 你：「${thread.reply}」`];
     // Without this the model answers from the words alone and guesses what the photos show.
     const photoCount = checkIn.photos?.length ?? 0;
     const photos =
@@ -197,8 +206,8 @@ export function taskOf({
         : [];
     return [
       `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
-      ...(others.length === 0 ? [] : [`这条下面别人的评论（先后顺序）：\n${others.join('\n')}`]),
-      `你们在下面的对话：\n${[...ownReply, ...said].join('\n')}`,
+      `这条下面的评论区（先后顺序）：\n${said.join('\n')}`,
+      `现在是 ${thread.now}。`,
       ...photos,
       ...occasion,
       ...(answering === undefined ? [] : [writeIn(languageOf(week, answering.member))]),

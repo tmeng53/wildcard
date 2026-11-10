@@ -10,6 +10,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case captionLength(Int)
     /// Workout minutes outside `WorkoutMinutes.range`.
     case workoutMinutes(Int)
+    /// A start time that isn't a time of day (`HH:mm`, 00:00 to 23:59).
+    case startTime(String)
     /// A caption with a line break; it is one line.
     case multilineCaption
     /// A check-in sent to no squads, or more than `Audience.maxSquads`.
@@ -40,6 +42,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case strayCustomSport
     /// A player card number outside `JerseyNumber.range`.
     case jerseyNumberOutOfRange(Int)
+    /// A birthday before 1900 or after today.
+    case birthdayOutOfRange(String)
     /// A comment that is empty or longer than `CommentText.maxLength` characters.
     case commentLength(Int)
     /// Feedback that is empty or longer than `FeedbackText.maxLength` characters.

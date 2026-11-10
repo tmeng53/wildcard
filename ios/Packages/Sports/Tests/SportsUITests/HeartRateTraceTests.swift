@@ -34,3 +34,10 @@ private let curve = [
     #expect(trace.bpmRange == 94...181)
     #expect(trace.minutes.map(\.minutes) == [2, 0, 2, 0])
 }
+
+@Test func aZoneStartTooCloseToTheOneBelowIsLeftUnlabelled() {
+    let trace = HeartRateTrace(points: curve, zones: zones)
+    #expect(trace.labelledStarts(height: 87, labelHeight: 14) == [107, 144, 175])
+    #expect(trace.labelledStarts(height: 300, labelHeight: 14) == [107, 119, 144, 175])
+    #expect(HeartRateTrace(points: curve, zones: nil).labelledStarts(height: 300, labelHeight: 14).isEmpty)
+}

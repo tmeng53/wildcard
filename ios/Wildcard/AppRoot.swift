@@ -4,9 +4,11 @@ import Contracts
 import DesignSystem
 import DesignSystemUI
 import FeedUI
+import HomeWidgetDomain
 import LocationDomain
 import OnboardingUI
 import SwiftUI
+import WidgetKit
 
 /// The app on the real backend: the screen its account is on.
 struct AppRoot: View {
@@ -15,8 +17,12 @@ struct AppRoot: View {
     let delegate: AppDelegate
     /// Where a tapped push goes (its notice's place), kept until the tabs open it.
     @State private var pushDestination: AppDestination?
+    /// Where a tapped home screen widget asked to go, kept until the tabs open it.
+    @State private var widgetLink: WidgetLink?
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
+    /// Pushes that arrived while the tabs were in front, which they tell in their own banner.
+    @State private var pushesInFront = 0
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -54,16 +60,26 @@ struct AppRoot: View {
                     squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
                     previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
-                    location: AppModel.location
-                ) {
-                    Task { await app.leftSquad() }
-                }
+                    location: AppModel.location, pushesInFront: pushesInFront,
+                    sceneMoved: { Task { await app.refreshScene() } },
+                    leftSquad: { Task { await app.leftSquad() } }
+                )
                 .onAppear {
                     // A tap that launched the app came before the tabs.
                     if let destination = delegate.takeDestination() {
                         WildcardApp.open(destination, today: today, tab: $tab)
                     }
+                    if let link = widgetLink {
+                        widgetLink = nil
+                        WildcardApp.open(link, today: today, tab: $tab)
+                    }
                 }
+            }
+            // A build older than the lowest the catalog lets run: only 有新版本, over everything.
+            if app.mustUpdate {
+                UpdateRequired()
+                    .zIndex(2)
+                    .transition(.opacity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -80,7 +96,7 @@ struct AppRoot: View {
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }
         .alert(
-            Text("你已不在 \(app.lostSquadName ?? "") 小队"),
+            Text(copy: "你已不在 \(app.lostSquadName ?? "") 小队", bundle: .main),
             isPresented: Binding(
                 get: { app.lostSquadName != nil },
                 set: { shown in if !shown { app.lostSquadName = nil } })
@@ -88,19 +104,30 @@ struct AppRoot: View {
             Button {
                 app.lostSquadName = nil
             } label: {
-                Text("确认")
+                Text(copy: "确认", bundle: .main)
             }
         }
         .task { await app.run() }
         // An invite link: universal links come here in a SwiftUI app.
         .onOpenURL { url in
             if let code = InviteLink.code(in: url) { app.open(invite: code) }
+            // A home screen widget: open its place now, or once the tabs are up.
+            if let link = WidgetLink(url: url) {
+                if case .tabs(let today, _, _, _, _, _) = app.screen {
+                    WildcardApp.open(link, today: today, tab: $tab)
+                } else {
+                    widgetLink = link
+                }
+            }
         }
         // Each account's tabs open on 今天, not where the last one left off (我, after signing out).
         .onChange(of: app.showsTabs) { _, shows in
             if !shows { tab = .today }
         }
         .onChange(of: scenePhase) { _, phase in
+            // Leaving the app: the home screen widgets read the squad again, with what was just
+            // posted.
+            if phase == .background { WidgetCenter.shared.reloadAllTimelines() }
             if phase == .active {
                 Task { await app.refreshCatalog() }
                 Task { await app.refreshScene() }
@@ -108,6 +135,13 @@ struct AppRoot: View {
             }
         }
         .onAppear {
+            // A push while the tabs are up drops in as their banner, not iOS's.
+            // Only a push 通知 keeps (not an admin's 战报-stuck or test push) becomes its banner.
+            delegate.arrived = { [app, $pushesInFront] category in
+                guard app.showsTabs, Push.toldInNotices.contains(category) else { return false }
+                $pushesInFront.wrappedValue += 1
+                return true
+            }
             delegate.opened = { [app, delegate, $tab, $pushDestination] opened in
                 switch opened {
                 // Where its notice in 通知 goes (MainTabs' `open`), unless the 6pm push's view

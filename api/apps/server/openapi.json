@@ -395,6 +395,9 @@
           "disclaimerDice": {
             "$ref": "#/components/schemas/DisclaimerDiceCatalog"
           },
+          "appCopy": {
+            "$ref": "#/components/schemas/AppCopyCatalog"
+          },
           "scenes": {
             "$ref": "#/components/schemas/ScenesCatalog"
           },
@@ -406,6 +409,12 @@
           },
           "pieces": {
             "$ref": "#/components/schemas/PiecesCatalog"
+          },
+          "appBuild": {
+            "$ref": "#/components/schemas/AppBuildCatalog"
+          },
+          "reactions": {
+            "$ref": "#/components/schemas/ReactionsCatalog"
           },
           "art": {
             "$ref": "#/components/schemas/ArtCatalog"
@@ -553,6 +562,45 @@
         "required": [
           "lines"
         ],
+        "additionalProperties": {}
+      },
+      "AppCopyCatalog": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/AppCopyWords"
+            },
+            "description": "Lines put over the app’s String Catalog, by key (its Simplified Chinese source line). A language left out, or a key not here, keeps the build’s own words. Each keeps its key’s placeholders, the same kinds, perhaps by explicit position (`%2$lld`).",
+            "example": {
+              "还有 %lld 次开门": {
+                "zhHans": "再练 %lld 次就开门"
+              }
+            }
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "additionalProperties": {}
+      },
+      "AppCopyWords": {
+        "type": "object",
+        "properties": {
+          "zhHans": {
+            "type": "string",
+            "description": "Simplified Chinese."
+          },
+          "en": {
+            "type": "string",
+            "description": "English."
+          },
+          "zhHant": {
+            "type": "string",
+            "description": "Traditional Chinese (Taiwan)."
+          }
+        },
         "additionalProperties": {}
       },
       "ScenesCatalog": {
@@ -773,6 +821,41 @@
         },
         "required": [
           "pieces"
+        ],
+        "additionalProperties": {}
+      },
+      "AppBuildCatalog": {
+        "type": "object",
+        "properties": {
+          "minimumBuild": {
+            "type": "string",
+            "description": "The lowest build (CFBundleVersion, such as `190` or `190.1`) that may run, compared number by number; an older app shows only 有新版本 and a button to the App Store. Left out while every build may run.",
+            "example": "190"
+          }
+        },
+        "additionalProperties": {}
+      },
+      "ReactionsCatalog": {
+        "type": "object",
+        "properties": {
+          "quick": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The emoji the reaction bar offers first, in order. Any one emoji is still a reaction.",
+            "example": [
+              "❤️",
+              "💪",
+              "😂",
+              "🤤",
+              "😮",
+              "😡"
+            ]
+          }
+        },
+        "required": [
+          "quick"
         ],
         "additionalProperties": {}
       },
@@ -1238,6 +1321,11 @@
             "minimum": 1,
             "maximum": 600,
             "description": "How long the workout took, in whole minutes."
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "When it started, on the member's clock on its day, as HH:mm."
           },
           "caption": {
             "type": "string",
@@ -1885,6 +1973,11 @@
             "minimum": 1,
             "maximum": 600,
             "description": "How long the workout took, in whole minutes."
+          },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "When it started, on the member's clock on its day, as HH:mm."
           },
           "caption": {
             "type": "string",
@@ -4440,12 +4533,16 @@
               },
               "challenge": {
                 "$ref": "#/components/schemas/CoachChallenge"
+              },
+              "coach": {
+                "$ref": "#/components/schemas/CoachSpeaker"
               }
             },
             "required": [
               "noteId",
               "day",
-              "challenge"
+              "challenge",
+              "coach"
             ],
             "additionalProperties": false,
             "description": "The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off."
@@ -12168,7 +12265,7 @@
       "get": {
         "operationId": "getEarlierCoachCards",
         "summary": "The coach page’s 以前, a page at a time",
-        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).",
         "security": [
           {
             "bearer": []
@@ -12208,6 +12305,20 @@
             "required": false,
             "description": "`true` keeps only the cards not seen yet.",
             "name": "unseen",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "description": "`true` keeps only the challenges, from when the caller joined (not only the last 30 days)."
+            },
+            "required": false,
+            "description": "`true` keeps only the challenges, from when the caller joined (not only the last 30 days).",
+            "name": "challenges",
             "in": "query"
           }
         ],
@@ -14093,7 +14204,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
+        "description": "Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

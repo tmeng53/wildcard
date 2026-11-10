@@ -33,14 +33,18 @@ public struct MeDestinations {
     public var health: HealthConnection?
     /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
     public var location: LocationSharing?
+    /// 设置 › 桌面小组件, how to put the home screen widgets on; nil shows no row.
+    public var widgetGuide: AnyView?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil
+        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
+        widgetGuide: AnyView? = nil
     ) {
         self.previewSignUp = previewSignUp
+        self.widgetGuide = widgetGuide
         self.health = health
         self.location = location
         self.editCharacter = editCharacter
@@ -103,9 +107,9 @@ public struct MeView<PostsTile: View>: View {
     private var header: some View {
         HStack(spacing: Space.xs) {
             Spacer()
-            HeaderButton(Text("换装", bundle: .module), systemImage: "tshirt", action: destinations.editCharacter)
+            HeaderButton(Text(copy: "换装", bundle: .module), systemImage: "tshirt", action: destinations.editCharacter)
                 .accessibilityIdentifier("me.editCharacter")
-            HeaderButton(Text("商店街", bundle: .module), systemImage: "bag", action: destinations.street)
+            HeaderButton(Text(copy: "商店街", bundle: .module), systemImage: "bag", action: destinations.street)
                 .overlay(alignment: .topTrailing) {
                     if destinations.streetHasNews {
                         Circle()
@@ -115,9 +119,11 @@ public struct MeView<PostsTile: View>: View {
                             .accessibilityIdentifier("me.street.dot")
                     }
                 }
-                .accessibilityValue(destinations.streetHasNews ? Text("有新货", bundle: .module) : Text(verbatim: ""))
+                .accessibilityValue(
+                    destinations.streetHasNews ? Text(copy: "有新货", bundle: .module) : Text(verbatim: "")
+                )
                 .accessibilityIdentifier("me.street")
-            HeaderButton(Text("设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
+            HeaderButton(Text(copy: "设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
                 .accessibilityIdentifier("me.settings")
         }
     }
@@ -176,10 +182,10 @@ struct ScheduleTile: View {
     var body: some View {
         GlanceTile(
             figure: Text(verbatim: glance.map { "W\($0.number)" } ?? "–"),
-            figureStyle: TypeRamp.scoreWeek, title: Text("出赛表", bundle: .module),
-            caption: glance?.daysLeft.map { Text("这周还有 \($0) 天", bundle: .module) }, action: open
+            figureStyle: TypeRamp.scoreWeek, title: Text(copy: "出赛表", bundle: .module),
+            caption: glance?.daysLeft.map { Text(copy: "这周还有 \($0) 天", bundle: .module) }, action: open
         ) {
-            GlanceAction(Text("编辑", bundle: .module), systemImage: "pencil")
+            GlanceAction(Text(copy: "编辑", bundle: .module), systemImage: "pencil")
         }
         .accessibilityIdentifier("me.schedule")
     }
@@ -232,34 +238,88 @@ struct MeStage: View {
             .padding(.bottom, Space.xxs)
         }
         .frame(width: size.width, height: size.height)
-        .task(id: character) { dress() }
+        .task(id: character) { await dress() }
     }
 
-    private func dress() {
+    /// Builds the art off the main actor, once per look and mood: the card's front is rebuilt on
+    /// every flip, and a cached stage dresses as soon as it shows instead of after a parse.
+    private func dress() async {
         guard let character else { return }
-        do {
-            let look =
-                switch mood {
-                case .typing: PlaceholderCharacter.atDesk(character.outfit)
-                case .writing: PlaceholderCharacter.atDeskWriting(character.outfit)
-                case .idle, .teary: character.outfit
-                }
-            let figure = try PlaceholderCharacter.figure(wearing: look)
-            let idle: Clip
-            switch mood {
-            case .idle: idle = try PlaceholderCharacter.clip("idle", persona: character.persona)
-            case .typing: idle = try PlaceholderCharacter.typing(persona: character.persona)
-            case .writing: idle = try PlaceholderCharacter.writing(persona: character.persona)
-            case .teary: idle = try PlaceholderCharacter.teary(persona: character.persona)
+        let key = StageArt.Key(
+            outfit: character.outfit, persona: character.persona, mood: mood, generation: StageArt.generation)
+        let art: StageArt
+        if let cached = StageArt.cache[key] {
+            art = cached
+        } else {
+            guard let built = try? await Task.detached(operation: { try StageArt(key) }).value else {
+                // Art that doesn't build leaves the stage empty; the rest of 我 still works.
+                player = nil
+                return
             }
+            guard !Task.isCancelled else { return }
+            StageArt.remember(built, for: key)
+            art = built
+        }
+        do {
             if let player {
-                try player.wear(figure, idle: idle)
+                try player.wear(art.figure, idle: art.idle)
             } else {
-                player = try CharacterPlayer(figure: figure, idle: idle)
+                player = try CharacterPlayer(figure: art.figure, idle: art.idle)
             }
         } catch {
-            // Art that doesn't build leaves the stage empty; the rest of 我 still works.
             player = nil
+        }
+    }
+}
+
+/// A stage's parsed figure and idle, kept for the few looks 我 shows.
+private struct StageArt: Sendable {
+    struct Key: Hashable, Sendable {
+        let outfit: Outfit
+        let persona: Persona
+        let mood: MeStage.Mood
+        /// The downloaded art's generation, so a newer one is parsed again, not served stale.
+        let generation: Int?
+    }
+
+    /// `ArtTree.downloaded` is swapped whole for each new generation, so its folder's file
+    /// number changes with it; nil while nothing was downloaded.
+    @MainActor static var generation: Int? {
+        let folder = ArtTree.downloaded.path(percentEncoded: false)
+        return (try? FileManager.default.attributesOfItem(atPath: folder))?[.systemFileNumber] as? Int
+    }
+
+    let figure: Figure
+    let idle: Clip
+
+    @MainActor static var cache: [Key: StageArt] = [:]
+
+    @MainActor static func remember(_ art: StageArt, for key: Key) {
+        // A handful of looks a session: an edit now and then, four moods.
+        if cache.count >= 8 { cache.removeAll() }
+        cache[key] = art
+    }
+
+    init(_ key: Key) throws(AvatarError) {
+        let look =
+            switch key.mood {
+            case .typing: PlaceholderCharacter.atDesk(key.outfit)
+            case .writing: PlaceholderCharacter.atDeskWriting(key.outfit)
+            case .idle, .teary: key.outfit
+            }
+        figure = try PlaceholderCharacter.figure(wearing: look)
+        switch key.mood {
+        case .idle:
+            // A held prop plays its move, looped at the persona's tempo.
+            // `??` takes an untyped throwing closure, so it can't be used under typed throws.
+            if let held = try PlaceholderCharacter.heldMove(wearing: key.outfit, persona: key.persona) {
+                idle = held
+            } else {
+                idle = try PlaceholderCharacter.clip("idle", persona: key.persona)
+            }
+        case .typing: idle = try PlaceholderCharacter.typing(persona: key.persona)
+        case .writing: idle = try PlaceholderCharacter.writing(persona: key.persona)
+        case .teary: idle = try PlaceholderCharacter.teary(persona: key.persona)
         }
     }
 }

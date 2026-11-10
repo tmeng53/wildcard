@@ -156,7 +156,7 @@ export function coachMemberFacts(deps: {
   readonly awards: Pick<WeeklyAwards, 'titlesWon'>;
   readonly sports: Sports;
 }): CoachMemberFacts {
-  return async ({ members, weekStart }) => {
+  return async ({ squad, members, weekStart }) => {
     const catalog = await deps.sports.catalog();
     const sportNames = new Map(
       catalog.categories.flatMap(({ sports }) => sports.map(({ id, names }) => [id, names.zhHans])),
@@ -166,13 +166,23 @@ export function coachMemberFacts(deps: {
     return Promise.all(
       members.map(async (member): Promise<MemberFacts> => {
         const [totals, plan, won] = await Promise.all([
-          deps.checkIns.totals(CheckInMember.parse(member)),
+          // Only what reached this squad: a 仅自己可见 post never reaches its coach.
+          deps.checkIns.totalsSharedTo({
+            member: CheckInMember.parse(member),
+            squad: CheckInSquad.parse(squad),
+          }),
           deps.plans.find({
             member: CheckInMember.parse(member),
             weekStart: CheckInWeek.parse(weekStart),
           }),
           deps.awards.titlesWon(AwardsMember.parse(member)),
         ]);
+        // The plan's days as the squad sees them: a day a 仅自己可见 训练 turned reads as planned.
+        const days = await deps.checkIns.planSharedTo({
+          member: CheckInMember.parse(member),
+          squad: CheckInSquad.parse(squad),
+          weekStart: CheckInWeek.parse(weekStart),
+        });
         const top = totals.topSport;
         const topName = top === undefined ? undefined : nameOf(top.sport, top.customSport);
         return {
@@ -186,7 +196,7 @@ export function coachMemberFacts(deps: {
             : { topSport: { name: topName, checkIns: top.checkIns } }),
           titles: won.count,
           ...(won.latest === undefined ? {} : { latestTitle: won.latest.title }),
-          plan: plan.days.map((day): PlanDayFacts => {
+          plan: days.map((day): PlanDayFacts => {
             if (day.kind === 'rest') return { kind: 'rest' };
             const sport = nameOf(day.sport, day.customSport);
             return sport === undefined ? { kind: 'train' } : { kind: 'train', sport };

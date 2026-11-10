@@ -50,13 +50,14 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
                 case .trained(let activity, let minutes, let body):
                     .trained(
                         Training(
-                            activity: activity, minutes: minutes, photos: photos,
+                            activity: activity, minutes: minutes, startTime: body.startTime, photos: photos,
                             caption: try body.caption.map(Caption.init), workout: body.workout))
                 case .healthyMeal(let body):
                     .healthyMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
                 case .cheatMeal(let body):
                     .cheatMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
-                case .disclaimer(let disclaimer): .disclaimer(disclaimer)
+                case .disclaimer(let disclaimer, _):
+                    .disclaimer(try Disclaimer(disclaimer.text, restDay: disclaimer.restDay, photos: photos))
                 }
             return CheckIn(
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt, audience: audience,

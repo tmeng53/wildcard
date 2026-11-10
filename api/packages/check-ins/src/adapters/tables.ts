@@ -122,6 +122,18 @@ export interface PlanTemplates {
   payload: Json;
 }
 
+export interface QuickReactionEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  reactions: Json;
+}
+
+export interface QuickReactions {
+  emoji: Json;
+  only_row: Generated<boolean>;
+}
+
 export interface WeeklyPlanEvents {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -160,6 +172,8 @@ export interface DB {
   fuel_goal_events: FuelGoalEvents;
   fuel_goals: FuelGoals;
   plan_templates: PlanTemplates;
+  quick_reaction_events: QuickReactionEvents;
+  quick_reactions: QuickReactions;
   week_summary_word_events: WeekSummaryWordEvents;
   week_summary_words: WeekSummaryWords;
   weekly_plan_events: WeeklyPlanEvents;

@@ -13,6 +13,9 @@ import Observation
 import SportsUI
 import SwiftUI
 
+/// A post's character and the outfit and persona it was built for.
+private typealias PostPlayer = (outfit: Outfit, persona: Persona, player: CharacterPlayer)
+
 /// The 动态 screen's state over its `FeedStore`: which post's emoji bar is open, the moves the
 /// authors' characters play when someone reacts, and the post to scroll to. Reactions show at
 /// once and go out behind.
@@ -97,10 +100,13 @@ public final class FeedModel {
     var deleting: CheckInID?
     /// The last delete didn't go through.
     var deleteFailed = false
+    /// The 成绩卡's sheet, over one of the member's 训练.
+    var scoreCard: ScoreCardModel?
+    /// The squad's name as it is now, which the 成绩卡 shows; the app sets it.
+    @ObservationIgnored public var squadName: @MainActor () -> String? = { nil }
 
     /// Each player with the outfit it wears, so a look that changed since builds a new one.
-    @ObservationIgnored private var players: [CheckInID: (outfit: Outfit, persona: Persona, player: CharacterPlayer)] =
-        [:]
+    @ObservationIgnored private var players: [CheckInID: PostPlayer] = [:]
     @ObservationIgnored private var heads: [MemberID: (outfit: Outfit, player: CharacterPlayer)] = [:]
     /// The coaches' characters, by coach, for their heads and the 战术板.
     @ObservationIgnored var coachPlayers: [CoachID: CharacterPlayer] = [:]
@@ -124,7 +130,8 @@ public final class FeedModel {
 
     // MARK: - Loading
 
-    public func load() async {
+    /// One read of the feed, then what the coach said (`load()`).
+    fileprivate func reload() async {
         hasNews = false
         await store.load()
         answerArrivals()
@@ -185,7 +192,7 @@ public final class FeedModel {
         }
         arrivals += 1
         let who = name(of: newest.member) ?? Self.teammate
-        announce(String(localized: "\(who)回应了你：\(newest.emoji.text)", bundle: .module.inAppLanguage))
+        announce(String(copy: "\(who)回应了你：\(newest.emoji.text)", bundle: .module))
     }
 
     /// The bubble has shown long enough.
@@ -256,7 +263,7 @@ public final class FeedModel {
                     play(move, on: post)
                 }
                 let author = name(of: post.author) ?? Self.teammate
-                announce(String(localized: "\(author)收到了\(mine.text)", bundle: .module.inAppLanguage))
+                announce(String(copy: "\(author)收到了\(mine.text)", bundle: .module))
             }
             picks += 1
         } catch {
@@ -274,7 +281,7 @@ public final class FeedModel {
         AccessibilityNotification.Announcement(AttributedString(text)).post()
     }
 
-    private static var teammate: String { String(localized: "队友", bundle: .module.inAppLanguage) }
+    private static var teammate: String { String(copy: "队友", bundle: .module) }
     private static let recentKey = "feed.recentEmoji"
     private static let recentLimit = 24
     private static func seenKey(_ viewer: MemberID) -> String { "feed.reactionsSeen.\(viewer)" }
@@ -350,8 +357,8 @@ public final class FeedModel {
 
     /// How a comment names someone: 我, their nickname, or 队友 when it isn't known.
     func displayName(of member: MemberID) -> String {
-        if member == viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
-        return name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
+        if member == viewer { return String(copy: "我", bundle: .module) }
+        return name(of: member) ?? String(copy: "队友", bundle: .module)
     }
 
     /// The move has finished: the character goes back to its idle.
@@ -371,6 +378,16 @@ public final class FeedModel {
         try? player.play(clip, now: start)
         played[post.id] = Played(
             count: (played[post.id]?.count ?? 0) + 1, until: start.addingTimeInterval(clip.duration))
+    }
+}
+
+extension FeedModel {
+    /// Reads the feed and what the coach said again. Pull to refresh waits for it, but it runs on
+    /// its own task: SwiftUI cancels a refresh's task when the view updates under it (here, as the
+    /// posts arrive), which cut off the coach's read, the last step, so a new reply showed only
+    /// after a relaunch.
+    public func load() async {
+        await Task { await reload() }.value
     }
 }
 #endif

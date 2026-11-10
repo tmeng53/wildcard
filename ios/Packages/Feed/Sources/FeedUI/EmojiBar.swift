@@ -61,6 +61,7 @@ struct FeedLayer: View {
                     }
                     .frame(width: EmojiGrid.size.width, height: EmojiGrid.size.height)
                     .accessibilityIdentifier("feed.emojiGrid")
+                    .accessibilityAction(.escape) { close() }
                     .position(gridCenter(over: button, in: proxy))
                     .transition(.scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity))
                 } else {
@@ -68,13 +69,15 @@ struct FeedLayer: View {
                         EmojiBar.common, text: \.text, mine: post.reactions.kind(of: model.viewer),
                         hovered: model.hovering, identifier: "feed.emoji"
                     ) { index in
-                        guard let from = model.slotCenter(index) else { return }
-                        model.react(.pick(EmojiBar.common[index]), on: post, from: from)
+                        guard let from = model.slotCenter(index), let emoji = Emoji.quick(at: index) else { return }
+                        model.react(.pick(emoji), on: post, from: from)
                     } more: {
                         withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) { grid = post.id }
                     }
                     .fixedSize()
                     .accessibilityIdentifier("feed.emojiBar")
+                    // VoiceOver can't tap outside: its two-finger scrub closes it instead.
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(FeedView.space))
                     } action: { frame in
@@ -87,6 +90,7 @@ struct FeedLayer: View {
             if let who, let post = model.store.post(who.post) {
                 let coach = model.coachReply(on: post.id)
                 WhoPanel(model: model, reactions: post.reactions, coach: coach)
+                    .accessibilityAction(.escape) { close() }
                     .position(panelCenter(at: proxy[who.bounds], for: post.reactions, coach: coach, in: proxy))
                     .transition(.scale(scale: 0.8, anchor: .topLeading).combined(with: .opacity))
             }
@@ -144,7 +148,7 @@ struct FeedLayer: View {
 
 /// The bar's emoji, in the approved order.
 enum EmojiBar {
-    static let common = Emoji.quick
+    static var common: [Emoji] { Emoji.quick }
     static let height = ReactionBarMetrics.height
     static var width: Double { ReactionBarMetrics.width(count: common.count) }
 }

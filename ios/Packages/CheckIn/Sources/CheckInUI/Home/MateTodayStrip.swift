@@ -30,7 +30,7 @@ public struct MateTodayStrip: View {
     public var body: some View {
         if let today = model.today(of: member) {
             VStack(alignment: .leading, spacing: Space.xs) {
-                Text("今天", bundle: .module)
+                Text(copy: "今天", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                 HStack(spacing: Space.s) {
@@ -72,7 +72,7 @@ public struct MateTodayStrip: View {
                 model.patMate(member)
             }
         } label: {
-            if patted { Text("拍过了", bundle: .module) } else { Text("拍一拍", bundle: .module) }
+            if patted { Text(copy: "拍过了", bundle: .module) } else { Text(copy: "拍一拍", bundle: .module) }
         }
         .buttonStyle(PrimaryButtonStyle(.regular))
         .disabled(patted)

@@ -89,6 +89,8 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${checkIn}, ${mia}, '2026-11-01', ${new Date(now.getTime() - 10 * 60_000)}, 'trained',
           '{"version": 1, "sport": "run"}')`.execute(trx);
+      // Route tests that ran before may have left squads with a coach; this run wakes only its own.
+      await sql`delete from public.squad_coaches`.execute(trx);
       const squad = SquadId.parse(squadId);
       await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
         { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
@@ -396,7 +398,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天。 用简体中文写。\n- 队员2：这周已经练了 0 天。 用简体中文写。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天；这周发过的：周日跑步。 用简体中文写。\n- 队员2：这周已经练了 0 天；这周还没发过动态。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
@@ -408,6 +410,10 @@ describe('the coach', () => {
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
       expect(runs[1]?.instructions).toContain('你会在四种时候醒来');
+      // The seeded wakes let the coach pick its tools and say one thing per note, never "I remember".
+      expect(runs[1]?.instructions).toContain('一张便条只说一件事');
+      expect(runs[1]?.instructions).toContain('做什么、用哪个工具，你自己判断。');
+      expect(runs[1]?.instructions).not.toContain('再加上记性里记着他的');
       // The 简历 is for the app only: the model never reads the coach's missing license.
       expect(runs[1]?.instructions).not.toContain('证还没考下来');
       expect(runs[0]?.instructions).toBe(runs[1]?.instructions);
@@ -832,7 +838,7 @@ describe('the coach', () => {
       const answering = runs.find(({ task }) => task.includes('要回的这句'));
       expect(answering?.task).toContain('有人在评论里 @ 你。');
       expect(answering?.task).toContain(
-        '你们在下面的对话：\n- 队员2：「@小混 下雨还练吗」（要回的这句）',
+        '这条下面的评论区（先后顺序）：\n- 11-01 周日 10:01 队员2（@你）：「@小混 下雨还练吗」（要回的这句）',
       );
       expect(told).toStrictEqual([
         {
@@ -978,9 +984,11 @@ describe('the coach', () => {
         'answer',
         'answer',
       ]);
-      expect(runs[2]?.task).toContain('- 你：「周日也跑？」\n- 队员2：「你也跑吗」（要回的这句）');
+      expect(runs[2]?.task).toContain(
+        '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」（要回的这句）',
+      );
       expect(runs[3]?.task).toContain(
-        '- 你：「周日也跑？」\n- 队员2：「你也跑吗」\n- 你：「你也来跑」\n- 队员1：「那你喊大声点」（要回的这句）',
+        '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n- 11-01 周日 10:03 队员1（回复你）：「那你喊大声点」（要回的这句）',
       );
       // Only `answer` on a reply's wake; it may not name 队员N, as any line members read.
       expect(runs[2]?.answers).toStrictEqual([
@@ -1310,7 +1318,7 @@ describe('the coach', () => {
           [earlier]: { weekStart: earlier, members: fixture.week.members, checkIns: [] },
         },
       }).checkedIn({ checkIn, squads: [squad] });
-      expect(asked).toStrictEqual([{ members: [mia], weekStart: fixture.week.weekStart }]);
+      expect(asked).toStrictEqual([{ squad, members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
     });
@@ -1353,7 +1361,7 @@ describe('the coach', () => {
 
   it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
     await rolledBack(async (fixture) => {
-      const { mia, leo } = fixture;
+      const { squad, mia, leo } = fixture;
       const asked: unknown[] = [];
       const rest = { kind: 'rest' } as const;
       const memberFacts: CoachMemberFacts = (input) => {
@@ -1396,13 +1404,17 @@ describe('the coach', () => {
       }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       // Asked once, by the server, for everyone it writes to.
-      expect(asked[0]).toStrictEqual({ members: [mia, leo], weekStart: fixture.week.weekStart });
+      expect(asked[0]).toStrictEqual({
+        squad,
+        members: [mia, leo],
+        weekStart: fixture.week.weekStart,
+      });
       expect(daily?.task).toContain('新的一天：2026-11-01，周日。');
       expect(daily?.task).toContain(
-        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水；这周已经练了 1 天。',
+        '- 队员1：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳；这周的饮食小目标：喝够水；这周已经练了 1 天；这周发过的：周日跑步。',
       );
       // A member whose plan it couldn't read still gets a note.
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周发过的：周六健康餐。');
       expect(daily?.task).toContain(
         '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
       );
@@ -1423,9 +1435,9 @@ describe('the coach', () => {
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '- 队员1：这周已经练了 1 天；当地今天雨，8–13°C，降水概率 80%。',
+        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步；当地今天雨，8–13°C，降水概率 80%。',
       );
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天。');
+      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周还没发过动态。');
     });
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => []);
@@ -1434,7 +1446,7 @@ describe('the coach', () => {
         weatherOf: () => Promise.reject(new Error('no weather')),
       }).run();
       expect(runs.find(({ task }) => task.includes('新的一天'))?.task).toContain(
-        '- 队员1：这周已经练了 1 天。',
+        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步。',
       );
     });
   });
@@ -1658,7 +1670,9 @@ describe('the coach', () => {
       );
       expect(daily?.task).not.toContain('没同意的人');
       // Only the consented member gets a note.
-      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天。');
+      expect(daily?.task).toContain(
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天；这周还没发过动态。',
+      );
       expect(daily?.task).not.toContain('- 队员2：');
     });
   });

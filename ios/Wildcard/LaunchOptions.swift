@@ -54,6 +54,11 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-recap-picker")
     }
 
+    /// `-recap-winter`: the 雪场 is open as well, so the sticker has six scenes and scrolls.
+    static var recapWinter: Bool {
+        ProcessInfo.processInfo.arguments.contains("-recap-winter")
+    }
+
     /// `-recap-reveal pool 0.8`: open the sample story on its last page with the reveal of that
     /// scene held at that second, for UI tests' screenshots.
     static var recapReveal: (scene: SceneTheme, at: Double)? {
@@ -97,6 +102,11 @@ enum LaunchOptions {
         return arguments[flag + 1] == "schedule"
     }
 
+    /// `-widgets`: the home screen widgets on the sample squad, instead of the app.
+    static var showsWidgets: Bool {
+        ProcessInfo.processInfo.arguments.contains("-widgets")
+    }
+
     /// `-daily-push full` (or `empty`): the 6pm push's long-press view on the sample squad, as
     /// its notification shows it, instead of the app.
     static var dailyPush: DailyPushPreview.Day? {
@@ -114,9 +124,11 @@ enum LaunchOptions {
     /// The sample member's 通知: the sample squad's last two weeks, or none with
     /// `-uitest-no-notices`, to see the page empty. `-uitest-broadcast trot|jingle` adds that
     /// holiday's pre-holiday broadcast, told just now, which 今天 shows on its celebration card.
+    /// `-uitest-live-comment` tells a teammate's comment live a few seconds after launch.
     static var notices: any NoticeSource {
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains("-uitest-no-notices") { return InMemoryNoticeSource.empty }
+        if arguments.contains("-uitest-live-comment") { return InMemoryNoticeSource.withLiveComment(now: now()) }
         guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count else {
             return InMemoryNoticeSource.sample(now: now())
         }

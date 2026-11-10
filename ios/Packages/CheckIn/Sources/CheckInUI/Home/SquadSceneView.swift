@@ -178,7 +178,8 @@ struct SquadSceneView: View {
             let hop = Self.hop(since: pats.hops[mate.id], at: date, scale: position.scale) + bob
             return Placed(
                 id: .mate(mate.id), player: mate.player, position: position, ring: mate.member.status.ring,
-                sleep: sleep, sign: sign, hop: hop, fall: fall(of: mate.id, at: date))
+                sleep: sleep, sign: sign, hop: hop, fall: fall(of: mate.id, at: date),
+                reachesHigh: together.reachesHigh(.mate(mate.id)))
         }
         if let myPlayer {
             let (position, bob) = together.position(of: .mine, home: .mine, at: date)
@@ -187,8 +188,8 @@ struct SquadSceneView: View {
                 holdsSign: iHoldSign, sleeper: iSleep ? sleepers.count : nil, doze: myDoze, at: date)
             figures.append(
                 Placed(
-                    id: .mine, player: myPlayer, position: position,
-                    ring: myRing, sleep: sleep, sign: sign, hop: bob, fall: fall(of: nil, at: date)))
+                    id: .mine, player: myPlayer, position: position, ring: myRing, sleep: sleep, sign: sign,
+                    hop: bob, fall: fall(of: nil, at: date), reachesHigh: together.reachesHigh(.mine)))
         }
         // Under Reduce Motion everyone is simply there.
         if arrival != nil, !reduceMotion {
@@ -231,7 +232,7 @@ struct SquadSceneView: View {
 
     /// A teammate's nickname, or 我 for me; nil for anyone without one yet.
     private func nickname(of id: Placed.ID) -> String? {
-        guard case .mate(let member) = id else { return String(localized: "我", bundle: .module.inAppLanguage) }
+        guard case .mate(let member) = id else { return String(copy: "我", bundle: .module) }
         return cast.mates.first { $0.id == member }?.name
     }
 
@@ -263,13 +264,15 @@ private struct Placed: Identifiable {
     let hop: Double
     /// How far into their drop onto a newly picked scene they are, in seconds.
     let fall: Double?
+    /// Whether they play 叠罗汉, whose top one jumps far above and beside its canvas.
+    let reachesHigh: Bool
 
     var depth: Double { position.point.y + (id == .mine ? 50 : 0) }
 
     func turned(_ direction: Double, awake: Bool) -> Placed {
         Placed(
             id: id, player: player, position: position.facing(direction), ring: ring, sleep: awake ? 0 : sleep,
-            sign: sign, hop: hop, fall: fall)
+            sign: sign, hop: hop, fall: fall, reachesHigh: reachesHigh)
     }
 }
 
@@ -301,6 +304,11 @@ private struct StageFigure: View {
     /// The canvas with the room the drop starts in, 420 rig points above it, while it falls.
     private static let fallReach = CGRect(
         x: reach.minX, y: -fallRoom, width: reach.width, height: reach.maxY + fallRoom)
+    /// The canvas with the room 叠罗汉's top one reaches into: up onto the other's head and over.
+    private static let stackReach = CGRect(
+        x: -PlaceholderCharacter.stackReachSideways, y: -PlaceholderCharacter.stackReachAbove,
+        width: canvas.width + 2 * PlaceholderCharacter.stackReachSideways,
+        height: canvas.height + PlaceholderCharacter.stackReachAbove + PlaceholderCharacter.patReachBelow)
     /// The room above the canvas while falling: the drop's height and a little air for the head.
     private static let fallRoom = PlaceholderCharacter.dropHeight + 20
 
@@ -312,7 +320,7 @@ private struct StageFigure: View {
         let point = figure.position.point
         let frame = reduceMotion ? figure.player.restFrame : figure.player.frame(at: date)
         let falling = isFalling && !reduceMotion
-        let crop = falling ? Self.fallReach : Self.reach
+        let crop = falling ? Self.fallReach : figure.reachesHigh ? Self.stackReach : Self.reach
         let lift =
             falling
             ? DropIn.lift(

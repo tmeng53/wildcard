@@ -75,6 +75,9 @@ final class AppModel {
     /// Launching with nothing kept on the phone and no server: 网络开小差了 instead of the cover,
     /// while the next try waits.
     private(set) var startsOffline = false
+    /// This build is older than the lowest the catalog lets run: only 有新版本 shows, over
+    /// everything, until the member updates from the App Store.
+    private(set) var mustUpdate = false
     /// The wait before the next try at launch, which 再试一次 cuts short.
     @ObservationIgnored private var nextStartTry: Task<Void, Never>?
 
@@ -136,6 +139,7 @@ final class AppModel {
     /// Follows the account for as long as the app runs: the first state picks the first screen,
     /// and signing out, from here or because the session ended, returns to the open screen.
     func run() async {
+        mustUpdate = Self.mustUpdate(catalog.kept())
         Task { await refreshCatalog() }
         for await state in await account.states() {
             switch state {
@@ -203,17 +207,11 @@ final class AppModel {
     /// added on the server shows without an app update (the art once all of it is downloaded).
     func refreshCatalog() async {
         let fresh = await catalog.refresh()
-        if let fresh { Self.show(fresh) }
+        if let fresh {
+            Self.show(fresh)
+            mustUpdate = Self.mustUpdate(fresh)
+        }
         await art.update(to: (fresh ?? catalog.kept()).art)
-    }
-
-    /// Hands each part of the catalog to the screens; static, since `init` calls it first.
-    static func show(_ catalog: AppCatalog) {
-        SportList.shared.show(catalog.sports)
-        SceneTheme.list(catalog.scenes)
-        DiceLines.shared.show(catalog.diceLines)
-        StarterStock.shared.show(catalog.starterStock)
-        Switchboard.shared.show(catalog.switches)
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
@@ -285,6 +283,8 @@ final class AppModel {
 
     /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        // Zones wait for this member's own birthday: one signed in before never lends theirs.
+        Self.health.birthday = nil
         let today = TodayModel(
             store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
             health: Self.health, posted: posted,
@@ -322,7 +322,9 @@ final class AppModel {
             squad: squad,
             recap: recap)
         homeSquad = home.squad.id
-        isAdmin = (try? await api.me())?.isAdmin ?? false
+        let member = try? await api.me()
+        // A failed read keeps what 我 may have handed Health meanwhile.
+        (isAdmin, Self.health.birthday) = (member?.isAdmin ?? false, member.map(\.birthday) ?? Self.health.birthday)
     }
 
     /// The member's home, from what the phone kept for them alone.

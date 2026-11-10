@@ -106,7 +106,7 @@ public struct NoticeEntry: Hashable, Sendable, Identifiable {
     }
 
     /// `notices`, newest first; nil when there are none.
-    init?(_ notices: [Notice]) {
+    public init?(_ notices: [Notice]) {
         guard let newest = notices.first else { return nil }
         self.notice = newest
         self.notices = notices

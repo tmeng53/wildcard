@@ -56,17 +56,21 @@ public struct CheckIn: Hashable, Sendable {
 public struct Training: Hashable, Sendable {
     public let activity: Activity
     public let minutes: WorkoutMinutes?
+    /// When it started on the member's clock, picked by hand; nil when left out, and on a
+    /// workout from Apple Health, which carries its own start.
+    public let startTime: StartTime?
     public let photos: Photos?
     public let caption: Caption?
     /// The imported workout, with only the numbers the member kept; nil on one posted by hand.
     public let workout: Workout?
 
     public init(
-        activity: Activity, minutes: WorkoutMinutes? = nil, photos: Photos? = nil, caption: Caption? = nil,
-        workout: Workout? = nil
+        activity: Activity, minutes: WorkoutMinutes? = nil, startTime: StartTime? = nil, photos: Photos? = nil,
+        caption: Caption? = nil, workout: Workout? = nil
     ) {
         self.activity = activity
         self.minutes = minutes
+        self.startTime = startTime
         self.photos = photos
         self.caption = caption
         self.workout = workout
@@ -83,6 +87,38 @@ public struct WorkoutMinutes: Hashable, Sendable {
     public init(_ value: Int) throws(ContractsError) {
         guard Self.range.contains(value) else { throw .workoutMinutes(value) }
         self.value = value
+    }
+}
+
+/// When a 练了 started, on the member's own clock on its day, to the minute. Never asked for.
+public struct StartTime: Hashable, Sendable, Comparable {
+    public let hour: Int
+    public let minute: Int
+
+    public init(hour: Int, minute: Int) throws(ContractsError) {
+        guard (0...23).contains(hour), (0...59).contains(minute) else {
+            throw .startTime("\(hour):\(minute)")
+        }
+        (self.hour, self.minute) = (hour, minute)
+    }
+
+    /// From the API's `HH:mm`.
+    public init(wire: String) throws(ContractsError) {
+        let parts = wire.split(separator: ":", omittingEmptySubsequences: false)
+        guard parts.count == 2, parts.allSatisfy({ $0.count == 2 }), let hour = Int(parts[0]),
+            let minute = Int(parts[1]), (0...23).contains(hour), (0...59).contains(minute)
+        else { throw .startTime(wire) }
+        (self.hour, self.minute) = (hour, minute)
+    }
+
+    /// The API's `HH:mm`, 24 hours.
+    public var wire: String {
+        let pad = { (number: Int) in number < 10 ? "0\(number)" : "\(number)" }
+        return "\(pad(hour)):\(pad(minute))"
+    }
+
+    public static func < (lhs: StartTime, rhs: StartTime) -> Bool {
+        (lhs.hour, lhs.minute) < (rhs.hour, rhs.minute)
     }
 }
 
@@ -151,6 +187,9 @@ public struct Audience: Hashable, Sendable {
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }
+
+    /// Shared to no squad: 仅自己可见, only its author sees it.
+    public var isOnlyMe: Bool { squads.isEmpty }
 }
 
 /// A check-in's photos: one to `maxCount`, no repeats, in the order the member set.

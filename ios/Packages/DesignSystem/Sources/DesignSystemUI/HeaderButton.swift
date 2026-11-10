@@ -178,7 +178,7 @@ public struct StepHeader: View {
 
     public var body: some View {
         HStack(spacing: Space.l) {
-            HeaderButton(Text("返回", bundle: .module), systemImage: "chevron.left", action: onBack)
+            HeaderButton(Text(copy: "返回", bundle: .module), systemImage: "chevron.left", action: onBack)
             if let step {
                 StepSegments(step: step, of: count)
             } else {
@@ -215,7 +215,7 @@ public struct StepSegments: View {
         }
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: step)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("第 \(step) 步，共 \(count) 步", bundle: .module))
+        .accessibilityLabel(Text(copy: "第 \(step) 步，共 \(count) 步", bundle: .module))
     }
 }
 #endif

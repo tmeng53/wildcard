@@ -17,12 +17,14 @@ import {
 } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
 import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
-import { factsText, planIndexOf, type NoteBrief } from '../domain/member-facts.js';
+import { factsText, type NoteBrief } from '../domain/member-facts.js';
 import {
   consentedOnly,
+  dayWords,
   languageOf,
   rosterOf,
   saidTo,
+  postWhat,
   weekText,
   type SquadWeek,
 } from '../domain/squad-week.js';
@@ -500,7 +502,9 @@ async function think(
       shownBody(body, roster),
     ]),
   );
-  const thread = await threadOf(deps, { wake, week, coach });
+  // The squad's own clock: the day the wake is for, and the times the coach reads.
+  const zone = (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK;
+  const thread = await threadOf(deps, { wake, week, coach, now, zone });
   // A reply's wake with nothing to answer: the reply went, or isn't to this squad's coach.
   if (wake.reason.kind === 'comment' && thread === undefined) return undefined;
   const draft: WakeDraft = {
@@ -544,7 +548,6 @@ async function think(
     }),
   );
   // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
-  const zone = (await deps.timeZonesAt?.([wake.squad], now))?.get(wake.squad) ?? NEW_YORK;
   const day =
     wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
       ? wake.reason.day
@@ -603,13 +606,22 @@ async function think(
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
     ...(wake.reason.kind === 'daily'
-      ? { noteTo: await briefsOf(deps, { week, roster, members: noteTo, day: wake.reason.day }) }
+      ? {
+          noteTo: await briefsOf(deps, {
+            squad: wake.squad,
+            week,
+            roster,
+            members: noteTo,
+            day: wake.reason.day,
+          }),
+        }
       : {}),
     ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
   });
   if (task === undefined) return undefined;
   const run = await deps.agent.run({
     model: settings.model,
+    reasoning: settings.reasoning,
     // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
     instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
     task,
@@ -626,7 +638,7 @@ async function think(
         challengeOpen(challenge) &&
         postedOn({ week, reason: wake.reason, day, zone }),
       ...photosOf(deps.photoUrls, { week, wake }),
-      ...factsFor(deps, { week, roster }),
+      ...factsFor(deps, { squad: wake.squad, week, roster }),
       ...(deps.memes === undefined ? {} : { memes: deps.memes }),
       noteTo,
       ...(gifting === undefined ? {} : { gifting }),
@@ -737,7 +749,15 @@ async function runWake(
  */
 function factsFor(
   deps: CoachWakesDependencies,
-  { week, roster }: { readonly week: SquadWeek; readonly roster: ReadonlyMap<string, string> },
+  {
+    squad,
+    week,
+    roster,
+  }: {
+    readonly squad: string;
+    readonly week: SquadWeek;
+    readonly roster: ReadonlyMap<string, string>;
+  },
 ): { readonly facts?: () => Promise<string> } {
   const { memberFacts } = deps;
   if (memberFacts === undefined) return {};
@@ -746,24 +766,27 @@ function factsFor(
       const all = week.members.map(({ member }) => member);
       const consented = new Set(await deps.aiConsented(all));
       const members = all.filter((member) => consented.has(member));
-      return factsText(await memberFacts({ members, weekStart: week.weekStart }), roster);
+      return factsText(await memberFacts({ squad, members, weekStart: week.weekStart }), roster);
     },
   };
 }
 
 /**
- * What the daily wake tells the coach about each member it writes a morning note to: today's
- * plan, this week's 饮食小目标 and how many days they trained so far, so it needn't look them up.
- * Without the plans (no `memberFacts`, or they can't be read), only the days trained.
+ * What the daily wake tells the coach about each member it writes a morning note to: this week's
+ * whole plan and 饮食小目标, what they posted to the squad so far and how many days they trained,
+ * so it needn't look them up. Without the plans (no `memberFacts`, or they can't be read), only
+ * the posts and days trained.
  */
 async function briefsOf(
   deps: CoachWakesDependencies,
   {
+    squad,
     week,
     roster,
     members,
     day,
   }: {
+    readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
     readonly members: readonly string[];
@@ -773,8 +796,7 @@ async function briefsOf(
   const facts =
     members.length === 0 || deps.memberFacts === undefined
       ? []
-      : await deps.memberFacts({ members, weekStart: week.weekStart }).catch(() => []);
-  const today = planIndexOf(day);
+      : await deps.memberFacts({ squad, members, weekStart: week.weekStart }).catch(() => []);
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
     members.length === 0 || deps.weatherOf === undefined
@@ -789,16 +811,22 @@ async function briefsOf(
         .map((each) => each.day),
     ).size;
     const mine = facts.find((each) => each.member === member);
-    const planned = mine?.plan[today];
+    const posts = week.checkIns
+      .filter((each) => each.member === member && each.day <= day)
+      .toSorted(
+        (a, b) => a.day.localeCompare(b.day) || a.createdAt.getTime() - b.createdAt.getTime(),
+      )
+      .map((each) => ({ day: each.day, what: postWhat(each) }));
     return [
       {
         name,
         language: languageOf(week, member),
         trainedDays,
+        posts,
         ...(weather.has(member) ? { weather: weather.get(member) } : {}),
-        ...(mine === undefined || planned === undefined
+        ...(mine === undefined || mine.plan.length === 0
           ? {}
-          : { plan: { today: planned, fuelGoals: mine.fuelGoals } }),
+          : { plan: { week: mine.plan, fuelGoals: mine.fuelGoals } }),
       },
     ];
   });
@@ -839,6 +867,12 @@ function postedOn({
   if (reason.kind !== 'checkIn') return false;
   const posted = week.checkIns.find(({ id }) => id === reason.checkIn)?.createdAt;
   return posted !== undefined && wallClockAt(posted, zone).day === day;
+}
+
+/** A moment on the squad's clock, as the coach reads it: `11-09 周一 22:44`. */
+function clockWords(moment: Date, zone: string): string {
+  const { day, hour, minute } = wallClockAt(moment, zone);
+  return `${dayWords(day)} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
 /** `YYYY-MM-DD`, `days` before `day`. */
@@ -999,9 +1033,9 @@ async function talksOf(
 }
 
 /**
- * On a comment's wake (a reply to the coach or an @ of it), what was said under its check-in for
- * the coach to go on: its own reply, when it wrote one, then members' replies and @s to it and
- * its answers, up to the one to answer; with who wrote that. `undefined` on another wake, or
+ * On a comment's wake (a reply to the coach or an @ of it), the whole comment section under its
+ * check-in for the coach to go on, up to the one to answer: every member's comment and every
+ * coach's reply and answers, this one's and a coach's before it; with who wrote that. `undefined` on another wake, or
  * when there is nothing to answer: the comment went (or its writer withdrew their AI consent),
  * was answered already, isn't to this coach or from this squad, or replies to what the coach
  * never said to the check-in in this squad.
@@ -1012,7 +1046,15 @@ async function threadOf(
     wake,
     week,
     coach,
-  }: { readonly wake: NewWake; readonly week: SquadWeek; readonly coach: Coach },
+    now,
+    zone,
+  }: {
+    readonly wake: NewWake;
+    readonly week: SquadWeek;
+    readonly coach: Coach;
+    readonly now: Date;
+    readonly zone: string;
+  },
 ): Promise<{ readonly thread: CoachThread; readonly commenter: string } | undefined> {
   const { reason } = wake;
   if (reason.kind !== 'comment') return undefined;
@@ -1032,21 +1074,46 @@ async function threadOf(
   );
   const answered = answers.some(({ comment }) => toThisCoach.has(comment));
   if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
-  // Each answer right after the reply it answers.
-  const answerOf = new Map(answers.map(({ comment, text }) => [comment, text]));
-  const said = comments
-    .filter((each) => saidTo(each) === coach.id && each.at <= answering.at)
-    .flatMap(({ id, member, text }) => {
-      const answer = answerOf.get(id);
-      return [
-        { member, text, ...(id === answering.id ? { answering: true } : {}) },
-        ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
-      ];
-    });
-  return {
-    thread: { ...(reply === undefined ? {} : { reply }), said },
-    commenter: answering.member,
-  };
+  // Other coaches go by their names in the squad's language, as members read them.
+  const language = week.language ?? 'zh-Hans';
+  const names = new Map<string, string>(
+    (await deps.catalog.list()).map((each) => [each.id, coachIn(each, language).name]),
+  );
+  const nameOf = (id: string): string => (id === coach.id ? '你' : (names.get(id) ?? '教练'));
+  const by = (id: string): CoachThread['said'][number]['by'] =>
+    id === coach.id ? 'you' : { coach: names.get(id) ?? '教练' };
+  // The reply to the check-in first, as the app shows it, then each comment with its answer
+  // right after it.
+  const answersOf = new Map(answers.map((each) => [each.comment, each]));
+  const replied = found?.text === undefined ? [] : [{ by: by(found.coach), text: found.text }];
+  const said: CoachThread['said'] = [
+    ...replied,
+    ...comments
+      .filter((each) => each.at <= answering.at)
+      .flatMap((comment) => {
+        const to = comment.toCoach ?? comment.mentionsCoach;
+        const answer = answersOf.get(comment.id);
+        return [
+          {
+            by: { member: comment.member },
+            text: comment.text,
+            when: clockWords(comment.at, zone),
+            ...(to === undefined
+              ? {}
+              : {
+                  to: {
+                    kind: comment.toCoach === undefined ? ('mention' as const) : ('reply' as const),
+                    coach: nameOf(to),
+                  },
+                }),
+            ...(comment.id === answering.id ? { answering: true } : {}),
+          },
+          ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
+        ];
+      }),
+  ];
+  // Without the time now and each comment's, the coach takes an old @ for one just written.
+  return { thread: { now: clockWords(now, zone), said }, commenter: answering.member };
 }
 
 /** The members a daily wake writes a morning note to. */

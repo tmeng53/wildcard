@@ -25,12 +25,12 @@ public actor InMemoryMeService: MeService {
         InMemoryMeService(
             overview: MeOverview(
                 character: MeCharacter(
-                    nickname: Bundle.module.inAppLanguage.localizedString(forKey: "小林", value: nil, table: nil),
+                    nickname: String(copyKey: "小林", bundle: Bundle.module),
                     outfit: PlaceholderCharacter.lifter, persona: .energetic),
                 joinedAt: Date(timeIntervalSince1970: 1_792_756_800),  // 2026-10-23, noon UTC
                 counts: LifetimeCounts(trainedDays: 128, healthyMeals: 46, cheatMeals: 12, disclaimers: 9),
                 week: WeekCount(trainedDays: 3, plannedDays: 5),
-                squadName: Bundle.module.inAppLanguage.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil),
+                squadName: String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module),
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
@@ -128,6 +128,11 @@ public actor InMemoryMeService: MeService {
         current.jerseyNumber = jerseyNumber
     }
 
+    public func save(birthday: Birthday?) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.birthday = birthday
+    }
+
     public func setDailyPush(_ isOn: Bool) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.dailyPushOn = isOn
@@ -168,7 +173,7 @@ public struct InMemorySquadmateCards: SquadmateCards {
         PlayerCardFace(
             character: characters(member)
                 ?? MeCharacter(
-                    nickname: Bundle.module.inAppLanguage.localizedString(forKey: "阿杰", value: nil, table: nil),
+                    nickname: String(copyKey: "阿杰", bundle: Bundle.module),
                     outfit: PlaceholderCharacter.lifter, persona: .deadpan),
             number: try? JerseyNumber(7), squadName: nil,
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
@@ -226,15 +231,15 @@ extension TitleBoard {
     private static func title(
         _ key: String, _ shape: String, _ colour: String, _ glyph: String, weeks: KeyValuePairs<String, String>
     ) -> BoardTitle {
-        let bundle = Bundle.module.inAppLanguage
+        let bundle = Bundle.module
         return BoardTitle(
-            title: bundle.localizedString(forKey: key, value: nil, table: nil),
+            title: String(copyKey: key, bundle: bundle),
             badge: TitleBadge(shape: shape, colour: colour, tone: sampleTones[colour], glyph: glyph),
             weeks: weeks.compactMap { day, speech in
                 (try? LocalDay(day)).map {
                     BoardTitle.Week(
-                        weekStart: $0, speech: bundle.localizedString(forKey: speech, value: nil, table: nil),
-                        squadName: bundle.localizedString(forKey: "周三不练腿俱乐部", value: nil, table: nil))
+                        weekStart: $0, speech: String(copyKey: speech, bundle: bundle),
+                        squadName: String(copyKey: "周三不练腿俱乐部", bundle: bundle))
                 }
             })
     }

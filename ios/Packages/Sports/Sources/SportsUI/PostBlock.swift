@@ -7,7 +7,7 @@ import SwiftUI
 /// A post's face where it has no photo, and the same corners over a photo where it has one: a
 /// block in its sport category's colour with the post's words on it, the sport or kind top right,
 /// a 训练's minutes bottom left (not on a 动态 card, whose 成绩条 has them) and, on a tile, its
-/// day top left. Every screen that shows a post
+/// day top left and 仅自己可见 over the minutes on a post shared to no squad. Every screen that shows a post
 /// without a photo draws this one block: 我的动态's tiles, 动态's cards and the 战报's
 /// 你最火的一条 (Tracy, 2026-11-02).
 public struct PostBlock: View {
@@ -34,6 +34,8 @@ public struct PostBlock: View {
     private let layout: Layout
     /// A 请假条 posted as 休息, a rest the member planned.
     private var restDay = false
+    /// Shared to no squad: a tile says 仅自己可见 at its foot, over the minutes.
+    private var onlyMe = false
 
     /// `activity` is a 练了's sport; `day` (the day of the month) shows top left where given;
     /// with a `photo` the block is that photo and leaves its words to the caller.
@@ -65,6 +67,7 @@ public struct PostBlock: View {
             self.init(kind: .disclaimer, words: disclaimer.text, day: day, photo: photo, layout: layout)
             restDay = disclaimer.restDay
         }
+        onlyMe = layout == .tile && checkIn.audience.isOnlyMe
     }
 
     public var body: some View {
@@ -99,12 +102,20 @@ public struct PostBlock: View {
                 }
             }
             .overlay(alignment: .bottomLeading) {
-                if let minutes {
-                    Text(verbatim: "\(minutes)′")
-                        .typeStyle(minutesStyle)
-                        .padding(.horizontal, padding)
-                        .padding(.bottom, layout == .card || layout == .strip ? Space.xs : Space.xxs)
-                        .accessibilityIdentifier("post.block.minutes")
+                VStack(alignment: .leading, spacing: 0) {
+                    if onlyMe {
+                        // A tile is too narrow for the lock beside the minutes' padding.
+                        OnlyMeTag(showsIcon: false)
+                            .padding(.horizontal, Space.xxs)
+                            .padding(.bottom, minutes == nil ? Space.xxs : 0)
+                    }
+                    if let minutes {
+                        Text(verbatim: "\(minutes)′")
+                            .typeStyle(minutesStyle)
+                            .padding(.horizontal, padding)
+                            .padding(.bottom, layout == .card || layout == .strip ? Space.xs : Space.xxs)
+                            .accessibilityIdentifier("post.block.minutes")
+                    }
                 }
             }
             .foregroundStyle(Color(colors.ink))
@@ -125,7 +136,7 @@ public struct PostBlock: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, padding)
                 .padding(.top, wordsTop)
-                .padding(.bottom, minutes == nil ? padding : minutesHeight)
+                .padding(.bottom, (minutes == nil ? padding : minutesHeight) + (onlyMe ? onlyMeHeight : 0))
                 .accessibilityIdentifier("post.block.words")
         } else {
             Color.clear
@@ -146,11 +157,11 @@ public struct PostBlock: View {
     /// The sport for a 练了, else the kind.
     private var label: Text {
         switch kind {
-        case .trained: activity?.cardName ?? Text("训练", bundle: .module)
-        case .healthyMeal: Text("健康餐", bundle: .module)
-        case .cheatMeal: Text("放纵餐", bundle: .module)
+        case .trained: activity?.cardName ?? Text(copy: "训练", bundle: .module)
+        case .healthyMeal: Text(copy: "健康餐", bundle: .module)
+        case .cheatMeal: Text(copy: "放纵餐", bundle: .module)
         case .disclaimer:
-            if restDay { Text("休息", bundle: .module) } else { Text("请假条", bundle: .module) }
+            if restDay { Text(copy: "休息", bundle: .module) } else { Text(copy: "请假条", bundle: .module) }
         }
     }
 
@@ -178,6 +189,9 @@ public struct PostBlock: View {
         case .strip, .card: TypeRamp.scoreCard
         }
     }
+
+    /// Room kept under the words for 仅自己可见.
+    private var onlyMeHeight: Double { Sizing.smallTag + Space.xxs }
 
     /// Room kept under the words for the minutes.
     private var minutesHeight: Double { layout == .tile || layout == .thumbnail ? Space.l : Space.xxl }

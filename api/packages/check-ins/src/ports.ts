@@ -8,6 +8,7 @@ import type { Comment, CommentId } from './domain/comment.js';
 import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, TrainedBy, WeekStart } from './domain/weekly-plan.js';
+import type { QuickReactions } from './domain/quick-reactions.js';
 import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
@@ -52,6 +53,11 @@ export interface CheckInStore {
   photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
+  /** The same counts of only what `member` shared to `squad`: none of their 仅自己可见 posts. */
+  totalsSharedTo(query: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+  }): Promise<CheckInTotals>;
   /** The member's 训练 check-ins made from `since` on, the earliest made first. */
   trainedSince(query: {
     readonly member: MemberId;
@@ -283,4 +289,15 @@ export interface WeekSummaryWordsStore {
    * nothing is saved or logged. Says whether anything changed.
    */
   save(words: WeekSummaryWords, by: MemberId): Promise<boolean>;
+}
+
+/** Where the reaction bar's quick emoji are kept: one value, and a log of every change to it. */
+export interface QuickReactionsStore {
+  /** The emoji now. */
+  current(): Promise<QuickReactions>;
+  /**
+   * Saves `reactions` with `by` as who changed them, unless they are the emoji already: then
+   * nothing is saved or logged.
+   */
+  save(reactions: QuickReactions, by: MemberId): Promise<void>;
 }

@@ -45,7 +45,7 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     let rest = figure.layout(figure.restPose)
     for part in [
         "mouthGasp", "drool", "puff", "browsMad", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL",
-        "squirtR", "heart", "heartL", "heartR", "sparkle", "flexL", "flexR", "muscleL", "muscleR",
+        "squirtR", "heart", "heartL", "heartR", "sparkle",
     ] as [PartID] {
         #expect(rest[try figure.index(part)].opacity == 0, "\(part)")
     }
@@ -62,8 +62,9 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     #expect(try opacity("gloom", in: "shocked", at: 0.6) == 1)
     #expect(try opacity("squirtL", in: "laugh-bend", at: 1.0) == 1)
     #expect(try opacity("heart", in: "heart", at: 1.0) == 1)
-    #expect(try opacity("muscleR", in: "flex", at: 1.0) == 1)
-    #expect(try opacity("flexR", in: "flex", at: 1.0) == 1)
+    // The flexing arm is the arm itself, never swapped for another drawing, and it stays behind
+    // the body the whole time.
+    #expect(try opacity("armRBack", in: "flex", at: 1.0) == 1)
     #expect(try opacity("armR", in: "flex", at: 1.0) == 0)
     #expect(try opacity("sparkle", in: "chin-up", at: 1.3) == 1)
     #expect(try opacity("puff", in: "pout", at: 1.0) == 1)
@@ -72,6 +73,16 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
     #expect(try opacity("brows", in: "pout", at: 1.0) == 0)
     #expect(try opacity("vein", in: "pout", at: 1.0) == 1)
     #expect(try opacity("steamL", in: "pout", at: 1.1) == 1)
+}
+
+/// 秀肌肉 and the dumbbell raise never bring the arm in front of the body: a front/back swap shows
+/// as a jump however it is timed, so the arm curls out to the side behind the body instead.
+@Test func flexingArmsNeverSwapDepth() throws {
+    let flex = try #require(PlaceholderCharacter.reactionMove("flex"))
+    let dumbbell = try #require(try PlaceholderCharacter.propMove(for: Outfit(["prop": "dumbbell"])))
+    for clip in [flex, dumbbell] {
+        #expect(clip.tracks.allSatisfy { $0.channel != .front }, "\(clip.name)")
+    }
 }
 
 /// Every brows variant draws an angry `mad` pair in its own style and color, for a pout.

@@ -18,7 +18,7 @@ struct HealthStep: View {
 
     var body: some View {
         StepPage(
-            step: .health, title: Text("连上 Apple 健康", bundle: .module), character: model.myCharacter,
+            step: .health, title: Text(copy: "连上 Apple 健康", bundle: .module), character: model.myCharacter,
             onBack: model.back
         ) {
             VStack(alignment: .leading, spacing: Space.m) {
@@ -31,18 +31,18 @@ struct HealthStep: View {
         } actions: {
             if isConnected {
                 StepButton(
-                    title: Text("下一步", bundle: .module), isWorking: false, isEnabled: true,
+                    title: Text(copy: "下一步", bundle: .module), isWorking: false, isEnabled: true,
                     action: model.finishHealth
                 )
                 .accessibilityIdentifier("health.done")
             } else {
                 StepButton(
-                    title: Text("连接", bundle: .module), isWorking: model.isConnectingHealth, isEnabled: true,
+                    title: Text(copy: "连接", bundle: .module), isWorking: model.isConnectingHealth, isEnabled: true,
                     action: model.connectHealth
                 )
                 .accessibilityIdentifier("health.connect")
                 Button(action: model.finishHealth) {
-                    Text("以后再说", bundle: .module)
+                    Text(copy: "以后再说", bundle: .module)
                 }
                 .buttonStyle(TextButtonStyle())
                 .accessibilityIdentifier("health.skip")
@@ -57,7 +57,7 @@ struct HealthStep: View {
     /// 已连接 Apple 健康: a line with a check, no box around it.
     private var connected: some View {
         Label {
-            Text("已连接 Apple 健康", bundle: .module)
+            Text(copy: "已连接 Apple 健康", bundle: .module)
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
         } icon: {
@@ -86,7 +86,7 @@ private struct SampleRun: View {
                     activity.name
                     Spacer(minLength: Space.s)
                     Label {
-                        Text("Apple 健康", bundle: .module)
+                        Text(copy: "Apple 健康", bundle: .module)
                     } icon: {
                         Image(systemName: "heart.fill")
                     }

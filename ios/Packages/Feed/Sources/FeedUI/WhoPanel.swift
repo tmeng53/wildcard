@@ -34,7 +34,7 @@ struct WhoPanel: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: Space.xs) {
                         PickPill(
-                            Text("全部 \(reactions.all.count)", bundle: .module),
+                            Text(copy: "全部 \(reactions.all.count)", bundle: .module),
                             isSelected: filter == nil || !reactions.groups.contains { $0.kind == filter }
                         ) {
                             filter = nil
@@ -91,7 +91,7 @@ struct WhoPanel: View {
         }
         .frame(height: Self.row)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("教练 \(coach.name)：\(emoji.text)", bundle: .module))
+        .accessibilityLabel(Text(copy: "教练 \(coach.name)：\(emoji.text)", bundle: .module))
         .accessibilityIdentifier("feed.whoCoach")
     }
 
@@ -104,8 +104,8 @@ struct WhoPanel: View {
     }
 
     private func name(_ member: MemberID) -> String {
-        if member == model.viewer { return String(localized: "我", bundle: .module.inAppLanguage) }
-        return model.name(of: member) ?? String(localized: "队友", bundle: .module.inAppLanguage)
+        if member == model.viewer { return String(copy: "我", bundle: .module) }
+        return model.name(of: member) ?? String(copy: "队友", bundle: .module)
     }
 }
 #endif

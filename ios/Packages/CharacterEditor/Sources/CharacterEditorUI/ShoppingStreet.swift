@@ -51,7 +51,7 @@ public struct ShoppingStreetPage: View {
         return content(store)
             // The street's 进店 stays at the bottom, above the tab bar, however tall the phone.
             .safeAreaInset(edge: .bottom) { if store == nil { counter } }
-            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text("商店街", bundle: .module))
+            .barTitleOnScroll(store.map { StoreCopy.name($0.id) } ?? Text(copy: "商店街", bundle: .module))
             // The street stands under a pale sky; a store's rack is a white page.
             .background(store == nil ? ShopPavement.sky : Color(role: .bgCanvas, in: theme))
             .sheet(
@@ -131,7 +131,7 @@ public struct ShoppingStreetPage: View {
     @ViewBuilder
     private var claimFailed: some View {
         if model.claimFailed {
-            Text("网络开小差了，没领上", bundle: .module)
+            Text(copy: "网络开小差了，没领上", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .accessibilityIdentifier("street.claimFailed")
@@ -178,10 +178,11 @@ private struct RackHeader: View {
                     .font(.system(size: 20))
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .frame(width: Sizing.compactControl, height: Sizing.compactControl)
-                    .contentShape(Circle())
+                    // Drawn small, tapped at the full 44 points.
+                    .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Sizing.compactControl) / 2))
             }
             .buttonStyle(PressableButtonStyle())
-            .accessibilityLabel(Text("练这些运动解锁", bundle: .module))
+            .accessibilityLabel(Text(copy: "练这些运动解锁", bundle: .module))
             .accessibilityIdentifier("street.rack.info")
             .popover(isPresented: tipShown) {
                 SportsTip(sports: sports).presentationCompactAdaptation(.popover)
@@ -216,7 +217,7 @@ enum StoreCopy {
     static func sports(_ store: String) -> [String] {
         let line =
             uploaded(store)?.sports?.localized
-            ?? sportLines[store].map { Bundle.module.inAppLanguage.localizedString(forKey: $0, value: nil, table: nil) }
+            ?? sportLines[store].map { String(copyKey: $0, bundle: Bundle.module) }
             ?? ""
         let commas = CharacterSet(charactersIn: ",，")
         // A Latin line without commas is one phrase (Any sport, Winter sports); Chinese
@@ -234,7 +235,7 @@ enum StoreCopy {
     /// How far a closed store is from opening: 「还有 2 天开门」 once the server says, else how it unlocks.
     static func opens(_ store: EditorChoices.Store) -> Text {
         guard let toGo = store.toGo else { return unlock(store.id) }
-        return Text("还有 \(toGo) 天开门", bundle: .module)
+        return Text(copy: "还有 \(toGo) 天开门", bundle: .module)
     }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
     static func limited(_ store: String) -> Text? {
@@ -248,7 +249,7 @@ enum StoreCopy {
     private static func text(_ words: CatalogNames?, _ key: String?, or fallback: String) -> Text {
         if let words { return Text(verbatim: words.localized) }
         guard let key else { return Text(verbatim: fallback) }
-        return Text(LocalizedStringKey(key), bundle: .module)
+        return Text(copyKey: key, bundle: .module)
     }
 
     private static let names = [

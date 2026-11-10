@@ -58,7 +58,7 @@ struct WardrobePanel: View {
                     .padding(.vertical, Space.s)
                 } else {
                     // A slot the member owns nothing in yet still has its tab.
-                    StateView(Text("还是空的", bundle: .module))
+                    StateView(Text(copy: "还是空的", bundle: .module))
                         .padding(.horizontal, Space.pageMargin)
                         .padding(.vertical, Space.xl)
                         .accessibilityIdentifier("editor.wardrobe.empty")

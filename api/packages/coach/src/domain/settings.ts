@@ -56,6 +56,17 @@ export function holidaysOn(calendar: readonly CoachHoliday[], day: string): stri
     .map(({ name }) => name);
 }
 
+/**
+ * How hard the model thinks before it answers: more reads a member's tone better and costs more
+ * output tokens, which the usage counts at the output price.
+ */
+export const CoachReasoning = z
+  .enum(['none', 'minimal', 'low', 'medium', 'high'])
+  .describe(
+    'How hard the model thinks before answering: none, minimal, low, medium or high. Thinking is billed as output tokens.',
+  );
+export type CoachReasoning = z.infer<typeof CoachReasoning>;
+
 /** US dollars in millionths, per million tokens. */
 const MicrosPerMillion = z.int().min(0).max(2_000_000_000);
 
@@ -66,11 +77,19 @@ const fields = {
       'Whether coaches wake at all. On, every squad that hired a coach has one; off, none does and nothing is sent.',
     ),
   model: CoachModel,
+  reasoning: CoachReasoning,
   rules: z
     .string()
     .min(1)
     .max(20_000)
     .describe('The rules every coach follows, Chinese; each coach’s soul comes after them.'),
+  wakes: z
+    .string()
+    .min(1)
+    .max(20_000)
+    .describe(
+      'How each kind of wake goes (a check-in, a reply or @ to the coach, a new day) and how the coach keeps its memory, Chinese; after each coach’s soul. `{replyLimit}` and `{noteLimit}` stand for the longest reply and the longest 战术板 line or 便条, which the API puts in.',
+    ),
   inputMicrosPerMillion: MicrosPerMillion.describe(
     'The model’s price for input tokens: US dollars in millionths per million tokens.',
   ),

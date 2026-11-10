@@ -30,13 +30,15 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     let posts = feed.sections.flatMap(\.posts)
     #expect(posts.count == 8)
     #expect(posts.contains { $0.author == viewer })
-    // Three 训练 come from Apple Health: two with their map, the swim with its laps.
+    // Four 训练 come from Apple Health: two with their map, the swim with its laps, my strength
+    // session with its heart rate after its photo.
     let tiles = posts.compactMap { post -> [Contracts.PostTile]? in
         guard case .trained(let training) = post.checkIn.entry, training.workout != nil else { return nil }
         return training.tiles
     }
-    #expect(tiles.count == 3)
+    #expect(tiles.count == 4)
     #expect(tiles.contains([.workout(.map)]))
+    #expect(tiles.contains { $0.count == 2 && $0.first != .workout(.chart) && $0.last == .workout(.chart) })
     #expect(tiles.contains { $0.count == 2 && $0.last == .workout(.chart) })
     #expect(posts.allSatisfy { feed.characters[$0.author] != nil })
     let disclaimer = posts.first {
@@ -44,6 +46,16 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     }
     #expect(disclaimer?.reactions.all.count == 3)
     #expect(feed.characters[viewer]?.look.variants["body"] == "peach")
+}
+
+/// My run shared to no squad is on my own wall, first, and never in the squad's 动态.
+@MainActor @Test func myPrivatePostIsOnlyOnMyWall() async throws {
+    let (feed, source) = await sampleFeed()
+    #expect(!feed.sections.flatMap(\.posts).contains { $0.checkIn.audience.isOnlyMe })
+    let wall = try await source.myPosts(kind: nil, after: nil)
+    #expect(wall.posts.count == 2)
+    #expect(wall.posts.first?.checkIn.audience.isOnlyMe == true)
+    #expect(wall.posts.last?.checkIn.audience.isOnlyMe == false)
 }
 
 /// Reactions go through the in-memory server as through the API: one each, never on my own.

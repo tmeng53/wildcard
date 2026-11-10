@@ -96,7 +96,9 @@ extension Bundle {
     /// (`String(localized:bundle:)`, `localizedString(forKey:)`) rather than a `Text`.
     public var inAppLanguage: Bundle {
         let language = AppLanguage.current.rawValue
-        guard let path = path(forResource: language, ofType: "lproj") else { return self }
+        // Its folder by the name it was written under, whatever the case.
+        let name = localizations.first { $0.caseInsensitiveCompare(language) == .orderedSame } ?? language
+        guard let path = path(forResource: name, ofType: "lproj") else { return self }
         return Bundle(path: path) ?? self
     }
 }

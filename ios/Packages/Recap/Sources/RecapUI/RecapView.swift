@@ -57,6 +57,9 @@ public struct RecapView: View {
         }
         .onChange(of: voiceOver, initial: true) { _, isOn in model.autoAdvance(!isOn && autoAdvances) }
         .environment(\.sceneTheme, model.cast.scene)
+        // A timed page that never scrolls: past the largest standard size its fixed lines and
+        // podium blocks would clip, so the story stops growing there.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .statusBarHidden()
         .task { picture = await renderPicture() }
         // Drawn again on the ending if the first try came back empty.
@@ -83,8 +86,8 @@ public struct RecapView: View {
         .offset(y: max(dragDown, 0))
         .contentShape(Rectangle())
         .gesture(touch)
-        .accessibilityAction(named: Text("下一页", bundle: .module)) { model.next() }
-        .accessibilityAction(named: Text("上一页", bundle: .module)) { model.previous() }
+        .accessibilityAction(named: Text(copy: "下一页", bundle: .module)) { model.next() }
+        .accessibilityAction(named: Text(copy: "上一页", bundle: .module)) { model.previous() }
     }
 
     /// One touch does it all, as a phone story: touching pauses the page; a quick tap on the
@@ -124,7 +127,7 @@ public struct RecapView: View {
                 .foregroundStyle(Color(role: .fgOnScene, in: model.cast.scene))
                 .accessibilityElement(children: .combine)
                 Spacer(minLength: 0)
-                HeaderButton(Text("关闭", bundle: .module), systemImage: "xmark", on: .scene) { model.dismiss() }
+                HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", on: .scene) { model.dismiss() }
                     .accessibilityIdentifier("recap.close")
             }
         }
@@ -234,7 +237,7 @@ private struct SegmentBar: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text("第 \(currentPage) 页，共 \(fractions.count) 页", bundle: .module))
+        .accessibilityLabel(Text(copy: "第 \(currentPage) 页，共 \(fractions.count) 页", bundle: .module))
     }
 
     private var currentPage: Int {

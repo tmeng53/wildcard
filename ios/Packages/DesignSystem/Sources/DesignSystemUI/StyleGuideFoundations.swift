@@ -6,39 +6,39 @@ import SwiftUI
 
 struct ColorSection: View {
     private let neutrals: [(role: ColorRole, name: Text)] = [
-        (.bgCanvas, Text("页面底", bundle: .module)),
-        (.bgSubtle, Text("内块、未选中", bundle: .module)),
-        (.borderDefault, Text("分隔线、未完成", bundle: .module)),
-        (.fgDefault, Text("主文字", bundle: .module)),
-        (.fgMuted, Text("次要文字", bundle: .module)),
-        (.fgSubtle, Text("弱文字、占位", bundle: .module)),
+        (.bgCanvas, Text(copy: "页面底", bundle: .module)),
+        (.bgSubtle, Text(copy: "内块、未选中", bundle: .module)),
+        (.borderDefault, Text(copy: "分隔线、未完成", bundle: .module)),
+        (.fgDefault, Text(copy: "主文字", bundle: .module)),
+        (.fgMuted, Text(copy: "次要文字", bundle: .module)),
+        (.fgSubtle, Text(copy: "弱文字、占位", bundle: .module)),
     ]
 
     private let brand: [(role: ColorRole, name: Text)] = [
-        (.bgBrand, Text("品牌色：主操作、选中", bundle: .module)),
-        (.fgOnBrand, Text("品牌色上的字", bundle: .module)),
-        (.fgOnBrandMuted, Text("品牌色上的次要字", bundle: .module)),
+        (.bgBrand, Text(copy: "品牌色：主操作、选中", bundle: .module)),
+        (.fgOnBrand, Text(copy: "品牌色上的字", bundle: .module)),
+        (.fgOnBrandMuted, Text(copy: "品牌色上的次要字", bundle: .module)),
     ]
 
     private let accents: [(role: ColorRole, name: Text)] = [
-        (.bgAccent, Text("主操作、选中", bundle: .module)),
-        (.bgAccentSubtle, Text("强调浅底", bundle: .module)),
-        (.fgOnAccent, Text("强调上的字", bundle: .module)),
-        (.fgAccent, Text("强调色文字", bundle: .module)),
-        (.bgScene, Text("场景底", bundle: .module)),
-        (.ring, Text("状态圈", bundle: .module)),
-        (.bgKind, Text("打卡四类", bundle: .module)),
-        (.fgKind, Text("打卡四类图标", bundle: .module)),
+        (.bgAccent, Text(copy: "主操作、选中", bundle: .module)),
+        (.bgAccentSubtle, Text(copy: "强调浅底", bundle: .module)),
+        (.fgOnAccent, Text(copy: "强调上的字", bundle: .module)),
+        (.fgAccent, Text(copy: "强调色文字", bundle: .module)),
+        (.bgScene, Text(copy: "场景底", bundle: .module)),
+        (.ring, Text(copy: "状态圈", bundle: .module)),
+        (.bgKind, Text(copy: "打卡四类", bundle: .module)),
+        (.fgKind, Text(copy: "打卡四类图标", bundle: .module)),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 1, title: Text("颜色", bundle: .module))
-            GuideGroup(Text("中性色", bundle: .module)) { SwatchGrid(swatches: neutrals) }
-            GuideGroup(Text("品牌：开场、注册、我、发动态、请假条、动态", bundle: .module)) {
+            SectionTitle(number: 1, title: Text(copy: "颜色", bundle: .module))
+            GuideGroup(Text(copy: "中性色", bundle: .module)) { SwatchGrid(swatches: neutrals) }
+            GuideGroup(Text(copy: "品牌：开场、注册、我、发动态、请假条、动态", bundle: .module)) {
                 SwatchGrid(swatches: brand)
             }
-            GuideGroup(Text("强调：当前场景色，一屏只有这一种", bundle: .module)) { SwatchGrid(swatches: accents) }
+            GuideGroup(Text(copy: "强调：当前场景色，一屏只有这一种", bundle: .module)) { SwatchGrid(swatches: accents) }
         }
     }
 }
@@ -87,28 +87,29 @@ private struct RoleSwatch: View {
 struct TypeSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 2, title: Text("字体", bundle: .module))
-            GuideGroup(Text("六级中文字号，最粗 600", bundle: .module)) {
+            SectionTitle(number: 2, title: Text(copy: "字体", bundle: .module))
+            GuideGroup(Text(copy: "六级中文字号，最粗 600", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.m) {
                     Sample(token: "largeTitle", style: TypeRamp.largeTitle, text: Text(verbatim: "Tracy"))
-                    Sample(token: "title", style: TypeRamp.title, text: Text("本周", bundle: .module))
-                    Sample(token: "headline", style: TypeRamp.headline, text: Text("周三不练腿俱乐部", bundle: .module))
-                    Sample(token: "body", style: TypeRamp.body, text: Text("今天游了 2 公里，水有点凉", bundle: .module))
-                    Sample(token: "footnote", style: TypeRamp.footnote, text: Text("今天 3 人训练", bundle: .module))
-                    Sample(token: "label", style: TypeRamp.label, text: Text("本周小队训练", bundle: .module))
+                    Sample(token: "title", style: TypeRamp.title, text: Text(copy: "本周", bundle: .module))
+                    Sample(token: "headline", style: TypeRamp.headline, text: Text(copy: "周三不练腿俱乐部", bundle: .module))
+                    Sample(token: "body", style: TypeRamp.body, text: Text(copy: "今天游了 2 公里，水有点凉", bundle: .module))
+                    Sample(token: "footnote", style: TypeRamp.footnote, text: Text(copy: "今天 3 人训练", bundle: .module))
+                    Sample(token: "label", style: TypeRamp.label, text: Text(copy: "本周小队训练", bundle: .module))
                 }
             }
-            GuideGroup(Text("任务页标题和控件", bundle: .module)) {
+            GuideGroup(Text(copy: "任务页标题和控件", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    Sample(token: "taskTitle", style: TypeRamp.taskTitle, text: Text("平时练什么？", bundle: .module))
-                    Sample(token: "action", style: TypeRamp.action, text: Text("下一步", bundle: .module))
-                    Sample(token: "pick", style: TypeRamp.pick, text: Text("游泳", bundle: .module))
-                    Sample(token: "callout", style: TypeRamp.callout, text: Text("全部", bundle: .module))
+                    Sample(token: "taskTitle", style: TypeRamp.taskTitle, text: Text(copy: "平时练什么？", bundle: .module))
+                    Sample(token: "action", style: TypeRamp.action, text: Text(copy: "下一步", bundle: .module))
+                    Sample(token: "pick", style: TypeRamp.pick, text: Text(copy: "游泳", bundle: .module))
+                    Sample(token: "callout", style: TypeRamp.callout, text: Text(copy: "全部", bundle: .module))
                     Sample(
-                        token: "calloutEmphasis", style: TypeRamp.calloutEmphasis, text: Text("换一组", bundle: .module))
+                        token: "calloutEmphasis", style: TypeRamp.calloutEmphasis,
+                        text: Text(copy: "换一组", bundle: .module))
                 }
             }
-            GuideGroup(Text("数字：Barlow Condensed，只给数字", bundle: .module)) {
+            GuideGroup(Text(copy: "数字：Barlow Condensed，只给数字", bundle: .module)) {
                 HStack(alignment: .lastTextBaseline, spacing: Space.l) {
                     Score(count: 14, goal: 22, size: .hero)
                     Score(count: 14, goal: 22, size: .card)
@@ -145,20 +146,20 @@ struct LayoutSection: View {
         ("xxl", Space.xxl),
     ]
     private let radii: [(name: Text, value: Double)] = [
-        (Text("缩略图", bundle: .module), Radius.thumbnail),
-        (Text("选项、输入框", bundle: .module), Radius.pick),
-        (Text("卡片", bundle: .module), Radius.card),
+        (Text(copy: "缩略图", bundle: .module), Radius.thumbnail),
+        (Text(copy: "选项、输入框", bundle: .module), Radius.pick),
+        (Text(copy: "卡片", bundle: .module), Radius.card),
     ]
     private let heights: [(name: Text, value: Double)] = [
-        (Text("主按钮，一屏一个", bundle: .module), Sizing.primaryControl),
-        (Text("普通按钮、输入框、页头按钮", bundle: .module), Sizing.control),
-        (Text("标签和切换", bundle: .module), Sizing.compactControl),
+        (Text(copy: "主按钮，一屏一个", bundle: .module), Sizing.primaryControl),
+        (Text(copy: "普通按钮、输入框、页头按钮", bundle: .module), Sizing.control),
+        (Text(copy: "标签和切换", bundle: .module), Sizing.compactControl),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 3, title: Text("间距、圆角、控件高度", bundle: .module))
-            GuideGroup(Text("间距：4 的倍数，7 档", bundle: .module)) {
+            SectionTitle(number: 3, title: Text(copy: "间距、圆角、控件高度", bundle: .module))
+            GuideGroup(Text(copy: "间距：4 的倍数，7 档", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     ForEach(steps, id: \.name) { step in
                         HStack(spacing: Space.s) {
@@ -169,7 +170,7 @@ struct LayoutSection: View {
                     }
                 }
             }
-            GuideGroup(Text("圆角：只有按钮是胶囊", bundle: .module)) {
+            GuideGroup(Text(copy: "圆角：只有按钮是胶囊", bundle: .module)) {
                 HStack(alignment: .top, spacing: Space.s) {
                     ForEach(Array(radii.enumerated()), id: \.offset) { _, radius in
                         Labeled(name: radius.name, value: radius.value) {
@@ -178,12 +179,12 @@ struct LayoutSection: View {
                                 .frame(width: 64, height: 64)
                         }
                     }
-                    Labeled(name: Text("按钮", bundle: .module), value: nil) {
+                    Labeled(name: Text(copy: "按钮", bundle: .module), value: nil) {
                         Capsule().fill(Color(role: .bgSubtle, in: theme)).frame(width: 64, height: Sizing.control)
                     }
                 }
             }
-            GuideGroup(Text("控件高度：只有三种", bundle: .module)) {
+            GuideGroup(Text(copy: "控件高度：只有三种", bundle: .module)) {
                 VStack(alignment: .leading, spacing: Space.xs) {
                     ForEach(Array(heights.enumerated()), id: \.offset) { _, height in
                         HStack(spacing: Space.s) {
@@ -232,17 +233,17 @@ struct MotionSection: View {
     @State private var checkPlays = 0
 
     private let names: [String: Text] = [
-        "press": Text("按下：所有按钮", bundle: .module),
-        "change": Text("变色：选中、切换，不回弹", bundle: .module),
-        "sheet": Text("半屏：展开、弹出", bundle: .module),
-        "page": Text("全屏：换页", bundle: .module),
-        "celebrate": Text("庆祝：只在打卡成功那一下回弹", bundle: .module),
-        "notice": Text("通知条：从顶上落下", bundle: .module),
+        "press": Text(copy: "按下：所有按钮", bundle: .module),
+        "change": Text(copy: "变色：选中、切换，不回弹", bundle: .module),
+        "sheet": Text(copy: "半屏：展开、弹出", bundle: .module),
+        "page": Text(copy: "全屏：换页", bundle: .module),
+        "celebrate": Text(copy: "庆祝：只在打卡成功那一下回弹", bundle: .module),
+        "notice": Text(copy: "通知条：从顶上落下", bundle: .module),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
-            SectionTitle(number: 10, title: Text("动效", bundle: .module))
+            SectionTitle(number: 10, title: Text(copy: "动效", bundle: .module))
             VStack(alignment: .leading, spacing: Space.m) {
                 ForEach(Motion.all, id: \.name) { item in
                     VStack(alignment: .leading, spacing: Space.xxs) {
@@ -272,11 +273,11 @@ struct MotionSection: View {
             Button {
                 isAtEnd.toggle()
             } label: {
-                isAtEnd ? Text("回到起点", bundle: .module) : Text("播放", bundle: .module)
+                isAtEnd ? Text(copy: "回到起点", bundle: .module) : Text(copy: "播放", bundle: .module)
             }
             .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("styleguide.motion.play")
-            GuideGroup(Text("整页加载：两张票", bundle: .module)) {
+            GuideGroup(Text(copy: "整页加载：两张票", bundle: .module)) {
                 HStack(spacing: 0) {
                     TicketSpinner(size: 64, on: .brand)
                         .frame(maxWidth: .infinity, minHeight: 120)
@@ -287,9 +288,9 @@ struct MotionSection: View {
                 }
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
-            GuideGroup(Text("完成：两张票打勾", bundle: .module)) {
-                TicketCheck(size: 96, label: Text("完成", bundle: .module)) {
-                    Text("完成", bundle: .module).typeStyle(TypeRamp.headline)
+            GuideGroup(Text(copy: "完成：两张票打勾", bundle: .module)) {
+                TicketCheck(size: 96, label: Text(copy: "完成", bundle: .module)) {
+                    Text(copy: "完成", bundle: .module).typeStyle(TypeRamp.headline)
                 }
                 .id(checkPlays)
                 .frame(maxWidth: .infinity, minHeight: 180)

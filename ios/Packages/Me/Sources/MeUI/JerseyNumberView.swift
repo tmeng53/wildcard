@@ -27,7 +27,7 @@ public struct JerseyNumberView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("球衣号码", bundle: .module)
+            Text(copy: "球衣号码", bundle: .module)
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .accessibilityAddTraits(.isHeader)
@@ -44,7 +44,7 @@ public struct JerseyNumberView: View {
                     Text(verbatim: number.text).tag(number)
                 }
             } label: {
-                Text("球衣号码", bundle: .module)
+                Text(copy: "球衣号码", bundle: .module)
             }
             .pickerStyle(.wheel)
             .accessibilityIdentifier("number.picker")
@@ -60,7 +60,7 @@ public struct JerseyNumberView: View {
                     if !model.saveFailed { close() }
                 }
             } label: {
-                Text("保存", bundle: .module).loadingLabel(saving).frame(maxWidth: .infinity)
+                Text(copy: "保存", bundle: .module).loadingLabel(saving).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(saving)

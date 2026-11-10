@@ -89,6 +89,7 @@ export function createCoachLetters(deps: {
       let text: string | undefined;
       const run = await agent.run({
         model: settings.model,
+        reasoning: settings.reasoning,
         // The outgoing coach's own instructions, as on its wakes, so they stay cached.
         instructions: instructionsOf(settings, from),
         task,

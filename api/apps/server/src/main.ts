@@ -20,6 +20,8 @@ import {
   createPostgresWeeklyPlanStore,
   createWeekSummaryWords,
   createWeeklyPlans,
+  createPostgresQuickReactions,
+  createQuickReactions,
 } from '@wildcard/check-ins';
 import {
   createCoachCatalog,
@@ -41,6 +43,7 @@ import {
   postgresCoachTransaction,
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
+import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import {
   DisclaimerWriterOffError,
   createDisclaimerDrafts,
@@ -107,7 +110,13 @@ import {
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { coachNotesOn, createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  coachNotesOn,
+  createMinimumBuilds,
+  createPostgresMinimumBuild,
+  createPostgresSwitchStore,
+  createSwitches,
+} from '@wildcard/switches';
 import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
@@ -138,6 +147,7 @@ import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
+import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -152,6 +162,8 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
+import { minimumBuildTools } from './admin-mcp/tools/minimum-build.js';
+import { quickReactionTools } from './admin-mcp/tools/quick-reactions.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
 import { newYorkDay } from './new-york-day.js';
@@ -167,13 +179,16 @@ import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import {
+  appBuildSection,
   artSection,
+  appCopySection,
   disclaimerDiceSection,
   scenesSection,
   sportsSection,
   switchesSection,
   storesSection,
   piecesSection,
+  reactionsSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { inProcessEvents, type EventHandlers } from './events.js';
@@ -324,6 +339,10 @@ const giftWeekStart = squadWeekStart((ids, moment) =>
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
+const minimumBuildsOn = (scope: Database) =>
+  createMinimumBuilds({ store: createPostgresMinimumBuild(scope) });
+const quickReactionsOn = (scope: Database) =>
+  createQuickReactions({ store: createPostgresQuickReactions(scope) });
 const scenes = createScenes({
   store: createPostgresSceneStore(db),
   switches: () => switches.states(),
@@ -707,7 +726,10 @@ const app = createApp({
       storesSection(unlocksOn(db)),
       piecesSection(unlocksOn(db)),
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
+      appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
       artSection(artOn(db)),
+      appBuildSection(minimumBuildsOn(db)),
+      reactionsSection(quickReactionsOn(db)),
     ],
     clock: () => new Date(),
   },
@@ -840,6 +862,7 @@ const app = createApp({
       ...disclaimerDiceTools({
         dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
       }),
+      ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
       }),
@@ -848,6 +871,8 @@ const app = createApp({
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
+      ...minimumBuildTools({ minimum: minimumBuildsOn(scope) }),
+      ...quickReactionTools({ reactions: quickReactionsOn(scope) }),
       ...sceneTools({
         scenes: createScenes({
           store: createPostgresSceneStore(scope),

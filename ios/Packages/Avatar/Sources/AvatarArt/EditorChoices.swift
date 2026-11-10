@@ -1,5 +1,6 @@
 import AvatarDomain
 import Foundation
+import Synchronization
 
 /// What the character editor offers beyond every bundled variant: bodies grouped by species,
 /// in the order the editor shows them, the stores of its shopping street, the clothes on their
@@ -38,8 +39,8 @@ public struct EditorChoices: Hashable, Sendable {
     /// A prop of this release. Its name is UI copy, in the editor's String Catalog.
     public struct Prop: Hashable, Sendable, Identifiable {
         public let id: String
-        /// Whether every member holds it from the start: the tumbler and the dumbbell. The
-        /// others open once the member unlocks them by training.
+        /// Whether every member holds it from the start (every prop now, Tracy 2026-11-09); one
+        /// that isn't opens once the member unlocks it by training.
         public let isOpen: Bool
 
         public init(id: String, isOpen: Bool = false) {
@@ -150,8 +151,16 @@ public struct EditorChoices: Hashable, Sendable {
 
 extension PlaceholderCharacter {
     public static func editorChoices() throws(AvatarError) -> EditorChoices {
-        try EditorChoices.decode(file("editor.json"))
+        let bytes = try file("editor.json")
+        // Read for each row of 通知 and each unlock banner: decode once, again only when a
+        // download changed it.
+        if let kept = choices.withLock({ $0 }), kept.bytes == bytes { return kept.choices }
+        let decoded = try EditorChoices.decode(bytes)
+        choices.withLock { $0 = (bytes, decoded) }
+        return decoded
     }
+
+    private static let choices = Mutex<(bytes: Data, choices: EditorChoices)?>(nil)
 
     /// The slots a piece of clothing or a prop may be worn in, in the order `slot(holding:)` looks.
     public static let wornSlots: [Slot] = ["top", "bottom", "shoes", "hat", "acc", "prop"]
@@ -170,9 +179,17 @@ extension PlaceholderCharacter {
     /// A store's badge, `stores/<id>.svg`.
     public static func storeBadge(_ store: String) throws(AvatarError) -> Artwork {
         let path = "stores/\(store).svg"
-        guard let svg = String(bytes: try file(path), encoding: .utf8) else { throw .missingFile(path) }
-        return try Artwork.read(svg: svg, path: path)
+        let bytes = try file(path)
+        // 商店街 asks for each badge and colour on every frame it draws: parse a file once, and
+        // again only when a download changed it.
+        if let kept = badges.withLock({ $0[path] }), kept.bytes == bytes { return kept.artwork }
+        guard let svg = String(bytes: bytes, encoding: .utf8) else { throw .missingFile(path) }
+        let artwork = try Artwork.read(svg: svg, path: path)
+        badges.withLock { $0[path] = (bytes, artwork) }
+        return artwork
     }
+
+    private static let badges = Mutex<[String: (bytes: Data, artwork: Artwork)]>([:])
 
     /// A store's own colour, for its awning and name on 商店街: the first fill in its badge that
     /// isn't a grey (white, mist or graphite), so a store uploaded with its badge brings its colour.

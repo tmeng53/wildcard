@@ -46,6 +46,7 @@ import Testing
         "badminton": "badminton", "pickleball": "pickleball", "tableTennis": "pingpong", "climb": "climb",
         "ski": "ski",
         "yoga": "yoga", "matPilates": "yoga", "basketball": "basketball", "dance": "warmup", "dogWalk": "warmup",
+        "deepClean": "clean",
     ]
     for (sport, kit) in picks {
         #expect(kits.kit(for: .sport(sport), in: Looks.sports).id == kit, "\(sport)")
@@ -54,7 +55,7 @@ import Testing
     #expect(
         kits.kits.map(\.id) == [
             "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
-            "cycling", "boxing", "basketball", "soccer", "ski", "snowboard", "warmup",
+            "cycling", "boxing", "basketball", "soccer", "ski", "snowboard", "clean", "warmup",
         ])
 }
 
@@ -147,7 +148,7 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     #expect(
         moves == [
             "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
-            "pingpong", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "warmup",
+            "pingpong", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom", "warmup",
         ])
 }
 

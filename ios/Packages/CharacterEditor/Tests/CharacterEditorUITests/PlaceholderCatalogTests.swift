@@ -38,12 +38,16 @@ private func stock(
 private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", "powder"], locked: powderLocked) }
 
 /// The bundled art gives the editor what the design shows: five species, WARM-UP's nineteen pieces
-/// and POWDER DAY's four starters, the two props every member starts with, and swatches with a 原色
+/// and POWDER DAY's four starters, every prop (each member's from the start), and swatches with a 原色
 /// for exactly the pieces that recolor (POWDER DAY's keep their colours).
 @Test func thePlaceholderCatalogComesFromTheArt() throws {
     let catalog = try Catalog.placeholder(stock: try winterStart())
     #expect(catalog.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
-    #expect(catalog.props == ["bottle", "dumbbell"])
+    #expect(
+        catalog.props == [
+            "bottle", "dumbbell", "racket", "badminton", "pickleball", "pingpong", "kettlebell", "yogamat", "chalkbag",
+            "goggles", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom",
+        ])
     #expect(
         catalog.variants["top"] == [
             "warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe",
@@ -152,8 +156,8 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     }
 }
 
-/// A store the member unlocked opens on the street with its rack, and an unlocked prop joins
-/// the starters; the rest stay shut.
+/// A store the member unlocked opens on the street with its rack, and the rest stay shut; a prop
+/// unlocked before every prop was open is held once, not twice.
 @Test func unlocksOpenTheirStoresAndProps() throws {
     let catalog = try Catalog.placeholder(
         unlocks: [
@@ -163,7 +167,7 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
             Unlock(kind: .prop, id: "racket", unlockedAt: unlockedAt, sports: ["tennis", "squash"], checkIns: 1),
         ], stock: try stock(earned: ["warmup", "deuce", "powder"], locked: powderLocked))
     #expect(catalog.stores.filter(\.isOpen).map(\.id) == ["warmup", "deuce", "powder"])
-    #expect(catalog.props == ["bottle", "dumbbell", "racket"])
+    #expect(catalog.props.filter { $0 == "racket" }.count == 1)
     #expect(
         catalog.rack(of: "deuce").map(\.variant) == [
             "deuce-polo", "deuce-cable", "deuce-dress", "deuce-shorts", "deuce-skirt", "deuce-pants", "deuce-court",

@@ -38,6 +38,7 @@ struct EmojiBarLayer: View {
                         model.pick(emoji, on: open, from: from)
                     }
                     .frame(height: Self.panelHeight)
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(DailyPushView.space))
                     } action: {
@@ -50,15 +51,18 @@ struct EmojiBarLayer: View {
                     ReactionBar(
                         Emoji.quick, text: \.text, mine: model.store.mine(on: open), identifier: "dailyPush.emoji"
                     ) { index in
+                        guard let emoji = Emoji.quick(at: index) else { return }
                         let from =
                             bar.map { ReactionBarMetrics.slotCenter(index, in: $0) }
                             ?? CGPoint(x: button.midX, y: button.midY)
-                        model.pick(Emoji.quick[index], on: open, from: from)
+                        model.pick(emoji, on: open, from: from)
                     } more: {
                         withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.browsing = true }
                     }
                     .fixedSize()
                     .accessibilityIdentifier("dailyPush.emojiBar")
+                    // VoiceOver can't tap outside: its two-finger scrub closes it instead.
+                    .accessibilityAction(.escape) { close() }
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .named(DailyPushView.space))
                     } action: {

@@ -147,3 +147,15 @@ func planLengthIsTheAPIs(schema: String) throws {
     #expect(try property("body", of: "FeedbackDraft")?.maxCharacters == FeedbackText.maxLength)
     #expect(try property("screenshots", of: "FeedbackDraft")?.maxItems == FeedbackText.maxScreenshots)
 }
+
+/// The earliest birthday is the API's `BIRTHDAY_EARLIEST`, which the OpenAPI document only states
+/// in words, so the test reads the rule's own source.
+@Test func theEarliestBirthdayIsTheAPIs() throws {
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appending(path: "../../../../../api/packages/members/src/domain/profile.ts")
+    let source = try String(contentsOf: url.standardizedFileURL, encoding: .utf8)
+    let line = source.split(separator: "\n").first { $0.contains("export const BIRTHDAY_EARLIEST = ") }
+    let earliest = line.flatMap { $0.split(separator: "'").dropFirst().first }.map(String.init)
+    #expect(earliest == Birthday.earliest.description)
+}

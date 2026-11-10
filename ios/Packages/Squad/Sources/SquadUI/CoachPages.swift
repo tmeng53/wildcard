@@ -53,11 +53,11 @@ struct CoachCard: View {
             .frame(width: CoachMetrics.thumbnail, height: CoachMetrics.thumbnail)
             .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: Space.xxs) {
-                Text("还没有教练", bundle: .module)
+                Text(copy: "还没有教练", bundle: .module)
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                 if !canHire {
-                    Text("只有队长能雇教练", bundle: .module)
+                    Text(copy: "只有队长能雇教练", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                 }
@@ -67,7 +67,7 @@ struct CoachCard: View {
                 Button {
                     open(.market)
                 } label: {
-                    Text("招聘", bundle: .module)
+                    Text(copy: "招聘", bundle: .module)
                 }
                 .buttonStyle(SecondaryButtonStyle(.onInk))
                 .fixedSize()
@@ -83,7 +83,7 @@ struct CoachCard: View {
         Button {
             open(.market)
         } label: {
-            Text("逛逛招聘会", bundle: .module).frame(maxWidth: .infinity)
+            Text(copy: "逛逛招聘会", bundle: .module).frame(maxWidth: .infinity)
         }
         .buttonStyle(SecondaryButtonStyle(.onInk))
         .accessibilityIdentifier("squad.coach.browse")
@@ -91,8 +91,8 @@ struct CoachCard: View {
 
     private static func tenureText(_ tenure: CoachTenure) -> Text {
         switch tenure {
-        case .days(let days): Text("执教 \(days) 天", bundle: .module)
-        case .weeks(let weeks): Text("执教 \(weeks) 周", bundle: .module)
+        case .days(let days): Text(copy: "执教 \(days) 天", bundle: .module)
+        case .weeks(let weeks): Text(copy: "执教 \(weeks) 周", bundle: .module)
         }
     }
 
@@ -177,12 +177,12 @@ struct CoachMarketPage: View {
                     .typeStyle(TypeRamp.ticketDate)
                     .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                     .accessibilityHidden(true)
-                Text("教练招聘会", bundle: .module)
+                Text(copy: "教练招聘会", bundle: .module)
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .accessibilityAddTraits(.isHeader)
                 if case .loaded(let coaches) = market {
-                    Text("\(coaches.count) 位教练在找队伍", bundle: .module)
+                    Text(copy: "\(coaches.count) 位教练在找队伍", bundle: .module)
                         .typeStyle(TypeRamp.footnote)
                         .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                 }
@@ -227,7 +227,7 @@ private struct MarketCard: View {
                     figureHeight: CoachMetrics.marketFigure,
                     floor: CoachMetrics.marketFloor
                 )
-                .frame(height: CoachMetrics.marketCardStage)
+                .frame(minHeight: CoachMetrics.marketCardStage)
                 .overlay(alignment: .topTrailing) {
                     StatusTag(isCurrent: isCurrent).padding(Space.s + 2)
                 }
@@ -245,12 +245,12 @@ private struct MarketCard: View {
                         }
                     }
                     HStack(spacing: Space.s) {
-                        Text("期望待遇：\(coach.pay)", bundle: .module)
+                        Text(copy: "期望待遇：\(coach.pay)", bundle: .module)
                             .typeStyle(TypeRamp.footnote)
                             .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
                             .lineLimit(1)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("看简历 ›", bundle: .module)
+                        Text(copy: "看简历 ›", bundle: .module)
                             .typeStyle(TypeRamp.calloutEmphasis)
                             .foregroundStyle(Color(role: .fgOnBrand, in: theme))
                             .lineLimit(1)
@@ -288,7 +288,7 @@ private struct MoreCoaches: View {
             .frame(width: CoachMetrics.moreThumbnail.width, height: CoachMetrics.moreThumbnail.height)
             .clipShape(RoundedRectangle(cornerRadius: Radius.thumbnail, style: .continuous))
             .accessibilityHidden(true)
-            Text("更多教练在路上", bundle: .module)
+            Text(copy: "更多教练在路上", bundle: .module)
                 .typeStyle(TypeRamp.calloutEmphasis)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -47,7 +47,7 @@ struct HealthHomeCard: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier("today.health.summary")
             Button(action: post) {
-                Text("打卡", bundle: .module)
+                Text(copy: "打卡", bundle: .module)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .padding(.horizontal, Space.s)
@@ -66,7 +66,7 @@ struct HealthHomeCard: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(Text("收起", bundle: .module))
+            .accessibilityLabel(Text(copy: "收起", bundle: .module))
             .accessibilityIdentifier("today.health.dismiss")
         }
         .padding(.leading, Space.s)
@@ -78,20 +78,9 @@ struct HealthHomeCard: View {
 
     /// 「跑步 32 分钟 · 5.2 公里」, the numbers in the scoreboard face.
     private var summary: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-            (workout.activity?.name ?? Text("运动", bundle: .module))
-            if let minutes = workout.minutes {
-                Text(verbatim: "\(minutes.value)").typeStyle(TypeRamp.scoreSmall)
-                Text("分钟", bundle: .module)
-            }
-            if let distance = ScoreCell.cells(of: workout.workout.summary).first(where: { $0.cell == .distance }) {
-                Text(verbatim: "·")
-                Text(verbatim: distance.value).typeStyle(TypeRamp.scoreSmall)
-                distance.unit?.text
-            }
-        }
-        .typeStyle(TypeRamp.calloutEmphasis)
-        .foregroundStyle(Color(role: .fgDefault, in: theme))
+        WorkoutSummaryLine(activity: workout.activity, minutes: workout.minutes, summary: workout.workout.summary)
+            .typeStyle(TypeRamp.calloutEmphasis)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
     }
 
     private static let heart: Double = 12

@@ -26,6 +26,29 @@ import Testing
     #expect(await DeviceOutbox(directory: directory).load() == [post, untimed])
 }
 
+@Test func aWaitingTrainingKeepsItsStartTimeOnDisk() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let squad = SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))
+    let post = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-11-08"), createdAt: Timestamp(millisecondsSince1970: 1_794_000_000_000),
+        audience: try Audience([squad]),
+        draft: .trained(
+            .sport("run"), try WorkoutMinutes(30),
+            PostBody(photos: [], caption: "早起", startTime: try StartTime(hour: 6, minute: 5))))
+
+    await DeviceOutbox(directory: directory).save([post])
+
+    let loaded = await DeviceOutbox(directory: directory).load()
+    #expect(loaded == [post])
+    guard case .trained(_, _, let body) = try #require(loaded.first).draft else {
+        Issue.record("the waiting post isn't a 训练")
+        return
+    }
+    #expect(body.startTime?.wire == "06:05")
+}
+
 @Test func aWaitingPostKeepsItsPhotosSizesOnDisk() async throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
     let portrait = try PhotoSize(width: 1080, height: 1350)
@@ -66,5 +89,24 @@ import Testing
 
     let kept = try #require(await DeviceOutbox(directory: directory).load().first)
     #expect(kept.draft.workout == workout)
+    #expect(kept == post)
+}
+
+@Test func aWaitingDisclaimerKeepsItsPhotosOnDisk() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let sent = PreparedPhoto(id: UUID(), jpeg: Data(), size: try PhotoSize(width: 1080, height: 1440))
+    let waiting = PreparedPhoto(id: UUID(), jpeg: Data([0xFF, 0xD8]), size: try PhotoSize(width: 1080, height: 720))
+    let post = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-11-10"), createdAt: Timestamp(millisecondsSince1970: 1_794_270_000_000),
+        audience: try Audience([SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))]),
+        draft: .disclaimer(try Disclaimer("下大雨，在家给猫当沙发"), photos: [sent, waiting]),
+        uploaded: [sent.id: try PhotoRef(path: "22222222-2222-2222-2222-222222222222/sent")])
+
+    await DeviceOutbox(directory: directory).save([post])
+
+    let kept = try #require(await DeviceOutbox(directory: directory).load().first)
+    #expect(kept.draft.photos.map(\.id) == [sent.id, waiting.id])
     #expect(kept == post)
 }

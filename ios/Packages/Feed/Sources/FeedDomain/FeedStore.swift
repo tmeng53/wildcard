@@ -60,13 +60,13 @@ public final class FeedStore {
     /// After this many empty weeks in a row going back, the feed stops looking further.
     static let emptyWeeksBeforeTheStart = 4
 
-    /// What the store holds: a squad's feed, or one post.
+    /// A squad's feed, or one post with the squad a post shared to no squad draws its author from.
     private enum Scope {
         case squad(SquadID)
-        case post(CheckInID)
+        case post(CheckInID, ownSquad: SquadID?)
     }
 
-    private let source: any FeedSource
+    let source: any FeedSource
     private let scope: Scope
     private let viewer: MemberID
     private let today: @Sendable () -> LocalDay
@@ -86,13 +86,14 @@ public final class FeedStore {
         self.newCommentID = newCommentID
     }
 
-    /// One post, for its own page opened from outside the feed (the member's past posts).
+    /// One post, for its own page opened from outside the feed; `ownSquad` draws one shared to no squad.
     public init(
-        source: any FeedSource, post: CheckInID, viewer: MemberID, today: @escaping @Sendable () -> LocalDay,
-        now: @escaping @Sendable () -> Timestamp, newCommentID: @escaping @Sendable () -> CommentID
+        source: any FeedSource, post: CheckInID, ownSquad: SquadID? = nil, viewer: MemberID,
+        today: @escaping @Sendable () -> LocalDay, now: @escaping @Sendable () -> Timestamp,
+        newCommentID: @escaping @Sendable () -> CommentID
     ) {
         self.source = source
-        self.scope = .post(post)
+        self.scope = .post(post, ownSquad: ownSquad)
         self.viewer = viewer
         self.today = today
         self.now = now
@@ -103,7 +104,10 @@ public final class FeedStore {
     /// A store of one of the posts this store can read, for that post's own page opened from
     /// outside the feed (the member's past posts), on the same source and clocks.
     public func store(of post: CheckInID) -> FeedStore {
-        FeedStore(source: source, post: post, viewer: viewer, today: today, now: now, newCommentID: newCommentID)
+        let own: SquadID? = if case .squad(let squad) = scope { squad } else { nil }
+        return FeedStore(
+            source: source, post: post, ownSquad: own, viewer: viewer, today: today, now: now,
+            newCommentID: newCommentID)
     }
 
     // MARK: - Reading
@@ -126,9 +130,9 @@ public final class FeedStore {
     public func load() async {
         let squad: SquadID
         switch scope {
-        case .post(let id):
+        case .post(let id, let ownSquad):
             await refresh(id)
-            guard let first = loaded[id]?.checkIn.audience.squads.first else { return }
+            guard let first = loaded[id]?.checkIn.audience.squads.first ?? ownSquad else { return }
             squad = first
         case .squad(let id):
             squad = id
@@ -306,18 +310,6 @@ public final class FeedStore {
             !deleting.contains(mine.id) && !post.comments.contains { $0.id == mine.id }
         }
         post.comments = post.comments.filter { !deleting.contains($0.id) } + pending
-        return post
-    }
-}
-
-/// The reaction the member wants on a post, or none.
-private struct Wish: Hashable, Sendable {
-    let emoji: Emoji?
-    let since: Timestamp
-
-    func applied(to post: FeedPost, by member: MemberID) -> FeedPost {
-        var post = post
-        post.reactions = post.reactions.setting(emoji, for: member, at: since)
         return post
     }
 }

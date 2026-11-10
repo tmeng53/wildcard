@@ -32,15 +32,15 @@ public enum LapBars {
 extension ScoreCell.Unit {
     public var text: Text {
         switch self {
-        case .minutes: Text("分钟", bundle: .module)
-        case .laps: Text("趟", bundle: .module)
-        case .runs: Text("score.runs.unit", bundle: .module)
-        case .meters: Text("米", bundle: .module)
-        case .kilometres: Text("公里", bundle: .module)
-        case .kilometresPerHour: Text("km/h", bundle: .module)
-        case .per100Meters: Text("/100 米", bundle: .module)
+        case .minutes: Text(copy: "分钟", bundle: .module)
+        case .laps: Text(copy: "趟", bundle: .module)
+        case .runs: Text(copy: "score.runs.unit", bundle: .module)
+        case .meters: Text(copy: "米", bundle: .module)
+        case .kilometres: Text(copy: "公里", bundle: .module)
+        case .kilometresPerHour: Text(copy: "km/h", bundle: .module)
+        case .per100Meters: Text(copy: "/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
-        case .kilocalories: Text("千卡", bundle: .module)
+        case .kilocalories: Text(copy: "千卡", bundle: .module)
         }
     }
 }
@@ -48,20 +48,20 @@ extension ScoreCell.Unit {
 extension ScoreCell.Label {
     public var text: Text {
         switch self {
-        case .duration: Text("时长", bundle: .module)
-        case .distance: Text("距离", bundle: .module)
-        case .pace: Text("配速", bundle: .module)
-        case .speed: Text("均速", bundle: .module)
-        case .averageHeartRate: Text("平均心率", bundle: .module)
-        case .maxHeartRate: Text("最高心率", bundle: .module)
-        case .effort: Text("强度", bundle: .module)
-        case .runs: Text("score.runs", bundle: .module)
-        case .descent: Text("落差", bundle: .module)
-        case .topSpeed: Text("最高速", bundle: .module)
-        case .elevationGain: Text("爬升", bundle: .module)
-        case .calories: Text("卡路里", bundle: .module)
-        case .laps(let pool?): Text("\(pool) 米泳池", bundle: .module)
-        case .laps(nil): Text("趟数", bundle: .module)
+        case .duration: Text(copy: "时长", bundle: .module)
+        case .distance: Text(copy: "距离", bundle: .module)
+        case .pace: Text(copy: "配速", bundle: .module)
+        case .speed: Text(copy: "均速", bundle: .module)
+        case .averageHeartRate: Text(copy: "平均心率", bundle: .module)
+        case .maxHeartRate: Text(copy: "最高心率", bundle: .module)
+        case .effort: Text(copy: "强度", bundle: .module)
+        case .runs: Text(copy: "score.runs", bundle: .module)
+        case .descent: Text(copy: "落差", bundle: .module)
+        case .topSpeed: Text(copy: "最高速", bundle: .module)
+        case .elevationGain: Text(copy: "爬升", bundle: .module)
+        case .calories: Text(copy: "卡路里", bundle: .module)
+        case .laps(let pool?): Text(copy: "\(pool) 米泳池", bundle: .module)
+        case .laps(nil): Text(copy: "趟数", bundle: .module)
         }
     }
 }
@@ -78,6 +78,7 @@ public struct ScoreStrip: View {
     private let bottom: Bottom
     private let struck: Set<WorkoutCell>
     private let onToggle: ((WorkoutCell) -> Void)?
+    private let fill: Fill
 
     /// Under a card (rounded) or across a post's ticket, where the stub goes on under it (square).
     public enum Bottom: Sendable {
@@ -85,22 +86,33 @@ public struct ScoreStrip: View {
         case square
     }
 
+    /// What the strip stands on.
+    public enum Fill: Sendable {
+        /// Its own block in the sport category's colour.
+        case block
+        /// Nothing of its own: a band the caller lays it on, such as the 成绩卡's.
+        case none
+    }
+
     /// Read only, under a post's cover.
-    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded) {
+    public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded, fill: Fill = .block) {
         self.cells = cells
         self.bottom = bottom
+        self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
         struck = []
         onToggle = nil
     }
 
-    /// While a post is made: every corner rounded, and a tap on a cell calls `onToggle` with it.
+    /// While a post is made, or its 成绩卡: every corner rounded, and a tap on a cell calls
+    /// `onToggle` with it.
     public init(
-        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell>,
+        cells: [ScoreCell], activity: Activity, struck: Set<WorkoutCell>, fill: Fill = .block,
         onToggle: @escaping (WorkoutCell) -> Void
     ) {
         self.cells = cells
         bottom = .rounded
+        self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.struck = struck
         self.onToggle = onToggle
@@ -139,8 +151,10 @@ public struct ScoreStrip: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .haptic(.pick, trigger: isStruck)
-                    .accessibilityValue(isStruck ? Text("不发", bundle: .module) : Text("发", bundle: .module))
-                    .accessibilityHint(isStruck ? Text("点一下恢复", bundle: .module) : Text("点一下划掉", bundle: .module))
+                    .accessibilityValue(isStruck ? Text(copy: "不发", bundle: .module) : Text(copy: "发", bundle: .module))
+                    .accessibilityHint(
+                        isStruck ? Text(copy: "点一下恢复", bundle: .module) : Text(copy: "点一下划掉", bundle: .module)
+                    )
                     .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
                 } else {
                     face(cell, isStruck: false)
@@ -150,7 +164,7 @@ public struct ScoreStrip: View {
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
-        .background(Color(colors.fill), in: shape)
+        .background(fill == .block ? Color(colors.fill) : .clear, in: shape)
         .foregroundStyle(Color(colors.ink))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier(onToggle == nil ? "post.strip" : "compose.score")
@@ -214,12 +228,12 @@ public struct WorkoutMap: View {
         // The camera frames the route only when the map is made, so another route makes another map.
         .id(route)
         .allowsHitTesting(false)
-        .accessibilityLabel(Text("路线地图", bundle: .module))
+        .accessibilityLabel(Text(copy: "路线地图", bundle: .module))
         .accessibilityIdentifier("workout.map")
     }
 
     /// The route's bounds with a margin, so the lane doesn't touch the edge.
-    private static func frame(around coordinates: [CLLocationCoordinate2D]) -> MKMapRect {
+    static func frame(around coordinates: [CLLocationCoordinate2D]) -> MKMapRect {
         let points = coordinates.map(MKMapPoint.init)
         guard let first = points.first else { return .world }
         var rect = MKMapRect(origin: first, size: MKMapSize(width: 0, height: 0))
@@ -234,22 +248,41 @@ public struct WorkoutMap: View {
 /// A workout's chart. Heart rate is `HeartRateChart` on graphite, detailed with `label` (a post's
 /// cover: zones, minutes per zone, scrubbing), the curve alone without. A swim's laps stay on the
 /// sport category's colour, each lap's time as a bar, the fastest in white and the rest dimmed, with
-/// `label` its name top left.
+/// `label` its name top left. With a `shape`, the chart keeps that width over height in the middle
+/// of whatever box it's given, on its own colour, never stretched to the box.
 public struct WorkoutChart: View {
     private let series: WorkoutSeries
     private let colors: PostBlockColors
     private let showsLabel: Bool
     private let startedAt: Date?
+    private let shape: Double?
 
-    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil) {
+    public init(
+        series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil,
+        shape: Double? = nil
+    ) {
         self.series = series
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.showsLabel = showsLabel
         self.startedAt = startedAt
+        self.shape = shape
     }
 
     public var body: some View {
-        if series.laps?.isEmpty ?? true, let curve = series.heartRate, curve.count >= 2 {
+        if let shape {
+            face
+                .aspectRatio(shape, contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(isHeartRate ? Color(ZoneColors.fill) : Color(colors.fill))
+        } else {
+            face
+        }
+    }
+
+    private var isHeartRate: Bool { (series.laps?.isEmpty ?? true) && (series.heartRate?.count ?? 0) >= 2 }
+
+    @ViewBuilder private var face: some View {
+        if isHeartRate, let curve = series.heartRate {
             HeartRateChart(points: curve, zones: series.zones, startedAt: startedAt, isDetailed: showsLabel)
         } else {
             lapChart
@@ -282,9 +315,9 @@ public struct WorkoutChart: View {
 
     private var label: Text {
         if let laps = series.laps, !laps.isEmpty, let fastest = series.fastestLap {
-            return Text("每趟用时 · 最快第 \(fastest + 1) 趟", bundle: .module)
+            return Text(copy: "每趟用时 · 最快第 \(fastest + 1) 趟", bundle: .module)
         }
-        return Text("心率曲线", bundle: .module)
+        return Text(copy: "心率曲线", bundle: .module)
     }
 
     private static func drawLaps(

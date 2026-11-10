@@ -1,4 +1,5 @@
 import AvatarDomain
+import Contracts
 import Foundation
 
 /// The art tree the app draws from: the files this package bundles, with the ones downloaded
@@ -12,11 +13,23 @@ public enum ArtTree {
     /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
     public static let rigVersion = 2
 
-    /// Where the downloaded files stand, mirroring the tree's paths: Application Support's
-    /// `Art/current`, swapped whole for a newer generation once all of it is downloaded.
+    /// Where the downloaded files stand, mirroring the tree's paths: the app group's `Art/current`,
+    /// so the widgets and push views draw the art the app downloaded (a coach that came after
+    /// this build too), swapped whole for a newer generation once all of it is downloaded.
+    /// Outside the group (the Linux tests), Application Support's.
     public static var downloaded: URL {
+        let shared = SharedContainer.directory
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-        return (support ?? FileManager.default.temporaryDirectory).appending(path: "Art/current")
+        return (shared ?? support ?? FileManager.default.temporaryDirectory).appending(path: "Art/current")
+    }
+
+    /// Where builds before the app group kept the downloaded art, which the next download
+    /// deletes; nil when that is where it stands now.
+    public static var formerDownloads: URL? {
+        guard SharedContainer.directory != nil,
+            let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        else { return nil }
+        return support.appending(path: "Art")
     }
 
     /// The file at `path` within `tree` (`avatar`, `coaches`): the downloaded one, else `bundled`'s.

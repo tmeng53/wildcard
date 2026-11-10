@@ -10,13 +10,13 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "armLBack", "armRBack",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "armLBack",
+            "armRBack",
             "torso", "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
-            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "flexL",
-            "muscleL", "flexR", "muscleR", "heart",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "heart",
             "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
@@ -71,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 64)
+    #expect(figure.parts.count == 61)
 }
 
 @Test(arguments: Persona.allCases)
@@ -288,7 +288,7 @@ func outline(_ path: [PathElement]) -> [Point] {
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
 /// clothing and prop it offers is bundled, and WARM-UP's nineteen pieces recolor; any piece's first
-/// color is its art's own; every member starts with the tumbler and the dumbbell.
+/// color is its art's own; every member holds every prop from the start.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -296,7 +296,7 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props.filter(\.isOpen).map(\.id) == ["bottle", "dumbbell"])
+    #expect(choices.props.filter { !$0.isOpen }.isEmpty)
     #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [
@@ -370,19 +370,5 @@ func outline(_ path: [PathElement]) -> [Point] {
             Data(
                 #"{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hiar": true}], "stores": [], "wear": {}, "props": []}"#
                     .utf8))
-    }
-}
-
-/// 秀肌肉's flexed arms and their biceps are the same fur as the arms at rest: a tuxedo's dark
-/// arm stays dark, with only the paw white.
-@Test(arguments: PlaceholderCharacter.variants(for: "body"))
-func theFlexedArmsKeepTheArmsColor(body: String) throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "top": "warmup-tank"]))
-    for (arm, flex, muscle) in [("armL", "flexL", "muscleL"), ("armR", "flexR", "muscleR")]
-        as [(PartID, PartID, PartID)]
-    {
-        let fur = try #require(figure.part(arm).art.first?.shapes[1].stroke?.color)
-        #expect(try figure.part(flex).art.first?.shapes[1].stroke?.color == fur, "\(body) \(flex)")
-        #expect(try figure.part(muscle).art.first?.shapes[0].fill == fur, "\(body) \(muscle)")
     }
 }

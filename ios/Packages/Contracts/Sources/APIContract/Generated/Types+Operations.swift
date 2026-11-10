@@ -20752,7 +20752,7 @@ public enum Operations {
     }
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen.
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
@@ -20789,17 +20789,31 @@ public enum Operations {
                 ///
                 /// - Remark: Generated from `#/paths/squads/{squadId}/coach/cards/earlier/GET/query/unseen`.
                 public var unseen: Operations.GetEarlierCoachCards.Input.Query.UnseenPayload?
+                /// `true` keeps only the challenges, from when the caller joined (not only the last 30 days).
+                ///
+                /// - Remark: Generated from `#/paths/squads/{squadId}/coach/cards/earlier/GET/query/challenges`.
+                @frozen public enum ChallengesPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                    case _true = "true"
+                    case _false = "false"
+                }
+                /// `true` keeps only the challenges, from when the caller joined (not only the last 30 days).
+                ///
+                /// - Remark: Generated from `#/paths/squads/{squadId}/coach/cards/earlier/GET/query/challenges`.
+                public var challenges: Operations.GetEarlierCoachCards.Input.Query.ChallengesPayload?
                 /// Creates a new `Query`.
                 ///
                 /// - Parameters:
                 ///   - cursor: The `next` of the page before.
                 ///   - unseen: `true` keeps only the cards not seen yet.
+                ///   - challenges: `true` keeps only the challenges, from when the caller joined (not only the last 30 days).
                 public init(
                     cursor: Swift.String? = nil,
-                    unseen: Operations.GetEarlierCoachCards.Input.Query.UnseenPayload? = nil
+                    unseen: Operations.GetEarlierCoachCards.Input.Query.UnseenPayload? = nil,
+                    challenges: Operations.GetEarlierCoachCards.Input.Query.ChallengesPayload? = nil
                 ) {
                     self.cursor = cursor
                     self.unseen = unseen
+                    self.challenges = challenges
                 }
             }
             public var query: Operations.GetEarlierCoachCards.Input.Query
@@ -29001,7 +29015,7 @@ public enum Operations {
     }
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街, props and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, the tumbler, the dumbbell and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.

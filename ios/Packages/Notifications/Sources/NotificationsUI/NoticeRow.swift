@@ -25,7 +25,7 @@ struct NoticeRow: View {
     private static let dot: Double = 6
 
     var body: some View {
-        let words = self.words
+        let words = NoticeWords(entry: entry, unlocked: unlocked).words
         HStack(spacing: Space.s) {
             words.icon
                 .frame(width: Self.icon, height: Self.icon)
@@ -41,7 +41,7 @@ struct NoticeRow: View {
                 }
                 // A broadcast's button: the row's tap opens it.
                 if let action = words.action {
-                    NoticeActionLabel(action, on: .page)
+                    NoticeActionLabel(action)
                         .padding(.top, Space.xxs)
                 }
             }
@@ -66,7 +66,7 @@ struct NoticeRow: View {
         .frame(minHeight: Sizing.control)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityValue(isUnread ? Text("新", bundle: .module) : Text(verbatim: ""))
+        .accessibilityValue(isUnread ? Text(copy: "新", bundle: .module) : Text(verbatim: ""))
     }
 
     /// When it was told: the time today, 昨天 or the weekday this week, the date before.
@@ -78,15 +78,24 @@ struct NoticeRow: View {
             if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now),
                 Calendar.current.isDate(notice.toldAt, inSameDayAs: yesterday)
             {
-                return Text("昨天", bundle: .module)
+                return Text(copy: "昨天", bundle: .module)
             }
             return Text(notice.toldAt, format: .dateTime.weekday(.abbreviated).locale(locale))
         case .earlier:
             return Text(notice.toldAt, format: .dateTime.month(.abbreviated).day().locale(locale))
         }
     }
+}
 
-    private struct Words {
+/// What 通知 says of a notice, or of what was said on one post in a day: its title, the line
+/// under it, its icon, and a broadcast's button. Its row and its banner both read it.
+struct NoticeWords {
+    let entry: NoticeEntry
+    let unlocked: (Unlock.Kind, String) -> UnlockWords
+
+    private var notice: Notice { entry.notice }
+
+    struct Words {
         let title: Text
         let detail: Text?
         let icon: AnyView
@@ -95,27 +104,27 @@ struct NoticeRow: View {
         var wraps = false
     }
 
-    private var words: Words {
+    var words: Words {
         if entry.isJoined, let talk = Self.talk(entry) { return talk }
         switch notice.subject {
         case .dailyProgress(let alert):
             let parts = Self.pushParts(alert)
             return Words(
-                title: parts.map { Text(verbatim: $0.title) } ?? Text("小队今天的进度", bundle: .module),
+                title: parts.map { Text(verbatim: $0.title) } ?? Text(copy: "小队今天的进度", bundle: .module),
                 detail: parts?.detail.map { Text(verbatim: $0) },
                 icon: AnyView(ProgressIcon(alert: alert)))
         case .weeklyAwards(_, let week):
             let number = Self.weekNumber(of: week)
             return Words(
-                title: Text("每周战报出来了", bundle: .module),
-                detail: Text("第 \(number) 周", bundle: .module),
+                title: Text(copy: "每周战报出来了", bundle: .module),
+                detail: Text(copy: "第 \(number) 周", bundle: .module),
                 icon: AnyView(CrownIcon()))
         case .sceneMoved(let scene, _, let moverName):
             let theme = SceneTheme(rawValue: scene)
-            let place = theme?.name ?? Text("新场地", bundle: .module)
+            let place = theme?.name ?? Text(copy: "新场地", bundle: .module)
             return Words(
-                title: moverName.map { Text("\($0) 把小队搬到了\(place)", bundle: .module) }
-                    ?? Text("小队搬到了\(place)", bundle: .module),
+                title: moverName.map { Text(copy: "\($0) 把小队搬到了\(place)", bundle: .module) }
+                    ?? Text(copy: "小队搬到了\(place)", bundle: .module),
                 detail: nil,
                 icon: AnyView(theme.map { AnyView(SceneBadge($0)) } ?? AnyView(NoticeSymbol(systemImage: "map"))))
         case .coachReply(_, let coach, let coachName, let replied, let emoji):
@@ -126,15 +135,16 @@ struct NoticeRow: View {
             // 「毛头：…」, as its push says it.
             return Words(
                 title: note.coach.name.isEmpty
-                    ? Text("教练：\(note.text)", bundle: .module)
-                    : Text("\(note.coach.name)：\(note.text)", bundle: .module),
+                    ? Text(copy: "教练：\(note.text)", bundle: .module)
+                    : Text(copy: "\(note.coach.name)：\(note.text)", bundle: .module),
                 detail: nil,
                 icon: AnyView(CoachIcon(coach: note.coach.id)))
         case .coachLetter(let letter):
             // 「毛头给帕帕留了一封交接信」, which opens it again on 今天.
             return Words(
                 title: Text(
-                    "\(Self.coach(letter.from.name))给\(Self.coach(letter.recipient.name))留了一封交接信", bundle: .module),
+                    copy: "\(Self.coach(letter.from.name))给\(Self.coach(letter.recipient.name))留了一封交接信", bundle: .module
+                ),
                 detail: nil, icon: AnyView(CoachIcon(coach: letter.from.id)))
         case .unlocked(let kind, let item):
             let unlock = unlocked(kind, item)
@@ -142,7 +152,7 @@ struct NoticeRow: View {
         case .comment(let alert, _):
             return Words(
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
-                    ?? Text("队友评论了你的动态", bundle: .module),
+                    ?? Text(copy: "队友评论了你的动态", bundle: .module),
                 detail: nil, icon: AnyView(NoticeSymbol(systemImage: "bubble.left.fill")))
         case .broadcast(let broadcast):
             return Words(
@@ -155,8 +165,8 @@ struct NoticeRow: View {
         case .goalSuggestion(let suggestion):
             // The row opens 小队, whose first card is the weekly goal.
             return Words(
-                title: Text("连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
-                detail: Text("改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
+                title: Text(copy: "连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
+                detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 icon: AnyView(NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis")))
         }
     }
@@ -169,45 +179,45 @@ struct NoticeRow: View {
         let (first, second, others) = (names[0], names[1], names.count - 2)
         let title: Text =
             switch (entry.answersMember, others) {
-            case (false, 0): Text("\(first) 和 \(second) 评论了你的动态", bundle: .module)
-            case (false, _): Text("\(first)、\(second) 和另外 \(others) 人评论了你的动态", bundle: .module)
-            case (true, 0): Text("\(first) 和 \(second) 回复了你", bundle: .module)
-            case (true, _): Text("\(first)、\(second) 和另外 \(others) 人回复了你", bundle: .module)
+            case (false, 0): Text(copy: "\(first) 和 \(second) 评论了你的动态", bundle: .module)
+            case (false, _): Text(copy: "\(first)、\(second) 和另外 \(others) 人评论了你的动态", bundle: .module)
+            case (true, 0): Text(copy: "\(first) 和 \(second) 回复了你", bundle: .module)
+            case (true, _): Text(copy: "\(first)、\(second) 和另外 \(others) 人回复了你", bundle: .module)
             }
         let line = entry.latestLine.map { (who: name($0.voice), text: $0.text) }
         return Words(
             title: title,
-            detail: line.map { line in Text("\(line.who)：\(line.text)", bundle: .module) },
+            detail: line.map { line in Text(copy: "\(line.who)：\(line.text)", bundle: .module) },
             icon: AnyView(NoticeSymbol(systemImage: "bubble.left.and.bubble.right.fill")))
     }
 
     /// A coach's name now, or 教练 when it has none.
     private static func coach(_ name: String) -> String {
-        name.isEmpty ? String(localized: "教练", bundle: .module.inAppLanguage) : name
+        name.isEmpty ? String(copy: "教练", bundle: .module) : name
     }
 
     /// A voice's name: a teammate's as the push gave it, the coach's, or 教练.
     private static func name(_ voice: NoticeEntry.Voice) -> String {
         switch voice {
         case .teammate(let name), .coach(let name?): name
-        case .coach(nil): String(localized: "教练", bundle: .module.inAppLanguage)
+        case .coach(nil): String(copy: "教练", bundle: .module)
         }
     }
 
     /// 教练 毛头 回复了你的动态, or the emoji it left when it wrote no line.
     private static func coachTitle(name: String?, replied: Bool, emoji: Emoji?) -> Text {
         switch (name, replied ? nil : emoji) {
-        case (let name?, nil): Text("教练 \(name) 回复了你的动态", bundle: .module)
-        case (let name?, let emoji?): Text("教练 \(name) 给你的动态回了 \(emoji.text)", bundle: .module)
-        case (nil, nil): Text("教练回复了你的动态", bundle: .module)
-        case (nil, let emoji?): Text("教练给你的动态回了 \(emoji.text)", bundle: .module)
+        case (let name?, nil): Text(copy: "教练 \(name) 回复了你的动态", bundle: .module)
+        case (let name?, let emoji?): Text(copy: "教练 \(name) 给你的动态回了 \(emoji.text)", bundle: .module)
+        case (nil, nil): Text(copy: "教练回复了你的动态", bundle: .module)
+        case (nil, let emoji?): Text(copy: "教练给你的动态回了 \(emoji.text)", bundle: .module)
         }
     }
 
     /// The push's own words, as the app's catalog has them in the app's language, split into a
     /// title and what follows; nil for a key this build doesn't have.
     private static func pushParts(_ alert: PushAlert) -> (title: String, detail: String?)? {
-        let line = Bundle.main.inAppLanguage.localizedString(forKey: alert.key, value: nil, table: nil)
+        let line = String(copyKey: alert.key, bundle: Bundle.main)
         guard line != alert.key else { return nil }
         return PushAlertWords(alert).parts(line)
     }
@@ -218,6 +228,33 @@ struct NoticeRow: View {
         calendar.timeZone = .gmt
         let day = DateComponents(calendar: calendar, year: week.year, month: week.month, day: week.day)
         return day.date.map { calendar.component(.weekOfYear, from: $0) } ?? 0
+    }
+}
+
+/// A notice told while the app is open, in the banner that drops in over any page (2026-11-08):
+/// 通知's words for it and a button, 去看看 for a store or a scene, 查看 for the rest, or a
+/// broadcast's own. The app opens its `Notice.destination` on a tap.
+public struct ToldNoticeBanner: View {
+    private let notice: Notice
+    private let unlocked: (Unlock.Kind, String) -> UnlockWords
+
+    /// - Parameter unlocked: how a store, piece or prop is named, as on 通知's rows.
+    public init(_ notice: Notice, unlocked: @escaping (Unlock.Kind, String) -> UnlockWords) {
+        (self.notice, self.unlocked) = (notice, unlocked)
+    }
+
+    public var body: some View {
+        if let entry = NoticeEntry([notice]) {
+            let words = NoticeWords(entry: entry, unlocked: unlocked).words
+            NoticeBanner(words.title, detail: words.detail, action: words.action ?? action) { words.icon }
+        }
+    }
+
+    private var action: Text {
+        switch notice.subject {
+        case .unlocked, .sceneMoved: Text(copy: "去看看", bundle: .module)
+        default: Text(copy: "查看", bundle: .module)
+        }
     }
 }
 

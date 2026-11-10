@@ -38,21 +38,21 @@ struct ChoicesPanel: View {
             }
         case .face:
             scroll {
-                ChoiceSection(label: Text("眼睛", bundle: .module)) {
+                ChoiceSection(label: Text(copy: "眼睛", bundle: .module)) {
                     SwatchRow(model: model, slot: "eyes")
                     TileGrid(model: model, slot: "eyes", variants: variants("eyes"), offersNothing: false)
                 }
-                ChoiceSection(label: Text("眉毛", bundle: .module)) {
+                ChoiceSection(label: Text(copy: "眉毛", bundle: .module)) {
                     SwatchRow(model: model, slot: "brows")
                     TileGrid(model: model, slot: "brows", variants: variants("brows"), offersNothing: true)
                 }
-                ChoiceSection(label: Text("嘴巴", bundle: .module)) {
+                ChoiceSection(label: Text(copy: "嘴巴", bundle: .module)) {
                     TileGrid(model: model, slot: "mouth", variants: variants("mouth"), offersNothing: false)
                 }
-                ChoiceSection(label: Text("脸蛋", bundle: .module)) {
+                ChoiceSection(label: Text(copy: "脸蛋", bundle: .module)) {
                     TileGrid(model: model, slot: "cheeks", variants: variants("cheeks"), offersNothing: true)
                 }
-                ChoiceSection(label: Text("眼镜", bundle: .module)) {
+                ChoiceSection(label: Text(copy: "眼镜", bundle: .module)) {
                     TileGrid(model: model, slot: "glasses", variants: variants("glasses"), offersNothing: true)
                 }
             }
@@ -196,9 +196,11 @@ struct SwatchRow: View {
                             .foregroundStyle(Color(role: .fgMuted, in: theme))
                             .padding(.trailing, Space.xxs)
                     }
-                    swatch(original, value: nil, label: Text("原色", bundle: .module), index: 0)
+                    swatch(original, value: nil, label: Text(copy: "原色", bundle: .module), index: 0)
                     ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
-                        swatch(color, value: color, label: Text("颜色 \(index + 1)", bundle: .module), index: index + 1)
+                        swatch(
+                            color, value: color, label: Text(copy: "颜色 \(index + 1)", bundle: .module), index: index + 1
+                        )
                     }
                 }
             }

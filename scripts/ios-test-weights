@@ -17,14 +17,14 @@ FeedUITests 430
 LanguageUITests 116
 LightsUITests 64
 LoadingUITests 82
-MeUITests 322
+MeUITests 345
 NightlyRecapUITests 33
 NoticeBellUITests 137
-NoticeUITests 30
+NoticeUITests 60
 NotificationPromptUITests 58
 OpeningUITests 37
 PatUITests 93
-PostManageUITests 142
+PostManageUITests 185
 PushBannerUITests 174
 PushLongPressUITests 46
 RecapUITests 152

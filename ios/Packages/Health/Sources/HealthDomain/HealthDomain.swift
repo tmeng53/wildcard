@@ -18,19 +18,19 @@ public struct ImportedWorkout: Hashable, Sendable, Identifiable {
         self.restingBpm = restingBpm
     }
 
-    /// The workout with its heart-rate zones placed for a member born on `birthday`, as of the
-    /// day it started; unchanged without a birthday or a heart-rate curve. Only the zones are
-    /// posted, never the birthday or the resting heart rate.
-    public func withZones(birthday: DateComponents?, calendar: Calendar) -> Workout {
+    /// The workout with its heart-rate zones placed for a member born on `birthday`, at their age
+    /// on the day it started on `timeZone`'s clock; unchanged without a birthday or a heart-rate
+    /// curve. Only the zones are posted, never the birthday or the resting heart rate.
+    public func withZones(birthday: Birthday?, in timeZone: TimeZone) -> ImportedWorkout {
         guard let series = workout.series, let curve = series.heartRate, let birthday,
-            let born = calendar.date(from: birthday),
-            let age = calendar.dateComponents([.year], from: born, to: workout.startedAt.date).year,
-            let zones = HeartRateZones(age: age, restingBpm: restingBpm)
-        else { return workout }
-        return Workout(
+            let zones = HeartRateZones(
+                age: birthday.age(on: LocalDay(at: workout.startedAt.date, in: timeZone)), restingBpm: restingBpm)
+        else { return self }
+        let zoned = Workout(
             source: workout.source, startedAt: workout.startedAt, endedAt: workout.endedAt, summary: workout.summary,
             series: WorkoutSeries(heartRate: curve, laps: series.laps, zones: zones), route: workout.route,
             tilePosition: workout.tilePosition, chartPosition: workout.chartPosition)
+        return ImportedWorkout(workout: zoned, activity: activity, restingBpm: restingBpm)
     }
 
     public var id: WorkoutSource { workout.source }
@@ -126,13 +126,53 @@ public struct TodaysWorkout: Hashable, Sendable, Identifiable {
     public var id: WorkoutSource { imported.id }
 }
 
+/// A 训练 the member posted, as what is offered from Health is checked against it: its sport,
+/// the day it counts for, when it was made and the Health workout it came from, if any.
+public struct PostedTraining: Hashable, Sendable {
+    public let activity: Activity
+    public let day: LocalDay
+    public let madeAt: Timestamp
+    public let workout: Workout?
+
+    public init(activity: Activity, day: LocalDay, madeAt: Timestamp, workout: Workout?) {
+        self.activity = activity
+        self.day = day
+        self.madeAt = madeAt
+        self.workout = workout
+    }
+
+    /// Whether this post is of `imported`'s session: its workout, or a workout of the same
+    /// sport at an overlapping time, which is the same session saved again under another id
+    /// (two apps saving it, or one saving it again after deleting it).
+    func covers(_ imported: ImportedWorkout) -> Bool {
+        guard let workout else { return false }
+        if workout.source == imported.id { return true }
+        return activity == imported.activity && workout.startedAt < imported.workout.endedAt
+            && imported.workout.startedAt < workout.endedAt
+    }
+}
+
 extension [ImportedWorkout] {
-    /// Those that ended on the member's `day`, newest first, each marked
-    /// posted when `posted` holds it: a member posts each workout once.
-    public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
-        filter { LocalDay(at: $0.workout.endedAt.date, in: timeZone) == day }
-            .sorted { $0.workout.endedAt > $1.workout.endedAt }
-            .map { TodaysWorkout(imported: $0, isPosted: posted.contains($0.id)) }
+    /// Those that ended on the member's `day`, newest first, each marked posted when one of
+    /// `posted` is of its session (a member posts each session once), or when a 训练 posted by
+    /// hand that day covers it: each covers the earliest unposted workout of its sport that
+    /// started before it was made.
+    public func today(_ day: LocalDay, in timeZone: TimeZone, posted: [PostedTraining]) -> [TodaysWorkout] {
+        let fromHealth = posted.filter { $0.workout != nil }
+        var byHand = posted.filter { $0.workout == nil && $0.day == day }.sorted { $0.madeAt < $1.madeAt }
+        return filter { LocalDay(at: $0.workout.endedAt.date, in: timeZone) == day }
+            .sorted { $0.workout.startedAt < $1.workout.startedAt }
+            .map { imported in
+                if fromHealth.contains(where: { $0.covers(imported) }) {
+                    return TodaysWorkout(imported: imported, isPosted: true)
+                }
+                let cover = byHand.firstIndex {
+                    $0.activity == imported.activity && imported.workout.startedAt <= $0.madeAt
+                }
+                if let cover { byHand.remove(at: cover) }
+                return TodaysWorkout(imported: imported, isPosted: cover != nil)
+            }
+            .sorted { $0.imported.workout.endedAt > $1.imported.workout.endedAt }
     }
 }
 

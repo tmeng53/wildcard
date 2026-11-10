@@ -560,9 +560,17 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       day: today,
       challenge: { title: '喝水', amount: 8, unit: '杯' },
     });
+    // It names the coach who set it, as the squad calls it.
+    const anyLook: unknown = expect.any(String);
+    const setter = { id: 'xiaohun', name: '小混', look: anyLook };
     expect(await todays(mate.token)).toStrictEqual({
       version: 1,
-      today: { noteId: water, day: today, challenge: { title: '喝水', amount: 8, unit: '杯' } },
+      today: {
+        noteId: water,
+        day: today,
+        challenge: { title: '喝水', amount: 8, unit: '杯' },
+        coach: setter,
+      },
     });
     // Only on its own day.
     const late = await complete(mate.token, old);
@@ -580,6 +588,9 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     expect(await todays(mate.token)).toMatchObject({
       today: { noteId: water, challenge: { completedAt: at, completedBy: 'member' } },
     });
+    // Still that coach once the squad has none (or another): the note keeps who set it.
+    await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
+    expect(await todays(mate.token)).toMatchObject({ today: { noteId: water, coach: setter } });
     // Only the member it was written to; a note without a challenge has nothing to do.
     expect((await complete(captain.token, water)).status).toBe(404);
     const plain = await note(captain.userId, { day: today });
@@ -826,6 +837,34 @@ describe('/squads/{squadId}/coach/cards', () => {
     await fire(mate, squad);
   });
 
+  it("shows only the day's newest challenge when a second note came that day", async () => {
+    // An admin's delivered preview and the morning's wake both write a note with a challenge;
+    // the newest one is the day's, so the older challenge doesn't show twice (Tracy, 2026-11-09).
+    const mate = await signUp();
+    const squad = await squadOf(mate);
+    await hire(mate, squad);
+    const path = `/squads/${squad}/coach/cards`;
+    const note = async (title: string) => {
+      const written = await sql<{ id: string }>`
+        insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
+        values (${squad}, ${mate.userId}, 'xiaohun', current_date, '热身', ${title})
+        returning id`.execute(db);
+      const id = String(written.rows[0]?.id);
+      await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(
+        db,
+      );
+      return id;
+    };
+    const first = await note('热身');
+    const second = await note('肩髋热身');
+    const cards = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    const all = ids([...cards.stack, ...cards.earlier]);
+    expect(all.filter((id) => id.startsWith('challenge:'))).toStrictEqual([`challenge:${second}`]);
+    expect(all).toContain(`note:${first}`);
+    expect(all).toContain(`note:${second}`);
+    await fire(mate, squad);
+  });
+
   it('still reads once the caller swiped cards of a kind that is no longer one', async () => {
     // Before 2026-11-09 the coach's replies and answers were cards too; their seen marks stay.
     const mate = await signUp();
@@ -896,6 +935,54 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(unseen.cards.every((card) => !card.seen)).toBe(true);
     const odd = await call({ method: 'GET', path: `${path}?cursor=nope`, token: mate.token });
     expect(odd.status).toBe(400);
+  });
+
+  it('lists only the challenges when asked, every one since the caller joined, done ones marked', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
+    // Joined 60 days ago, so a challenge from 40 days ago is past 以前's 30 days but still theirs.
+    await sql`update public.squad_members set joined_at = now() - interval '60 days'
+      where squad_id = ${squad} and member_id = ${mate.userId}`.execute(db);
+    const challenge = async (daysAgo: number, title: string) => {
+      const written = await sql<{ id: string }>`
+        insert into public.coach_member_notes
+          (squad_id, member_id, coach_id, day, text, challenge_title, at)
+        values (${squad}, ${mate.userId}, 'xiaohun', current_date - ${daysAgo}::int, '动一动', ${title},
+          now() - make_interval(days => ${daysAgo}))
+        returning id`.execute(db);
+      const id = String(written.rows[0]?.id);
+      // A card is dated by its delivery, so it is delivered then too.
+      await sql`insert into public.coach_member_note_deliveries (note_id, at)
+        values (${id}, now() - make_interval(days => ${daysAgo}))`.execute(db);
+      return id;
+    };
+    const old = await challenge(40, '拉伸');
+    await challenge(0, '喝水');
+    await coachSaid(squad, { day: new Date().toISOString().slice(0, 10), text: '今天谁先动' });
+    await sql`insert into public.coach_challenge_answers (note_id, answer) values (${old}, 'accepted')`.execute(
+      db,
+    );
+    await sql`insert into public.coach_challenge_completions (note_id, by, at)
+      values (${old}, 'member', now() - interval '40 days')`.execute(db);
+
+    const Page = z.object({
+      cards: z.array(z.object({ kind: z.string(), challenge: z.unknown().optional() }).loose()),
+    });
+    const path = `/squads/${squad}/coach/cards/earlier`;
+    const only = Page.parse(
+      (await call({ method: 'GET', path: `${path}?challenges=true`, token: mate.token })).body,
+    );
+    // Today's, still in the stack, and the one from 40 days ago, newest first; no 战术板 line.
+    expect(only.cards.map((card) => card.kind)).toStrictEqual(['challenge', 'challenge']);
+    expect(only.cards).toMatchObject([
+      { challenge: { title: '喝水' } },
+      { challenge: { title: '拉伸', completedBy: 'member' } },
+    ]);
+    // 以前 itself keeps to its 30 days and leaves the stack out.
+    const all = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
+    expect(all.cards.filter((card) => card.kind === 'challenge')).toStrictEqual([]);
+    await fire(captain, squad);
   });
 
   it('keeps its place in 未读 when the card it ended on is seen, beside cards of the same moment', async () => {

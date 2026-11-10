@@ -381,7 +381,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
       async ofCheckIn(squad, checkIn) {
         const rows = await db
           .selectFrom('coach_answers')
-          .select(['comment_id', 'text', 'at'])
+          .select(['comment_id', 'coach_id', 'text', 'at'])
           .where('squad_id', '=', squad)
           .where('check_in_id', '=', checkIn)
           .orderBy('at')
@@ -389,6 +389,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           .execute();
         return rows.map((row) => ({
           comment: row.comment_id,
+          coach: CoachId.parse(row.coach_id),
           text: row.text,
           at: new Date(row.at),
         }));
@@ -686,6 +687,13 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           left join public.coach_challenge_completions done on done.note_id = m.id
           where m.squad_id = ${squad}::uuid and m.member_id = ${member}::uuid
             and m.challenge_title is not null and d.at >= ${since}
+            -- Only the day's standing challenge: a newer note of that day with one replaces it,
+            -- as in challengesOn (an admin may have sent themselves a note besides the morning's).
+            and not exists (
+              select 1 from public.coach_member_notes newer
+              join public.coach_member_note_deliveries nd on nd.note_id = newer.id
+              where newer.squad_id = m.squad_id and newer.member_id = m.member_id
+                and newer.day = m.day and newer.challenge_title is not null and newer.id > m.id)
           union all
           select 'challengeDone', m.id::text, to_char(m.day, 'YYYY-MM-DD'), null, null, null,
             m.challenge_title, m.challenge_amount, m.challenge_unit, m.challenge_line, null, null,
@@ -1084,6 +1092,7 @@ function dayChallenges(
 ) {
   return db
     .selectFrom('coach_member_notes')
+    .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
     .innerJoin(
       'coach_member_note_deliveries',
       'coach_member_note_deliveries.note_id',
@@ -1106,6 +1115,9 @@ function dayChallenges(
       'coach_challenge_answers.reason',
       'coach_challenge_completions.by as done_by',
       'coach_challenge_completions.at as done_at',
+      'coaches.id as coach_id',
+      'coaches.name as coach_name',
+      'coaches.look as coach_look',
     ])
     .where('coach_member_notes.squad_id', '=', squad)
     .where('coach_member_notes.day', '=', day)
@@ -1120,6 +1132,9 @@ function dayChallengeOfRow(
       readonly id: string;
       readonly answer: string | null;
       readonly reason: string | null;
+      readonly coach_id: string;
+      readonly coach_name: string;
+      readonly coach_look: string;
     },
   day: string,
 ): DayChallenge | undefined {
@@ -1129,6 +1144,7 @@ function dayChallengeOfRow(
     note: Number(row.id),
     day,
     challenge,
+    coach: { id: row.coach_id, name: row.coach_name, look: row.coach_look },
     answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
     reason: row.reason ?? undefined,
     completion: completionOfRow(row),

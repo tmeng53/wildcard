@@ -6,7 +6,7 @@
 public enum ZoneColors {
     /// Under the chart.
     public static let fill = Palette.brand
-    /// Words, numbers and the line below the first zone.
+    /// Words, numbers and a curve without zones; below 轻松 the chart dims it, outside every zone.
     public static let ink = Palette.white
 
     /// Zone `index` (0 轻松 to 3 峰值); the last one for any higher.

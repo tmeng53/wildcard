@@ -1,6 +1,7 @@
 import Backend
 import DailyPushDomain
 import DailyPushUI
+import DesignSystemUI
 import NotificationsDomain
 import NotificationsUI
 import UIKit
@@ -13,6 +14,9 @@ enum Push {
 
     /// Pause after a post before the permission prompt, so the cheer plays out first.
     static let promptDelay = Duration.seconds(1.5)
+    /// The categories of the pushes the server also keeps in 通知 (each flow's `category`), which the
+    /// app tells in its own banner while in front; any other push keeps iOS's banner.
+    static let toldInNotices: Set<String> = ["dailyProgress", "comment", "coachNote", "weeklyAwards"]
 
     /// Where the 6pm push's view asked to open the app: 动态, 打卡, or nil for a plain tap.
     static func takeDestination() -> PushDestination? {
@@ -35,7 +39,7 @@ enum Push {
             let key = alert["loc-key"] as? String
         else { return }
         let content = UNMutableNotificationContent()
-        let format = Bundle.main.localizedString(forKey: key, value: nil, table: nil)
+        let format = String(copyKey: key, bundle: .main)
         content.body = String(format: format, arguments: alert["loc-args"] as? [String] ?? [])
         content.categoryIdentifier = aps["category"] as? String ?? ""
         content.threadIdentifier = aps["thread-id"] as? String ?? ""
@@ -50,13 +54,18 @@ enum Push {
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// What a tapped notification does; the scene sets it.
     var opened: (OpenedNotification) -> Void = { _ in }
+    /// A notification of a category arrived while the app is in front: true when the app tells it
+    /// in its own banner, so iOS shows none. The scene sets it.
+    var arrived: (String) -> Bool = { _ in false }
     /// Where the 6pm push's view asked to go, kept until the tabs take it: a tap that launched
     /// the app comes before they are there.
     private var destination: PushDestination?
-    private lazy var taps = NotificationTaps { [weak self] in
-        self?.destination = Push.takeDestination()
-        self?.opened($0)
-    }
+    private lazy var taps = NotificationTaps(
+        arrived: { [weak self] in self?.arrived($0) ?? false },
+        opened: { [weak self] in
+            self?.destination = Push.takeDestination()
+            self?.opened($0)
+        })
 
     /// Whether the last tapped notification's view asked to go somewhere of its own.
     var hasDestination: Bool { destination != nil }

@@ -121,6 +121,34 @@ describe('CheckInDraft', () => {
     expect(issues({ ...base, kind: 'healthyMeal', meal: { minutes: 30 } })).toStrictEqual(['meal']);
   });
 
+  it('takes a start time on the clock as HH:mm on a 练了, or none', () => {
+    const start = (value: unknown) =>
+      issues({ ...trained, training: { sport: 'run', startTime: value } });
+    expect(start('00:00')).toBe('ok');
+    expect(start('07:30')).toBe('ok');
+    expect(start('23:59')).toBe('ok');
+    expect(start('24:00')).toStrictEqual(['training.startTime']);
+    expect(start('7:30')).toStrictEqual(['training.startTime']);
+    expect(start('07:60')).toStrictEqual(['training.startTime']);
+    expect(start(450)).toStrictEqual(['training.startTime']);
+    expect(issues({ ...base, kind: 'healthyMeal', meal: { startTime: '07:30' } })).toStrictEqual([
+      'meal',
+    ]);
+  });
+
+  it('stores the start time with the sport, and reads it back', () => {
+    const started = CheckInDraft.parse({
+      ...trained,
+      training: { sport: 'run', minutes: 30, startTime: '06:45' },
+    });
+    expect(storedPayload(started)).toStrictEqual({
+      version: 1,
+      sport: 'run',
+      minutes: 30,
+      startTime: '06:45',
+    });
+  });
+
   it('takes up to 3 different squads, or none', () => {
     const audience = (squads: unknown) => issues({ ...trained, audience: squads });
     expect(audience([squad, otherSquad])).toBe('ok');

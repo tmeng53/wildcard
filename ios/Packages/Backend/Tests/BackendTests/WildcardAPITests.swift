@@ -280,7 +280,7 @@ private struct RefusedTokens: AuthProvider {
     #expect(try await member.api.checkInTotals().topSport == TopSport(activity: .sport("run"), checkIns: 2))
 }
 
-@Test func tennisCheckInsUnlockTheRacketThenDeuceClubAndHalfMoonAndPiecesOneByOne() async throws {
+@Test func tennisCheckInsUnlockDeuceClubAndHalfMoonAndPiecesOneByOne() async throws {
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     let squad = try await stack.squad(of: member)
@@ -292,17 +292,18 @@ private struct RefusedTokens: AuthProvider {
         _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(training), daysAgo: daysAgo))
     }
     try await tennis(2)
-    #expect(try await member.api.unlocks().map(\.id) == ["racket"])
+    // Props are everyone's: a 练了 opens none.
+    #expect(try await member.api.unlocks().isEmpty)
 
-    // A second one on the same day counts nowhere.
+    // A second one on the same day counts nowhere: WARM-UP's headphones still wait for a 2nd day.
     try await tennis(2)
-    #expect(try await member.api.unlocks().map(\.id) == ["racket"])
+    #expect(try await member.api.unlocks().isEmpty)
     try await tennis(1)
     try await tennis(0)
     let standing = try await member.api.unlockStanding()
     let unlocked = standing.unlocks
     // WARM-UP's headphones open on the 2nd 练了 of any sport.
-    #expect(Set(unlocked.map(\.id)) == ["racket", "deuce", "halfmoon", "warmup-headphones"])
+    #expect(Set(unlocked.map(\.id)) == ["deuce", "halfmoon", "warmup-headphones"])
     #expect(unlocked.first { $0.id == "deuce" }?.checkIns == 3)
     #expect(unlocked.first { $0.id == "warmup-headphones" }?.kind == .piece)
     // The street as the server works it out: DEUCE CLUB earned, its sweater 2 练了 away.

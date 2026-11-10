@@ -64,6 +64,8 @@ public actor DeviceOutbox: Outbox {
         let sport: String?
         let customSport: String?
         let minutes: Int?
+        /// A 训练's start, `HH:mm`; missing on the rest and on posts kept before it.
+        let startTime: String?
         let caption: String?
         let text: String?
         /// A 休息 rather than a 请假条; missing on posts kept before it existed.
@@ -90,10 +92,12 @@ public actor DeviceOutbox: Outbox {
             var text: String?
             var restDay: Bool?
             workout = post.draft.workout
+            var startTime: String?
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
                 minutes = workoutMinutes?.value
+                startTime = body.startTime?.wire
                 caption = body.caption
                 switch activity {
                 case .sport(let listed): sport = listed.rawValue
@@ -105,12 +109,13 @@ public actor DeviceOutbox: Outbox {
             case .cheatMeal(let body):
                 kind = "cheatMeal"
                 caption = body.caption
-            case .disclaimer(let disclaimer):
+            case .disclaimer(let disclaimer, _):
                 kind = "disclaimer"
                 text = disclaimer.text
                 restDay = disclaimer.restDay ? true : nil
             }
             self.restDay = restDay
+            self.startTime = startTime
             (self.sport, self.customSport, self.minutes, self.caption, self.text) = (
                 sport, customSport, minutes, caption, text
             )
@@ -129,7 +134,11 @@ public actor DeviceOutbox: Outbox {
                     prepared.append(PreparedPhoto(id: photo.id, jpeg: jpeg, size: size))
                 }
             }
-            let body = PostBody(photos: prepared, caption: caption ?? "", workout: kind == "trained" ? workout : nil)
+            let trained = kind == "trained"
+            let start = startTime.flatMap { try? StartTime(wire: $0) }
+            let body = PostBody(
+                photos: prepared, caption: caption ?? "", workout: trained ? workout : nil,
+                startTime: trained ? start : nil)
             let draft: CheckInDraft
             switch kind {
             case "trained":
@@ -145,7 +154,7 @@ public actor DeviceOutbox: Outbox {
             case "cheatMeal": draft = .cheatMeal(body)
             case "disclaimer":
                 guard let text else { return nil }
-                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false))
+                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
             default: return nil
             }
             return PendingCheckIn(

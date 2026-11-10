@@ -58,7 +58,7 @@ public struct APIMeService: MeService {
                 board: board,
                 unlocks: standing.unlocks,
                 stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
-                record: record)
+                record: record, birthday: member.birthday)
         }
     }
 
@@ -120,6 +120,13 @@ public struct APIMeService: MeService {
                 Profile(
                     timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
                     character: profile?.character, jerseyNumber: jerseyNumber))
+        }
+    }
+
+    /// Saves or forgets the birthday, apart from the profile, which keeps it.
+    public func save(birthday: Birthday?) async throws(MeError) {
+        try await me { () throws(APIError) in
+            if let birthday { try await api.save(birthday) } else { try await api.forgetBirthday() }
         }
     }
 

@@ -39,7 +39,7 @@ public struct LoadingDots: View {
             isShown = true
         }
         .accessibilityElement()
-        .accessibilityLabel(Text("加载中", bundle: .module))
+        .accessibilityLabel(Text(copy: "加载中", bundle: .module))
         .accessibilityHidden(!isShown)
     }
 }
@@ -114,7 +114,7 @@ struct LoadingCover<Loader: View>: ViewModifier {
                     loader
                         .transition(.opacity)
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(Text("加载中", bundle: .module))
+                        .accessibilityLabel(Text(copy: "加载中", bundle: .module))
                         .accessibilityAddTraits(.isModal)
                         .accessibilityIdentifier("loading.cover")
                 }

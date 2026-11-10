@@ -65,9 +65,9 @@ struct NicknameField: View {
     var body: some View {
         TextField(
             text: $nickname,
-            prompt: Text("昵称", bundle: .module).foregroundStyle(Color(role: .fgBrandPen, in: theme))
+            prompt: Text(copy: "昵称", bundle: .module).foregroundStyle(Color(role: .fgBrandPen, in: theme))
         ) {
-            Text("昵称", bundle: .module)
+            Text(copy: "昵称", bundle: .module)
         }
         .typeStyle(TypeRamp.headline)
         .foregroundStyle(Color(role: .fgOnBrand, in: theme))

@@ -14,6 +14,7 @@ import FeedDomain
 import FeedUI
 import Foundation
 import HealthUI
+import HomeWidgetDomain
 import LocationDomain
 import LocationUI
 import MeDomain
@@ -76,11 +77,7 @@ struct WildcardApp: App {
     // An init, not property initializers: those run outside the main actor, and the post
     // callback and the models are the main actor's.
     init() {
-        CrashReports.start()
-        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
-        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
-        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
-        AppModel.show(CatalogClient.bundled)
+        Self.startUp()
         // Only now: the editor's street is the catalog's starter street, which `show` just put out.
         _editor = State(initialValue: CharacterEditorDemo.model())
         LaunchOptions.forgetTodayStateIfAsked()
@@ -128,8 +125,20 @@ struct WildcardApp: App {
                     now: LaunchOptions.signUpTime, health: Self.sampleHealth(), location: Self.sampleLocation))
         }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
-        _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource))
+        _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
+    }
+
+    /// What every launch does first, before any model or screen is made.
+    private static func startUp() {
+        CrashReports.start()
+        // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
+        AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
+        // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
+        // the newest for the next one), before anything shows.
+        AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
+        // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
+        AppModel.show(CatalogClient.bundled, keepsCopy: false)
     }
 
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
@@ -172,7 +181,9 @@ struct WildcardApp: App {
             service: RecapSample.Service(),
             squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
             seen: .onlyThisLaunch(),
-            scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
+            scenePicker: { _ in
+                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
+            },
             scenePicked: { scene in today.scene = scene })
     }
 
@@ -183,19 +194,31 @@ struct WildcardApp: App {
             ? InMemoryFeedSource(viewer: viewer, posts: [], characters: [:], offline: LaunchOptions.feedIsOffline)
             : InMemoryFeedSource.sample(
                 viewer: viewer, squad: squad, now: LaunchOptions.now(), zone: .current,
-                photos: InMemoryFeedSource.renderSamplePhotos(), coach: LaunchOptions.sidelineCoach)
+                photos: samplePhotos(), coach: LaunchOptions.sidelineCoach)
+    }
+
+    /// The sample posts' photos, drawn only when the sample squad can show: with a backend the
+    /// tabs are `AppRoot`'s, and drawing them would hold the launch on the main actor for nothing.
+    private static func samplePhotos() -> [String: Data] {
+        AppConfig.current == nil ? InMemoryFeedSource.renderSamplePhotos() : [:]
     }
 
     /// 动态 on the sample squad.
-    private static func feed(viewer: MemberID, squad: SquadID, source: InMemoryFeedSource) -> FeedModel {
+    private static func feed(viewer: MemberID, squad: SquadID, source: InMemoryFeedSource, today: TodayModel)
+        -> FeedModel
+    {
         let zone = TimeZone.current
         let store = FeedStore(
             source: source, squad: squad, viewer: viewer, today: { LocalDay(at: LaunchOptions.now(), in: zone) },
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
-        return FeedModel(
+        let feed = FeedModel(
             store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
             now: LaunchOptions.now)
+        // 成绩卡's 小队名: the squad's name as 今天 has it, or the sample's own before 今天 first
+        // loads (a launch straight into 动态 never opens 今天).
+        feed.squadName = { [weak today] in today?.home?.squad.name ?? InMemoryCheckInBackend.sampleSquadName }
+        return feed
     }
 
     /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
@@ -210,6 +233,11 @@ struct WildcardApp: App {
         case nil:
             tab.wrappedValue = .today
         }
+    }
+
+    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
+    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
     }
 
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
@@ -272,6 +300,8 @@ struct WildcardApp: App {
             LaunchCover()
         } else if LaunchOptions.showsRecap {
             RecapDemo()
+        } else if LaunchOptions.showsWidgets {
+            WidgetPreview(now: LaunchOptions.now())
         } else if let day = LaunchOptions.dailyPush {
             DailyPushPreview(day: day, now: LaunchOptions.now())
         } else if let app {

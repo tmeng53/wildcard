@@ -52,7 +52,7 @@ public struct FeedView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Space.m) {
                     HStack(alignment: .center, spacing: Space.s) {
-                        Text("动态", bundle: .module)
+                        Text(copy: "动态", bundle: .module)
                             .typeStyle(TypeRamp.largeTitle)
                             .foregroundStyle(Color(role: .fgDefault, in: theme))
                             .accessibilityAddTraits(.isHeader)
@@ -173,15 +173,15 @@ extension DayHeading {
     /// 今天, 昨天, 周三, or 10月14日.
     var title: Text {
         switch self {
-        case .today: Text("今天", bundle: .module)
-        case .yesterday: Text("昨天", bundle: .module)
-        case .weekday(1): Text("周一", bundle: .module)
-        case .weekday(2): Text("周二", bundle: .module)
-        case .weekday(3): Text("周三", bundle: .module)
-        case .weekday(4): Text("周四", bundle: .module)
-        case .weekday(5): Text("周五", bundle: .module)
-        case .weekday(6): Text("周六", bundle: .module)
-        case .weekday: Text("周日", bundle: .module)
+        case .today: Text(copy: "今天", bundle: .module)
+        case .yesterday: Text(copy: "昨天", bundle: .module)
+        case .weekday(1): Text(copy: "周一", bundle: .module)
+        case .weekday(2): Text(copy: "周二", bundle: .module)
+        case .weekday(3): Text(copy: "周三", bundle: .module)
+        case .weekday(4): Text(copy: "周四", bundle: .module)
+        case .weekday(5): Text(copy: "周五", bundle: .module)
+        case .weekday(6): Text(copy: "周六", bundle: .module)
+        case .weekday: Text(copy: "周日", bundle: .module)
         case .date(let day): Text(Self.noon(of: day), format: Self.dayStyle)
         }
     }

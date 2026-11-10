@@ -22,7 +22,7 @@ public struct StateView<Figure: View>: View {
 
         /// 再试一次.
         public static func retry(identifier: String, run: @escaping () -> Void) -> Action {
-            Action(Text("再试一次", bundle: .module), identifier: identifier, run: run)
+            Action(Text(copy: "再试一次", bundle: .module), identifier: identifier, run: run)
         }
     }
 
@@ -67,7 +67,8 @@ extension StateView {
         -> StateView
     {
         StateView(
-            Text("网络开小差了", bundle: .module), action: .retry(identifier: retryIdentifier, run: retry), figure: figure)
+            Text(copy: "网络开小差了", bundle: .module), action: .retry(identifier: retryIdentifier, run: retry),
+            figure: figure)
     }
 }
 
@@ -87,7 +88,7 @@ public struct InlineFailure: View {
 
     /// 网络开小差了，没存上.
     public init() {
-        self.init(Text("网络开小差了，没存上", bundle: .module))
+        self.init(Text(copy: "网络开小差了，没存上", bundle: .module))
     }
 
     /// Other words for what didn't go out (没发出去).

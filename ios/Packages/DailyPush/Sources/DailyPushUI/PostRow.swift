@@ -37,9 +37,14 @@ struct PostRow: View {
         .accessibilityActions {
             ForEach(Emoji.quick, id: \.self) { emoji in
                 Button {
-                    model.pick(emoji, on: post.id, from: .zero)
+                    // From its smiley, as a tap on the bar sends it; VoiceOver hears it went.
+                    let from = model.buttons[post.id].map { CGPoint(x: $0.midX, y: $0.midY) } ?? .zero
+                    model.pick(emoji, on: post.id, from: from)
+                    AccessibilityNotification.Announcement(
+                        AppCopyLines.attributed("已回应 \(emoji.text)", bundle: .module)
+                    ).post()
                 } label: {
-                    Text("回应 \(emoji.text)", bundle: .module.inAppLanguage)
+                    Text(copy: "回应 \(emoji.text)", bundle: .module)
                 }
             }
         }
@@ -112,19 +117,19 @@ struct PostRow: View {
     @ViewBuilder private var kindTag: some View {
         switch post.entry {
         case .trained(let activity?, let minutes?):
-            Tag(Text("训练 · \(activity.name) · \(minutes.value) 分钟", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "训练 · \(activity.name) · \(minutes.value) 分钟", bundle: .module))
         case .trained(let activity?, nil):
-            Tag(Text("训练 · \(activity.name)", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "训练 · \(activity.name)", bundle: .module))
         case .trained(nil, let minutes?):
-            Tag(Text("训练 · \(minutes.value) 分钟", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "训练 · \(minutes.value) 分钟", bundle: .module))
         case .trained(nil, nil):
-            Tag(Text("训练", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "训练", bundle: .module))
         case .healthyMeal:
-            Tag(Text("健康餐", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "健康餐", bundle: .module))
         case .cheatMeal:
-            Tag(Text("坦白放纵餐", bundle: .module.inAppLanguage))
+            Tag(Text(copy: "坦白放纵餐", bundle: .module))
         case .disclaimer:
-            Tag(Text("请假条", bundle: .module.inAppLanguage), systemImage: "moon.fill", style: .rest)
+            Tag(Text(copy: "请假条", bundle: .module), systemImage: "moon.fill", style: .rest)
         }
     }
 
@@ -165,7 +170,7 @@ struct PostRow: View {
     /// 「3 人回应：💪 2，😂 1」
     private var summary: Text {
         let groups = post.reactions.groups.map { "\($0.kind.text) \($0.members.count)" }.joined(separator: "，")
-        return Text("\(post.reactionCount) 人回应：\(groups)", bundle: .module.inAppLanguage)
+        return Text(copy: "\(post.reactionCount) 人回应：\(groups)", bundle: .module)
     }
 
     private func myButton(_ mine: Emoji?) -> some View {
@@ -200,8 +205,8 @@ struct PostRow: View {
             model.buttons[post.id] = frame
         }
         .accessibilityLabel(
-            mine.map { Text("我的回应 \($0.text)，换一个", bundle: .module.inAppLanguage) }
-                ?? Text("回应", bundle: .module.inAppLanguage)
+            mine.map { Text(copy: "我的回应 \($0.text)，换一个", bundle: .module) }
+                ?? Text(copy: "回应", bundle: .module)
         )
         .accessibilityIdentifier("dailyPush.react")
     }

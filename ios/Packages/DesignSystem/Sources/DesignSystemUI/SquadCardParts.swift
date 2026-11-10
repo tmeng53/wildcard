@@ -5,13 +5,18 @@ import SwiftUI
 /// The squad's goal as one cell a day, as many cells as the goal and as many filled as the days
 /// trained, never past full (the score's 「+N」 tag shows days past it). Ink on a light grey that
 /// reads on the card's glass, never red.
-struct DayCells: View {
+public struct DayCells: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let filled: Int
     let total: Int
 
-    var body: some View {
+    public init(filled: Int, total: Int) {
+        self.filled = filled
+        self.total = total
+    }
+
+    public var body: some View {
         let spacing = total > 40 ? SquadCardMetrics.denseCellSpacing : SquadCardMetrics.cellSpacing
         HStack(spacing: spacing) {
             ForEach(0..<max(total, 1), id: \.self) { index in
@@ -47,7 +52,9 @@ struct PageDots: View {
                         .contentShape(Self.tapArea)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(item == .squad ? Text("小队", bundle: .module) : Text("我这周", bundle: .module))
+                .accessibilityLabel(
+                    item == .squad ? Text(copy: "小队", bundle: .module) : Text(copy: "我这周", bundle: .module)
+                )
                 .accessibilityAddTraits(item == page ? .isSelected : [])
                 .accessibilityIdentifier("squadcard.page.\(item == .squad ? "squad" : "mine")")
             }

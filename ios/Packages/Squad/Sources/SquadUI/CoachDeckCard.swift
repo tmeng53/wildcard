@@ -149,7 +149,7 @@ struct CoachDeckCard: View {
                 big(Text(verbatim: shown.text ?? ""))
             }
         } else {
-            big(Text("暂时没有新消息", bundle: .module))
+            big(Text(copy: "暂时没有新消息", bundle: .module))
         }
     }
 
@@ -165,7 +165,7 @@ struct CoachDeckCard: View {
     /// 衣橱」 once it is put away.
     @ViewBuilder private func giftFace(_ gift: CoachPageCard.Gift) -> some View {
         if giftMoment == .boxed {
-            big(Text("送你一样东西，拆开看看。", bundle: .module))
+            big(Text(copy: "送你一样东西，拆开看看。", bundle: .module))
         } else {
             HStack(spacing: Space.m) {
                 places.giftPicture(gift.piece)
@@ -182,7 +182,7 @@ struct CoachDeckCard: View {
                         .lineLimit(1)
                     Group {
                         if giftMoment == .stowed {
-                            Text("已放进衣橱", bundle: .module)
+                            Text(copy: "已放进衣橱", bundle: .module)
                         } else if let line = gift.line {
                             Text(verbatim: line)
                         }
@@ -225,31 +225,31 @@ struct CoachDeckCard: View {
         if let shown {
             switch shown.kind {
             case .board:
-                primary(Text("去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
+                primary(Text(copy: "去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
             case .gift:
                 giftButtons(shown)
             case .note, .challenge:
                 EmptyView()
             }
         } else {
-            outline(Text("看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
+            outline(Text(copy: "看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
         }
     }
 
     @ViewBuilder private func giftButtons(_ card: CoachPageCard) -> some View {
         switch giftMoment {
         case .boxed:
-            primary(Text("拆开", bundle: .module), id: "coachDeck.unwrap") { moment = .floating }
+            primary(Text(copy: "拆开", bundle: .module), id: "coachDeck.unwrap") { moment = .floating }
         case .floating:
-            outline(Text("一会儿再说", bundle: .module), id: "coachDeck.later", grows: false) {
+            outline(Text(copy: "一会儿再说", bundle: .module), id: "coachDeck.later", grows: false) {
                 Task { if await deck.open(card, worn: false) { moment = .stowed } }
             }
-            primary(Text("立刻穿上", bundle: .module), id: "coachDeck.wear") {
+            primary(Text(copy: "立刻穿上", bundle: .module), id: "coachDeck.wear") {
                 Task { if await deck.open(card, worn: true) { moment = .worn } }
             }
         case .worn, .stowed:
             if let piece = card.gift?.piece {
-                primary(Text("去衣橱看看", bundle: .module), id: "coachDeck.wardrobe") { places.wardrobe(piece) }
+                primary(Text(copy: "去衣橱看看", bundle: .module), id: "coachDeck.wardrobe") { places.wardrobe(piece) }
             }
         }
     }
@@ -275,10 +275,10 @@ struct CoachDeckCard: View {
 
     static func kind(_ kind: CoachPageCard.Kind) -> Text {
         switch kind {
-        case .board: Text("对小队说", bundle: .module)
-        case .note: Text("今天对你说", bundle: .module)
-        case .challenge: Text("今日挑战", bundle: .module)
-        case .gift: Text("送你的", bundle: .module)
+        case .board: Text(copy: "对小队说", bundle: .module)
+        case .note: Text(copy: "今天对你说", bundle: .module)
+        case .challenge: Text(copy: "今日挑战", bundle: .module)
+        case .gift: Text(copy: "送你的", bundle: .module)
         }
     }
 
@@ -317,5 +317,9 @@ enum DeckMetrics {
     static let squash: Double = 0.08
     /// Seconds 接受挑战's stamp shows before the card goes into 以前.
     static let stampHold: Double = 0.6
+    /// How far right the top card leans when the page opens, to show it swipes.
+    static let nudge: Double = 30
+    /// Seconds after the page opens before the top card leans.
+    static let nudgeDelay: Double = 0.6
 }
 #endif

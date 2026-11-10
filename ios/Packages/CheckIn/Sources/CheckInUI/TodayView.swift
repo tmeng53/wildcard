@@ -77,7 +77,6 @@ public struct TodayView: View {
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
-        .modifier(HomeNotices(model: model))
         .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
@@ -227,7 +226,7 @@ public struct TodayView: View {
                 })
             let mine = myWeek(
                 home: home, day: day, week: week.mine,
-                challenge: weekChallenge(model.myChallenge, coach: model.sidelineCoach))
+                challenge: weekChallenge(model.myChallenge))
             Group {
                 if isCardCollapsed {
                     capsule(squad: squad, mine: mine, day: day, recap: recap)
@@ -237,13 +236,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
-                    .completesChallenge(model.completeChallenge)
+                    .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
-                        .completesChallenge(model.completeChallenge)
+                        .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
@@ -305,7 +304,7 @@ public struct TodayView: View {
         if model.phase == .night {
             let isOn = model.lightsOn
             let chain = short ? PullCordMotion.shortLength : PullCordMotion.length
-            PullCord(isOn ? Text("关灯", bundle: .module) : Text("开灯", bundle: .module), isOn: isOn, chain: chain) {
+            PullCord(Text(copy: isOn ? "关灯" : "开灯", bundle: .module), isOn: isOn, chain: chain) {
                 model.pullCord(reduceMotion: reduceMotion)
             }
             .accessibilityIdentifier("today.lights")

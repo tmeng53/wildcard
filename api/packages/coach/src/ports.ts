@@ -9,7 +9,13 @@ import type {
 } from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
-import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
+import type {
+  CoachModel,
+  CoachReasoning,
+  CoachSettings,
+  MemberId,
+  SquadId,
+} from './domain/settings.js';
 import type { MemberFacts } from './domain/member-facts.js';
 import type { CoachLetter, Handover } from './domain/letter.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
@@ -63,6 +69,8 @@ export type CoachPhotoUrls = (paths: readonly string[]) => Promise<readonly stri
 
 /** What the coach can look up about these members: their counts, titles and this week's plan. */
 export type CoachMemberFacts = (input: {
+  /** The squad whose coach asks: counts only what each member shared to it. */
+  readonly squad: string;
   readonly members: readonly string[];
   /** The Monday of the week whose plan to give. */
   readonly weekStart: string;
@@ -100,6 +108,8 @@ export type AgentRun =
 export interface CoachAgent {
   run(request: {
     readonly model: CoachModel;
+    /** How hard the model thinks before it answers. */
+    readonly reasoning: CoachReasoning;
     readonly instructions: string;
     readonly task: string;
     readonly tools: readonly CoachTool[];
@@ -233,6 +243,8 @@ export interface DayChallenge {
   /** The squad's day it is for, `YYYY-MM-DD`. */
   readonly day: string;
   readonly challenge: Challenge;
+  /** The coach who set it: the note's, which stays its own after the squad changes coach. */
+  readonly coach: CoachReply['coach'];
   readonly answer: ChallengeAnswer | undefined;
   /** Why they let it go, if they said. */
   readonly reason: string | undefined;
@@ -281,11 +293,18 @@ export interface CoachAnswerStore {
     readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
-  /** The squad's answers under a check-in, oldest first. */
+  /** The squad's answers under a check-in, whichever coach wrote them, oldest first. */
   ofCheckIn(
     squad: SquadId,
     checkIn: string,
-  ): Promise<readonly { readonly comment: string; readonly text: string; readonly at: Date }[]>;
+  ): Promise<
+    readonly {
+      readonly comment: string;
+      readonly coach: CoachId;
+      readonly text: string;
+      readonly at: Date;
+    }[]
+  >;
 }
 
 /** A 战术板 line as members read it, with the coach who wrote it. */

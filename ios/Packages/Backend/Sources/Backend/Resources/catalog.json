@@ -1094,6 +1094,9 @@
       }
     ]
   },
+  "appCopy": {
+    "entries": {}
+  },
   "scenes": {
     "scenes": [
       {
@@ -1814,6 +1817,17 @@
         "slot": "acc",
         "starter": true
       }
+    ]
+  },
+  "appBuild": {},
+  "reactions": {
+    "quick": [
+      "❤️",
+      "💪",
+      "😂",
+      "🤤",
+      "😮",
+      "😡"
     ]
   }
 }

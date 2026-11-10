@@ -66,7 +66,7 @@ struct MyWeekPage: View {
         }
         .overlay(alignment: .top) {
             VStack(alignment: .leading, spacing: 0) {
-                PageTitle(label: Text("本周", bundle: .module), title: Text("你的一周", bundle: .module))
+                PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "你的一周", bundle: .module))
                 VStack(alignment: .leading, spacing: Space.xxs) {
                     HStack(alignment: .center, spacing: Space.l) {
                         Score(count: week.trainedDays, goal: week.plan, size: .story)
@@ -78,7 +78,7 @@ struct MyWeekPage: View {
                             Text(verbatim: line).typeStyle(TypeRamp.headline)
                         }
                     }
-                    Text("训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
+                    Text(copy: "训练天数", bundle: .module).typeStyle(TypeRamp.footnote)
                 }
                 .padding(.horizontal, Space.l)
             }
@@ -147,7 +147,7 @@ private struct DayDot: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        Text(Self.weekday(index), bundle: .module)
+        Text(copy: Self.weekday(index), bundle: .module)
             .typeStyle(TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: kind.isTrained ? .fgOnAccent : .fgMuted, in: theme))
             .frame(width: Self.size, height: Self.size)
@@ -165,7 +165,7 @@ private struct DayDot: View {
             }
     }
 
-    static func weekday(_ index: Int) -> LocalizedStringKey {
+    static func weekday(_ index: Int) -> CopyLine {
         ["一", "二", "三", "四", "五", "六", "日"][min(max(index, 0), 6)]
     }
 }
@@ -177,9 +177,9 @@ private struct DayName: View {
     var body: some View {
         switch kind {
         case .trained(let sport?): sport.cardName
-        case .trained(nil): Text("训练", bundle: .module)
-        case .rest: Text("休息", bundle: .module)
-        case .disclaimer: Text("请假", bundle: .module)
+        case .trained(nil): Text(copy: "训练", bundle: .module)
+        case .rest: Text(copy: "休息", bundle: .module)
+        case .disclaimer: Text(copy: "请假", bundle: .module)
         case .none: Text(verbatim: " ").accessibilityHidden(true)
         }
     }
@@ -199,7 +199,7 @@ struct HottestPage: View {
             ZStack(alignment: .topLeading) {
                 Ground(height: StoryLayout.groundLow)
                 VStack(alignment: .leading, spacing: Space.l) {
-                    PageTitle(label: Text("本周", bundle: .module), title: Text("你最火的一条", bundle: .module))
+                    PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "你最火的一条", bundle: .module))
                     post(photoHeight: min(Self.photoHeight, max(Self.photoHeightMin, floor - Self.besidePhoto)))
                         .padding(.horizontal, Space.l)
                         .offset(y: 30 * (1 - page.pop(0, 0.5)))
@@ -272,7 +272,7 @@ struct HottestPage: View {
             } placeholder: {
                 Color(role: .bgCanvas, in: theme)
             }
-            .accessibilityLabel(Text("照片", bundle: .module))
+            .accessibilityLabel(Text(copy: "照片", bundle: .module))
         } else {
             PostBlock(
                 kind: hottest.kind, activity: hottest.sport.map(Activity.sport), words: hottest.words,
@@ -284,7 +284,7 @@ struct HottestPage: View {
     private var kindTag: Text {
         let kind = hottest.kind.fullName
         guard let sport = hottest.sport else { return kind }
-        return Text("\(kind) · \(sport.name)", bundle: .module)
+        return Text(copy: "\(kind) · \(sport.name)", bundle: .module)
     }
 }
 

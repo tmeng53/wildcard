@@ -26,14 +26,17 @@ public struct PostBody: Hashable, Sendable {
     public let photos: [PreparedPhoto]
     public let caption: String?
     public let workout: Workout?
+    /// When a 训练 made by hand started, if the member picked it; nil on the other kinds.
+    public let startTime: StartTime?
 
     /// Keeps at most `Photos.maxCount` photos, and the caption trimmed, on one line and cut to
     /// `Caption.maxLength`; an empty caption is none.
-    public init(photos: [PreparedPhoto], caption: String, workout: Workout? = nil) {
+    public init(photos: [PreparedPhoto], caption: String, workout: Workout? = nil, startTime: StartTime? = nil) {
         self.photos = Array(photos.prefix(Photos.maxCount))
         let line = Self.fitCaption(caption).trimmingCharacters(in: .whitespaces)
         self.caption = line.isEmpty ? nil : line
         self.workout = workout
+        self.startTime = startTime
     }
 
     public var cover: PreparedPhoto? { photos.first }
@@ -51,7 +54,9 @@ public enum CheckInDraft: Hashable, Sendable {
     case trained(Activity, WorkoutMinutes?, PostBody)
     case healthyMeal(PostBody)
     case cheatMeal(PostBody)
-    case disclaimer(Disclaimer)
+    /// 今日请假条 with up to three photos, the cover first, which go out as the disclaimer's
+    /// photos once uploaded.
+    case disclaimer(Disclaimer, photos: [PreparedPhoto] = [])
 
     /// The workout a 训练 was posted from; nil for one made by hand and for the other kinds.
     public var workout: Workout? {
@@ -62,7 +67,7 @@ public enum CheckInDraft: Hashable, Sendable {
     public var photos: [PreparedPhoto] {
         switch self {
         case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body): body.photos
-        case .disclaimer: []
+        case .disclaimer(_, let photos): Array(photos.prefix(Photos.maxCount))
         }
     }
 }
