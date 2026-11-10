@@ -96,14 +96,11 @@ public struct Performance: Sendable {
         // Waiting helps only when the forearm on screen is over the body now and clears later.
         guard canWait, !seen.isEmpty, !clear(onScreen.pose(at: time)) else { return }
         // The screen's last frame before the clip starts may be a little earlier, so the frame
-        // before must be clear too.
-        var clearBefore = false
-        for frame in 1...Int((DepthSwap.reach * DepthSwap.rate).rounded()) {
-            let start = time + Double(frame) / DepthSwap.rate
+        // before must be clear too. Every other frame first, the most of the measuring.
+        for frame in stride(from: 2, through: Int((DepthSwap.reach * 60).rounded()), by: 2) {
+            let start = time + Double(frame) / 60
             let pose = onScreen.pose(at: start)
-            let clearNow = clear(pose)
-            defer { clearBefore = clearNow }
-            guard clearNow, clearBefore else { continue }
+            guard clear(pose), clear(onScreen.pose(at: start - 1.0 / 60)) else { continue }
             var later = onScreen
             later.waiting = Change(swap: start, performance: onScreen)
             later.current = Playing(clip: clip, start: start, from: pose)
@@ -280,8 +277,12 @@ public struct Performance: Sendable {
             let order = (soonest..<close).sorted { abs($0 - origin) < abs($1 - origin) }
             var best = (index: order[0], shows: Double.infinity)
             for index in order {
-                // A screen frame either side of it, wherever the screen's frames fall.
-                let area = (index - 2...index + 1).map { shown(min(max($0, 0), frames.count - 1)) }.max() ?? 0
+                // A screen frame either side of it, wherever the screen's frames fall. Every fourth
+                // frame first, which each such span holds one of: where it shows, so does the span,
+                // and the rest needn't be measured (it is the most of the measuring, on a tap).
+                let span = (index - 2...index + 1).map { min(max($0, 0), frames.count - 1) }
+                let probe = span.first { $0 % 4 == 0 } ?? span[0]
+                let area = shown(probe) > DepthSwap.unseen ? shown(probe) : span.map(shown).max() ?? 0
                 if area < best.shows { best = (index, area) }
                 if area <= DepthSwap.unseen { break }
             }
