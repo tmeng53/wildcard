@@ -28,8 +28,7 @@ final class HealthUITests: XCTestCase {
         XCTAssertTrue(map.exists, "the ride's map isn't in the photo row")
         XCTAssertTrue(chart.exists, "the ride's heart rate isn't beside its map")
         XCTAssertFalse(app.buttons["compose.minutes.60"].exists, "the minutes show beside the 成绩条")
-        settle()
-        keepScreenshot(named: "71-health-compose-ride")
+        keepTheRideAndOpenItsChart(chart, in: app)
 
         // The swim: its laps chart takes the map's place.
         app.buttons["compose.health.sample-swim"].tap()
@@ -73,6 +72,21 @@ final class HealthUITests: XCTestCase {
         app.buttons["compose.post"].tap()
         XCTAssertTrue(score.waitForNonExistence(timeout: Self.wait), "the post didn't go out")
         putAwayFromTheCard(in: app)
+    }
+
+    /// The ride on the compose page; tapping its chart opens it full screen, as a photo does, and
+    /// 关闭 puts it back in the row.
+    private func keepTheRideAndOpenItsChart(_ chart: XCUIElement, in app: XCUIApplication) {
+        settle()
+        keepScreenshot(named: "71-health-compose-ride")
+        chart.tap()
+        let bigChart = app.descendants(matching: .any).matching(identifier: "compose.viewer.chart").firstMatch
+        XCTAssertTrue(bigChart.waitForExistence(timeout: Self.wait), "tapping the chart didn't open it full screen")
+        settle()
+        assertOnScreen(bigChart, in: app)
+        keepScreenshot(named: "71b-health-compose-chart-full")
+        app.buttons["photoViewer.close"].tap()
+        XCTAssertTrue(bigChart.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the chart")
     }
 
     /// 时长 is struck like any other number (Tracy, 2026-11-08).
