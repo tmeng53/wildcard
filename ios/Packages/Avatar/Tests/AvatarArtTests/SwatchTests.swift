@@ -51,7 +51,8 @@ func everySwatchApplies(outfit: Outfit) throws {
     var lifter = PlaceholderCharacter.lifter
     lifter.colors["body"] = RGBAColor(hex: "#5E3B27")
     let figure = try PlaceholderCharacter.figure(wearing: lifter)
-    let legs = figure.parts.filter { ["legL", "legR"].contains($0.id.rawValue) }.flatMap(\.art).flatMap(\.shapes)
+    let legs = figure.parts.filter { ["legL", "legR", "shoeL", "shoeR"].contains($0.id.rawValue) }.flatMap(\.art)
+        .flatMap(\.shapes)
     #expect(legs.contains { $0.fill == RGBAColor(hex: "#F4F6FA") })
     // The legs are drawn as thick skin-colored strokes.
     #expect(legs.contains { $0.stroke?.color == RGBAColor(hex: "#5E3B27") })

@@ -6,19 +6,36 @@ import Foundation
 import Testing
 
 /// Shoes are their own slot: bodies draw bare legs, and every look wears WARM-UP's canvas shoes
-/// unless it picks another pair, drawn over the bottoms.
+/// unless it picks another pair. The shoes are parts of their own, carried by the legs and drawn
+/// after the torso, so no bottom's seat or top's hem covers them (long pants, overalls, a tall
+/// pair like the 手卷).
 @Test func everyLookWearsShoes() throws {
     for body in PlaceholderCharacter.variants(for: "body") {
         let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": body, "bottom": "warmup-leggings"]))
-        for leg in ["legL", "legR"] as [PartID] {
-            #expect(try figure.part(leg).art.count == 3, "\(body) \(leg)")
+        for (leg, shoe) in [("legL", "shoeL"), ("legR", "shoeR")] as [(PartID, PartID)] {
+            #expect(try figure.part(leg).art.count == 2, "\(body) \(leg)")
+            #expect(try figure.part(shoe).art.count == 1, "\(body) \(shoe)")
         }
     }
     let plain = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
     let canvas = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "warmup-canvas"]))
     let runners = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "shoes": "lap-runner"]))
-    #expect(try plain.part("legL").art == canvas.part("legL").art)
-    #expect(try runners.part("legL").art != canvas.part("legL").art)
+    #expect(try plain.part("shoeL").art == canvas.part("shoeL").art)
+    #expect(try runners.part("shoeL").art != canvas.part("shoeL").art)
+}
+
+/// Every pair of shoes draws over every bottom: after the part that draws the bottom's seat and
+/// the top's hem, and after both legs, which draw the bottom's legs.
+@Test func shoesDrawOverEveryBottom() throws {
+    let order = try PlaceholderCharacter.figure(wearing: Outfit(["body": "cat"])).parts.map(\.id.rawValue)
+    let last = ["torso", "legL", "legR"].compactMap { order.firstIndex(of: $0) }.max() ?? .max
+    for shoe in ["shoeL", "shoeR"] {
+        #expect((order.firstIndex(of: shoe) ?? -1) > last, "\(shoe)")
+    }
+    let bottoms = try PlaceholderCharacter.rig().parts.filter { part in
+        part.layers.contains { $0.slot == "bottom" }
+    }
+    #expect(bottoms.map(\.id.rawValue).sorted() == ["legL", "legR", "torso"])
 }
 
 /// A look saved with a piece this build has no art for (retired, or released after it) wears

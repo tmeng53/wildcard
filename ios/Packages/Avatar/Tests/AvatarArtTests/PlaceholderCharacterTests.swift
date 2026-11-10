@@ -10,9 +10,9 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "armLBack",
-            "armRBack",
-            "torso", "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "armLBack", "armRBack",
+            "torso", "medal", "shoeL", "shoeR", "propToes", "acc", "armL", "armR", "earL", "earR", "head", "flapL",
+            "flapR", "brows",
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
@@ -71,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 61)
+    #expect(figure.parts.count == 63)
 }
 
 @Test(arguments: Persona.allCases)
