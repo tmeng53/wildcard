@@ -54,9 +54,11 @@ final class MeUITests: XCTestCase {
         let tile = app.descendants(matching: .any).matching(identifier: "wall.tile").firstMatch
         XCTAssertTrue(tile.waitForExistence(timeout: 30), "the wall has no tiles")
         XCTAssertTrue(
-            app.staticTexts["wall.counts"].label.contains("发过 1 条"),
+            app.staticTexts["wall.counts"].label.contains("发过 2 条"),
             "the header has no counts: \(app.staticTexts["wall.counts"].label)")
         XCTAssertTrue(tile.frame.maxX <= app.frame.maxX && tile.frame.minX >= 0, "a tile runs off the screen")
+        // The newest, this morning's run, went to no squad: its tile says so in words.
+        XCTAssertTrue(tile.label.contains("仅自己可见"), "the private post's tile doesn't say 仅自己可见: \(tile.label)")
         settle()
         keepScreenshot(named: "92-my-posts")
 
@@ -64,6 +66,9 @@ final class MeUITests: XCTestCase {
         tile.tap()
         let back = backButton(in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
+        let onlyMe = app.descendants(matching: .any).matching(identifier: "post.onlyMe").firstMatch
+        XCTAssertTrue(onlyMe.waitForExistence(timeout: 10), "the private post's page doesn't say 仅自己可见")
+        XCTAssertTrue(onlyMe.frame.maxX <= app.frame.maxX, "仅自己可见 runs off the screen")
         waitFor(
             app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the post's page")
         settle()
