@@ -17,6 +17,18 @@ private func imported(
         activity: .sport(sport))
 }
 
+/// A 训练 posted from this Health workout.
+private func posted(_ imported: ImportedWorkout, on day: String) throws -> PostedTraining {
+    PostedTraining(
+        activity: try #require(imported.activity), day: try LocalDay(day), madeAt: imported.workout.endedAt,
+        workout: imported.workout)
+}
+
+/// A 训练 posted by hand, with no workout.
+private func byHand(_ sport: Sport, on day: String, at moment: String) throws -> PostedTraining {
+    PostedTraining(activity: .sport(sport), day: try LocalDay(day), madeAt: try Timestamp(moment), workout: nil)
+}
+
 @Test func todayIsTheMembersDayNewestFirstWithPostedMarked() throws {
     let morning = try imported("A", endingAt: "2026-11-06T12:10:00Z")
     let evening = try imported("B", endingAt: "2026-11-07T01:40:00Z")
@@ -25,7 +37,7 @@ private func imported(
     let yesterday = try imported("D", endingAt: "2026-11-05T20:00:00Z")
     let tomorrow = try imported("E", endingAt: "2026-11-07T05:30:00Z")
     let today = [morning, yesterday, late, tomorrow, evening].today(
-        try LocalDay("2026-11-06"), in: newYork, posted: [late.id])
+        try LocalDay("2026-11-06"), in: newYork, posted: [try posted(late, on: "2026-11-06")])
     #expect(today.map(\.imported.id.id) == ["C", "B", "A"])
     #expect(today.map(\.isPosted) == [true, false, false])
     #expect(today.newestToPost()?.id.id == "B")
@@ -41,33 +53,53 @@ private func imported(
     // A later game, and a run at the same time, are not the same session.
     let later = try imported("L", endingAt: "2026-11-10T01:30:00Z", seconds: 1800, sport: "pickleball")
     let run = try imported("R", endingAt: "2026-11-09T23:45:00Z", seconds: 1200, sport: "run")
-    let today = [watch, app, later, run].today(try LocalDay("2026-11-09"), in: newYork, posted: [watch.id])
+    let today = [watch, app, later, run].today(
+        try LocalDay("2026-11-09"), in: newYork, posted: [try posted(watch, on: "2026-11-09")])
     #expect(today.map(\.imported.id.id) == ["L", "A", "W", "R"])
     #expect(today.map(\.isPosted) == [false, true, true, false])
     #expect(today.newestToPost(skipping: [later.id])?.id.id == "R")
+}
+
+@Test func aSessionPostedUnderAnIDHealthNoLongerHasIsPosted() throws {
+    // The game was posted from Health as "OLD"; Health now keeps the same 6:19–6:49pm game as
+    // "NEW" only, and nothing else of it.
+    let old = try imported("OLD", endingAt: "2026-11-09T23:49:04Z", seconds: 1800, sport: "pickleball")
+    let new = try imported("NEW", endingAt: "2026-11-09T23:49:04Z", seconds: 1800, sport: "pickleball")
+    let day = try LocalDay("2026-11-09")
+    let today = [new].today(day, in: newYork, posted: [try posted(old, on: "2026-11-09")])
+    #expect(today.map(\.isPosted) == [true])
+    #expect(today.newestToPost() == nil)
+    // A post of another sport at that time, or of the sport earlier that day, covers nothing.
+    let run = try imported("RUN", endingAt: "2026-11-09T23:49:04Z", seconds: 1800, sport: "run")
+    #expect([new].today(day, in: newYork, posted: [try posted(run, on: "2026-11-09")]).map(\.isPosted) == [false])
+    let morning = try imported("AM", endingAt: "2026-11-09T14:00:00Z", seconds: 1800, sport: "pickleball")
+    #expect(
+        [new].today(day, in: newYork, posted: [try posted(morning, on: "2026-11-09")]).map(\.isPosted) == [false])
 }
 
 @Test func aTrainingPostedByHandCoversTheWorkoutOfItsSport() throws {
     // Pickleball 6:00–6:30pm in New York, posted by hand at 7:12pm; a run later that night.
     let pickleball = try imported("P", endingAt: "2026-11-09T23:30:00Z", seconds: 1800, sport: "pickleball")
     let run = try imported("R", endingAt: "2026-11-10T02:00:00Z", sport: "run")
-    let posted = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-10T00:12:00Z"))
     let day = try LocalDay("2026-11-09")
-    let today = [pickleball, run].today(day, in: newYork, posted: [], byHand: [posted])
+    let hand = try byHand("pickleball", on: "2026-11-09", at: "2026-11-10T00:12:00Z")
+    let today = [pickleball, run].today(day, in: newYork, posted: [hand])
     #expect(today.map(\.imported.id.id) == ["R", "P"])
     #expect(today.map(\.isPosted) == [false, true])
     #expect(today.newestToPost(skipping: [run.id]) == nil)
-    // A post of another sport, or one made before the workout started, covers nothing.
-    let other = HandPostedTraining(activity: .sport("run"), madeAt: try Timestamp("2026-11-10T00:12:00Z"))
-    #expect([pickleball, run].today(day, in: newYork, posted: [], byHand: [other]).map(\.isPosted) == [false, false])
-    let early = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-09T20:00:00Z"))
-    #expect([pickleball].today(day, in: newYork, posted: [], byHand: [early]).map(\.isPosted) == [false])
+    // A post of another sport, one made before the workout started, or one of another day,
+    // covers nothing.
+    let other = try byHand("run", on: "2026-11-09", at: "2026-11-10T00:12:00Z")
+    #expect([pickleball, run].today(day, in: newYork, posted: [other]).map(\.isPosted) == [false, false])
+    let early = try byHand("pickleball", on: "2026-11-09", at: "2026-11-09T20:00:00Z")
+    #expect([pickleball].today(day, in: newYork, posted: [early]).map(\.isPosted) == [false])
+    let backfill = try byHand("pickleball", on: "2026-11-08", at: "2026-11-10T00:12:00Z")
+    #expect([pickleball].today(day, in: newYork, posted: [backfill]).map(\.isPosted) == [false])
     // Each post covers one workout, the earliest: a second game still waits.
     let second = try imported("P2", endingAt: "2026-11-10T01:00:00Z", seconds: 1800, sport: "pickleball")
-    let late = HandPostedTraining(activity: .sport("pickleball"), madeAt: try Timestamp("2026-11-10T01:30:00Z"))
-    #expect(
-        [pickleball, second].today(day, in: newYork, posted: [], byHand: [late]).map(\.isPosted) == [false, true])
-    let both = [pickleball, second].today(day, in: newYork, posted: [pickleball.id], byHand: [late])
+    let late = try byHand("pickleball", on: "2026-11-09", at: "2026-11-10T01:30:00Z")
+    #expect([pickleball, second].today(day, in: newYork, posted: [late]).map(\.isPosted) == [false, true])
+    let both = [pickleball, second].today(day, in: newYork, posted: [try posted(pickleball, on: "2026-11-09"), late])
     #expect(both.map(\.isPosted) == [true, true])
 }
 
