@@ -24,7 +24,8 @@ extension MainTabs {
         }
         Task {
             let card = await deck.challengeCard(note: challenge.note)
-            selection = .today
+            // The member hasn't gone elsewhere while it was read.
+            guard selection == .today, todayPages.isEmpty else { return }
             // A coach fired since keeps its card, though the squad has no page for it.
             let page: [TodayPage] = deckCoach == nil ? [] : [.coachDeck]
             todayPages = page + (card.map { [.coachCard($0)] } ?? [])
