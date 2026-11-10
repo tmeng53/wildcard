@@ -84,7 +84,7 @@ async function tellNotices(
 }
 
 /**
- * The push to a squadmate a 训练 names: 「小美说你们一起练了，也算你一次？点开发一条」. A tap
+ * The push to a squadmate a 训练 names: 「小美 @了你：你们一起练了，点开也发一条」. A tap
  * opens their own 训练, filled from this one.
  */
 export function trainedWithNotification({

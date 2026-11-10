@@ -513,54 +513,6 @@
         }
       }
     },
-    "%@说你们一起练了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ says you trained together"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@說你們一起練了"
-          }
-        }
-      }
-    },
-    "队友说你们一起练了": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A squadmate says you trained together"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隊友說你們一起練了"
-          }
-        }
-      }
-    },
-    "也发一条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Post yours too"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "也發一則"
-          }
-        }
-      }
-    },
     "我也发": {
       "localizations": {
         "en": {
@@ -573,6 +525,54 @@
           "stringUnit": {
             "state": "translated",
             "value": "我也發"
+          }
+        }
+      }
+    },
+    "%@ @了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mentioned you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ @了你"
+          }
+        }
+      }
+    },
+    "队友 @了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A squadmate mentioned you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊友 @了你"
+          }
+        }
+      }
+    },
+    "一起练了 · 也发一条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You trained together · Post yours too"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一起練了 · 也發一則"
           }
         }
       }

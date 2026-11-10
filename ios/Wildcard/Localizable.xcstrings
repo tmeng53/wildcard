@@ -408,19 +408,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ says you trained together. Post yours too?"
+            "value": "%1$@ mentioned you: you trained together. Post yours too?"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 说你们一起练了，也算你一次？点开发一条"
+            "value": "%1$@ @了你：你们一起练了，点开也发一条"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ 說你們一起練了，也算你一次？點開發一則"
+            "value": "%1$@ @了你：你們一起練了，點開也發一則"
           }
         }
       }
