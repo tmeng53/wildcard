@@ -73,15 +73,18 @@ struct StreakTile: View {
     /// 现在连续 N 天, or 正在刷新纪录 N 天 while the run still going is the record; 0 once broken.
     private func currentRow(ongoing: Bool) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            if ongoing {
-                Text(copy: "正在刷新纪录", bundle: .module)
-                    .typeStyle(TypeRamp.captionEmphasis)
-                    .foregroundStyle(Color(role: .fgOnBrand, in: theme))
-            } else {
-                Text(copy: "现在连续", bundle: .module)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
+            Group {
+                if ongoing {
+                    Text(copy: "正在刷新纪录", bundle: .module)
+                        .typeStyle(TypeRamp.captionEmphasis)
+                        .foregroundStyle(Color(role: .fgOnBrand, in: theme))
+                } else {
+                    Text(copy: "现在连续", bundle: .module)
+                        .typeStyle(TypeRamp.caption)
+                        .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
+                }
             }
+            .minimumScaleFactor(Self.labelScale)
             Spacer(minLength: Space.xs)
             HStack(alignment: .firstTextBaseline, spacing: Self.unitGap) {
                 Text(verbatim: "\(current?.days ?? 0)")
@@ -91,6 +94,8 @@ struct StreakTile: View {
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
             }
+            // The number and its unit always show whole; the words give way first.
+            .layoutPriority(1)
         }
         .lineLimit(1)
     }
@@ -99,6 +104,7 @@ struct StreakTile: View {
     private static let moreHeight = 24.0
     private static let hairline = 1.0
     private static let unitGap = 3.0
+    private static let labelScale = 0.85
 }
 
 /// 10.20 – 10.25, 10.6 – 今天 when it runs to today, or 10.6 – 至今 while it is still going.

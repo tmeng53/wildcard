@@ -94,6 +94,24 @@ describe('longestRun', () => {
     });
   });
 
+  it('breaks a run on a seventh planned rest day in a row, as the run still going does', () => {
+    const rests = (from: number, count: number) =>
+      new Set(
+        Array.from({ length: count }, (_, i) => `2026-10-${String(from + i).padStart(2, '0')}`),
+      );
+    const days = new Set(['2026-10-01', '2026-10-02', '2026-10-10']);
+    expect(longestRun(days, rests(3, 7))).toEqual({
+      days: 2,
+      from: '2026-10-01',
+      to: '2026-10-02',
+    });
+    expect(longestRun(new Set(['2026-10-01', '2026-10-08']), rests(2, 6))).toEqual({
+      days: 2,
+      from: '2026-10-01',
+      to: '2026-10-08',
+    });
+  });
+
   it('has none without a day', () => {
     expect(longestRun(new Set())).toBeUndefined();
   });

@@ -662,7 +662,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Current streak"
+            "value" : "Now"
           }
         },
         "zh-Hant" : {
@@ -678,7 +678,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Setting a new record"
+            "value" : "New record"
           }
         },
         "zh-Hant" : {
