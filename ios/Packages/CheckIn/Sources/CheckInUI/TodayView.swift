@@ -224,7 +224,7 @@ public struct TodayView: View {
                         id: mate.member.description,
                         status: StageStatus(training: mate.training, activity: nil, plannedRest: mate.plannedRest).ring,
                         isMe: mate.member == home.member,
-                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
+                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : "today.mateRing")
                 })
             let mine = myWeek(
                 home: home, day: day, week: week.mine,
@@ -238,13 +238,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
-                    .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
+                    .onHome(model)
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
-                        .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
+                        .onHome(model)
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
