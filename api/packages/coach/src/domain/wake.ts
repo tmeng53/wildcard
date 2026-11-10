@@ -68,9 +68,13 @@ export function wakesDue({
 }): NewWake[] {
   const since = now.getTime() - CHECK_IN_WINDOW_MS;
   const wakes: NewWake[] = week.checkIns
-    .filter(({ createdAt }) => createdAt.getTime() > since && createdAt <= now)
+    .filter(
+      ({ createdAt, unposted }) =>
+        unposted !== true && createdAt.getTime() > since && createdAt <= now,
+    )
     .map(({ id }) => ({ squad, reason: { kind: 'checkIn', checkIn: id } }));
   for (const checkIn of week.checkIns) {
+    if (checkIn.unposted === true) continue;
     for (const comment of checkIn.comments) {
       if (saidTo(comment) === undefined) continue;
       if (comment.at.getTime() <= since || comment.at > now) continue;

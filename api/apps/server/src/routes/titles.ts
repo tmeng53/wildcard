@@ -489,8 +489,8 @@ export function titles(deps: {
       const [boards, profiles, totals, week, teamBadges, squadWeek, streaks] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
-        // A squadmate sees only what the member shared to this squad: 仅自己可见 posts never
-        // count toward squad data. The member's own card counts everything, as 我 does.
+        // A squadmate sees only what the member sent to this squad (posted or only recorded),
+        // nothing from before they joined it. The member's own card counts everything, as 我 does.
         viewer === memberId
           ? deps.checkIns.totals(memberId)
           : deps.checkIns.totalsSharedTo({ member: memberId, squad: squadId }),

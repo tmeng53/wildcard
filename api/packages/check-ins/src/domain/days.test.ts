@@ -38,6 +38,7 @@ function checkIn(
     day,
     createdAt: at(createdAt),
     audience: [],
+    inFeed: true,
   };
   switch (kind) {
     case 'trained':

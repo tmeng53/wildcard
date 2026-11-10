@@ -46,9 +46,9 @@ public final class ComposeModel {
     let healthWorkouts: [TodaysWorkout]
     /// What a workout picked from Health starts with: the numbers and tile 设置 shares.
     @ObservationIgnored private let sharing: HealthSharing
-    /// Whether a new post goes to the squad; off keeps it to the member. An edit keeps its squads
-    /// as posted and never reads it.
-    var isShared = true
+    /// 发布到动态: whether a new post goes in the squad's 动态; off only records it, counted for the
+    /// squad all the same. An edit keeps it as posted and never reads it.
+    var inFeed = true
     /// The days a new post can count for (补打卡), today last; none for an edit, whose day stays.
     let postableDays: [LocalDay]
     /// The past day a new post counts for, once the member picks one; nil is today, whatever
@@ -262,7 +262,7 @@ public final class ComposeModel {
         case .disclaimer:
             return
         }
-        isShared = !post.audience.squads.isEmpty
+        inFeed = post.inFeed
         day = postableDays.contains(post.day) && post.day != postableDays.last ? post.day : nil
     }
 

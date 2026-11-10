@@ -58,6 +58,11 @@ const checkInFields = {
       'The squads it went to, in the member’s order. On someone else’s check-in, only the ' +
       'viewer’s own squads are listed.',
   }),
+  inFeed: z.boolean().meta({
+    description:
+      '发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for ' +
+      'them, but only its author sees it.',
+  }),
 };
 
 /** How long a photo's view URL works. The app lists again for fresh ones. */
@@ -398,6 +403,7 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     postedDay: record.postedDay ?? record.day,
     createdAt: record.createdAt.toISOString(),
     audience: [...record.audience],
+    inFeed: record.inFeed,
   };
   switch (record.kind) {
     case 'trained': {
@@ -684,7 +690,8 @@ export function checkIns(deps: {
         draft: c.req.valid('json'),
       });
       const body = wire(checkIn, await viewUrls(deps, [checkIn]));
-      if (created && checkIn.audience.length > 0) {
+      // The coach answers posts; a check-in only recorded has nothing to answer under.
+      if (created && checkIn.inFeed && checkIn.audience.length > 0) {
         await deps.publish({
           version: 1,
           kind: 'check-in.created',

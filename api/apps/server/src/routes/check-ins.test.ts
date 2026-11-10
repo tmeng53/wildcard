@@ -214,6 +214,7 @@ describe('PUT /check-ins/{id}', () => {
       postedDay: day,
       createdAt,
       audience: [squad],
+      inFeed: true,
       kind: 'trained',
       training: { sport: 'custom', customSport: '飞盘', caption: '累但爽' },
     };
@@ -391,6 +392,7 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       day,
       postedDay: day,
       createdAt,
+      inFeed: true,
       kind: 'healthyMeal',
       meal: { caption: '番茄炒蛋' },
     };
@@ -447,7 +449,78 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
     ]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });
 
-  it('keeps a post shared to no squad to its member', async () => {
+  it('records a check-in with 发布到动态 off for the squad, out of its 动态', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const body = {
+      version: 1,
+      day,
+      createdAt,
+      audience: [squad],
+      inFeed: false,
+      kind: 'trained',
+      training: { sport: 'run', caption: '只给自己看' },
+    };
+    const saved = await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body });
+    expect([
+      saved.status,
+      z.object({ inFeed: z.boolean() }).parse(saved.body).inFeed,
+    ]).toStrictEqual([201, false]);
+    // The coach answers posts only.
+    expect(looked.filter(({ checkIn }) => checkIn === id)).toStrictEqual([]);
+    const range = `from=${day}&to=${day}`;
+    for (const viewer of [me, friend]) {
+      expect(
+        await call({
+          method: 'GET',
+          path: `/squads/${squad}/check-ins?${range}`,
+          token: viewer.token,
+        }),
+      ).toStrictEqual({ status: 200, type: 'application/json', body: { version: 1, posts: [] } });
+    }
+    expect((await call({ method: 'GET', path: `/check-ins/${id}`, token: me.token })).status).toBe(
+      200,
+    );
+    expect(
+      (await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).status,
+    ).toBe(404);
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}/reactions/mine`,
+          token: friend.token,
+          body: { version: 1, emoji: '🤤' },
+        })
+      ).status,
+    ).toBe(404);
+    // No post to talk under, for its author either, so nobody is told and the coach never hears.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}/comments/${randomUUID()}`,
+          token: me.token,
+          body: { version: 1, text: `@${friend.userId}`, mentions: [friend.userId] },
+        })
+      ).status,
+    ).toBe(404);
+    // An edit keeps it out of 动态.
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: { sport: 'run', caption: '改一下' } },
+    });
+    expect([
+      edited.status,
+      z.object({ inFeed: z.boolean() }).parse(edited.body).inFeed,
+    ]).toStrictEqual([200, false]);
+  });
+
+  it('takes an older build’s 仅自己可见 as sent to the squad, off its 动态', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -460,61 +533,40 @@ describe('GET /squads/{squadId}/check-ins and /me/check-ins', () => {
       kind: 'disclaimer',
       disclaimer: { text: '累' },
     };
+    const posted = {
+      version: 1,
+      id,
+      member: me.userId,
+      day,
+      postedDay: day,
+      createdAt,
+      audience: [squad],
+      inFeed: false,
+      kind: 'disclaimer',
+      disclaimer: { text: '累' },
+    };
+    expect(
+      await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body }),
+    ).toStrictEqual({ status: 201, type: 'application/json', body: posted });
+    // A retry from that build is the same check-in.
     expect(
       (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
-    ).toBe(201);
+    ).toBe(200);
     const range = `from=${day}&to=${day}`;
-    // Builds from before sharing was optional can't read it, so they aren't sent it.
     expect(
       await call({ method: 'GET', path: `/me/check-ins?${range}`, token: me.token }),
     ).toStrictEqual({
       status: 200,
       type: 'application/json',
-      body: { version: 1, checkIns: [] },
+      body: { version: 1, checkIns: [posted] },
     });
-    expect(
-      await call({
-        method: 'GET',
-        path: `/me/check-ins?${range}&unshared=include`,
-        token: me.token,
-      }),
-    ).toStrictEqual({
-      status: 200,
-      type: 'application/json',
-      body: {
-        version: 1,
-        checkIns: [
-          {
-            version: 1,
-            id,
-            member: me.userId,
-            day,
-            postedDay: day,
-            createdAt,
-            audience: [],
-            kind: 'disclaimer',
-            disclaimer: { text: '累' },
-          },
-        ],
-      },
-    });
-    expect((await call({ method: 'GET', path: `/check-ins/${id}`, token: me.token })).status).toBe(
-      200,
-    );
-    expect(
-      (await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).status,
-    ).toBe(404);
     expect(
       await call({
         method: 'GET',
         path: `/squads/${squad}/check-ins?${range}`,
         token: friend.token,
       }),
-    ).toStrictEqual({
-      status: 200,
-      type: 'application/json',
-      body: { version: 1, posts: [] },
-    });
+    ).toStrictEqual({ status: 200, type: 'application/json', body: { version: 1, posts: [] } });
   });
 
   it('refuses a range of more than 31 days, or one that runs backwards', async () => {
@@ -567,7 +619,7 @@ describe('GET /me/posts', () => {
       expect(
         (await call({ method: 'PUT', path: `/check-ins/${id}`, token: me.token, body })).status,
       ).toBe(201);
-      return { ...body, id, member: me.userId, postedDay: body.day };
+      return { ...body, id, member: me.userId, postedDay: body.day, inFeed: true };
     };
     const run = await put(earlier, { kind: 'trained', training: { sport: 'run', minutes: 30 } });
     const meal = await put(later, { kind: 'cheatMeal', meal: { caption: '火锅' } });
@@ -837,9 +889,8 @@ describe('GET /me/records', () => {
     expect(body).not.toHaveProperty('currentMealStreak');
   });
 
-  it('stands the member against squadmates only on what they shared with the squad', async () => {
+  it('stands the member against squadmates only on what they sent the squad', async () => {
     const [me, coco] = [await signUp(), await signUp()];
-    const squad = await squadOf(me, coco);
     const today = new Date().toISOString().slice(0, 10);
     const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
     const put = async (
@@ -857,9 +908,10 @@ describe('GET /me/records', () => {
       const path = `/check-ins/${randomUUID()}`;
       expect((await call({ method: 'PUT', path, token: who.token, body })).status).toBe(201);
     };
-    await put(me, { day: today, audience: [squad] });
-    // Kept to myself: mine, but not the squad's to compare.
+    // Made before joining: mine, but not the squad's to compare.
     await put(me, { day: yesterday, audience: [] });
+    const squad = await squadOf(me, coco);
+    await put(me, { day: today, audience: [squad] });
     await put(coco, { day: today, audience: [squad] });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });

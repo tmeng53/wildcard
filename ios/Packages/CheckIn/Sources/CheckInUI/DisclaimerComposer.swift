@@ -34,7 +34,7 @@ struct DisclaimerComposer: View {
     /// Counts lines that landed in the hero, for their haptic.
     @State private var landed = 0
     /// Whether the squad sees it: on until the member turns it off.
-    @State private var isShared = true
+    @State private var inFeed = true
     /// The past day it counts for (补打卡); nil is today, whatever day it is when it posts. It
     /// opens on today, or on the latest day before it without a 练了 when today can't take one.
     @State private var day: LocalDay?
@@ -101,9 +101,7 @@ struct DisclaimerComposer: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .actionBar(isShown: model.shareSquad != nil) {
-            if let squad = model.shareSquad {
-                ShareRow(squad: squad, isShared: $isShared)
-            }
+            FeedSwitchRow(inFeed: $inFeed)
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: entry)
@@ -132,7 +130,7 @@ struct DisclaimerComposer: View {
 
     private func post() {
         guard let disclaimer, !model.isSending, !(model.compose?.isPreparingPhotos ?? false) else { return }
-        Task { await model.post(.disclaimer(disclaimer, photos: photos), shared: isShared, on: day) }
+        Task { await model.post(.disclaimer(disclaimer, photos: photos), inFeed: inFeed, on: day) }
     }
 
     /// The photos picked for it, the cover first.

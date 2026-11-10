@@ -223,6 +223,24 @@ describe('when the coach wakes', () => {
     expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
   });
 
+  it('never wakes for a check-in only recorded, not posted', () => {
+    const unposted: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) => ({ ...each, unposted: true as const })),
+    };
+    expect(
+      wakesDue({
+        squad,
+        week: unposted,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
+  });
+
   it('wakes for check-ins of the last hour, to dream from 3am and once a day from 6am on the squad’s clock', () => {
     // 10:00 EST: c2 was made 10 minutes ago, c1 days ago.
     expect(

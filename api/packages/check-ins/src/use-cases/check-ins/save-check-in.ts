@@ -122,9 +122,14 @@ async function insertCheckIn(
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
-  checkIn: CheckInRecord,
+  drafted: CheckInRecord,
 ): Promise<SavedCheckIn> {
-  const { id, member } = checkIn;
+  const { id, member } = drafted;
+  const joined = await membership.squadIdsOf(member);
+  // A check-in made in a squad always goes to it: an empty audience (an older build's 仅自己可见,
+  // which `recordFromDraft` takes off the feed) goes to the member's squads.
+  const checkIn: CheckInRecord =
+    drafted.audience.length === 0 ? { ...drafted, audience: [...joined] } : drafted;
   const retry = await asRetry(store, checkIn);
   if (retry !== undefined) return retry;
 
@@ -132,7 +137,6 @@ async function insertCheckIn(
     now: clock(),
     timeZone: (await calendarOf(member))?.timeZone,
   });
-  const joined = await membership.squadIdsOf(member);
   const notJoined = checkIn.audience.find((squad) => !joined.has(squad));
   if (notJoined !== undefined) throw new SquadNotJoinedError(notJoined);
   await checkPhotos(photos, {

@@ -1282,6 +1282,10 @@
             },
             "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -1299,6 +1303,7 @@
           "day",
           "createdAt",
           "audience",
+          "inFeed",
           "kind",
           "training"
         ],
@@ -1688,6 +1693,10 @@
             },
             "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -1705,6 +1714,7 @@
           "day",
           "createdAt",
           "audience",
+          "inFeed",
           "kind",
           "meal"
         ],
@@ -1771,6 +1781,10 @@
             },
             "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -1788,6 +1802,7 @@
           "day",
           "createdAt",
           "audience",
+          "inFeed",
           "kind",
           "meal"
         ],
@@ -1835,6 +1850,10 @@
             },
             "description": "The squads it went to, in the member’s order. On someone else’s check-in, only the viewer’s own squads are listed."
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for them, but only its author sees it."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -1852,6 +1871,7 @@
           "day",
           "createdAt",
           "audience",
+          "inFeed",
           "kind",
           "disclaimer"
         ],
@@ -1935,6 +1955,10 @@
               "format": "uuid"
             },
             "maxItems": 3
+          },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted."
           },
           "kind": {
             "type": "string",
@@ -2105,6 +2129,10 @@
             },
             "maxItems": 3
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -2171,6 +2199,10 @@
             },
             "maxItems": 3
           },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted."
+          },
           "kind": {
             "type": "string",
             "enum": [
@@ -2215,6 +2247,10 @@
               "format": "uuid"
             },
             "maxItems": 3
+          },
+          "inFeed": {
+            "type": "boolean",
+            "description": "发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, counted for the squads like any other but not in their 动态. Older builds leave it out and send an empty audience for a check-in that isn’t posted."
           },
           "kind": {
             "type": "string",

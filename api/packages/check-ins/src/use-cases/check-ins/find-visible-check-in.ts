@@ -4,8 +4,9 @@ import { CheckInNotFoundError } from '../../errors.js';
 import type { CheckInStore, SquadMembership } from '../../ports.js';
 
 /**
- * The check-in, if `viewer` may see it (their own, or sent to a squad they share with its
- * author), with the squads they see it through. Throws `CheckInNotFoundError` otherwise, the same
+ * The check-in, if `viewer` may see it (their own, or posted in the 动态 of a squad they share
+ * with its author), with the squads they see it through: none for one only recorded, which
+ * reaches nobody else. Throws `CheckInNotFoundError` otherwise, the same
  * as for one that doesn't exist.
  */
 export async function findVisibleCheckIn(
@@ -20,7 +21,8 @@ export async function findVisibleCheckIn(
       ? membership.squadIdsOf(viewer)
       : membership.squadIdsOf(checkIn.member),
   ]);
-  const through = sharedSquads(checkIn, { viewerSquads, authorSquads });
-  if (through.length === 0 && checkIn.member !== viewer) throw new CheckInNotFoundError(id);
+  const through = checkIn.inFeed ? sharedSquads(checkIn, { viewerSquads, authorSquads }) : [];
+  if (checkIn.member !== viewer && (through.length === 0 || !checkIn.inFeed))
+    throw new CheckInNotFoundError(id);
   return { checkIn, through };
 }
