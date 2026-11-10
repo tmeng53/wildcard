@@ -144,6 +144,15 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     #expect(stage.placements[id(3)] == .floor(point(81, 437.5)))
 }
 
+@Test func peopleStandingRightOfMeAreNotMirrored() {
+    var stage = SquadStage(layout: .of(.track))
+    stage.arrange([member(1, .disclaimer, 30), member(2, .disclaimer, 10)])
+    // Drawn as on their player card, so a prop stays in the same hand on both.
+    let positions = [id(1), id(2)].compactMap { stage.position(of: $0, at: 0) }
+    #expect(positions.map(\.point.x).contains { $0 > StageLayout.mySpot.x })
+    #expect(positions.map(\.facing) == [1, 1])
+}
+
 @Test func theShyTakeTheFreeSpotFurthestBack() {
     var stage = SquadStage(layout: .of(.track))
     stage.arrange([member(1, .notYet, shy: true), member(2, .notYet)])

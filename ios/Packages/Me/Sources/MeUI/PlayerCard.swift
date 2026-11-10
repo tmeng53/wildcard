@@ -70,7 +70,7 @@ private struct CardFront: View {
         VStack(spacing: 0) {
             GeometryReader { window in
                 MeStage(character: face.character, size: Self.figure(in: window.size.width), floor: .borderDefault)
-                    .padding(.bottom, -Space.xxs)
+                    .padding(.bottom, Space.s)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
             }
             .overlay(alignment: .topLeading) { numberAndTitle }
