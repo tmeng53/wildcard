@@ -236,13 +236,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
-                    .completesChallenge(model.completeChallenge)
+                    .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.sidelineCoach) }
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
-                        .completesChallenge(model.completeChallenge)
+                        .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.sidelineCoach) }
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
