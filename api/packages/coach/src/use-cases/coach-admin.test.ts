@@ -61,6 +61,7 @@ describe('the coach settings', () => {
       version: 1,
       coaching: false,
       model: 'openai/gpt-6-luna',
+      reasoning: 'low',
       inputMicrosPerMillion: 0,
       outputMicrosPerMillion: 0,
     });
@@ -112,6 +113,8 @@ describe('the coach settings', () => {
       false,
     );
     expect(CoachSettingsChange.safeParse({ model: 'openai/gpt-6-luna' }).success).toBe(true);
+    expect(CoachSettingsChange.safeParse({ reasoning: 'medium' }).success).toBe(true);
+    expect(CoachSettingsChange.safeParse({ reasoning: 'max' }).success).toBe(false);
   });
 });
 

@@ -186,6 +186,7 @@ export interface CoachSettings {
   note_hour: Generated<number>;
   only_row: Generated<boolean>;
   output_micros_per_million: number;
+  reasoning: Generated<string>;
   rules: string;
   squad_daily_cap_micros: Generated<number>;
   wakes: string;

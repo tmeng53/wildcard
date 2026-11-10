@@ -40,6 +40,7 @@ function recordingTool(calls: unknown[]): CoachTool {
 
 const request = {
   model: CoachModel.parse('openai/gpt-6-luna'),
+  reasoning: 'low' as const,
   instructions: '你是小混。',
   task: '新的一天。',
   cacheKey: 'coach:xiaohun',
@@ -77,7 +78,10 @@ describe('the coach on the OpenAI Agents SDK', () => {
     expect(model.firstCall?.request.modelSettings.promptCacheRetention).toBe('24h');
     expect(model.lastCall?.request.modelSettings.providerData).toStrictEqual({
       prompt_cache_key: 'coach:xiaohun',
+      include: ['reasoning.encrypted_content'],
     });
+    // It thinks as hard as the settings say.
+    expect(model.firstCall?.request.modelSettings.reasoning).toStrictEqual({ effort: 'low' });
     model.assertComplete();
   });
 

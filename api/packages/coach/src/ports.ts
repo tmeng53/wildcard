@@ -9,7 +9,13 @@ import type {
 } from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
-import type { CoachModel, CoachSettings, MemberId, SquadId } from './domain/settings.js';
+import type {
+  CoachModel,
+  CoachReasoning,
+  CoachSettings,
+  MemberId,
+  SquadId,
+} from './domain/settings.js';
 import type { MemberFacts } from './domain/member-facts.js';
 import type { CoachLetter, Handover } from './domain/letter.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
@@ -102,6 +108,8 @@ export type AgentRun =
 export interface CoachAgent {
   run(request: {
     readonly model: CoachModel;
+    /** How hard the model thinks before it answers. */
+    readonly reasoning: CoachReasoning;
     readonly instructions: string;
     readonly task: string;
     readonly tools: readonly CoachTool[];
@@ -283,11 +291,18 @@ export interface CoachAnswerStore {
     readonly mentions?: readonly string[];
     readonly wake: number;
   }): Promise<boolean>;
-  /** The squad's answers under a check-in, oldest first. */
+  /** The squad's answers under a check-in, whichever coach wrote them, oldest first. */
   ofCheckIn(
     squad: SquadId,
     checkIn: string,
-  ): Promise<readonly { readonly comment: string; readonly text: string; readonly at: Date }[]>;
+  ): Promise<
+    readonly {
+      readonly comment: string;
+      readonly coach: CoachId;
+      readonly text: string;
+      readonly at: Date;
+    }[]
+  >;
 }
 
 /** A 战术板 line as members read it, with the coach who wrote it. */
