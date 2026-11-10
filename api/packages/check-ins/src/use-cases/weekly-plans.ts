@@ -10,13 +10,13 @@ import {
   localDayAt,
   restedOnDay,
   trainedByKept,
-  trainedOnRestDay,
+  trainedOnDay,
   weekStartOf,
   type PlanDays,
   type WeeklyPlan,
 } from '../domain/weekly-plan.js';
 import { TimeZoneNotSetError } from '../errors.js';
-import type { Clock, MemberCalendar, SportList, WeeklyPlanStore } from '../ports.js';
+import type { CheckInStore, Clock, MemberCalendar, SportList, WeeklyPlanStore } from '../ports.js';
 import { checkSport } from './check-sport.js';
 
 interface Deps {
@@ -104,12 +104,19 @@ export async function findWeeklyPlan(
 }
 
 /**
- * Makes `day` a training day of the 训练's sport in the member's plan when it was a rest day, so
- * training on a planned rest day counts in the week like any training day, and notes which 训练
- * did it. Safe to repeat.
+ * Makes `day` show what the member trained (`trainedOnDay`): a planned rest day, a day with no
+ * sport or a day planned as a sport none of that day's 训练 logged becomes a training day of this
+ * 训练's sport. A rest day it turned notes which 训练 did it, so a squadmate's card can tell it
+ * from a day the member planned. Safe to repeat.
  */
 export async function planTrainedDay(
-  { store }: { readonly store: WeeklyPlanStore },
+  {
+    store,
+    checkIns,
+  }: {
+    readonly store: WeeklyPlanStore;
+    readonly checkIns: Pick<CheckInStore, 'listForMember'>;
+  },
   {
     member,
     day,
@@ -118,19 +125,27 @@ export async function planTrainedDay(
   }: {
     readonly member: MemberId;
     readonly day: LocalDay;
-    readonly training: Parameters<typeof trainedOnRestDay>[0]['training'];
+    readonly training: Parameters<typeof trainedOnDay>[0]['training'];
     readonly checkIn: CheckInId;
   },
 ): Promise<void> {
-  const plan = await findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) });
-  const days = trainedOnRestDay({ plan, day, training });
+  const [plan, sameDay] = await Promise.all([
+    findWeeklyPlan({ store }, { member, weekStart: weekStartOf(day) }),
+    checkIns.listForMember({ member, from: day, to: day }),
+  ]);
+  const trainedThatDay = [
+    training,
+    ...sameDay.flatMap((other) => (other.kind === 'trained' ? [other.training] : [])),
+  ];
+  const days = trainedOnDay({ plan, day, training, trainedThatDay });
   if (days === undefined) return;
+  const index = dayIndex(plan.weekStart, day);
   const trainedBy = plan.source === 'saved' ? await store.trainedBy(member, plan.weekStart) : {};
   await store.save({
     member,
     weekStart: plan.weekStart,
     days,
-    trainedBy: { ...trainedBy, [dayIndex(plan.weekStart, day)]: checkIn },
+    trainedBy: plan.days[index]?.kind === 'rest' ? { ...trainedBy, [index]: checkIn } : trainedBy,
   });
 }
 

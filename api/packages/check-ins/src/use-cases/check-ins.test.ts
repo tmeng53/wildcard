@@ -378,6 +378,41 @@ describe('saving a check-in', () => {
     expect(await plans.savedFor(other, { weekStart: week })).toBeUndefined();
   });
 
+  it('swaps the day’s planned sport for the one trained, and an edit’s too', async () => {
+    const member = await newMember();
+    const squad = await newSquad(member);
+    const plans = createPostgresWeeklyPlanStore(db);
+    const week = WeekStart.parse('2026-10-12');
+    // The 17th is a Saturday, planned as strength; the member went swimming instead.
+    await plans.save({
+      member,
+      weekStart: week,
+      days: DEFAULT_PLAN_DAYS.map((day, index) =>
+        index === 5 ? { kind: 'train', sport: 'strength' } : day,
+      ),
+    });
+    const id = CheckInId.parse(randomUUID());
+    await checkIns.save({
+      id,
+      member,
+      draft: draft({ audience: [squad], day: '2026-10-17', training: { sport: 'swim' } }),
+    });
+    expect((await plans.savedFor(member, { weekStart: week }))?.[5]).toStrictEqual({
+      kind: 'train',
+      sport: 'swim',
+    });
+    // Editing the 练了 to another sport follows it.
+    await checkIns.edit({
+      id,
+      member,
+      edit: edit({ kind: 'trained', training: { sport: 'yoga' } }),
+    });
+    expect((await plans.savedFor(member, { weekStart: week }))?.[5]).toStrictEqual({
+      kind: 'train',
+      sport: 'yoga',
+    });
+  });
+
   it('makes a 休息’s day a rest day, never undoing a 练了 on it', async () => {
     const member = await newMember();
     const squad = await newSquad(member);

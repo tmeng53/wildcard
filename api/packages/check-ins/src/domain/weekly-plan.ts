@@ -200,26 +200,46 @@ export function dayIndex(weekStart: LocalDay, day: LocalDay): number {
   return Math.round((Date.parse(day) - Date.parse(weekStart)) / DAY);
 }
 
+/** A sport as a 训练 logs it and a planned day names it. */
+interface TrainedSport {
+  readonly sport: SportKey;
+  readonly customSport?: string | undefined;
+}
+
+const sameSport = (a: TrainedSport, b: TrainedSport) =>
+  a.sport === b.sport && a.customSport === b.customSport;
+
 /**
- * The plan with `day` a training day of `training`'s sport when it was a rest day: a 训练 on a
- * planned rest day makes it a training day. Undefined when the day was already a training day.
+ * The plan with `day` showing what the member trained (Tracy, 2026-11-10): a 训练 on a planned
+ * rest day, a training day with no sport picked, or a day planned as a sport none of that day's
+ * 训练 logged makes it a training day of `training`'s sport. Undefined when the day already names
+ * a sport trained that day. `trainedThatDay` is every sport the member's 训练 that day logged,
+ * this one included; a member who changes the day afterwards keeps their change until their next
+ * 训练 that day.
  */
-export function trainedOnRestDay({
+export function trainedOnDay({
   plan,
   day,
   training,
+  trainedThatDay,
 }: {
   readonly plan: WeeklyPlan;
   readonly day: LocalDay;
-  readonly training: { readonly sport: SportKey; readonly customSport?: string | undefined };
+  readonly training: TrainedSport;
+  readonly trainedThatDay: readonly TrainedSport[];
 }): PlanDays | undefined {
   const index = dayIndex(plan.weekStart, day);
-  if (plan.days[index]?.kind !== 'rest') return undefined;
+  const planned = plan.days[index];
+  if (planned === undefined) return undefined;
+  if (planned.kind === 'train' && planned.sport !== undefined) {
+    const named = { sport: planned.sport, customSport: planned.customSport };
+    if (trainedThatDay.some((sport) => sameSport(sport, named))) return undefined;
+  }
   const trained: PlanDay =
     training.customSport === undefined
       ? { kind: 'train', sport: training.sport }
       : { kind: 'train', sport: training.sport, customSport: training.customSport };
-  return plan.days.map((planned, at) => (at === index ? trained : planned));
+  return plan.days.map((other, at) => (at === index ? trained : other));
 }
 
 /**
