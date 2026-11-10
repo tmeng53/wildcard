@@ -24,10 +24,10 @@ extension MainTabs {
     static var tabs: [TabBarItem<Tab>] {
         [
             TabBarItem(
-                id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
+                id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "person.3",
                 accessibilityIdentifier: "tab.today"),
             TabBarItem(
-                id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
+                id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "square.stack",
                 accessibilityIdentifier: "tab.feed"
             ),
             TabBarItem(
