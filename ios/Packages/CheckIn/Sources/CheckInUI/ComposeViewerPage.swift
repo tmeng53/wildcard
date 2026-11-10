@@ -59,6 +59,9 @@ private struct ViewerCard: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             .padding(.horizontal, Space.m)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Its own element holding the chart's or map's, so the page's identifier lands here
+            // whatever the face names itself.
+            .accessibilityElement(children: .contain)
     }
 }
 #endif
