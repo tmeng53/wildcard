@@ -1,8 +1,9 @@
-import CheckInDomain
 import Contracts
 import Foundation
 import HealthDomain
 import Testing
+
+@testable import CheckInDomain
 
 @MainActor @Test func aPostedWorkoutStaysPostedWhetherSavedOrWaiting() async throws {
     let workout = Workout(
@@ -67,5 +68,11 @@ import Testing
     // One still waiting to go out counts too.
     await backend.set(failure: .notSent)
     _ = try await today.post(.trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
+    #expect(today.trainedByHand(on: tuesday).map(\.activity) == [.sport("pickleball"), .sport("run")])
+
+    // Saved on the server but not yet out of the outbox, it still counts once.
+    let waiting = try #require(try today.pending.first?.checkIn())
+    today.fold(waiting)
+    #expect(today.pending.count == 1)
     #expect(today.trainedByHand(on: tuesday).map(\.activity) == [.sport("pickleball"), .sport("run")])
 }

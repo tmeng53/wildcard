@@ -44,11 +44,13 @@ extension Home {
 }
 
 extension TodayStore {
-    /// The member's 训练 on `day` posted by hand, saved or still waiting to go out.
+    /// The member's 训练 on `day` posted by hand, saved or still waiting to go out, each once:
+    /// a post the server has saved may still be in the outbox for a moment.
     public func trainedByHand(on day: LocalDay) -> [HandPostedTraining] {
-        (savedHome?.trainedByHand(on: day) ?? [])
+        let saved = Set(savedHome?.checkIns.map(\.id) ?? [])
+        return (savedHome?.trainedByHand(on: day) ?? [])
             + pending.compactMap { post -> HandPostedTraining? in
-                guard post.member == savedHome?.member, post.day == day,
+                guard post.member == savedHome?.member, post.day == day, !saved.contains(post.id),
                     case .trained(let activity, _, let body) = post.draft, body.workout == nil
                 else { return nil }
                 return HandPostedTraining(activity: activity, madeAt: post.createdAt)
