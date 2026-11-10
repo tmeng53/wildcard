@@ -1,3 +1,4 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
 import {
   memberRecords,
@@ -70,7 +71,8 @@ export async function records(
   for (const training of rows.trainings) {
     byMember.set(training.member, [...(byMember.get(training.member) ?? []), training]);
   }
-  const timeZoneOf = async (id: MemberId) => (await deps.calendarOf(id))?.timeZone ?? 'UTC';
+  const timeZoneOf = async (id: MemberId) =>
+    (await deps.calendarOf(id))?.timeZone ?? UNSAVED_MEMBER_ZONE;
   const mine = byMember.get(member) ?? [];
   const me = memberRecords({
     trainings: mine,

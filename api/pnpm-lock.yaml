@@ -281,6 +281,9 @@ importers:
       '@wildcard/sport-ids':
         specifier: workspace:*
         version: link:../sport-ids
+      '@wildcard/time-zones':
+        specifier: workspace:*
+        version: link:../time-zones
       '@wildcard/typed-text':
         specifier: workspace:*
         version: link:../typed-text
@@ -491,6 +494,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/time-zones':
+        specifier: workspace:*
+        version: link:../time-zones
       kysely:
         specifier: 0.29.7
         version: 0.29.7
@@ -680,6 +686,9 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      '@wildcard/time-zones':
+        specifier: workspace:*
+        version: link:../time-zones
       kysely:
         specifier: 0.29.7
         version: 0.29.7

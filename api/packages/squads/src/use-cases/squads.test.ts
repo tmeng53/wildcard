@@ -551,15 +551,12 @@ describe('a squad’s time zone', () => {
       timeZone: 'Asia/Taipei',
     });
     // Before the squad's first week it kept New York, as every squad did.
-    expect(await squads.timeZonesFor([taipei.id, plain.id], '2026-10-26')).toStrictEqual(
-      new Map([
-        [taipei.id, 'America/New_York'],
-        [plain.id, 'America/New_York'],
-      ]),
-    );
-    expect(await squads.timeZonesAt([taipei.id], new Date('2026-11-04T12:00:00Z'))).toStrictEqual(
-      new Map([[taipei.id, 'Asia/Taipei']]),
-    );
+    expect(
+      [taipei.id, plain.id].map(await squads.timeZonesFor([taipei.id, plain.id], '2026-10-26')),
+    ).toStrictEqual(['America/New_York', 'America/New_York']);
+    expect(
+      [taipei.id].map(await squads.timeZonesAt([taipei.id], new Date('2026-11-04T12:00:00Z'))),
+    ).toStrictEqual(['Asia/Taipei']);
   });
 
   it('keeps its zone from the moment it is made, when the creator’s week is ahead of it', async () => {
@@ -574,12 +571,12 @@ describe('a squad’s time zone', () => {
       name: name('洛杉矶队'),
       timeZone: 'America/Los_Angeles',
     });
-    expect(await squads.timeZonesAt([squad.id], made)).toStrictEqual(
-      new Map([[squad.id, 'America/Los_Angeles']]),
-    );
-    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
-      new Map([[squad.id, 'America/Los_Angeles']]),
-    );
+    expect([squad.id].map(await squads.timeZonesAt([squad.id], made))).toStrictEqual([
+      'America/Los_Angeles',
+    ]);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
+      'America/Los_Angeles',
+    ]);
   });
 
   it('refuses a zone that doesn’t exist', async () => {
@@ -619,9 +616,9 @@ describe('a squad’s time zone', () => {
         moment: during,
       }),
     ).toStrictEqual({ timeZone: 'Asia/Taipei' });
-    expect(await squads.timeZonesFor([squad.id], thisWeek)).toStrictEqual(
-      new Map([[squad.id, 'Asia/Taipei']]),
-    );
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], thisWeek))).toStrictEqual([
+      'Asia/Taipei',
+    ]);
     // The same again changes nothing.
     await squads.setTimeZone({
       squad: squad.id,
@@ -655,9 +652,9 @@ describe('a squad’s time zone', () => {
         moment: during,
       }),
     ).toStrictEqual({ timeZone: 'America/Los_Angeles' });
-    expect(await squads.timeZonesFor([squad.id], '2026-11-16')).toStrictEqual(
-      new Map([[squad.id, 'America/Los_Angeles']]),
-    );
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-16'))).toStrictEqual([
+      'America/Los_Angeles',
+    ]);
   });
 
   it('counts a change at once on the new clock, even when that clock is a day behind', async () => {
@@ -680,15 +677,15 @@ describe('a squad’s time zone', () => {
         moment,
       }),
     ).toStrictEqual({ timeZone: 'America/New_York' });
-    expect(await squads.timeZonesAt([squad.id], moment)).toStrictEqual(
-      new Map([[squad.id, 'America/New_York']]),
-    );
-    expect(await squads.timeZonesFor([squad.id], '2026-11-02')).toStrictEqual(
-      new Map([[squad.id, 'America/New_York']]),
-    );
-    expect(await squads.timeZonesFor([squad.id], '2026-11-09')).toStrictEqual(
-      new Map([[squad.id, 'America/New_York']]),
-    );
+    expect([squad.id].map(await squads.timeZonesAt([squad.id], moment))).toStrictEqual([
+      'America/New_York',
+    ]);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-02'))).toStrictEqual([
+      'America/New_York',
+    ]);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
+      'America/New_York',
+    ]);
   });
 });
 

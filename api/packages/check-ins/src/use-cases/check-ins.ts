@@ -140,14 +140,13 @@ export interface CheckIns {
   squadToday(input: { readonly viewer: MemberId; readonly squad: SquadId }): Promise<SquadToday>;
   /**
    * A member's own 本周 x/y, for a squadmate's view of their card: the week and today on
-   * `squadZone`, the squad's clock, so every squadmate sees the same week; without it, on the
-   * member's own.
+   * `squadZone`, the squad's clock, so every squadmate sees the same week.
    */
   memberWeek(input: {
     readonly member: MemberId;
     readonly viewer: MemberId;
     readonly squad: SquadId;
-    readonly squadZone?: string;
+    readonly squadZone: string;
   }): Promise<MemberWeek>;
   /**
    * A member's plan for a week as the squad may see it: a day a 训练 the squad can't see turned

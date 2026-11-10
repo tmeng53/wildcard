@@ -478,6 +478,12 @@ export type AiConsented = (members: readonly string[]) => Promise<readonly strin
  */
 export type CoachOccasions = (day: string) => Promise<readonly string[]>;
 
+/** Each squad's time zone at a moment (小队时区): a lookup that has one for every squad. */
+export type CoachTimeZones = (
+  squads: readonly SquadId[],
+  moment: Date,
+) => Promise<(squad: SquadId) => string>;
+
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
   /** The coach the squad has hired now and since when, if any. */

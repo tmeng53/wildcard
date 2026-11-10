@@ -1,3 +1,4 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import { trainings, weekOf } from '../../domain/days.js';
 import { localDayAt, weekStartOf, type WeekStart } from '../../domain/weekly-plan.js';
@@ -9,7 +10,7 @@ export async function weekStartNow(
   member: MemberId,
 ): Promise<WeekStart> {
   const calendar = await deps.calendarOf(member);
-  return weekStartOf(localDayAt(deps.clock(), calendar?.timeZone ?? 'UTC'));
+  return weekStartOf(localDayAt(deps.clock(), calendar?.timeZone ?? UNSAVED_MEMBER_ZONE));
 }
 
 /**

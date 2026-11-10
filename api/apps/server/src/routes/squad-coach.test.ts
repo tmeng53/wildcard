@@ -133,6 +133,7 @@ const app = createApp({
     squadWeek: () => Promise.reject(new Error('unused')),
     aiConsented: () => Promise.reject(new Error('unused')),
     clock: () => new Date(),
+    timeZonesAt: () => Promise.reject(new Error('unused')),
   }),
   ...ignoredNotices,
   ...unusedFeedback,

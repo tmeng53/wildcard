@@ -1,3 +1,4 @@
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 // The campaign tools over the real switches, scenes, unlock rules and campaigns in local Supabase,
 // each test inside a transaction it rolls back so the seed stays as it was.
 import { randomUUID } from 'node:crypto';
@@ -16,7 +17,6 @@ import { z } from 'zod';
 import { createDatabase } from '../../adapters/postgres.js';
 import type { Database } from '../../ports.js';
 import { config } from '../../test-kit/local-supabase.js';
-import { newYorkDay } from '../../new-york-day.js';
 import type { AdminTool } from '../admin-tool.js';
 import { campaignTools } from './campaigns.js';
 
@@ -57,7 +57,7 @@ function toolsOn(trx: Database) {
     sportListed: (id) => createSports({ store: createPostgresSportStore(trx) }).isListed(id),
     switches: async (member) => {
       const { on } = await switches.statesFor(member);
-      return (id, at) => on(id, newYorkDay(at));
+      return (id, at) => on(id, wallClockAt(at, NEW_YORK).day);
     },
     switchListed: async (id) => (await switches.list()).some((each) => each.id === id),
   });
@@ -200,7 +200,7 @@ describe('a campaign', () => {
         version: 1,
         previewers: [{ member: admin, dayOffset: 20, day: '2026-11-26' }],
       });
-      const today = newYorkDay(now);
+      const today = wallClockAt(now, NEW_YORK).day;
       const takeover = async (who: string) =>
         scenes.takeover({ day: today, switchOn: (await switches.statesFor(who)).on });
       expect(await takeover(admin)).toBe('tgTown');

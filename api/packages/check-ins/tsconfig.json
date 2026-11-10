@@ -12,10 +12,13 @@
       "path": "../errors"
     },
     {
-      "path": "../typed-text"
+      "path": "../sport-ids"
     },
     {
-      "path": "../sport-ids"
+      "path": "../time-zones"
+    },
+    {
+      "path": "../typed-text"
     }
   ]
 }

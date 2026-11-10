@@ -1,10 +1,6 @@
-import {
-  localDay,
-  type MemberId,
-  type Nudge,
-  type NudgeKind,
-  type SquadId,
-} from '../domain/nudge.js';
+import { UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
+
+import type { MemberId, Nudge, NudgeKind, SquadId } from '../domain/nudge.js';
 import { NotASquadmateError, OwnNudgeError, SquadNotJoinedError } from '../errors.js';
 import type { Clock, NudgeStore, SquadMembership, TimeZoneOf } from '../ports.js';
 
@@ -68,7 +64,7 @@ export function createNudges(deps: {
       if (!members.includes(to)) throw new NotASquadmateError(to);
       const at = deps.clock();
       // A member who hasn't saved a time zone yet counts days in UTC.
-      const day = localDay(at, (await deps.timeZoneOf(from)) ?? 'UTC');
+      const day = wallClockAt(at, (await deps.timeZoneOf(from)) ?? UNSAVED_MEMBER_ZONE).day;
       const nudge: Nudge = { from, to, squad, kind, day, at };
       return deps.store.add(nudge);
     },
@@ -98,7 +94,7 @@ export function createNudges(deps: {
       if (!members.has(member)) throw new SquadNotJoinedError(squad);
       const until = deps.clock();
       const since = new Date(until.getTime() - RECEIVED_WINDOW_MS);
-      const day = localDay(until, (await deps.timeZoneOf(member)) ?? 'UTC');
+      const day = wallClockAt(until, (await deps.timeZoneOf(member)) ?? UNSAVED_MEMBER_ZONE).day;
       const [sentRows, receivedRows] = await Promise.all([
         deps.store.sentBy({ member, squad, day, kind }),
         deps.store.receivedBy({ member, since, until, kind }),

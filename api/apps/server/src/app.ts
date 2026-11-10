@@ -1,3 +1,4 @@
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import { OpenAPIHono } from '@hono/zod-openapi';
 import type { Admins } from '@wildcard/admins';
 import type { AiConsent } from '@wildcard/ai-consent';
@@ -72,7 +73,6 @@ import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { coachCards } from './routes/coach-cards.js';
 import { squadScene } from './routes/squad-scene.js';
-import { newYorkDay } from './new-york-day.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
 import { weekStory } from './routes/week-story.js';
@@ -210,7 +210,10 @@ export function createApp(deps: AppDependencies) {
       clock: deps.weeklyAwards.clock,
       takeoverFor: async (member) => {
         const { on } = await deps.switches.statesFor(member);
-        return deps.scenes.takeover({ day: newYorkDay(deps.weeklyAwards.clock()), switchOn: on });
+        return deps.scenes.takeover({
+          day: wallClockAt(deps.weeklyAwards.clock(), NEW_YORK).day,
+          switchOn: on,
+        });
       },
     }),
   );

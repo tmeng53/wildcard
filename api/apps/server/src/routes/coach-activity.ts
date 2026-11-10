@@ -1,4 +1,4 @@
-import { NEW_YORK, TimeZone, wallClockAt } from '@wildcard/time-zones';
+import { TimeZone, wallClockAt } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   LETTER_LIMIT,
@@ -534,8 +534,7 @@ export function coachActivity(deps: {
   /** Today on the squad's clock, the day a challenge counts on. */
   const todayOf = async (squad: z.infer<typeof SquadId>) => {
     const now = new Date();
-    return wallClockAt(now, (await deps.squads.timeZonesAt([squad], now)).get(squad) ?? NEW_YORK)
-      .day;
+    return wallClockAt(now, (await deps.squads.timeZonesAt([squad], now))(squad)).day;
   };
 
   return new OpenAPIHono<SignedIn>()
@@ -625,7 +624,7 @@ export function coachActivity(deps: {
       const { squadId } = c.req.valid('param');
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-      const zone = (await deps.squads.timeZonesAt([squadId], new Date())).get(squadId) ?? NEW_YORK;
+      const zone = (await deps.squads.timeZonesAt([squadId], new Date()))(squadId);
       const {
         note,
         replies,

@@ -43,13 +43,10 @@ export const CHECK_IN_WINDOW_MS = 60 * 60_000;
 export function weeksAround(now: Date): string[] {
   const hours = [-10, 0, 19];
   const weeks = hours.map((hour) =>
-    weekStartOf(wallClockAt(new Date(now.getTime() + hour * 3_600_000), NEW_YORK).day),
+    mondayOf(wallClockAt(new Date(now.getTime() + hour * 3_600_000), NEW_YORK).day),
   );
   return [...new Set(weeks)];
 }
-
-/** The Monday of a day's week, `YYYY-MM-DD`. */
-export const weekStartOf = mondayOf;
 
 /**
  * The wakes due for a squad at `now`: one for each check-in made in the last

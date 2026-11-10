@@ -76,6 +76,7 @@ export type {
   CoachWeather,
   CoachOccasions,
   CoachPhotoUrls,
+  CoachTimeZones,
   CoachTool,
   ToolAnswer,
   CoachTransaction,

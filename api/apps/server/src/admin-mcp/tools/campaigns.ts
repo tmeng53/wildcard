@@ -1,3 +1,4 @@
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
   CampaignId,
   CampaignStatus,
@@ -26,7 +27,6 @@ import {
 } from '@wildcard/unlocks';
 import { z } from 'zod';
 
-import { newYorkDay } from '../../new-york-day.js';
 import { adminTool } from '../admin-tool.js';
 
 // Campaigns (Tracy, 2026-11-04): a holiday, an anniversary or a race day is a bundle of generic
@@ -332,7 +332,7 @@ export function setSwitchPreview(deps: CampaignToolDependencies) {
       day: z.iso.date().optional().meta({ description: 'The day to pretend it is, New York.' }),
     }),
     run: async ({ member, preview, day }, { admin }) => {
-      const today = newYorkDay(deps.clock());
+      const today = wallClockAt(deps.clock(), NEW_YORK).day;
       const offset =
         !preview || day === undefined
           ? 0

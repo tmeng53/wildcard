@@ -422,7 +422,7 @@ export function titles(deps: {
       });
       const place = squad.members.findIndex(({ member }) => member === memberId);
       if (place < 0) throw new SquadMemberUnknownError(memberId);
-      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date())).get(squad.id);
+      const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date()))(squad.id);
       const viewer = MemberId.parse(c.var.caller.userId);
       const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
         deps.awards.boards([memberId]),
@@ -436,7 +436,7 @@ export function titles(deps: {
           member: memberId,
           viewer: MemberId.parse(c.var.caller.userId),
           squad: squadId,
-          ...(squadZone === undefined ? {} : { squadZone }),
+          squadZone,
         }),
         deps.rewards.badgesOf(RewardMember.parse(memberId)),
         squadFirstWeek(deps.squads, squad),
