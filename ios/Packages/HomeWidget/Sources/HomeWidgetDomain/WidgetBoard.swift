@@ -83,7 +83,8 @@ public struct WidgetBoard: Hashable, Sendable {
         self.coachHasNews = coachHasNews
         // One Health has no sport of the list for is picked by hand in the app, so the widgets
         // leave it out.
-        let todays = health.filter { $0.activity != nil }.today(day, in: home.timeZone, posted: home.postedWorkouts)
+        let todays = health.filter { $0.activity != nil }
+            .today(day, in: home.timeZone, posted: home.postedWorkouts, byHand: home.trainedByHand(on: day))
         workout = todays.newestToPost(skipping: putAway)
         postedWorkout = workout == nil ? todays.first(where: \.isPosted)?.imported : nil
     }

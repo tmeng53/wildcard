@@ -126,13 +126,51 @@ public struct TodaysWorkout: Hashable, Sendable, Identifiable {
     public var id: WorkoutSource { imported.id }
 }
 
+extension ImportedWorkout {
+    /// Whether `other` is another record of the same session: the same sport, at times that overlap.
+    func isRecord(of other: ImportedWorkout) -> Bool {
+        activity != nil && activity == other.activity && workout.startedAt < other.workout.endedAt
+            && other.workout.startedAt < workout.endedAt
+    }
+}
+
+/// A 训练 the member posted by hand, without a workout from Health: its sport and when it was
+/// made. It counts as posting one of that day's Health workouts of the same sport that had
+/// started by then, so the home's card doesn't offer the workout again.
+public struct HandPostedTraining: Hashable, Sendable {
+    public let activity: Activity
+    public let madeAt: Timestamp
+
+    public init(activity: Activity, madeAt: Timestamp) {
+        self.activity = activity
+        self.madeAt = madeAt
+    }
+}
+
 extension [ImportedWorkout] {
-    /// Those that ended on the member's `day`, newest first, each marked
-    /// posted when `posted` holds it: a member posts each workout once.
-    public func today(_ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>) -> [TodaysWorkout] {
-        filter { LocalDay(at: $0.workout.endedAt.date, in: timeZone) == day }
-            .sorted { $0.workout.endedAt > $1.workout.endedAt }
-            .map { TodaysWorkout(imported: $0, isPosted: posted.contains($0.id)) }
+    /// Those that ended on the member's `day`, newest first, each marked posted when `posted`
+    /// holds it (a member posts each workout once), when it is another record of a posted one
+    /// (the same sport at an overlapping time, as when the watch and another app both save the
+    /// session), or when one of `byHand`, that day's 训练 posted by hand, covers it: each
+    /// covers the earliest unposted workout of its sport that started before it was made.
+    public func today(
+        _ day: LocalDay, in timeZone: TimeZone, posted: Set<WorkoutSource>, byHand: [HandPostedTraining] = []
+    ) -> [TodaysWorkout] {
+        let postedHere = filter { posted.contains($0.id) }
+        var covering = byHand.sorted { $0.madeAt < $1.madeAt }
+        return filter { LocalDay(at: $0.workout.endedAt.date, in: timeZone) == day }
+            .sorted { $0.workout.startedAt < $1.workout.startedAt }
+            .map { imported in
+                if posted.contains(imported.id) || postedHere.contains(where: { $0.isRecord(of: imported) }) {
+                    return TodaysWorkout(imported: imported, isPosted: true)
+                }
+                let cover = covering.firstIndex {
+                    $0.activity == imported.activity && imported.workout.startedAt <= $0.madeAt
+                }
+                if let cover { covering.remove(at: cover) }
+                return TodaysWorkout(imported: imported, isPosted: cover != nil)
+            }
+            .sorted { $0.imported.workout.endedAt > $1.imported.workout.endedAt }
     }
 }
 
