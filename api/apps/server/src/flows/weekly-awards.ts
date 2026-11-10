@@ -28,7 +28,7 @@ import {
   topCheckInOf,
   type AwardsState,
   type Failures,
-  type MemberAwards,
+  type ShownMemberAwards,
   type MemberWeek,
   SquadId,
   type StoryMember,
@@ -272,7 +272,7 @@ export interface SquadStory {
   /** Everyone in the squad at the awards, in the order they joined, less accounts deleted since. */
   readonly members: readonly StoryMember[];
   /** The titles, in the members' order: empty until ready, or when nobody checked in. */
-  readonly titles: readonly MemberAwards[];
+  readonly titles: readonly ShownMemberAwards[];
   /** The top 3 by days trained, the crown winner in the middle, and who finished their plan. */
   readonly podium?: Podium<string>;
   /** The squad's meals; who ate more of what is in each member's part. */
@@ -356,8 +356,9 @@ export async function squadStory(
   )[0];
   // From the members' frozen days, less accounts deleted since: someone else steps up.
   const podium = podiumOf(members);
-  const titles =
-    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [];
+  const titles = await deps.awards.shownTitles(
+    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [],
+  );
   const anyone = members.some(({ checkedIn }) => checkedIn);
   return {
     squad: { id: squad, name: story.name },

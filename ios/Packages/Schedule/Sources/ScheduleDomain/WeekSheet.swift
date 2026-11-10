@@ -74,13 +74,15 @@ public enum DayMark: Hashable, Sendable {
     }
 }
 
-/// A title (头衔) the weekly awards gave the member, and its award line (颁奖词).
+/// A title (头衔) the weekly awards gave the member, its award line (颁奖词) and its badge.
 public struct AwardTitle: Hashable, Sendable {
     public let title: String
     public let speech: String
+    /// Drawn in its own colour, as the badge board draws it.
+    public let badge: TitleBadge
 
-    public init(title: String, speech: String) {
-        (self.title, self.speech) = (title, speech)
+    public init(title: String, speech: String, badge: TitleBadge = .plain) {
+        (self.title, self.speech, self.badge) = (title, speech, badge)
     }
 }
 

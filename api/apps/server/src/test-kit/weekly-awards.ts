@@ -10,6 +10,7 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimReadyPush: unused,
     titlesWon: unused,
+    shownTitles: unused,
     story: unused,
     freezeStory: unused,
     storyWeeks: unused,

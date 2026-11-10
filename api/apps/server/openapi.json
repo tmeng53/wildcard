@@ -6704,6 +6704,9 @@
             "minLength": 1,
             "description": "The move the character plays collecting it. A move id as the app names its art (`cheer` is the persona’s own cheer); which moves the awards pick from is a setting, so new ones come without an app release: play `cheer` for one the app doesn’t know.",
             "example": "pump"
+          },
+          "badge": {
+            "$ref": "#/components/schemas/TitleBadge"
           }
         },
         "required": [
