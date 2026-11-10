@@ -84,7 +84,7 @@ struct MysteryBox: View {
                 },
                 name: Text(copy: "神秘款", bundle: .module), muted: true,
                 status: {
-                    Text(copy: "再练 \(toGo) 次", bundle: .module)
+                    Text(copy: "再练 \(toGo) 天", bundle: .module)
                         .typeStyle(TypeRamp.caption)
                         .foregroundStyle(Color(role: .fgMuted, in: theme))
                         .lineLimit(1)
@@ -94,7 +94,7 @@ struct MysteryBox: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(copy: "神秘款，再练 \(toGo) 次解锁", bundle: .module))
+        .accessibilityLabel(Text(copy: "神秘款，再练 \(toGo) 天解锁", bundle: .module))
         .accessibilityAddTraits(.isButton)
         .accessibilityIdentifier("editor.mystery.\(slot.rawValue)")
     }

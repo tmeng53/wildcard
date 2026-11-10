@@ -185,21 +185,26 @@ async function squadOf(
   return id;
 }
 
-/** A 练了 the member posts to their squad, as the app does. */
+/**
+ * A 练了 the member posts to their squad, as the app does, for the day `daysAgo` days back (a
+ * 补打卡 when more than 0), since a rule counts days, not posts.
+ */
 async function train({
   member,
   squad,
   sport,
+  daysAgo,
 }: {
   readonly member: { readonly token: string };
   readonly squad: string;
   readonly sport: string;
+  readonly daysAgo: number;
 }) {
   // Now: only check-ins made since the rules were added count, and a reset database adds them.
   const when = new Date();
   const body = {
     version: 1,
-    day: when.toISOString().slice(0, 10),
+    day: new Date(when.getTime() - daysAgo * 86_400_000).toISOString().slice(0, 10),
     createdAt: when.toISOString(),
     audience: [squad],
     kind: 'trained',
@@ -262,9 +267,11 @@ describe('GET /me/unlocks', () => {
       checkInsToGo: 1,
     });
     expect(shelf.pieces.some(({ storeId }) => storeId === 'deuce')).toBe(false);
-    await train({ member: me, squad, sport: 'tennis' });
-    const run = await train({ member: me, squad, sport: 'run' });
-    const squash = await train({ member: me, squad, sport: 'squash' });
+    await train({ member: me, squad, sport: 'tennis', daysAgo: 4 });
+    // A second 练了 on the same day counts nowhere: rules count days, not posts.
+    await train({ member: me, squad, sport: 'tennis', daysAgo: 4 });
+    const run = await train({ member: me, squad, sport: 'run', daysAgo: 3 });
+    const squash = await train({ member: me, squad, sport: 'squash', daysAgo: 2 });
     const three = z
       .object({
         version: z.literal(1),
@@ -296,7 +303,7 @@ describe('GET /me/unlocks', () => {
         },
       ],
     });
-    const third = await train({ member: me, squad, sport: 'pickleball' });
+    const third = await train({ member: me, squad, sport: 'pickleball', daysAgo: 1 });
     const after = z
       .object({ unlocks: z.array(z.object({ id: z.string(), unlockedAt: z.string() })) })
       .parse((await unlocked(me)).body);
@@ -337,9 +344,9 @@ describe('GET /me/unlocks', () => {
       status: 400,
       body: { reason: 'PIECE_NOT_UNLOCKED' },
     });
-    await train({ member: me, squad, sport: 'run' });
-    // The second 练了 opens the headphones, and the claim counts it without a read first.
-    await train({ member: me, squad, sport: 'yoga' });
+    await train({ member: me, squad, sport: 'run', daysAgo: 1 });
+    // The second day of 练了 opens the headphones, and the claim counts it without a read first.
+    await train({ member: me, squad, sport: 'yoga', daysAgo: 0 });
     const first = await claim('warmup-headphones');
     expect(first).toMatchObject({
       status: 200,

@@ -3009,18 +3009,18 @@
         }
       }
     },
-    "网球练满 3 次": {
+    "网球练满 3 天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "3 tennis sessions"
+            "value": "Tennis on 3 days"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "網球練滿 3 次"
+            "value": "網球練滿 3 天"
           }
         }
       }

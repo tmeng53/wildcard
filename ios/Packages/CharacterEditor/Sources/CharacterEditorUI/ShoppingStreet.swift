@@ -231,10 +231,10 @@ enum StoreCopy {
     }
     static func tagline(_ store: String) -> Text { text(words(store)?.tagline, or: "") }
     static func unlock(_ store: String) -> Text { text(words(store)?.unlock, or: "") }
-    /// How far a closed store is from opening: 「还有 2 次开门」 once the server says, else how it unlocks.
+    /// How far a closed store is from opening: 「还有 2 天开门」 once the server says, else how it unlocks.
     static func opens(_ store: EditorChoices.Store) -> Text {
         guard let toGo = store.toGo else { return unlock(store.id) }
-        return Text(copy: "还有 \(toGo) 次开门", bundle: .module)
+        return Text(copy: "还有 \(toGo) 天开门", bundle: .module)
     }
     /// The tag a limited store wears, such as 冬季限定; nil for one without.
     static func limited(_ store: String) -> Text? {

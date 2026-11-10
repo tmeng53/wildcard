@@ -39,7 +39,7 @@ export type EventName = z.infer<typeof EventName>;
 
 /** The ways a reward is got. */
 export const TRIGGER_KINDS = [
-  /** The member's 练了 check-ins in its sports. */
+  /** The days the member has 练了 in its sports (many on one day count once). */
   'training',
   /** A squad's AI coach may give it (a piece, at most one a member a week). */
   'coach',

@@ -134,7 +134,7 @@ extension String {
     }
 }
 
-/// A line of the app's own, written as a `Text`'s is (`"还有 \(toGo) 次开门"`): its String
+/// A line of the app's own, written as a `Text`'s is (`"还有 \(toGo) 天开门"`): its String
 /// Catalog key, made the way SwiftUI makes a `LocalizedStringKey`'s (an `Int` as `%lld`, a
 /// `Double` as `%lf`, a `String` as `%@`, a `%` in a line with arguments as `%%`), and the
 /// arguments to fill it with.
