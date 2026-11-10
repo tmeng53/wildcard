@@ -19,7 +19,12 @@ func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
     let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
     var swaps = 0
     for case let url as URL in files where url.pathExtension == "json" {
-        let name = url.path().replacing(root.path(), with: "")
+        // The path under Placeholder, from its components: macOS's enumerator hands back resolved
+        // paths, without the root's "../..", so cutting the root's path off would leave it whole.
+        let name =
+            "/"
+            + url.standardizedFileURL.pathComponents.drop { $0 != "Placeholder" }.dropFirst()
+            .joined(separator: "/")
         guard ["/moves/", "/clips/"].contains(where: name.hasPrefix),
             let clip = try? Clip.decode(Data(contentsOf: url))
         else { continue }
