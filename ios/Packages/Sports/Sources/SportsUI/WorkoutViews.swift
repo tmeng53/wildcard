@@ -248,22 +248,41 @@ public struct WorkoutMap: View {
 /// A workout's chart. Heart rate is `HeartRateChart` on graphite, detailed with `label` (a post's
 /// cover: zones, minutes per zone, scrubbing), the curve alone without. A swim's laps stay on the
 /// sport category's colour, each lap's time as a bar, the fastest in white and the rest dimmed, with
-/// `label` its name top left.
+/// `label` its name top left. With a `shape`, the chart keeps that width over height in the middle
+/// of whatever box it's given, on its own colour, never stretched to the box.
 public struct WorkoutChart: View {
     private let series: WorkoutSeries
     private let colors: PostBlockColors
     private let showsLabel: Bool
     private let startedAt: Date?
+    private let shape: Double?
 
-    public init(series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil) {
+    public init(
+        series: WorkoutSeries, activity: Activity, showsLabel: Bool = false, startedAt: Date? = nil,
+        shape: Double? = nil
+    ) {
         self.series = series
         colors = PostBlockColors(kind: .trained, activity: activity)
         self.showsLabel = showsLabel
         self.startedAt = startedAt
+        self.shape = shape
     }
 
     public var body: some View {
-        if series.laps?.isEmpty ?? true, let curve = series.heartRate, curve.count >= 2 {
+        if let shape {
+            face
+                .aspectRatio(shape, contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(isHeartRate ? Color(ZoneColors.fill) : Color(colors.fill))
+        } else {
+            face
+        }
+    }
+
+    private var isHeartRate: Bool { (series.laps?.isEmpty ?? true) && (series.heartRate?.count ?? 0) >= 2 }
+
+    @ViewBuilder private var face: some View {
+        if isHeartRate, let curve = series.heartRate {
             HeartRateChart(points: curve, zones: series.zones, startedAt: startedAt, isDetailed: showsLabel)
         } else {
             lapChart
