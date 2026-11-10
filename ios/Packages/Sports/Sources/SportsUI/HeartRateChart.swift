@@ -55,13 +55,13 @@ struct HeartRateChart: View {
                 if let zone = pickedZone { tag(zone) }
             }
             .lineLimit(1)
-            .frame(height: Self.headerHeight, alignment: .bottomLeading)
+            .frame(height: Self.headerHeight, alignment: .leading)
             .accessibilityIdentifier("workout.chart.reading")
         } else {
             Text(copy: "心率曲线", bundle: .module)
                 .typeStyle(TypeRamp.caption)
                 .opacity(0.85)
-                .frame(height: Self.headerHeight, alignment: .bottomLeading)
+                .frame(height: Self.headerHeight, alignment: .leading)
         }
     }
 
@@ -192,8 +192,11 @@ struct HeartRateChart: View {
 
     private func isLit(_ zone: HeartRateZone) -> Bool { picked == nil || pickedZone == zone }
 
+    /// A zone's colour; below 轻松 the line dims, so it reads as outside every zone (as warming up
+    /// and cooling down are), and without zones the whole line is white.
     private func color(of zone: HeartRateZone?) -> Color {
-        zone.map { Color(ZoneColors.zone($0.rawValue)) } ?? Color(ZoneColors.ink)
+        if let zone { return Color(ZoneColors.zone(zone.rawValue)) }
+        return Color(ZoneColors.ink).opacity(trace.zones == nil ? 1 : Self.belowZones)
     }
 
     /// The reading's clock time, in the app's language; nil without the workout's start.
@@ -209,7 +212,9 @@ struct HeartRateChart: View {
         }
     }
 
-    private static let headerHeight = 26.0
+    /// As tall as the post's 「…」 over the cover's corner, so the zones' axis starts below it.
+    private static let headerHeight = Sizing.control
+    private static let belowZones = 0.4
     private static let dot = 12.0
     private static let hold = 0.15
 }
