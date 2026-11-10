@@ -183,22 +183,13 @@ private struct CardFront: View {
                 .foregroundStyle(Color(role: .fgOnInk, in: theme))
                 .lineLimit(1)
                 .accessibilityIdentifier("me.nickname")
-            // The squad, then the year they joined, under the name: the 外卡 stand at the right.
-            HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
-                if let squad = face.squadName {
-                    Text(squad)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                        .lineLimit(1)
-                        .accessibilityIdentifier("me.squadName")
-                }
-                if let year = face.joinedAt.map({ String(Calendar.current.component(.year, from: $0)) }) {
-                    Text(copy: "card.since \(year)", bundle: .module)
-                        .typeStyle(TypeRamp.label)
-                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                        .fixedSize()
-                        .accessibilityIdentifier("me.since")
-                }
+            // The squad under the name: the 外卡 stand at the right.
+            if let squad = face.squadName {
+                Text(squad)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                    .lineLimit(1)
+                    .accessibilityIdentifier("me.squadName")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

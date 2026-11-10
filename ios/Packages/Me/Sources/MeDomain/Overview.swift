@@ -179,7 +179,7 @@ public struct MeOverview: Hashable, Sendable {
     public var card: PlayerCardFace {
         PlayerCardFace(
             character: character, number: cardNumber,
-            squadName: squadName, joinedAt: joinedAt, counts: counts, week: week, board: board,
+            squadName: squadName, counts: counts, week: week, board: board,
             streaks: streaks)
     }
 }
@@ -190,8 +190,6 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// The number on it; nil with neither a pick nor a place in a squad.
     public var number: JerseyNumber?
     public var squadName: String?
-    /// When they signed up: the year on the card.
-    public var joinedAt: Date?
     public var counts: LifetimeCounts
     /// The streaks still going, on the card's 外卡; a squadmate's from what they shared with the squad.
     public var streaks: CardStreaks
@@ -202,14 +200,13 @@ public struct PlayerCardFace: Hashable, Sendable {
     public var schedule: MateSchedule?
 
     public init(
-        character: MeCharacter, number: JerseyNumber?, squadName: String?, joinedAt: Date?, counts: LifetimeCounts,
+        character: MeCharacter, number: JerseyNumber?, squadName: String?, counts: LifetimeCounts,
         week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil, streaks: CardStreaks = .none
     ) {
         self.streaks = streaks
         self.character = character
         self.number = number
         self.squadName = squadName
-        self.joinedAt = joinedAt
         self.counts = counts
         self.week = week
         self.board = board
