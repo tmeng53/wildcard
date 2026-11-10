@@ -4492,12 +4492,16 @@
               },
               "challenge": {
                 "$ref": "#/components/schemas/CoachChallenge"
+              },
+              "coach": {
+                "$ref": "#/components/schemas/CoachSpeaker"
               }
             },
             "required": [
               "noteId",
               "day",
-              "challenge"
+              "challenge",
+              "coach"
             ],
             "additionalProperties": false,
             "description": "The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off."

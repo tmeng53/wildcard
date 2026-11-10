@@ -235,6 +235,8 @@ export interface DayChallenge {
   /** The squad's day it is for, `YYYY-MM-DD`. */
   readonly day: string;
   readonly challenge: Challenge;
+  /** The coach who set it: the note's, which stays its own after the squad changes coach. */
+  readonly coach: CoachReply['coach'];
   readonly answer: ChallengeAnswer | undefined;
   /** Why they let it go, if they said. */
   readonly reason: string | undefined;

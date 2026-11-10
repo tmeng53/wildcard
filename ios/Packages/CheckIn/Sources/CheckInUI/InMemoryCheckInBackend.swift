@@ -298,7 +298,8 @@ extension InMemoryCheckInBackend {
             note: "41", day: day,
             challenge: CoachPageCard.Challenge(
                 title: String(copyKey: "拉伸", bundle: words), amount: 5,
-                unit: String(copyKey: "分钟", bundle: words), answer: .accepted))
+                unit: String(copyKey: "分钟", bundle: words), answer: .accepted),
+            coach: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)))
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? { dayChallenge }

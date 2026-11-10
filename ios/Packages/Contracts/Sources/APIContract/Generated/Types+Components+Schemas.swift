@@ -7117,25 +7117,31 @@ extension Components {
                 public var day: Swift.String
                 /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today/challenge`.
                 public var challenge: Components.Schemas.CoachChallenge
+                /// - Remark: Generated from `#/components/schemas/CoachDayChallenge/today/coach`.
+                public var coach: Components.Schemas.CoachSpeaker
                 /// Creates a new `TodayPayload`.
                 ///
                 /// - Parameters:
                 ///   - noteId: The morning note that set it, which answering and completing it name.
                 ///   - day: Its day, on the squad’s clock.
                 ///   - challenge:
+                ///   - coach:
                 public init(
                     noteId: Swift.Int,
                     day: Swift.String,
-                    challenge: Components.Schemas.CoachChallenge
+                    challenge: Components.Schemas.CoachChallenge,
+                    coach: Components.Schemas.CoachSpeaker
                 ) {
                     self.noteId = noteId
                     self.day = day
                     self.challenge = challenge
+                    self.coach = coach
                 }
                 public enum CodingKeys: String, CodingKey {
                     case noteId
                     case day
                     case challenge
+                    case coach
                 }
             }
             /// The caller’s challenge today, once their morning note reached them; `null` when there is none, or while their `coach` switch is off.

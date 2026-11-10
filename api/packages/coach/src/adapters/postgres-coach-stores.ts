@@ -1091,6 +1091,7 @@ function dayChallenges(
 ) {
   return db
     .selectFrom('coach_member_notes')
+    .innerJoin('coaches', 'coaches.id', 'coach_member_notes.coach_id')
     .innerJoin(
       'coach_member_note_deliveries',
       'coach_member_note_deliveries.note_id',
@@ -1113,6 +1114,9 @@ function dayChallenges(
       'coach_challenge_answers.reason',
       'coach_challenge_completions.by as done_by',
       'coach_challenge_completions.at as done_at',
+      'coaches.id as coach_id',
+      'coaches.name as coach_name',
+      'coaches.look as coach_look',
     ])
     .where('coach_member_notes.squad_id', '=', squad)
     .where('coach_member_notes.day', '=', day)
@@ -1127,6 +1131,9 @@ function dayChallengeOfRow(
       readonly id: string;
       readonly answer: string | null;
       readonly reason: string | null;
+      readonly coach_id: string;
+      readonly coach_name: string;
+      readonly coach_look: string;
     },
   day: string,
 ): DayChallenge | undefined {
@@ -1136,6 +1143,7 @@ function dayChallengeOfRow(
     note: Number(row.id),
     day,
     challenge,
+    coach: { id: row.coach_id, name: row.coach_name, look: row.coach_look },
     answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
     reason: row.reason ?? undefined,
     completion: completionOfRow(row),

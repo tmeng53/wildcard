@@ -6,7 +6,8 @@ import Testing
 private func challenge(_ answer: CoachChallengeAnswer?, on day: LocalDay) -> DayChallenge {
     DayChallenge(
         note: "41", day: day,
-        challenge: CoachPageCard.Challenge(title: "拉伸", amount: 5, unit: "分钟", answer: answer))
+        challenge: CoachPageCard.Challenge(title: "拉伸", amount: 5, unit: "分钟", answer: answer),
+        coach: CoachSpeaker(id: "xiaohun", name: "毛头"))
 }
 
 @MainActor @Test func onlyAnAcceptedChallengeTheServerCallsTodaysShowsOnMyWeek() async throws {
