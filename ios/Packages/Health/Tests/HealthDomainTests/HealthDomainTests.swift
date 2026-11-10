@@ -34,6 +34,19 @@ private func imported(
     #expect(today.newestToPost(skipping: [today[1].imported.id, today[2].imported.id]) == nil)
 }
 
+@Test func anotherRecordOfAPostedSessionIsPostedToo() throws {
+    // The watch and another app both saved the 6:19–6:49pm game; the member posted the watch's.
+    let watch = try imported("W", endingAt: "2026-11-09T23:49:04Z", seconds: 1800, sport: "pickleball")
+    let app = try imported("A", endingAt: "2026-11-09T23:50:00Z", seconds: 1860, sport: "pickleball")
+    // A later game, and a run at the same time, are not the same session.
+    let later = try imported("L", endingAt: "2026-11-10T01:30:00Z", seconds: 1800, sport: "pickleball")
+    let run = try imported("R", endingAt: "2026-11-09T23:45:00Z", seconds: 1200, sport: "run")
+    let today = [watch, app, later, run].today(try LocalDay("2026-11-09"), in: newYork, posted: [watch.id])
+    #expect(today.map(\.imported.id.id) == ["L", "A", "W", "R"])
+    #expect(today.map(\.isPosted) == [false, true, true, false])
+    #expect(today.newestToPost(skipping: [later.id])?.id.id == "R")
+}
+
 @Test func aTrainingPostedByHandCoversTheWorkoutOfItsSport() throws {
     // Pickleball 6:00–6:30pm in New York, posted by hand at 7:12pm; a run later that night.
     let pickleball = try imported("P", endingAt: "2026-11-09T23:30:00Z", seconds: 1800, sport: "pickleball")
