@@ -12,10 +12,16 @@ import Testing
     private let mia = MemberID(UUID())
     private let jie = MemberID(UUID())
 
-    private func page() -> ComposeModel {
-        ComposeModel(
+    private func page(mates: [MemberID] = []) -> ComposeModel {
+        let day = LocalDay(at: Date(timeIntervalSince1970: 1_792_515_600), in: .gmt)
+        let today = mates.map {
+            SquadmateToday(
+                member: $0, catchphrase: nil, character: nil, day: day, training: .notCheckedIn, latestMeal: nil,
+                plannedRest: false, firstCheckInAt: nil)
+        }
+        return ComposeModel(
             kind: .trained, purpose: .new(shareSquad: squad), suggestedActivity: .sport("run"), recentActivities: [],
-            save: { _ in true }, close: {})
+            together: { _, _, _ in TrainingTogether(mates: today, hints: []) }, save: { _ in true }, close: {})
     }
 
     private func hint(_ mate: MemberID, namedMe: Bool) throws -> TrainingTogether.Hint {
@@ -65,6 +71,22 @@ import Testing
         #expect(model.trainedWith == [mia])
         #expect(model.activity == nil)
         #expect(model.minutes == nil)
+    }
+
+    @Test func aSquadmateWhoLeftIsNotPostedNorCounted() throws {
+        let gone = MemberID(UUID())
+        let model = page(mates: [mia, jie])
+        model.trainedWith = [gone, mia]
+        if case .trained(_, _, let body) = model.draft { #expect(body.trainedWith.members == [mia]) }
+    }
+
+    @Test func aHintPastTheLimitFillsNothing() throws {
+        let mates = (0..<TrainedWith.limit).map { _ in MemberID(UUID()) }
+        let model = page(mates: mates + [jie])
+        for mate in mates { model.toggle(mate: mate) }
+        model.take(try hint(jie, namedMe: true))
+        #expect(!model.trainedWith.contains(jie))
+        #expect(model.activity == nil)
     }
 }
 #endif

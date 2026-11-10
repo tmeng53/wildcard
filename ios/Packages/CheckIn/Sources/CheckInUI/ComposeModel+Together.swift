@@ -20,11 +20,19 @@ extension ComposeModel {
         return offer(day, workout, workout == nil ? startTime : nil)
     }
 
+    /// The squadmates picked who are still in the squad, once it is known: one who left isn't
+    /// on the row to be let go, so they aren't posted (the API would refuse a new post naming
+    /// them) and don't count toward the limit.
+    var pickedMates: [MemberID] {
+        let mates = Set(together.mates.map(\.member))
+        return mates.isEmpty ? trainedWith : trainedWith.filter(mates.contains)
+    }
+
     /// Names a squadmate on the 训练, or lets them go again; at most `TrainedWith.limit`.
     func toggle(mate: MemberID) {
         if let index = trainedWith.firstIndex(of: mate) {
             trainedWith.remove(at: index)
-        } else if trainedWith.count < TrainedWith.limit {
+        } else if pickedMates.count < TrainedWith.limit {
             trainedWith.append(mate)
         }
     }
@@ -35,7 +43,7 @@ extension ComposeModel {
     func take(_ hint: TrainingTogether.Hint) {
         let picking = !trainedWith.contains(hint.mate)
         toggle(mate: hint.mate)
-        guard picking, hint.namedMe, workout == nil, !isEditing else { return }
+        guard picking, trainedWith.contains(hint.mate), hint.namedMe, workout == nil, !isEditing else { return }
         activity = hint.activity
         startTime = hint.startTime
         minutes = hint.minutes

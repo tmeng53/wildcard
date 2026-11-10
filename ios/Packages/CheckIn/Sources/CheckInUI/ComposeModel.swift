@@ -308,7 +308,7 @@ public final class ComposeModel {
         let body = PostBody(
             photos: picked, caption: line, workout: trained ? postedWorkout : nil,
             startTime: trained && workout == nil ? startTime : nil,
-            trainedWith: trained && goesToSquad ? (try? TrainedWith(trainedWith)) ?? .none : .none)
+            trainedWith: trained && goesToSquad ? (try? TrainedWith(pickedMates)) ?? .none : .none)
         return switch kind {
         case .trained: .trained(currentActivity, postedMinutes, body)
         case .healthyMeal: .healthyMeal(body)
@@ -322,7 +322,7 @@ public final class ComposeModel {
         return PostEdit(
             original: checkIn, activity: currentActivity, minutes: postedMinutes, line: line, photos: photos,
             workout: postedWorkout, startTime: workout == nil ? startTime : nil,
-            trainedWith: (try? TrainedWith(trainedWith)) ?? .none)
+            trainedWith: (try? TrainedWith(pickedMates)) ?? .none)
     }
 
     private struct Snapshot: Equatable {
