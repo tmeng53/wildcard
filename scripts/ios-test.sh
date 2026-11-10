@@ -88,6 +88,16 @@ xcodebuild test \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
 
+# What the widgets' extension and WidgetKit said during the run: a widget that draws nothing
+# shows in a UI test only as a blank box, so its own errors are the evidence.
+if [[ " ${ONLY_TESTING:-} " == *HomeScreenWidget* ]]; then
+  echo "----- widget log begin -----"
+  xcrun simctl spawn "$udid" log show --last 30m --style compact --info --debug \
+    --predicate 'process == "WildcardWidgets" OR (process == "chronod" AND eventMessage CONTAINS[c] "wildcard")' |
+    tail -400 || true
+  echo "----- widget log end -----"
+fi
+
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then
   raw="$out/attachments"
