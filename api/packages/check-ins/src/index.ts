@@ -7,6 +7,7 @@ export {
 } from './adapters/postgres-check-in-store.js';
 export { createPostgresCommentStore } from './adapters/postgres-comment-store.js';
 export { createPostgresReactionStore } from './adapters/postgres-reaction-store.js';
+export { createPostgresQuickReactions } from './adapters/postgres-quick-reactions.js';
 export { createPostgresWeekSummaryWords } from './adapters/postgres-week-summary-words.js';
 
 export {
@@ -96,6 +97,7 @@ export type {
   SquadMembership,
   WeeklyPlanStore,
   WeekSummaryWordsStore,
+  QuickReactionsStore,
 } from './ports.js';
 export type { Reacted } from './use-cases/check-ins/react-to-check-in.js';
 export type { CommentInput, Commented } from './use-cases/check-ins/comments.js';
@@ -110,6 +112,8 @@ export {
   inLanguage,
   winnerText,
 } from './domain/week-summary-words.js';
+export { QuickReactions } from './domain/quick-reactions.js';
+export { createQuickReactions, type QuickReactionsAdmin } from './use-cases/quick-reactions.js';
 export {
   createWeekSummaryWords,
   type WeekSummaryWordsAdmin,

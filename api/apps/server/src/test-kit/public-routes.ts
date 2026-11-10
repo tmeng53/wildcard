@@ -3,14 +3,22 @@ import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  createMinimumBuilds,
+  createPostgresMinimumBuild,
+  createPostgresSwitchStore,
+  createSwitches,
+} from '@wildcard/switches';
+import { createPostgresQuickReactions, createQuickReactions } from '@wildcard/check-ins';
 import { createPostgresUnlockStore } from '@wildcard/unlocks';
 
 import type { Database } from '../ports.js';
 import {
   artSection,
+  appBuildSection,
   appCopySection,
   disclaimerDiceSection,
+  reactionsSection,
   scenesSection,
   sportsSection,
   switchesSection,
@@ -46,6 +54,8 @@ export const catalogOn = (
     switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
     storesSection(createPostgresUnlockStore(db)),
     piecesSection(createPostgresUnlockStore(db)),
+    appBuildSection(createMinimumBuilds({ store: createPostgresMinimumBuild(db) })),
+    reactionsSection(createQuickReactions({ store: createPostgresQuickReactions(db) })),
     // The art as main.ts serves it: the database's list, downloaded from local Storage.
     artSection({
       manifest: async () => ({

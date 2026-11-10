@@ -6,7 +6,13 @@ import { writeFileSync } from 'node:fs';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import { createDiceLines, createPostgresDiceLines } from '@wildcard/disclaimer-drafts';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  createMinimumBuilds,
+  createPostgresMinimumBuild,
+  createPostgresSwitchStore,
+  createSwitches,
+} from '@wildcard/switches';
+import { createPostgresQuickReactions, createQuickReactions } from '@wildcard/check-ins';
 import { createPostgresUnlockStore } from '@wildcard/unlocks';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { z } from 'zod';
@@ -14,8 +20,10 @@ import { z } from 'zod';
 import { createDatabase } from '../src/adapters/postgres.js';
 import {
   catalog,
+  appBuildSection,
   appCopySection,
   disclaimerDiceSection,
+  reactionsSection,
   scenesSection,
   sportsSection,
   switchesSection,
@@ -38,6 +46,8 @@ const app = catalog({
     switchesSection(createSwitches({ store: createPostgresSwitchStore(db) })),
     storesSection(createPostgresUnlockStore(db)),
     piecesSection(createPostgresUnlockStore(db)),
+    appBuildSection(createMinimumBuilds({ store: createPostgresMinimumBuild(db) })),
+    reactionsSection(createQuickReactions({ store: createPostgresQuickReactions(db) })),
   ],
   clock: () => new Date(),
   publicRoutes: {

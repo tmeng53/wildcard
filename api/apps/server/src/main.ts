@@ -20,6 +20,8 @@ import {
   createPostgresWeeklyPlanStore,
   createWeekSummaryWords,
   createWeeklyPlans,
+  createPostgresQuickReactions,
+  createQuickReactions,
 } from '@wildcard/check-ins';
 import {
   createCoachCatalog,
@@ -108,7 +110,13 @@ import {
   createWeeklyAwards,
 } from '@wildcard/weekly-awards';
 import { createPostgresSceneStore, createScenes } from '@wildcard/scenes';
-import { coachNotesOn, createPostgresSwitchStore, createSwitches } from '@wildcard/switches';
+import {
+  coachNotesOn,
+  createMinimumBuilds,
+  createPostgresMinimumBuild,
+  createPostgresSwitchStore,
+  createSwitches,
+} from '@wildcard/switches';
 import { createCampaigns, createPostgresCampaignStore } from '@wildcard/campaigns';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import {
@@ -154,6 +162,8 @@ import { nudgeInteractions, checkInInteractions } from './flows/daily-progress-p
 import { suggestGoalIn } from './flows/squad-goal-suggestion.js';
 import { memeTools } from './admin-mcp/tools/memes.js';
 import { sceneTools } from './admin-mcp/tools/scenes.js';
+import { minimumBuildTools } from './admin-mcp/tools/minimum-build.js';
+import { quickReactionTools } from './admin-mcp/tools/quick-reactions.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
 import { newYorkDay } from './new-york-day.js';
@@ -169,6 +179,7 @@ import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
 import { createSupabasePhotoStorage } from './adapters/supabase-storage.js';
 import { createApp } from './app.js';
 import {
+  appBuildSection,
   artSection,
   appCopySection,
   disclaimerDiceSection,
@@ -177,6 +188,7 @@ import {
   switchesSection,
   storesSection,
   piecesSection,
+  reactionsSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
 import { inProcessEvents, type EventHandlers } from './events.js';
@@ -327,6 +339,10 @@ const giftWeekStart = squadWeekStart((ids, moment) =>
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
+const minimumBuildsOn = (scope: Database) =>
+  createMinimumBuilds({ store: createPostgresMinimumBuild(scope) });
+const quickReactionsOn = (scope: Database) =>
+  createQuickReactions({ store: createPostgresQuickReactions(scope) });
 const scenes = createScenes({
   store: createPostgresSceneStore(db),
   switches: () => switches.states(),
@@ -712,6 +728,8 @@ const app = createApp({
       disclaimerDiceSection(createDiceLines({ store: createPostgresDiceLines(db) })),
       appCopySection(createAppCopy({ store: createPostgresAppCopy(db) })),
       artSection(artOn(db)),
+      appBuildSection(minimumBuildsOn(db)),
+      reactionsSection(quickReactionsOn(db)),
     ],
     clock: () => new Date(),
   },
@@ -853,6 +871,8 @@ const app = createApp({
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
+      ...minimumBuildTools({ minimum: minimumBuildsOn(scope) }),
+      ...quickReactionTools({ reactions: quickReactionsOn(scope) }),
       ...sceneTools({
         scenes: createScenes({
           store: createPostgresSceneStore(scope),
