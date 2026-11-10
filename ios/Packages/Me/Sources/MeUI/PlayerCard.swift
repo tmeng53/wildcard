@@ -6,7 +6,7 @@ import MeDomain
 import SwiftUI
 
 /// A player card, like a baseball card, as the approved 头衔徽章 design draws it: the front has the
-/// number over the title worn and its badge, the character, the name, squad and year, and the
+/// number over the title worn and its badge, the character, the name and squad, and the
 /// headline numbers; a tap turns it over to the career line and the badge board (徽章板), where a
 /// badge opens its own card. Ink card stock with white type, the character in a light grey window,
 /// standing on faint court lines. The member's own on 我 can wear a title from a badge's card
@@ -86,8 +86,8 @@ struct PlayerCard: View {
 }
 
 /// The front: in the character's window, the number over a short bar in the badge's colour and
-/// the title worn, with its badge at the top right; then the name, squad and the year they
-/// joined, and 练了, 本周 and 徽章.
+/// the title worn, with its badge at the top right; then the name and squad,
+/// and 练了, 本周 and 徽章.
 private struct CardFront: View {
     let face: PlayerCardFace
     @Environment(\.sceneTheme) private var theme
