@@ -43,14 +43,19 @@ final class HomeScreenWidgetUITests: XCTestCase {
         search.typeText("Wildcard")
         Thread.sleep(forTimeInterval: 2)
         log("searched")
-        var entry = springboard.cells.matching(NSPredicate(format: "label CONTAINS[c] %@", "Wildcard")).firstMatch
-        if !entry.waitForExistence(timeout: 5) {
-            entry = springboard.descendants(matching: .any)
-                .matching(NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS %@", "Wildcard", "外卡"))
-                .element(boundBy: 1)
+        let named = NSPredicate(format: "label CONTAINS[c] %@ OR label CONTAINS %@", "Wildcard", "外卡")
+        let found = springboard.descendants(matching: .any).matching(named)
+        _ = found.firstMatch.waitForExistence(timeout: Self.wait)
+        attachTree("70-home-widget-search-tree")
+        // The gallery's row for the app, not its icon behind the gallery.
+        let entry = found.allElementsBoundByIndex.first {
+            $0.elementType != .icon && $0.frame.width > 0 && $0.isHittable
         }
-        XCTAssertTrue(entry.waitForExistence(timeout: Self.wait), "the app isn't in the widget gallery:\n\(tree)")
-        entry.tap()
+        print(
+            "home-widget: found \(found.allElementsBoundByIndex.map { "\($0.elementType.rawValue) \($0.frame) \($0.label)" })"
+        )
+        let row = try XCTUnwrap(entry, "the app isn't in the widget gallery:\n\(tree)")
+        row.tap()
         // The gallery's preview: the extension's snapshot of the sample squad.
         Thread.sleep(forTimeInterval: 8)
         keepScreenshot(named: "70-home-widget-gallery")
@@ -71,6 +76,14 @@ final class HomeScreenWidgetUITests: XCTestCase {
 
     private func log(_ step: String) {
         print("===== home-widget: \(step) =====\n\(tree)")
+    }
+
+    private func attachTree(_ name: String) {
+        let tree = XCTAttachment(string: springboard.debugDescription)
+        tree.name = name
+        tree.lifetime = .keepAlways
+        add(tree)
+        print("===== \(name) =====\n\(springboard.debugDescription)")
     }
 
     private func keepScreenshot(named name: String) {
