@@ -89,7 +89,7 @@ struct StageSection: View {
                         SceneBadge(.track)
                     }
                     NoticeBanner(
-                        Text(copy: "DEUCE CLUB 开门了", bundle: .module), detail: Text(copy: "网球练满 3 次", bundle: .module),
+                        Text(copy: "DEUCE CLUB 开门了", bundle: .module), detail: Text(copy: "网球练满 3 天", bundle: .module),
                         action: Text(copy: "去看看", bundle: .module)
                     ) { SceneBadge(.tennis) }
                     NoticeBanner(

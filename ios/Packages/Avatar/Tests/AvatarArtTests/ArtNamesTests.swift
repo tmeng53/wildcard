@@ -65,7 +65,7 @@ private let trot = Data(
     #expect(powder.name.english == "POWDER DAY")
     #expect(powder.limited?.simplifiedChinese == "冬季限定")
     #expect(powder.limitedColor == RGBAColor(red: 0x1E, green: 0x6A, blue: 0x9E))
-    #expect(names.stores["lap"]?.unlock?.simplifiedChinese == "跑步、快走或徒步 3 次解锁")
+    #expect(names.stores["lap"]?.unlock?.simplifiedChinese == "跑步、快走或徒步练满 3 天解锁")
     // Nothing downloaded in tests: the bundled names are all there is.
     #expect(PlaceholderCharacter.names() == names)
     let bundled = try Data(contentsOf: PlaceholderCharacter.folder.appending(path: "names.json"))
@@ -86,7 +86,7 @@ private let trot = Data(
     let lap = try #require(names.stores["lap"])
     #expect(lap.tagline?.english == "A new line.")
     // Words the upload leaves out keep the bundled ones.
-    #expect(lap.unlock?.simplifiedChinese == "跑步、快走或徒步 3 次解锁")
+    #expect(lap.unlock?.simplifiedChinese == "跑步、快走或徒步练满 3 天解锁")
     #expect(lap.sports == PlaceholderCharacter.bundledNames.stores["lap"]?.sports)
     // A store only the upload names is added, and its variants come with it.
     #expect(names.stores["trot"]?.local.simplifiedChinese == "火鸡全开")

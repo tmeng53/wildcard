@@ -10,6 +10,7 @@ export const unusedWeeklyAwards = {
     claimNudge: unused,
     claimReadyPush: unused,
     titlesWon: unused,
+    shownTitles: unused,
     story: unused,
     freezeStory: unused,
     storyWeeks: unused,
@@ -24,7 +25,6 @@ export const unusedWeeklyAwards = {
 };
 
 /** The Sunday summary's words, for an app whose test never reads them. */
-export const unusedWeekSummaryWords = unused;
 
 /** Each squad's coach, for an app whose test never reads it. */
 export const unusedCoachHiring = {
@@ -41,7 +41,6 @@ export const unusedCoachLetters = { write: unused };
 /** What coaches said, for an app whose test never reads it. */
 export const unusedCoachActivity = {
   squad: unused,
-  putAway: unused,
   answerChallenge: unused,
   challenge: unused,
   completeChallenge: unused,

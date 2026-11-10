@@ -26,10 +26,6 @@ public protocol CheckInBackend: Sendable {
     /// Deletes the member's own check-in, with its photos and what teammates left on it; fine
     /// when it is gone already.
     func delete(_ checkIn: CheckInID) async throws(CheckInError)
-    func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction]
-    /// Sets the member's one reaction on a check-in, replacing any earlier one.
-    func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError)
-    func removeReaction(from checkIn: CheckInID) async throws(CheckInError)
     /// Whom the member patted today in `squad` (拍一拍) and who patted them in the last day.
     func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes
     /// Pats a teammate. Once a day each: patting them again the same day changes nothing.

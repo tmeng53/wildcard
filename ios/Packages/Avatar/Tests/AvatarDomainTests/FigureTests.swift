@@ -148,3 +148,35 @@ private let teeTones = ##"{ "version": 1, "base": "#2D5BA0", "shades": [] }"##
     #expect(shown(front: 0.4) == [1, 1, 0])
     #expect(shown(front: 1) == [1, 1, 1])
 }
+
+/// An arm's front copy is drawn only past the elbow, so only the forearm comes in front of the body
+/// and the shoulder stays behind it: a swap of depth shows only where the forearm crosses the body.
+/// The area turns with the bend; the copy behind the body is drawn whole.
+@Test func onlyTheForearmComesInFront() throws {
+    var twinned = rig
+    twinned.parts[1].elbow = Rig.Elbow(point: Point(x: 60, y: 60), hand: Point(x: 60, y: 80))
+    twinned.parts.insert(Rig.Part(id: "armBack", parent: "body", pivot: Point(x: 60, y: 40), twin: "arm"), at: 1)
+    let figure = try Figure(rig: twinned, outfit: Outfit([:]), art: art)
+    func inside(_ point: Point, _ area: [Point]) -> Bool {
+        // Convex: the point is on the same side of every edge.
+        let sides = area.indices.map { index -> Double in
+            let (start, end) = (area[index], area[(index + 1) % area.count])
+            return (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (point.x - start.x)
+        }
+        return sides.allSatisfy { $0 > 0 } || sides.allSatisfy { $0 < 0 }
+    }
+    var pose = figure.restPose
+    pose.parts[2].front = 1
+    let rest = figure.layout(pose)
+    #expect(rest[1].area == nil)
+    let area = try #require(rest[2].area)
+    #expect(inside(Point(x: 60, y: 80), area))
+    #expect(inside(Point(x: 60, y: 61), area))
+    #expect(!inside(Point(x: 60, y: 59), area))
+    #expect(!inside(Point(x: 60, y: 40), area))
+    // Bent 90° clockwise, the forearm points left from the elbow, and so does the area.
+    pose.parts[2].bend = 90
+    let bent = try #require(figure.layout(pose)[2].area)
+    #expect(inside(Point(x: 40, y: 60), bent))
+    #expect(!inside(Point(x: 70, y: 80), bent))
+}

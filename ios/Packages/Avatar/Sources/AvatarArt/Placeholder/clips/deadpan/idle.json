@@ -14,10 +14,10 @@
       { "t": 0, "v": 1 }, { "t": 1.8, "v": 1.015, "ease": "easeInOut" },
       { "t": 3.6, "v": 1, "ease": "easeInOut" } ] },
     { "part": "armL", "channel": "rotation", "keys": [
-      { "t": 0, "v": 0 }, { "t": 1, "v": -3, "ease": "easeInOut" }, { "t": 2.8, "v": 3, "ease": "easeInOut" },
+      { "t": 0, "v": 0 }, { "t": 1, "v": -2, "ease": "easeInOut" }, { "t": 2.8, "v": 2, "ease": "easeInOut" },
       { "t": 3.6, "v": 0, "ease": "easeInOut" } ] },
     { "part": "armR", "channel": "rotation", "keys": [
-      { "t": 0, "v": 0 }, { "t": 1, "v": -3, "ease": "easeInOut" }, { "t": 2.8, "v": 3, "ease": "easeInOut" },
+      { "t": 0, "v": 0 }, { "t": 1, "v": -2, "ease": "easeInOut" }, { "t": 2.8, "v": 1, "ease": "easeInOut" },
       { "t": 3.6, "v": 0, "ease": "easeInOut" } ] },
     { "part": "propR", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 1, "v": 0 }, { "t": 2.8, "v": 0 }, { "t": 3.6, "v": 0 } ] },

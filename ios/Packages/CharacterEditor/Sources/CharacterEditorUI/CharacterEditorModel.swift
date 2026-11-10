@@ -83,7 +83,7 @@ public final class CharacterEditorModel {
     }
 
     /// The placeholder character's catalog on the member's 商店街 (`stock`; the starter street
-    /// while it isn't known) with the props they unlocked, and a look to start from: the one
+    /// while it isn't known) with every prop, and a look to start from: the one
     /// given, or a random one until sign-up hands over the last look its first screen showed. The
     /// wardrobe (穿搭) holds the pieces of open stores that came with them and the unlocked pieces
     /// in `claimed`.
@@ -92,7 +92,7 @@ public final class CharacterEditorModel {
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
         marks: any WardrobeMarks = MemoryWardrobeMarks()
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder(unlocks: unlocks, stock: stock, gifts: gifts)
+        let catalog = try Catalog.placeholder(stock: stock, gifts: gifts)
         var generator = SystemRandomNumberGenerator()
         let arrived = Catalog.arrived(unlocks: unlocks, stock: stock)
         let start =

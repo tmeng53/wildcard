@@ -30,6 +30,8 @@ export interface TrainedCheckIn {
   readonly id: CheckInId;
   /** The listed sport, or `custom` for one the member named. */
   readonly sport: SportKey;
+  /** The day it counts for (`YYYY-MM-DD`, the member's own day), apart from when it was made. */
+  readonly day: string;
   readonly madeAt: Date;
 }
 

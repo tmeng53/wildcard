@@ -31,7 +31,7 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
     let today = SquadToday(
         squad: squadID,
         members: members ?? [row(mate, .trained), row(viewer, .notCheckedIn), row(resting, .notCheckedIn, rest: true)],
-        today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false),
+        today: TodayCounts(trained: 1, disclaimer: 0, resting: 1),
         myWeek: MyWeek(
             firstDay: tuesday.weekStart, lastDay: tuesday.weekStart.adding(days: 6),
             week: WeekCount(trainedDays: 1, plannedDays: 4)),

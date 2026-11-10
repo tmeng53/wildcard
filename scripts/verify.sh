@@ -78,6 +78,8 @@ supabase() { if type -P supabase >/dev/null; then command supabase "$@"; else np
 
 if want supabase && [ -d supabase/migrations ]; then
   echo "==> supabase"
+  # New migrations must be numbered after the newest on main, or the hosted deploy refuses them.
+  scripts/migration-order.sh ${MIGRATIONS_BASE:+"$MIGRATIONS_BASE"}
   supabase db reset
   # The reset restarts the stack's services; wait for them before the tests and the next steps.
   for _ in $(seq 30); do supabase status >/dev/null 2>&1 && break; sleep 2; done

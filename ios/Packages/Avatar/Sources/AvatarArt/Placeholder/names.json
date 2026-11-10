@@ -45,9 +45,9 @@
         "zhHant": "操場第九圈，才是今天真正開始的地方。"
       },
       "unlock": {
-        "zhHans": "跑步、快走或徒步 3 次解锁",
-        "en": "Unlock: 3 runs, walks or hikes",
-        "zhHant": "跑步、快走或健行 3 次解鎖"
+        "zhHans": "跑步、快走或徒步练满 3 天解锁",
+        "en": "Unlock: run, walk or hike on 3 days",
+        "zhHant": "跑步、快走或健行練滿 3 天解鎖"
       }
     },
     "nolook": {
@@ -72,9 +72,9 @@
         "zhHant": "傳丟了，就說是戰術。"
       },
       "unlock": {
-        "zhHans": "球类 3 次解锁",
-        "en": "Unlock: 3 ball games",
-        "zhHant": "球類 3 次解鎖"
+        "zhHans": "球类练满 3 天解锁",
+        "en": "Unlock: ball games on 3 days",
+        "zhHant": "球類練滿 3 天解鎖"
       }
     },
     "moss": {
@@ -99,9 +99,9 @@
         "zhHant": "路不在地圖上，在青苔上。"
       },
       "unlock": {
-        "zhHans": "攀岩或徒步 3 次解锁",
-        "en": "Unlock: 3 climbs or hikes",
-        "zhHant": "攀岩或健行 3 次解鎖"
+        "zhHans": "攀岩或徒步练满 3 天解锁",
+        "en": "Unlock: climb or hike on 3 days",
+        "zhHant": "攀岩或健行練滿 3 天解鎖"
       }
     },
     "halfmoon": {
@@ -126,9 +126,9 @@
         "zhHant": "動作做不到位，表情要到位。"
       },
       "unlock": {
-        "zhHans": "随便练 3 次解锁",
-        "en": "Unlock: 3 workouts",
-        "zhHant": "隨便練 3 次解鎖"
+        "zhHans": "随便练满 3 天解锁",
+        "en": "Unlock: work out on 3 days",
+        "zhHant": "隨便練滿 3 天解鎖"
       }
     },
     "deuce": {
@@ -153,9 +153,9 @@
         "zhHant": "平分？那就接著打。"
       },
       "unlock": {
-        "zhHans": "拍类运动 3 次解锁",
-        "en": "Unlock: 3 racket sessions",
-        "zhHant": "拍類運動 3 次解鎖"
+        "zhHans": "拍类运动练满 3 天解锁",
+        "en": "Unlock: racket sports on 3 days",
+        "zhHant": "拍類運動練滿 3 天解鎖"
       }
     },
     "powder": {

@@ -43,7 +43,12 @@ import { createCoachActivity } from './coach-activity.js';
 import { createCoachNoteDelivery } from './coach-note-delivery.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
-import { createCoachWakes, type CoachAnswered, type CoachReplied } from './coach-wakes.js';
+import {
+  createCoachWakes,
+  type CoachAnswered,
+  type CoachReplied,
+  type CoachWakesDependencies,
+} from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
 // transaction it rolls back, so the seeded settings stay as they are for the other tests.
@@ -213,6 +218,7 @@ function wakes(
       ),
     hiring: ownSquadOnly(createPostgresCoachHiring(trx), squad),
     clock: () => at,
+    ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
@@ -223,6 +229,27 @@ function wakes(
     ...(weatherOf === undefined ? {} : { weatherOf }),
   });
 }
+
+/**
+ * The ports a test doesn't look at: every squad on New York's clock, no facts, memes, weather,
+ * occasions or gifts, every member wanting notes, photos at a test address.
+ */
+const quietPorts = {
+  photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
+  memberFacts: () => Promise.resolve([]),
+  timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  memes: () => Promise.resolve([]),
+  weatherOf: () => Promise.resolve(new Map()),
+  occasions: () => Promise.resolve([]),
+  replied: () => Promise.resolve(),
+  answered: () => Promise.resolve(),
+  wantNotes: (members) => Promise.resolve(members),
+  gifting: {
+    options: () => Promise.resolve({ pool: [], open: new Map() }),
+    give: () => Promise.resolve('no gifts in this test'),
+  },
+  warn: () => undefined,
+} satisfies Partial<CoachWakesDependencies>;
 
 /**
  * The hiring store, seeing only the fixture's squad among the squads with a coach: other
@@ -281,6 +308,7 @@ describe('the coach', () => {
       aiConsented: () => Promise.reject(new Error('no one to ask')),
       hiring: createPostgresCoachHiring(db),
       clock: () => now,
+      ...quietPorts,
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
@@ -371,8 +399,8 @@ describe('the coach', () => {
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'remember', 'edit_file', 'reply', 'react'],
-        ['squad_week', 'remember', 'edit_file', 'post_note', 'note_to'],
+        ['squad_week', 'remember', 'edit_file', 'member_stats', 'memes', 'reply', 'react'],
+        ['squad_week', 'remember', 'edit_file', 'member_stats', 'memes', 'post_note', 'note_to'],
       ]);
       expect(runs[0]?.task).toContain('队员1 训练 跑步');
       expect(runs[0]?.answers).toStrictEqual([
@@ -534,12 +562,15 @@ describe('the coach', () => {
       expect(
         (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
       ).toBeUndefined();
-      // Put away on one phone, it shows on none; only its own member can.
-      await expect(
-        activity.putAway({ squad, member: leo, note: miaNote.id }),
-      ).rejects.toBeInstanceOf(CoachNoteNotFoundError);
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
+      // Seen on one phone (its card swiped away), it shows on none; another member's swipe
+      // does nothing to it.
+      const seen = { squad, kind: 'note', id: String(miaNote.id) } as const;
+      await activity.markSeen({ ...seen, member: leo });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote?.id,
+      ).toBe(miaNote.id);
+      await activity.markSeen({ ...seen, member: fixture.mia });
+      await activity.markSeen({ ...seen, member: fixture.mia });
       expect(
         (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote,
       ).toBeUndefined();
@@ -1350,15 +1381,6 @@ describe('the coach', () => {
     });
   });
 
-  it('has no meme tool without the library', async () => {
-    await rolledBack(async (fixture) => {
-      const { squad, checkIn } = fixture;
-      const { agent, runs } = scriptedAgent(() => []);
-      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
-      expect(runs[0]?.tools).not.toContain('memes');
-    });
-  });
-
   it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
     await rolledBack(async (fixture) => {
       const { squad, mia, leo } = fixture;
@@ -1677,7 +1699,7 @@ describe('the coach', () => {
     });
   });
 
-  it('tells an @ about a post with photos that it hasn’t seen them, only when it can look', async () => {
+  it('tells an @ about a post with photos that it hasn’t seen them', async () => {
     await rolledBack(async (fixture) => {
       const { squad, leo, checkIn } = fixture;
       const asked = await commentOn(fixture, {
@@ -1707,30 +1729,6 @@ describe('the coach', () => {
       ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
       expect(seeing.runs[0]?.task).toContain(hint);
       expect(seeing.runs[0]?.tools).toContain('look_at_photos');
-    });
-    await rolledBack(async (fixture) => {
-      const { squad, leo, checkIn } = fixture;
-      const asked = await commentOn(fixture, {
-        member: leo,
-        text: '@小混 你看看我们吃了啥',
-        at: new Date(now.getTime() + 60_000),
-        mentionsCoach: 'xiaohun',
-      });
-      const week: SquadWeek = {
-        ...fixture.week,
-        checkIns: fixture.week.checkIns.map((each) =>
-          each.id === checkIn ? { ...each, photos: ['m/a.jpg'], comments: [asked] } : each,
-        ),
-      };
-      // Without photo URLs it can't look, so it isn't told to.
-      const blind = scriptedAgent(() => []);
-      await wakes(
-        { ...fixture, week },
-        { agent: blind.agent, at: new Date(now.getTime() + 2 * 60_000) },
-      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
-      expect(blind.runs[0]?.task).toContain('有人在评论里 @ 你。');
-      expect(blind.runs[0]?.task).not.toContain('look_at_photos');
-      expect(blind.runs[0]?.tools).not.toContain('look_at_photos');
     });
   });
 

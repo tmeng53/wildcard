@@ -16,17 +16,17 @@ struct UpdateRequired: View {
                 .scaledToFit()
                 .frame(width: Self.markSize, height: Self.markSize)
                 .accessibilityHidden(true)
-            Text("有新版本")
+            Text(copy: "有新版本", bundle: .main)
                 .typeStyle(TypeRamp.largeTitle)
                 .foregroundStyle(Color(role: .fgDefault, in: .gym))
-            Text("更新后才能继续使用外卡")
+            Text(copy: "更新后才能继续使用外卡", bundle: .main)
                 .typeStyle(TypeRamp.body)
                 .foregroundStyle(Color(role: .fgMuted, in: .gym))
             Spacer()
             Button {
                 if let appStore = URL(string: "https://apps.apple.com/app/id6826015677") { openURL(appStore) }
             } label: {
-                Text("去更新").frame(maxWidth: .infinity)
+                Text(copy: "去更新", bundle: .main).frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(.large))
             .accentTone(.brand)

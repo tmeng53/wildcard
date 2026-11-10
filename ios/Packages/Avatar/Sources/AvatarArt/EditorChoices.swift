@@ -36,15 +36,13 @@ public struct EditorChoices: Hashable, Sendable {
         }
     }
 
-    /// A prop of this release. Its name is UI copy, in the editor's String Catalog.
+    /// A prop of this release, which every member holds (Tracy, 2026-11-09). Its name is UI
+    /// copy, in the editor's String Catalog.
     public struct Prop: Hashable, Sendable, Identifiable {
         public let id: String
-        /// Whether every member holds it from the start (every prop now, Tracy 2026-11-09); one
-        /// that isn't opens once the member unlocks it by training.
-        public let isOpen: Bool
 
-        public init(id: String, isOpen: Bool = false) {
-            (self.id, self.isOpen) = (id, isOpen)
+        public init(id: String) {
+            self.id = id
         }
     }
 
@@ -87,7 +85,7 @@ public struct EditorChoices: Hashable, Sendable {
     /// `{"version": 4, "species": [{"id": "person", "bodies": ["peach"], "hair": true}],
     /// "stores": [{"id": "warmup"}, {"id": "lap"}, {"id": "powder"}],
     /// "wear": {"top": [{"id": "warmup-tee", "store": "warmup", "swatches": ["#F4F6FA", "#1F2128"]}]},
-    /// "props": [{"id": "dumbbell", "open": true}, {"id": "racket"}]}`. Every piece hangs in a
+    /// "props": [{"id": "dumbbell", "open": true}]}`. Every piece hangs in a
     /// store the list has. Which stores are open and which pieces are out is data on the server
     /// (`StreetStock`), so the art only lists them.
     public static func decode(_ data: Data) throws(AvatarError) -> EditorChoices {
@@ -108,7 +106,7 @@ public struct EditorChoices: Hashable, Sendable {
         }
         return EditorChoices(
             species: file.species.map { Species(id: $0.id, bodies: $0.bodies, wearsHair: $0.hair ?? false) },
-            stores: stores, wear: wear, props: file.props.map { Prop(id: $0.id, isOpen: $0.open ?? false) })
+            stores: stores, wear: wear, props: file.props.map { Prop(id: $0.id) })
     }
 
     private struct File: Decodable {
@@ -133,7 +131,8 @@ public struct EditorChoices: Hashable, Sendable {
     /// A prop: its id, and whether it is open from the start.
     private struct ItemFile: Decodable {
         let id: String
-        let open: Bool?
+        // Each prop's `"open": true` stays in the file for builds from before every prop was
+        // open, which read an uploaded `editor.json` too; this build reads only the id.
     }
 
     private struct SpeciesFile: Decodable {

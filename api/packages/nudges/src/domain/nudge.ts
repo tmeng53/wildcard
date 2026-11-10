@@ -28,14 +28,3 @@ export interface Nudge {
   readonly day: LocalDay;
   readonly at: Date;
 }
-
-/** The day `at` falls on in `timeZone` (an IANA zone). */
-export function localDay(at: Date, timeZone: string): LocalDay {
-  // en-CA writes dates as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(at);
-}

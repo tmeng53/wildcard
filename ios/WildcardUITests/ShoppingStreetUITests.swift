@@ -105,7 +105,7 @@ final class ShoppingStreetUITests: XCTestCase {
         XCTAssertTrue(lap.waitForExistence(timeout: 30), "the map didn't walk to LAP NINE")
         settle()
         XCTAssertTrue(lap.isHittable, "LAP NINE isn't in the middle of the street")
-        XCTAssertTrue(lap.label.contains("还有 3 次开门"), lap.label)
+        XCTAssertTrue(lap.label.contains("还有 3 天开门"), lap.label)
         XCTAssertFalse(app.buttons["street.enter"].isEnabled, "a closed store's button lets the member in")
         keepScreenshot(named: "22-street-closed")
         lap.tap()

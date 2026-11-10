@@ -22,11 +22,8 @@ public struct SquadSettings: Hashable, Sendable {
 
     public init(
         squad: Squad, viewer: MemberID, characters: [MemberID: MemberCharacter], scene: SquadScene,
-        coach: SquadCoach, today: LocalDay, timeZone: TimeZone,
-        goal: SquadWeeklyGoal = SquadWeeklyGoal(daysPerMember: 3, nextDaysPerMember: 3, canChange: false, recent: nil),
-        matchTimeZone: SquadTimeZone = SquadTimeZone(
-            timeZone: SquadTimeZone.newYork, canChange: false),
-        language: SquadLanguage = SquadLanguage(language: .simplifiedChinese, canChange: false)
+        coach: SquadCoach, today: LocalDay, timeZone: TimeZone, goal: SquadWeeklyGoal,
+        matchTimeZone: SquadTimeZone, language: SquadLanguage
     ) {
         self.squad = squad
         self.viewer = viewer

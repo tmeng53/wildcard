@@ -159,8 +159,18 @@ describe('unlocks', () => {
     ).rejects.toBeInstanceOf(UnlockStoreMissingError);
 
     const me = await newMember();
-    const july = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-07-01T12:00:00Z') };
-    const december = { id: randomUUID(), sport: 'ski', madeAt: new Date('2099-12-01T12:00:00Z') };
+    const july = {
+      id: randomUUID(),
+      sport: 'ski',
+      day: '2099-07-01',
+      madeAt: new Date('2099-07-01T12:00:00Z'),
+    };
+    const december = {
+      id: randomUUID(),
+      sport: 'ski',
+      day: '2099-12-01',
+      madeAt: new Date('2099-12-01T12:00:00Z'),
+    };
     const trained = new Map<MemberId, Trained[]>([[me, [july]]]);
     const switched = unlocksWith(trained);
     const summer = await switched.standing(me);
@@ -241,7 +251,17 @@ describe('unlocks', () => {
     await unlocks.putRule({ kind: 'piece', id: sweater, sports: [], after: 1 });
     const me = await newMember();
     const trained = new Map<MemberId, Trained[]>([
-      [me, [{ id: randomUUID(), sport: 'run', madeAt: new Date('2099-12-01T12:00:00Z') }]],
+      [
+        me,
+        [
+          {
+            id: randomUUID(),
+            sport: 'run',
+            day: '2099-12-01',
+            madeAt: new Date('2099-12-01T12:00:00Z'),
+          },
+        ],
+      ],
     ]);
     // In the preview the store's switch is on; as really set, it is off.
     const pieceStore = createPostgresUnlockStore(db);
@@ -309,6 +329,8 @@ describe('unlocks', () => {
     const tennis = [1, 2, 3].map((minutes) => ({
       id: randomUUID(),
       sport: 'tennis',
+      // Each on a day of its own, since a rule counts days.
+      day: `2099-01-0${String(minutes)}`,
       madeAt: new Date(now + minutes * 60_000),
     }));
     // Props are everyone's: no 练了 opens the racket, whose rule is retired.
@@ -374,18 +396,18 @@ describe('unlocks', () => {
     const unlocks = unlocksWith(new Map());
     const before = await unlocks.rules();
     const id = `test${randomUUID().slice(0, 8)}`;
-    const added = await unlocks.putRule({ kind: 'prop', id, sports: ['testOne'], after: 2 });
+    const added = await unlocks.putRule({ kind: 'store', id, sports: ['testOne'], after: 2 });
     const rule = added.find((each) => each.id === id);
-    expect(rule).toMatchObject({ kind: 'prop', id, sports: ['testOne'], after: 2 });
+    expect(rule).toMatchObject({ kind: 'store', id, sports: ['testOne'], after: 2 });
     // No check-in names these sports, so the rule never opens for another test's members.
-    const changed = await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
+    const changed = await unlocks.putRule({ kind: 'store', id, sports: ['testTwo'], after: 4 });
     expect(changed.find((each) => each.id === id)).toStrictEqual({
       ...rule,
       sports: ['testTwo'],
       after: 4,
     });
     // The same again changes nothing, so it logs nothing.
-    await unlocks.putRule({ kind: 'prop', id, sports: ['testTwo'], after: 4 });
+    await unlocks.putRule({ kind: 'store', id, sports: ['testTwo'], after: 4 });
     const events = await sql<{ op: string; value: { after: number } }>`
       select op, value from public.reward_trigger_events where value ->> 'reward_id' = ${id} order by id
     `.execute(db);
@@ -408,10 +430,11 @@ describe('unlocks', () => {
     const trained = new Map<MemberId, Trained[]>();
     const told: string[] = [];
     const unlocks = unlocksWith(trained, told);
-    // Two 练了 open WARM-UP's headphones.
+    // Two days of 练了 open WARM-UP's headphones.
     const tennis = [1, 2].map((minutes) => ({
       id: randomUUID(),
       sport: 'tennis',
+      day: `2099-01-0${String(minutes)}`,
       madeAt: new Date(Date.now() + minutes * 60_000),
     }));
     trained.set(me, tennis);

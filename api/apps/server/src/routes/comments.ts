@@ -84,9 +84,6 @@ export const Comment = z
   .openapi('Comment');
 /** A comment in a list, which carries the version. */
 export const CommentEntry = z.strictObject(commentFields).openapi('CommentEntry');
-const CommentList = z
-  .strictObject({ version: bodyVersion(1), comments: z.array(CommentEntry) })
-  .openapi('CommentList');
 
 export const wireComment = ({
   id,
@@ -108,7 +105,6 @@ export const wireComment = ({
   commentedAt: commentedAt.toISOString(),
 });
 
-const listParams = z.strictObject({ checkInId: CheckInId });
 const params = z.strictObject({ checkInId: CheckInId, commentId: CommentId });
 
 const failures = {
@@ -119,8 +115,8 @@ const failures = {
 
 /**
  * Comments on a check-in (动态评论): its author and the teammates who can see it write them,
- * one level deep. `PUT` and `DELETE /check-ins/{checkInId}/comments/{commentId}`, and
- * `GET /check-ins/{checkInId}/comments`.
+ * one level deep. `PUT` and `DELETE /check-ins/{checkInId}/comments/{commentId}`; they are read
+ * with the post (`GET /check-ins/{id}`) and the squad's feed.
  */
 export function comments(deps: {
   readonly verifyToken: VerifyToken;
@@ -176,25 +172,6 @@ export function comments(deps: {
       ...failures,
     },
   });
-  const list = createRoute({
-    method: 'get',
-    path: '/check-ins/{checkInId}/comments',
-    operationId: 'listCheckInComments',
-    summary: 'A check-in’s comments',
-    description: 'Oldest first, for its author and the teammates who can see it.',
-    security: [{ bearer: [] }],
-    middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { params: listParams },
-    responses: {
-      200: {
-        description: 'The comments',
-        content: { 'application/json': { schema: CommentList } },
-      },
-      400: problem('Not a check-in id'),
-      ...failures,
-    },
-  });
-
   return new OpenAPIHono<SignedIn>()
     .openapi(write, async (c) => {
       const { checkInId, commentId } = c.req.valid('param');
@@ -238,12 +215,5 @@ export function comments(deps: {
         member: MemberId.parse(c.var.caller.userId),
       });
       return c.body(null, 204);
-    })
-    .openapi(list, async (c) => {
-      const found = await deps.checkIns.listComments({
-        checkIn: c.req.valid('param').checkInId,
-        viewer: MemberId.parse(c.var.caller.userId),
-      });
-      return c.json({ version: 1 as const, comments: found.map(wireComment) }, 200);
     });
 }

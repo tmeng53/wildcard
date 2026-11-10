@@ -202,6 +202,17 @@ export interface MemberAwards {
   readonly titles: readonly Title[];
 }
 
+/** A title as the 战报 shows it: its badge with its colour's tone, the default for one won before badges. */
+export interface ShownTitle extends Omit<Title, 'badge'> {
+  readonly badge: ShownBadge;
+}
+
+/** One member's titles as the 战报 shows them. */
+export interface ShownMemberAwards {
+  readonly member: MemberId;
+  readonly titles: readonly ShownTitle[];
+}
+
 /**
  * A squad's awards for a week: every member who checked in before them, in the order they
  * joined (less any account deleted since).

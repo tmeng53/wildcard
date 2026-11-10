@@ -9,8 +9,12 @@ export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
 export const UNLOCK_KINDS = ['store', 'prop', 'piece'] as const;
+/** What a member unlocked: a `prop` only from before every prop was open (Tracy, 2026-11-09). */
 export const UnlockKind = z.enum(UNLOCK_KINDS);
 export type UnlockKind = z.infer<typeof UnlockKind>;
+
+/** What a rule opens or an admin gives now: props never need unlocking. */
+export const UnlockableKind = UnlockKind.exclude(['prop']);
 
 /** A store's or prop's id in the app's art, such as `deuce` or `racket`. */
 export const ItemId = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
@@ -28,10 +32,13 @@ export function idFits(kind: UnlockKind, id: string): boolean {
   return (kind === 'piece' ? PieceId : ItemId).safeParse(id).success;
 }
 
-/** The most check-ins a rule may ask for. */
+/** The most days of 训练 a rule may ask for. */
 export const AFTER_MAX = 100;
 
-/** How a store, prop or piece opens: `after` 训练 check-ins in one of `sports` (any when empty). */
+/**
+ * How a store, prop or piece opens: 训练 in one of `sports` (any when empty) on `after` different
+ * days.
+ */
 export interface UnlockRule {
   readonly kind: UnlockKind;
   /** An `ItemId` for a store or prop, a `PieceId` for a piece. */
@@ -214,17 +221,19 @@ export interface Unlock {
   readonly unlockedAt: Date;
 }
 
-/** A 训练 check-in's sport and when it was made. */
+/** A 训练 check-in's sport, the day it counts for and when it was made. */
 export interface Trained {
   readonly id: string;
   /** A listed sport's id, or `custom`. */
   readonly sport: string;
+  /** The member's own day it counts for, `YYYY-MM-DD`. */
+  readonly day: string;
   readonly madeAt: Date;
 }
 
 /**
  * What `trained` (the earliest made first) earns by `rules` beyond what `has` already holds: each
- * rule whose `after`-th counted check-in exists, that check-in being when it opened.
+ * rule whose `after`-th counted day is reached, the check-in that reached it being when it opened.
  */
 export function earned({
   rules,
@@ -255,24 +264,31 @@ export function earned({
   });
 }
 
-/** The check-ins in `trained` that count towards `rule`, the earliest first. */
+/**
+ * The first check-in in `trained` that counts towards `rule` on each day, the earliest made first.
+ * A rule counts days trained, not posts, so many 训练 on one day count once.
+ */
 function counting(
   rule: CountedRule,
   { trained, switchOn }: { readonly trained: readonly Trained[]; readonly switchOn: SwitchOn },
 ): Trained[] {
-  return trained.filter(
-    ({ sport, madeAt }) =>
+  const days = new Set<string>();
+  return trained.filter(({ sport, day, madeAt }) => {
+    const counts =
       madeAt >= rule.countsFrom &&
       (rule.sports.length === 0 || rule.sports.includes(sport)) &&
-      rule.switchIds.every((id) => switchOn(id, madeAt)),
-  );
+      rule.switchIds.every((id) => switchOn(id, madeAt)) &&
+      !days.has(day);
+    if (counts) days.add(day);
+    return counts;
+  });
 }
 
-/** A rule a member hasn't reached yet, and how many more 训练 it takes. */
+/** A rule a member hasn't reached yet, and how many more days of 训练 it takes. */
 export interface Locked {
   readonly kind: UnlockKind;
   readonly id: string;
-  /** 训练 check-ins still to go, 1 or more. */
+  /** Days of 训练 still to go, 1 or more. */
   readonly toGo: number;
   /** The sports whose 训练 count; empty for any sport. */
   readonly sports: readonly SportId[];
@@ -300,35 +316,31 @@ export function toGo({
   });
 }
 
-/** Stores, props and pieces an admin gives a member, whatever they trained. */
+/** Stores and pieces an admin gives a member, whatever they trained. */
 export const UnlockGift = z.strictObject({
   member: MemberId.describe('The member’s id.'),
   items: z
     .array(
       z
-        .strictObject({ kind: UnlockKind, id: z.string().max(48) })
+        .strictObject({ kind: UnlockableKind, id: z.string().max(48) })
         .refine(({ kind, id }) => idFits(kind, id), { message: 'the id doesn’t fit its kind' }),
     )
     .max(100)
     .optional()
-    .describe(
-      'The stores, props and pieces to give, each by kind and id; leave out for every one.',
-    ),
+    .describe('The stores and pieces to give, each by kind and id; leave out for every one.'),
 });
 export type UnlockGift = z.infer<typeof UnlockGift>;
 
 /** A rule as an admin adds or changes it. Its start is kept from when it was added. */
 export const UnlockRuleEdit = z
   .strictObject({
-    kind: UnlockKind.describe(
-      '`store` for a 商店街 store, `prop` for a prop, `piece` for a clothing piece in a store.',
+    kind: UnlockableKind.describe(
+      '`store` for a 商店街 store, `piece` for a clothing piece in a store. Props need no rule.',
     ),
     id: z
       .string()
       .max(48)
-      .describe(
-        'The id in the app’s art: a store or prop such as `deuce` or `racket`, a piece such as `lap-bib`.',
-      ),
+      .describe('The id in the app’s art: a store such as `deuce`, a piece such as `lap-bib`.'),
     sports: z
       .array(SportId)
       .max(20)
@@ -338,7 +350,9 @@ export const UnlockRuleEdit = z
       .int()
       .min(1)
       .max(AFTER_MAX)
-      .describe('How many 训练 check-ins in those sports open it.'),
+      .describe(
+        'On how many different days 训练 in those sports open it; many on one day count once.',
+      ),
   })
   .refine(({ kind, id }) => idFits(kind, id), {
     message: 'the id doesn’t fit its kind',

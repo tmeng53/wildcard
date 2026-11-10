@@ -1,3 +1,4 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import {
   CheckInId,
   MemberId as CheckInMember,
@@ -28,7 +29,7 @@ import {
   topCheckInOf,
   type AwardsState,
   type Failures,
-  type MemberAwards,
+  type ShownMemberAwards,
   type MemberWeek,
   SquadId,
   type StoryMember,
@@ -157,9 +158,7 @@ async function awardsTimeFor(
   { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<Date> {
   const id = SquadsSquad.parse(squad);
-  const zone = (await deps.squads.timeZonesFor([id], weekStart)).get(id);
-  if (zone === undefined) throw new Error(`No time zone for squad ${squad}`);
-  return awardsTimeOf(weekStart, zone);
+  return awardsTimeOf(weekStart, (await deps.squads.timeZonesFor([id], weekStart))(id));
 }
 
 /** One week's awards for every squad that checked in before them, as `giveWeeklyAwards`. */
@@ -272,7 +271,7 @@ export interface SquadStory {
   /** Everyone in the squad at the awards, in the order they joined, less accounts deleted since. */
   readonly members: readonly StoryMember[];
   /** The titles, in the members' order: empty until ready, or when nobody checked in. */
-  readonly titles: readonly MemberAwards[];
+  readonly titles: readonly ShownMemberAwards[];
   /** The top 3 by days trained, the crown winner in the middle, and who finished their plan. */
   readonly podium?: Podium<string>;
   /** The squad's meals; who ate more of what is in each member's part. */
@@ -356,8 +355,9 @@ export async function squadStory(
   )[0];
   // From the members' frozen days, less accounts deleted since: someone else steps up.
   const podium = podiumOf(members);
-  const titles =
-    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [];
+  const titles = await deps.awards.shownTitles(
+    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [],
+  );
   const anyone = members.some(({ checkedIn }) => checkedIn);
   return {
     squad: { id: squad, name: story.name },
@@ -565,8 +565,8 @@ async function memberWeeks(
       const profile = await deps.members.findProfile(member);
       return {
         member: MemberId.parse(member),
-        // A member who checked in has saved a time zone; UTC only for one who never did.
-        timeZone: profile?.timeZone ?? 'UTC',
+        // A member who checked in has saved a time zone.
+        timeZone: profile?.timeZone ?? UNSAVED_MEMBER_ZONE,
         checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek)),
       };
     }),

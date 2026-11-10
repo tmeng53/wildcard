@@ -51,7 +51,6 @@ import {
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedWeeklyAwards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -137,7 +136,6 @@ const app = createApp({
   unlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,

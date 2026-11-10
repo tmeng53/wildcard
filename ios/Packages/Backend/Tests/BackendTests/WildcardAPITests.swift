@@ -29,10 +29,14 @@ func moment(now: Date = Date()) throws -> (day: LocalDay, createdAt: Timestamp) 
     #expect(try moment(now: Date(timeIntervalSince1970: 1_792_800_060)).day == LocalDay(year: 2026, month: 10, day: 24))
 }
 
-func checkIn(by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry) throws -> CheckIn {
+/// A check-in made now, for the day `daysAgo` days back (a 补打卡 when more than 0).
+func checkIn(
+    by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry, daysAgo: Int = 0
+) throws -> CheckIn {
     let now = try moment()
+    let day = try moment(now: Date().addingTimeInterval(-Double(daysAgo) * 86_400)).day
     return CheckIn(
-        id: CheckInID(UUID()), member: member.id, day: now.day, createdAt: now.createdAt,
+        id: CheckInID(UUID()), member: member.id, day: day, createdAt: now.createdAt,
         audience: try Audience([squad]), entry: entry)
 }
 
@@ -282,16 +286,20 @@ private struct RefusedTokens: AuthProvider {
     let squad = try await stack.squad(of: member)
     #expect(try await member.api.unlocks().isEmpty)
 
-    let tennis = { () async throws in
+    // Rules count days, not posts, so each 练了 is for a day of its own.
+    let tennis = { (daysAgo: Int) async throws in
         let training = Training(activity: .sport("tennis"))
-        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(training)))
+        _ = try await member.api.save(try checkIn(by: member, to: squad, .trained(training), daysAgo: daysAgo))
     }
-    try await tennis()
+    try await tennis(2)
     // Props are everyone's: a 练了 opens none.
     #expect(try await member.api.unlocks().isEmpty)
 
-    try await tennis()
-    try await tennis()
+    // A second one on the same day counts nowhere: WARM-UP's headphones still wait for a 2nd day.
+    try await tennis(2)
+    #expect(try await member.api.unlocks().isEmpty)
+    try await tennis(1)
+    try await tennis(0)
     let standing = try await member.api.unlockStanding()
     let unlocked = standing.unlocks
     // WARM-UP's headphones open on the 2nd 练了 of any sport.

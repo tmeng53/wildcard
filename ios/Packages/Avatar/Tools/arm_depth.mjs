@@ -8,6 +8,8 @@
 // An arm is in front while its hand is over the chest, so the hand is drawn over the top rather than
 // lost behind it; anywhere else (hanging, on the hip, out to the side, raised beside the head) it
 // stays behind, so its sleeve root stays under the top and what is worn over it.
+// Only the forearm is drawn in front (Figure.forearm), so after the draft each swap is moved to a
+// moment the forearm is clear of the body, where it can't be seen; the tests check every swap.
 //
 //   node ios/Packages/Avatar/Tools/arm_depth.mjs [--write] [--only <path fragment>] [--keep]
 //

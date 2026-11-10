@@ -23,11 +23,11 @@
     { "part": "armL", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.4, "v": 45, "ease": "easeOut" }, { "t": 0.7, "v": 45 },
       { "t": 0.95, "v": 108, "ease": "easeInOut" }, { "t": 1.4, "v": 108 },
-      { "t": 1.75, "v": -14, "ease": "easeInOut" } ] },
+      { "t": 1.75, "v": -1, "ease": "easeInOut" } ] },
     { "part": "armR", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.4, "v": -45, "ease": "easeOut" }, { "t": 0.7, "v": -45 },
       { "t": 0.95, "v": -108, "ease": "easeInOut" }, { "t": 1.4, "v": -108 },
-      { "t": 1.75, "v": 14, "ease": "easeInOut" } ] },
+      { "t": 1.75, "v": 1, "ease": "easeInOut" } ] },
     { "part": "propR", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.4, "v": 0 }, { "t": 0.7, "v": 0 }, { "t": 0.837, "v": 0 },
       { "t": 0.95, "v": 86.72, "ease": "easeOut" }, { "t": 1.4, "v": 86.72 },

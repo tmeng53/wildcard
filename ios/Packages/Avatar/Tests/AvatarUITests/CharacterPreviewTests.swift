@@ -163,7 +163,7 @@ struct CharacterPreviewTests {
     }
 
     /// A person, a cat, two dogs, a rabbit, a bear and a lop in a cap, each on another persona, idling with their
-    /// species' moves on top (a yawn, a head tilt, ears, a belly scratch), then cheering at 8 s.
+    /// species' moves on top (a yawn, a head tilt, ears, a bear dozing off), then cheering at 8 s.
     private func writeSpecies(to url: URL) throws {
         let cast: [(Persona, Outfit)] = [
             (.drama, PlaceholderCharacter.lifter),

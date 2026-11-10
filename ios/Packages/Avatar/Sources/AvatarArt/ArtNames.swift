@@ -17,7 +17,7 @@ public struct ArtNames: Hashable, Sendable {
         /// Which sports open it, in words.
         public let sports: CatalogNames?
         public let tagline: CatalogNames?
-        /// How it opens (跑步 3 次解锁).
+        /// How it opens (跑步练满 3 天解锁).
         public let unlock: CatalogNames?
         /// The tag a limited store wears (感恩节限定).
         public let limited: CatalogNames?

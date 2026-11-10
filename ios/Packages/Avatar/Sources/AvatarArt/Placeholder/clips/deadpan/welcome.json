@@ -9,7 +9,7 @@
     { "part": "eyes", "channel": "scaleY", "keys": [ {"t": 0.0, "v": 0.62}, {"t": 0.1, "v": 0.56}, {"t": 0.133, "v": 0.55}, {"t": 1.8, "v": 0.55}, {"t": 2.1, "v": 0.62} ] },
     { "part": "head", "channel": "rotation", "keys": [ {"t": 0.0, "v": 0}, {"t": 0.2, "v": 5.91}, {"t": 0.317, "v": 4.79}, {"t": 0.45, "v": 0}, {"t": 0.883, "v": 0}, {"t": 1.033, "v": 4.88}, {"t": 1.117, "v": 6.0}, {"t": 1.217, "v": 4.73}, {"t": 1.35, "v": 0}, {"t": 2.1, "v": 0.0} ] },
     {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.833, "v": 1, "ease": "hold"}, {"t": 1.267, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.783, "v": 1, "ease": "hold"}, {"t": 1.233, "v": 0, "ease": "hold"}]}
+    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 1}, {"t": 2.1, "v": 0, "ease": "hold"}]},
+    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 1}, {"t": 2.1, "v": 0, "ease": "hold"}]}
   ]
 }

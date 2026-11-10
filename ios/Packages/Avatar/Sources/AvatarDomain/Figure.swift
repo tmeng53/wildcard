@@ -321,6 +321,7 @@ public struct Figure: Hashable, Sendable {
             if let elbow = part.elbow {
                 let bend = Bend(shoulder: part.pivot, elbow: elbow, degrees: move.bend)
                 if move.bend != 0 { (placements[index].bend, carriers[index]) = (bend, bend.forearm.then(transform)) }
+                if part.front { placements[index].area = forearm(part.pivot, elbow, carriers[index]) }
             }
         }
         return placements

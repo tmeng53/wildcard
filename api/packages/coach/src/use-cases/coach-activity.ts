@@ -55,19 +55,6 @@ export interface CoachActivity {
     readonly now?: Date;
   }): Promise<SquadCoachActivity>;
   /**
-   * Whether `coach` wrote a line to the check-in for any of these squads, so a member who sees
-   * it through them may reply to it.
-   */
-  /**
-   * The reader put their morning note away on 今天 (收下), so no phone shows it again. Safe to
-   * repeat. Throws `CoachNoteNotFoundError` when it isn't theirs in this squad.
-   */
-  putAway(input: {
-    readonly squad: SquadId;
-    readonly member: string;
-    readonly note: number;
-  }): Promise<void>;
-  /**
    * The reader's answer to their morning note's challenge (接受挑战 or 算了, with why if they
    * say), answered with the one that stands: the first. Throws `CoachNoteNotFoundError` when the note isn't theirs in
    * this squad, `CoachNoteNoChallengeError` when it sets none.
@@ -123,6 +110,10 @@ export interface CoachActivity {
     readonly kind: CoachCardKind;
     readonly id: string;
   }): Promise<void>;
+  /**
+   * Whether `coach` wrote a line to the check-in for any of these squads, so a member who sees
+   * it through them may reply to it.
+   */
   spoke(input: {
     readonly squads: readonly SquadId[];
     readonly checkIn: string;
@@ -148,9 +139,6 @@ export function createCoachActivity(deps: { readonly store: CoachActivityStore }
         deps.store.letter(squad),
       ]);
       return { note, replies, answers, memberNote, letter };
-    },
-    putAway: async (input) => {
-      if (!(await deps.store.putAway(input))) throw new CoachNoteNotFoundError();
     },
     answerChallenge: async (input) => {
       const kept = await deps.store.answerChallenge(input);

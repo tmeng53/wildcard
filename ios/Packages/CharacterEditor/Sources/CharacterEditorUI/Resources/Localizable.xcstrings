@@ -1778,34 +1778,68 @@
         }
       }
     },
-    "随便练满 %lld 次": {
+    "随便练满 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Any %lld workouts"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Any workout on %lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Any workouts on %lld days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "隨便練滿 %lld 次"
+            "value": "隨便練滿 %lld 天"
           }
         }
       }
     },
-    "%@练满 %lld 次": {
+    "%@练满 %lld 天": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@ × %lld"
+            "value": "%1$@ on %#@days@"
+          },
+          "substitutions": {
+            "days": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg day"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg days"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@練滿 %lld 次"
+            "value": "%@練滿 %lld 天"
           }
         }
       }
@@ -1874,18 +1908,30 @@
         }
       }
     },
-    "再练 %lld 次": {
+    "再练 %lld 天": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld more to go"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "再練 %lld 次"
+            "value": "再練 %lld 天"
           }
         }
       }
@@ -1906,18 +1952,30 @@
         }
       }
     },
-    "神秘款，再练 %lld 次解锁": {
+    "神秘款，再练 %lld 天解锁": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mystery piece, unlocks in %lld more workouts"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mystery piece, unlocks in %lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Mystery piece, unlocks in %lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "神秘款，再練 %lld 次解鎖"
+            "value": "神秘款，再練 %lld 天解鎖"
           }
         }
       }
@@ -3299,18 +3357,30 @@
         }
       }
     },
-    "还有 %lld 次开门": {
+    "还有 %lld 天开门": {
       "localizations": {
         "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens in %lld more"
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Opens in %lld more day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Opens in %lld more days"
+                }
+              }
+            }
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "還有 %lld 次開門"
+            "value": "還有 %lld 天開門"
           }
         }
       }

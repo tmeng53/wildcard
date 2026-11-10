@@ -1,6 +1,6 @@
 import { WeekStart } from '@wildcard/check-ins';
 import type { Squad, Squads } from '@wildcard/squads';
-import { NEW_YORK, mondayOf, wallClockAt } from '@wildcard/time-zones';
+import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 /**
  * The squad's W1: the Monday of the week it was made, on its own clock then. Every 出赛表 counts
@@ -11,7 +11,7 @@ export async function squadFirstWeek(
   squads: Pick<Squads, 'timeZonesAt'>,
   squad: Pick<Squad, 'id' | 'createdAt'>,
 ): Promise<WeekStart> {
-  const zone = (await squads.timeZonesAt([squad.id], squad.createdAt)).get(squad.id) ?? NEW_YORK;
+  const zone = (await squads.timeZonesAt([squad.id], squad.createdAt))(squad.id);
   return WeekStart.parse(mondayOf(wallClockAt(squad.createdAt, zone).day));
 }
 

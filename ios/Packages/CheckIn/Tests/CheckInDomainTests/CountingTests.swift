@@ -17,7 +17,7 @@ private func mine(
     #expect(counted.members.map(\.member) == [mate, myID, resting])
     #expect(counted.members[1].training == .trained)
     #expect(counted.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
-    #expect(counted.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false))
+    #expect(counted.today == TodayCounts(trained: 1, disclaimer: 0, resting: 1))
     #expect(counted.squadWeek == WeekCount(trainedDays: 14, plannedDays: 22))
 }
 
@@ -47,14 +47,9 @@ private func mine(
 @Test func trainingOnAPlannedRestDayLeavesTheRestersCount() throws {
     var today = sampleToday()
     today.members = [entry(mate, .trained, since: 1), entry(myID, .notCheckedIn, plannedRest: true)]
-    today.today = TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: true)
+    today.today = TodayCounts(trained: 1, disclaimer: 0, resting: 1)
     let counted = today.countingMineSeenAsMyRow(try mine(.trained(Training(activity: .sport("run")))))
-    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 0, everyoneTrained: true))
-}
-
-@Test func everyoneTrainedOnceTheLastWhoWasntRestingTrains() throws {
-    let counted = sampleToday().countingMineSeenAsMyRow(try mine(.trained(Training(activity: .sport("run")))))
-    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 0))
 }
 
 @Test func aCheckInForAnotherDayIsntCountedToday() throws {
@@ -67,7 +62,7 @@ private func mine(
     var today = sampleToday()
     today.members[1].training = .disclaimer
     let counted = today.countingMine(try mine(.trained(Training(activity: .sport("run")))), squadSaw: .notCheckedIn)
-    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1))
     #expect(counted.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
 }
 
@@ -77,15 +72,8 @@ private func mine(
     today.myWeek.week.trainedDays = 2
     let counted = today.countingMine(try mine(.trained(Training(activity: .sport("run")))), squadSaw: .notCheckedIn)
     #expect(counted.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
-    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1))
     #expect(counted.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
-}
-
-@Test func aPrivateTrainingNeverMakesTheSquadEveryoneTrained() throws {
-    var today = sampleToday()
-    today.members[1].training = .trained
-    let counted = today.countingMine(try mine(.healthyMeal(Meal())), squadSaw: .notCheckedIn)
-    #expect(counted.today.everyoneTrained == false)
 }
 
 @Test func aRestShowsMeRestingNotOnLeave() throws {
@@ -108,9 +96,9 @@ extension SquadToday {
     var today = sampleToday()
     today.members[1].training = .trained
     today.myWeek.week.trainedDays = 2
-    today.today = TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true)
+    today.today = TodayCounts(trained: 2, disclaimer: 0, resting: 1)
     let counted = today.countingMine(try mine(.trained(Training(activity: .sport("run")))), squadSaw: .trained)
     #expect(counted.myWeek.week == WeekCount(trainedDays: 2, plannedDays: 5))
-    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1, everyoneTrained: true))
+    #expect(counted.today == TodayCounts(trained: 2, disclaimer: 0, resting: 1))
     #expect(counted.squadWeek == WeekCount(trainedDays: 15, plannedDays: 22))
 }

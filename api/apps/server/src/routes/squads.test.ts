@@ -44,7 +44,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -121,7 +120,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -168,7 +166,12 @@ async function call({
 }
 
 const create = (token: string, { id = randomUUID(), name }: { id?: string; name: unknown }) =>
-  call({ method: 'PUT', path: `/squads/${id}`, token, body: { version: 1, name } });
+  call({
+    method: 'PUT',
+    path: `/squads/${id}`,
+    token,
+    body: { version: 1, name, timeZone: 'America/New_York' },
+  });
 
 const SquadBody = z.object({
   id: z.uuid(),
@@ -247,7 +250,7 @@ describe('PUT /squads/{squadId}', () => {
     const refused = await call({
       method: 'PUT',
       path: `/squads/${randomUUID()}`,
-      body: { version: 1, name: 'a' },
+      body: { version: 1, name: 'a', timeZone: 'America/New_York' },
     });
     expect([refused.status, reason(refused)]).toStrictEqual([401, 'AUTH_TOKEN_MISSING']);
   });
@@ -732,7 +735,7 @@ describe('the squad’s weekly goal', () => {
       method: 'PUT',
       path: `/squads/${id}`,
       token: me.token,
-      body: { version: 1, name: '练得多', daysPerMember: 5 },
+      body: { version: 1, name: '练得多', daysPerMember: 5, timeZone: 'America/New_York' },
     });
     expect(created.status).toBe(201);
     const { inviteCode } = SquadBody.parse(created.body);
@@ -919,25 +922,15 @@ describe('the squad’s time zone', () => {
     expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
   });
 
-  it('keeps the creator’s own zone when an older build sends none', async () => {
+  it('refuses a squad made without a time zone', async () => {
     const me = await signUp();
-    const saved = await call({
+    const refused = await call({
       method: 'PUT',
-      path: '/me/profile',
+      path: `/squads/${randomUUID()}`,
       token: me.token,
-      body: { version: 1, timeZone: 'America/Los_Angeles' },
+      body: { version: 1, name: '早八跑团' },
     });
-    expect(saved.status).toBe(200);
-    const squad = await newSquad(me.token);
-    expect((await zoneOf(me.token, squad.id)).body).toMatchObject({
-      timeZone: 'America/Los_Angeles',
-    });
-    // Without a profile yet, New York, as every squad kept before.
-    const other = await signUp();
-    const plain = await newSquad(other.token);
-    expect((await zoneOf(other.token, plain.id)).body).toMatchObject({
-      timeZone: 'America/New_York',
-    });
+    expect([refused.status, reason(refused)]).toStrictEqual([400, 'REQUEST_INVALID']);
   });
 });
 

@@ -85,8 +85,11 @@ func everyPersonaHasAnIdleACheerAndAWelcome(persona: Persona) throws {
         let oneShot = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
         #expect(oneShot.clip.name == name && !oneShot.clip.loops)
         // It lands where the idle starts (half-closed eyes included, for deadpan), so handing
-        // back to idle doesn't jump either.
-        #expect(nearlyEqual(figure.pose(oneShot, at: oneShot.clip.duration), figure.pose(idle, at: 0)), "\(name)")
+        // back to idle doesn't jump either. Its arms may end in front: the crossfade keeps them
+        // there until they are back at rest (`Pose.blended`).
+        var landing = figure.pose(oneShot, at: oneShot.clip.duration)
+        for index in landing.parts.indices { landing.parts[index].front = 0 }
+        #expect(nearlyEqual(landing, figure.pose(idle, at: 0)), "\(name)")
     }
 }
 
@@ -296,7 +299,6 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props.filter { !$0.isOpen }.isEmpty)
     #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [

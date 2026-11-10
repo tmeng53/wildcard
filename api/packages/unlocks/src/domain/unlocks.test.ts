@@ -43,10 +43,10 @@ const allYear = () => true;
 describe('earned', () => {
   it('opens a rule on its after-th check-in in its sports, at that check-in', () => {
     const trained = [
-      { id: 'a', sport: 'tennis', madeAt: at(1) },
-      { id: 'b', sport: 'run', madeAt: at(2) },
-      { id: 'c', sport: 'pickleball', madeAt: at(3) },
-      { id: 'd', sport: 'squash', madeAt: at(4) },
+      { id: 'a', sport: 'tennis', day: '2026-11-02', madeAt: at(1) },
+      { id: 'b', sport: 'run', day: '2026-11-03', madeAt: at(2) },
+      { id: 'c', sport: 'pickleball', day: '2026-11-04', madeAt: at(3) },
+      { id: 'd', sport: 'squash', day: '2026-11-05', madeAt: at(4) },
     ];
     expect(
       earned({ rules: [deuce, halfmoon, racket], trained, has: [], switchOn: allYear }),
@@ -80,10 +80,10 @@ describe('earned', () => {
 
   it('leaves out check-ins made before the rule counts from, and what is already held', () => {
     const trained = [
-      { id: 'a', sport: 'tennis', madeAt: at(-60) },
-      { id: 'b', sport: 'tennis', madeAt: at(-1) },
-      { id: 'c', sport: 'tennis', madeAt: at(0) },
-      { id: 'd', sport: 'tennis', madeAt: at(5) },
+      { id: 'a', sport: 'tennis', day: '2026-11-02', madeAt: at(-60) },
+      { id: 'b', sport: 'tennis', day: '2026-11-03', madeAt: at(-1) },
+      { id: 'c', sport: 'tennis', day: '2026-11-04', madeAt: at(0) },
+      { id: 'd', sport: 'tennis', day: '2026-11-05', madeAt: at(5) },
     ];
     const held = {
       kind: 'prop' as const,
@@ -99,7 +99,7 @@ describe('earned', () => {
     expect(
       earned({
         rules: [deuce],
-        trained: [...trained, { id: 'e', sport: 'tennis', madeAt: at(6) }],
+        trained: [...trained, { id: 'e', sport: 'tennis', day: '2026-11-06', madeAt: at(6) }],
         has: [],
         switchOn: allYear,
       }),
@@ -110,11 +110,57 @@ describe('earned', () => {
     const trained = ['a', 'b', 'c'].map((id, index) => ({
       id,
       sport: 'custom',
+      day: `2026-11-0${String(index + 2)}`,
       madeAt: at(index + 1),
     }));
     expect(earned({ rules: [deuce, halfmoon], trained, has: [], switchOn: allYear })).toMatchObject(
       [{ id: 'halfmoon', by: { checkIn: 'c' } }],
     );
+  });
+
+  it('counts days, not posts: many 训练 on one day count once', () => {
+    const skiDay = (id: string, { day, minutes }: { day: string; minutes: number }) => ({
+      id,
+      sport: 'ski',
+      day,
+      madeAt: at(minutes),
+    });
+    const tuna: CountedRule = {
+      kind: 'piece',
+      id: 'powder-tuna',
+      sports: ['ski'],
+      after: 3,
+      countsFrom: start,
+      switchIds: [],
+    };
+    const oneDay = Array.from({ length: 30 }, (_, index) =>
+      skiDay(`a${String(index)}`, { day: '2026-11-03', minutes: index }),
+    );
+    expect(earned({ rules: [tuna], trained: oneDay, has: [], switchOn: allYear })).toStrictEqual(
+      [],
+    );
+    expect(toGo({ rules: [tuna], trained: oneDay, switchOn: allYear })).toStrictEqual([
+      { kind: 'piece', id: 'powder-tuna', toGo: 2, sports: ['ski'] },
+    ]);
+    // A 补打卡 for an earlier day counts as its own day, opening it when it is made.
+    const more = [
+      ...oneDay,
+      skiDay('b', { day: '2026-11-04', minutes: 1500 }),
+      skiDay('c', { day: '2026-11-02', minutes: 1600 }),
+    ];
+    expect(earned({ rules: [tuna], trained: more, has: [], switchOn: allYear })).toMatchObject([
+      { id: 'powder-tuna', by: { checkIn: 'c' }, unlockedAt: at(1600) },
+    ]);
+  });
+
+  it('counts a day only by a 训练 in the rule’s sports', () => {
+    const trained = [
+      { id: 'a', sport: 'run', day: '2026-11-02', madeAt: at(1) },
+      { id: 'b', sport: 'tennis', day: '2026-11-02', madeAt: at(2) },
+    ];
+    expect(earned({ rules: [racket], trained, has: [], switchOn: allYear })).toMatchObject([
+      { id: 'racket', by: { checkIn: 'b' } },
+    ]);
   });
 });
 
@@ -129,10 +175,10 @@ describe('toGo', () => {
       switchIds: [],
     };
     const trained = [
-      { id: 'a', sport: 'run', madeAt: at(-5) },
-      { id: 'b', sport: 'run', madeAt: at(1) },
-      { id: 'c', sport: 'walk', madeAt: at(2) },
-      { id: 'd', sport: 'tennis', madeAt: at(3) },
+      { id: 'a', sport: 'run', day: '2026-11-02', madeAt: at(-5) },
+      { id: 'b', sport: 'run', day: '2026-11-03', madeAt: at(1) },
+      { id: 'c', sport: 'walk', day: '2026-11-04', madeAt: at(2) },
+      { id: 'd', sport: 'tennis', day: '2026-11-05', madeAt: at(3) },
     ];
     expect(toGo({ rules: [bib, racket, halfmoon], trained, switchOn: allYear })).toStrictEqual([
       { kind: 'piece', id: 'lap-bib', toGo: 3, sports: ['run', 'walk'] },
@@ -154,15 +200,15 @@ describe('a rule with switches', () => {
     // On only from the third hour on.
     const switchOn = (id: string, madeAt: Date) => id === 'winter' && madeAt >= at(180);
     const trained = [
-      { id: 'a', sport: 'ski', madeAt: at(60) },
-      { id: 'b', sport: 'ski', madeAt: at(120) },
-      { id: 'c', sport: 'ski', madeAt: at(200) },
+      { id: 'a', sport: 'ski', day: '2026-11-02', madeAt: at(60) },
+      { id: 'b', sport: 'ski', day: '2026-11-03', madeAt: at(120) },
+      { id: 'c', sport: 'ski', day: '2026-11-04', madeAt: at(200) },
     ];
     expect(earned({ rules: [tuna], trained, has: [], switchOn })).toStrictEqual([]);
     expect(toGo({ rules: [tuna], trained, switchOn })).toStrictEqual([
       { kind: 'piece', id: 'powder-tuna', toGo: 1, sports: ['ski'] },
     ]);
-    const more = [...trained, { id: 'd', sport: 'ski', madeAt: at(240) }];
+    const more = [...trained, { id: 'd', sport: 'ski', day: '2026-11-05', madeAt: at(240) }];
     expect(earned({ rules: [tuna], trained: more, has: [], switchOn })).toMatchObject([
       { id: 'powder-tuna', by: { checkIn: 'd' } },
     ]);

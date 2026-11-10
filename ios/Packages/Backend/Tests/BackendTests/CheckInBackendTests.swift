@@ -227,36 +227,6 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(tablet.pending.isEmpty)
 }
 
-@MainActor @Test func aTeammateReactsAndTheAuthorSeesIt() async throws {
-    let stack = try LocalStack()
-    let author = try await stack.signedInMember()
-    let mate = try await stack.signedInMember()
-    _ = try await stack.squad(of: author, mate)
-    let authors = store(author, directory: scratch())
-    await authors.load()
-    guard
-        case .posted(let saved) = try await authors.post(
-            .trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
-    else {
-        Issue.record("expected posted")
-        return
-    }
-
-    let mates = store(mate, directory: scratch())
-    await mates.load()
-    try await mates.react(.heart, to: saved.id)
-    try await mates.react(try Emoji("😂"), to: saved.id)
-
-    try await authors.loadReactions(to: saved.id)
-    #expect(authors.reactions[saved.id]?.map(\.member) == [mate.id])
-    #expect(authors.reactions[saved.id]?.map(\.emoji) == [try Emoji("😂")])
-    #expect(authors.myReaction(on: saved.id) == nil)
-
-    try await mates.removeReaction(from: saved.id)
-    try await authors.loadReactions(to: saved.id)
-    #expect(authors.reactions[saved.id] == [])
-}
-
 /// Stands in for the dice, so the test sees when it answered.
 private struct Dice: DisclaimerWriter {
     func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {

@@ -47,7 +47,7 @@ final class NoticeBellUITests: XCTestCase {
         if !store.exists { app.swipeUp() }
         XCTAssertTrue(store.waitForExistence(timeout: Self.wait), "no store row")
         XCTAssertTrue(store.label.contains("DEUCE CLUB 开门了"), "the store row says \(store.label)")
-        XCTAssertTrue(store.label.contains("网球练满 3 次"), "the store row says \(store.label)")
+        XCTAssertTrue(store.label.contains("网球练满 3 天"), "the store row says \(store.label)")
         app.swipeDown()
 
         // Back on 动态, everything is read: the dot is gone.

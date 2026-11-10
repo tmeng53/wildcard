@@ -70,11 +70,21 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
 
     /// What the weekly awards might say; the real ones come from the API.
     private static let sampleTitles = [
-        AwardTitle(title: "网球担当", speech: "三次站上网球场，打到天黑还不走"),
-        AwardTitle(title: "雨天也出门", speech: "周四下着雨，照样跑完了五公里"),
-        AwardTitle(title: "说练就练", speech: "计划写了四天，就练了四天"),
-        AwardTitle(title: "小队气氛组", speech: "谁练完你都第一个冲出来夸"),
-        AwardTitle(title: "早起冠军", speech: "三次在早上七点前打卡"),
+        AwardTitle(
+            title: "网球担当", speech: "三次站上网球场，打到天黑还不走",
+            badge: TitleBadge(shape: "shield", colour: "tennis", tone: "#4F6B22", glyph: "tennisball.fill")),
+        AwardTitle(
+            title: "雨天也出门", speech: "周四下着雨，照样跑完了五公里",
+            badge: TitleBadge(shape: "hexagon", colour: "pool", tone: "#079BB8", glyph: "cloud.rain.fill")),
+        AwardTitle(
+            title: "说练就练", speech: "计划写了四天，就练了四天",
+            badge: TitleBadge(shape: "circle", colour: "cobalt", tone: "#2D5BA0", glyph: "checkmark.seal.fill")),
+        AwardTitle(
+            title: "小队气氛组", speech: "谁练完你都第一个冲出来夸",
+            badge: TitleBadge(shape: "scallop", colour: "track", tone: "#E65345", glyph: "hands.clap.fill")),
+        AwardTitle(
+            title: "早起冠军", speech: "三次在早上七点前打卡",
+            badge: TitleBadge(shape: "shield", colour: "honey", tone: "#A0760E", glyph: "sunrise.fill")),
     ]
 
     public func profile() async throws(ScheduleError) -> ScheduleProfile { member }
