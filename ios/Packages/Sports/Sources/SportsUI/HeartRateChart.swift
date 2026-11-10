@@ -5,6 +5,7 @@ import DesignSystem
 import DesignSystemUI
 import Foundation
 import SwiftUI
+import UIKit
 
 /// A heart-rate curve on the brand's graphite (Tracy, 2026-11-08), coloured by zone when the post
 /// carries the poster's zones. Detailed, as a post's cover: each zone's start on the right, the
@@ -15,8 +16,8 @@ struct HeartRateChart: View {
     private let trace: HeartRateTrace
     private let startedAt: Date?
     private let isDetailed: Bool
-    /// Gesture state, so a scrub the pager cancels lets go of the reading too.
-    @GestureState private var picked: HeartRatePoint?
+    /// The reading under the finger while it scrubs; nil once it lifts or the scrub is cancelled.
+    @State private var picked: HeartRatePoint?
 
     init(points: [HeartRatePoint], zones: HeartRateZones?, startedAt: Date?, isDetailed: Bool) {
         trace = HeartRateTrace(points: points, zones: zones)
@@ -114,7 +115,10 @@ struct HeartRateChart: View {
                 if isDetailed {
                     Color.clear
                         .contentShape(Rectangle())
-                        .gesture(scrub(proxy: proxy, geometry: geometry))
+                        .gesture(
+                            HoldToScrub { location in
+                                picked = location.flatMap { reading(at: $0, proxy: proxy, geometry: geometry) }
+                            })
                 }
             }
         }
@@ -131,15 +135,12 @@ struct HeartRateChart: View {
         }
     }
 
-    /// A hold, then a drag: the hold lets a quick swipe page the cover instead.
-    private func scrub(proxy: ChartProxy, geometry: GeometryProxy) -> some Gesture {
-        LongPressGesture(minimumDuration: Self.hold)
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .updating($picked) { value, picked, _ in
-                guard case .second(true, let drag?) = value, let plot = proxy.plotFrame else { return }
-                let across = drag.location.x - geometry[plot].origin.x
-                if let seconds: Double = proxy.value(atX: across) { picked = trace.reading(at: seconds) }
-            }
+    /// The reading at `location`, in the chart's overlay.
+    private func reading(at location: CGPoint, proxy: ChartProxy, geometry: GeometryProxy) -> HeartRatePoint? {
+        guard let plot = proxy.plotFrame else { return nil }
+        let across = location.x - geometry[plot].origin.x
+        guard let seconds: Double = proxy.value(atX: across) else { return nil }
+        return trace.reading(at: seconds)
     }
 
     /// The curve's first to last reading, at least a second wide so a flat series still draws.
@@ -216,7 +217,33 @@ struct HeartRateChart: View {
     private static let headerHeight = Sizing.control
     private static let belowZones = 0.4
     private static let dot = 12.0
-    private static let hold = 0.15
+    fileprivate static let hold = 0.15
+    /// How far the finger may wander before the hold counts, as a swipe that pages the cover.
+    fileprivate static let slop = 10.0
+}
+
+/// Press and hold the curve, then slide along it. A UIKit long press, not a SwiftUI one: a SwiftUI
+/// gesture with a drag in it keeps the cover's pager from paging when a swipe starts on the chart.
+/// This one fails once the finger moves first, so the swipe pages, and once it holds the pager
+/// can't start, so the slide only scrubs. Its hold is shorter than the card's emoji bar's, so a
+/// hold on the curve scrubs.
+private struct HoldToScrub: UIGestureRecognizerRepresentable {
+    /// Where the finger is, in the view it's on, while it scrubs; nil once it lifts.
+    let scrubbed: (CGPoint?) -> Void
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let recognizer = UILongPressGestureRecognizer()
+        recognizer.minimumPressDuration = HeartRateChart.hold
+        recognizer.allowableMovement = HeartRateChart.slop
+        return recognizer
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        switch recognizer.state {
+        case .began, .changed: scrubbed(context.converter.localLocation)
+        default: scrubbed(nil)
+        }
+    }
 }
 
 extension HeartRateZone {

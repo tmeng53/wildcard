@@ -8,9 +8,10 @@ import SportsUI
 import SwiftUI
 
 /// A post's cover across the top of its card: its photos and, for a 训练 from Health, the map or
-/// chart in the member's order, swiped one to the next with dots, the first being the cover. The
-/// box takes the photos' shape (`PhotoFrame`: portrait up to 4:5), or the map's or chart's own
-/// without photos. A tap on a photo opens the photos full screen; a double tap anywhere pops a
+/// chart in the member's order, swiped one to the next with dots, the first being the cover. As
+/// Instagram does it, the cover sets the box's shape (a photo's own, `PhotoFrame`: portrait up to
+/// 4:5; the map's or chart's design shape) and every page after fills that same box, so the
+/// height holds while swiping: a photo or map fills it, a chart keeps its own shape in the middle. A tap on a photo opens the photos full screen; a double tap anywhere pops a
 /// big ❤️ where it landed, which flies to the author's character (never taking a reaction back).
 struct PostPhotos: View {
     @Environment(\.sceneTheme) private var theme
@@ -34,10 +35,13 @@ struct PostPhotos: View {
         if case .trained(let training) = post.checkIn.entry { training.activity } else { .sport("run") }
     }
 
-    /// The photos' shape; a map alone is a little taller than a chart alone.
+    /// The cover's shape; a map is a little taller than a chart.
     private var aspectRatio: Double {
-        if let photos = try? Photos(photoRefs) { return PhotoFrame.aspectRatio(of: photos) }
-        return tiles.first == .workout(.map) ? Self.mapAspect : Self.chartAspect
+        switch tiles.first {
+        case .photo: (try? Photos(photoRefs)).map(PhotoFrame.aspectRatio(of:)) ?? PhotoFrame.unknown
+        case .workout(.map): Self.mapAspect
+        case .workout(.chart), nil: Self.chartAspect
+        }
     }
 
     var body: some View {
@@ -92,7 +96,8 @@ struct PostPhotos: View {
         case .workout(.chart):
             if let series = workout?.series {
                 WorkoutChart(
-                    series: series, activity: activity, showsLabel: true, startedAt: workout?.startedAt.date
+                    series: series, activity: activity, showsLabel: true, startedAt: workout?.startedAt.date,
+                    shape: Self.chartAspect
                 )
                 .accessibilityIdentifier("feed.chart")
             }
