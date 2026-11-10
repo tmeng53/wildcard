@@ -162,6 +162,7 @@ const app = createApp({
       claimReadyPush: unused,
       titlesWon: unused,
       boards: unused,
+      shownTitles: unused,
       story: unused,
       freezeStory: unused,
       storyWeeks: unused,

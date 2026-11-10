@@ -24,6 +24,7 @@ import { PhotoPath, type PhotoStorage, type VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
+import { TitleBadgeBody } from './titles.js';
 
 /** How long a photo's view URL works. The app reads the story again for fresh ones. */
 const PHOTO_VIEW_SECONDS = 60 * 60;
@@ -59,6 +60,9 @@ const Title = z
         example: '周三下着雨还去跑了 5 公里',
       }),
     move: move('The move the character plays collecting it.'),
+    // Its badge, as the badge board draws it; left out by older servers, and the default badge
+    // for a title won before titles came with one.
+    badge: TitleBadgeBody.optional(),
   })
   .openapi('StoryTitle');
 
@@ -562,8 +566,12 @@ export function weekStory(
               status: 'ready' as const,
               titles: story.titles.map(({ member, titles }) => ({
                 member,
-                // The story shows no badges yet: just the words and the move.
-                titles: titles.map(({ title, speech, move }) => ({ title, speech, move })),
+                titles: titles.map(({ title, speech, move, badge }) => ({
+                  title,
+                  speech,
+                  move,
+                  badge,
+                })),
               })),
             }
           : {

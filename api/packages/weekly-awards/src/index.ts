@@ -26,6 +26,8 @@ export {
   type AwardsState,
   type BoardTitle,
   type ShownBoardTitle,
+  type ShownMemberAwards,
+  type ShownTitle,
   type TitleWin,
   type Failures,
   type MemberAwards,
