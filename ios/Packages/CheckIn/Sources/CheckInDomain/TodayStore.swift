@@ -51,7 +51,7 @@ public final class TodayStore {
     /// Whom the member patted today (拍一拍) and who patted them in the last day, as last loaded.
     public private(set) var pokes = SquadPokes.none
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
-    /// Set only by `loadCoach()`.
+    /// Set by `loadCoach()`, and from the device's copy before the first.
     var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
     /// Whether the coach's page has a card the member hasn't seen, as last loaded, for the squad it
     /// was loaded for: the dot on the coach's phone until they swipe them all away there.
@@ -144,9 +144,15 @@ public final class TodayStore {
             savedHome = await backend.savedHome()
             pending = await outbox.load()
         }
+        // The coach stands on the sideline at once too, as kept, while the server is asked.
+        if loadedCoach == nil, let kept = await backend.savedCoach() {
+            loadedCoach = (kept.squad, kept.coach.map { SidelineCoach(coach: $0, note: nil) })
+        }
         await refresh()
-        await loadPokes()
-        await loadCoach()
+        // Neither waits for the other: each is a round trip of its own.
+        async let pokes: Void = loadPokes()
+        async let coach: Void = loadCoach()
+        _ = await (pokes, coach)
         await sendPending()
         // A member who travelled takes the phone's zone once their waiting posts are out, as each
         // one's day was made in the old zone. Best effort: the home stays as it is if it fails.
