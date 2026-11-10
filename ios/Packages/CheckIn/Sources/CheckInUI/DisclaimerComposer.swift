@@ -14,7 +14,8 @@ import SwiftUI
 /// a time, so only every third 换一句 (or a new style or new words) asks it again, and typing and
 /// picking a style cost nothing. Under the ticket the 日期 strip (补打卡), whose days with a 练了
 /// can't be picked; the title follows the day picked: 今日请假条 or 今日休息 for today, 请假条 or
-/// 休息 before.
+/// 休息 before. Under 帮我编一句, the photos (up to three, the cover first) in a row with the W,
+/// as a 训练's.
 struct DisclaimerComposer: View {
 
     @Environment(\.sceneTheme) private var theme
@@ -53,7 +54,7 @@ struct DisclaimerComposer: View {
         VStack(spacing: 0) {
             ComposeBar(
                 title: title, finish: Text(copy: "发布", bundle: .module), isWorking: model.isSending,
-                canFinish: !model.isSending && disclaimer != nil,
+                canFinish: !model.isSending && disclaimer != nil && !(model.compose?.isPreparingPhotos ?? false),
                 cancelID: "disclaimer.close", finishID: "disclaimer.post",
                 cancel: { model.cancel() }, done: post)
             ScrollView {
@@ -130,8 +131,13 @@ struct DisclaimerComposer: View {
     private var disclaimer: Disclaimer? { entry.disclaimer(restDay: restDay) }
 
     private func post() {
-        guard let disclaimer, !model.isSending else { return }
-        Task { await model.post(.disclaimer(disclaimer), shared: isShared, on: day) }
+        guard let disclaimer, !model.isSending, !(model.compose?.isPreparingPhotos ?? false) else { return }
+        Task { await model.post(.disclaimer(disclaimer, photos: photos), shared: isShared, on: day) }
+    }
+
+    /// The photos picked for it, the cover first.
+    private var photos: [PreparedPhoto] {
+        (model.compose?.photos ?? []).compactMap { if case .new(let photo) = $0 { photo } else { nil } }
     }
 
     /// The excuse, on the ticket's face: room for its four lines from the start, so the ticket
@@ -195,14 +201,20 @@ struct DisclaimerComposer: View {
     /// The excuse's room on the ticket, in lines.
     private static let lines = 4
 
-    /// Below the tear: 帮我编一句 over the styles and the button that puts a line up, and the W.
+    /// Below the tear: 帮我编一句 over the styles and the button that puts a line up, then the
+    /// photos with the W.
     private var stub: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
             SectionLabel(Text(copy: "帮我编一句", bundle: .module))
             choices
-            HStack {
-                Spacer()
-                TicketStamp()
+            if let compose = model.compose {
+                PhotoTiles(model: compose)
+                    .padding(.top, Space.xs)
+            } else {
+                HStack {
+                    Spacer()
+                    TicketStamp()
+                }
             }
         }
     }

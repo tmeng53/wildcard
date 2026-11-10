@@ -109,7 +109,7 @@ public actor DeviceOutbox: Outbox {
             case .cheatMeal(let body):
                 kind = "cheatMeal"
                 caption = body.caption
-            case .disclaimer(let disclaimer):
+            case .disclaimer(let disclaimer, _):
                 kind = "disclaimer"
                 text = disclaimer.text
                 restDay = disclaimer.restDay ? true : nil
@@ -154,7 +154,7 @@ public actor DeviceOutbox: Outbox {
             case "cheatMeal": draft = .cheatMeal(body)
             case "disclaimer":
                 guard let text else { return nil }
-                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false))
+                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
             default: return nil
             }
             return PendingCheckIn(

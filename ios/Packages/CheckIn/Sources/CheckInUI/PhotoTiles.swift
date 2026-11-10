@@ -10,8 +10,8 @@ import SwiftUI
 import UIKit
 
 /// The post's photos on the ticket's stub, the cover first and marked 封面, then 「+ 照片」
-/// while there is room for another (up to three). A 训练's are small 3:4 tiles in a row with the
-/// ticket's W at the end (the row slides sideways and the W makes way once it holds more than
+/// while there is room for another (up to three). A 训练's and a 请假条's are small 3:4 tiles in
+/// a row with the ticket's W at the end (the row slides sideways and the W makes way once it holds more than
 /// four); a meal's three fill the stub. A 训练 from Health has its map and chart among them,
 /// which don't count toward the three. + asks 拍照 or 从相册选 (straight to the album on a phone
 /// without a camera); × takes a tile off, the map too; a long press drags a tile to another
@@ -107,7 +107,7 @@ struct PhotoTiles: View {
         }
     }
 
-    private var isWide: Bool { model.kind != .trained }
+    private var isWide: Bool { model.kind == .healthyMeal || model.kind == .cheatMeal }
 
     /// The tiles 「+ 照片」 included.
     private var slots: Int { model.tiles.count + (model.canAddPhoto ? 1 : 0) }

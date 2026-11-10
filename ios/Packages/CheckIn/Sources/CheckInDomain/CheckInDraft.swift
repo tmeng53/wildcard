@@ -54,7 +54,9 @@ public enum CheckInDraft: Hashable, Sendable {
     case trained(Activity, WorkoutMinutes?, PostBody)
     case healthyMeal(PostBody)
     case cheatMeal(PostBody)
-    case disclaimer(Disclaimer)
+    /// 今日请假条 with up to three photos, the cover first, which go out as the disclaimer's
+    /// photos once uploaded.
+    case disclaimer(Disclaimer, photos: [PreparedPhoto] = [])
 
     /// The workout a 训练 was posted from; nil for one made by hand and for the other kinds.
     public var workout: Workout? {
@@ -65,7 +67,7 @@ public enum CheckInDraft: Hashable, Sendable {
     public var photos: [PreparedPhoto] {
         switch self {
         case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body): body.photos
-        case .disclaimer: []
+        case .disclaimer(_, let photos): Array(photos.prefix(Photos.maxCount))
         }
     }
 }
