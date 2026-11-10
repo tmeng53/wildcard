@@ -102,9 +102,11 @@ final class UnlockNoticeUITests: XCTestCase {
         let app = launchWithAPieceCameIn()
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
         XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "the notice never dropped in")
-        banner.tap()
+        // Tapped as soon as it drops in, a second or two after launch, when a busy CI simulator
+        // now and then drops the tap: the banner stays and nothing opens (run 42843302351's
+        // recording). The banner holds a minute, so a second tap is safe.
         let piece = app.buttons["editor.tile.hat.warmup-headphones"]
-        XCTAssertTrue(piece.waitForExistence(timeout: Self.wait), "the piece isn't waiting on the rack")
+        tap(banner, until: piece, "exists == true", "the piece isn't waiting on the rack", timeout: Self.wait)
         let tag = app.descendants(matching: .any).matching(identifier: "editor.tile.hat.warmup-headphones.new")
             .firstMatch
         XCTAssertTrue(tag.exists, "the piece waits without NEW")
