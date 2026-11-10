@@ -222,7 +222,7 @@ export function toolbox({
       name: 'recall',
       reads: true,
       description:
-        '查你的记性：任务里每个文件只列了开头几行，聊到具体的人或事、要说「记得」之前，先用它查。不填就列出全部，新的在前。查不到的就是不记得。',
+        '查你的记性：任务里每个文件只列了开头几行，聊到具体的人或事、要说「记得」之前，先用它查。不填就按文件里的顺序列出全部。查不到的就是不记得。',
       parameters: z.object({
         path: z
           .string()

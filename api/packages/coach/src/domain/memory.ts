@@ -150,9 +150,9 @@ export function squadSeed(
 export const RECALL_LIMIT = 2000;
 
 /**
- * The lines of the coach's files that match what it looks for, newest first (a file grows at its
- * end): every line of the files asked for, or only those holding any of the query's words. Each
- * file is named by the path the model sees.
+ * The lines of the coach's files that match what it looks for, in each file's order (the night
+ * keeps what matters most at the top): every line of the files asked for, or only those holding
+ * any of the query's words. Each file is named by the path the model sees.
  */
 export function recallLines(
   files: ReadonlyMap<string, string>,
@@ -174,14 +174,23 @@ export function recallLines(
       .filter((line) => line !== '' && !line.startsWith('#'))
       .filter(
         (line) => terms.length === 0 || terms.some((term) => line.toLowerCase().includes(term)),
-      )
-      .reverse();
+      );
     found.push(...lines.map((line) => `【${shown}】${line}`));
   }
-  if (found.length === 0) return '没查到。查不到的就是不记得，别说你记得。';
+  if (found.length === 0) {
+    return terms.length === 0
+      ? '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。'
+      : '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。';
+  }
   const shown: string[] = [];
   let length = 0;
   for (const line of found) {
+    // A line longer than the whole answer is cut, so it is never left out for good.
+    if (shown.length === 0 && line.length > RECALL_LIMIT) {
+      shown.push(`${line.slice(0, RECALL_LIMIT - 1)}…`);
+      length = RECALL_LIMIT;
+      continue;
+    }
     if (length + line.length + 1 > RECALL_LIMIT) break;
     shown.push(line);
     length += line.length + 1;

@@ -844,20 +844,25 @@ describe('recall', () => {
     ['memory.md', '- 队员2 说过讨厌早起\n- 大家约好周日爬山'],
   ]);
 
-  it('finds the lines holding any of the words, newest first, naming each file', () => {
+  it('finds the lines holding any of the words, in file order, naming each file', () => {
     expect(recallLines(files, { query: '半马 爬山' })).toBe(
       '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
     );
   });
 
-  it('lists a whole file newest first, leaving out headings', () => {
+  it('lists a whole file top first, leaving out headings', () => {
     expect(recallLines(files, { path: 'people/队员1.md' })).toBe(
-      '【people/队员1.md】- 周三固定游泳\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 对花生过敏',
+      '【people/队员1.md】- 对花生过敏\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 周三固定游泳',
     );
   });
 
   it('says plainly when nothing matches, so the coach doesn’t claim to remember', () => {
-    expect(recallLines(files, { query: '夸奖' })).toBe('没查到。查不到的就是不记得，别说你记得。');
+    expect(recallLines(files, { query: '夸奖' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
+    );
+    expect(recallLines(new Map([['memory.md', '']]), {})).toBe(
+      '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
+    );
   });
 
   it('names the files there are when asked for one that isn’t', () => {
@@ -872,7 +877,14 @@ describe('recall', () => {
     ]);
     const answer = recallLines(many, {});
     expect(answer.length).toBeLessThanOrEqual(RECALL_LIMIT + 40);
-    expect(answer.startsWith('【memory.md】- 第 299 件事')).toBe(true);
+    expect(answer.startsWith('【memory.md】- 第 0 件事')).toBe(true);
     expect(answer).toMatch(/（还有 \d+ 行没列出，换个更具体的词再查）$/);
+  });
+
+  it('cuts a line longer than the whole answer instead of leaving it out', () => {
+    const answer = recallLines(new Map([['memory.md', '长'.repeat(RECALL_LIMIT * 2)]]), {});
+    expect(answer).toBe(
+      `${`【memory.md】${'长'.repeat(RECALL_LIMIT * 2)}`.slice(0, RECALL_LIMIT - 1)}…`,
+    );
   });
 });
