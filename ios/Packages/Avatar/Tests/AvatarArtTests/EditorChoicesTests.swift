@@ -33,18 +33,18 @@ import Testing
     ])
     #expect(
         worn == [
-            WornPiece(slot: "hat", id: "warmup-cap", store: "warmup"),
-            WornPiece(slot: "top", id: "powder-salmon", store: "powder"),
-            WornPiece(slot: "acc", id: "coach-scarf", store: nil),
-            WornPiece(slot: "prop", id: "snowboard", store: nil),
+            WornPiece(slot: "hat", piece: "warmup-cap", store: "warmup"),
+            WornPiece(slot: "top", piece: "powder-salmon", store: "powder"),
+            WornPiece(slot: "acc", piece: "coach-scarf", store: nil),
+            WornPiece(slot: "prop", piece: "snowboard", store: nil),
         ])
 }
 
 /// A look that picks no top or bottom still wears the rig's, and the card lists them.
 @Test func wornFillsInTheRigsDefaults() {
     let worn = PlaceholderCharacter.worn(Outfit(["body": "peach", "top": "powder-salmon"]))
-    #expect(worn.map(\.id).contains("powder-salmon"))
+    #expect(worn.map(\.piece).contains("powder-salmon"))
     #expect(worn.first { $0.slot == "top" }?.store == "powder")
-    #expect(worn.contains { $0.slot == "bottom" && $0.id == "warmup-shorts" })
+    #expect(worn.contains { $0.slot == "bottom" && $0.piece == "warmup-shorts" })
     #expect(!worn.contains { $0.slot == "body" })
 }

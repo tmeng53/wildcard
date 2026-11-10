@@ -15,12 +15,11 @@ public struct WornOutfitList: View {
     @State private var thumbnails = ThumbnailCache()
     @Environment(\.sceneTheme) private var theme
 
-    public init(outfit: Outfit) {
-        (self.outfit, pieces) = (outfit, PlaceholderCharacter.worn(outfit))
+    /// `pieces` from `PlaceholderCharacter.worn(outfit)`, read once by the caller, which reads
+    /// art files.
+    public init(outfit: Outfit, pieces: [WornPiece]) {
+        (self.outfit, self.pieces) = (outfit, pieces)
     }
-
-    /// How many pieces the list shows, for its header.
-    public static func count(_ outfit: Outfit) -> Int { PlaceholderCharacter.worn(outfit).count }
 
     public var body: some View {
         VStack(spacing: 0) {
@@ -34,7 +33,7 @@ public struct WornOutfitList: View {
         HStack(spacing: Space.s) {
             WornPieceTile(outfit: outfit, slot: piece.slot, size: Self.tile, cache: thumbnails)
             VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                EditorNames.variant(piece.id, in: piece.slot)
+                EditorNames.variant(piece.piece, in: piece.slot)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgOnInk, in: theme))
                     .lineLimit(1)
@@ -67,12 +66,13 @@ public struct WornOutfitList: View {
 /// The first pieces a squadmate wears, small, beside 穿搭 on their card's back.
 public struct WornOutfitPeek: View {
     private let outfit: Outfit
-    private let slots: [Slot]
+    private let count: Int
+    /// Read once the peek shows, since it reads art files.
+    @State private var slots: [Slot] = []
     @State private var thumbnails = ThumbnailCache()
 
     public init(outfit: Outfit, count: Int = 2) {
-        self.outfit = outfit
-        slots = Array(PlaceholderCharacter.worn(outfit).prefix(count).map(\.slot))
+        (self.outfit, self.count) = (outfit, count)
     }
 
     public var body: some View {
@@ -81,6 +81,8 @@ public struct WornOutfitPeek: View {
                 WornPieceTile(outfit: outfit, slot: slot, size: Self.tile, cache: thumbnails)
             }
         }
+        .frame(height: Self.tile)
+        .task(id: outfit) { slots = PlaceholderCharacter.worn(outfit).prefix(count).map(\.slot) }
         .accessibilityHidden(true)
     }
 

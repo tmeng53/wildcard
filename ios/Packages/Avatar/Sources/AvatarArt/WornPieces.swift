@@ -5,12 +5,16 @@ import AvatarDomain
 /// coach's gift or a prop).
 public struct WornPiece: Hashable, Sendable, Identifiable {
     public let slot: Slot
-    public let id: String
+    /// The variant (`powder-salmon`).
+    public let piece: String
     public let store: String?
 
-    public init(slot: Slot, id: String, store: String?) {
-        (self.slot, self.id, self.store) = (slot, id, store)
+    public init(slot: Slot, piece: String, store: String?) {
+        (self.slot, self.piece, self.store) = (slot, piece, store)
     }
+
+    /// One a slot, so a piece worn in two slots is two rows.
+    public var id: String { "\(slot)/\(piece)" }
 }
 
 extension EditorChoices {
@@ -22,7 +26,7 @@ extension EditorChoices {
     public func worn(_ variants: [Slot: String]) -> [WornPiece] {
         Self.listedSlots.compactMap { slot in
             guard let id = variants[slot] else { return nil }
-            return WornPiece(slot: slot, id: id, store: wear[slot]?.first { $0.id == id }?.store)
+            return WornPiece(slot: slot, piece: id, store: wear[slot]?.first { $0.id == id }?.store)
         }
     }
 }

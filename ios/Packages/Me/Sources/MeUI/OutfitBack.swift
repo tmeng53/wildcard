@@ -1,4 +1,5 @@
 #if os(iOS)
+import AvatarArt
 import CharacterEditorUI
 import DesignSystem
 import DesignSystemUI
@@ -14,7 +15,9 @@ struct OutfitBack: View {
 
     private var ink: Color { Color(role: .fgOnInk, in: theme) }
     private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
-    private var pieces: Int { WornOutfitList.count(face.character.outfit) }
+    /// Read once the side shows, since it reads art files.
+    @State private var worn: [WornPiece] = []
+    private var pieces: Int { worn.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -44,15 +47,17 @@ struct OutfitBack: View {
                 .buttonStyle(PressableButtonStyle())
                 .accessibilityIdentifier("me.cardOutfitBack")
                 Spacer(minLength: Space.xs)
-                Text(copy: "card.outfit.count \(pieces)", bundle: .module)
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(muted)
+                if pieces > 0 {
+                    Text(copy: "card.outfit.count \(pieces)", bundle: .module)
+                        .typeStyle(TypeRamp.caption)
+                        .foregroundStyle(muted)
+                }
             }
             .padding(.top, Space.xs)
             .padding(.bottom, Space.xs)
             .overlay(alignment: .bottom) { Hairline(on: .ink) }
             ScrollView {
-                WornOutfitList(outfit: face.character.outfit)
+                WornOutfitList(outfit: face.character.outfit, pieces: worn)
                     .padding(.vertical, Space.xxs)
             }
             .scrollIndicators(.hidden)
@@ -61,6 +66,7 @@ struct OutfitBack: View {
         .padding(.horizontal, Space.xs)
         .padding(.top, Space.xs)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .task(id: face.character.outfit) { worn = PlaceholderCharacter.worn(face.character.outfit) }
     }
 }
 #endif
