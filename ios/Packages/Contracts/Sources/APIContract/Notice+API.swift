@@ -139,6 +139,8 @@ extension AppDestination {
             self = place
         } else if path.hasPrefix("store/"), path.count > "store/".count {
             self = .store(String(path.dropFirst("store/".count)))
+        } else if path.hasPrefix("wardrobe/"), path.count > "wardrobe/".count {
+            self = .wardrobe(piece: String(path.dropFirst("wardrobe/".count)))
         } else if path.hasPrefix("post/"), let id = try? CheckInID(wire: String(path.dropFirst("post/".count))) {
             self = .post(id)
         } else {
@@ -149,7 +151,7 @@ extension AppDestination {
     /// The places named by a word alone.
     private static let places: [String: AppDestination] = [
         "stores": .stores, "notices": .notices, "schedule": .schedule, "squad": .squad, "coaches": .coaches,
-        "feed": .feed, "today": .today, "me": .profile,
+        "feed": .feed, "today": .today, "me": .profile, "wardrobe": .wardrobe(piece: nil), "badges": .badges,
     ]
 }
 

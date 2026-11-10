@@ -167,14 +167,17 @@ async function call({
   path,
   token,
   body,
+  language,
 }: {
   readonly method: string;
   readonly path: string;
   readonly token?: string | undefined;
   readonly body?: unknown;
+  readonly language?: string;
 }) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  if (language !== undefined) headers['accept-language'] = language;
   const response = await app.request(path, {
     method,
     headers,
@@ -653,5 +656,91 @@ describe('the team’s badges', () => {
     expect((await call({ method: 'GET', path: '/me/titles', token: me.token })).body).toMatchObject(
       { teamBadges: [] },
     );
+  });
+});
+
+describe('wearing a team badge', () => {
+  it('wears one the member holds instead of a title, on the board, the card and the home', async () => {
+    const me = await signUp();
+    const mate = await signUp();
+    await profileOf(me, { nickname: '小米' });
+    await profileOf(mate, { nickname: '阿杰' });
+    const squad = await squadOf(me, mate);
+    const badge = `idea-${randomUUID().slice(0, 8)}`;
+    await rewards.putBadge({
+      id: badge,
+      names: { 'zh-Hans': '点子王', 'zh-Hant': '點子王', en: 'Idea King' },
+      glyph: 'lightbulb.fill',
+      tone: '#F2B33D',
+      offered: true,
+    });
+    await rewards.putTrigger({ kind: 'badge', id: badge, way: 'team', offered: true });
+    const equip = (body: object, token = mate.token) =>
+      call({ method: 'PUT', path: '/me/equipped-title', token, body: { version: 1, ...body } });
+
+    // Not held yet: refused, and nothing is worn.
+    const early = await equip({ title: null, teamBadge: badge });
+    expect([early.status, reason(early)]).toStrictEqual([400, 'BADGE_NOT_HELD']);
+
+    await rewards.give({
+      member: RewardMember.parse(mate.userId),
+      reward: { kind: 'badge', id: badge },
+      admin: RewardMember.parse(randomUUID()),
+    });
+    // A title with it is refused.
+    const both = await equip({ title: '早八战神', teamBadge: badge });
+    expect([both.status, reason(both)]).toStrictEqual([400, 'BADGE_NOT_HELD']);
+
+    const worn = await equip({ title: null, teamBadge: badge });
+    expect(worn.status).toBe(200);
+    expect(worn.body).toMatchObject({ wornTeamBadge: badge });
+    expect(worn.body).not.toHaveProperty('worn');
+    expect(worn.body).not.toHaveProperty('equipped');
+    expect(
+      (await call({ method: 'GET', path: '/me/titles', token: mate.token })).body,
+    ).toMatchObject({ wornTeamBadge: badge });
+    expect(
+      (
+        await call({
+          method: 'GET',
+          path: `/squads/${squad}/members/${mate.userId}/card`,
+          token: me.token,
+        })
+      ).body,
+    ).toMatchObject({ wornTeamBadge: badge });
+
+    // Beside their name on the home: its name in the reader's language, on a ticket.
+    const titleOnHome = async (language: string) => {
+      const today = await call({
+        method: 'GET',
+        path: `/squads/${squad}/today`,
+        token: me.token,
+        language,
+      });
+      return z
+        .object({
+          members: z.array(z.object({ member: z.string(), title: z.unknown().optional() })),
+        })
+        .parse(today.body)
+        .members.find(({ member }) => member === mate.userId)?.title;
+    };
+    const ticket = { shape: 'ticket', colour: badge, tone: '#F2B33D', glyph: 'lightbulb.fill' };
+    expect(await titleOnHome('en-US')).toStrictEqual({ title: 'Idea King', badge: ticket });
+    expect(await titleOnHome('zh-Hant-TW')).toStrictEqual({ title: '點子王', badge: ticket });
+
+    // Taken off with nothing chosen: no title won yet, so nothing is worn.
+    const off = await equip({ title: null });
+    expect(off.status).toBe(200);
+    expect(off.body).not.toHaveProperty('wornTeamBadge');
+    expect(await titleOnHome('zh-CN')).toBeUndefined();
+
+    // Each change is logged with the profile, the badge too.
+    const logged = await db
+      .selectFrom('profile_events')
+      .select('equipped_team_badge')
+      .where('member_id', '=', mate.userId)
+      .orderBy('id')
+      .execute();
+    expect(logged.slice(-2).map((row) => row.equipped_team_badge)).toStrictEqual([badge, null]);
   });
 });

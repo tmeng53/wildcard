@@ -194,19 +194,20 @@ public final class MeModel {
         }
     }
 
-    /// Wears `title` on the card's front at once (nil: the latest won again) and saves it; puts
-    /// the one worn before back if saving fails. Answers the board as saved, or nil when it
-    /// wasn't. Saves even before 我 has read its overview, so the home's own card can wear one.
+    /// Wears a title or team badge on the card's front at once (nil: the latest title won again)
+    /// and saves it; puts the one worn before back if saving fails. Answers the board as saved,
+    /// or nil when it wasn't. Saves even before 我 has read its overview, so the home's own card
+    /// can wear one.
     @discardableResult
-    public func equip(_ title: String?) async -> TitleBoard? {
+    public func equip(_ wearable: Wearable?) async -> TitleBoard? {
         let before = overview?.board
         saveFailed = false
         if var overview {
-            overview.board.worn = title ?? overview.board.titles.first?.title
+            overview.board.wear(wearable)
             load = .loaded(overview)
         }
         do {
-            let board = try await service.equip(title)
+            let board = try await service.equip(wearable)
             if var latest = overview {
                 latest.board = board
                 load = .loaded(latest)

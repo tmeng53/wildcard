@@ -28,6 +28,18 @@ extension MainTabs {
             selection = .profile
             closeProfilePages()
             wardrobe.openShop()
+        case .wardrobe(let piece):
+            // 衣橱 in the editor, trying the piece on.
+            showsNotices = false
+            selection = .profile
+            closeProfilePages()
+            Task { await wardrobe.showGift(piece) }
+        case .badges:
+            // 我's player card turned to its badge board.
+            showsNotices = false
+            selection = .profile
+            closeProfilePages()
+            wardrobe.badgeMarks.showBoard()
         default:
             showsNotices = false
             openTab(for: destination)
@@ -91,7 +103,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store:
+        case .post, .unlock, .stores, .store, .wardrobe, .badges:
             break
         }
     }

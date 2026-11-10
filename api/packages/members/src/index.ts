@@ -12,6 +12,7 @@ export {
   Catchphrase,
   Character,
   EQUIPPED_TITLE_MAX,
+  EquippedTeamBadge,
   EquippedTitle,
   JERSEY_NUMBER_MAX,
   JerseyNumber,
@@ -25,6 +26,7 @@ export {
   Swatch,
   TimeZone,
   type Squadmate,
+  type Worn,
   latestBirthday,
 } from './domain/profile.js';
 export { ProfileMissingError, TimeZoneUnknownError } from './errors.js';

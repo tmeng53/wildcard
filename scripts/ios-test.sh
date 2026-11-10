@@ -107,9 +107,9 @@ items = [item for test in json.loads((raw / "manifest.json").read_text()) for it
 for item in sorted(items, key=lambda item: str(item.get("timestamp", ""))):
     name = item.get("suggestedHumanReadableName") or item["exportedFileName"]
     name = re.sub(r"_\d+_[0-9A-Fa-f-]{36}(\.\w+)$", r"\1", name)
-    # Only the screenshots the tests name ("01-..." or "117-..."); skip XCTest's automatic
+    # Only the screenshots the tests name ("01-...", "117-..." or "57a-..."); skip XCTest's automatic
     # UI snapshots, synthesized events and failure recordings.
-    if not re.match(r"^\d{2,3}-.+\.png$", name):
+    if not re.match(r"^\d{1,3}[a-z]?-.+\.png$", name):
         continue
     shutil.copy(raw / item["exportedFileName"], dest / name)
     print(f"screenshot: {dest / name}")

@@ -10,6 +10,8 @@ public struct FlippingCard<Front: View, Back: View>: View {
     private let hint: ColorRole?
     private let fillsWidth: Bool
     private let identifier: String
+    /// Set, turns the card to its back (as when a notice opens the badge board) and is unset.
+    @Binding private var backRequested: Bool
     private let front: Front
     private let back: Back
     @State private var showsBack = false
@@ -25,11 +27,15 @@ public struct FlippingCard<Front: View, Back: View>: View {
     ///     dim; nil leaves the line out.
     ///   - fillsWidth: spans the width it is given at the page proportions, instead of its own size.
     ///   - identifier: the front's accessibility identifier; the back's is it with `Back`.
+    ///   - backRequested: set, turns the card to its back if it isn't, and is unset; also when it
+    ///     was set before the card showed.
     public init(
         hint: ColorRole? = .fgMuted, fillsWidth: Bool = false, identifier: String,
+        backRequested: Binding<Bool> = .constant(false),
         @ViewBuilder front: () -> Front, @ViewBuilder back: () -> Back
     ) {
         (self.hint, self.fillsWidth, self.identifier) = (hint, fillsWidth, identifier)
+        _backRequested = backRequested
         (self.front, self.back) = (front(), back())
     }
 
@@ -57,6 +63,11 @@ public struct FlippingCard<Front: View, Back: View>: View {
                     .foregroundStyle(Color(role: hint, in: theme))
                     .accessibilityHidden(true)
             }
+        }
+        .onChange(of: backRequested, initial: true) {
+            guard backRequested else { return }
+            backRequested = false
+            if !showsBack { flip() }
         }
     }
 

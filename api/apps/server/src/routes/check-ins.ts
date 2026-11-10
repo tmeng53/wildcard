@@ -294,6 +294,8 @@ const MemberRecords = z
     // Described on the object: a described reference becomes a wrapper type in generated clients.
     longestStreak: Streak.optional(),
     mealStreak: Streak.optional(),
+    currentStreak: Streak.optional(),
+    currentMealStreak: Streak.optional(),
     hours: z.array(count('训练 posted in this hour.')).min(24).max(24).meta({
       description:
         '训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
@@ -342,7 +344,10 @@ const MemberRecords = z
     description:
       '外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them ' +
       'neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left ' +
-      'out before the first.',
+      'out before the first. `currentStreak` and `currentMealStreak`: the same runs still ' +
+      'going on the member’s clock (today not counted against them until it is over; a week ' +
+      'of rest days in a row breaks training), left out once broken; one is the record when ' +
+      'its days reach the longest.',
   })
   .openapi('MemberRecords');
 
