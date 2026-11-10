@@ -73,6 +73,10 @@ public struct Performance: Sendable {
     /// `DepthSwap.reach`, for the frame where the forearm on screen is clear, so it can change
     /// depth unseen as the blend begins.
     public mutating func play(_ clip: BoundClip, at time: Double, blending: Bool = true) {
+        play(clip, at: time, blending: blending, waiting: true)
+    }
+
+    private mutating func play(_ clip: BoundClip, at time: Double, blending: Bool, waiting canWait: Bool) {
         settle(at: time)
         if let waiting, time < waiting.swap { self = waiting.performance }
         (change, waiting) = (nil, nil)
@@ -88,7 +92,7 @@ public struct Performance: Sendable {
         let seen = current.swaps.filter { $0.shows > DepthSwap.unseen }.map(\.part)
         func clear(_ pose: Pose) -> Bool { seen.allSatisfy { figure.depthSwapShows($0, in: pose) <= DepthSwap.unseen } }
         // Waiting helps only when the forearm on screen is over the body now and clears later.
-        guard !seen.isEmpty, !clear(onScreen.pose(at: time)) else { return }
+        guard canWait, !seen.isEmpty, !clear(onScreen.pose(at: time)) else { return }
         // The screen's last frame before the clip starts may be a little earlier, so the frame
         // before must be clear too.
         var clearBefore = false
@@ -114,7 +118,8 @@ public struct Performance: Sendable {
     public mutating func change(
         into figure: Figure, idle: BoundClip, leaving: BoundClip, arriving: BoundClip, at time: Double
     ) {
-        play(leaving, at: time)
+        // The hop starts on time, so the swap lands on its last frame.
+        play(leaving, at: time, blending: true, waiting: false)
         let swap = time + leaving.clip.duration
         var next = Performance(figure: figure, idle: idle, startingAt: swap, blendDuration: blendDuration)
         // Where `leaving` ends up on screen, its blend in included.
@@ -202,7 +207,10 @@ public struct Performance: Sendable {
     private mutating func planBlendIn() {
         let (performance, clip) = (self, current.clip)
         guard let from = current.from else { return }
-        current.swaps = performance.depthSwaps(from: from, earliest: 0) { time in
+        // A one-shot's changes land before it ends; handing back plans the rest.
+        let latest =
+            clip.clip.loops ? blendDuration + DepthSwap.reach : min(blendDuration + DepthSwap.reach, clip.clip.duration)
+        current.swaps = performance.depthSwaps(from: from, earliest: 0, latest: latest) { time in
             let pose = performance.figure.pose(clip, at: time)
             return (performance.blend(from: from, to: pose, since: time), pose.parts)
         }
@@ -225,33 +233,29 @@ public struct Performance: Sendable {
 
     /// For each arm whose depth in `start` differs from the one keyed once the blend is over,
     /// when it changes. `frame(t)` gives the pose on screen `t` seconds after the blend starts,
-    /// and the poses the clips key then, whose depths bound where the change may go.
+    /// and the poses the clips key then, whose depths bound where the change may go; it looks no
+    /// later than `latest`.
     private func depthSwaps(
-        from start: Pose, earliest: Double, frame: (Double) -> (pose: Pose, keyed: [PartPose])
+        from start: Pose, earliest: Double, latest: Double = .infinity,
+        frame: (Double) -> (pose: Pose, keyed: [PartPose])
     ) -> [DepthSwap] {
         guard start.parts.count == figure.parts.count, blendDuration > 0 else { return [] }
         let rate = DepthSwap.rate
         let first = Int((earliest * rate).rounded(.down))
-        let frames = (first...Int(((blendDuration + DepthSwap.reach) * rate).rounded(.up))).map {
+        let last = Int((min(latest, blendDuration + DepthSwap.reach) * rate).rounded(.down))
+        let frames = (first...max(first, last)).map {
             frame(Double($0) / rate)
         }
         let origin = -first
         let settle = origin + Int((blendDuration * rate).rounded(.up))
+        // A clip over before its blend is: it hands back from wherever it is.
+        guard settle < frames.count else { return [] }
         var swaps: [DepthSwap] = []
         for part in figure.parts.indices where figure.parts[part].front {
             let keyed = frames.map { $0.keyed[part].front >= 0.5 }
             let (before, after) = (start.parts[part].front >= 0.5, keyed[settle])
             guard before != after else { continue }
-            // It may land from the clip's own last change before the blend to its next after.
-            var (open, close) = (0, keyed.count)
-            for index in (0..<origin).reversed() where keyed[index] != before {
-                open = index + 1
-                break
-            }
-            for index in settle..<keyed.count where keyed[index] != after {
-                close = index
-                break
-            }
+            let (open, close) = Self.window(keyed, before: before, after: after, origin: origin, settle: settle)
             guard open + 1 < close else { continue }
             var shows: [Int: Double] = [:]
             func shown(_ index: Int) -> Double {
@@ -277,6 +281,16 @@ public struct Performance: Sendable {
                     shows: best.shows))
         }
         return swaps
+    }
+
+    /// Where a change may land: from the clip's own last change before the blend (`origin`) to its
+    /// next after the blend is over (`settle`), as frame indexes into `keyed`.
+    private static func window(_ keyed: [Bool], before: Bool, after: Bool, origin: Int, settle: Int) -> (
+        open: Int, close: Int
+    ) {
+        let open = (0..<origin).last { keyed[$0] != before }.map { $0 + 1 } ?? 0
+        let close = (settle..<keyed.count).first { keyed[$0] != after } ?? keyed.count
+        return (open, close)
     }
 }
 

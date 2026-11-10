@@ -153,3 +153,27 @@ private func swapsOfDepth(in idle: Performance, playing plays: [(clip: BoundClip
 private func overlap(of arm: PartID, in figure: Figure, _ pose: Pose) throws -> Double {
     figure.depthSwapShows(try figure.index(arm), in: pose)
 }
+
+/// A clip that waits for an arm to clear the body waits only a moment, the clip before it going on
+/// until then, and a clip played meanwhile replaces it.
+@Test func aClipWaitsOnlyAMomentForAnArmToClear() throws {
+    let kit = try #require(try PlaceholderCharacter.sportKits().kits.first { $0.id == "run" })
+    let outfit = kit.dress(Outfit(["body": "peach", "top": "warmup-tee", "bottom": "warmup-shorts"]))
+    let figure = try PlaceholderCharacter.figure(wearing: outfit)
+    let run = try figure.bind(PlaceholderCharacter.move(for: kit, persona: .energetic))
+    let bottle = try figure.bind(PlaceholderCharacter.signatureMove(wearing: outfit, persona: .energetic))
+    var performance = Performance(figure: figure, idle: run)
+    performance.play(bottle, at: 1.3)
+    // Over the tee at 1.3 s, the run's arm clears it a few frames later.
+    #expect(performance.clipName(at: 1.3) == run.clip.name)
+    #expect(performance.pose(at: 1.3) == Performance(figure: figure, idle: run).pose(at: 1.3))
+    #expect(performance.clipName(at: 1.3 + engineReach) == bottle.clip.name)
+    let cheer = try figure.bind(
+        PlaceholderCharacter.clip("cheer", persona: .energetic, species: PlaceholderCharacter.species(of: outfit)))
+    performance.play(cheer, at: 1.31)
+    #expect(
+        stride(from: 1.31, through: 2.5, by: 1.0 / 60).allSatisfy { performance.clipName(at: $0) != bottle.clip.name })
+}
+
+/// How long `Performance` may hold a clip back (`DepthSwap.reach`, internal to the engine).
+private let engineReach = 0.45
