@@ -52,6 +52,13 @@ extension PlaceholderCharacter {
     /// How far right of its start the stack's top one ends up.
     public static let stackTopLandsAt = 250.0
 
+    /// How far past the canvas the stack's top one reaches, in canvas points: up 300 on its
+    /// jump with its arms raised over its head, and over to the right by `stackTopLandsAt` with
+    /// its whole body. A screen that plays it draws the figure with this much room above and to
+    /// either side (a figure facing left is mirrored), or the top one is cut off on the head.
+    public static let stackReachAbove = 400.0
+    public static let stackReachSideways = 280.0
+
     private static func interaction(_ name: String) throws(AvatarError) -> Clip {
         try Clip.decode(file("moves/interactions/\(name).json"))
     }
