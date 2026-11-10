@@ -40,11 +40,11 @@ func everyArmDepthSwapHappensClearOfTheBody(body: String) throws {
                 PlaceholderCharacter.clip("idle", persona: persona, species: PlaceholderCharacter.species(of: outfit)))
             let move = try figure.bind(asDrawn ? clip : clip.atTempo(persona.accentTempo))
             for start in [0.5, 2.9] {
-                var performance = Performance(figure: figure, idle: idle)
-                performance.play(move, at: start)
                 let end = start + move.clip.duration * (move.clip.loops ? 1.5 : 1)
-                if move.clip.loops { performance.play(idle, at: end) }
-                for (frame, pair) in swapsOfDepth(in: performance, figure, through: end + 0.5) {
+                // A loop goes on until the next play.
+                let plays = [(move, start)] + (move.clip.loops ? [(idle, end)] : [])
+                let performance = Performance(figure: figure, idle: idle)
+                for (frame, pair) in swapsOfDepth(in: performance, playing: plays, through: end + 0.5) {
                     swaps += 1
                     let shown = try max(
                         overlap(of: pair.arm, in: figure, pair.after), overlap(of: pair.arm, in: figure, pair.before))
@@ -80,108 +80,76 @@ func noIdleHoldsAnArmOverTheBody(body: String) throws {
     }
 }
 
+/// A sport's move is an idle too: on 今天 a member who trained stands in their kit, and a tap
+/// plays their signature move (`PlaceholderCharacter.signatureMove`), or a cheer, and hands back
+/// to the kit's move, which may hold an arm anywhere. Each swap stays clear of the body there too.
+@Test(arguments: Persona.allCases)
+func everyArmDepthSwapOverAKitHappensClearOfTheBody(persona: Persona) throws {
+    var swaps = 0
+    for kit in try PlaceholderCharacter.sportKits().kits {
+        for body in ["peach", "bear"] {
+            let outfit = kit.dress(Outfit(["body": body, "top": "warmup-tee", "bottom": "warmup-shorts"]))
+            let figure = try PlaceholderCharacter.figure(wearing: outfit)
+            let idle = try figure.bind(PlaceholderCharacter.move(for: kit, persona: persona))
+            let moves = [
+                try PlaceholderCharacter.signatureMove(wearing: outfit, persona: persona),
+                try PlaceholderCharacter.clip(
+                    "cheer", persona: persona, species: PlaceholderCharacter.species(of: outfit)),
+            ]
+            for move in try moves.map(figure.bind) {
+                for start in [0.37, 1.3, 2.05] {
+                    let performance = Performance(figure: figure, idle: idle)
+                    for (frame, pair) in swapsOfDepth(
+                        in: performance, playing: [(move, start)], through: start + move.clip.duration + 0.8)
+                    {
+                        swaps += 1
+                        let shown = try max(
+                            overlap(of: pair.arm, in: figure, pair.after),
+                            overlap(of: pair.arm, in: figure, pair.before))
+                        #expect(
+                            shown <= 16,
+                            "\(move.clip.name) over \(kit.id) as \(persona) on \(body) from \(start)s swaps \(pair.arm) at frame \(frame) over \(shown) pt²"
+                        )
+                    }
+                }
+            }
+        }
+    }
+    #expect(swaps > 0)
+}
+
 /// Each frame, at 60 a second, where an arm's front copy shows or hides, with the poses either
-/// side of it.
-private func swapsOfDepth(in performance: Performance, _ figure: Figure, through end: Double)
+/// side of it, as a performance over its idle plays each clip at its time (as the app does: a
+/// performance only ever goes forward), from the first play until `end`.
+private func swapsOfDepth(in idle: Performance, playing plays: [(clip: BoundClip, at: Double)], through end: Double)
     -> [(frame: Int, pair: (arm: PartID, before: Pose, after: Pose))]
 {
+    var stages = [(from: -Double.infinity, performance: idle)]
+    for play in plays {
+        var next = stages[stages.count - 1].performance
+        next.play(play.clip, at: play.at)
+        stages.append((play.at, next))
+    }
+    func pose(at time: Double) -> Pose {
+        stages.last { $0.from <= time }?.performance.pose(at: time) ?? idle.pose(at: time)
+    }
+    let figure = idle.figure
     var found: [(frame: Int, pair: (arm: PartID, before: Pose, after: Pose))] = []
-    var before = performance.pose(at: 0)
-    for frame in 1...Int((end * 60).rounded(.up)) {
-        let pose = performance.pose(at: Double(frame) / 60)
+    let first = Int(((plays.first?.at ?? 0) * 60).rounded(.down))
+    var before = pose(at: Double(first) / 60)
+    for frame in first + 1...Int((end * 60).rounded(.up)) {
+        let after = pose(at: Double(frame) / 60)
         for (index, part) in figure.parts.enumerated()
-        where part.front && (pose.parts[index].front >= 0.5) != (before.parts[index].front >= 0.5) {
-            found.append((frame, (part.id, before, pose)))
+        where part.front && (after.parts[index].front >= 0.5) != (before.parts[index].front >= 0.5) {
+            found.append((frame, (part.id, before, after)))
         }
-        before = pose
+        before = after
     }
     return found
 }
 
-/// The area where an arm's front copy, drawn past the elbow, covers a part drawn between it and
-/// its copy behind the body.
+/// The area where an arm's forearm covers the body, for a change of its depth
+/// (`Figure.depthSwapShows`).
 private func overlap(of arm: PartID, in figure: Figure, _ pose: Pose) throws -> Double {
-    let front = try figure.index(arm)
-    let back = try #require(figure.parts.firstIndex { $0.twin == front })
-    let placed = figure.layout(pose)
-    let area = try #require(placed[front].area)
-    let forearm = polygons(figure.parts[front], placed[front])
-    let between = (back + 1..<front).filter { placed[$0].opacity > 0.5 }
-        .flatMap { polygons(figure.parts[$0], placed[$0]) }
-    guard let box = bounds(forearm) else { return 0 }
-    let step = 2.0
-    var covered = 0.0
-    for row in stride(from: box.min.y, through: box.max.y, by: step) {
-        for column in stride(from: box.min.x, through: box.max.x, by: step) {
-            let point = Point(x: column, y: row)
-            guard inside(point, [area]), forearm.contains(where: { inside(point, $0) }),
-                between.contains(where: { inside(point, $0) })
-            else { continue }
-            covered += step * step
-        }
-    }
-    return covered
-}
-
-/// A part's filled shapes as polygons in canvas coordinates, each a list of closed rings.
-private func polygons(_ part: Figure.Part, _ placement: Placement) -> [[[Point]]] {
-    part.art.flatMap(\.shapes).filter { $0.fill != nil && $0.opacity > 0.5 }.map { shape in
-        let path = placement.bend.map { $0.apply(to: shape.path) } ?? shape.path
-        var rings: [[Point]] = []
-        var ring: [Point] = []
-        var pen = Point(x: 0, y: 0)
-        for element in path {
-            switch element {
-            case .move(let point):
-                if ring.count > 2 { rings.append(ring) }
-                (ring, pen) = ([point], point)
-            case .line(let point):
-                ring.append(point)
-                pen = point
-            case .quadCurve(let end, let control):
-                ring += (1...8).map { step in
-                    let (late, early) = (Double(step) / 8, 1 - Double(step) / 8)
-                    return Point(
-                        x: early * early * pen.x + 2 * early * late * control.x + late * late * end.x,
-                        y: early * early * pen.y + 2 * early * late * control.y + late * late * end.y)
-                }
-                pen = end
-            case .curve(let end, let one, let two):
-                ring += (1...8).map { step in
-                    let (late, early) = (Double(step) / 8, 1 - Double(step) / 8)
-                    let weights = (early * early * early, 3 * early * early * late, 3 * early * late * late)
-                    return Point(
-                        x: weights.0 * pen.x + weights.1 * one.x + weights.2 * two.x + late * late * late * end.x,
-                        y: weights.0 * pen.y + weights.1 * one.y + weights.2 * two.y + late * late * late * end.y)
-                }
-                pen = end
-            case .close:
-                if let first = ring.first { pen = first }
-            }
-        }
-        if ring.count > 2 { rings.append(ring) }
-        return rings.map { $0.map(placement.transform.apply) }
-    }
-}
-
-private func bounds(_ shapes: [[[Point]]]) -> (min: Point, max: Point)? {
-    let points = shapes.flatMap { $0.flatMap { $0 } }
-    guard let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
-        let minY = points.map(\.y).min(), let maxY = points.map(\.y).max()
-    else { return nil }
-    return (Point(x: minX, y: minY), Point(x: maxX, y: maxY))
-}
-
-/// Even-odd: whether `point` is inside the rings.
-private func inside(_ point: Point, _ rings: [[Point]]) -> Bool {
-    var crossings = false
-    for ring in rings {
-        for (start, end) in zip(ring, ring.dropFirst() + [ring[0]])
-        where (start.y > point.y) != (end.y > point.y)
-            && point.x < start.x + (point.y - start.y) / (end.y - start.y) * (end.x - start.x)
-        {
-            crossings.toggle()
-        }
-    }
-    return crossings
+    figure.depthSwapShows(try figure.index(arm), in: pose)
 }

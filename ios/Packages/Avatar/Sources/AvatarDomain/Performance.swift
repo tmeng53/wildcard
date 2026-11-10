@@ -15,9 +15,12 @@ public struct Performance: Sendable {
     private var current: Playing
     /// A change of clothes under way: from `at`, the performance in the new outfit takes over.
     private var change: Change?
+    /// What stays on screen until the playing clip starts, when `play` waits for an arm to clear
+    /// the body.
+    private var waiting: Change?
 
     private final class Change: Sendable {
-        /// When the new outfit goes on.
+        /// When the new outfit goes on, or the waiting clip starts.
         let swap: Double
         let performance: Performance
 
@@ -31,6 +34,13 @@ public struct Performance: Sendable {
         var start: Double
         /// The pose on screen when this clip began, to blend from.
         var from: Pose?
+        /// When each arm that changes depth as the clip blends in does, in seconds since it began.
+        var swaps: [DepthSwap] = []
+        /// The same for a one-shot handing back to idle, in seconds since it ended.
+        var handBack: [DepthSwap] = []
+
+        /// The most of a forearm over the body any change of depth as it blends in shows.
+        var shows: Double { swaps.map(\.shows).max() ?? 0 }
     }
 
     public init(figure: Figure, idle: BoundClip, startingAt time: Double = 0, blendDuration: Double = 0.15) {
@@ -50,17 +60,51 @@ public struct Performance: Sendable {
         if onScreen.parts.count == figure.parts.count {
             current.from = onScreen
         }
+        plan()
     }
 
     /// Starts a clip now, blending from whatever is on screen, or cutting straight to its first
     /// frame without `blending` (the entrance, which starts off stage: blending would slide the
     /// character out from its spot first). A change of clothes still under way stops where it
-    /// is, in the clothes on screen.
+    /// is, in the clothes on screen, and a clip still waiting to start never does.
+    ///
+    /// When an arm must change depth as the clip blends in and its forearm is over the body
+    /// all the while (a run's swing, say, into a bottle held in front), the clip waits, at most
+    /// `DepthSwap.reach`, for the frame where the forearm on screen is clear, so it can change
+    /// depth unseen as the blend begins.
     public mutating func play(_ clip: BoundClip, at time: Double, blending: Bool = true) {
         settle(at: time)
-        let onScreen = blending ? pose(at: time) : nil
-        change = nil
-        current = Playing(clip: clip, start: time, from: onScreen)
+        if let waiting, time < waiting.swap { self = waiting.performance }
+        (change, waiting) = (nil, nil)
+        guard blending else {
+            current = Playing(clip: clip, start: time, from: nil)
+            plan()
+            return
+        }
+        let onScreen = self
+        current = Playing(clip: clip, start: time, from: onScreen.pose(at: time))
+        planBlendIn()
+        defer { planHandBack() }
+        let seen = current.swaps.filter { $0.shows > DepthSwap.unseen }.map(\.part)
+        func clear(_ pose: Pose) -> Bool { seen.allSatisfy { figure.depthSwapShows($0, in: pose) <= DepthSwap.unseen } }
+        // Waiting helps only when the forearm on screen is over the body now and clears later.
+        guard !seen.isEmpty, !clear(onScreen.pose(at: time)) else { return }
+        // The screen's last frame before the clip starts may be a little earlier, so the frame
+        // before must be clear too.
+        var clearBefore = false
+        for frame in 1...Int((DepthSwap.reach * DepthSwap.rate).rounded()) {
+            let start = time + Double(frame) / DepthSwap.rate
+            let pose = onScreen.pose(at: start)
+            let clearNow = clear(pose)
+            defer { clearBefore = clearNow }
+            guard clearNow, clearBefore else { continue }
+            var later = onScreen
+            later.waiting = Change(swap: start, performance: onScreen)
+            later.current = Playing(clip: clip, start: start, from: pose)
+            later.planBlendIn()
+            if later.current.shows < current.shows { self = later }
+            return
+        }
     }
 
     /// Changes clothes with a hop: `leaving` plays in the clothes on screen (a squash down),
@@ -78,6 +122,7 @@ public struct Performance: Sendable {
         let handOver = current.from.map { blend(from: $0, to: end, since: leaving.clip.duration) } ?? end
         next.current = Playing(
             clip: arriving, start: swap, from: handOver.parts.count == figure.parts.count ? handOver : nil)
+        next.plan()
         change = Change(swap: swap, performance: next)
     }
 
@@ -98,19 +143,26 @@ public struct Performance: Sendable {
     /// The clip on screen at a time: a one-shot clip that has ended is idle again.
     public func clipName(at time: Double) -> String {
         if let change, time >= change.swap { return change.performance.clipName(at: time) }
+        if let waiting, time < waiting.swap { return waiting.performance.clipName(at: time) }
         return finishedOneShot(at: time) == nil ? current.clip.clip.name : idle.clip.name
     }
 
     public func pose(at time: Double) -> Pose {
         if let change, time >= change.swap { return change.performance.pose(at: time) }
+        if let waiting, time < waiting.swap { return waiting.performance.pose(at: time) }
         if let end = finishedOneShot(at: time) {
             // Idle restarts from its first frame, blended from the one-shot's last.
             let last = figure.pose(current.clip, at: current.clip.clip.duration)
-            return blend(from: last, to: figure.pose(idle, at: time - end), since: time - end)
+            var pose = blend(from: last, to: figure.pose(idle, at: time - end), since: time - end)
+            current.handBack.apply(to: &pose, at: time - end)
+            return pose
         }
-        let pose = figure.pose(current.clip, at: time - current.start)
-        guard let from = current.from else { return pose }
-        return blend(from: from, to: pose, since: time - current.start)
+        let elapsed = time - current.start
+        var pose = figure.pose(current.clip, at: elapsed)
+        if let from = current.from { pose = blend(from: from, to: pose, since: elapsed) }
+        current.swaps.apply(to: &pose, at: elapsed)
+        if !current.clip.clip.loops { current.handBack.apply(to: &pose, at: elapsed - current.clip.clip.duration) }
+        return pose
     }
 
     /// Becomes the performance in the new outfit once a change has swapped it in by `time`.
@@ -131,5 +183,129 @@ public struct Performance: Sendable {
         let fraction = max(elapsed, 0) / blendDuration
         // Smoothstep: starts and ends gently.
         return start.blended(to: target, amount: fraction * fraction * (3 - 2 * fraction))
+    }
+
+    /// Picks when each arm that changes depth as the playing clip blends in, and (a one-shot) as
+    /// it hands back to idle, does: on a frame where its forearm doesn't show over the body
+    /// (`Figure.depthSwapShows`), so the change can't be seen, whatever the clips on either side
+    /// (a sport's move is an idle too, and holds its arms anywhere). It looks from the blend's
+    /// start until the clip's own next change of that arm's depth, at most `DepthSwap.reach` past
+    /// the blend, and, handing back, from as far before the end; nearest the blend's start first,
+    /// clear a 60 Hz screen frame either side. With none clear, an arm the clip itself changes back
+    /// within that span keeps its depth throughout; else it changes on the frame that shows least,
+    /// which `play` may avoid by waiting. Run once as a clip starts.
+    private mutating func plan() {
+        planBlendIn()
+        planHandBack()
+    }
+
+    private mutating func planBlendIn() {
+        let (performance, clip) = (self, current.clip)
+        guard let from = current.from else { return }
+        current.swaps = performance.depthSwaps(from: from, earliest: 0) { time in
+            let pose = performance.figure.pose(clip, at: time)
+            return (performance.blend(from: from, to: pose, since: time), pose.parts)
+        }
+    }
+
+    private mutating func planHandBack() {
+        let (performance, clip) = (self, current.clip)
+        guard !clip.clip.loops else { return }
+        let length = clip.clip.duration
+        let last = figure.pose(clip, at: length)
+        current.handBack = performance.depthSwaps(from: last, earliest: -min(DepthSwap.reach, length)) { time in
+            if time < 0 {
+                let pose = performance.figure.pose(clip, at: length + time)
+                return (pose, pose.parts)
+            }
+            let idle = performance.figure.pose(performance.idle, at: time)
+            return (performance.blend(from: last, to: idle, since: time), idle.parts)
+        }
+    }
+
+    /// For each arm whose depth in `start` differs from the one keyed once the blend is over,
+    /// when it changes. `frame(t)` gives the pose on screen `t` seconds after the blend starts,
+    /// and the poses the clips key then, whose depths bound where the change may go.
+    private func depthSwaps(
+        from start: Pose, earliest: Double, frame: (Double) -> (pose: Pose, keyed: [PartPose])
+    ) -> [DepthSwap] {
+        guard start.parts.count == figure.parts.count, blendDuration > 0 else { return [] }
+        let rate = DepthSwap.rate
+        let first = Int((earliest * rate).rounded(.down))
+        let frames = (first...Int(((blendDuration + DepthSwap.reach) * rate).rounded(.up))).map {
+            frame(Double($0) / rate)
+        }
+        let origin = -first
+        let settle = origin + Int((blendDuration * rate).rounded(.up))
+        var swaps: [DepthSwap] = []
+        for part in figure.parts.indices where figure.parts[part].front {
+            let keyed = frames.map { $0.keyed[part].front >= 0.5 }
+            let (before, after) = (start.parts[part].front >= 0.5, keyed[settle])
+            guard before != after else { continue }
+            // It may land from the clip's own last change before the blend to its next after.
+            var (open, close) = (0, keyed.count)
+            for index in (0..<origin).reversed() where keyed[index] != before {
+                open = index + 1
+                break
+            }
+            for index in settle..<keyed.count where keyed[index] != after {
+                close = index
+                break
+            }
+            guard open + 1 < close else { continue }
+            var shows: [Int: Double] = [:]
+            func shown(_ index: Int) -> Double {
+                if let known = shows[index] { return known }
+                let area = figure.depthSwapShows(part, in: frames[index].pose)
+                shows[index] = area
+                return area
+            }
+            let order = (open + 1..<close).sorted { abs($0 - origin) < abs($1 - origin) }
+            var best = (index: order[0], shows: Double.infinity)
+            for index in order {
+                // A screen frame either side of it, wherever the screen's frames fall.
+                let area = (index - 2...index + 1).map { shown(min(max($0, 0), frames.count - 1)) }.max() ?? 0
+                if area < best.shows { best = (index, area) }
+                if area <= DepthSwap.unseen { break }
+            }
+            // No clear frame before the clip changes back by itself: keep the depth until then.
+            if best.shows > DepthSwap.unseen, close < keyed.count { best = (close, 0) }
+            swaps.append(
+                DepthSwap(
+                    part: part, before: before ? 1 : 0, after: after ? 1 : 0, opens: Double(open + first) / rate,
+                    turn: Double(best.index + first) / rate, closes: Double(close + first) / rate,
+                    shows: best.shows))
+        }
+        return swaps
+    }
+}
+
+/// When an arm changes depth around a blend: from `opens` until `turn` it keeps `before`, then
+/// until `closes` it is `after`, whatever the blended poses say; outside, the clips' own keys stand.
+/// Seconds since the clip began (blending in) or ended (handing back).
+struct DepthSwap: Sendable {
+    var part: Int
+    var before: Double
+    var after: Double
+    var opens: Double
+    var turn: Double
+    var closes: Double
+    /// How much of the forearm over the body the change shows, the frames either side of `turn`.
+    var shows: Double
+
+    /// How far past a blend, and before a one-shot's end, a change may move to find a clear frame.
+    static let reach = 0.45
+    /// Frames a second the planner looks at: two to each of a 60 Hz screen's.
+    static let rate = 120.0
+    /// Square points of forearm over the body a change may show and still not be seen: a sliver
+    /// along an outline, where both drawings agree.
+    static let unseen = 4.0
+}
+
+extension [DepthSwap] {
+    func apply(to pose: inout Pose, at time: Double) {
+        for swap in self where time >= swap.opens && time < swap.closes {
+            pose.parts[swap.part].front = time < swap.turn ? swap.before : swap.after
+        }
     }
 }

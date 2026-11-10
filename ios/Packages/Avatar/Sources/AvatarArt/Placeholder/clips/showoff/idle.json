@@ -18,7 +18,7 @@
       { "t": 1.5, "v": 7, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
     { "part": "armL", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.5, "v": 12, "ease": "easeInOut" },
-      { "t": 1.5, "v": -2, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
+      { "t": 1.5, "v": 1, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
     { "part": "armR", "channel": "rotation", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.5, "v": 2, "ease": "easeInOut" },
       { "t": 1.5, "v": -12, "ease": "easeInOut" }, { "t": 2, "v": 0, "ease": "easeInOut" } ] },
