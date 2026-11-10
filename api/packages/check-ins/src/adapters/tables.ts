@@ -74,6 +74,7 @@ export interface CheckIns {
   created_at: Timestamp;
   day: string;
   id: string;
+  in_feed: Generated<boolean>;
   kind: CheckInKind;
   member_id: string;
   payload: Json;

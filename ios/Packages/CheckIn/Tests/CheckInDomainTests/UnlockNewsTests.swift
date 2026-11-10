@@ -117,7 +117,7 @@ actor ScriptedLedger: UnlockLedger {
     await today.load()
 
     await ledger.set(server: [unlock(.store, "halfmoon", at: 1)])
-    try await today.post(.disclaimer(try Disclaimer("累")), shared: false)
+    try await today.post(.disclaimer(try Disclaimer("累")))
     await settle()
     #expect(today.unlocked.isEmpty)
 

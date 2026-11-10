@@ -1,38 +1,37 @@
 #if os(iOS)
-import Contracts
 import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 分享到, pinned under 发动态 and the 请假条 page: a switch for whether the member's squad sees
-/// the post. It starts on and nothing is remembered (the product owner, 2026-10-31). Off keeps the
-/// post to the member, in 我的动态 only, and says so under the switch. The page sets its side margins.
-struct ShareRow: View {
+/// 发布到动态, pinned under 发动态 and the 请假条 page: a switch for whether the post goes in the
+/// squad's 动态. It starts on and nothing is remembered. Off only records it: it counts for the squad
+/// all the same, and the hint under the switch says it stays out of 动态 (the product owner,
+/// 2026-11-10). The page sets its side margins.
+struct FeedSwitchRow: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.controlPlacement) private var placement
-    let squad: Squad
-    @Binding var isShared: Bool
+    @Binding var inFeed: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xxs) {
-            SwitchRow(Text(copy: "分享到 \(squad.name)", bundle: .module), isOn: $isShared, showsDivider: false)
-                .accessibilityIdentifier("compose.share.\(squad.id)")
-            // Sharing is the default and the switch says it; only the private choice needs a word.
-            if !isShared {
-                Text(copy: "仅自己可见，不计入小队数据", bundle: .module)
+            SwitchRow(Text(copy: "发布到动态", bundle: .module), isOn: $inFeed, showsDivider: false)
+                .accessibilityIdentifier("compose.inFeed")
+            // Posting is the default and the switch says it; only the record-only choice needs a word.
+            if !inFeed {
+                Text(copy: "只记录，不出现在动态里", bundle: .module)
                     .typeStyle(TypeRamp.footnote)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .accessibilityIdentifier("compose.share.hint")
+                    .accessibilityIdentifier("compose.inFeed.hint")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, Space.xs)
-        .modifier(ShareRowSurface(placement: placement))
+        .modifier(FeedSwitchRowSurface(placement: placement))
     }
 }
 /// In a page's content, a hairline above the row; floating in 发动态's action bar, a glass
 /// panel of its own, so the switch and its hint read over the caption scrolling under it.
-private struct ShareRowSurface: ViewModifier {
+private struct FeedSwitchRowSurface: ViewModifier {
     let placement: ControlPlacement
 
     func body(content: Content) -> some View {

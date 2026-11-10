@@ -14,8 +14,12 @@ public struct CheckIn: Hashable, Sendable {
     public let postedDay: LocalDay
     /// When it was made, for ordering on the track. Not used to pick the day.
     public let createdAt: Timestamp
-    /// The squads it was sent to. Squads not listed see the member as not checked in.
+    /// The squads it was sent to: the member's squad, or none for one made before joining any.
+    /// Squads not listed see the member as not checked in.
     public let audience: Audience
+    /// 发布到动态: whether it is a post in its squads' 动态. One that isn't still counts for them
+    /// (their week, the member's card), but only its author sees it. Never changed after posting.
+    public let inFeed: Bool
     public let entry: Entry
 
     /// How many days before the day it is posted a check-in may count for (补打卡). The API's
@@ -25,7 +29,7 @@ public struct CheckIn: Hashable, Sendable {
     /// `postedDay` left out is `day`: the check-in was posted the day it counts for.
     public init(
         id: CheckInID, member: MemberID, day: LocalDay, postedDay: LocalDay? = nil, createdAt: Timestamp,
-        audience: Audience, entry: Entry
+        audience: Audience, inFeed: Bool = true, entry: Entry
     ) {
         self.id = id
         self.member = member
@@ -33,6 +37,7 @@ public struct CheckIn: Hashable, Sendable {
         self.postedDay = postedDay ?? day
         self.createdAt = createdAt
         self.audience = audience
+        self.inFeed = inFeed
         self.entry = entry
     }
 
@@ -183,9 +188,6 @@ public struct Audience: Hashable, Sendable {
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }
-
-    /// Shared to no squad: 仅自己可见, only its author sees it.
-    public var isOnlyMe: Bool { squads.isEmpty }
 }
 
 /// A check-in's photos: one to `maxCount`, no repeats, in the order the member set.

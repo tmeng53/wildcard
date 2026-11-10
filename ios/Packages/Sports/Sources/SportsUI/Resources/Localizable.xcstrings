@@ -722,18 +722,18 @@
         }
       }
     },
-    "仅自己可见": {
+    "未发动态": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only me"
+            "value": "Not posted"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "僅自己可見"
+            "value": "未發動態"
           }
         }
       }

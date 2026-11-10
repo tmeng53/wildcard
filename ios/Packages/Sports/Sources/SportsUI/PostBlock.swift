@@ -7,7 +7,7 @@ import SwiftUI
 /// A post's face where it has no photo, and the same corners over a photo where it has one: a
 /// block in its sport category's colour with the post's words on it, the sport or kind top right,
 /// a 训练's minutes bottom left (not on a 动态 card, whose 成绩条 has them) and, on a tile, its
-/// day top left and 仅自己可见 over the minutes on a post shared to no squad. Every screen that shows a post
+/// day top left and 未发动态 over the minutes on a check-in only recorded. Every screen that shows a post
 /// without a photo draws this one block: 我的动态's tiles, 动态's cards and the 战报's
 /// 你最火的一条 (Tracy, 2026-11-02).
 public struct PostBlock: View {
@@ -34,8 +34,8 @@ public struct PostBlock: View {
     private let layout: Layout
     /// A 请假条 posted as 休息, a rest the member planned.
     private var restDay = false
-    /// Shared to no squad: a tile says 仅自己可见 at its foot, over the minutes.
-    private var onlyMe = false
+    /// Only recorded, not in 动态: a tile says 未发动态 at its foot, over the minutes.
+    private var unposted = false
 
     /// `activity` is a 练了's sport; `day` (the day of the month) shows top left where given;
     /// with a `photo` the block is that photo and leaves its words to the caller.
@@ -67,7 +67,7 @@ public struct PostBlock: View {
             self.init(kind: .disclaimer, words: disclaimer.text, day: day, photo: photo, layout: layout)
             restDay = disclaimer.restDay
         }
-        onlyMe = layout == .tile && checkIn.audience.isOnlyMe
+        unposted = layout == .tile && !checkIn.inFeed
     }
 
     public var body: some View {
@@ -103,9 +103,9 @@ public struct PostBlock: View {
             }
             .overlay(alignment: .bottomLeading) {
                 VStack(alignment: .leading, spacing: 0) {
-                    if onlyMe {
+                    if unposted {
                         // A tile is too narrow for the lock beside the minutes' padding.
-                        OnlyMeTag(showsIcon: false)
+                        UnpostedTag(showsIcon: false)
                             .padding(.horizontal, Space.xxs)
                             .padding(.bottom, minutes == nil ? Space.xxs : 0)
                     }
@@ -136,7 +136,7 @@ public struct PostBlock: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, padding)
                 .padding(.top, wordsTop)
-                .padding(.bottom, (minutes == nil ? padding : minutesHeight) + (onlyMe ? onlyMeHeight : 0))
+                .padding(.bottom, (minutes == nil ? padding : minutesHeight) + (unposted ? unpostedHeight : 0))
                 .accessibilityIdentifier("post.block.words")
         } else {
             Color.clear
@@ -190,8 +190,8 @@ public struct PostBlock: View {
         }
     }
 
-    /// Room kept under the words for 仅自己可见.
-    private var onlyMeHeight: Double { Sizing.smallTag + Space.xxs }
+    /// Room kept under the words for 未发动态.
+    private var unpostedHeight: Double { Sizing.smallTag + Space.xxs }
 
     /// Room kept under the words for the minutes.
     private var minutesHeight: Double { layout == .tile || layout == .thumbnail ? Space.l : Space.xxl }

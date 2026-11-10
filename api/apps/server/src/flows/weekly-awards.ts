@@ -487,7 +487,10 @@ async function frozenStory(
     members: week.members.map(({ member, checkIns }, index): StoryMember => {
       const page = pages.members[index];
       if (page?.member !== member) throw new Error('The 战报’s pages don’t match its members');
-      const hottest = topCheckInOf(checkIns.map((record) => weekCheckIn(record, week)));
+      // 你最火的一条 is a post: a check-in only recorded (发布到动态 off) is never on a page.
+      const hottest = topCheckInOf(
+        checkIns.filter(({ inFeed }) => inFeed).map((record) => weekCheckIn(record, week)),
+      );
       const best = pages.bestDisclaimer;
       return {
         member: MemberId.parse(member),
@@ -576,6 +579,8 @@ function weekCheckIn(
   record: CheckInRecord,
   { reactions, comments }: Pick<SquadWeekCheckIns, 'reactions' | 'comments'>,
 ): WeekCheckIn {
+  // A check-in only recorded (发布到动态 off) counts, but its words and photos stay its author's.
+  if (!record.inFeed) return unpostedWeekCheckIn(record);
   const counts: Record<string, number> = {};
   for (const { emoji } of reactions.get(record.id) ?? []) counts[emoji] = (counts[emoji] ?? 0) + 1;
   const base = {
@@ -607,6 +612,29 @@ function weekCheckIn(
         text: record.disclaimer.text,
         ...(record.disclaimer.restDay === true ? { restDay: true } : {}),
       };
+  }
+}
+
+/** A check-in only recorded, as the awards read it: its kind and sport, without words or photos. */
+function unpostedWeekCheckIn(record: CheckInRecord): WeekCheckIn {
+  const base = {
+    id: record.id,
+    day: record.day,
+    createdAt: record.createdAt,
+    kind: record.kind,
+    photos: [],
+    reactions: {},
+    comments: [],
+  };
+  switch (record.kind) {
+    case 'trained':
+      // What they did is the record, as squadmates see it on the member's card.
+      return { ...base, sport: record.training.customSport ?? record.training.sport };
+    case 'healthyMeal':
+    case 'cheatMeal':
+      return base;
+    case 'disclaimer':
+      return record.disclaimer.restDay === true ? { ...base, restDay: true } : base;
   }
 }
 

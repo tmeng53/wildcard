@@ -85,8 +85,8 @@ export async function memberWeek(
 
 /**
  * A member's plan for a week as `squad` may see it (`daysSeenBy`): a day a 训练 the squad can't
- * see turned reads as the member planned it, so a 仅自己可见 post never reaches the squad, or its
- * coach, through the plan.
+ * see turned reads as the member planned it, so a check-in sent elsewhere never reaches the squad,
+ * or its coach, through the plan.
  */
 export async function planSharedTo(
   deps: {
