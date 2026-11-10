@@ -64,7 +64,8 @@ final class PostManageUITests: XCTestCase {
         app.buttons["post.scoreCard"].tap()
         let save = app.buttons["savePicture.save"]
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "存成绩卡 didn't open 存图's page")
-        let preview = app.descendants(matching: .any).matching(identifier: "scoreCard").firstMatch
+        // The sheet's preview: SwiftUI folds the card's own container into it.
+        let preview = app.descendants(matching: .any).matching(identifier: "savePicture.preview").firstMatch
         XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存图's page doesn't show the card")
         // Only until the phone's first tap on a card, so a rerun on the same simulator has none.
         let hint = app.staticTexts["scoreCard.hint"]
@@ -84,6 +85,10 @@ final class PostManageUITests: XCTestCase {
         app.buttons["scoreCard.character"].tap()
         app.buttons["scoreCard.backdrop.plain"].tap()
         XCTAssertTrue(app.buttons["scoreCard.backdrop.plain"].isSelected, "纯色 isn't picked")
+        // Back to the chart, whose thumbnail draws without taking touches itself.
+        app.buttons["scoreCard.backdrop.chart"].tap()
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].isSelected, "the chart can't be picked again")
+        app.buttons["scoreCard.backdrop.plain"].tap()
         let squad = app.descendants(matching: .any).matching(identifier: "scoreCard.squad").firstMatch
         XCTAssertTrue(squad.exists, "the squad's name isn't on the card")
         app.switches.firstMatch.tap()

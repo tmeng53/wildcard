@@ -41,7 +41,7 @@ extension SquadToday {
         let kind: Kind =
             switch post.draft {
             case .trained: .trained
-            case .disclaimer(let note): note.restDay ? .rest : .disclaimer
+            case .disclaimer(let note, _): note.restDay ? .rest : .disclaimer
             case .healthyMeal: .healthyMeal
             case .cheatMeal: .cheatMeal
             }

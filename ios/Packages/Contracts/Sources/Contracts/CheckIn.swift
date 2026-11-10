@@ -187,6 +187,9 @@ public struct Audience: Hashable, Sendable {
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }
+
+    /// Shared to no squad: 仅自己可见, only its author sees it.
+    public var isOnlyMe: Bool { squads.isEmpty }
 }
 
 /// A check-in's photos: one to `maxCount`, no repeats, in the order the member set.

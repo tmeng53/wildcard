@@ -103,6 +103,9 @@ private struct BackdropRow: View {
                             .frame(width: Self.side, height: Self.side)
                             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                             .padding(Self.ringGap)
+                            // The chart's thumbnail takes no touches of its own, so without a shape
+                            // its button has nothing to hit and the chart can't be picked again.
+                            .contentShape(.rect)
                             .overlay {
                                 if backdrop == model.card.backdrop {
                                     RoundedRectangle(cornerRadius: Radius.card + Self.ringGap, style: .continuous)

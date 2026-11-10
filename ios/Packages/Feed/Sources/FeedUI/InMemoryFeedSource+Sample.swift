@@ -7,7 +7,8 @@ extension InMemoryFeedSource {
     /// The squad the 动态 screen is reviewed against, on `now`'s day in `zone`: today a run with
     /// two photos and its route from Apple Health, emoji and three comments, a 请假条, a salad and
     /// a run from Health with only its map; yesterday a swim with its laps and my own leg day;
-    /// two days ago a tennis serve without a photo and a confessed burger. `photos` are the sample photos by
+    /// two days ago a tennis serve without a photo and a confessed burger; and my own run this morning,
+    /// shared to no squad, which only 我的动态 shows. `photos` are the sample photos by
     /// their names in `samplePhotoSizes`; without them the photos' places stay grey. With `coach`,
     /// 毛头 coaches the squad: today's 战术板 line, a word and 🔥 on the run, 🫡 on the 请假条 and
     /// a word on the swim.
@@ -63,7 +64,7 @@ extension InMemoryFeedSource {
         ])
         let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
         return InMemoryFeedSource(
-            viewer: viewer, posts: posts, characters: characters, photos: byPath,
+            viewer: viewer, posts: posts + [write.runOnMyOwn(viewer)], characters: characters, photos: byPath,
             coach: coach ? sampleCoach(on: posts, now: now, mia: mia) : nil)
     }
 
@@ -208,6 +209,13 @@ private struct SamplePosts {
         training(sport, minutes: minutes, [photo], caption)
     }
 
+    /// My run this morning, shared to no squad: only 我的动态 shows it, saying 仅自己可见.
+    func runOnMyOwn(_ viewer: MemberID) -> FeedPost {
+        post(
+            viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")),
+            audience: try? Audience([]))
+    }
+
     func meal(_ photo: String, _ caption: String) -> Meal {
         Meal(photos: photos([photo]), caption: line(caption))
     }
@@ -215,14 +223,15 @@ private struct SamplePosts {
     func post(
         _ author: MemberID, _ daysAgo: Int, _ hour: Int, _ minute: Int, _ entry: CheckIn.Entry,
         reactions: [(MemberID, String)] = [],
-        comments: [(MemberID, MemberID?, String)] = []
+        comments: [(MemberID, MemberID?, String)] = [], audience: Audience? = nil
     ) -> FeedPost {
         let day = today.adding(days: -daysAgo)
         let made = time(on: day, hour, minute)
         func after(_ index: Int) -> Timestamp { Timestamp(made.addingTimeInterval(Double(index + 1) * 600)) }
         return FeedPost(
             checkIn: CheckIn(
-                id: CheckInID(UUID()), member: author, day: day, createdAt: Timestamp(made), audience: audience,
+                id: CheckInID(UUID()), member: author, day: day, createdAt: Timestamp(made),
+                audience: audience ?? self.audience,
                 entry: entry),
             reactions: Responses(
                 reactions.enumerated().compactMap { index, pair in

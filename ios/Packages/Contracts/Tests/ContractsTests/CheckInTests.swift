@@ -26,6 +26,8 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
     let squadD = SquadID(UUID(uuidString: "66666666-6666-6666-6666-666666666666")!)
     #expect(try Audience([squadA, squadB, squadC]).squads == [squadA, squadB, squadC])
     #expect(try Audience([]).squads == [])
+    #expect(try Audience([]).isOnlyMe)
+    #expect(try !Audience([squadA]).isOnlyMe)
     #expect(throws: ContractsError.audienceSize(4)) { try Audience([squadA, squadB, squadC, squadD]) }
     #expect(throws: ContractsError.repeatedSquad) { try Audience([squadA, squadA]) }
 }
