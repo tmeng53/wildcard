@@ -23,29 +23,29 @@ struct WidgetPreview: View {
             VStack(spacing: Space.l) {
                 HStack(spacing: Space.l) {
                     face(
-                        WeekWidget(board: board) { _ in PostWorkoutLabel() }, width: Self.small,
+                        WeekWidget(board: board) { _ in PostWorkoutLabel() }, size: .small,
                         identifier: "widget.week")
-                    face(WidgetNotice(.signedOut), width: Self.small, identifier: "widget.notice")
+                    face(WidgetNotice(.signedOut), size: .small, identifier: "widget.notice")
                 }
                 face(
-                    SquadWidget(board: board) { _ in PostWorkoutLabel() }, width: Self.medium,
+                    SquadWidget(board: board) { _ in PostWorkoutLabel() }, size: .medium,
                     identifier: "widget.squad")
                 HStack(spacing: Space.l) {
                     face(
-                        WeekWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.small,
+                        WeekWidget(board: synced) { _ in PostWorkoutLabel() }, size: .small,
                         identifier: "widget.weekWorkout")
                     // Once posted: the capsule stays, with 已打卡.
                     face(
-                        WeekWidget(board: posted) { _ in PostWorkoutLabel() }, width: Self.small,
+                        WeekWidget(board: posted) { _ in PostWorkoutLabel() }, size: .small,
                         identifier: "widget.weekPosted")
                 }
                 face(
-                    SquadWidget(board: synced) { _ in PostWorkoutLabel() }, width: Self.medium,
+                    SquadWidget(board: synced) { _ in PostWorkoutLabel() }, size: .medium,
                     identifier: "widget.squadWorkout")
                 // A squad of eight: one row of heads over the capsule.
                 face(
                     SquadWidget(board: SampleBoard.board(on: day, workout: true, size: 8)) { _ in PostWorkoutLabel() },
-                    width: Self.medium, identifier: "widget.squadWorkoutEight")
+                    size: .medium, identifier: "widget.squadWorkoutEight")
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)
@@ -54,18 +54,9 @@ struct WidgetPreview: View {
         .environment(\.sceneTheme, .gym)
     }
 
-    private func face(_ content: some View, width: Double, identifier: String) -> some View {
-        content
-            .padding(Space.m)
-            .frame(width: width, height: Self.small)
-            .background(Color(role: .bgCanvas, in: .gym))
-            .clipShape(RoundedRectangle(cornerRadius: Radius.menu - 2, style: .continuous))
+    private func face(_ content: some View, size: WidgetSize, identifier: String) -> some View {
+        WidgetFace(size) { content }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(identifier)
     }
-
-    /// An iPhone's small widget is 170 points square on a 6.1" to 6.3" phone, a medium one 364
-    /// by 170, with 16 points of margin inside.
-    private static let small: Double = 170
-    private static let medium: Double = 364
 }

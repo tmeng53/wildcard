@@ -24,7 +24,7 @@ public actor ArtDownloads {
     private var running: (id: UUID, task: Task<Bool, Never>)?
 
     /// - Parameters:
-    ///   - root: the folder whose `current` `ArtTree` reads (Application Support's `Art`).
+    ///   - root: the folder whose `current` `ArtTree` reads (the app group's `Art`).
     ///   - fetch: downloads one file.
     ///   - digest: a file's SHA-256 in lowercase hex.
     ///   - build: this app's build, which art left out as unreadable is tried again after.
@@ -100,6 +100,12 @@ public actor ArtDownloads {
             return false
         }
         prune(keeping: Set(files.map { $0.name }))
+        // Builds before the app group kept the tree in Application Support; the group's is
+        // whole now, so that one goes.
+        if root == ArtTree.downloaded.deletingLastPathComponent(), let former = ArtTree.formerDownloads, former != root
+        {
+            try? FileManager.default.removeItem(at: former)
+        }
         return true
     }
 

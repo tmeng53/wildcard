@@ -62,8 +62,11 @@ final class PostManageUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         openMenuOnMyPost(in: app)
         app.buttons["post.scoreCard"].tap()
-        let preview = app.descendants(matching: .any).matching(identifier: "scoreCard").firstMatch
-        XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存成绩卡 didn't open the card")
+        let save = app.buttons["savePicture.save"]
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "存成绩卡 didn't open 存图's page")
+        // The sheet's preview: SwiftUI folds the card's own container into it.
+        let preview = app.descendants(matching: .any).matching(identifier: "savePicture.preview").firstMatch
+        XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存图's page doesn't show the card")
         // Only until the phone's first tap on a card, so a rerun on the same simulator has none.
         let hint = app.staticTexts["scoreCard.hint"]
         XCTAssertTrue(app.staticTexts["scoreCard.weekCount"].waitForExistence(timeout: Self.wait), "no 本周第 N 次")
@@ -72,18 +75,22 @@ final class PostManageUITests: XCTestCase {
         XCTAssertFalse(app.buttons["scoreCard.backdrop.map"].exists, "a post without a route offers 路线")
         settle()
         assertOnScreen(preview, in: app)
-        assertOnScreen(app.buttons["savePicture.save"], in: app)
+        assertOnScreen(save, in: app)
         keepScreenshot(named: "57-score-card")
 
         app.buttons["scoreCard.hero"].tap()
         waitFor(hint, "exists == false", "点数字和人物可以换 is still there after a tap")
-        // The card's strip, not the post's behind the sheet.
-        preview.buttons["strip.maxHeartRate"].tap()
+        // Only the card's strip has buttons; the post's under the sheet is read-only.
+        app.buttons["strip.maxHeartRate"].firstMatch.tap()
         app.buttons["scoreCard.character"].tap()
         app.buttons["scoreCard.backdrop.plain"].tap()
         XCTAssertTrue(app.buttons["scoreCard.backdrop.plain"].isSelected, "纯色 isn't picked")
+        // Back to the chart, whose thumbnail draws without taking touches itself.
+        app.buttons["scoreCard.backdrop.chart"].tap()
+        XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].isSelected, "the chart can't be picked again")
+        app.buttons["scoreCard.backdrop.plain"].tap()
         let squad = app.descendants(matching: .any).matching(identifier: "scoreCard.squad").firstMatch
-        XCTAssertTrue(squad.exists, "the squad's name isn't on the card")
+        XCTAssertTrue(squad.waitForExistence(timeout: Self.wait), "the squad's name isn't on the card")
         app.switches.firstMatch.tap()
         waitFor(squad, "exists == false", "小队名 off still shows the squad's name")
         settle()
@@ -91,6 +98,32 @@ final class PostManageUITests: XCTestCase {
         keepScreenshot(named: "58-score-card-plain")
         app.buttons["savePicture.close"].tap()
         XCTAssertTrue(preview.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the card")
+    }
+
+    /// My 练腿日's second page is its heart rate in zones on graphite: the warm-up and cool-down
+    /// under 轻松 dimmed, and the zones' axis under the 「…」, not behind it.
+    func testHeartRateCover() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
+        let feed = app.scrollViews.firstMatch
+        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        var drags = 0
+        while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY + 240 <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(manage.isHittable, "my post isn't on screen")
+        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
+            .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
+        XCTAssertNotNil(photos, "my post's cover isn't under its 「…」")
+        photos?.swipeLeft()
+        let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
+        XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
+        settle()
+        keepScreenshot(named: "52-feed-heart-rate-cover")
     }
 
     /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.

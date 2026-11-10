@@ -56,6 +56,6 @@ extension DayChallenge {
         guard let today = wire.today else { return nil }
         self.init(
             note: String(today.noteId), day: try LocalDay(today.day),
-            challenge: CoachPageCard.Challenge(today.challenge))
+            challenge: CoachPageCard.Challenge(today.challenge), coach: try CoachSpeaker(today.coach))
     }
 }

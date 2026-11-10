@@ -80,7 +80,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     member: member, timeZone: zone,
                     squad: Squad(
                         id: squadID,
-                        name: String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module),
+                        name: sampleSquadName,
                         inviteCode: "K7M2QX9P", members: everyone.filter(kept.contains) + [member], captain: member),
                     today: SquadToday(
                         squad: squadID, members: members,
@@ -96,6 +96,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             unseenCoachCards: coachNote,
             challenge: challenge ? sampleChallenge(on: day) : nil)
     }
+
+    /// The sample squad's name, in the app's language.
+    public static var sampleSquadName: String { String(copyKey: "周三不练腿俱乐部", bundle: Bundle.module) }
 
     /// The squad's week at 人均 3 次, the default goal: 14 训练 so far, or the whole goal once
     /// everyone `reached` it together.
@@ -295,7 +298,8 @@ extension InMemoryCheckInBackend {
             note: "41", day: day,
             challenge: CoachPageCard.Challenge(
                 title: String(copyKey: "拉伸", bundle: words), amount: 5,
-                unit: String(copyKey: "分钟", bundle: words), answer: .accepted))
+                unit: String(copyKey: "分钟", bundle: words), answer: .accepted),
+            coach: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)))
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? { dayChallenge }

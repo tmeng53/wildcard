@@ -39,8 +39,6 @@ struct ScoreCardView: View {
         .foregroundStyle(ink)
         // A picture with a fixed layout: its type doesn't grow with Dynamic Type.
         .dynamicTypeSize(.large)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("scoreCard")
     }
 
     // MARK: A2, over a picture

@@ -11,7 +11,31 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
 
+export type Json = JsonValue;
+
+export type JsonArray = JsonValue[];
+
+export type JsonObject = {
+  [x: string]: JsonValue | undefined;
+};
+
+export type JsonPrimitive = boolean | number | string | null;
+
+export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface MinimumBuild {
+  build: string | null;
+  only_row: Generated<boolean>;
+}
+
+export interface MinimumBuildEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  minimum: Json;
+}
 
 export interface Switches {
   coach_note: string | null;
@@ -32,6 +56,8 @@ export interface SwitchPreviews {
 }
 
 export interface DB {
+  minimum_build: MinimumBuild;
+  minimum_build_events: MinimumBuildEvents;
   switch_previews: SwitchPreviews;
   switches: Switches;
 }

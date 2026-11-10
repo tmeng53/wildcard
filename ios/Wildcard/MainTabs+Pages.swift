@@ -19,18 +19,22 @@ extension MainTabs {
         }
     }
 
-    static let tabs: [TabBarItem<Tab>] = [
-        TabBarItem(
-            id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "sun.max",
-            accessibilityIdentifier: "tab.today"),
-        TabBarItem(
-            id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "bubble.left.and.bubble.right",
-            accessibilityIdentifier: "tab.feed"
-        ),
-        TabBarItem(
-            id: .profile, title: Text(copy: "我", bundle: .main), systemImage: "person.crop.circle",
-            accessibilityIdentifier: "tab.me"),
-    ]
+    /// Worked out on every read, never kept: the names are looked up in the language the app
+    /// speaks, and 设置's 语言 switches it while the app runs.
+    static var tabs: [TabBarItem<Tab>] {
+        [
+            TabBarItem(
+                id: .today, title: Text(copy: "小队", bundle: .main), systemImage: "person.3",
+                accessibilityIdentifier: "tab.today"),
+            TabBarItem(
+                id: .feed, title: Text(copy: "动态", bundle: .main), systemImage: "square.stack",
+                accessibilityIdentifier: "tab.feed"
+            ),
+            TabBarItem(
+                id: .profile, title: Text(copy: "我", bundle: .main), systemImage: "person.crop.circle",
+                accessibilityIdentifier: "tab.me"),
+        ]
+    }
 }
 
 /// The squad's newest 战报, once there is one and until the reader watched it to the end (Tracy,

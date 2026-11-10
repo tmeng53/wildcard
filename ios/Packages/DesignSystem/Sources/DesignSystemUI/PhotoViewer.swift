@@ -13,46 +13,56 @@ extension View {
         isPresented: Binding<Bool>, count: Int, page: Binding<Int>,
         load: @escaping @Sendable (Int) async -> Data?
     ) -> some View {
-        modifier(PhotoViewerPresenter(isPresented: isPresented, count: count, page: page, load: load))
+        pageViewer(isPresented: isPresented, count: count, page: page) { index, isShowing in
+            ViewerPhoto(isShowing: isShowing) { await load(index) }
+                .accessibilityLabel(Text(copy: "第 \(index + 1) 张，共 \(count) 张", bundle: .module))
+        }
+    }
+
+    /// The same full-screen viewer for pages that aren't all photos (a post's map or chart beside
+    /// its photos): `content` draws page `index`, told whether it is the one showing; a photo's
+    /// page is a `ViewerPhoto`.
+    public func pageViewer<Page: View>(
+        isPresented: Binding<Bool>, count: Int, page: Binding<Int>,
+        @ViewBuilder content: @escaping (_ index: Int, _ isShowing: Bool) -> Page
+    ) -> some View {
+        modifier(PageViewerPresenter(isPresented: isPresented, count: count, page: page, content: content))
     }
 }
 
-/// The zoom from the photos on the page to the viewer and back, which also gives the viewer
+/// The zoom from the pages on the screen to the viewer and back, which also gives the viewer
 /// its swipe down to close.
-private struct PhotoViewerPresenter: ViewModifier {
+private struct PageViewerPresenter<Page: View>: ViewModifier {
     @Binding var isPresented: Bool
     let count: Int
     @Binding var page: Int
-    let load: @Sendable (Int) async -> Data?
+    let content: (Int, Bool) -> Page
     @Namespace private var zoom
 
-    func body(content: Content) -> some View {
-        content
+    func body(content view: Content) -> some View {
+        view
             .matchedTransitionSource(id: Self.source, in: zoom)
             .fullScreenCover(isPresented: $isPresented) {
-                PhotoViewer(count: count, page: $page, load: load)
+                PageViewer(count: count, page: $page, content: content)
                     .navigationTransition(.zoom(sourceID: Self.source, in: zoom))
             }
     }
 
-    private static let source = "photos"
+    private static var source: String { "photos" }
 }
 
-/// The photos full screen, one page each.
-struct PhotoViewer: View {
+/// The pages full screen, one each, on ink.
+struct PageViewer<Page: View>: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.dismiss) private var dismiss
     let count: Int
     @Binding var page: Int
-    let load: @Sendable (Int) async -> Data?
+    let content: (Int, Bool) -> Page
 
     var body: some View {
         TabView(selection: $page) {
             ForEach(0..<count, id: \.self) { index in
-                ViewerPage(index: index, isShowing: index == page, load: load)
-                    .accessibilityElement()
-                    .accessibilityAddTraits(.isImage)
-                    .accessibilityLabel(Text(copy: "第 \(index + 1) 张，共 \(count) 张", bundle: .module))
+                content(index, index == page)
                     .tag(index)
             }
         }
@@ -69,19 +79,26 @@ struct PhotoViewer: View {
     }
 }
 
-/// One photo, decoded off the main actor so the swipe to it doesn't drop frames.
-private struct ViewerPage: View {
-    let index: Int
-    let isShowing: Bool
-    let load: @Sendable (Int) async -> Data?
+/// One photo of the viewer, zoomable, decoded off the main actor so the swipe to it doesn't drop
+/// frames. `load` gives it as JPEG (or any format ImageIO reads), nil while it can't.
+public struct ViewerPhoto: View {
+    private let isShowing: Bool
+    private let load: @Sendable () async -> Data?
     @State private var image: UIImage?
 
-    var body: some View {
+    public init(isShowing: Bool, load: @escaping @Sendable () async -> Data?) {
+        self.isShowing = isShowing
+        self.load = load
+    }
+
+    public var body: some View {
         ZoomablePhoto(image: image, isShowing: isShowing)
-            .task(id: index) {
-                guard let data = await load(index) else { return }
+            .task {
+                guard let data = await load() else { return }
                 image = await Self.decode(data)
             }
+            .accessibilityElement()
+            .accessibilityAddTraits(.isImage)
     }
 
     private nonisolated static func decode(_ data: Data) async -> UIImage? {

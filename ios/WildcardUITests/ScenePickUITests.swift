@@ -65,6 +65,32 @@ final class ScenePickUITests: XCTestCase {
         assertInside(app.windows.firstMatch.frame, [pool, line, app.buttons["scenePick.confirm"]])
     }
 
+    /// With more than five scenes (the winter 雪场 on top of the five) the row keeps each tile's
+    /// size and scrolls sideways, the sixth peeking in at the edge until swiped to.
+    func testMoreThanFiveScenesScroll() {
+        let app = launch(language: "zh-Hans", extra: ["-recap-winter"])
+        openEnding(in: app)
+        let track = app.buttons["scenePick.track"]
+        let ski = app.buttons["scenePick.ski"]
+        let confirm = app.buttons["scenePick.confirm"]
+        XCTAssertTrue(track.waitForExistence(timeout: Self.wait), "no track tile")
+        XCTAssertGreaterThan(track.frame.width, 50, "the tiles squeezed to fit six across")
+        let sticker = confirm.frame
+        XCTAssertTrue(ski.exists, "no 雪场 tile")
+        XCTAssertGreaterThan(ski.frame.maxX, sticker.maxX + 8, "the sixth tile fits without scrolling")
+        keepScreenshot(named: "55-scenepick-six-scenes")
+
+        app.scrollViews["scenePick.row"].swipeLeft()
+        Thread.sleep(forTimeInterval: 0.6)
+        XCTAssertLessThanOrEqual(ski.frame.maxX, sticker.maxX + 8, "swiping didn't bring the 雪场 in")
+        ski.tap()
+        waitFor(ski, "isSelected == true", "tapping the 雪场 didn't pick it")
+        XCTAssertTrue(app.staticTexts["小队还没来过"].waitForExistence(timeout: Self.wait), "no 小队还没来过")
+        Thread.sleep(forTimeInterval: 0.4)
+        keepScreenshot(named: "55-scenepick-six-scenes-ski-picked")
+        XCTAssertTrue(confirm.isEnabled, "确认 doesn't work with the 雪场 picked")
+    }
+
     /// A carton opening, held at the prototype's frames: the shake, the flaps flying, the card
     /// rising and filling the screen (covered at 2.8 s).
     func testCartonRevealFrames() {

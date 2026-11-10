@@ -7,7 +7,7 @@ import type {
 } from '../domain/check-in.js';
 import type { DayRange, Unshared } from '../domain/day-range.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from '../domain/totals.js';
-import type { WeekStart } from '../domain/weekly-plan.js';
+import type { PlanDays, WeekStart } from '../domain/weekly-plan.js';
 import type { Comment, CommentId } from '../domain/comment.js';
 import type { Reaction } from '../domain/reaction.js';
 import type {
@@ -32,7 +32,7 @@ import {
   type ListSquadCheckInsInput,
   type SquadPost,
 } from './check-ins/list-squad-check-ins.js';
-import { memberWeek, type MemberWeek } from './check-ins/member-week.js';
+import { memberWeek, planSharedTo, type MemberWeek } from './check-ins/member-week.js';
 import { records, type Records } from './check-ins/records.js';
 import { squadToday, type SquadToday } from './check-ins/squad-today.js';
 import {
@@ -149,6 +149,15 @@ export interface CheckIns {
     readonly squad: SquadId;
     readonly squadZone?: string;
   }): Promise<MemberWeek>;
+  /**
+   * A member's plan for a week as the squad may see it: a day a 训练 the squad can't see turned
+   * reads as the member planned it.
+   */
+  planSharedTo(input: {
+    readonly member: MemberId;
+    readonly squad: SquadId;
+    readonly weekStart: WeekStart;
+  }): Promise<PlanDays>;
   /** The Monday of the member's week now, in their time zone. */
   weekStartNow(member: MemberId): Promise<WeekStart>;
   /**
@@ -231,6 +240,7 @@ export function createCheckIns(deps: {
       listResponses({ ...deps, list: (checkIn) => deps.comments.list(checkIn) }, input),
     squadToday: (input) => squadToday(deps, input),
     memberWeek: (input) => memberWeek(deps, input),
+    planSharedTo: (input) => planSharedTo(deps, input),
     weekStartNow: (member) => weekStartNow(deps, member),
     squadTrainings: (input) => squadTrainings(deps, input),
     weekSummary: (input) => squadWeekSummary(deps, input),

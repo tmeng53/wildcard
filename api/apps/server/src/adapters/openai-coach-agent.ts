@@ -46,7 +46,7 @@ export function createOpenAICoachAgent(options: {
   // Tracing would send members' words to OpenAI's traces dashboard as well.
   const runner = new Runner({ modelProvider, tracingDisabled: true });
   return {
-    async run({ model, instructions, task, tools, cacheKey }): Promise<AgentRun> {
+    async run({ model, reasoning, instructions, task, tools, cacheKey }): Promise<AgentRun> {
       const agent = new Agent({
         name: 'coach',
         instructions,
@@ -58,7 +58,13 @@ export function createOpenAICoachAgent(options: {
           // so each wake pays OpenAI's cached price for them; the key sends a coach's requests
           // to the same cache.
           promptCacheRetention: '24h',
-          providerData: { prompt_cache_key: cacheKey },
+          reasoning: { effort: reasoning },
+          providerData: {
+            prompt_cache_key: cacheKey,
+            // Without storage, the model's reasoning goes back to it on the run's later turns
+            // only as this encrypted copy.
+            include: ['reasoning.encrypted_content'],
+          },
         },
         tools: tools.map((each) =>
           tool({

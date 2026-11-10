@@ -50,7 +50,8 @@ struct RecapDemo: View {
         let picks = LaunchOptions.recapPicker || heldReveal != nil
         return RecapModel(
             story: story, cast: RecapSample.cast, service: nil,
-            scenePicker: picks ? RecapSample.scenePicker() : nil, heldReveal: heldReveal,
+            scenePicker: picks ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil,
+            heldReveal: heldReveal,
             close: close, finished: finished, planNextWeek: close, scenePicked: { _, _ in close() })
     }
 }

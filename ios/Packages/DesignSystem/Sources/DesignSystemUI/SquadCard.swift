@@ -113,7 +113,9 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     private var openSquad: (() -> Void)?
     private var collapse: (() -> Void)?
     private var morph: GlassMorph?
-    private var completeChallenge: (() -> Void)?
+    /// Today's challenge row's 我完成了 and coach's head (`challenge(complete:coach:)`).
+    var completeChallenge: (() -> Void)?
+    var challengeCoach: AnyView?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -135,8 +137,8 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             ScrollView(.horizontal) {
                 HStack(spacing: 0) {
                     SquadPage(
-                        squad: squad, challenge: mine.challenge, avatar: avatar, footer: footer,
-                        openSquad: openSquad, completeChallenge: completeChallenge
+                        squad: squad, challenge: mine.challenge, challengeCoach: challengeCoach, avatar: avatar,
+                        footer: footer, openSquad: openSquad, completeChallenge: completeChallenge
                     )
                     .squadCardPage()
                     .id(SquadCardPage.squad)
@@ -198,13 +200,6 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     public func collapses(_ action: @escaping () -> Void) -> Self {
         var card = self
         card.collapse = action
-        return card
-    }
-
-    /// 我完成了 on today's challenge, the squad page's last row (`MyWeek.challenge`).
-    public func completesChallenge(_ action: @escaping () -> Void) -> Self {
-        var card = self
-        card.completeChallenge = action
         return card
     }
 
@@ -298,6 +293,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
     /// Today's accepted challenge, under everything else, so it is seen first (Tracy, 2026-11-09).
     let challenge: WeekChallenge?
+    let challengeCoach: AnyView?
     let avatar: (SquadMember) -> Avatar
     let footer: Footer?
     let openSquad: (() -> Void)?
@@ -323,7 +319,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
                 footer
             }
             if let challenge {
-                ChallengeRow(challenge: challenge, complete: completeChallenge)
+                ChallengeRow(challenge: challenge, coach: challengeCoach, complete: completeChallenge)
             }
         }
         .accessibilityElement(children: .contain)

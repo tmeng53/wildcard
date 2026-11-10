@@ -1617,6 +1617,22 @@
         }
       }
     },
+    "早上自己慢跑一圈" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A quiet run on my own this morning"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "早上自己慢跑一圈"
+          }
+        }
+      }
+    },
     "河边风好大" : {
       "localizations" : {
         "en" : {

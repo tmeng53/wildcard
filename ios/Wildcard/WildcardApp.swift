@@ -181,7 +181,9 @@ struct WildcardApp: App {
             service: RecapSample.Service(),
             squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
             seen: .onlyThisLaunch(),
-            scenePicker: { _ in LaunchOptions.recapPicker ? RecapSample.scenePicker() : nil },
+            scenePicker: { _ in
+                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
+            },
             scenePicked: { scene in today.scene = scene })
     }
 
@@ -213,8 +215,9 @@ struct WildcardApp: App {
         let feed = FeedModel(
             store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
             now: LaunchOptions.now)
-        // 成绩卡's 小队名: the squad's name as 今天 has it.
-        feed.squadName = { [weak today] in today?.home?.squad.name }
+        // 成绩卡's 小队名: the squad's name as 今天 has it, or the sample's own before 今天 first
+        // loads (a launch straight into 动态 never opens 今天).
+        feed.squadName = { [weak today] in today?.home?.squad.name ?? InMemoryCheckInBackend.sampleSquadName }
         return feed
     }
 

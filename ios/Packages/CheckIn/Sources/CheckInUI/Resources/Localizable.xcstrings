@@ -1697,22 +1697,6 @@
         }
       }
     },
-    "长按拖动换位置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Touch and hold to move it"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "長按拖動換位置"
-          }
-        }
-      }
-    },
     "数据": {
       "localizations": {
         "en": {

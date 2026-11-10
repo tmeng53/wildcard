@@ -1,4 +1,4 @@
-#if canImport(SwiftUI)
+#if os(iOS)
 import AvatarArt
 import AvatarDomain
 import AvatarUI
@@ -81,22 +81,12 @@ public struct WeekWidget<Post: View>: View {
     private var days: [WeekDayStatus] {
         zip(board.week.days, board.week.activities).map { status, activity in
             switch status {
-            case .trained: .trained(symbol: activity.flatMap(Self.symbol))
+            case .trained: .trained(symbol: activity?.symbol)
             case .disclaimer: .excused
             case .restDay: .restDay
             case .open: .open
             }
         }
-    }
-
-    /// A trained day's sport icon. SportsUI draws sports on iOS only, so the macOS build of this
-    /// package (`swift test`) leaves the icon out.
-    private static func symbol(_ activity: Activity) -> String? {
-        #if os(iOS)
-        return activity.symbol
-        #else
-        return nil
-        #endif
     }
 }
 
@@ -138,5 +128,9 @@ enum WidgetMetrics {
     static let capsule: Double = 36
     static let capsuleButton: Double = 28
     static let heart: Double = 10
+    /// An iPhone's small widget is 170 points square on a 6.1" to 6.3" phone, a medium one 364
+    /// by 170, with 16 points of margin inside.
+    static let small: Double = 170
+    static let medium: Double = 364
 }
 #endif

@@ -7,9 +7,9 @@ import SportsUI
 import SwiftUI
 
 /// 关于你, step 3: the member's birthday if they give it, on the flip clock (Tracy, 2026-11-08),
-/// then the sports they usually do. 最常见 in a two-column grid, and 更多 for the shared sport
-/// picker, which has every sport. Each pick changes the character into the sport's kit; the picks
-/// become the choices for the week that follows.
+/// then the sports they usually do (平时练什么 · 可多选): the common ones in a two-column grid, and
+/// 其他运动 for the shared sport picker, which has every sport. Each pick changes the character
+/// into the sport's kit; the picks become the choices for the week that follows.
 struct SportsStep: View {
     let model: SignUpModel
     @State private var isChoosing = false
@@ -24,7 +24,6 @@ struct SportsStep: View {
             VStack(alignment: .leading, spacing: Space.m) {
                 birthday
                 common
-                more
             }
         } actions: {
             StepButton(
@@ -65,29 +64,29 @@ struct SportsStep: View {
 
     private var common: some View {
         VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text(copy: "最常见", bundle: .module))
+            SectionLabel(Text(copy: "平时练什么 · 可多选", bundle: .module))
             LazyVGrid(columns: columns, spacing: Space.xs) {
                 ForEach(catalog.signUpCommon, id: \.self) { sport in
                     row(.sport(sport))
                 }
             }
+            more
         }
     }
 
+    /// Under the grid: sports picked from the full list, then 其他运动, which opens it.
     private var more: some View {
-        VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text(copy: "更多", bundle: .module))
-            FlowRow {
-                // Sports picked from the full list show here, to take off.
-                ForEach(extraPicks, id: \.key) { activity in
-                    PickPill(activity.name, isSelected: true, isRemovable: true) { model.toggle(activity) }
-                }
-                PickPill(Text(copy: "更多", bundle: .module), systemImage: "plus", isSelected: false) {
-                    isChoosing = true
-                }
-                .accessibilityIdentifier("sports.other")
+        FlowRow {
+            // Sports picked from the full list show here, to take off.
+            ForEach(extraPicks, id: \.key) { activity in
+                PickPill(activity.name, isSelected: true, isRemovable: true) { model.toggle(activity) }
             }
+            PickPill(Text(copy: "其他运动", bundle: .module), systemImage: "plus", isSelected: false) {
+                isChoosing = true
+            }
+            .accessibilityIdentifier("sports.other")
         }
+        .padding(.top, Space.xxs)
     }
 
     private func row(_ activity: Activity) -> some View {
@@ -97,7 +96,7 @@ struct SportsStep: View {
         .accessibilityIdentifier("sports.\(activity.key)")
     }
 
-    /// Picks that are not in 最常见.
+    /// Picks that are not in the grid.
     private var extraPicks: [Activity] {
         let shown = Set(catalog.signUpCommon.map(Activity.sport))
         return model.sports.picked.filter { !shown.contains($0) }

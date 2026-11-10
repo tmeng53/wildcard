@@ -60,6 +60,8 @@ public struct SavePictureSheet<Preview: View, Options: View>: View {
             preview
                 .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
                 .frame(maxWidth: Self.previewWidth, maxHeight: .infinity)
+                // Its own container, so the id doesn't replace the ids of what a live preview holds.
+                .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("savePicture.preview")
             options
             VStack(spacing: Space.xs) {

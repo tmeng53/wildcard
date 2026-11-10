@@ -58,7 +58,8 @@ private func cards(_ stack: String, earlier: String = "") throws -> CoachPageCar
     let json = #"""
         {"version": 1, "today": {"noteId": 41, "day": "2026-11-08",
          "challenge": {"title": "拉伸", "amount": 5, "unit": "分钟", "answer": "accepted",
-                       "completedAt": "2026-11-08T20:00:00Z", "completedBy": "coach"}}}
+                       "completedAt": "2026-11-08T20:00:00Z", "completedBy": "coach"},
+         "coach": {"id": "yalina", "name": "鸭梨娜", "look": "yalina"}}}
         """#
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
@@ -67,6 +68,7 @@ private func cards(_ stack: String, earlier: String = "") throws -> CoachPageCar
     #expect(today.note == "41")
     #expect(today.day == (try LocalDay("2026-11-08")))
     #expect(today.challenge == .init(title: "拉伸", amount: 5, unit: "分钟", answer: .accepted, completedBy: .coach))
+    #expect(today.coach == CoachSpeaker(id: "yalina", name: "鸭梨娜"))
     let none = try decoder.decode(
         Components.Schemas.CoachDayChallenge.self, from: Data(#"{"version": 1, "today": null}"#.utf8))
     #expect(try DayChallenge(none) == nil)

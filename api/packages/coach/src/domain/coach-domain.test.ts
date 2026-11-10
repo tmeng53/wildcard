@@ -320,27 +320,37 @@ describe('when the coach wakes', () => {
     ]);
   });
 
-  it('gives a reply’s wake the talk under the check-in, the reply to answer marked', () => {
+  it('gives a reply’s wake the whole comment section, every coach named, the reply to answer marked', () => {
     const task = taskOf({
       reason: { kind: 'comment', checkIn: 'c1', comment: 'k2' },
       week,
       files: new Map([['memory.md', undefined]]),
       recentNotes: [],
       thread: {
-        reply: '腿废了也算练',
+        now: '10-28 周三 09:30',
         said: [
-          { member: leo, text: '教练你也跑吗' },
-          { member: undefined, text: '我负责喊' },
-          { member: mia, text: '那你喊大声点', answering: true },
+          { by: { coach: '鸭梨娜' }, text: '第一次跑就跑完了' },
+          { by: { member: leo }, text: '强', when: '10-27 周二 20:01' },
+          { by: { member: leo }, text: '谢谢', to: { kind: 'reply', coach: '鸭梨娜' } },
+          { by: { coach: '鸭梨娜' }, text: '不客气' },
+          { by: { member: leo }, text: '教练你也跑吗', to: { kind: 'mention', coach: '你' } },
+          { by: 'you', text: '我负责喊' },
+          {
+            by: { member: mia },
+            text: '那你喊大声点',
+            to: { kind: 'reply', coach: '你' },
+            answering: true,
+          },
         ],
       },
     });
     expect(task).toBe(
       [
         '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
-        // The rest of the post's comments, so the coach knows what was said around it.
-        '这条下面别人的评论（先后顺序）：\n- 队员2：「强」',
-        '你们在下面的对话：\n- 你：「腿废了也算练」\n- 队员2：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1：「那你喊大声点」（要回的这句）',
+        // Everything said under the post, another coach's lines too, so nothing is hidden.
+        '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
+        // The time now, so an old @ isn't taken for one just written.
+        '现在是 10-28 周三 09:30。',
         '你的记性（你只记得这些）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
@@ -357,7 +367,10 @@ describe('when the coach wakes', () => {
       week: withPhotos,
       files: new Map(),
       recentNotes: [],
-      thread: { said: [{ member: mia, text: '你看看我吃了啥', answering: true }] },
+      thread: {
+        now: '10-28 周三 09:30',
+        said: [{ by: { member: mia }, text: '你看看我吃了啥', answering: true }],
+      },
     } as const;
     expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
       '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
@@ -506,10 +519,34 @@ describe('when the coach wakes', () => {
           {
             name: '队员1',
             trainedDays: 2,
-            plan: { today: { kind: 'train', sport: '游泳' }, fuelGoals: ['喝够水', '少吃外卖'] },
+            posts: [
+              { day: '2026-10-26', what: '游泳 45 分钟' },
+              { day: '2026-10-26', what: '健康餐' },
+              { day: '2026-10-28', what: '力量' },
+            ],
+            plan: {
+              week: [
+                { kind: 'train', sport: '游泳' },
+                { kind: 'rest' },
+                { kind: 'train', sport: '力量' },
+                { kind: 'rest' },
+                { kind: 'train', sport: '游泳' },
+                { kind: 'train' },
+                { kind: 'rest' },
+              ],
+              fuelGoals: ['喝够水', '少吃外卖'],
+            },
             weather: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
           },
-          { name: '队员2', trainedDays: 0, plan: { today: { kind: 'rest' }, fuelGoals: [] } },
+          {
+            name: '队员2',
+            trainedDays: 0,
+            posts: [],
+            plan: {
+              week: Array.from({ length: 7 }, () => ({ kind: 'rest' }) as const),
+              fuelGoals: [],
+            },
+          },
           // Plans that couldn't be read: only the days trained.
           { name: '队员3', trainedDays: 1, weather: '今天晴，-2–5°C' },
         ],
@@ -519,8 +556,8 @@ describe('when the coach wakes', () => {
     ).toBe(
       [
         '今天给这些人各写一张便条：',
-        '- 队员1：今天出赛表排了游泳；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
-        '- 队员2：今天出赛表是休息日；这周没定饮食小目标；这周已经练了 0 天。',
+        '- 队员1：本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；这周发过的：周一游泳 45 分钟、健康餐，周三力量；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
+        '- 队员2：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息；这周没定饮食小目标；这周已经练了 0 天；这周还没发过动态。',
         '- 队员3：这周已经练了 1 天；当地今天晴，-2–5°C。',
       ].join('\n'),
     );

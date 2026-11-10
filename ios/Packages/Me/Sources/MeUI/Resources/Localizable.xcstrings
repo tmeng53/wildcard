@@ -2624,6 +2624,22 @@
           }
         }
       }
+    },
+    "桌面小组件" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home Screen Widgets"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主畫面小工具"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
