@@ -75,6 +75,12 @@ struct AppRoot: View {
                     }
                 }
             }
+            // A build older than the lowest the catalog lets run: only 有新版本, over everything.
+            if app.mustUpdate {
+                UpdateRequired()
+                    .zIndex(2)
+                    .transition(.opacity)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .fullScreenCover(

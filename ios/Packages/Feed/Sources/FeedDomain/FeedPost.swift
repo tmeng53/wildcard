@@ -76,9 +76,15 @@ public struct MoveID: Hashable, Sendable, CustomStringConvertible {
 }
 
 extension Emoji {
-    /// The emoji bar's six, in the approved order, wherever a member reacts (动态, the 6pm push);
-    /// ＋ offers any other.
-    public static let quick: [Emoji] = ["❤️", "💪", "😂", "🤤", "😮", "😡"].compactMap { try? Emoji($0) }
+    /// The emoji bar's quick ones wherever a member reacts (动态, the 6pm push), from the catalog
+    /// (`QuickReactions`), else the six the app shipped with; ＋ offers any other.
+    public static var quick: [Emoji] { QuickReactions.shared.emoji }
+
+    /// The bar's emoji at `index`; nil once the bar changed under a tap and has fewer.
+    public static func quick(at index: Int) -> Emoji? {
+        let quick = Self.quick
+        return quick.indices.contains(index) ? quick[index] : nil
+    }
 
     /// Every single emoji ＋ offers wherever a member reacts, faces first, each skin tone left to
     /// the keyboard.
