@@ -10,10 +10,12 @@ import {
   squadSeed,
   storedBody,
   storedPathOf,
+  recallLines,
+  RECALL_LIMIT,
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
+import { HEAD_LIMIT, instructionsOf, memoryIndex, NOTE_LIMIT, taskOf } from './prompt.js';
 import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -351,7 +353,7 @@ describe('when the coach wakes', () => {
         '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
         // The time now, so an old @ isn't taken for one just written.
         '现在是 10-28 周三 09:30。',
-        '你的记性（你只记得这些）：\n还是空的：memory.md',
+        '你的记性（每个文件只列开头几行，其余要用 recall 查。查不到的就是不记得）：\n还是空的：memory.md',
       ].join('\n\n'),
     );
     // A post with photos: the coach is told it hasn't seen them, so it looks before answering
@@ -471,8 +473,8 @@ describe('when the coach wakes', () => {
       [
         '新的一天：2026-11-01，周日。',
         '过去一天没人在打卡下面和你说话。',
-        // What it remembers, in full: it forgets everything else between wakes.
-        '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
+        // What it remembers: each file's beginning, the rest looked up with recall.
+        '你的记性（每个文件只列开头几行，其余要用 recall 查。查不到的就是不记得）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
         '你最近写过：\n- 2026-10-31：周末也要动一动',
         // The 战术板 in the squad's language: Simplified Chinese until the week says another.
         '战术板：用简体中文写。',
@@ -615,7 +617,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（每个文件只列开头几行，其余要用 recall 查。查不到的就是不记得）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -627,7 +629,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（每个文件只列开头几行，其余要用 recall 查。查不到的就是不记得）：\n还是空的：memory.md',
     );
   });
 
@@ -789,5 +791,88 @@ describe('a line members read', () => {
     expect(lineProblem('全体队员加油', 100)).toBeUndefined();
     expect(lineProblem('跑跑跑', 2)).toBe('太长了：3 字，最多 2 字。');
     expect(lineProblem('', 2)).toBe('这句是空的。');
+  });
+});
+
+describe('memory on a waking day', () => {
+  it('shows each file’s first lines and how long it is, never the whole file', () => {
+    const long = [
+      '- 队员1 对花生过敏',
+      ...Array.from({ length: 30 }, (_, at) => `- 第 ${String(at)} 件小事，写得长一点占地方`),
+    ].join('\n');
+    const index = memoryIndex(
+      new Map([
+        ['people/队员1.md', long],
+        ['memory.md', '队员2 想跑半马'],
+        ['squad.md', undefined],
+      ]),
+    );
+    const block = index.split('\n【memory.md】')[0] ?? '';
+    // The first fact stays in sight; the rest is only counted.
+    expect(block).toContain('- 队员1 对花生过敏');
+    expect(block).not.toContain('第 29 件小事');
+    expect(block).toContain(`……（共 ${String(long.length)} 字）`);
+    expect(block.split('\n').slice(2, -1).join('\n').length).toBeLessThanOrEqual(HEAD_LIMIT);
+    // A short file shows whole, with no count.
+    expect(index).toContain('【memory.md】\n队员2 想跑半马\n还是空的：squad.md');
+  });
+
+  it('cuts a first line longer than the head', () => {
+    const index = memoryIndex(new Map([['memory.md', '跑'.repeat(HEAD_LIMIT + 50)]]));
+    expect(index).toContain(
+      `【memory.md】\n${'跑'.repeat(HEAD_LIMIT)}\n……（共 ${String(HEAD_LIMIT + 50)} 字）`,
+    );
+  });
+
+  it('the night still reads every file in full', () => {
+    const body = Array.from({ length: 40 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n');
+    const task = taskOf({
+      reason: { kind: 'dream', day: '2026-11-01' },
+      week,
+      files: new Map([['memory.md', body]]),
+      recentNotes: [],
+      talks: [],
+      yesterday: { day: '2026-10-31', checkIns: week.checkIns },
+    });
+    expect(task).toContain('- 第 39 件事');
+  });
+});
+
+describe('recall', () => {
+  const files = new Map([
+    ['people/队员1.md', '# 队员1\n- 对花生过敏\n- 想跑半马\n- 周三固定游泳'],
+    ['memory.md', '- 队员2 说过讨厌早起\n- 大家约好周日爬山'],
+  ]);
+
+  it('finds the lines holding any of the words, newest first, naming each file', () => {
+    expect(recallLines(files, { query: '半马 爬山' })).toBe(
+      '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
+    );
+  });
+
+  it('lists a whole file newest first, leaving out headings', () => {
+    expect(recallLines(files, { path: 'people/队员1.md' })).toBe(
+      '【people/队员1.md】- 周三固定游泳\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 对花生过敏',
+    );
+  });
+
+  it('says plainly when nothing matches, so the coach doesn’t claim to remember', () => {
+    expect(recallLines(files, { query: '夸奖' })).toBe('没查到。查不到的就是不记得，别说你记得。');
+  });
+
+  it('names the files there are when asked for one that isn’t', () => {
+    expect(recallLines(files, { path: 'people/队员9.md' })).toBe(
+      '没有 people/队员9.md 这个文件；能查的是：people/队员1.md，memory.md。',
+    );
+  });
+
+  it('stops at its limit and says how many lines are left', () => {
+    const many = new Map([
+      ['memory.md', Array.from({ length: 300 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n')],
+    ]);
+    const answer = recallLines(many, {});
+    expect(answer.length).toBeLessThanOrEqual(RECALL_LIMIT + 40);
+    expect(answer.startsWith('【memory.md】- 第 299 件事')).toBe(true);
+    expect(answer).toMatch(/（还有 \d+ 行没列出，换个更具体的词再查）$/);
   });
 });

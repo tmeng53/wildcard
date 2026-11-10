@@ -114,7 +114,7 @@ export function editBody(
     next = body === '' ? replace : `${body.replace(/\n*$/, '')}\n${replace}`;
   } else {
     const at = body.indexOf(find);
-    if (at === -1) return { ok: false, why: '没找到 find 的原文。照抄任务里「你的记性」的原文。' };
+    if (at === -1) return { ok: false, why: '没找到 find 的原文。先用 recall 查出原文，再照抄。' };
     if (body.slice(at + 1).includes(find)) {
       return { ok: false, why: 'find 的原文出现了不止一次，多带几个字让它只出现一次。' };
     }
@@ -143,5 +143,52 @@ export function squadSeed(
     ...(week.name === undefined ? [] : [`队名：${week.name}`]),
     '队员（昵称会变，以 squad_week 为准）：',
     ...members,
+  ].join('\n');
+}
+
+/** The most `recall` answers with, in characters. */
+export const RECALL_LIMIT = 2000;
+
+/**
+ * The lines of the coach's files that match what it looks for, newest first (a file grows at its
+ * end): every line of the files asked for, or only those holding any of the query's words. Each
+ * file is named by the path the model sees.
+ */
+export function recallLines(
+  files: ReadonlyMap<string, string>,
+  { path, query }: { readonly path?: string; readonly query?: string },
+): string {
+  if (path !== undefined && !files.has(path)) {
+    return `没有 ${path} 这个文件；能查的是：${[...files.keys()].join('，')}。`;
+  }
+  const terms = (query ?? '')
+    .toLowerCase()
+    .split(/[\s，,、。；;：:！!？?]+/)
+    .filter((term) => term !== '');
+  const found: string[] = [];
+  for (const [shown, body] of files) {
+    if (path !== undefined && shown !== path) continue;
+    const lines = body
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '' && !line.startsWith('#'))
+      .filter(
+        (line) => terms.length === 0 || terms.some((term) => line.toLowerCase().includes(term)),
+      )
+      .reverse();
+    found.push(...lines.map((line) => `【${shown}】${line}`));
+  }
+  if (found.length === 0) return '没查到。查不到的就是不记得，别说你记得。';
+  const shown: string[] = [];
+  let length = 0;
+  for (const line of found) {
+    if (length + line.length + 1 > RECALL_LIMIT) break;
+    shown.push(line);
+    length += line.length + 1;
+  }
+  const left = found.length - shown.length;
+  return [
+    ...shown,
+    ...(left === 0 ? [] : [`（还有 ${String(left)} 行没列出，换个更具体的词再查）`]),
   ].join('\n');
 }

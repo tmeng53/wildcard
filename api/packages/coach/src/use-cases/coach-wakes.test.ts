@@ -371,8 +371,8 @@ describe('the coach', () => {
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'remember', 'edit_file', 'reply', 'react'],
-        ['squad_week', 'remember', 'edit_file', 'post_note', 'note_to'],
+        ['squad_week', 'recall', 'remember', 'edit_file', 'reply', 'react'],
+        ['squad_week', 'recall', 'remember', 'edit_file', 'post_note', 'note_to'],
       ]);
       expect(runs[0]?.task).toContain('队员1 训练 跑步');
       expect(runs[0]?.answers).toStrictEqual([
