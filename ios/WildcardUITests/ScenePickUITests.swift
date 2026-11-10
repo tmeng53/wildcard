@@ -74,7 +74,7 @@ final class ScenePickUITests: XCTestCase {
         let ski = app.buttons["scenePick.ski"]
         let confirm = app.buttons["scenePick.confirm"]
         XCTAssertTrue(track.waitForExistence(timeout: Self.wait), "no track tile")
-        XCTAssertGreaterThan(track.frame.width, 44, "the tiles squeezed to fit six across")
+        XCTAssertGreaterThan(track.frame.width, 50, "the tiles squeezed to fit six across")
         let sticker = confirm.frame
         XCTAssertTrue(ski.exists, "no 雪场 tile")
         XCTAssertGreaterThan(ski.frame.maxX, sticker.maxX + 8, "the sixth tile fits without scrolling")

@@ -6,9 +6,9 @@ import SwiftUI
 
 /// 冠军专属: the sticker on the 战报's last page where last week's crown winner (or, with no
 /// crown, the captain) picks where the squad trains next week (approved 2026-10-22). A white
-/// card tilted 2° left: the scenes as tiles (sideways when there are more than five), a line saying when the squad last trained at
-/// the one chosen, and 「确认」. It is the page's only interactive piece and never part of
-/// 存图. `onPicked` gets the reveal to play once the pick is saved.
+/// card tilted 2° left: the scenes as tiles (scrolling sideways past five), a line saying when
+/// the squad last trained at the one chosen, and 「确认」. It is the page's only interactive piece
+/// and never part of 存图. `onPicked` gets the reveal to play once the pick is saved.
 public struct SceneSticker: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -108,9 +108,9 @@ public struct SceneTileRow: View {
 
     /// The tiles that fit the row before it scrolls.
     static let fitting = 5
-    /// Room around a scrolling row for a chosen tile's lift and ring (scaled 1.06, ringed 4
-    /// outside), which a scroll view would otherwise clip.
-    private static let liftRoom = 8.0
+    /// Room around a scrolling row for a chosen tile's lift (raised 4, ringed 4, scaled 1.06 and
+    /// tilted 4°), which a scroll view would otherwise clip.
+    private static let liftRoom = 12.0
 
     public init(picker: ScenePicker, height: Double, spacing: Double) {
         (self.picker, self.height, self.spacing) = (picker, height, spacing)
