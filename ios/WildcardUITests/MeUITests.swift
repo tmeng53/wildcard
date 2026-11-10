@@ -15,7 +15,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("128"), "the card has no lifetime count: \(card.label)")
         XCTAssertTrue(card.label.contains("3/5"), "the card has no 本周: \(card.label)")
         XCTAssertTrue(card.label.contains("22号"), "the card has no number: \(card.label)")
-        XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
+        XCTAssertFalse(card.label.contains("SINCE"), "the card still shows a join year: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear the latest title: \(card.label)")
         XCTAssertTrue(card.label.contains("徽章"), "the card has no 徽章 count: \(card.label)")
         XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "the 我 tab isn't the selected one")
