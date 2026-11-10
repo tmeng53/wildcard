@@ -81,3 +81,41 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     await today.load()
     #expect(!today.hasUnseenCoachCards)
 }
+
+@MainActor @Test func theCoachKeptOnThePhoneStandsOnTheSidelineWhileTheServerCantBeReached() async throws {
+    let home = sampleHome()
+    let backend = ScriptedBackend(saved: home, server: home)
+    await backend.set(keptCoach: SavedCoach(squad: home.squad.id, coach: maotou))
+    await backend.set(failure: .notSent)
+    let today = store(backend)
+    await today.load()
+    #expect(today.coach == SidelineCoach(coach: maotou, note: nil))
+    // Its line isn't kept: only the server's load brings it.
+    #expect(today.coachLine == nil)
+    // The server's word wins once it answers.
+    await backend.set(failure: nil)
+    await backend.set(coach: SidelineCoach(coach: other, note: nil))
+    await today.load()
+    #expect(today.coach?.coach == other)
+}
+
+@MainActor @Test func aCoachKeptForAnotherSquadIsntShown() async throws {
+    let home = sampleHome()
+    let backend = ScriptedBackend(saved: home, server: home)
+    await backend.set(keptCoach: SavedCoach(squad: SquadID(UUID()), coach: maotou))
+    await backend.set(failure: .notSent)
+    let today = store(backend)
+    await today.load()
+    #expect(today.coach == nil)
+    #expect(!today.isHiringCoach)
+}
+
+@MainActor @Test func aSquadKeptWithNoCoachLeavesTheSidelineOpenForHire() async throws {
+    let home = sampleHome()
+    let backend = ScriptedBackend(saved: home, server: home)
+    await backend.set(keptCoach: SavedCoach(squad: home.squad.id, coach: nil))
+    await backend.set(failure: .notSent)
+    let today = store(backend)
+    await today.load()
+    #expect(today.isHiringCoach)
+}

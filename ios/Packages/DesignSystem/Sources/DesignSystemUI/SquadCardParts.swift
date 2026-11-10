@@ -102,4 +102,59 @@ struct Grabber: View {
     /// Ink this faint reads as the system's grabber on glass.
     private static let opacity = 0.22
 }
+
+/// The squad page's top: its label and title on the left, the big score on the right. Given
+/// `open`, the title is a button with a chevron after it.
+struct PageHeader: View {
+    @Environment(\.sceneTheme) private var theme
+    let label: Text
+    let title: String
+    let count: Int
+    let goal: Int
+    let unit: Text  // A word after the score (次).
+    var open: (() -> Void)?
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: Space.s) {
+            VStack(alignment: .leading, spacing: Space.xxs) {
+                SectionLabel(label)
+                if let open {
+                    Button(action: open) {
+                        HStack(spacing: Space.xxs) {
+                            titleText
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
+                                .foregroundStyle(Color(role: .fgMuted, in: theme))
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityIdentifier("squadcard.squad")
+                } else {
+                    titleText
+                }
+            }
+            Spacer(minLength: 0)
+            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
+                Score(count: count, goal: goal, size: .hero)
+                unit
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
+                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
+                if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
+                    InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
+                        .accessibilityLabel(Text(copy: "多练 \(count - goal) 次", bundle: .module))
+                        .accessibilityIdentifier("squadcard.extra")
+                }
+            }
+        }
+    }
+
+    private var titleText: some View {
+        Text(verbatim: title)
+            .typeStyle(TypeRamp.headline)
+            .foregroundStyle(Color(role: .fgDefault, in: theme))
+            .lineLimit(1)
+    }
+}
 #endif

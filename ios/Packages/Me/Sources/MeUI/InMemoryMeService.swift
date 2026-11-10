@@ -40,7 +40,8 @@ public actor InMemoryMeService: MeService {
                     number: 3,
                     plan: [.train(nil), .rest, .train(nil), .train(nil), .train(nil), .train(nil), .rest],
                     trainedDays: [0, 2, 3], today: 3),
-                record: sampleRecord),
+                record: sampleRecord,
+                streaks: CardStreaks(training: 5, meals: 12)),
             failsSaving: failsSaving)
     }
 
@@ -179,7 +180,9 @@ public struct InMemorySquadmateCards: SquadmateCards {
             joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
             counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
             week: WeekCount(trainedDays: 3, plannedDays: 5),
-            board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)))
+            board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)),
+            // Their meals broke: only the training 外卡 shows.
+            streaks: CardStreaks(training: 12, meals: 0))
     }
 }
 

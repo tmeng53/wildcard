@@ -162,6 +162,11 @@ actor ScriptedBackend: CheckInBackend {
     var serverCoach: SidelineCoach?
     func set(coach: SidelineCoach?) { serverCoach = coach }
 
+    /// The coach kept on the device from an earlier load.
+    var keptCoach: SavedCoach?
+    func set(keptCoach: SavedCoach?) { self.keptCoach = keptCoach }
+    func savedCoach() async -> SavedCoach? { keptCoach }
+
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
         if let failure { throw failure }
         return serverCoach

@@ -200,6 +200,16 @@ public final class CoachDeck {
         }
     }
 
+    /// The card of the challenge `note` set (a challenge's card has its note's id), as it stands
+    /// now: from this page if it is here, else from the first page of 以前's challenges, where
+    /// today's is; nil when neither has it, or the read fails.
+    public func challengeCard(note: String) async -> CoachPageCard? {
+        let isIt = { (card: CoachPageCard) in card.kind == .challenge && card.id == note }
+        if let here = (stack + earlier + swiped).first(where: isIt) { return here }
+        let page = try? await source.earlier(in: squad, from: nil, showing: .challenges)
+        return page?.cards.first(where: isIt)
+    }
+
     /// The card as it stands now, wherever it is.
     public func current(_ card: CoachPageCard) -> CoachPageCard {
         (stack + earlier + swiped).first { $0.key == card.key } ?? card

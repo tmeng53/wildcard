@@ -33,6 +33,9 @@ public protocol CheckInBackend: Sendable {
     /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
     /// nil while the squad has none.
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
+    /// The coach `coach(in:)` last loaded, read from the device without the network, so the home
+    /// shows it at once with its kept copy; nil before the first load, or after signing out.
+    func savedCoach() async -> SavedCoach?
     /// Whether the squad's coach has anything on its page the member hasn't seen (a card in its
     /// stack: its 战术板 line, their morning note, a challenge or a gift), for the dot on its phone.
     func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool

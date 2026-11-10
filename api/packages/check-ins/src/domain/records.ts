@@ -109,6 +109,43 @@ export function longestRun(
   return best;
 }
 
+/** Rest days in a row a run outlasts: a whole week without one breaks it, whatever the plan says. */
+export const MAX_BRIDGED_DAYS = 6;
+
+/**
+ * The run of `days` still going on `today` (外卡 on the player card): it ends on today or, while
+ * today has none yet, on the day before, and a day in `bridges` without one neither breaks nor
+ * adds, like `longestRun`, up to `MAX_BRIDGED_DAYS` of them in a row. `streak` is none once a day without one that isn't a bridge broke it;
+ * `brokeOn` is that day, so a caller that knows bridges only from some day on can tell whether
+ * it looked far enough back.
+ */
+export function currentRun(
+  days: ReadonlySet<LocalDay>,
+  {
+    today,
+    bridges = new Set(),
+  }: { readonly today: LocalDay; readonly bridges?: ReadonlySet<LocalDay> },
+): { readonly streak?: Streak; readonly brokeOn?: LocalDay } {
+  const first = [...days].sort()[0];
+  if (first === undefined) return {};
+  let run: { days: number; from: LocalDay; to: LocalDay } | undefined;
+  let bridged = 0;
+  // Today isn't over: not having one yet doesn't break the run.
+  let day = days.has(today) ? today : addDays(today, -1);
+  for (; day >= first; day = addDays(day, -1)) {
+    if (days.has(day)) {
+      bridged = 0;
+      run =
+        run === undefined
+          ? { days: 1, from: day, to: day }
+          : { ...run, days: run.days + 1, from: day };
+    } else if (!bridges.has(day) || ++bridged > MAX_BRIDGED_DAYS) {
+      return { ...(run === undefined ? {} : { streak: run }), brokeOn: day };
+    }
+  }
+  return run === undefined ? {} : { streak: run };
+}
+
 export function memberRecords(input: {
   readonly trainings: readonly RecordTraining[];
   readonly healthyMealDays: readonly LocalDay[];

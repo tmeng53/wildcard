@@ -159,7 +159,7 @@ struct MainTabs: View {
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {
             if let editor = wardrobe.editor {
-                ProfileEditor(model: editor, profile: profile) { wardrobe.editor = nil }
+                ProfileEditor(model: editor, profile: profile, today: today) { wardrobe.editor = nil }
             }
         }
         .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
@@ -360,7 +360,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = { openCoachDeck() }
+                opensCoachPagesFromToday()
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {

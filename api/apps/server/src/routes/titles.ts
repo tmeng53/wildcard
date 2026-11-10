@@ -412,7 +412,7 @@ export function titles(deps: {
       if (place < 0) throw new SquadMemberUnknownError(memberId);
       const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date()))(squad.id);
       const viewer = MemberId.parse(c.var.caller.userId);
-      const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
+      const [boards, profiles, totals, week, teamBadges, squadWeek, streaks] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         // A squadmate sees only what the member shared to this squad: 仅自己可见 posts never
@@ -428,6 +428,11 @@ export function titles(deps: {
         }),
         deps.rewards.badgesOf(RewardMember.parse(memberId)),
         squadFirstWeek(deps.squads, squad),
+        // As the totals: a squadmate sees only what was shared to this squad.
+        deps.checkIns.currentStreaks({
+          member: memberId,
+          ...(viewer === memberId ? {} : { squad: squadId }),
+        }),
       ]);
       const profile = profiles.get(memberId);
       return c.json(
@@ -439,6 +444,7 @@ export function titles(deps: {
           squadPlace: place + 1,
           ...(profile === undefined ? {} : { joinedAt: profile.joinedAt.toISOString() }),
           ...totals,
+          streaks,
           week: {
             ...week,
             squadFirstWeek: squadWeek,
