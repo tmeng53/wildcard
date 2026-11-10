@@ -411,6 +411,23 @@ describe('saving a check-in', () => {
       kind: 'train',
       sport: 'yoga',
     });
+    // The member changes the day afterwards; editing the 练了's words keeps their change.
+    await plans.save({
+      member,
+      weekStart: week,
+      days: DEFAULT_PLAN_DAYS.map((day, index) =>
+        index === 5 ? { kind: 'train', sport: 'strength' } : day,
+      ),
+    });
+    await checkIns.edit({
+      id,
+      member,
+      edit: edit({ kind: 'trained', training: { sport: 'yoga', caption: '改了字' } }),
+    });
+    expect((await plans.savedFor(member, { weekStart: week }))?.[5]).toStrictEqual({
+      kind: 'train',
+      sport: 'strength',
+    });
   });
 
   it('makes a 休息’s day a rest day, never undoing a 练了 on it', async () => {
