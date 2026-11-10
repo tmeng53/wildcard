@@ -153,7 +153,11 @@ const SquadBody = z.object({
   members: z.array(z.object({ userId: z.uuid() })),
 });
 const makeSquad = (token: string) =>
-  call('PUT', `/squads/${randomUUID()}`, token, { version: 1, name: '早八跑团' });
+  call('PUT', `/squads/${randomUUID()}`, token, {
+    version: 1,
+    name: '早八跑团',
+    timeZone: 'America/New_York',
+  });
 
 describe('GET and PUT /me/ai-consent', () => {
   it('starts with no consent, records one to the current copy, and answers a repeat', async () => {

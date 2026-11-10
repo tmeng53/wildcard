@@ -2,7 +2,7 @@
 
 **Status: Ready** since comments (#334), driven over HTTP by `scripts/api-journeys.sh comments`; CI's `supabase` job runs it. The app's screens for it are covered by `FeedUITests.testComments`.
 
-A teammate comments on a member's check-in and retries it; the author replies to them; both read the comments oldest first, in the list and on the post's own page; an outsider sees nothing; a reply to an outsider, a comment over 100 characters and deleting someone else's are refused; the writer deletes theirs, twice. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
+A teammate comments on a member's check-in and retries it; the author replies to them; both read the comments oldest first on the post's own page; an outsider sees nothing; a reply to an outsider, a comment over 100 characters and deleting someone else's are refused; the writer deletes theirs, twice. Stand-in: members sign up with email and password (the app uses Sign in with Apple).
 
 Code: `api/apps/server/src/routes/comments.ts`, `api/packages/check-ins/src/use-cases/check-ins/comments.ts`.
 
@@ -22,7 +22,7 @@ Ids differ each run; the shape doesn't. Copied from a real run:
 server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 comments: mate wrote one (201), the retry saved nothing new (200), another text under its id refused (409)
-comments: the author replied to mate (201); both read them oldest first, here and on the post's page
+comments: the author replied to mate (201); both read them oldest first on the post's page
 comments: outsider sees nothing (404), a reply to an outsider (400), 101 characters (400) and deleting mate's (403) refused
 comments: mate deleted theirs (204, again 204), one row left
 api-journeys: ok (comments)
