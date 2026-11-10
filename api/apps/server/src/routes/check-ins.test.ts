@@ -794,6 +794,9 @@ describe('GET /me/records', () => {
       training: { sport: 'run', minutes: 30 },
     });
     await put(me, { day: today, kind: 'healthyMeal', meal: {} });
+    // A 坦白放纵餐 keeps the card's meal 外卡 going, but 健康餐连续 counts 健康餐 only.
+    const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
+    await put(me, { day: yesterday, kind: 'cheatMeal', meal: {} });
     const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
     const react = async (who: { readonly token: string }, id: string) => {
       expect(
@@ -826,6 +829,8 @@ describe('GET /me/records', () => {
       longestMinutes: 45,
       longestStreak: { days: 1, from: today, to: today },
       mealStreak: { days: 1, from: today, to: today },
+      currentStreak: { days: 1, from: today, to: today },
+      currentMealStreak: { days: 1, from: today, to: today },
       hours,
       weekdays,
       sports: [{ sport: 'run', days: 2 }],
@@ -850,6 +855,38 @@ describe('GET /me/records', () => {
       sportCount: 0,
     });
     expect((await call({ method: 'GET', path: '/me/records' })).status).toBe(401);
+  });
+
+  it('counts the run still going apart from the record, and leaves out one that broke', async () => {
+    const me = await signUp();
+    const today = new Date().toISOString().slice(0, 10);
+    const daysAgo = (n: number) =>
+      new Date(Date.parse(today) - n * 24 * 60 * 60_000).toISOString().slice(0, 10);
+    const put = async (day: string, fields: Readonly<Record<string, unknown>>) => {
+      const body = {
+        version: 1,
+        day,
+        createdAt: new Date(Date.now() - 60_000).toISOString(),
+        audience: [],
+        ...fields,
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      expect((await call({ method: 'PUT', path, token: me.token, body })).status).toBe(201);
+    };
+    const run = { kind: 'trained', training: { sport: 'run' } };
+    // Three days in a row, then three without: the default plan never rests two days running,
+    // so one of them breaks the run whatever the weekday.
+    for (const day of [daysAgo(6), daysAgo(5), daysAgo(4), today]) await put(day, run);
+    // A 健康餐 two days ago: yesterday had none, so that run is over.
+    await put(daysAgo(2), { kind: 'healthyMeal', meal: {} });
+
+    const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    expect(body).toMatchObject({
+      longestStreak: { days: 3, from: daysAgo(6), to: daysAgo(4) },
+      currentStreak: { days: 1, from: today, to: today },
+      mealStreak: { days: 1, from: daysAgo(2), to: daysAgo(2) },
+    });
+    expect(body).not.toHaveProperty('currentMealStreak');
   });
 
   it('stands the member against squadmates only on what they sent the squad', async () => {
@@ -928,11 +965,23 @@ describe('GET /me/check-in-totals', () => {
         cheatMeals: 1,
         disclaimers: 1,
         topSport: { sport: 'run', checkIns: 2 },
+        // Yesterday's 健康餐 and today's two meals: any meal keeps the meal streak going.
+        streaks: {
+          training: { days: 2, from: yesterday, to: today },
+          meals: { days: 2, from: yesterday, to: today },
+        },
       },
     });
     expect(
       (await call({ method: 'GET', path: '/me/check-in-totals', token: friend.token })).body,
-    ).toStrictEqual({ version: 1, trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0 });
+    ).toStrictEqual({
+      version: 1,
+      trainedDays: 0,
+      healthyMeals: 0,
+      cheatMeals: 0,
+      disclaimers: 0,
+      streaks: {},
+    });
     expect((await call({ method: 'GET', path: '/me/check-in-totals' })).status).toBe(401);
   });
 

@@ -35,14 +35,18 @@ public struct MeDestinations {
     public var location: LocationSharing?
     /// 设置 › 桌面小组件, how to put the home screen widgets on; nil shows no row.
     public var widgetGuide: AnyView?
+    /// What this phone saw of the member's badge board, for NEW, and the turns to it a notice
+    /// asks for; nil shows no NEW.
+    public var badgeMarks: BadgeMarks?
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
         previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
-        widgetGuide: AnyView? = nil
+        widgetGuide: AnyView? = nil, badgeMarks: BadgeMarks? = nil
     ) {
+        self.badgeMarks = badgeMarks
         self.previewSignUp = previewSignUp
         self.widgetGuide = widgetGuide
         self.health = health
@@ -142,7 +146,8 @@ public struct MeView<PostsTile: View>: View {
                 VStack(spacing: Space.s) {
                     header
                     PlayerCard(
-                        face: overview.card, equip: { title in Task { await model.equip(title) } }, hint: nil,
+                        face: overview.card, equip: { wearable in Task { await model.equip(wearable) } },
+                        marks: destinations.badgeMarks, hint: nil,
                         fillsWidth: true)
                     HStack(spacing: Space.cardGap) {
                         ScheduleTile(glance: overview.weekGlance, open: destinations.schedule)

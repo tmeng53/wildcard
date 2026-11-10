@@ -143,6 +143,9 @@ public final class TodayModel {
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
+    /// Opens the card of a challenge on its coach's page, from a tap on the coach's head on the
+    /// squad card's challenge row; the app sets it.
+    @ObservationIgnored public var openChallenge: (DayChallenge) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?

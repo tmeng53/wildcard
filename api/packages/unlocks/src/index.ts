@@ -67,6 +67,7 @@ export {
   type GiftRequest,
 } from './domain/gifts.js';
 export {
+  BadgeNotHeldError,
   GiftAlreadyOwnedError,
   GiftMemberNotInSquadError,
   GiftNoCoachError,

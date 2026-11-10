@@ -1,6 +1,13 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { LocalDay, SportKey, WeekStart, type CheckIns } from '@wildcard/check-ins';
-import { EquippedTitle, JerseyNumber, MemberId, type Members } from '@wildcard/members';
+import {
+  EquippedTeamBadge,
+  EquippedTitle,
+  JerseyNumber,
+  MemberId,
+  type Members,
+  type Worn,
+} from '@wildcard/members';
 import { SquadId, SquadMemberUnknownError, type Squads } from '@wildcard/squads';
 import {
   BadgeTone,
@@ -10,12 +17,20 @@ import {
   type ShownBoardTitle,
   type WeeklyAwards,
 } from '@wildcard/weekly-awards';
-import { MemberId as RewardMember, type HeldBadge, type Rewards } from '@wildcard/unlocks';
+import {
+  BadgeNotHeldError,
+  MemberId as RewardMember,
+  type HeldBadge,
+  type Rewards,
+} from '@wildcard/unlocks';
+
+import type { ReaderLanguage } from '@wildcard/language-model';
 
 import { bodyVersion } from '../body-version.js';
 import { squadFirstWeek } from '../flows/squad-weeks.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
+import { readerLanguageOf } from '../reader-language.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
 import { checkInTotalsFields } from './check-ins.js';
@@ -31,8 +46,8 @@ export const TitleBadgeBody = z
   .strictObject({
     shape: z.string().meta({
       description:
-        'The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today. An app that ' +
-        'doesn’t know one draws a circle.',
+        'The badge’s shape: `shield`, `hexagon`, `circle` or `scallop` today, and `ticket` ' +
+        'for a team badge worn as one. An app that doesn’t know one draws a circle.',
       example: 'shield',
     }),
     colour: z.string().meta({
@@ -60,7 +75,10 @@ const titleWords = z.string().meta({
   example: '早八战神',
 });
 
-/** The title a member wears, wherever the API shows it beside them. */
+/**
+ * The title a member wears, wherever the API shows it beside them: a weekly title, or a team
+ * badge worn as one (its name in the reader’s language on a ticket).
+ */
 export const WornTitleBody = z
   .strictObject({ title: titleWords, badge: TitleBadgeBody })
   .openapi('WornTitle');
@@ -134,7 +152,16 @@ const boardFields = {
     .meta({
       description:
         'The title worn on the card’s front: the one equipped, else the latest won. Left out ' +
-        'before the first.',
+        'before the first, and while a team badge is worn.',
+    }),
+  wornTeamBadge: z
+    .string()
+    .optional()
+    .meta({
+      description:
+        'The team badge worn on the card’s front instead of a title, by its id. Left out unless ' +
+        'the member chose one they hold.',
+      example: 'idea-king',
     }),
 };
 
@@ -142,9 +169,14 @@ const TitleBoard = z
   .strictObject({
     version: bodyVersion(1),
     ...boardFields,
-    equipped: z.string().optional().meta({
-      description: 'The title the member chose to wear. Left out until they choose one.',
-    }),
+    equipped: z
+      .string()
+      .optional()
+      .meta({
+        description:
+          'The title the member chose to wear. Left out until they choose one, and while they wear ' +
+          'a team badge.',
+      }),
   })
   .openapi('TitleBoard');
 
@@ -154,7 +186,13 @@ const EquipTitle = z
     title: EquippedTitle.nullable().meta({
       description:
         'A title the member has won, by its words, to wear on their card; null to wear the ' +
-        'latest won again.',
+        'latest won again, or with `teamBadge`.',
+    }),
+    teamBadge: EquippedTeamBadge.optional().meta({
+      description:
+        'A team badge the member holds, by its id, to wear instead of a title; `title` must ' +
+        'then be null. Left out by builds before it, whose save takes a worn team badge off.',
+      example: 'idea-king',
     }),
   })
   .openapi('EquipTitle');
@@ -249,20 +287,49 @@ const PlayerCardBody = z
   })
   .openapi('PlayerCard');
 
+/** What a member wears and could wear: their titles, what they chose and the team's badges. */
+interface WornInputs {
+  readonly board: readonly ShownBoardTitle[];
+  readonly equipped: string | null | undefined;
+  readonly equippedTeamBadge: string | null | undefined;
+  readonly teamBadges: readonly HeldBadge[];
+}
+
+/** The team badge a member wears: the one they chose, while they hold it. */
+function wornBadgeOf({ equippedTeamBadge, teamBadges }: WornInputs): HeldBadge | undefined {
+  return teamBadges.find(({ badge }) => badge.id === equippedTeamBadge);
+}
+
+/**
+ * What a member wears beside their name (头衔): the team badge they chose while they hold it, its
+ * name in the reader's language on a ticket, else their equipped or latest title.
+ */
+export function wornTitleOf(inputs: WornInputs, reader: ReaderLanguage) {
+  const held = wornBadgeOf(inputs);
+  if (held !== undefined) {
+    return {
+      title: held.badge.names[reader],
+      badge: {
+        shape: 'ticket',
+        colour: held.badge.id,
+        tone: held.badge.tone,
+        glyph: held.badge.glyph,
+      },
+    };
+  }
+  const worn = wornOf(inputs.board, inputs.equipped);
+  return worn === undefined ? undefined : { title: worn.title, badge: worn.badge };
+}
+
+/** The reader's language from the request, Simplified Chinese when it names none we write. */
+export const readerOf = (header: string | undefined): ReaderLanguage =>
+  readerLanguageOf(header) ?? 'zh-Hans';
+
 /** A board as the API sends it; `speechIn` says which weeks' award lines and squad names it may carry. */
-function wireBoard(
-  {
-    board,
-    equipped,
-    teamBadges,
-  }: {
-    readonly board: readonly ShownBoardTitle[];
-    readonly equipped: string | null | undefined;
-    readonly teamBadges: readonly HeldBadge[];
-  },
-  speechIn: (squad: SquadId) => boolean,
-) {
-  const worn = wornOf(board, equipped);
+function wireBoard(inputs: WornInputs, speechIn: (squad: SquadId) => boolean) {
+  const { board, equipped, teamBadges } = inputs;
+  const wornBadge = wornBadgeOf(inputs);
+  const worn = wornBadge === undefined ? wornOf(board, equipped) : undefined;
   return {
     teamBadges: teamBadges.map(({ badge, times, latestAt }) => ({
       id: badge.id,
@@ -281,6 +348,7 @@ function wireBoard(
       })),
     })),
     ...(worn === undefined ? {} : { worn: worn.title }),
+    ...(wornBadge === undefined ? {} : { wornTeamBadge: wornBadge.badge.id }),
   };
 }
 
@@ -331,8 +399,9 @@ export function titles(deps: {
     responses: {
       200: { description: 'Worn', content: { 'application/json': { schema: TitleBoard } } },
       400: problem(
-        'Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), or no profile ' +
-          'saved yet (`PROFILE_MISSING`)',
+        'Not a valid body, a title the member hasn’t won (`TITLE_NOT_WON`), a team badge they ' +
+          'don’t hold or sent with a title (`BADGE_NOT_HELD`), or no profile saved yet ' +
+          '(`PROFILE_MISSING`)',
       ),
       ...jsonBodyFailures,
       ...unauthorized,
@@ -359,8 +428,8 @@ export function titles(deps: {
     },
   });
 
-  /** The member's board and the title they equipped. */
-  const boardOf = async (member: MemberId) => {
+  /** The member's board and what they chose to wear. */
+  const boardOf = async (member: MemberId): Promise<WornInputs> => {
     const [boards, profile, teamBadges] = await Promise.all([
       deps.awards.boards([member]),
       deps.members.squadmates([member]),
@@ -369,22 +438,17 @@ export function titles(deps: {
     return {
       board: boards.get(member) ?? [],
       equipped: profile.get(member)?.equippedTitle,
+      equippedTeamBadge: profile.get(member)?.equippedTeamBadge,
       teamBadges,
     };
   };
 
-  const wireMine = ({
-    board,
-    equipped,
-    teamBadges,
-  }: {
-    readonly board: readonly ShownBoardTitle[];
-    readonly equipped: string | null | undefined;
-    readonly teamBadges: readonly HeldBadge[];
-  }) => ({
+  const wireMine = (inputs: WornInputs) => ({
     version: 1 as const,
-    ...wireBoard({ board, equipped, teamBadges }, () => true),
-    ...(equipped === null || equipped === undefined ? {} : { equipped }),
+    ...wireBoard(inputs, () => true),
+    ...(inputs.equipped === null || inputs.equipped === undefined
+      ? {}
+      : { equipped: inputs.equipped }),
   });
 
   return new OpenAPIHono<SignedIn>()
@@ -393,13 +457,23 @@ export function titles(deps: {
     )
     .openapi(putEquipped, async (c) => {
       const member = MemberId.parse(c.var.caller.userId);
-      const { title } = c.req.valid('json');
+      const { title, teamBadge } = c.req.valid('json');
       const { board, teamBadges } = await boardOf(member);
-      if (title !== null && !board.some((each) => each.title === title)) {
-        throw new TitleNotWonError();
+      let worn: Worn | null = null;
+      if (teamBadge !== undefined) {
+        if (title !== null || !teamBadges.some(({ badge }) => badge.id === teamBadge)) {
+          throw new BadgeNotHeldError(teamBadge);
+        }
+        worn = { teamBadge };
+      } else if (title !== null) {
+        if (!board.some((each) => each.title === title)) throw new TitleNotWonError();
+        worn = { title };
       }
-      await deps.members.equipTitle(member, title);
-      return c.json(wireMine({ board, equipped: title, teamBadges }), 200);
+      await deps.members.wear(member, worn);
+      return c.json(
+        wireMine({ board, equipped: title, equippedTeamBadge: teamBadge ?? null, teamBadges }),
+        200,
+      );
     })
     .openapi(getCard, async (c) => {
       const { squadId, memberId } = c.req.valid('param');
@@ -412,7 +486,7 @@ export function titles(deps: {
       if (place < 0) throw new SquadMemberUnknownError(memberId);
       const squadZone = (await deps.squads.timeZonesAt([squad.id], new Date()))(squad.id);
       const viewer = MemberId.parse(c.var.caller.userId);
-      const [boards, profiles, totals, week, teamBadges, squadWeek] = await Promise.all([
+      const [boards, profiles, totals, week, teamBadges, squadWeek, streaks] = await Promise.all([
         deps.awards.boards([memberId]),
         deps.members.squadmates([memberId]),
         // A squadmate sees only what the member sent to this squad (posted or only recorded),
@@ -428,6 +502,11 @@ export function titles(deps: {
         }),
         deps.rewards.badgesOf(RewardMember.parse(memberId)),
         squadFirstWeek(deps.squads, squad),
+        // As the totals: a squadmate sees only what was shared to this squad.
+        deps.checkIns.currentStreaks({
+          member: memberId,
+          ...(viewer === memberId ? {} : { squad: squadId }),
+        }),
       ]);
       const profile = profiles.get(memberId);
       return c.json(
@@ -439,6 +518,7 @@ export function titles(deps: {
           squadPlace: place + 1,
           ...(profile === undefined ? {} : { joinedAt: profile.joinedAt.toISOString() }),
           ...totals,
+          streaks,
           week: {
             ...week,
             squadFirstWeek: squadWeek,
@@ -448,7 +528,12 @@ export function titles(deps: {
             ),
           },
           ...wireBoard(
-            { board: boards.get(memberId) ?? [], equipped: profile?.equippedTitle, teamBadges },
+            {
+              board: boards.get(memberId) ?? [],
+              equipped: profile?.equippedTitle,
+              equippedTeamBadge: profile?.equippedTeamBadge,
+              teamBadges,
+            },
             (squad) => squad === squadId,
           ),
         },

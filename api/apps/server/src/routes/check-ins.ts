@@ -193,8 +193,31 @@ const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi(
 
 const count = (description: string) => z.int().nonnegative().meta({ description });
 
+const Streak = z
+  .strictObject({
+    days: count('Days in the run.'),
+    from: LocalDay.meta({ description: 'Its first day.' }),
+    to: LocalDay.meta({ description: 'Its last day.' }),
+  })
+  .openapi('RecordStreak');
+
+const CurrentStreaks = z
+  .strictObject({
+    training: Streak.optional(),
+    meals: Streak.optional(),
+  })
+  .meta({
+    description:
+      'Streaks still going on the member’s clock, the player card’s 外卡: `training`, days ' +
+      'trained in a row, a planned rest day between them neither breaking nor adding; `meals`, ' +
+      'days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or ' +
+      'yesterday while today has none yet, and is left out once broken.',
+  })
+  .openapi('CurrentStreaks');
+
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
+  streaks: CurrentStreaks.optional(),
   trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
@@ -252,14 +275,6 @@ const customSport = z
   .optional()
   .meta({ description: 'The name of a `custom` sport; a listed sport has none.' });
 
-const Streak = z
-  .strictObject({
-    days: count('Days in the run.'),
-    from: LocalDay.meta({ description: 'Its first day.' }),
-    to: LocalDay.meta({ description: 'Its last day.' }),
-  })
-  .openapi('RecordStreak');
-
 const MateCount = z
   .strictObject({
     memberId: z.uuid(),
@@ -284,6 +299,8 @@ const MemberRecords = z
     // Described on the object: a described reference becomes a wrapper type in generated clients.
     longestStreak: Streak.optional(),
     mealStreak: Streak.optional(),
+    currentStreak: Streak.optional(),
+    currentMealStreak: Streak.optional(),
     hours: z.array(count('训练 posted in this hour.')).min(24).max(24).meta({
       description:
         '训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
@@ -332,7 +349,10 @@ const MemberRecords = z
     description:
       '外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them ' +
       'neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left ' +
-      'out before the first.',
+      'out before the first. `currentStreak` and `currentMealStreak`: the same runs still ' +
+      'going on the member’s clock (today not counted against them until it is over; a week ' +
+      'of rest days in a row breaks training), left out once broken; one is the record when ' +
+      'its days reach the longest.',
   })
   .openapi('MemberRecords');
 
@@ -774,8 +794,12 @@ export function checkIns(deps: {
       );
     })
     .openapi(totals, async (c) => {
-      const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
-      return c.json({ version: 1 as const, ...counts }, 200);
+      const member = MemberId.parse(c.var.caller.userId);
+      const [counts, streaks] = await Promise.all([
+        deps.checkIns.totals(member),
+        deps.checkIns.currentStreaks({ member }),
+      ]);
+      return c.json({ version: 1 as const, ...counts, streaks }, 200);
     })
     .openapi(memberRecords, async (c) => {
       const found = await deps.checkIns.records(MemberId.parse(c.var.caller.userId));

@@ -34,6 +34,11 @@ public struct WildcardRecords: Hashable, Sendable {
     public var longestStreak: Streak?
     /// Most days in a row with a 健康餐.
     public var mealStreak: Streak?
+    /// The days trained in a row still going; nil once broken. Today not trained yet doesn't
+    /// break it.
+    public var currentStreak: Streak?
+    /// The days in a row with a 健康餐 still going; nil once broken.
+    public var currentMealStreak: Streak?
     /// 练了 by the hour of the member's clock they were posted at, 0 to 23; 补打卡 left out.
     public var hours: [Int]
     /// Days trained by weekday, Monday first.
@@ -47,12 +52,21 @@ public struct WildcardRecords: Hashable, Sendable {
 
     public init(
         trainedDays: Int, minutes: Int, longestMinutes: Int?, longestStreak: Streak?, mealStreak: Streak?,
+        currentStreak: Streak? = nil, currentMealStreak: Streak? = nil,
         hours: [Int], weekdays: [Int], sports: [SportDays], sportCount: Int, squad: SquadStanding?
     ) {
         (self.trainedDays, self.minutes, self.longestMinutes) = (trainedDays, minutes, longestMinutes)
         (self.longestStreak, self.mealStreak) = (longestStreak, mealStreak)
+        (self.currentStreak, self.currentMealStreak) = (currentStreak, currentMealStreak)
         (self.hours, self.weekdays, self.sports, self.sportCount, self.squad) =
             (hours, weekdays, sports, sportCount, squad)
+    }
+
+    /// Whether `current`, the run still going, is the record `longest`: the tile then reads
+    /// 正在刷新纪录 and its days run 至今.
+    public static func breaksRecord(current: Streak?, longest: Streak?) -> Bool {
+        guard let current, let longest else { return false }
+        return current.days >= longest.days
     }
 
     /// Before the first 练了 the page shows only the two streak tiles, both at 0.

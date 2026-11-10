@@ -21,13 +21,15 @@ const words = (max: number) =>
 
 /**
  * Where a button goes in the app: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表),
- * `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. The app shows no button for
- * one it doesn't know, so a place added later is safe to send to older builds.
+ * `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today`, `me`,
+ * `wardrobe` (衣橱), `wardrobe/<pieceId>` (衣橱, trying that piece on) or `badges` (the badge
+ * board). The app shows no button for one it doesn't know, so a place added later is safe to
+ * send to older builds.
  */
 export const Destination = z
   .string()
   .regex(
-    /^(stores|notices|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|coaches|feed|post\/[0-9a-f-]{36}|today|me)$/,
+    /^(stores|notices|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|coaches|feed|post\/[0-9a-f-]{36}|today|me|wardrobe|wardrobe\/[a-z][a-z0-9-]{0,47}|badges)$/,
   );
 export type Destination = z.infer<typeof Destination>;
 
@@ -56,7 +58,8 @@ export const BroadcastValue = z
         label: words(16).describe('The button’s words, a few characters, in each language.'),
         destination: Destination.describe(
           'Where it opens: `stores`, `store/<storeId>`, `notices` (通知), `schedule`, `squad`, `feed`, ' +
-            '`post/<checkInId>`, `today` or `me`.',
+            '`post/<checkInId>`, `today`, `me`, `wardrobe` (衣橱), `wardrobe/<pieceId>` (衣橱, ' +
+            'trying that piece on) or `badges` (the badge board).',
         ),
       })
       .optional()

@@ -86,6 +86,14 @@ export interface CheckInStore {
     readonly to: string;
   }): Promise<TrainingDay[]>;
   /**
+   * The days `member` checked in a 训练 and the days they checked in a meal (健康餐 or 坦白放纵餐),
+   * each day once, earliest first; with `squad`, only what they shared to it.
+   */
+  streakDays(query: { readonly member: MemberId; readonly squad?: SquadId }): Promise<{
+    readonly trained: readonly LocalDay[];
+    readonly meals: readonly LocalDay[];
+  }>;
+  /**
    * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
    * to `squad`; the days the member logged a 健康餐; and the reactions between the member and
    * each squadmate, counted by squadmate.

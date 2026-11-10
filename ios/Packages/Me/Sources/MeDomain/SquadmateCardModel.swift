@@ -31,17 +31,17 @@ public final class SquadmateCardModel {
     /// The member's own card, whose badges have 装备.
     public var canEquip: Bool { own != nil }
 
-    /// Wears `title` on this card at once and saves it as 我 does; puts the one worn before back
-    /// if saving fails. Does nothing on a squadmate's card.
-    public func equip(_ title: String) async {
+    /// Wears a title or team badge on this card at once and saves it as 我 does; puts the one
+    /// worn before back if saving fails. Does nothing on a squadmate's card.
+    public func equip(_ wearable: Wearable) async {
         guard let own, case .loaded(var face) = load else { return }
-        let before = face.board.worn
-        face.board.worn = title
+        let before = (face.board.worn, face.board.wornTeamBadge)
+        face.board.wear(wearable)
         load = .loaded(face)
-        let saved = await own.equip(title)
+        let saved = await own.equip(wearable)
         guard case .loaded(var latest) = load else { return }
         // Only what is worn: this card's board lists what this squad's route sent.
-        latest.board.worn = saved.map(\.worn) ?? before
+        (latest.board.worn, latest.board.wornTeamBadge) = saved.map { ($0.worn, $0.wornTeamBadge) } ?? before
         load = .loaded(latest)
     }
 

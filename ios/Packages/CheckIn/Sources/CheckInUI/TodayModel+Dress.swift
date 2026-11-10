@@ -50,6 +50,17 @@ extension TodayModel {
         return (myLook, idle)
     }
 
+    /// New art came down while 今天 is up (a piece redrawn on the server): everyone on the scene is
+    /// made again from it at once, as the next launch would, instead of keeping the parts drawn
+    /// before. During the squad's drop it does nothing: they keep the art they dropped in with
+    /// until the next launch, a few seconds' window not worth a flag.
+    public func artChanged() {
+        guard home != nil, arrival == nil else { return }
+        (player, worn) = (nil, nil)
+        cast.forgetCharacters()
+        placeSquad()
+    }
+
     /// Dresses my character for the day, when that changed: with the kit's hop when it changes
     /// as I watch (after a 练了), else at once.
     func dressMe(hop: Bool) {

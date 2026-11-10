@@ -265,3 +265,19 @@ func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, 
     deck.seen(today)
     #expect(deck.earlier.map(\.id) == ["41", "30"])
 }
+
+@MainActor @Test func aChallengeCardIsFoundByItsNoteHereOrInEarlier() async {
+    // The morning note and its challenge share the note's id; only the challenge is wanted.
+    let note = card(.note, "41", minutes: 0, text: "今天拉一拉。")
+    let source = CardsInMemory(CoachPageCards(stack: [note], earlier: [oldNote, stretch.with(isSeen: true)]))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    // Before the page was ever read, 以前's challenges have it.
+    #expect(await deck.challengeCard(note: "41")?.key == stretch.key)
+    #expect(source.state.withLock(\.filters) == [.challenges])
+    // Once read, the page's own copy, as it stands, without another read.
+    await deck.reload()
+    let read = source.state.withLock(\.filters).count
+    #expect(await deck.challengeCard(note: "41")?.isSeen == true)
+    #expect(source.state.withLock(\.filters).count == read)
+    #expect(await deck.challengeCard(note: "99") == nil)
+}

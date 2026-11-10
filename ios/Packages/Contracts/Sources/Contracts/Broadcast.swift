@@ -85,6 +85,10 @@ public enum AppDestination: Hashable, Sendable {
     case waitingCoachNote
     /// 我.
     case profile
+    /// 衣橱 in the character editor, trying this piece on (nil: just the editor).
+    case wardrobe(piece: String?)
+    /// 我's player card turned to its badge board (徽章).
+    case badges
     /// 通知, behind the bell on 动态.
     case notices
 }

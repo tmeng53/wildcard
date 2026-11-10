@@ -212,10 +212,15 @@ jobs:
           # The database pool stays within Supabase's: 10 connections an instance (node-postgres's
           # default) plus one LISTEN session each.
           # https://cloud.google.com/run/docs/about-concurrency
+          # One instance stays warm, so opening the app never waits on a cold start (Tracy,
+          # 2026-11-10: the home showed the squad without its coach for seconds after one); an idle
+          # instance is billed at the idle rate.
+          # https://cloud.google.com/run/docs/configuring/min-instances
           gcloud run deploy "$SERVICE" --image "$IMAGE" --region "$GCP_REGION" \
             --service-account "wildcard-api@$GCP_PROJECT_ID.iam.gserviceaccount.com" \
             --allow-unauthenticated \
             --concurrency 250 \
+            --min-instances 1 \
             --max-instances 10 \
             --timeout 3600 \
             --startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=3,timeoutSeconds=3,failureThreshold=10 \

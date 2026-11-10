@@ -29,6 +29,7 @@ export interface ProfileEvents {
   at: Generated<Timestamp>;
   birthday: string | null;
   catchphrase: string | null;
+  equipped_team_badge: string | null;
   equipped_title: string | null;
   id: Generated<Int8>;
   jersey_number: number | null;
@@ -43,6 +44,7 @@ export interface Profiles {
   birthday: string | null;
   catchphrase: string | null;
   created_at: Generated<Timestamp>;
+  equipped_team_badge: string | null;
   equipped_title: string | null;
   jersey_number: number | null;
   language: Generated<string>;

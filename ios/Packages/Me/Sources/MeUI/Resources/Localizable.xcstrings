@@ -657,6 +657,54 @@
         }
       }
     },
+    "现在连续" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在連續"
+          }
+        }
+      }
+    },
+    "正在刷新纪录" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New record"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在刷新紀錄"
+          }
+        }
+      }
+    },
+    "至今" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "now"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "至今"
+          }
+        }
+      }
+    },
     "天" : {
       "localizations" : {
         "en" : {
@@ -1609,6 +1657,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "每週戰報"
+          }
+        }
+      }
+    },
+    "外卡团队" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wildcard team"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外卡團隊"
           }
         }
       }
@@ -2637,6 +2701,44 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "主畫面小工具"
+          }
+        }
+      }
+    },
+    "穿搭" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outfit"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "穿搭"
+          }
+        }
+      }
+    },
+    "card.outfit.count %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pieces"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 件"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 件"
           }
         }
       }

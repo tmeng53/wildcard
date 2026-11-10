@@ -10,6 +10,8 @@ import OpenAPIRuntime
 public struct APICheckInBackend: CheckInBackend {
     private let api: WildcardAPI
     private let saved: URL
+    /// The squad's coach as last loaded, so the home shows it before the network answers.
+    private let savedCoachFile: URL
     /// The newest coach's letter (交接信) opened on this phone.
     private let openedLetterFile: URL
     private let shared: SharedSquad?
@@ -26,6 +28,7 @@ public struct APICheckInBackend: CheckInBackend {
     ) {
         self.api = api
         saved = directory.appending(path: "home.json")
+        savedCoachFile = directory.appending(path: "coach.json")
         openedLetterFile = directory.appending(path: "coach-letter.json")
         self.shared = shared
         self.phoneZone = phoneZone
@@ -50,6 +53,7 @@ public struct APICheckInBackend: CheckInBackend {
             }
             guard let squad = try await api.mySquadWire() else {
                 try? FileManager.default.removeItem(at: saved)
+                try? FileManager.default.removeItem(at: savedCoachFile)
                 shared?.forget()
                 return nil
             }
@@ -119,12 +123,35 @@ public struct APICheckInBackend: CheckInBackend {
 
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
         do {
-            guard let hire = try await api.coach(of: squad).hire else { return nil }
+            guard let hire = try await api.coach(of: squad).hire else {
+                keep(SavedCoach(squad: squad, coach: nil))
+                return nil
+            }
+            let speaker = CoachSpeaker(id: hire.coach.id, name: hire.coach.name)
+            keep(SavedCoach(squad: squad, coach: speaker))
             let activity = try await api.coachActivity(of: squad)
             return SidelineCoach(
-                coach: CoachSpeaker(id: hire.coach.id, name: hire.coach.name), note: activity.note,
-                letter: activity.letter)
+                coach: speaker, note: activity.note, letter: activity.letter)
         } catch { throw CheckInError(error) }
+    }
+
+    public func savedCoach() async -> SavedCoach? {
+        guard let data = try? Data(contentsOf: savedCoachFile),
+            let kept = try? DeviceJSON.decoder.decode(KeptCoach.self, from: data), kept.version == 1,
+            let squad = UUID(uuidString: kept.squad)
+        else { return nil }
+        let coach = kept.coach.flatMap { kept in
+            CoachID(rawValue: kept.id).map { CoachSpeaker(id: $0, name: kept.name) }
+        }
+        return SavedCoach(squad: SquadID(squad), coach: coach)
+    }
+
+    private func keep(_ coach: SavedCoach) {
+        let kept = KeptCoach(
+            version: 1, squad: coach.squad.description,
+            coach: coach.coach.map { KeptCoach.Speaker(id: $0.id.rawValue, name: $0.name) })
+        guard let data = try? DeviceJSON.encoder.encode(kept) else { return }
+        try? DeviceJSON.write(data, to: savedCoachFile)
     }
 
     public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool {
@@ -159,6 +186,18 @@ public struct APICheckInBackend: CheckInBackend {
         }
         try? DeviceJSON.write(data, to: openedLetterFile)
     }
+}
+
+/// The squad's coach as last loaded, by its id and name. Stored JSON, so it carries a `version`.
+struct KeptCoach: Codable {
+    struct Speaker: Codable {
+        let id: String
+        let name: String
+    }
+
+    let version: Int
+    let squad: String
+    let coach: Speaker?
 }
 
 /// The newest coach's letter opened on this phone, by its id. Stored JSON, so it carries a `version`.

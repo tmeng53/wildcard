@@ -1,4 +1,7 @@
+import AvatarArt
 import CharacterEditorUI
+import CheckInUI
+import Contracts
 import DesignSystemUI
 import MeDomain
 import MeUI
@@ -9,6 +12,8 @@ import SwiftUI
 struct ProfileEditor: View {
     let model: CharacterEditorModel
     let profile: MeModel
+    /// 今天, which wears the saved character at once.
+    let today: TodayModel
     let close: () -> Void
     @State private var pickingNumber = false
 
@@ -18,9 +23,16 @@ struct ProfileEditor: View {
                 model: model, context: .profile, issued: profile.overview?.joinedAt, onBack: close,
                 onDone: { edited in
                     close()
+                    let character = MeCharacter(
+                        nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona)
+                    let save: @MainActor () async -> Void = { await profile.save(character) }
                     Task {
-                        await profile.save(
-                            MeCharacter(nickname: edited.nickname, outfit: edited.outfit, persona: edited.persona))
+                        if let nickname = try? Nickname(edited.nickname) {
+                            let look = CharacterLook(outfit: edited.outfit, persona: edited.persona)
+                            await today.wear(MemberCharacter(nickname: nickname, look: look), save: save)
+                        } else {
+                            await save()
+                        }
                     }
                 },
                 jerseyNumber: JerseyNumberEntry(number: profile.overview?.cardNumber?.text) { pickingNumber = true }

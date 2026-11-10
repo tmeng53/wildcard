@@ -159,7 +159,7 @@ struct MainTabs: View {
             isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
         ) {
             if let editor = wardrobe.editor {
-                ProfileEditor(model: editor, profile: profile) { wardrobe.editor = nil }
+                ProfileEditor(model: editor, profile: profile, today: today) { wardrobe.editor = nil }
             }
         }
         .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
@@ -276,7 +276,8 @@ struct MainTabs: View {
                     openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
                     writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
-                    location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now()))),
+                    location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now())),
+                    badgeMarks: wardrobe.badgeMarks),
                 isSettingsOpen: $showsSettings
             ) {
                 MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
@@ -333,8 +334,7 @@ struct MainTabs: View {
             set: { if !$0 { wardrobe.showsShop = false } })
     }
 
-    /// A post opened from 训练记录, pushed over 我 while 我的动态 isn't open; the system's back
-    /// closes it.
+    /// A post opened from 训练记录, over 我 while 我的动态 isn't open; the system's back closes it.
     private var recordPost: Binding<OpenedPost?> {
         Binding(get: { wall == nil ? post : nil }, set: { if $0 == nil { post = nil } })
     }
@@ -360,7 +360,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                today.openCoach = { openCoachDeck() }
+                opensCoachPagesFromToday()
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {

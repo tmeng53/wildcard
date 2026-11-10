@@ -87,6 +87,7 @@ const everyoneNamed = {
               jerseyNumber: null,
               joinedAt: new Date(),
               equippedTitle: null,
+              equippedTeamBadge: null,
             },
           ]),
         ),

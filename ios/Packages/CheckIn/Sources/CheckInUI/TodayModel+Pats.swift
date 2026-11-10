@@ -32,6 +32,15 @@ extension TodayModel {
         openTeammate(id)
     }
 
+    /// A ring in the squad card's 今天 row was tapped: that member's card opens (mine too), as from
+    /// the scene, without the hop or the pat.
+    func tapRing(_ member: String) {
+        guard let home, arrival == nil,
+            let id = home.today.members.first(where: { $0.member.description == member })?.member
+        else { return }
+        openTeammate(id)
+    }
+
     /// What `member` is up to today, as the home shows them (睡着了 while asleep on the scene),
     /// for the 今天 line over their card; nil for someone the home doesn't show.
     func today(of member: MemberID) -> MateToday? {
