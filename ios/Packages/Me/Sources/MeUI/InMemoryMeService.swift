@@ -179,7 +179,6 @@ public struct InMemorySquadmateCards: SquadmateCards {
                     nickname: String(copyKey: "阿杰", bundle: Bundle.module),
                     outfit: PlaceholderCharacter.lifter, persona: .deadpan),
             number: try? JerseyNumber(7), squadName: nil,
-            joinedAt: Date(timeIntervalSince1970: 1_792_756_800),
             counts: LifetimeCounts(trainedDays: 42, healthyMeals: 18, cheatMeals: 5, disclaimers: 4),
             week: WeekCount(trainedDays: 3, plannedDays: 5),
             board: .sample, schedule: .sample(weekOf: LocalDay(at: Date(), in: .current)),

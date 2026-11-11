@@ -200,7 +200,7 @@ public struct APISquadmateCards: SquadmateCards {
                     persona: character.map { Persona($0.look) } ?? .energetic),
                 number: PlayerCardFace.number(picked: card.jerseyNumber, place: card.squadPlace),
                 // The sheet fills in the squad's name it was opened from.
-                squadName: nil, joinedAt: card.joinedAt,
+                squadName: nil,
                 counts: LifetimeCounts(
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
