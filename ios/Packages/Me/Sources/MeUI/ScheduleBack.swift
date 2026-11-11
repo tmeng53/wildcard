@@ -160,8 +160,6 @@ struct ScheduleBack: View {
                 Text(copy: "徽章", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(ink)
-                    // One line, as 穿搭 is: never a word stacked a character a line.
-                    .fixedSize()
                 HStack(spacing: Space.xxs) {
                     ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
                         TitleBadgeView(
