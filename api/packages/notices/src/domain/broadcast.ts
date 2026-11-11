@@ -61,7 +61,13 @@ export type LetterPresent = z.infer<typeof LetterPresent>;
  */
 export const BroadcastLetter = z.strictObject({
   lines: words(300),
-  presents: z.array(LetterPresent).max(4),
+  presents: z
+    .array(LetterPresent)
+    .max(4)
+    .refine(
+      (presents) => new Set(presents.map((p) => `${p.kind}:${p.id}`)).size === presents.length,
+      'each present once',
+    ),
 });
 export type BroadcastLetter = z.infer<typeof BroadcastLetter>;
 

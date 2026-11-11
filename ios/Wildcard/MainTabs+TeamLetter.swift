@@ -3,6 +3,7 @@ import CheckInUI
 import Contracts
 import DesignSystemUI
 import MeDomain
+import SportsUI
 import SwiftUI
 
 /// The team's letter on 今天 (感谢信, Tracy 2026-11-11): what the team gave, drawn from the
