@@ -2820,11 +2820,11 @@
             "items": {
               "type": "integer",
               "minimum": 0,
-              "description": "训练 posted in this hour."
+              "description": "训练 started in this hour."
             },
             "minItems": 24,
             "maxItems": 24,
-            "description": "训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out."
+            "description": "训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted, when a 补打卡 without one is left out."
           },
           "weekdays": {
             "type": "array",

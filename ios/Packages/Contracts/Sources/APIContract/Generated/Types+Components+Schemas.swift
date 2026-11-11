@@ -4886,7 +4886,7 @@ extension Components {
             public var currentStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/currentMealStreak`.
             public var currentMealStreak: Components.Schemas.RecordStreak?
-            /// 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            /// 训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted, when a 补打卡 without one is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
             public var hours: [Swift.Int]
@@ -4915,7 +4915,7 @@ extension Components {
             ///   - mealStreak:
             ///   - currentStreak:
             ///   - currentMealStreak:
-            ///   - hours: 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            ///   - hours: 训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted, when a 补打卡 without one is left out.
             ///   - weekdays: Days trained by weekday, Monday first.
             ///   - sports: The sports trained on the most days, most first.
             ///   - sportCount: How many different sports the member trained.

@@ -31,9 +31,12 @@ public final class ComposeModel {
     /// The sport picked; the suggestion until the member picks one.
     var activity: Activity?
     var minutes: WorkoutMinutes?
-    /// When a 训练 made by hand started, if the member picked it on the flip clock; a workout
-    /// from Apple Health carries its own.
+    /// When a 训练 made by hand started: the phone's time as a new page opens, until the member
+    /// picks another on the flip clock (Tracy, 2026-11-11: every 训练 has a start). A workout from
+    /// Apple Health carries its own; only an edit of an older post may have none.
     var startTime: StartTime?
+    /// Where a new 训练 made by hand starts, and starts again when its Health workout is let go.
+    @ObservationIgnored private let handStart: StartTime?
     /// The workout the 训练 is posted from, as Health has it (or, for an edit, as it was posted);
     /// nil for one made by hand.
     private(set) var workout: Workout?
@@ -69,13 +72,14 @@ public final class ComposeModel {
 
     /// - Parameters:
     ///   - photos: the photos it starts with, the cover first.
+    ///   - startingAt: the start a new 训练 made by hand begins with, the phone's time.
     ///   - loadPhoto: a saved photo's JPEG, for an edit.
     ///   - save: posts or saves it; false when it didn't go through.
     ///   - close: leaves the page without saving.
     init(
         kind: CheckInKind, purpose: Purpose, photos: [ComposedPhoto] = [], postableDays: [LocalDay] = [],
         suggestedActivity: Activity, recentActivities: [Activity], healthWorkouts: [TodaysWorkout] = [],
-        sharing: HealthSharing = HealthSharing(),
+        sharing: HealthSharing = HealthSharing(), startingAt: StartTime? = .phoneNow,
         loadPhoto: @escaping @Sendable (PhotoRef) async -> Data? = { _ in nil },
         save: @escaping @MainActor (ComposeModel) async -> Bool, close: @escaping @MainActor () -> Void
     ) {
@@ -92,7 +96,7 @@ public final class ComposeModel {
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(
             tiles: Array(photos.prefix(Photos.maxCount)).map(ComposedTile.photo), line: "", activity: nil,
-            minutes: nil, startTime: nil)
+            minutes: nil, startTime: kind == .trained ? startingAt : nil)
         var posted: Workout?
         if case .edit(let checkIn) = purpose {
             start.tiles = ComposedTile.of(checkIn)
@@ -110,6 +114,7 @@ public final class ComposeModel {
         minutes = start.minutes
         startTime = start.startTime
         workout = posted
+        handStart = kind == .trained ? startingAt : nil
         initial = start
     }
 
@@ -219,7 +224,7 @@ public final class ComposeModel {
         chartTakenAt = nil
         activity = nil
         minutes = nil
-        startTime = nil
+        startTime = isEditing ? nil : handStart
     }
 
     /// Strikes a number out of the post, or brings it back. 时长 too (Tracy, 2026-11-08): struck,
@@ -255,7 +260,7 @@ public final class ComposeModel {
         case .trained(let sport, let length, let body):
             activity = sport
             minutes = length
-            startTime = body.startTime
+            startTime = body.startTime ?? (body.workout == nil ? handStart : nil)
             apply(body)
         case .healthyMeal(let body), .cheatMeal(let body):
             apply(body)
