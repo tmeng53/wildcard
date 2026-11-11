@@ -55,13 +55,13 @@ final class TodayUITests: XCTestCase {
             let after = Int(Date().timeIntervalSince(posted) * 1000)
             keepScreenshot(named: String(format: "16-moment-%02d-%04dms", frame, after))
         }
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
-        XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
         XCTAssertTrue(
             labeled("15/24", in: app).waitForExistence(timeout: Self.wait), "the squad's score didn't tick up to 15/24")
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
+        // The caption stays in the post: no bubble over my head.
+        let shownCaption = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "晨跑 5 公里")).firstMatch
+        XCTAssertFalse(shownCaption.exists && shownCaption.isHittable, "the caption showed on the scene")
         keepScreenshot(named: "16-today-trained-payoff")
         tapMeInMyKit(in: app)
 
@@ -74,8 +74,8 @@ final class TodayUITests: XCTestCase {
     }
 
     /// 请假: type a reason, pick a style, 编一句 puts a line from it up, 换一句 shows the next,
-    /// bring the typed words back, post, and the line lands on the scene without moving the
-    /// squad bar.
+    /// bring the typed words back, post: back on the scene the line stays off it, the
+    /// squad bar doesn't move, and 动态 has it.
     func testDisclaimer() {
         let app = launch(language: "zh-Hans", photos: 0)
         _ = topCard(in: app)
@@ -133,9 +133,8 @@ final class TodayUITests: XCTestCase {
         // The character holds up the 请假条 sign; its words stay in 动态, off the scene.
         waitFor(field, "exists == false", "the 请假条 page didn't close")
         settle()
-        XCTAssertFalse(
-            app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch.exists,
-            "a 请假条's words showed in a bubble on the scene")
+        let words = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
+        XCTAssertFalse(words.exists && words.isHittable, "a 请假条's words showed on the scene")
         XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
         keepScreenshot(named: "19-today-disclaimer-posted")
 

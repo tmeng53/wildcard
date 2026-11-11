@@ -48,10 +48,9 @@ final class BackfillUITests: XCTestCase {
         caption.tap()
         caption.typeText("补一顿沙拉")
         app.buttons["compose.post"].tap()
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "the post didn't land")
-        bubble.tap()
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
+        XCTAssertTrue(caption.waitForNonExistence(timeout: Self.wait), "the post didn't land")
+        app.buttons["tab.feed"].tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
         let label = app.staticTexts.matching(identifier: "post.backfill").firstMatch
         XCTAssertTrue(label.waitForExistence(timeout: Self.wait), "the post isn't marked as a 补打卡")
         XCTAssertEqual(label.label, "补昨天的")
