@@ -53,6 +53,7 @@ function post(author: MemberId, minute: number): SquadPost {
       member: author,
       day,
       createdAt: new Date(Date.UTC(2026, 9, 23, 18, minute)),
+      inFeed: true,
       audience: [squad],
       kind: 'trained',
       training: {

@@ -69,7 +69,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 @Test func aSquadPostCarriesItsReactions() throws {
     let checkIn =
         #"{"version":1,"id":"66666666-6666-6666-6666-666666666666","member":"\#(myID)","day":"2026-10-19","#
-        + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"kind":"disclaimer","#
+        + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"inFeed":true,"kind":"disclaimer","#
         + #""disclaimer":{"text":"下雨了"}}"#
     let wire = try decode(
         Components.Schemas.SquadPostList.self,
@@ -89,7 +89,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
 @Test func aReactionThatIsNotOneEmojiIsRefused() throws {
     let checkIn =
         #"{"version":1,"id":"66666666-6666-6666-6666-666666666666","member":"\#(myID)","day":"2026-10-19","#
-        + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"kind":"disclaimer","#
+        + #""createdAt":"2026-10-19T14:00:00.000Z","audience":["\#(squad)"],"inFeed":true,"kind":"disclaimer","#
         + #""disclaimer":{"text":"下雨了"}}"#
     let wire = try decode(
         Components.Schemas.SquadPostList.self,

@@ -10,11 +10,11 @@ import Testing
     private let squad = SquadID(UUID())
     private let tuesday = LocalDay(at: Date(timeIntervalSince1970: 1_792_515_600), in: .gmt)
 
-    private func refused(_ draft: CheckInDraft, shared: Bool = true) throws -> PendingCheckIn {
+    private func refused(_ draft: CheckInDraft, inFeed: Bool = true) throws -> PendingCheckIn {
         PendingCheckIn(
             id: CheckInID(UUID()), member: MemberID(UUID()), day: tuesday,
             createdAt: Timestamp(millisecondsSince1970: 0),
-            audience: try Audience(shared ? [squad] : []), draft: draft)
+            audience: try Audience([squad]), inFeed: inFeed, draft: draft)
     }
 
     private func page() -> ComposeModel {
@@ -26,14 +26,14 @@ import Testing
     @Test func aRefusedTrainingComesBackWithEverythingItHad() throws {
         let photo = PreparedPhoto(id: UUID(), jpeg: Data([1]), size: nil)
         let post = try refused(
-            .trained(.sport("swim"), try WorkoutMinutes(40), PostBody(photos: [photo], caption: "晨游")), shared: false)
+            .trained(.sport("swim"), try WorkoutMinutes(40), PostBody(photos: [photo], caption: "晨游")), inFeed: false)
         let model = page()
         model.restore(post)
         #expect(model.activity == .sport("swim"))
         #expect(model.minutes == (try WorkoutMinutes(40)))
         #expect(model.line == "晨游")
         #expect(model.photos == [.new(photo)])
-        #expect(!model.isShared)
+        #expect(!model.inFeed)
         // Its day is today, so it posts for whatever day it is when sent.
         #expect(model.day == nil)
     }

@@ -42,7 +42,9 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
         -> [FeedPost]
     {
         if offline { throw .notSent }
-        return posts.filter { $0.checkIn.audience.squads.contains(squad) && (first...last).contains($0.checkIn.day) }
+        return posts.filter {
+            $0.checkIn.inFeed && $0.checkIn.audience.squads.contains(squad) && (first...last).contains($0.checkIn.day)
+        }
     }
 
     public func characters(in squad: SquadID) async throws(FeedError) -> [MemberID: MemberCharacter] {

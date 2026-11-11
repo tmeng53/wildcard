@@ -24,8 +24,6 @@ private let squadB = SquadID(UUID(uuidString: "44444444-4444-4444-4444-444444444
 @Test func audienceIsDistinctSquads() throws {
     #expect(try Audience([squadA, squadB]).squads == [squadA, squadB])
     #expect(try Audience([]).squads == [])
-    #expect(try Audience([]).isOnlyMe)
-    #expect(try !Audience([squadA]).isOnlyMe)
     #expect(throws: ContractsError.repeatedSquad) { try Audience([squadA, squadA]) }
 }
 

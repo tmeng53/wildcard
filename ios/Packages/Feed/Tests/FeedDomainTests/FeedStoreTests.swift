@@ -193,7 +193,7 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     #expect(feed.characters == [jay: jays])
 }
 
-/// A post of mine shared to no squad, opened from 我的动态, draws me from my own squad.
+/// A check-in of mine made before I joined a squad, opened from 我的动态, draws me from my own squad.
 @MainActor @Test func myPostSharedToNoSquadOpensWithMyCharacter() async throws {
     let solo = FeedPost(
         checkIn: CheckIn(
@@ -205,7 +205,7 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
     await source.setCharacters([coco: mine])
     let page = store(source).store(of: solo.id)
     await page.load()
-    #expect(page.post(solo.id)?.checkIn.audience.isOnlyMe == true)
+    #expect(page.post(solo.id)?.checkIn.audience.squads.isEmpty == true)
     #expect(page.characters == [coco: mine])
 }
 

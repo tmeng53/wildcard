@@ -195,11 +195,19 @@ const SquadBody = z.object({ id: z.uuid(), inviteCode: z.string() });
 
 /** A squad `captain` made, with `others` in it too. */
 async function squadOf(captain: { token: string }, ...others: { token: string }[]) {
+  return squadIn('America/New_York', [captain, ...others]);
+}
+
+/** As `squadOf`, on `timeZone`'s clock: the first of `members` makes it. */
+async function squadIn(
+  timeZone: string,
+  [captain, ...others]: [{ token: string }, ...{ token: string }[]],
+) {
   const made = await call({
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团', timeZone: 'America/New_York' },
+    body: { version: 1, name: '早八跑团', timeZone },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
@@ -388,7 +396,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     const [me, mate, stranger] = [await signUp(), await signUp(), await signUp()];
     await profileOf(me, { nickname: '小米' });
     await profileOf(mate, { nickname: '阿杰', jerseyNumber: 7 });
-    const squad = await squadOf(me, mate);
+    // On the members' own clock (UTC), so the week and today below are the same dates on every clock.
+    const squad = await squadIn('UTC', [me, mate]);
     const elsewhere = await squadOf(await signUp());
     await alsoJoinedEarlier(db, { squad: elsewhere, member: mate.userId });
     await award({ squad: squad, weekStart: '2026-10-19', member: mate.userId }, [
