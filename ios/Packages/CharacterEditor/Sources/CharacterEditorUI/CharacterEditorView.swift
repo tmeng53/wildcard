@@ -8,7 +8,8 @@ import SwiftUI
 /// The character editor: the character on its ticket at the top, with its nickname on the stub
 /// under its feet and the day the member signed up in the corner; tabs of choices below; and one
 /// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
-/// from 我 it shows 取消, the member's 球衣号码 when the app passes one, and saves.
+/// from 我 it is a pushed page: the system's back, the member's 球衣号码 when the app passes one
+/// and undo and shuffle in the bar, and it saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
@@ -33,7 +34,9 @@ public struct CharacterEditorView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            EditorHeader(model: model, context: context, jerseyNumber: jerseyNumber, onBack: onBack)
+            if case .signUp(let step, let total) = context {
+                EditorHeader(model: model, step: step, total: total, onBack: onBack)
+            }
             if showsTitle {
                 Text(copy: "创建你的外卡运动员", bundle: .module)
                     .typeStyle(TypeRamp.taskTitle)
@@ -77,9 +80,14 @@ public struct CharacterEditorView: View {
                 context: context, result: model.result, isNaming: isNaming, onNamed: { isNaming = false },
                 onDone: onDone)
         }
+        .toolbar {
+            if context == .profile {
+                EditorBarItems(model: model, jerseyNumber: jerseyNumber)
+            }
+        }
         .onAppear { model.start() }
-        // A brand screen wherever it opens: sign-up, or a cover over 我 that doesn't inherit
-        // 我's tone. Its button, tabs, picks and swatches never wear the squad's scene.
+        // A brand screen wherever it opens: sign-up, or a page over 我 or 商店街 that doesn't take
+        // their tone. Its button, tabs, picks and swatches never wear the squad's scene.
         .accentTone(.brand)
     }
 
@@ -103,39 +111,21 @@ public struct JerseyNumberEntry {
     }
 }
 
-/// Back or 取消 on the leading side, the sign-up step segments or, from 我, the 球衣号码 in the
-/// middle, undo and shuffle on the trailing side.
+/// Sign-up's header: back on the leading side, the step segments in the middle, undo and shuffle
+/// on the trailing side.
 private struct EditorHeader: View {
     let model: CharacterEditorModel
-    let context: EditorContext
-    let jerseyNumber: JerseyNumberEntry?
+    let step: Int
+    let total: Int
     let onBack: () -> Void
 
     var body: some View {
         HStack(spacing: Space.xs) {
-            switch context {
-            case .signUp:
-                HeaderButton(Text(copy: "返回", bundle: .module), systemImage: "chevron.left", action: onBack)
-                    .accessibilityIdentifier("editor.back")
-            case .profile:
-                HeaderTextButton(Text(copy: "取消", bundle: .module), action: onBack)
-                    .accessibilityIdentifier("editor.cancel")
-            }
-            if case .signUp(let step, let total) = context {
-                StepSegments(step: step, of: total)
-                    .padding(.horizontal, Space.xs)
-                    .accessibilityIdentifier("editor.steps")
-            } else {
-                Spacer(minLength: 0)
-                if context == .profile, let jerseyNumber {
-                    Button(action: jerseyNumber.open) {
-                        Text(copy: "球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
-                    }
-                    .buttonStyle(TextButtonStyle(.plain))
-                    .accessibilityIdentifier("editor.jerseyNumber")
-                    Spacer(minLength: 0)
-                }
-            }
+            HeaderButton(Text(copy: "返回", bundle: .module), systemImage: "chevron.left", action: onBack)
+                .accessibilityIdentifier("editor.back")
+            StepSegments(step: step, of: total)
+                .padding(.horizontal, Space.xs)
+                .accessibilityIdentifier("editor.steps")
             HeaderButton(Text(copy: "撤销", bundle: .module), systemImage: "arrow.uturn.backward") { model.undo() }
                 .disabled(!model.draft.canUndo)
                 .accessibilityIdentifier("editor.undo")
@@ -144,6 +134,48 @@ private struct EditorHeader: View {
         }
         .padding(.horizontal, Space.pageMargin)
         .padding(.vertical, Space.xs)
+    }
+}
+
+/// From 我, in the pushed page's bar beside the system's back: the 球衣号码 in the middle, undo
+/// and shuffle on the trailing side.
+private struct EditorBarItems: ToolbarContent {
+    let model: CharacterEditorModel
+    let jerseyNumber: JerseyNumberEntry?
+
+    var body: some ToolbarContent {
+        if let jerseyNumber {
+            ToolbarItem(placement: .principal) {
+                Button(action: jerseyNumber.open) {
+                    Text(copy: "球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
+                }
+                .buttonStyle(TextButtonStyle(.plain))
+                .accessibilityIdentifier("editor.jerseyNumber")
+            }
+        }
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Button {
+                model.undo()
+            } label: {
+                Label {
+                    Text(copy: "撤销", bundle: .module)
+                } icon: {
+                    Image(systemName: "arrow.uturn.backward")
+                }
+            }
+            .disabled(!model.draft.canUndo)
+            .accessibilityIdentifier("editor.undo")
+            Button {
+                model.shuffle()
+            } label: {
+                Label {
+                    Text(copy: "随机换一个", bundle: .module)
+                } icon: {
+                    Image(systemName: "dice")
+                }
+            }
+            .accessibilityIdentifier("editor.shuffle")
+        }
     }
 }
 

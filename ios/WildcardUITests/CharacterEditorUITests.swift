@@ -215,7 +215,9 @@ final class CharacterEditorUITests: XCTestCase {
         let save = app.buttons["editor.done"]
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(save.label, "Save")
-        XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
+        // From 我 it is a pushed page: undo and shuffle sit in the system's bar.
+        XCTAssertTrue(app.navigationBars.buttons["editor.undo"].exists, "undo isn't in the bar")
+        XCTAssertEqual(app.buttons["editor.shuffle"].label, "Shuffle")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Looks")
         app.buttons["editor.tab.outfit"].tap()
         let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]

@@ -266,8 +266,13 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(
-                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
+            // As from 我, it is a page on a NavigationStack, whose bar holds its buttons.
+            NavigationStack {
+                CharacterEditorView(
+                    model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in }
+                )
+                .toolbarVisibility(CharacterEditorDemo.context == .profile ? .automatic : .hidden, for: .navigationBar)
+            }
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 ContinueWithApple {
