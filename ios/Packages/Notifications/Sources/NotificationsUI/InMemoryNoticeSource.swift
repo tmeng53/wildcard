@@ -142,6 +142,30 @@ public actor InMemoryNoticeSource: NoticeSource {
                 style: .celebration, icon: Broadcast.Gift(kind: .store, id: store), gifts: gifts))
     }
 
+    /// A letter from the team (感谢信), for the sample squad: thanks for an idea we used, with the
+    /// sample member's 点子王 badge and a piece the bundled art has. Its id is new on each launch,
+    /// so this phone flies it in every time.
+    public static func thanksLetter() -> Notice.Subject {
+        let words = { (hans: String, english: String, hant: String) in
+            CatalogNames(simplifiedChinese: hans, english: english, traditionalChinese: hant)
+        }
+        return .broadcast(
+            Broadcast(
+                id: "thanks-\(UUID().uuidString)",
+                title: words("你的建议被外卡团队采纳了", "We used your idea!", "你的建議被外卡團隊採納了"),
+                body: words("送你一个神秘礼物", "A little gift is waiting for you", "送你一個神秘禮物"),
+                action: Broadcast.Action(
+                    label: words("去看看", "Take a look", "去看看"), destination: .wardrobe(piece: "warmup-beanie")),
+                style: .banner, gifts: [],
+                letter: Broadcast.Letter(
+                    lines: words(
+                        "你提的点子，我们做进外卡了。\n从今天起，你是外卡的「首席点子官」。\n「点子王」徽章和这顶帽子送你，有新点子随时告诉我们。\n谢谢你！",
+                        "We built your idea into Wildcard.\nFrom today you are our Chief Idea Officer.\n"
+                            + "The Idea King badge and this beanie are yours. Tell us your next idea any time.\nThank you!",
+                        "你提的點子，我們做進外卡了。\n從今天起，你是外卡的「首席點子官」。\n「點子王」徽章和這頂帽子送你，有新點子隨時告訴我們。\n謝謝你！"),
+                    presents: [.badge("idea-king"), .piece("warmup-beanie")])))
+    }
+
     /// 毛头's morning note, as the approved 便条 shows it.
     private static func sampleNote(on day: Date) -> CoachMemberNote {
         CoachMemberNote(

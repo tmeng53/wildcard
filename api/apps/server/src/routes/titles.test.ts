@@ -627,6 +627,11 @@ describe('the team’s badges', () => {
     await rewards.putBadge({
       id: badge,
       names: { 'zh-Hans': '捉虫队', 'zh-Hant': '捉蟲隊', en: 'Bug Hunter' },
+      lines: {
+        'zh-Hans': '外卡专业捕虫团队 · 认证队员',
+        'zh-Hant': '外卡專業捕蟲團隊 · 認證隊員',
+        en: 'Certified member, Wildcard Bug Squad',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       offered: true,
@@ -645,6 +650,11 @@ describe('the team’s badges', () => {
     const shown = {
       id: badge,
       name: { zhHans: '捉虫队', en: 'Bug Hunter', zhHant: '捉蟲隊' },
+      line: {
+        zhHans: '外卡专业捕虫团队 · 认证队员',
+        en: 'Certified member, Wildcard Bug Squad',
+        zhHant: '外卡專業捕蟲團隊 · 認證隊員',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       times: 2,

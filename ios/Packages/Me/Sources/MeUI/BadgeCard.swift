@@ -18,7 +18,7 @@ enum BadgeOrigin {
 /// One badge opened from the board, as the approved design draws it: a dark collectible card
 /// whose top is the badge's colour, the badge large over the seam, the title, a chip for each week
 /// it was won, the latest 颁奖词, and 装备 on the member's own card. A badge the team gave shows
-/// the same card, from 外卡团队, with neither weeks nor 颁奖词.
+/// the same card, from 外卡团队, with no weeks and its line, if the team wrote one, as its 颁奖词.
 struct BadgeCard: View {
     /// What the card shows of a title or a team badge.
     struct Shown {
@@ -201,7 +201,7 @@ enum OpenedBadge: Identifiable {
         case .team(let badge):
             BadgeCard.Shown(
                 name: badge.name.localized(in: [AppLanguage.current.rawValue]), badge: badge.badge, times: badge.times,
-                weeks: [], speech: nil, from: .team)
+                weeks: [], speech: badge.line?.localized(in: [AppLanguage.current.rawValue]), from: .team)
         }
     }
 }

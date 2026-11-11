@@ -30,6 +30,7 @@ export interface Badges {
   glyph: string;
   id: string;
   kind: Generated<string>;
+  lines: Json | null;
   names: Json;
   offered: Generated<boolean>;
   tone: string;
