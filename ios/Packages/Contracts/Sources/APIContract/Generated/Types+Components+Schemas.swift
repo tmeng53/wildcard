@@ -270,6 +270,97 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/icon`.
             public var icon: Components.Schemas.NoticeEntry.IconPayload?
+            /// A letter from the team (`broadcast`), opened from an envelope over 今天 and from this notice, in place of its `style`; left out for a notice without one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter`.
+            public struct TeamLetterPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/lines`.
+                public struct LinesPayload: Codable, Hashable, Sendable {
+                    /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/lines/value1`.
+                    public var value1: Components.Schemas.LocalizedWords
+                    /// Its words under the member’s name, a line break per line; signed 外卡团队.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/lines/value2`.
+                    public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                    /// Creates a new `LinesPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - value1:
+                    ///   - value2: Its words under the member’s name, a line break per line; signed 外卡团队.
+                    public init(
+                        value1: Components.Schemas.LocalizedWords,
+                        value2: OpenAPIRuntime.OpenAPIValueContainer
+                    ) {
+                        self.value1 = value1
+                        self.value2 = value2
+                    }
+                    public init(from decoder: any Swift.Decoder) throws {
+                        self.value1 = try .init(from: decoder)
+                        self.value2 = try .init(from: decoder)
+                    }
+                    public func encode(to encoder: any Swift.Encoder) throws {
+                        try self.value1.encode(to: encoder)
+                        try self.value2.encode(to: encoder)
+                    }
+                }
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/lines`.
+                public var lines: Components.Schemas.NoticeEntry.TeamLetterPayload.LinesPayload
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/PresentsPayload`.
+                public struct PresentsPayloadPayload: Codable, Hashable, Sendable {
+                    /// `piece` or `badge`. Skip another.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/PresentsPayload/kind`.
+                    public var kind: Swift.String
+                    /// The piece’s or team badge’s id.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/PresentsPayload/id`.
+                    public var id: Swift.String
+                    /// Creates a new `PresentsPayloadPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - kind: `piece` or `badge`. Skip another.
+                    ///   - id: The piece’s or team badge’s id.
+                    public init(
+                        kind: Swift.String,
+                        id: Swift.String
+                    ) {
+                        self.kind = kind
+                        self.id = id
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case kind
+                        case id
+                    }
+                }
+                /// What the team gave the caller, drawn under it with 立刻穿上.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/presents`.
+                public typealias PresentsPayload = [Components.Schemas.NoticeEntry.TeamLetterPayload.PresentsPayloadPayload]
+                /// What the team gave the caller, drawn under it with 立刻穿上.
+                ///
+                /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter/presents`.
+                public var presents: Components.Schemas.NoticeEntry.TeamLetterPayload.PresentsPayload
+                /// Creates a new `TeamLetterPayload`.
+                ///
+                /// - Parameters:
+                ///   - lines:
+                ///   - presents: What the team gave the caller, drawn under it with 立刻穿上.
+                public init(
+                    lines: Components.Schemas.NoticeEntry.TeamLetterPayload.LinesPayload,
+                    presents: Components.Schemas.NoticeEntry.TeamLetterPayload.PresentsPayload
+                ) {
+                    self.lines = lines
+                    self.presents = presents
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case lines
+                    case presents
+                }
+            }
+            /// A letter from the team (`broadcast`), opened from an envelope over 今天 and from this notice, in place of its `style`; left out for a notice without one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/teamLetter`.
+            public var teamLetter: Components.Schemas.NoticeEntry.TeamLetterPayload?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/GiftsPayload`.
             public struct GiftsPayloadPayload: Codable, Hashable, Sendable {
                 /// `store`, `prop` or `piece`. Skip another.
@@ -340,6 +431,7 @@ extension Components {
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
             ///   - style: How the app first shows it (`broadcast`): `banner` (the home’s notice banner) or `celebration` (full screen). Show another as `banner`.
             ///   - icon: The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol.
+            ///   - teamLetter: A letter from the team (`broadcast`), opened from an envelope over 今天 and from this notice, in place of its `style`; left out for a notice without one.
             ///   - gifts: What it gave the caller when they were told (`broadcast`), already among their unlocks; left out when it gave nothing.
             public init(
                 id: Swift.Int,
@@ -374,6 +466,7 @@ extension Components {
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
                 style: Swift.String? = nil,
                 icon: Components.Schemas.NoticeEntry.IconPayload? = nil,
+                teamLetter: Components.Schemas.NoticeEntry.TeamLetterPayload? = nil,
                 gifts: Components.Schemas.NoticeEntry.GiftsPayload? = nil
             ) {
                 self.id = id
@@ -408,6 +501,7 @@ extension Components {
                 self.action = action
                 self.style = style
                 self.icon = icon
+                self.teamLetter = teamLetter
                 self.gifts = gifts
             }
             public enum CodingKeys: String, CodingKey {
@@ -443,6 +537,7 @@ extension Components {
                 case action
                 case style
                 case icon
+                case teamLetter
                 case gifts
             }
         }
@@ -10305,6 +10400,37 @@ extension Components {
             public var id: Swift.String
             /// - Remark: Generated from `#/components/schemas/TeamBadge/name`.
             public var name: Components.Schemas.LocalizedWords
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/line`.
+            public struct LinePayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/TeamBadge/line/value1`.
+                public var value1: Components.Schemas.LocalizedWords
+                /// What its card says under its name, as a title’s 颁奖词 does; left out, nothing.
+                ///
+                /// - Remark: Generated from `#/components/schemas/TeamBadge/line/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `LinePayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: What its card says under its name, as a title’s 颁奖词 does; left out, nothing.
+                public init(
+                    value1: Components.Schemas.LocalizedWords,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/TeamBadge/line`.
+            public var line: Components.Schemas.TeamBadge.LinePayload?
             /// The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
             ///
             /// - Remark: Generated from `#/components/schemas/TeamBadge/glyph`.
@@ -10326,6 +10452,7 @@ extension Components {
             /// - Parameters:
             ///   - id: The badge’s id.
             ///   - name:
+            ///   - line:
             ///   - glyph: The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.
             ///   - tone: Its colour, as #RRGGBB.
             ///   - times: How many times the member got it: ×N.
@@ -10333,6 +10460,7 @@ extension Components {
             public init(
                 id: Swift.String,
                 name: Components.Schemas.LocalizedWords,
+                line: Components.Schemas.TeamBadge.LinePayload? = nil,
                 glyph: Swift.String,
                 tone: Swift.String,
                 times: Swift.Int,
@@ -10340,6 +10468,7 @@ extension Components {
             ) {
                 self.id = id
                 self.name = name
+                self.line = line
                 self.glyph = glyph
                 self.tone = tone
                 self.times = times
@@ -10348,6 +10477,7 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case id
                 case name
+                case line
                 case glyph
                 case tone
                 case times

@@ -47,6 +47,30 @@ const ArtItem = z.strictObject({
 export const BroadcastGift = ArtItem.extend({ kind: z.enum(['store', 'piece']) });
 export type BroadcastGift = z.infer<typeof BroadcastGift>;
 
+/** A badge or piece the team gave the member, drawn on its letter. */
+export const LetterPresent = z.strictObject({
+  kind: z.enum(['piece', 'badge']),
+  id: z.string().min(1).max(48),
+});
+export type LetterPresent = z.infer<typeof LetterPresent>;
+
+/**
+ * A letter from the team (感谢信, Tracy 2026-11-11), opened from an envelope over 今天: its lines
+ * under the member's name, signed 外卡团队, with what the team gave them drawn under it and
+ * 立刻穿上. Give the presents with `give_reward` first; the letter only shows them.
+ */
+export const BroadcastLetter = z.strictObject({
+  lines: words(300),
+  presents: z
+    .array(LetterPresent)
+    .max(4)
+    .refine(
+      (presents) => new Set(presents.map((p) => `${p.kind}:${p.id}`)).size === presents.length,
+      'each present once',
+    ),
+});
+export type BroadcastLetter = z.infer<typeof BroadcastLetter>;
+
 /** What a broadcast says and when it runs, as an admin writes it and it is stored. */
 export const BroadcastValue = z
   .strictObject({
@@ -71,6 +95,12 @@ export const BroadcastValue = z
     icon: ArtItem.optional().describe(
       'A store’s sign, a prop or a piece the app already draws, beside its words (such as ' +
         '`{ "kind": "store", "id": "powder" }`); left out, a sparkle. A build without it shows the sparkle.',
+    ),
+    letter: BroadcastLetter.optional().describe(
+      'A letter from the team opened from an envelope over 今天, instead of the banner or ' +
+        'celebration: `lines` (its words under the member’s name, a line break per line, signed ' +
+        '外卡团队) and `presents` (badges or pieces the team gave them with give_reward, drawn ' +
+        'under it with 立刻穿上). A build without letters shows `style`, so keep a title and button.',
     ),
     gifts: z
       .array(BroadcastGift)

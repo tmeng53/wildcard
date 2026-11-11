@@ -240,6 +240,49 @@
             "additionalProperties": false,
             "description": "The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app draws; left out, or one this build doesn’t draw, shows its own symbol."
           },
+          "teamLetter": {
+            "type": "object",
+            "properties": {
+              "lines": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LocalizedWords"
+                  },
+                  {
+                    "description": "Its words under the member’s name, a line break per line; signed 外卡团队."
+                  }
+                ]
+              },
+              "presents": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "description": "`piece` or `badge`. Skip another."
+                    },
+                    "id": {
+                      "type": "string",
+                      "description": "The piece’s or team badge’s id."
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "What the team gave the caller, drawn under it with 立刻穿上."
+              }
+            },
+            "required": [
+              "lines",
+              "presents"
+            ],
+            "additionalProperties": false,
+            "description": "A letter from the team (`broadcast`), opened from an envelope over 今天 and from this notice, in place of its `style`; left out for a notice without one."
+          },
           "gifts": {
             "type": "array",
             "items": {
@@ -6558,6 +6601,16 @@
           },
           "name": {
             "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "line": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedWords"
+              },
+              {
+                "description": "What its card says under its name, as a title’s 颁奖词 does; left out, nothing."
+              }
+            ]
           },
           "glyph": {
             "type": "string",

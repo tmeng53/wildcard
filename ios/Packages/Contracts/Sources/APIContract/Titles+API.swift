@@ -28,8 +28,9 @@ extension BoardTitle {
 extension TeamBadge {
     public init(_ wire: Components.Schemas.TeamBadge) {
         self.init(
-            id: wire.id, name: CatalogNames(wire.name), glyph: wire.glyph, tone: wire.tone, times: wire.times,
-            latestAt: wire.latestAt)
+            id: wire.id, name: CatalogNames(wire.name), line: wire.line.map { CatalogNames($0.value1) },
+            glyph: wire.glyph,
+            tone: wire.tone, times: wire.times, latestAt: wire.latestAt)
     }
 }
 

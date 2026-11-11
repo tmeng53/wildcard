@@ -59,7 +59,7 @@ public final class TodayModel {
     /// anywhere outside its capsules closes it), a check-in is being written (the compose and
     /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        guard !holdsTabBar, opening == nil, shownLetter == nil else { return false }
+        guard !holdsTabBar, opening == nil, shownLetter == nil, shownTeamLetter == nil else { return false }
         return switch step {
         case .scene: !isBurstOpen
         case .composing, .disclaimer: false
@@ -160,6 +160,9 @@ public final class TodayModel {
     /// Refused posts the member was told of and hasn't opened again, oldest first, for 重发.
     var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
+    /// The team's letter over 今天, and how it draws and answers what the team gave (`+TeamLetter`).
+    var teamLetter: ShownTeamLetter?
+    @ObservationIgnored public var teamLetterPlaces: TeamLetterPlaces?
     public var isHomeInFront = true
     /// A screen covers the tabs (the editor, a 战报), where a banner would drop in unseen.
     public var isCovered = false
@@ -249,8 +252,7 @@ public final class TodayModel {
     /// The days a 请假条 can't go on: one with a 练了.
     var blockedForDisclaimer: Set<LocalDay> { store.disclaimerBlockedDays }
 
-    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
-    /// writes on the scene itself.
+    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.

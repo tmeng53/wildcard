@@ -34,6 +34,7 @@ export {
 } from './domain/unlocks.js';
 export {
   BadgeEdit,
+  BadgeLines,
   BadgeNames,
   CatalogRewardId,
   EventName,

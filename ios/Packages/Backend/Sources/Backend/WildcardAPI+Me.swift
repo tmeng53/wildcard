@@ -110,7 +110,7 @@ extension WildcardAPI {
             SquadmateCard(
                 character: try card.character.map(MemberCharacter.init),
                 jerseyNumber: try card.jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) },
-                squadPlace: card.squadPlace, joinedAt: card.joinedAt,
+                squadPlace: card.squadPlace,
                 totals: CheckInTotals(
                     trainedDays: card.trainedDays, healthyMeals: card.healthyMeals, cheatMeals: card.cheatMeals,
                     disclaimers: card.disclaimers,
@@ -251,8 +251,6 @@ public struct SquadmateCard: Hashable, Sendable {
     public let jerseyNumber: JerseyNumber?
     /// Their place in the squad, the first to join being 1.
     public let squadPlace: Int
-    /// When they signed up; nil before they saved a profile.
-    public let joinedAt: Date?
     public let totals: CheckInTotals
     /// Their own 本周 x/y.
     public let week: WeekCount
