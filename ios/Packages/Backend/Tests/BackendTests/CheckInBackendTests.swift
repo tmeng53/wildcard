@@ -238,6 +238,8 @@ private struct Dice: DisclaimerWriter {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     try await author.api.agreeToAI(copyVersion: 3)
+    // A member in no squad has no AI budget, so they'd get the dice by 429 before the key matters.
+    _ = try await stack.squad(of: author)
     // The local API runs without ANTHROPIC_API_KEY, so it answers 503.
     await #expect(throws: APIError.unavailable) {
         try await author.api.disclaimerDrafts(reason: "早上没起来", style: .funny)
