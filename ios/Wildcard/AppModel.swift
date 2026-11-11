@@ -366,7 +366,7 @@ final class AppModel {
     private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
         guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
         let model = newSignUp(hasAgreedToAI: true, takesInvite: false)
-        return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
+        return await model.resume(in: squad, madeIt: progress.madeIt, rejoining: progress.rejoining) ? model : nil
     }
 }
 

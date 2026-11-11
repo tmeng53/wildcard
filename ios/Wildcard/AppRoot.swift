@@ -51,7 +51,9 @@ struct AppRoot: View {
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
                 }
                 .onChange(of: signUp.joinedSquad) { _, squad in
-                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
+                    if let squad {
+                        SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad, rejoining: signUp.isRejoining)
+                    }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(

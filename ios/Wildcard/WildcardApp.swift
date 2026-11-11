@@ -296,7 +296,8 @@ struct WildcardApp: App {
             .loadingCover(isSigningIn) { LaunchCover() }
             .removalAlert($removedFrom)
             .task {
-                guard LaunchOptions.rejoins, await signUp.rejoin() else { return }
+                // Once: a language switch makes the view again, and its task with it.
+                guard LaunchOptions.rejoins, !signUp.isRejoining, await signUp.rejoin() else { return }
                 removedFrom = InMemorySignUpService.formerSquadName
             }
             .onChange(of: signUp.finished) { _, finished in

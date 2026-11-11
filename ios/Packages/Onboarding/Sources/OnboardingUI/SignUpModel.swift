@@ -64,7 +64,7 @@ public final class SignUpModel {
     /// A call under way: the step's button shows it's busy and can't be tapped twice.
     private(set) var isWorking = false
     /// What went wrong with the step's last call, until the member changes something.
-    private(set) var failure: SignUpError?
+    internal(set) var failure: SignUpError?
 
     /// This week's days, Monday first, for the poster's weekday names.
     let weekDays: [LocalDay]
@@ -118,9 +118,11 @@ public final class SignUpModel {
     }
 
     /// Carries on a sign-up closed after 你的小队, at 关于你 with its saved character; false if not.
-    public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
+    /// `rejoining`: a member back in no squad, who carries on at 上场 or 这周在哪练？ instead.
+    public func resume(in squad: SquadID, madeIt: Bool, rejoining: Bool = false) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
         (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
+        isRejoining = rejoining && resumed.character != nil
         teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
         if let made = resumed.character {
             (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
@@ -129,7 +131,7 @@ public final class SignUpModel {
                 look: made.outfit, persona: made.persona, nickname: nickname, stock: stock)
             await myCharacter?.load(idle: false)
         }
-        show(.sports)
+        show(afterSquad)
         return true
     }
 
@@ -194,11 +196,6 @@ public final class SignUpModel {
     }
 
     // MARK: 你的小队
-
-    func choose(_ choice: SquadDraft.Choice) {
-        squad.choice = choice
-        failure = nil
-    }
 
     func typeCode(_ text: String) {
         squad.typedCode = text

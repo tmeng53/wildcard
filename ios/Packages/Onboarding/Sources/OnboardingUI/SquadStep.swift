@@ -285,6 +285,11 @@ extension SignUpModel {
     }
 
     /// The squad's goal this week, before and after the member's 人均 N 次 adds to it.
+    func choose(_ choice: SquadDraft.Choice) {
+        squad.choice = choice
+        failure = nil
+    }
+
     var squadGoal: (before: Int, after: Int) {
         let before = joined?.weekGoal ?? 0
         return (before, before + (joined?.daysPerMember ?? 0))
