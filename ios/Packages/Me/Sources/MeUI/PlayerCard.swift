@@ -266,7 +266,7 @@ private struct FrontStat<Value: View>: View {
 
 /// The back: the name and number, the career count of 练了 large with 健康餐 and 请假条 beside
 /// it, then the badge board, three to a row, ending on the dashed slot of the next Sunday's. On a
-/// squadmate's card it is opened from their 出赛表, with 「‹ 出赛表」 back to it and no next slot.
+/// squadmate's card it is opened from their 出赛表, with 「‹ 徽章」 back to it and no next slot.
 private struct CardBack: View {
     let face: PlayerCardFace
     /// Back to a squadmate's 出赛表; nil on the member's own card.
@@ -278,33 +278,14 @@ private struct CardBack: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let toSchedule {
-                Button(action: toSchedule) {
-                    Label {
-                        Text(copy: "出赛表", bundle: .module)
-                    } icon: {
-                        Image(systemName: "chevron.left")
-                    }
-                    .typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                }
-                .buttonStyle(PressableButtonStyle())
-                .padding(.bottom, Space.xxs)
-                .accessibilityIdentifier("me.cardBackToSchedule")
-            }
-            HStack(alignment: .firstTextBaseline) {
-                Text(face.character.nickname)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                    .lineLimit(1)
-                Spacer(minLength: Space.s)
-                if let number = face.number {
-                    Text(verbatim: "#\(number.text)")
-                        .typeStyle(TypeRamp.scoreSmall)
-                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                        .monospacedDigit()
-                }
-            }
+            // A squadmate's goes back to their 出赛表 as 穿搭 does, with how many badges.
+            CardSideHeader(
+                face: face,
+                back: toSchedule.map {
+                    CardSideHeader.Back(
+                        title: Text(copy: "徽章", bundle: .module), count: Text(verbatim: "\(face.board.count)"),
+                        identifier: "me.cardBackToSchedule", action: $0)
+                })
             HStack(alignment: .lastTextBaseline, spacing: Space.xs) {
                 Score(count: face.counts.trainedDays, size: .hero, onInk: true)
                 Text(copy: "card.career \(face.counts.healthyMeals) \(face.counts.disclaimers)", bundle: .module)
@@ -316,19 +297,22 @@ private struct CardBack: View {
             }
             .padding(.top, Space.xs)
             .accessibilityElement(children: .combine)
-            HStack(alignment: .firstTextBaseline) {
-                Text(copy: "徽章", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(Color(role: .fgOnInk, in: theme))
-                Spacer()
-                Text(verbatim: "\(face.board.count)")
-                    .typeStyle(TypeRamp.scoreCaption)
-                    .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
-                    .monospacedDigit()
+            // The member's own names the board here; a squadmate's names it in the header.
+            if toSchedule == nil {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(copy: "徽章", bundle: .module)
+                        .typeStyle(TypeRamp.label)
+                        .foregroundStyle(Color(role: .fgOnInk, in: theme))
+                    Spacer()
+                    Text(verbatim: "\(face.board.count)")
+                        .typeStyle(TypeRamp.scoreCaption)
+                        .foregroundStyle(Color(role: .fgOnInkMuted, in: theme))
+                        .monospacedDigit()
+                }
+                .padding(.top, Space.s)
+                .overlay(alignment: .top) { Hairline(on: .ink).offset(y: -Space.xxs) }
+                .padding(.top, Space.xxs)
             }
-            .padding(.top, Space.s)
-            .overlay(alignment: .top) { Hairline(on: .ink).offset(y: -Space.xxs) }
-            .padding(.top, Space.xxs)
             ScrollView {
                 LazyVGrid(columns: Self.columns, spacing: Space.s) {
                     // The team's tickets first: few, and given by hand.
