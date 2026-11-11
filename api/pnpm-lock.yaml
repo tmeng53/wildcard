@@ -74,6 +74,9 @@ importers:
       '@wildcard/ai-consent':
         specifier: workspace:*
         version: link:../../packages/ai-consent
+      '@wildcard/ai-usage':
+        specifier: workspace:*
+        version: link:../../packages/ai-usage
       '@wildcard/app-copy':
         specifier: workspace:*
         version: link:../../packages/app-copy
@@ -199,6 +202,34 @@ importers:
       '@wildcard/errors':
         specifier: workspace:*
         version: link:../errors
+      kysely:
+        specifier: 0.29.7
+        version: 0.29.7
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
+
+  packages/ai-usage:
+    dependencies:
+      '@wildcard/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@wildcard/language-model':
+        specifier: workspace:*
+        version: link:../language-model
+      '@wildcard/time-zones':
+        specifier: workspace:*
+        version: link:../time-zones
       kysely:
         specifier: 0.29.7
         version: 0.29.7

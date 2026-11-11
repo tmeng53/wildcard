@@ -7,14 +7,18 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import {
-  createPostgresDraftAllowance,
+  createPostgresDraftSettings,
   type DisclaimerDraftTables,
-} from '../adapters/postgres-draft-allowance.js';
-import { createPostgresDraftSettings } from '../adapters/postgres-draft-settings.js';
+} from '../adapters/postgres-draft-settings.js';
 import { DraftReason, MemberId, type PromptMeme } from '../domain/draft-request.js';
 import type { DraftSettings } from '../domain/settings.js';
 import type { ModelReply } from '../domain/drafts.js';
-import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
+import {
+  AiBudgetSpentError,
+  LanguageModelUnavailableError,
+  type LanguageModel,
+  type ModelPayer,
+} from '@wildcard/language-model';
 import { createDisclaimerDrafts } from './disclaimer-drafts.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database. The
@@ -43,7 +47,6 @@ function setup(
     memes?: PromptMeme[];
     /** The random numbers the use case draws, in order; the last one repeats. */
     rolls?: number[];
-    now?: Date;
     consentsToAi?: boolean;
     settings?: Partial<DraftSettings>;
   } = {},
@@ -51,15 +54,14 @@ function setup(
   const rolls = options.rolls ?? [0.99];
   let drawn = 0;
   const prompts: string[] = [];
-  const asked: { model: string; instructions: string }[] = [];
+  const asked: { model: string; instructions: string; payer: ModelPayer }[] = [];
   const model: LanguageModel = {
-    answer: async ({ model, instructions, prompt, reply }) => {
+    answer: async ({ model, instructions, prompt, reply, payer }) => {
       prompts.push(prompt);
-      asked.push({ model, instructions });
+      asked.push({ model, instructions, payer });
       return reply.parse(await (options.answer ?? (() => Promise.resolve(good)))());
     },
   };
-  let now = options.now ?? new Date('2026-10-19T04:00:00.000Z');
   const saved = createPostgresDraftSettings(db);
   const drafts = createDisclaimerDrafts({
     model,
@@ -68,18 +70,13 @@ function setup(
       current: async () => ({ ...(await saved.current()), ...options.settings }),
     },
     memes: () => Promise.resolve(options.memes ?? []),
-    allowance: createPostgresDraftAllowance(db),
     aiConsent: () => Promise.resolve(options.consentsToAi ?? true),
-    clock: () => now,
     random: () => rolls[Math.min(drawn++, rolls.length - 1)] ?? 0,
   });
   return {
     drafts,
     prompts,
     asked,
-    later: (ms: number) => {
-      now = new Date(now.getTime() + ms);
-    },
   };
 }
 
@@ -133,72 +130,43 @@ describe('createDisclaimerDrafts', () => {
     expect(asked[0]?.instructions).toContain('"outcome":"selfHarm"');
   });
 
-  it('refuses while the settings turn drafts off, without asking the model or counting', async () => {
+  it('counts each call to the member who asked', async () => {
+    const { drafts, asked } = setup();
     const member = await newMember();
+    await drafts.write(request(member));
+    expect(asked[0]?.payer).toStrictEqual({ member });
+  });
+
+  it('refuses while the settings turn drafts off, without asking the model', async () => {
     const off = setup({ settings: { writing: false } });
-    expect(await reasonOf(off.drafts.write(request(member)))).toBe('DISCLAIMER_WRITER_UNAVAILABLE');
-    expect(off.prompts).toStrictEqual([]);
-    expect(
-      await db
-        .selectFrom('disclaimer_draft_requests')
-        .select('id')
-        .where('member_id', '=', member)
-        .execute(),
-    ).toStrictEqual([]);
-  });
-
-  it('gives each member as many batches as the settings say', async () => {
-    const { drafts } = setup({ settings: { batchesPerDay: 2 } });
-    const member = await newMember();
-    expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
-    expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
-    expect(await reasonOf(drafts.write(request(member)))).toBe('DISCLAIMER_DRAFTS_USED_UP');
-  });
-
-  it('gives each member 6 batches a day, then refuses until a day has passed', async () => {
-    const { drafts, later } = setup();
-    const [member, other] = [await newMember(), await newMember()];
-    for (let batch = 0; batch < 6; batch += 1) {
-      expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
-      later(60_000);
-    }
-    expect(await reasonOf(drafts.write(request(member)))).toBe('DISCLAIMER_DRAFTS_USED_UP');
-    expect(await reasonOf(drafts.write(request(other)))).toBe('ok');
-    // The first batch was 6 minutes ago; 24 hours after it, one batch comes back.
-    later(86_400_000 - 6 * 60_000);
-    expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
-    expect(await reasonOf(drafts.write(request(member)))).toBe('DISCLAIMER_DRAFTS_USED_UP');
-  });
-
-  it('lets only 6 of many requests at once through', async () => {
-    const { drafts } = setup();
-    const member = await newMember();
-    const results = await Promise.all(
-      Array.from({ length: 10 }, () => reasonOf(drafts.write(request(member)))),
+    expect(await reasonOf(off.drafts.write(request(await newMember())))).toBe(
+      'DISCLAIMER_WRITER_UNAVAILABLE',
     );
-    expect(results.filter((result) => result === 'ok')).toHaveLength(6);
-    expect(results.filter((result) => result === 'DISCLAIMER_DRAFTS_USED_UP')).toHaveLength(4);
+    expect(off.prompts).toStrictEqual([]);
   });
 
-  it('doesn’t count a batch the model failed or that failed the checks', async () => {
+  it('answers that drafts are used up once the squad’s AI budget is spent', async () => {
+    const { drafts } = setup({
+      answer: () => Promise.reject(new AiBudgetSpentError('the squad spent its budget')),
+    });
+    expect(await reasonOf(drafts.write(request(await newMember())))).toBe(
+      'DISCLAIMER_DRAFTS_USED_UP',
+    );
+  });
+
+  it('answers that the writer is unavailable when the model failed or its drafts failed the checks', async () => {
     const member = await newMember();
     // The model's own failure comes back as the drafts' reason, which the app knows.
     const down = setup({ answer: () => Promise.reject(new LanguageModelUnavailableError()) });
     const short = setup({
       answer: () => Promise.resolve({ ...good, drafts: ['太短了。', 'a', 'b'] }),
     });
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      expect(await reasonOf(down.drafts.write(request(member)))).toBe(
-        'DISCLAIMER_WRITER_UNAVAILABLE',
-      );
-      expect(await reasonOf(short.drafts.write(request(member)))).toBe(
-        'DISCLAIMER_WRITER_UNAVAILABLE',
-      );
-    }
-    const { drafts } = setup();
-    for (let batch = 0; batch < 6; batch += 1) {
-      expect(await reasonOf(drafts.write(request(member)))).toBe('ok');
-    }
+    expect(await reasonOf(down.drafts.write(request(member)))).toBe(
+      'DISCLAIMER_WRITER_UNAVAILABLE',
+    );
+    expect(await reasonOf(short.drafts.write(request(member)))).toBe(
+      'DISCLAIMER_WRITER_UNAVAILABLE',
+    );
   });
 
   it('refuses a member without a current AI consent, without asking the model', async () => {
@@ -206,13 +174,6 @@ describe('createDisclaimerDrafts', () => {
     const member = await newMember();
     expect(await reasonOf(drafts.write(request(member)))).toBe('AI_CONSENT_REQUIRED');
     expect(prompts).toStrictEqual([]);
-    expect(
-      await db
-        .selectFrom('disclaimer_draft_requests')
-        .select('id')
-        .where('member_id', '=', member)
-        .execute(),
-    ).toStrictEqual([]);
   });
 
   it('answers the care line or a decline when the model says so, with no word list of its own', async () => {

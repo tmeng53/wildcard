@@ -1,5 +1,6 @@
 import type { AdminTables } from '@wildcard/admins';
 import type { AiConsentTables } from '@wildcard/ai-consent';
+import type { AiUsageTables } from '@wildcard/ai-usage';
 import type { AppCopyTables } from '@wildcard/app-copy';
 import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
@@ -168,6 +169,7 @@ export type Tables = CheckInTables &
   SquadTables &
   AdminTables &
   AiConsentTables &
+  AiUsageTables &
   NudgeTables &
   WeatherTables &
   WeeklyAwardTables &

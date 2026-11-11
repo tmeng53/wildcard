@@ -22,7 +22,6 @@ import type {
   CoachStores,
   CoachTransaction,
   DayChallenge,
-  UsageTotal,
 } from '../ports.js';
 import { letterWhere } from './postgres-coach-letters.js';
 import type { DB } from './tables.js';
@@ -106,7 +105,7 @@ function insertWake(
   }
 }
 
-/** The coach's wakes, files, notes and usage on Postgres (`supabase/migrations`). */
+/** The coach's wakes, files, notes and steps on Postgres (`supabase/migrations`). */
 export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
   return {
     wakes: {
@@ -393,43 +392,6 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           text: row.text,
           at: new Date(row.at),
         }));
-      },
-    },
-
-    usage: {
-      async record({ squad, wake, coach, model, usage, costMicros, at }) {
-        await db
-          .insertInto('coach_usage')
-          .values({
-            squad_id: squad,
-            // Null for a letter, which has no wake, and when the wake has gone meanwhile (its
-            // check-in was deleted).
-            wake_id: (eb) =>
-              wake === undefined
-                ? sql<string | null>`null`
-                : eb.selectFrom('coach_wakes').select('id').where('id', '=', String(wake)),
-            coach_id: coach,
-            model,
-            requests: usage.requests,
-            input_tokens: usage.inputTokens,
-            cached_input_tokens: usage.cachedInputTokens,
-            output_tokens: usage.outputTokens,
-            cost_micros: costMicros,
-            at,
-          })
-          .execute();
-      },
-
-      async spent({ squad, since }) {
-        const row = await db
-          .selectFrom('coach_usage')
-          .select((eb) =>
-            eb.fn.coalesce(eb.fn.sum<string>('cost_micros'), sql<string>`0`).as('spent'),
-          )
-          .where('at', '>=', since)
-          .$if(squad !== undefined, (query) => query.where('squad_id', '=', squad ?? ''))
-          .executeTakeFirstOrThrow();
-        return Number(row.spent);
       },
     },
 
@@ -888,7 +850,7 @@ export function postgresCoachTransaction(db: Kysely<DB>): CoachTransaction {
 /** What a squad's coach has done, read from Postgres for the admins. */
 export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
   return {
-    async squad(squad, now) {
+    async squad(squad) {
       const files = await db
         .selectFrom('coach_files')
         .distinctOn('path')
@@ -924,30 +886,6 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
               )
               .orderBy('id')
               .execute();
-      const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
-      const totalSince = async (since: Date | undefined): Promise<UsageTotal> => {
-        const row = await db
-          .selectFrom('coach_usage')
-          .select((eb) => [
-            eb.fn.countAll<string>().as('wakes'),
-            sql<string>`coalesce(sum(requests), 0)`.as('requests'),
-            sql<string>`coalesce(sum(input_tokens), 0)`.as('input_tokens'),
-            sql<string>`coalesce(sum(cached_input_tokens), 0)`.as('cached_input_tokens'),
-            sql<string>`coalesce(sum(output_tokens), 0)`.as('output_tokens'),
-            sql<string>`coalesce(sum(cost_micros), 0)`.as('cost_micros'),
-          ])
-          .where('squad_id', '=', squad)
-          .$if(since !== undefined, (query) => query.where('at', '>=', since ?? now))
-          .executeTakeFirstOrThrow();
-        return {
-          wakes: Number(row.wakes),
-          requests: Number(row.requests),
-          inputTokens: Number(row.input_tokens),
-          cachedInputTokens: Number(row.cached_input_tokens),
-          outputTokens: Number(row.output_tokens),
-          costMicros: Number(row.cost_micros),
-        };
-      };
       const hired = await db
         .selectFrom('squad_coaches')
         .select('coach_id')
@@ -971,7 +909,6 @@ export function createPostgresCoachReport(db: Kysely<DB>): CoachReportStore {
             .filter(({ wake_id }) => wake_id === wake.id)
             .map(({ tool, input, output }) => ({ tool, input, output })),
         })),
-        usage: { total: await totalSince(undefined), lastWeek: await totalSince(weekAgo) },
       };
     },
   };

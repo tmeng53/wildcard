@@ -13,7 +13,7 @@ select is((select count(*)::int from public.disclaimer_draft_settings), 1, 'draf
 select is((select count(*)::int from public.weekly_award_settings), 1, 'the awards start with their settings');
 select throws_ok($$delete from public.disclaimer_draft_settings$$, '42501', null, 'the draft settings keep their row');
 select throws_ok($$truncate public.weekly_award_settings$$, '42501', null, 'the award settings keep their row');
-select throws_ok($$insert into public.disclaimer_draft_settings (only_row, writing, model, instructions, batches_per_day, meme_chance) values (false, true, 'openai/x', 'x', 1, 0)$$, '23514', null, 'there is only one row of draft settings');
+select throws_ok($$insert into public.disclaimer_draft_settings (only_row, writing, model, instructions, meme_chance) values (false, true, 'openai/x', 'x', 0)$$, '23514', null, 'there is only one row of draft settings');
 select throws_ok($$update public.disclaimer_draft_settings set model = 'gemini/flash'$$, '23514', null, 'a model names a provider the API knows');
 select throws_ok($$update public.disclaimer_draft_settings set meme_chance = 1.5$$, '23514', null, 'a chance is from 0 to 1');
 select throws_ok($$update public.weekly_award_settings set moves = '[]'$$, '23514', null, 'the moves are an object');
@@ -29,8 +29,8 @@ select is(
   2, 'deleting the admin''s account keeps their changes, with no one named'
 );
 select is(
-  (select count(*)::int from public.disclaimer_draft_setting_events where changed_by is null and settings ->> 'model' = 'openai/gpt-6-luna'),
-  1, 'the log starts with the first settings'
+  (select settings ->> 'model' from public.disclaimer_draft_setting_events where changed_by is null order by id limit 1),
+  'openai/gpt-6-luna', 'the log starts with the first settings'
 );
 
 select * from finish();

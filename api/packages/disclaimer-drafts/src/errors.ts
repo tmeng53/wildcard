@@ -15,8 +15,8 @@ export class AiConsentRequiredError extends AppError {
 }
 
 /**
- * Thrown when a member has asked for drafts as often as a day allows (the first batch and 5
- * 换一批). The app shows its dice suggestions until the allowance comes back.
+ * Thrown when the member's squad (or every squad) spent the day's AI budget. The app shows its
+ * dice suggestions until the next day.
  */
 export class DisclaimerDraftsUsedUpError extends AppError {
   override readonly name = 'DisclaimerDraftsUsedUpError';

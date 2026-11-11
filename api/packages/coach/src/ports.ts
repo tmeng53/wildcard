@@ -1,3 +1,4 @@
+import type { TokenUsage } from '@wildcard/language-model';
 import type { z } from 'zod';
 
 import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
@@ -20,7 +21,7 @@ import type { MemberFacts } from './domain/member-facts.js';
 import type { CoachLetter, Handover } from './domain/letter.js';
 import type { CoachAnswer, CoachEmoji, CoachReply } from './domain/reply.js';
 import type { SquadWeek } from './domain/squad-week.js';
-import type { NewWake, TokenUsage, Wake, WakeStep } from './domain/wake.js';
+import type { NewWake, Wake, WakeStep } from './domain/wake.js';
 
 /** Where the coach settings are kept: one value, and a log of every change to it. */
 export interface CoachSettingsStore {
@@ -416,22 +417,33 @@ export interface CoachActivityStore {
 }
 
 /**
- * The tokens each wake used, per squad, for usage-based billing later. Recorded even when the
- * wake has gone meanwhile (its check-in was deleted): then without it.
+ * The coach's model calls, each counted in the AI usage ledger to its squad and to the member it
+ * answered, against the squad's daily AI budget, which every model call for the squad spends
+ * (Tracy, 2026-11-08 and 11-10).
  */
-export interface CoachUsageStore {
+export interface CoachUsage {
+  /**
+   * Why the squad's coach is off duty now, if it is: the squad or every squad spent the day's AI
+   * budget, or the model has no price to count its cost at. It is back the next day.
+   */
+  offDutyWhy(input: {
+    readonly squad: SquadId;
+    readonly model: CoachModel;
+  }): Promise<string | undefined>;
+  /**
+   * Records a run's tokens, whatever came of it: a wake's (with the member whose check-in or
+   * reply it answered), a letter's or an admin's preview. Returns their cost in US dollars'
+   * millionths.
+   */
   record(entry: {
     readonly squad: SquadId;
-    /** The wake that used them; none for a letter, which runs outside the queue. */
-    readonly wake?: number;
-    readonly coach: CoachId;
+    readonly member?: string;
+    readonly kind: 'wake' | 'letter' | 'preview';
     readonly model: CoachModel;
     readonly usage: TokenUsage;
-    readonly costMicros: number;
-    readonly at: Date;
-  }): Promise<void>;
-  /** What was spent since `since`, in US dollars' millionths: by this squad, or by every squad. */
-  spent(input: { readonly squad?: SquadId; readonly since: Date }): Promise<number>;
+  }): Promise<number>;
+  /** What the squad's coach has run, since `since` or ever. */
+  total(input: { readonly squad: SquadId; readonly since?: Date }): Promise<UsageTotal>;
 }
 
 /** Each wake's tool calls, in order, for the admins to see how the coach worked. */
@@ -452,7 +464,6 @@ export interface CoachStores {
   readonly memberNotes: CoachMemberNoteStore;
   readonly replies: CoachReplyStore;
   readonly answers: CoachAnswerStore;
-  readonly usage: CoachUsageStore;
   readonly steps: CoachStepStore;
 }
 
@@ -491,11 +502,10 @@ export interface CoachHiringStore {
   /** Every squad with a coach hired now, with its coach. */
   hired(): Promise<ReadonlyMap<SquadId, CoachId>>;
   /**
-   * Whether the squad's coach was its coach before, was fired and is back, and has not run for it
-   * since it came back (a wake skipped without running, as for a check-in no longer shared with
-   * AI, doesn't count), from the hires and firings log and the usage log.
+   * When the squad's coach was hired back, if it was its coach before and was fired, from the
+   * hires and firings log; `undefined` for a coach new to the squad, or no coach.
    */
-  backAgain(squad: SquadId): Promise<boolean>;
+  hiredBackAt(squad: SquadId): Promise<Date | undefined>;
   /**
    * Hires `coach` for the squad, logged as `by`'s, unless it has a coach: then nothing is
    * saved. `noSquad` when there is no such squad.
@@ -570,6 +580,7 @@ export interface SquadCoaching {
 }
 
 export interface UsageTotal {
+  /** The coach's runs: its wakes, letters and admins' previews. */
   readonly wakes: number;
   readonly requests: number;
   readonly inputTokens: number;
@@ -580,9 +591,9 @@ export interface UsageTotal {
   readonly costMicros: number;
 }
 
-/** Reads what a squad's coach has done. */
+/** Reads what a squad's coach has done, but for what it spent, which is the usage ledger's. */
 export interface CoachReportStore {
-  squad(squad: SquadId, now: Date): Promise<SquadCoaching>;
+  squad(squad: SquadId): Promise<Omit<SquadCoaching, 'usage'>>;
 }
 
 /**

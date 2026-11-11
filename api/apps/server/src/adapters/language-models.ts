@@ -1,4 +1,4 @@
-import type { LanguageModel } from '@wildcard/language-model';
+import type { ProviderModel } from '@wildcard/language-model';
 
 import type { Provider } from '../model-choice.js';
 
@@ -12,9 +12,9 @@ import type { Provider } from '../model-choice.js';
  * entry in `providers`) is refused with `missing`'s error, which tells the module the AI is off.
  */
 export function byProvider(
-  providers: Partial<Record<Provider, LanguageModel>>,
+  providers: Partial<Record<Provider, ProviderModel>>,
   missing: () => Error,
-): LanguageModel {
+): ProviderModel {
   return {
     answer: (request) => {
       const [provider = '', name = ''] = request.model.split('/', 2);

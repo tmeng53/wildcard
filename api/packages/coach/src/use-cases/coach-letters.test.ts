@@ -19,7 +19,7 @@ import {
 import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import type { SquadWeek } from '../domain/squad-week.js';
-import type { AgentRun, CoachAgent } from '../ports.js';
+import type { AgentRun, CoachAgent, CoachUsage } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachLetters, type CoachLettered } from './coach-letters.js';
@@ -39,8 +39,30 @@ class RolledBack extends Error {}
 const xiaohun = CoachId.parse('xiaohun');
 const nuannuan = CoachId.parse('nuannuan');
 
+/**
+ * The AI usage ledger as the coach sees it, kept in memory (the ledger's own tests run it on
+ * Postgres): the runs it counted, and off duty while `offDuty` says so.
+ */
+function countedUsage() {
+  const counted: { runs: Parameters<CoachUsage['record']>[0][]; offDuty: string | undefined } = {
+    runs: [],
+    offDuty: undefined,
+  };
+  const usage: CoachUsage = {
+    offDutyWhy: () => Promise.resolve(counted.offDuty),
+    record: (entry) => {
+      counted.runs.push(entry);
+      return Promise.resolve(0);
+    },
+    total: () => Promise.reject(new Error('Letters never ask for totals.')),
+  };
+  return { counted, usage };
+}
+
 interface Fixture {
   readonly trx: Kysely<CoachTables>;
+  /** What the coaches ran, as the usage ledger counted it. */
+  readonly usage: ReturnType<typeof countedUsage>;
   readonly squad: SquadId;
   readonly mia: string;
   readonly leo: string;
@@ -70,7 +92,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       const squad = SquadId.parse(squadId);
       const by = MemberId.parse(mia);
       await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
-        { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
+        { coaching: true },
         by,
       );
       const catalog = createPostgresCoachCatalog(trx);
@@ -86,7 +108,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       const { began } = z
         .object({ began: z.date() })
         .parse((await sql`select now() as began`.execute(trx)).rows[0]);
-      await test({ trx, squad, mia, leo, by, hiring, began });
+      await test({ trx, usage: countedUsage(), squad, mia, leo, by, hiring, began });
       throw new RolledBack();
     })
     .catch((error: unknown) => {
@@ -127,7 +149,7 @@ function writingAgent(texts: readonly string[]) {
 }
 
 function letters(
-  { trx, mia, leo, began }: Fixture,
+  { trx, mia, leo, began, usage }: Fixture,
   {
     agent,
     at = new Date(began.getTime() + 5_000),
@@ -157,7 +179,7 @@ function letters(
     catalog: createPostgresCoachCatalog(trx),
     letters: createPostgresCoachLetters(trx),
     memory: stores.memory,
-    usage: stores.usage,
+    usage: usage.usage,
     squadWeek: () => Promise.resolve(week),
     aiConsented: (members) =>
       consentUnread
@@ -169,14 +191,6 @@ function letters(
     ...(lettered === undefined ? {} : { lettered }),
   });
 }
-
-const usageRows = async ({ trx, squad }: Fixture) =>
-  (
-    await sql<{
-      coach_id: string;
-      wake_id: string | null;
-    }>`select coach_id, wake_id from public.coach_usage where squad_id = ${squad}`.execute(trx)
-  ).rows;
 
 describe('the outgoing coach’s letter', () => {
   it('is written once a change of coach, in its own voice, for the whole squad', async () => {
@@ -214,8 +228,15 @@ describe('the outgoing coach’s letter', () => {
       expect(run?.task).toContain('【people/队员1.md】\n队员1 周三雷打不动游泳');
       expect(run?.task).toContain('【squad.md】\n周日晚上最热闹');
       expect(run?.task).not.toContain('回来');
-      // The tokens count toward the squad's cap, with no wake.
-      expect(await usageRows(fixture)).toStrictEqual([{ coach_id: 'xiaohun', wake_id: null }]);
+      // The tokens count toward the squad's budget, as a letter's.
+      expect(fixture.usage.counted.runs).toStrictEqual([
+        {
+          squad,
+          kind: 'letter',
+          model: 'openai/gpt-6-luna',
+          usage: { requests: 1, inputTokens: 4_000, cachedInputTokens: 0, outputTokens: 300 },
+        },
+      ]);
       // Everyone in the squad is told.
       expect(told).toStrictEqual([{ letter: letter?.id, members: [mia, leo] }]);
 
@@ -274,7 +295,7 @@ describe('the outgoing coach’s letter', () => {
 
   it('is none without a change just made, over the cap, or when the coach can’t write it', async () => {
     await rolledBack(async (fixture) => {
-      const { squad, by, hiring, trx, began } = fixture;
+      const { squad, by, hiring, began } = fixture;
       const { agent, runs } = writingAgent(['交给你了。']);
       // A squad's first coach replaced no one.
       expect(await letters(fixture, { agent }).write(squad)).toBeUndefined();
@@ -284,9 +305,8 @@ describe('the outgoing coach’s letter', () => {
       expect(await letters(fixture, { agent, at: late }).write(squad)).toBeUndefined();
       // Without a model.
       expect(await letters(fixture, {}).write(squad)).toBeUndefined();
-      // Over the squad's cap for the day.
-      await sql`insert into public.coach_usage (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
-        values (${squad}, 'xiaohun', 'openai/gpt', 1, 1, 1, 50000)`.execute(trx);
+      // Over the squad's AI budget for the day.
+      fixture.usage.counted.offDuty = 'the squad spent its budget';
       expect(await letters(fixture, { agent }).write(squad)).toBeUndefined();
       expect(runs).toHaveLength(0);
     });
@@ -299,7 +319,7 @@ describe('the outgoing coach’s letter', () => {
       const after = writingAgent(['交给你了。']);
       expect(await letters(fixture, { agent: after.agent }).write(squad)).toBeUndefined();
       expect(after.runs).toHaveLength(0);
-      expect(await usageRows(fixture)).toHaveLength(1);
+      expect(fixture.usage.counted.runs).toHaveLength(1);
     });
     await rolledBack(async (fixture) => {
       const { squad, by, hiring } = fixture;
