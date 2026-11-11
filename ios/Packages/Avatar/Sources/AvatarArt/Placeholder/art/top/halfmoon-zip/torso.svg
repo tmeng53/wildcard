@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <circle cx="92.4" cy="222" r="10.8" fill="#1F2128"/>
+  <circle cx="147.6" cy="222" r="10.8" fill="#1F2128"/>
   <path d="M 80.4 224.4 C 80.4 210 92.4 204.6 105.6 204 L 134.4 204 C 147.6 204.6 159.6 210 159.6 224.4 L 158.4 265.2 C 159.6 276 151.2 282 141.6 282 L 98.4 282 C 88.8 282 80.4 276 81.6 265.2 Z" fill="#1F2128" stroke="#16181D" stroke-width="2.64"/>
   <path d="M 99 214 Q 92 236 96.4 258 M 141 214 Q 148 236 143.6 258" fill="none" stroke="#3A3F4B" stroke-width="1.8" stroke-linecap="round"/>
   <path d="M 120 212 L 120 258" fill="none" stroke="#AEB2BC" stroke-width="2" stroke-linecap="round"/>
