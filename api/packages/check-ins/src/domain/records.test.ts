@@ -169,6 +169,11 @@ describe('memberRecords', () => {
           { day: '2026-11-03', hourUtc: 4 },
           { workoutStartedAt: new Date('2026-11-03T23:00:00Z') },
         ),
+        // Both: the start picked wins over the workout's.
+        training(
+          { day: '2026-11-04', hourUtc: 4 },
+          { startTime: '09:00', workoutStartedAt: new Date('2026-11-04T23:00:00Z') },
+        ),
         // A 补打卡 with a start picked keeps it.
         training(
           { day: '2026-11-01', hourUtc: 4 },
@@ -182,8 +187,9 @@ describe('memberRecords', () => {
     expect(started.hours[7]).toBe(1);
     expect(started.hours[18]).toBe(1);
     expect(started.hours[12]).toBe(1);
+    expect(started.hours[9]).toBe(1);
     expect(started.hours[23]).toBe(0);
-    expect(started.hours.reduce((sum, count) => sum + count, 0)).toBe(3);
+    expect(started.hours.reduce((sum, count) => sum + count, 0)).toBe(4);
   });
 
   it('ranks sports by days', () => {

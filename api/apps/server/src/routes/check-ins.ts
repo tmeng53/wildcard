@@ -308,7 +308,7 @@ const MemberRecords = z
       .meta({
         description:
           '训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else ' +
-          'the Health workout’s, else the hour posted, when a 补打卡 without one is left out.',
+          'the Health workout’s, else the hour posted; a 补打卡 without a start is left out.',
       }),
     weekdays: z
       .array(count('Days trained on this weekday.'))

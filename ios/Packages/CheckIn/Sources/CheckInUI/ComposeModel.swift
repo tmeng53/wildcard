@@ -35,8 +35,9 @@ public final class ComposeModel {
     /// picks another on the flip clock (Tracy, 2026-11-11: every 训练 has a start). A workout from
     /// Apple Health carries its own; only an edit of an older post may have none.
     var startTime: StartTime?
-    /// Where a new 训练 made by hand starts, and starts again when its Health workout is let go.
-    @ObservationIgnored private let handStart: StartTime?
+    /// Where a new 训练 made by hand starts, and starts again when its Health workout is let go:
+    /// the phone's time as the page opened, then the last start picked before a workout.
+    @ObservationIgnored private var handStart: StartTime?
     /// The workout the 训练 is posted from, as Health has it (or, for an edit, as it was posted);
     /// nil for one made by hand.
     private(set) var workout: Workout?
@@ -200,6 +201,7 @@ public final class ComposeModel {
             return
         }
         guard !(healthWorkouts.first { $0.id == imported.id }?.isPosted ?? false) else { return }
+        if workout == nil, let startTime { handStart = startTime }
         tiles.removeAll(where: \.isWorkout)
         workout = imported.workout
         struck = sharing.struck
