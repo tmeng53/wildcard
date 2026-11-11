@@ -7,7 +7,8 @@ import OnboardingDomain
 import SwiftUI
 
 /// 你的小队, step 2: 加入小队 by invite code, with the squad it finds, or 建一个小队 with a
-/// name. The character just made stands beside the title.
+/// name. The character just made stands beside the title. For a member back in no squad it is
+/// the whole page, 加入小队, with no way back and no steps.
 struct SquadStep: View {
     let model: SignUpModel
     let privacyPolicy: URL
@@ -16,7 +17,8 @@ struct SquadStep: View {
 
     var body: some View {
         StepPage(
-            step: .squad, title: Text(copy: "你的小队", bundle: .module), character: model.myCharacter, onBack: model.back
+            step: .squad, title: title, character: model.myCharacter,
+            onBack: model.isRejoining ? nil : model.back
         ) {
             VStack(alignment: .leading, spacing: Space.xs) {
                 PickRow(Text(copy: "加入小队", bundle: .module), systemImage: "person.2", isSelected: isJoining) {
@@ -54,6 +56,10 @@ struct SquadStep: View {
     }
 
     private var isJoining: Bool { model.squad.choice == .join }
+
+    private var title: Text {
+        model.isRejoining ? Text(copy: "加入小队", bundle: .module) : Text(copy: "你的小队", bundle: .module)
+    }
 
     private var panelTransition: AnyTransition {
         reduceMotion ? .opacity : .opacity.combined(with: .offset(y: -Space.xs))

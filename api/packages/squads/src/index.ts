@@ -51,6 +51,7 @@ export type {
   JoinOutcome,
   NewSquad,
   SceneWeekAt,
+  SquadExit,
   SquadStore,
 } from './ports.js';
 export {

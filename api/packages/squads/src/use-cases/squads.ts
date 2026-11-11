@@ -7,7 +7,7 @@ import {
   type Scene,
 } from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
-import type { AiConsentCheck, PickOutcome, SquadStore } from '../ports.js';
+import type { AiConsentCheck, PickOutcome, SquadExit, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -57,6 +57,8 @@ export interface Squads {
   find(input: { squad: SquadId; viewer: MemberId }): Promise<Squad>;
   /** The squads a member is in now, the earliest joined first. */
   listMine(member: MemberId): Promise<Squad[]>;
+  /** The squad a member was last in, when they are in none now: how they came out of it. */
+  lastExit(member: MemberId): Promise<SquadExit | undefined>;
   /** The ids of the squads a member is in now: what other modules ask instead of reading tables. */
   squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
   /** The members in a squad now, in the order they joined. */
@@ -187,6 +189,7 @@ export function createSquads(deps: {
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),
     find: (input) => findSquad(deps, input),
     listMine: (member) => deps.store.squadsOf(member),
+    lastExit: (member) => deps.store.lastExit(member),
     squadIdsOf: (member) => deps.store.squadIdsOf(member),
     membersOf: (squad) => deps.store.membersOf(squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),

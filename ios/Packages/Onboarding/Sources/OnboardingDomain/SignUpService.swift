@@ -25,6 +25,8 @@ public protocol SignUpService: Sendable {
     /// Picks where the squad the member made trains, from 这周在哪练？: its first scene, from now
     /// on. Safe to repeat with the same scene.
     func pickScene(_ scene: SceneID, for squad: SquadID) async throws(SignUpError)
+    /// The character the member saved, nil before they made one.
+    func character() async throws(SignUpError) -> NewCharacter?
     /// The squad the member joined or made in a sign-up the app was closed during, and the
     /// character they saved before it, to carry on from the step after 你的小队.
     func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp

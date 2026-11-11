@@ -13,6 +13,12 @@ extension Squad {
     }
 }
 
+extension SquadExit {
+    public init(_ wire: Components.Schemas.SquadExit) throws(ContractsError) {
+        self.init(id: try SquadID(wire: wire.id), name: wire.name, wasRemoved: wire.how == .removed)
+    }
+}
+
 extension SquadScene {
     public init(_ wire: Components.Schemas.SquadScene) throws(ContractsError) {
         let pickers = try wire.pickers.members.map { member throws(ContractsError) in try MemberID(wire: member) }

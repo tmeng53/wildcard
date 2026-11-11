@@ -58,6 +58,13 @@ export type PickOutcome = 'picked' | 'taken';
 /** What joining a squad did. `ended`: everyone left it, so its invite no longer works. */
 export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit' | 'ended';
 
+/** How a member came out of the squad they were last in. */
+export interface SquadExit {
+  readonly squad: SquadId;
+  readonly name: string;
+  readonly how: 'left' | 'removed';
+}
+
 /** Where squads and their members are kept. */
 export interface SquadStore {
   find(id: SquadId): Promise<Squad | undefined>;
@@ -65,6 +72,11 @@ export interface SquadStore {
   findByInviteCode(code: InviteCode): Promise<Squad | undefined>;
   /** The squads `member` is in now, the earliest joined first. */
   squadsOf(member: MemberId): Promise<Squad[]>;
+  /**
+   * The squad `member` was last in, when they are in none now and their last change of squad
+   * took them out of one: how they went (`left` themselves or `removed` by its captain).
+   */
+  lastExit(member: MemberId): Promise<SquadExit | undefined>;
   /** The ids of the squads `member` is in now. */
   squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
   /** The members in `squad` now, in the order they joined. */
