@@ -12,7 +12,7 @@ import Testing
 /// every frame where an arm changes depth, and the frame before, the forearm may overlap what
 /// lies between its two copies by at most 16 square points: a sliver along an outline, where the
 /// two drawings already agree.
-@Test(arguments: [("cat", "warmup-tee"), ("bear", "warmup-tee"), ("cat", "warmup-long")])
+@Test(arguments: [("cat", "warmup-tee"), ("bear", "warmup-tee"), ("cat", "warmup-long"), ("bear", "warmup-hoodie")])
 func everyArmDepthSwapHappensClearOfTheBody(body: String, top: String) throws {
     let root = URL(filePath: #filePath).deletingLastPathComponent()
         .appending(path: "../../Sources/AvatarArt/Placeholder")
