@@ -3,10 +3,9 @@ import AvatarDomain
 import Foundation
 import Testing
 
-/// Each arm is drawn once, whole, always in front of the body: over the top, the bottom and an
-/// accessory's `torso` (a bag at the hip, a bib), under an accessory's `over` (what lies on the
-/// shoulders: a sweater, a strap) and under the head, so no arm or sleeve ever crosses the face. An
-/// arm never changes depth, so it never jumps from behind the body to in front of it.
+/// Each arm is drawn once, whole, always in front of the body and everything worn on it (the top,
+/// the bottom, an accessory, even a bag's strap) and under the head, so no arm or sleeve ever crosses
+/// the face. An arm never changes depth, so it never jumps from behind the body to in front of it.
 @Test func armsAreDrawnOnceInFrontOfTheBodyAndUnderTheHead() throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "acc": "halfmoon-tote"]))
     let ids = figure.parts.map(\.id)
@@ -14,30 +13,15 @@ import Testing
         #expect(ids.filter { $0 == arm }.count == 1)
         #expect(try figure.index(arm) > figure.index("torso"))
         #expect(try figure.index(arm) > figure.index("acc"))
-        #expect(try figure.index(arm) < figure.index("accOver"))
         #expect(try figure.index(arm) < figure.index("head"))
     }
-    #expect(!ids.contains { $0.description.hasSuffix("Back") && $0.description.hasPrefix("arm") })
+    #expect(ids.count { $0.description.hasPrefix("arm") } == 2)
     // Whatever the angle, both arms show.
     for rotation in [0.0, -45, 45, 160] {
         var pose = figure.restPose
         for arm: PartID in ["armL", "armR"] { pose.parts[try figure.index(arm)].rotation = rotation }
         let placed = figure.layout(pose)
         #expect(try placed[figure.index("armL")].opacity == 1 && placed[figure.index("armR")].opacity == 1)
-    }
-}
-
-/// A bag's strap lies over the shoulder, so the arm goes under it, while the bag at the hip is under
-/// the arm: the tote and the sling draw their straps as `over`, their bags as `torso`; the sweater
-/// tied over the shoulders is `over` down to its knot, and its sleeves hanging from it are `torso`.
-@Test func strapsLieOverTheArmsAndBagsUnder() throws {
-    for (acc, parts) in [
-        ("halfmoon-tote", ["acc", "accOver"]), ("moss-sling", ["acc", "accOver"]),
-        ("deuce-sweater", ["acc", "accOver"]),
-    ] {
-        let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "acc": acc]))
-        let drawn = figure.parts.filter { ["acc", "accOver"].contains($0.id.description) && !$0.art.isEmpty }
-        #expect(drawn.map(\.id.description) == parts, "\(acc)")
     }
 }
 

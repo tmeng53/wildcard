@@ -30,7 +30,6 @@
       "layers": [{ "slot": "body", "art": "armL" }, { "slot": "top", "art": "armL" }] },
     { "id": "armR", "parent": "torso", "pivot": [147.6, 222], "elbow": { "at": [161.4, 238.8], "hand": [170.4, 264] },
       "layers": [{ "slot": "body", "art": "armR" }, { "slot": "top", "art": "armR" }] },
-    { "id": "accOver", "parent": "torso", "pivot": [120, 230], "layers": [{ "slot": "acc", "art": "over" }] },
     { "id": "earL", "parent": "head", "pivot": [92.4, 100.8], "layers": [{ "slot": "body", "art": "earL" }] },
     { "id": "earR", "parent": "head", "pivot": [147.6, 100.8], "layers": [{ "slot": "body", "art": "earR" }] },
     { "id": "head", "parent": "torso", "pivot": [120, 210],
