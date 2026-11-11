@@ -30,13 +30,18 @@ extension MainTabs {
     }
 
     /// 立刻穿上: the badge worn on the member's card, each piece in its slot, then 衣橱 trying the
-    /// first piece on (the badge board when it gave no piece).
+    /// first piece on (the badge board when it gave no piece). Only what the member holds, read
+    /// again first, since the letter only shows what `give_reward` gave.
     private func wear(_ presents: [TeamPresent]) async {
+        await profile.reload()
+        let badges = Set(profile.overview?.board.teamBadges.map(\.id) ?? [])
+        let held = Set(profile.overview?.gifts ?? [])
         var pieces: [String] = []
         for present in presents {
             switch present {
-            case .badge(let badge): await profile.equip(.teamBadge(badge))
-            case .piece(let piece): pieces.append(piece)
+            case .badge(let badge) where badges.contains(badge): await profile.equip(.teamBadge(badge))
+            case .piece(let piece) where held.contains(piece): pieces.append(piece)
+            case .badge, .piece: continue
             }
         }
         for piece in pieces { await wardrobe.wear(piece) }

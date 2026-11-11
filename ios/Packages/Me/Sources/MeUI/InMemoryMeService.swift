@@ -20,7 +20,7 @@ public actor InMemoryMeService: MeService {
     /// The member the screens are reviewed against: 小林 of 周三不练腿俱乐部, number 22 since 2026,
     /// 128 days trained, 3 of 5 this week and the approved board's seven titles, ten won in all.
     public static func sample(
-        failsSaving: Bool = false, unlocks: [Unlock] = [], stock: StreetStock? = nil
+        failsSaving: Bool = false, unlocks: [Unlock] = [], stock: StreetStock? = nil, gifts: [String] = []
     ) -> InMemoryMeService {
         InMemoryMeService(
             overview: MeOverview(
@@ -34,7 +34,7 @@ public actor InMemoryMeService: MeService {
                 dailyPushOn: true,
                 jerseyNumber: try? JerseyNumber(22), squadPlace: 2,
                 board: .sample,
-                unlocks: unlocks, stock: stock,
+                unlocks: unlocks, stock: stock, gifts: gifts,
                 // 3 of 5: Monday, Wednesday and today (Thursday) trained, Tuesday and Sunday off.
                 weekGlance: WeekGlance(
                     number: 3,
