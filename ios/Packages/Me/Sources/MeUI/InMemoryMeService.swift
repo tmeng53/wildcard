@@ -216,6 +216,9 @@ extension TitleBoard {
             TeamBadge(
                 id: "idea-king",
                 name: CatalogNames(simplifiedChinese: "点子王", english: "Idea King", traditionalChinese: "點子王"),
+                line: CatalogNames(
+                    simplifiedChinese: "首席点子官", english: "Chief Idea Officer",
+                    traditionalChinese: "首席點子官"),
                 glyph: "lightbulb.fill", tone: "#F2B33D", times: 1, latestAt: Date())
         ])
 

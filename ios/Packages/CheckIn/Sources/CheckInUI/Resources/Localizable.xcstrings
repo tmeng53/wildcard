@@ -1,6 +1,86 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "立刻穿上": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wear it now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立刻穿上"
+          }
+        }
+      }
+    },
+    "一会儿再说": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Later"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一會兒再說"
+          }
+        }
+      }
+    },
+    "外卡团队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Wildcard team"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外卡團隊"
+          }
+        }
+      }
+    },
+    "%@：": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@,"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@："
+          }
+        }
+      }
+    },
+    "给 %@ · 外卡团队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %@ · from the Wildcard team"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "給 %@ · 外卡團隊"
+          }
+        }
+      }
+    },
     "招聘教练": {
       "localizations": {
         "en": {
