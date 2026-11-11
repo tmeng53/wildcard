@@ -37,8 +37,9 @@ struct ProfileEditor: View {
             },
             jerseyNumber: JerseyNumberEntry(number: profile.overview?.cardNumber?.text) { pickingNumber = true }
         )
+        // Once something changed, the editor's own back asks first, in place of the system's.
         // 保存 is its own bar at the bottom, so the tab bar goes while it is up.
-        .pushedPage(hidesTabBar: true)
+        .pushedPage(canGoBack: !model.draft.canUndo, hidesTabBar: true)
         .navigationDestination(isPresented: $pickingNumber) {
             JerseyNumberView(model: profile) { pickingNumber = false }
         }

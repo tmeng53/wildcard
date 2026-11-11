@@ -8,8 +8,8 @@ import SwiftUI
 /// The character editor: the character on its ticket at the top, with its nickname on the stub
 /// under its feet and the day the member signed up in the corner; tabs of choices below; and one
 /// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
-/// from 我 it is a pushed page: the system's back, the member's 球衣号码 when the app passes one
-/// and undo and shuffle in the bar, and it saves.
+/// from 我 it is a pushed page: the system's back (asking first once something changed), the
+/// member's 球衣号码 when the app passes one and undo and shuffle in the bar, and it saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
@@ -18,6 +18,7 @@ public struct CharacterEditorView: View {
     private let onDone: (EditedCharacter) -> Void
     private let jerseyNumber: JerseyNumberEntry?
     @FocusState private var isNaming: Bool
+    @State private var isDiscarding = false
     @Environment(\.sceneTheme) private var theme
 
     public init(
@@ -82,8 +83,20 @@ public struct CharacterEditorView: View {
         }
         .toolbar {
             if context == .profile {
-                EditorBarItems(model: model, jerseyNumber: jerseyNumber)
+                EditorBarItems(model: model, jerseyNumber: jerseyNumber) { isDiscarding = true }
             }
+        }
+        // An alert, not a confirmation dialog: iOS 26 drops a dialog's cancel button.
+        .alert(Text(copy: "放弃这些修改？", bundle: .module), isPresented: $isDiscarding) {
+            Button(role: .destructive, action: onBack) {
+                Text(copy: "放弃", bundle: .module)
+            }
+            .accessibilityIdentifier("editor.discard")
+            Button(role: .cancel) {
+            } label: {
+                Text(copy: "继续编辑", bundle: .module)
+            }
+            .accessibilityIdentifier("editor.keepEditing")
         }
         .onAppear { model.start() }
         // A brand screen wherever it opens: sign-up, or a page over 我 or 商店街 that doesn't take
@@ -137,13 +150,27 @@ private struct EditorHeader: View {
     }
 }
 
-/// From 我, in the pushed page's bar beside the system's back: the 球衣号码 in the middle, undo
-/// and shuffle on the trailing side.
+/// From 我, in the pushed page's bar: the 球衣号码 in the middle, undo and shuffle on the trailing
+/// side. While the draft has changes the page hides the system's back (and its swipe), and this
+/// back in its place asks before they are lost (Tracy, 2026-11-11).
 private struct EditorBarItems: ToolbarContent {
     let model: CharacterEditorModel
     let jerseyNumber: JerseyNumberEntry?
+    let discard: () -> Void
 
     var body: some ToolbarContent {
+        if model.draft.canUndo {
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: discard) {
+                    Label {
+                        Text(copy: "返回", bundle: .module)
+                    } icon: {
+                        Image(systemName: "chevron.backward")
+                    }
+                }
+                .accessibilityIdentifier("editor.back")
+            }
+        }
         if let jerseyNumber {
             ToolbarItem(placement: .principal) {
                 Button(action: jerseyNumber.open) {

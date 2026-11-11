@@ -227,6 +227,16 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(app.buttons["editor.wardrobe.top"].label, "Tops")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
+        // Once something changed, back asks before the changes are lost.
+        XCTAssertFalse(app.buttons["editor.back"].exists, "the editor's own back shows before any change")
+        hoodie.tap()
+        let back = app.buttons["editor.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: Self.wait), "no back that asks after a change")
+        back.tap()
+        let alert = app.alerts["Discard your changes?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "back didn't ask before discarding")
+        alert.buttons["Keep Editing"].tap()
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "继续编辑 left the editor")
     }
 
     private func launch(language: String, profile: Bool = false) -> XCUIApplication {
