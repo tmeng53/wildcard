@@ -99,6 +99,17 @@ actor FakeNotices: NoticeSource {
     #expect(inbox.notices.map { inbox.isUnread($0) } == [false, false, false])
 }
 
+@Test @MainActor func aTappedRowIsReadOnTheOpenPage() async {
+    let server = FakeNotices([notice(1), notice(2), notice(3)], seen: NoticeID(rawValue: 1))
+    let inbox = NoticeInbox(source: server)
+    await inbox.open()
+
+    // The row of 3 tapped, a post pushed over the page and popped: only 2 is still new.
+    inbox.opened(inbox.notices.filter { $0.id == NoticeID(rawValue: 3) })
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [false, true, false])
+    #expect(await server.marked == [NoticeID(rawValue: 3)])
+}
+
 @Test @MainActor func pullingTheOpenPageMarksNewOnesReadAndKeepsTheBold() async {
     let server = FakeNotices([notice(1), notice(2)], seen: NoticeID(rawValue: 1))
     let inbox = NoticeInbox(source: server)
