@@ -98,9 +98,8 @@ final class ComposePhotoUITests: XCTestCase {
         keepScreenshot(named: "18-disclaimer-photos")
 
         app.buttons["disclaimer.post"].tap()
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
-        bubble.tap()
+        waitFor(field, "exists == false", "the 请假条 page didn't close")
+        app.buttons["tab.feed"].tap()
         let words = app.staticTexts.matching(NSPredicate(format: "label == %@", "下大雨，在家给猫当沙发")).firstMatch
         XCTAssertTrue(words.waitForExistence(timeout: Self.wait), "the 请假条 isn't in 动态")
         settle()

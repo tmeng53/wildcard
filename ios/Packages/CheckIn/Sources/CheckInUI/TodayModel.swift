@@ -351,8 +351,9 @@ public final class TodayModel {
         return true
     }
 
-    /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
-    /// in the post, off the scene (the product owner: too busy).
+    /// Stays on the scene: the character celebrates and the caption appears over it. The photos
+    /// stay in the post, off the scene (the product owner: too busy), and so do a 请假条's words:
+    /// the character holds up its sign instead (Tracy, 2026-11-11).
     private func land(
         _ draft: CheckInDraft, id: CheckInID, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
     ) {
@@ -360,8 +361,8 @@ public final class TodayModel {
         switch draft {
         case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
             line = body.caption
-        case .disclaimer(let disclaimer, _):
-            line = disclaimer.text
+        case .disclaimer:
+            line = nil
         }
         posts += 1
         payoff = Payoff(id: id, kind: draft.kind, line: line)

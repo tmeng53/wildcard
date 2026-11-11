@@ -130,21 +130,22 @@ final class TodayUITests: XCTestCase {
             "the count doesn't match the excuse")
         post.tap()
 
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
-        XCTAssertTrue(bubble.label.contains(line))
-        XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
+        // The character holds up the 请假条 sign; its words stay in 动态, off the scene.
+        waitFor(field, "exists == false", "the 请假条 page didn't close")
         settle()
+        XCTAssertFalse(
+            app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch.exists,
+            "a 请假条's words showed in a bubble on the scene")
+        XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
         keepScreenshot(named: "19-today-disclaimer-posted")
 
-        assertOpensItsPost(bubble, saying: line, in: app)
+        app.buttons["tab.feed"].tap()
+        assertInFeed(saying: line, in: app)
     }
 
-    /// A caption's bubble opens its post in 动态, on screen.
-    private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
-        bubble.tap()
-        // 动态 opens scrolled to the post, so its title may be off screen: the tab says it opened.
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
+    /// 动态 shows my post, on screen.
+    private func assertInFeed(saying line: String, in app: XCUIApplication) {
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
         let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
         waitFor(post, "isHittable == true", "动态 didn't open on my post")
