@@ -39,7 +39,6 @@
       { "t": 1.8, "v": 0, "ease": "easeInOut" } ] },
     { "part": "brows", "channel": "y", "keys": [
       { "t": 0, "v": 0 }, { "t": 1, "v": 0 }, { "t": 1.1, "v": -2.4, "ease": "easeOut" },
-      { "t": 1.6, "v": -2.4 }, { "t": 1.8, "v": 0, "ease": "easeInOut" } ] },
-      {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.933, "v": 1, "ease": "hold"}, {"t": 1.267, "v": 0, "ease": "hold"}]}
+      { "t": 1.6, "v": -2.4 }, { "t": 1.8, "v": 0, "ease": "easeInOut" } ] }
   ]
 }

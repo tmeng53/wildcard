@@ -13,8 +13,6 @@
     { "part": "head", "channel": "y", "keys": [ {"t": 0.0, "v": 2}, {"t": 2.1, "v": 2} ] },
     { "part": "root", "channel": "x", "keys": [ {"t": 0.0, "v": 0}, {"t": 1.117, "v": -0.03}, {"t": 1.5, "v": -6.0}, {"t": 1.833, "v": -5.79}, {"t": 2.1, "v": 0} ] },
     { "part": "root", "channel": "y", "keys": [ {"t": 0.0, "v": 0}, {"t": 0.2, "v": 0}, {"t": 0.267, "v": -6.69}, {"t": 0.333, "v": -8.95}, {"t": 0.383, "v": -6.69}, {"t": 0.45, "v": 0}, {"t": 2.1, "v": 0} ] },
-    {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 1}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 1}]}
+    {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}]}
   ]
 }

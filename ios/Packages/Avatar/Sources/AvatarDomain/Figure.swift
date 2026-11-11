@@ -50,11 +50,6 @@ public struct Figure: Hashable, Sendable {
         public let restOpacity: Double
         /// Where the part bends, for an arm (`bend`).
         public let elbow: Rig.Elbow?
-        /// The arm this part draws again, as an index into `parts` (`Rig.Part.twin`).
-        public internal(set) var twin: Int?
-        /// Whether it is an arm's front copy, drawn only while the arm is in front: the part a
-        /// twin names (`Rig.Part.twin`).
-        public internal(set) var front = false
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
@@ -109,7 +104,6 @@ public struct Figure: Hashable, Sendable {
                     id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow,
                     art: artworks, slots: slots))
         }
-        try Self.resolveTwins(&built, rig.parts)
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
@@ -307,7 +301,7 @@ public struct Figure: Hashable, Sendable {
         var carried = [Double](repeating: 1, count: parts.count)
         for index in evaluationOrder {
             let part = parts[index]
-            let move = pose.parts[part.twin ?? index]
+            let move = pose.parts[index]
             // Turn and scale around the pivot, then shift by the clip's offset.
             let local = Transform.translation(x: -part.pivot.x, y: -part.pivot.y)
                 .then(.scale(x: move.scaleX, y: move.scaleY))
@@ -316,12 +310,11 @@ public struct Figure: Hashable, Sendable {
             let parent = parents[index]
             carried[index] = move.opacity * (parent.map { carried[$0] } ?? 1)
             let transform = parent.map { local.then(carriers[$0]) } ?? local
-            placements[index] = Placement(transform: transform, opacity: carried[index] * depth(index, pose))
+            placements[index] = Placement(transform: transform, opacity: carried[index])
             carriers[index] = transform
             if let elbow = part.elbow {
                 let bend = Bend(shoulder: part.pivot, elbow: elbow, degrees: move.bend)
                 if move.bend != 0 { (placements[index].bend, carriers[index]) = (bend, bend.forearm.then(transform)) }
-                if part.front { placements[index].area = forearm(part.pivot, elbow, carriers[index]) }
             }
         }
         return placements

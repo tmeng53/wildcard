@@ -95,16 +95,6 @@ public struct CharacterCanvas: View {
             where placement.opacity > 0 && !drawing.parts[index].isEmpty {
                 let shapes = drawing.shapes(index, placement)
                 var part = context
-                if let area = placement.area, let first = area.first {
-                    // An arm's front copy shows only past the elbow (`Placement.area`).
-                    part.transform = fit
-                    part.clip(
-                        to: Path { path in
-                            path.move(to: CGPoint(x: first.x, y: first.y))
-                            for point in area.dropFirst() { path.addLine(to: CGPoint(x: point.x, y: point.y)) }
-                            path.closeSubpath()
-                        })
-                }
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)
                 guard placement.opacity < 1 else {
                     part.draw(shapes)

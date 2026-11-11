@@ -39,7 +39,7 @@ func checkInMovesPlayOnceOnEveryLook(persona: Persona) throws {
             let end = figure.pose(bound, at: clip.duration)
             let free: Set<PartID> = ["food0", "food1", "food2", "propR", "mouthOpen", "mouthSmile"]
             for (index, part) in figure.parts.enumerated() where !free.contains(part.id) {
-                let gaps = Channel.allCases.filter { $0 != .front }.map {
+                let gaps = Channel.allCases.map {
                     abs(end.parts[index][$0] - figure.restPose.parts[index][$0])
                 }
                 #expect(gaps.allSatisfy { $0 < 1e-6 }, "\(move) \(part.id) \(persona.rawValue)")

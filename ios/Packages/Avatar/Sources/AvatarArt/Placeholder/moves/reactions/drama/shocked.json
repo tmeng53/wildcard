@@ -27,8 +27,6 @@
     { "part": "earL", "channel": "scaleY", "keys": [ {"t": 0, "v": 1.0}, {"t": 0.8, "v": 1.0, "ease": "linear"}, {"t": 0.912, "v": 1.202, "ease": "easeOut"}, {"t": 2.34, "v": 1.168, "ease": "easeInOut"}, {"t": 2.69, "v": 1.0, "ease": "easeInOut"} ] },
     { "part": "earR", "channel": "scaleY", "keys": [ {"t": 0, "v": 1.0}, {"t": 0.8, "v": 1.0, "ease": "linear"}, {"t": 0.912, "v": 1.202, "ease": "easeOut"}, {"t": 2.34, "v": 1.168, "ease": "easeInOut"}, {"t": 2.69, "v": 1.0, "ease": "easeInOut"} ] },
     { "part": "flapL", "channel": "rotation", "keys": [ {"t": 0, "v": 0.0}, {"t": 0.8, "v": 0.0, "ease": "linear"}, {"t": 0.912, "v": 24.64, "ease": "easeOut"}, {"t": 2.34, "v": 20.16, "ease": "easeInOut"}, {"t": 2.69, "v": 0.0, "ease": "easeInOut"} ] },
-    { "part": "flapR", "channel": "rotation", "keys": [ {"t": 0, "v": 0.0}, {"t": 0.8, "v": 0.0, "ease": "linear"}, {"t": 0.912, "v": -24.64, "ease": "easeOut"}, {"t": 2.34, "v": -20.16, "ease": "easeInOut"}, {"t": 2.69, "v": 0.0, "ease": "easeInOut"} ] },
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.133, "v": 1, "ease": "hold"}, {"t": 2.467, "v": 0, "ease": "hold"}, {"t": 3.7, "v": 1, "ease": "hold"}, {"t": 4.633, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.133, "v": 1, "ease": "hold"}, {"t": 2.467, "v": 0, "ease": "hold"}, {"t": 3.7, "v": 1, "ease": "hold"}, {"t": 4.633, "v": 0, "ease": "hold"}]}
+    { "part": "flapR", "channel": "rotation", "keys": [ {"t": 0, "v": 0.0}, {"t": 0.8, "v": 0.0, "ease": "linear"}, {"t": 0.912, "v": -24.64, "ease": "easeOut"}, {"t": 2.34, "v": -20.16, "ease": "easeInOut"}, {"t": 2.69, "v": 0.0, "ease": "easeInOut"} ] }
   ]
 }

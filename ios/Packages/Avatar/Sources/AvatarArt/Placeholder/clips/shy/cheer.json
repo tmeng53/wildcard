@@ -59,8 +59,6 @@
       { "t": 0.9, "v": 0.8 }, { "t": 0.9500000000000001, "v": 1, "ease": "hold" } ] },
     { "part": "brows", "channel": "y", "keys": [
       { "t": 0, "v": 0 }, { "t": 0.4, "v": -3.6, "ease": "easeOut" }, { "t": 0.9, "v": -3.6 },
-      { "t": 1, "v": 1.2, "ease": "easeOut" }, { "t": 1.45, "v": 1.2 }, { "t": 1.6, "v": 0, "ease": "easeInOut" } ] },
-      {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.767, "v": 1, "ease": "hold"}, {"t": 1.633, "v": 0, "ease": "hold"}]},
-      {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.767, "v": 1, "ease": "hold"}, {"t": 1.633, "v": 0, "ease": "hold"}]}
+      { "t": 1, "v": 1.2, "ease": "easeOut" }, { "t": 1.45, "v": 1.2 }, { "t": 1.6, "v": 0, "ease": "easeInOut" } ] }
   ]
 }
