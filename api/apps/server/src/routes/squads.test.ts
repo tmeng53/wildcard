@@ -182,7 +182,9 @@ const SquadBody = z.object({
 });
 const SquadListBody = z.object({
   squads: z.array(SquadBody),
-  lastSquad: z.object({ id: z.uuid(), name: z.string(), how: z.enum(['left', 'removed']) }).optional(),
+  lastSquad: z
+    .object({ id: z.uuid(), name: z.string(), how: z.enum(['left', 'removed']) })
+    .optional(),
 });
 
 /** A squad the member creates; its body. */

@@ -449,7 +449,9 @@ export function squads(deps: {
         {
           version: 1 as const,
           squads: mine.map(wire),
-          ...(last === undefined ? {} : { lastSquad: { id: last.squad, name: last.name, how: last.how } }),
+          ...(last === undefined
+            ? {}
+            : { lastSquad: { id: last.squad, name: last.name, how: last.how } }),
         },
         200,
       );
