@@ -14,8 +14,8 @@ public struct TeamLetterPlaces {
     /// - Parameters:
     ///   - picture: a piece on its own, or a team badge's ticket, filling its frame.
     ///   - name: its name in the reader's language.
-    ///   - wear: 立刻穿上: the pieces worn and the badge on the member's card, then the wardrobe
-    ///     wearing them.
+    ///   - wear: 立刻穿上: the wardrobe trying the pieces on, nothing saved until the member
+    ///     saves it there.
     public init<Picture: View>(
         picture: @escaping (TeamPresent) -> Picture, name: @escaping (TeamPresent) -> Text,
         wear: @escaping ([TeamPresent]) -> Void
