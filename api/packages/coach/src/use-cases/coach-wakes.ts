@@ -1015,7 +1015,8 @@ async function pastDaysOf(
   const members = week.members.map(({ member }) => member);
   const consented = new Set(await deps.aiConsented(members));
   const [boards, notes, gifts] = await Promise.all([
-    deps.stores.notes.recent({ squad, coach, limit: DREAM_DAYS }),
+    // More than a line a day: an admin's preview may have added one.
+    deps.stores.notes.recent({ squad, coach, limit: DREAM_DAYS * 3 }),
     deps.stores.memberNotes.deliveredBetween({ squad, coach, from, to }),
     deps.gifting.given({
       squad,
@@ -1029,7 +1030,10 @@ async function pastDaysOf(
   const lastDay = new Date(now.getTime() - DAY_MS);
   const quiet =
     !checkIns.some((each) => each.day === to || each.postedDay === to) &&
-    !checkIns.some((each) => each.comments.some(({ at }) => at >= lastDay)) &&
+    // Talk under any post of those weeks, an older one's too.
+    !weeks.some(({ checkIns: theirs }) =>
+      theirs.some((each) => each.comments.some(({ at }) => at >= lastDay)),
+    ) &&
     !theirs.some(
       ({ day: noteDay, challenge }) =>
         noteDay === to &&
