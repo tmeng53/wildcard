@@ -241,14 +241,20 @@ async function member(at: { readonly zone: string; readonly offset: number }, ni
   return { ...signedUp, phone, offset: at.offset };
 }
 
+/** How many squads the tests made, so each later one is joined a second later, in order. */
+let squadsMade = 0;
+
 async function squadOf(...joined: readonly { readonly userId: string }[]) {
   const id = randomUUID();
+  // Before the fixed days these tests post on (a member sees only what was posted after they
+  // joined), and later for each later squad, as joining one after another would be.
+  const joinedAt = new Date(Date.parse('2026-09-01T00:00:00Z') + 1000 * squadsMade++);
   const inviteCode = randomInviteCodes();
   await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${inviteCode})`.execute(
     db,
   );
   for (const each of joined) {
-    await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${id}, ${each.userId}, '2026-09-01T00:00:00Z')`.execute(
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${id}, ${each.userId}, ${joinedAt})`.execute(
       db,
     );
   }
