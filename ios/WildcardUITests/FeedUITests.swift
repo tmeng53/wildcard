@@ -254,7 +254,9 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(checkIn, in: app)
         keepScreenshot(named: "47-feed-empty")
         checkIn.tap()
-        waitFor(app.buttons["tab.today"], "isSelected == true", "去打卡 didn't open 今天")
+        // By its place in the bar when need be: opened straight on 动态, the system's bar may not
+        // carry the tabs' identifiers, so `tab.today` alone is never found.
+        waitFor(tabButton("tab.today", in: app), "isSelected == true", "去打卡 didn't open 今天")
     }
 
     /// 动态 opened with no server and nothing read before: 网络开小差了 with 再试一次, not a
