@@ -17,9 +17,11 @@ public actor InMemorySignUpService: SignUpService {
     private(set) var scene: SceneID?
 
     /// `character`: one saved before, for a member back in no squad.
+    /// A member who made their character before (`character`) was in a squad, so agreed to AI then.
     public init(sample: JoinedSquad, character: NewCharacter? = nil) {
         self.sample = sample
         self.character = character
+        agreedToAI = character != nil
     }
 
     /// The squad the sample member was in before, whose captain removed them.
