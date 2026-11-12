@@ -50,6 +50,7 @@ import {
   type CoachAnswered,
   type CoachReplied,
   type CoachWakesDependencies,
+  type CoachWelcomed,
 } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
@@ -226,6 +227,7 @@ function wakes(
     consented,
     replied,
     answered,
+    welcomed,
     photoUrls,
     memberFacts,
     wantNotes,
@@ -240,6 +242,7 @@ function wakes(
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
     readonly answered?: CoachAnswered;
+    readonly welcomed?: CoachWelcomed;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
     readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
@@ -272,6 +275,7 @@ function wakes(
     ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
+    ...(welcomed === undefined ? {} : { welcomed }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
     ...(wantNotes === undefined ? {} : { wantNotes }),
@@ -294,6 +298,7 @@ const quietPorts = {
   occasions: () => Promise.resolve([]),
   replied: () => Promise.resolve(),
   answered: () => Promise.resolve(),
+  welcomed: () => Promise.resolve(),
   wantNotes: (members) => Promise.resolve(members),
   gifting: {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
@@ -889,6 +894,82 @@ describe('the coach', () => {
 
       await hiring.fire({ squad, by });
       expect(await hiring.current(squad)).toBeUndefined();
+    });
+  });
+
+  it('welcomes a member who joins at once, introducing itself in a note only they read', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, leo } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('刚加入小队')
+          ? [{ tool: 'note_to', input: { member: '队员2', text: '我是小混，欢迎你来' } }]
+          : [],
+      );
+      const told: Parameters<CoachWelcomed>[0][] = [];
+      const welcomed: CoachWelcomed = (welcome) => {
+        told.push(welcome);
+        return Promise.resolve();
+      };
+      const coach = wakes(fixture, { agent, welcomed, at: now });
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.task).toContain('队员2刚加入小队，今天是 2026-11-01，周日。');
+      expect(runs[0]?.task).toContain('给他写一张便条（note_to）：先介绍你自己，再欢迎他。');
+      // Only the note: no 战术板, no gift, no reply.
+      expect(runs[0]?.tools).toContain('note_to');
+      expect(runs[0]?.tools).not.toContain('post_note');
+      expect(runs[0]?.tools).not.toContain('reply');
+      expect(runs[0]?.answers).toStrictEqual(['便条写好了，给 队员2。']);
+      const notes = await sql<{ id: string; challenge_title: string | null; delivered: boolean }>`
+        select n.id, n.challenge_title, d.note_id is not null as delivered
+        from public.coach_member_notes n
+        left join public.coach_member_note_deliveries d on d.note_id = n.id
+        where n.member_id = ${leo}`.execute(trx);
+      expect(
+        notes.rows.map(({ challenge_title, delivered }) => ({ challenge_title, delivered })),
+      ).toStrictEqual([{ challenge_title: null, delivered: true }]);
+      expect(told).toStrictEqual([
+        {
+          squad,
+          member: leo,
+          coach: 'xiaohun',
+          note: Number(notes.rows[0]?.id),
+          day: '2026-11-01',
+          text: '我是小混，欢迎你来',
+        },
+      ]);
+      // Delivered already, so the morning delivery never pushes it.
+      const delivery = createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(trx) });
+      expect((await delivery.waiting(now)).filter(({ member }) => member === leo)).toStrictEqual(
+        [],
+      );
+      // Joining again the same day isn't welcomed twice.
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+    });
+  });
+
+  it('welcomes no one who hasn’t agreed to AI use, nor while coaching is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent, consented: [mia] }).welcome({ squad, member: leo });
+      expect(runs).toHaveLength(0);
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { coaching: false },
+        MemberId.parse(mia),
+      );
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).welcome({
+        squad,
+        member: leo,
+      });
+      expect(runs).toHaveLength(0);
+      const queued = await sql<{ n: number }>`
+        select count(*)::int as n from public.coach_wakes where squad_id = ${squad} and reason = 'joined'`.execute(
+        trx,
+      );
+      // The first was queued and let go; none while coaching is off.
+      expect(queued.rows[0]?.n).toBe(1);
     });
   });
 

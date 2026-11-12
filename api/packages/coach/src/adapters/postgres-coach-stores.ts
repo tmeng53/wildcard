@@ -45,12 +45,16 @@ function wakeOf(row: {
   readonly reason: string;
   readonly check_in_id: string | null;
   readonly comment_id: string | null;
+  readonly member_id: string | null;
   readonly day: string | null;
 }): Wake {
   const squad = SquadId.parse(row.squad_id);
   const id = Number(row.id);
   if ((row.reason === 'daily' || row.reason === 'dream') && row.day !== null) {
     return { id, squad, reason: { kind: row.reason, day: row.day } };
+  }
+  if (row.reason === 'joined' && row.member_id !== null && row.day !== null) {
+    return { id, squad, reason: { kind: 'joined', member: row.member_id, day: row.day } };
   }
   if (row.reason === 'comment' && row.comment_id !== null && row.check_in_id !== null) {
     return {
@@ -99,6 +103,23 @@ function insertWake(
         .values({ squad_id: squad, reason: reason.kind, day: reason.day, created_at: now })
         .onConflict((conflict) =>
           conflict.columns(['squad_id', 'day']).where('reason', '=', reason.kind).doNothing(),
+        )
+        .returning('id')
+        .execute();
+    case 'joined':
+      return insert
+        .values({
+          squad_id: squad,
+          reason: 'joined',
+          member_id: reason.member,
+          day: reason.day,
+          created_at: now,
+        })
+        .onConflict((conflict) =>
+          conflict
+            .columns(['squad_id', 'member_id', 'day'])
+            .where('reason', '=', 'joined')
+            .doNothing(),
         )
         .returning('id')
         .execute();
@@ -159,8 +180,9 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           )
           .orderBy('wake.squad_id')
           .orderBy(sql`wake.state = 'running'`, 'desc')
-          // A member's reply waits on its answer, so it goes before older wakes.
-          .orderBy(sql`wake.reason = 'comment'`, 'desc')
+          // A member's reply waits on its answer, and a new member on their welcome, so these go
+          // before older wakes.
+          .orderBy(sql`wake.reason in ('comment', 'joined')`, 'desc')
           .orderBy('wake.created_at')
           .orderBy('wake.id')
           .execute();
@@ -182,6 +204,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
               'reason',
               'check_in_id',
               'comment_id',
+              'member_id',
               sql<string | null>`to_char(day, 'YYYY-MM-DD')`.as('day'),
             ])
             .executeTakeFirst()
@@ -264,7 +287,7 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
     },
 
     memberNotes: {
-      async save({ squad, member, coach, day, text, challenge, wake }) {
+      async save({ squad, member, coach, day, text, challenge, wake, deliveredNow = false }) {
         // Nothing when the member left the squad or deleted their account while the run thought.
         const saved = await sql<{ id: string }>`
           insert into public.coach_member_notes
@@ -277,7 +300,15 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           where exists (select 1 from auth.users where id = ${member}::uuid)
           on conflict (wake_id, member_id) where wake_id is not null do nothing
           returning id`.execute(db);
-        return saved.rows.length > 0;
+        const id = saved.rows[0]?.id;
+        if (id === undefined) return undefined;
+        // Delivered with the save, so the morning delivery never takes it up.
+        if (deliveredNow) {
+          await sql`insert into public.coach_member_note_deliveries (note_id) values (${id}::bigint)`.execute(
+            db,
+          );
+        }
+        return Number(id);
       },
 
       challengeOf: (input) => dayChallenge(db, input),
