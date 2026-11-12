@@ -46,6 +46,7 @@ import type {
   CoachSettingsStore,
   CoachStores,
   CoachTimeZones,
+  CoachEndedSquads,
   CoachTransaction,
   CoachUsage,
   SquadWeekSource,
@@ -183,6 +184,8 @@ export interface CoachWakesDependencies {
   readonly memberFacts: CoachMemberFacts;
   /** The clock of each squad's daily wake and of the day it tells the coach. */
   readonly timeZonesAt: CoachTimeZones;
+  /** Squads everyone left, which the coach never wakes for, whoever is hired there. */
+  readonly ended: CoachEndedSquads;
   /** The meme library the coach draws humour from. */
   readonly memes: CoachMemes;
   readonly weatherOf: CoachWeather;
@@ -256,7 +259,9 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       // the squads that have it until they fire it.
       const hired = await deps.hiring.hired();
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
-      const squads = [...hired.keys()];
+      // A squad that ended keeps its coach on record, but nothing runs for it.
+      const ended = await deps.ended([...hired.keys()]);
+      const squads = [...hired.keys()].filter((squad) => !ended.has(squad));
       let queued = 0;
       const zones = await deps.timeZonesAt(squads, now);
       for (const squad of squads) {

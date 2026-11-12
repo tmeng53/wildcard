@@ -14,12 +14,13 @@ export interface Awarded {
 /**
  * The squads whose awards of `week` are due now, by id: those with a check-in for the week made
  * before their own Sunday 8pm, and those `waiting` names (a frozen 战报 still waiting for its
- * titles, though the check-ins that started it were deleted since).
+ * titles, though the check-ins that started it were deleted since). A squad that ended
+ * (everyone left) gets none: nobody is there to read them, and no AI is spent on it.
  */
 export async function squadsAwardedIn(
   deps: {
     readonly checkIns: Pick<CheckIns, 'squadsCheckedInto'>;
-    readonly squads: Pick<Squads, 'timeZonesFor'>;
+    readonly squads: Pick<Squads, 'timeZonesFor' | 'endedAmong'>;
     readonly clock: () => Date;
     readonly waiting?: (week: WeekStart) => Promise<readonly string[]>;
   },
@@ -36,9 +37,9 @@ export async function squadsAwardedIn(
     deps.waiting?.(week) ?? Promise.resolve([]),
   ]);
   const stillWaiting = new Set<string>(waiting);
-  const candidates = [...new Set([...checkedIn, ...stillWaiting])].map((squad) =>
-    SquadId.parse(squad),
-  );
+  const named = [...new Set([...checkedIn, ...stillWaiting])].map((squad) => SquadId.parse(squad));
+  const ended = await deps.squads.endedAmong(named);
+  const candidates = named.filter((squad) => !ended.has(squad));
   const zones = await deps.squads.timeZonesFor(candidates, week);
   const due = new Map<string, Awarded>();
   for (const squad of candidates) {

@@ -503,6 +503,9 @@ export type CoachTimeZones = (
   moment: Date,
 ) => Promise<(squad: SquadId) => string>;
 
+/** Which of these squads ended (everyone left): the coach never wakes for one. */
+export type CoachEndedSquads = (squads: readonly SquadId[]) => Promise<ReadonlySet<SquadId>>;
+
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
   /** The coach the squad has hired now and since when, if any. */
