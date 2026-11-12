@@ -138,7 +138,6 @@ export {
   CARDS_DAYS,
   CoachCardId,
   CoachCardKind,
-  STACK_HOURS,
   cardKey,
   type CoachOwnCard,
 } from './domain/cards.js';

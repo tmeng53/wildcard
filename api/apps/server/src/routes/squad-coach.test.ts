@@ -938,6 +938,37 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(odd.status).toBe(400);
   });
 
+  it('stacks only today’s cards, leaving those not seen before today in 以前', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
+    await sql`update public.squad_members set joined_at = now() - interval '3 days'
+      where squad_id = ${squad} and member_id = ${mate.userId}`.execute(db);
+    // Yesterday's, on any clock: 30 hours ago is before today's midnight in New York.
+    await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+      values (${squad}, 'xiaohun', current_date - 1, '昨天的战术板', now() - interval '30 hours')`.execute(
+      db,
+    );
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, at)
+      values (${squad}, ${mate.userId}, 'xiaohun', current_date - 1, '昨天的便条',
+        now() - interval '30 hours')
+      returning id`.execute(db);
+    const yesterdays = String(written.rows[0]?.id);
+    await sql`insert into public.coach_member_note_deliveries (note_id, at)
+      values (${yesterdays}, now() - interval '30 hours')`.execute(db);
+    const today = new Date().toISOString().slice(0, 10);
+    await coachSaid(squad, { day: today, text: '今天谁先动' });
+
+    const cards = CardsBody.parse(
+      (await call({ method: 'GET', path: `/squads/${squad}/coach/cards`, token: mate.token })).body,
+    );
+    expect(ids(cards.stack)).toStrictEqual([`board:${today}`]);
+    expect(ids(cards.earlier)).toContain(`note:${yesterdays}`);
+    expect(cards.earlier).toHaveLength(2);
+    await fire(captain, squad);
+  });
+
   it('lists only the challenges when asked, every one since the caller joined, done ones marked', async () => {
     const [captain, mate] = [await signUp(), await signUp()];
     const squad = await squadOf(captain, mate);
