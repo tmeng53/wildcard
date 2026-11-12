@@ -23,8 +23,9 @@ const Published = z.object({ messageIds: z.array(z.string()).min(1) });
  * (`check-in-created`, …), signed with the server's own service account, which
  * `scripts/gcp-setup.sh` lets publish. Pub/Sub then pushes it to each subscriber's
  * `/jobs/events/<subscriber>`. The request never runs an event's work itself: when Pub/Sub can't
- * take it after a second try, the event is logged as an error (and so reported), and the coach
- * job catches the check-ins and comments it missed.
+ * take it after a second try (with a fresh token), the event is logged as an error, and so
+ * reported. The coach job still catches the check-ins and replies to the coach it missed; a lost
+ * comment push or welcome is not sent again.
  * https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics/publish
  * https://cloud.google.com/run/docs/securing/service-identity#fetching_identity_and_access_tokens
  */
@@ -82,6 +83,8 @@ export function pubSubEvents(options: {
         await publishOnce(event, topic);
         return;
       } catch (error) {
+        // A token Google stopped taking is fetched again for the next try.
+        cached = undefined;
         if (tried >= PUBLISH_TRIES) {
           options.log.error('event not published', { topic, event, error });
           return;
