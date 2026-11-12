@@ -1701,6 +1701,28 @@
         }
       }
     },
+    "晨跑搭子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dawn Run Crew"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "晨跑搭子"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "晨跑搭子"
+          }
+        }
+      }
+    },
     "周三不练腿俱乐部": {
       "localizations": {
         "en": {

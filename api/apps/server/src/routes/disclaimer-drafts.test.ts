@@ -10,10 +10,15 @@ import {
   DisclaimerWriterOffError,
   ModelName,
   createDisclaimerDrafts,
-  createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
-import type { LanguageModel } from '@wildcard/language-model';
+import {
+  createAiUsage,
+  createPostgresAiUsageLedger,
+  createPostgresAiUsageSettings,
+} from '@wildcard/ai-usage';
+import type { LanguageModel, ProviderModel } from '@wildcard/language-model';
+import { NEW_YORK } from '@wildcard/time-zones';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -61,18 +66,59 @@ const db = createDatabase(config.databaseUrl);
 afterAll(() => db.destroy());
 
 const settings = createPostgresDraftSettings(db);
+const pricedSettings = createPostgresAiUsageSettings(db);
 
-function appAnswering(provider: Provider, ...fixtures: [Fixture, ...Fixture[]]) {
+/**
+ * The provider's model counted in the AI usage ledger as main.ts counts drafts, the recorded
+ * models priced, and everyone's budget for the day `dailyCapMicros`.
+ */
+function metered(provider: ProviderModel, { dailyCapMicros = 2_000_000_000 } = {}) {
+  const price = {
+    inputMicrosPerMillion: 100_000,
+    cachedInputMicrosPerMillion: 10_000,
+    outputMicrosPerMillion: 500_000,
+  };
+  return createAiUsage({
+    settings: {
+      current: async () => ({
+        ...(await pricedSettings.current()),
+        prices: { 'openai/recorded': price, 'anthropic/recorded': price },
+        dailyCapMicros,
+      }),
+    },
+    ledger: createPostgresAiUsageLedger(db),
+    timeZonesAt: () => Promise.resolve(() => NEW_YORK),
+    // Every member here counts to one squad, with no rows of its own: only its budget matters.
+    squadOf: () => Promise.resolve('00000000-0000-4000-8000-0000000000aa'),
+    clock: () => new Date(),
+  }).meter(provider, { feature: 'disclaimer-drafts', capped: true });
+}
+
+function appAnswering(
+  provider: Provider,
+  { answers: fixtures, ...budget }: { answers: [Fixture, ...Fixture[]]; dailyCapMicros?: number },
+) {
   const recorded = recordedModel(provider, ...fixtures);
   const options = { baseURL: `http://${provider}.test`, fetch: recorded.fetch };
-  const model = byProvider(
-    provider === 'openai'
-      ? { openai: createOpenAILanguageModel({ apiKey: 'sk-openai-test', ...options }) }
-      : { anthropic: createAnthropicLanguageModel({ apiKey: 'sk-ant-test', ...options }) },
-    () => new DisclaimerWriterOffError(),
+  const model = metered(
+    byProvider(
+      provider === 'openai'
+        ? { openai: createOpenAILanguageModel({ apiKey: 'sk-openai-test', ...options }) }
+        : { anthropic: createAnthropicLanguageModel({ apiKey: 'sk-ant-test', ...options }) },
+      () => new DisclaimerWriterOffError(),
+    ),
+    budget,
   );
   return { ...appWith(model, `${provider}/recorded`), requests: recorded.requests };
 }
+
+/** What the ledger counted to a member. */
+const countedTo = async (member: string) =>
+  db
+    .selectFrom('ai_usage')
+    .select(['feature', 'squad_id', 'model', 'input_tokens', 'output_tokens', 'cost_micros'])
+    .where('member_id', '=', member)
+    .execute();
 
 /**
  * The server with this model, the settings as saved but naming `modelName` when given, and what
@@ -123,9 +169,7 @@ function appWith(model: LanguageModel, modelName?: string) {
               }),
             },
       memes: () => Promise.resolve([]),
-      allowance: createPostgresDraftAllowance(db),
       aiConsent: () => Promise.resolve(true),
-      clock: () => new Date(),
       random: () => 0,
     }),
     members: createMembers({ store: createPostgresProfileStore(db) }),
@@ -186,9 +230,9 @@ async function ask(
 }
 
 describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s', (provider) => {
-  it('answers three drafts for a signed-in member', async () => {
-    const { app, requests } = appAnswering(provider, 'drafts');
-    const { token } = await signUp();
+  it('answers three drafts for a signed-in member, counted to them', async () => {
+    const { app, requests } = appAnswering(provider, { answers: ['drafts'] });
+    const { token, userId } = await signUp();
     const answer = await ask(app, { token });
     expect(answer.status).toBe(200);
     expect(answer.body).toEqual({
@@ -204,13 +248,24 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
     expect(JSON.stringify(requests)).toContain('原因：早上没起来\\n风格：搞笑');
     expect(JSON.stringify(requests)).toContain('recorded');
     expect(JSON.stringify(requests)).toContain('你在帮一个朋友运动打卡 App 的用户写「请假条」');
+    // 812 input tokens at $0.10 and 96 output at $0.50 a million: 81.2 + 48, rounded up.
+    expect(await countedTo(userId)).toStrictEqual([
+      {
+        feature: 'disclaimer-drafts',
+        squad_id: null,
+        model: `${provider}/recorded`,
+        input_tokens: '812',
+        output_tokens: '96',
+        cost_micros: '130',
+      },
+    ]);
   });
 
   it.each<[Fixture, string]>([
     ['self-harm', 'care'],
     ['unsafe', 'declined'],
   ])('answers %s as %s', async (fixture, kind) => {
-    const { app } = appAnswering(provider, fixture);
+    const { app } = appAnswering(provider, { answers: [fixture] });
     const { token } = await signUp();
     expect((await ask(app, { token })).body).toEqual({ version: 1, kind });
   });
@@ -218,7 +273,7 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
   it.each<Fixture>(['refusal', 'overloaded'])(
     'answers 503 when %s leaves nothing to show',
     async (fixture) => {
-      const { app } = appAnswering(provider, fixture);
+      const { app } = appAnswering(provider, { answers: [fixture] });
       const { token } = await signUp();
       const answer = await ask(app, { token });
       expect(answer.status).toBe(503);
@@ -229,7 +284,7 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
 
   it('answers 503 without an error log when the model’s provider has no key', async () => {
     const { app, logged } = appWith(
-      byProvider({}, () => new DisclaimerWriterOffError()),
+      metered(byProvider({}, () => new DisclaimerWriterOffError())),
       `${provider}/recorded`,
     );
     const { token } = await signUp();
@@ -253,7 +308,7 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
   });
 
   it('logs an error when the model fails', async () => {
-    const { app, logged } = appAnswering(provider, 'refusal');
+    const { app, logged } = appAnswering(provider, { answers: ['refusal'] });
     const { token } = await signUp();
     expect((await ask(app, { token })).status).toBe(503);
     expect(logged).toMatchObject([
@@ -261,17 +316,25 @@ describe.each<Provider>(['openai', 'anthropic'])('POST /disclaimer-drafts on %s'
     ]);
   });
 
-  it('answers 429 after the day’s 6 batches', async () => {
-    const { app } = appAnswering(provider, 'drafts');
-    const { token } = await signUp();
-    for (let batch = 0; batch < 6; batch += 1) expect((await ask(app, { token })).status).toBe(200);
+  it('answers 429 once the day’s AI budget is spent, without asking the model', async () => {
+    const { app, requests } = appAnswering(provider, { answers: ['drafts'], dailyCapMicros: 0 });
+    const { token, userId } = await signUp();
     const answer = await ask(app, { token });
     expect(answer.status).toBe(429);
     expect(answer.body.reason).toBe('DISCLAIMER_DRAFTS_USED_UP');
+    expect(requests).toStrictEqual([]);
+    expect(await countedTo(userId)).toStrictEqual([]);
+  });
+
+  it('counts the tokens of a refusal too, though it shows nothing', async () => {
+    const { app } = appAnswering(provider, { answers: ['refusal'] });
+    const { token, userId } = await signUp();
+    expect((await ask(app, { token })).status).toBe(503);
+    expect(await countedTo(userId)).toHaveLength(1);
   });
 
   it('refuses an unknown style or an empty reason, and a caller who isn’t signed in', async () => {
-    const { app, requests } = appAnswering(provider, 'drafts');
+    const { app, requests } = appAnswering(provider, { answers: ['drafts'] });
     const { token } = await signUp();
     const style = await ask(app, {
       token,

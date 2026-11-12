@@ -40,6 +40,7 @@ import {
   switchesOn,
   adminOn,
   aiConsentOn,
+  aiUsageOn,
   config,
   noJobs,
   nudgesOn,
@@ -47,6 +48,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
+import { coachUsageIn } from '../flows/coach-usage.js';
 import {
   unusedWeeklyAwards,
   unusedUnlocks,
@@ -127,7 +129,7 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
     letters: createPostgresCoachLetters(db),
     memory: createPostgresCoachStores(db).memory,
-    usage: createPostgresCoachStores(db).usage,
+    usage: coachUsageIn(aiUsageOn(db)),
     squadWeek: () => Promise.reject(new Error('unused')),
     aiConsented: () => Promise.reject(new Error('unused')),
     clock: () => new Date(),

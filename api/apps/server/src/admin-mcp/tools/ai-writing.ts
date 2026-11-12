@@ -37,8 +37,9 @@ export function getDisclaimerDraftSettings({ drafts }: AiWritingToolDependencies
     title: 'Read the 请假条 draft settings',
     description:
       'Shows what AI 请假条 drafts are written with now: whether they are on, the model ' +
-      '(provider/model), its standing instructions, the batches a member may ask for in 24 ' +
-      'hours, and how often a request gets one of the week’s memes.',
+      '(provider/model), its standing instructions, and how often a request gets one of the ' +
+      'week’s memes. Each request is counted to the member and their squad; once the squad’s ' +
+      'daily AI budget is spent (get_ai_usage_settings), the app shows its dice.',
     changes: false,
     input: z.strictObject({}),
     run: async () => drafts.current(),
@@ -53,7 +54,8 @@ export function changeDisclaimerDraftSettings({ drafts }: AiWritingToolDependenc
     description:
       'Changes any of the 请假条 draft settings; the rest stay as they are. Applies to the next ' +
       'request. Turning drafts off makes the app show its dice. A model whose provider has no ' +
-      'API key on the server writes nothing, as if drafts were off. Returns the settings now.',
+      'API key on the server writes nothing, as if drafts were off, and one without a price ' +
+      '(change_ai_usage_settings) is never asked. Returns the settings now.',
     changes: true,
     input: someChange(
       DraftSettingsChange.extend({ model: ModelChoice.pipe(DraftModel).optional() }),

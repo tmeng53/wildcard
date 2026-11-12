@@ -20,11 +20,6 @@ const fields = {
     .min(1)
     .max(20_000)
     .describe('The standing instructions (system prompt), Chinese, as the product spec has them.'),
-  batchesPerDay: z
-    .int()
-    .min(1)
-    .max(100)
-    .describe('Batches a member may ask for in 24 hours: the first and each 换一批.'),
   memeChance: z
     .number()
     .min(0)

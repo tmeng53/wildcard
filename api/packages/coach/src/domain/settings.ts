@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 // What every coach runs with, as kept in the database and changed by an admin: so coaching,
-// the model, the rules and the prices change without a deploy.
+// the model and the rules change without a deploy. What its calls cost and may spend is the AI
+// usage ledger's, with every other model call's.
 
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
@@ -58,7 +59,7 @@ export function holidaysOn(calendar: readonly CoachHoliday[], day: string): stri
 
 /**
  * How hard the model thinks before it answers: more reads a member's tone better and costs more
- * output tokens, which the usage counts at the output price.
+ * output tokens, which the AI usage ledger counts at the model's output price.
  */
 export const CoachReasoning = z
   .enum(['none', 'minimal', 'low', 'medium', 'high'])
@@ -66,9 +67,6 @@ export const CoachReasoning = z
     'How hard the model thinks before answering: none, minimal, low, medium or high. Thinking is billed as output tokens.',
   );
 export type CoachReasoning = z.infer<typeof CoachReasoning>;
-
-/** US dollars in millionths, per million tokens. */
-const MicrosPerMillion = z.int().min(0).max(2_000_000_000);
 
 const fields = {
   coaching: z
@@ -90,35 +88,12 @@ const fields = {
     .describe(
       'How each kind of wake goes (a check-in, a reply or @ to the coach, a new day) and how the coach keeps its memory, Chinese; after each coach’s soul. `{replyLimit}` and `{noteLimit}` stand for the longest reply and the longest 战术板 line or 便条, which the API puts in.',
     ),
-  inputMicrosPerMillion: MicrosPerMillion.describe(
-    'The model’s price for input tokens: US dollars in millionths per million tokens.',
-  ),
-  cachedInputMicrosPerMillion: MicrosPerMillion.describe(
-    'The model’s price for input tokens the provider had cached from an earlier request with the same beginning: US dollars in millionths per million tokens.',
-  ),
-  outputMicrosPerMillion: MicrosPerMillion.describe(
-    'The model’s price for output tokens: US dollars in millionths per million tokens.',
-  ),
   noteHour: z
     .int()
     .min(0)
     .max(23)
     .describe(
       'The hour on each member’s own clock when the coach’s morning note (便条) reaches them: pushed silently and told in 通知. A note written after it reaches them at once.',
-    ),
-  squadDailyCapMicros: z
-    .int()
-    .min(0)
-    .max(2_000_000_000)
-    .describe(
-      'What one squad’s coach may spend a day, on the squad’s own clock: US dollars in millionths. Once the squad’s spending that day reaches it, its coach is off duty: its wakes are skipped until the next day.',
-    ),
-  dailyCapMicros: z
-    .int()
-    .min(0)
-    .max(2_000_000_000)
-    .describe(
-      'What every squad’s coach together may spend a day, New York’s day: US dollars in millionths. Once reached, every coach is off duty until the next day.',
     ),
   holidays: z
     .array(CoachHoliday)

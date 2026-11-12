@@ -25,7 +25,7 @@ disclaimer-drafts: no key, so 503 DISCLAIMER_WRITER_UNAVAILABLE (the app shows i
 disclaimer-drafts: a self-harm reason is the model's to judge, so with no key it is 503 too
 disclaimer-drafts: a member who hasn't agreed to the AI terms refused (400 AI_CONSENT_REQUIRED)
 disclaimer-drafts: an unknown style refused (400), a signed-out caller refused (401)
-disclaimer-drafts: no batch counted
+disclaimer-drafts: no AI usage counted
 api-journeys: ok (disclaimer-drafts)
 ```
 
@@ -35,12 +35,12 @@ A `FAIL:` line, a missing line or a different value is a FAIL.
 
 Check at the source, with the ids from the log:
 
-- `psql "$DB_URL" -c "select count(*) from public.disclaimer_draft_requests where member_id = '<me>'"`: 0. A batch that showed nothing gives its place back.
+- `psql "$DB_URL" -c "select count(*) from public.ai_usage where member_id = '<me>'"`: 0. No model was called, so no AI usage is counted.
 - The server log has no `"severity":"ERROR"` line for the no-key 503s; it logs `no language model key: AI drafts are off and weekly awards stay pending` once at startup.
 
 ## Worth probing
 
 - A reason about self-harm reaches the model like any other; the recorded `self-harm` answer gives `{"version":1,"kind":"care"}`.
-- With a key (a fake one, pointed at a local stub replaying `api/apps/server/src/test-kit/openai/*.json`, or `anthropic/*.json` after setting the model to `anthropic/…` with the admin tool `change_disclaimer_draft_settings`): 3 drafts per batch, and the 7th counted batch in 24 hours answers 429 `DISCLAIMER_DRAFTS_USED_UP` (the settings' `batchesPerDay`). About 3 in 10 prompts (the settings' `memeChance`) carry one `本周梗` line, for a meme in use that suits the style; the rest carry none, and none ever lists the whole library.
-- Settings apply to the next request with no restart: `writing: false` makes every request answer 503 `DISCLAIMER_WRITER_UNAVAILABLE` without counting, and the request names the settings' model and instructions.
-- The server checks only a batch's shape (exactly 3 distinct drafts, 15 to 80 characters, one line each); a batch out of shape answers 503 and doesn't count. What the drafts say is the prompt's job: there are no word checks on them.
+- With a key (a fake one, pointed at a local stub replaying `api/apps/server/src/test-kit/openai/*.json`, or `anthropic/*.json` after setting the model to `anthropic/…` with the admin tool `change_disclaimer_draft_settings`): 3 drafts per batch, each batch a `disclaimer-drafts` row in `ai_usage` with the member and their squad; once the squad's spending that day reaches `squadDailyCapMicros` (or everyone's `dailyCapMicros`, both from `change_ai_usage_settings`), the next batch answers 429 `DISCLAIMER_DRAFTS_USED_UP` without calling the model. About 3 in 10 prompts (the settings' `memeChance`) carry one `本周梗` line, for a meme in use that suits the style; the rest carry none, and none ever lists the whole library.
+- Settings apply to the next request with no restart: `writing: false` makes every request answer 503 `DISCLAIMER_WRITER_UNAVAILABLE` without calling the model, and the request names the settings' model and instructions.
+- The server checks only a batch's shape (exactly 3 distinct drafts, 15 to 80 characters, one line each); a batch out of shape answers 503, its tokens still counted in `ai_usage`. What the drafts say is the prompt's job: there are no word checks on them.

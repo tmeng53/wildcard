@@ -8,6 +8,12 @@ import {
   createAiConsent,
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
+import {
+  createAiUsage,
+  createAiUsageSettings,
+  createPostgresAiUsageLedger,
+  createPostgresAiUsageSettings,
+} from '@wildcard/ai-usage';
 import { createArt, createPostgresArtStore } from '@wildcard/art';
 import {
   MemberId as CheckInMember,
@@ -35,6 +41,7 @@ import {
   createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
   createPostgresCoachLetters,
+  createCoachReport,
   createPostgresCoachReport,
   createPostgresCoachSettings,
   createPostgresCoachStores,
@@ -48,7 +55,6 @@ import {
   createDiceLines,
   createDraftSettings,
   createPostgresDiceLines,
-  createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
 import {
@@ -93,6 +99,7 @@ import {
   MemberId as PushMember,
 } from '@wildcard/push';
 import {
+  MemberId as SquadsMember,
   SquadId as SquadsSquad,
   createPostgresSquadStore,
   createSquads,
@@ -129,6 +136,7 @@ import {
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
+import { coachUsageIn } from './flows/coach-usage.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
@@ -144,6 +152,7 @@ import { pubSubEvents } from './adapters/pubsub-events.js';
 import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { aiUsageTools } from './admin-mcp/tools/ai-usage.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
@@ -246,12 +255,30 @@ const providers = (options: {
     ? {}
     : { anthropic: createAnthropicLanguageModel({ apiKey: anthropicKey, ...options }) }),
 });
-const model = byProvider(providers({}), () => new DisclaimerWriterOffError());
-// The awards are written in a job nobody waits on: a longer answer, given more time.
-const awardsModel = byProvider(
-  providers({ timeoutMs: 120_000, maxOutputTokens: 16_384 }),
-  () => new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
+// Every model call is counted to the member and squad it was for, against the squad's daily AI
+// budget (Tracy, 2026-11-10). The squads module is made below; it is only asked once a call comes.
+const aiUsage = createAiUsage({
+  settings: createPostgresAiUsageSettings(db),
+  ledger: createPostgresAiUsageLedger(db),
+  timeZonesAt: (ids, at) => squadZonesAt(ids, at),
+  squadOf: async (member) => [...(await squads.squadIdsOf(SquadsMember.parse(member)))][0],
+  clock: () => new Date(),
+});
+// 请假条 drafts wait on the squad's budget: once it is spent, the app shows its dice.
+const model = aiUsage.meter(
+  byProvider(providers({}), () => new DisclaimerWriterOffError()),
+  { feature: 'disclaimer-drafts', capped: true },
 );
+// The awards are written in a job nobody waits on: a longer answer, given more time. They are
+// counted to the squad but never held back by its budget: the 战报 waits on them.
+const awardsModel = aiUsage.meter(
+  byProvider(
+    providers({ timeoutMs: 120_000, maxOutputTokens: 16_384 }),
+    () => new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
+  ),
+  { feature: 'weekly-awards', capped: false },
+);
+const coachUsage = coachUsageIn(aiUsage);
 if (openaiKey === undefined && anthropicKey === undefined) {
   log.info('no language model key: AI drafts are off and weekly awards stay pending');
 }
@@ -562,6 +589,7 @@ const coachWakes =
         settings: createPostgresCoachSettings(db),
         catalog: createPostgresCoachCatalog(db),
         stores: createPostgresCoachStores(db),
+        usage: coachUsage,
         transaction: postgresCoachTransaction(db),
         agent: coachAgent,
         squadWeek: coachWeek,
@@ -756,9 +784,7 @@ const app = createApp({
         background,
         styles,
       })),
-    allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
-    clock: () => new Date(),
     random: Math.random,
   }),
   push,
@@ -771,7 +797,7 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
     letters: createPostgresCoachLetters(db),
     memory: createPostgresCoachStores(db).memory,
-    usage: createPostgresCoachStores(db).usage,
+    usage: coachUsage,
     squadWeek: coachWeek,
     aiConsented: coachConsented,
     clock: () => new Date(),
@@ -852,6 +878,9 @@ const app = createApp({
       ...disclaimerDiceTools({
         dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
       }),
+      ...aiUsageTools({
+        settings: createAiUsageSettings({ store: createPostgresAiUsageSettings(scope) }),
+      }),
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
@@ -907,7 +936,7 @@ const app = createApp({
           hiring: createPostgresCoachHiring(scope),
           catalog: createPostgresCoachCatalog(scope),
         }),
-        report: createPostgresCoachReport(scope),
+        report: createCoachReport({ store: createPostgresCoachReport(scope), usage: coachUsage }),
         memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
         clock: () => new Date(),
       }),

@@ -160,6 +160,7 @@ struct ScheduleBack: View {
                 Text(copy: "徽章", bundle: .module)
                     .typeStyle(TypeRamp.label)
                     .foregroundStyle(ink)
+                    .fixedSize()
                 HStack(spacing: Space.xxs) {
                     ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
                         TitleBadgeView(

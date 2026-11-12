@@ -17,6 +17,9 @@
       "path": "../../packages/language-model"
     },
     {
+      "path": "../../packages/ai-usage"
+    },
+    {
       "path": "../../packages/admins"
     },
     {

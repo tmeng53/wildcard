@@ -28,9 +28,9 @@ public final class SignUpModel {
     /// The pieces still locked for the member, read once they are signed in.
     /// The member's 商店街, once read; the editor offers the starter street until then.
     private var stock: StreetStock?
-    private(set) var character: NewCharacter?
+    internal(set) var character: NewCharacter?
     /// The character just made, beside each step's title and on the stage at 上场.
-    private(set) var myCharacter: CastMember?
+    internal(set) var myCharacter: CastMember?
 
     var squad: SquadDraft
     private(set) var preview: Lookup = .none
@@ -47,6 +47,10 @@ public final class SignUpModel {
     var birthday = BirthdayDraft()
     private(set) var week: WeekDraft?
 
+    /// The member was in a squad and is in none now: they only join or make one, as the character
+    /// they have, keeping everything else they saved (Tracy, 2026-11-11).
+    public internal(set) var isRejoining = false
+
     /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
     public private(set) var madeTheSquad = false
     /// 这周在哪练？'s five cartons, once the squad is made.
@@ -60,7 +64,7 @@ public final class SignUpModel {
     /// A call under way: the step's button shows it's busy and can't be tapped twice.
     private(set) var isWorking = false
     /// What went wrong with the step's last call, until the member changes something.
-    private(set) var failure: SignUpError?
+    internal(set) var failure: SignUpError?
 
     /// This week's days, Monday first, for the poster's weekday names.
     let weekDays: [LocalDay]
@@ -101,7 +105,7 @@ public final class SignUpModel {
     }
 
     /// The nickname so far, for the squad's suggested name and the poster.
-    private(set) var nickname: String
+    internal(set) var nickname: String
 
     // MARK: Moving between steps
 
@@ -114,9 +118,11 @@ public final class SignUpModel {
     }
 
     /// Carries on a sign-up closed after 你的小队, at 关于你 with its saved character; false if not.
-    public func resume(in squad: SquadID, madeIt: Bool) async -> Bool {
+    /// `rejoining`: a member back in no squad, who carries on at 上场 or 这周在哪练？ instead.
+    public func resume(in squad: SquadID, madeIt: Bool, rejoining: Bool = false) async -> Bool {
         guard let resumed = try? await service.resume(in: squad) else { return false }
         (joined, madeTheSquad, character) = (resumed.squad, madeIt, resumed.character)
+        isRejoining = rejoining && resumed.character != nil
         teammates = resumed.squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
         if let made = resumed.character {
             (nickname, myCharacter) = (made.nickname.text, CastMember(outfit: made.outfit, persona: made.persona))
@@ -125,7 +131,7 @@ public final class SignUpModel {
                 look: made.outfit, persona: made.persona, nickname: nickname, stock: stock)
             await myCharacter?.load(idle: false)
         }
-        show(.sports)
+        show(afterSquad)
         return true
     }
 
@@ -138,7 +144,9 @@ public final class SignUpModel {
     /// it lands, after they chose to go back.
     func back() {
         guard !isWorking, !isPickingScene, !isConnectingHealth, !isAskingLocation, reveal == nil else { return }
-        guard let previous = step.previous(hasHealth: hasHealth, hasLocation: hasLocation) else { return }
+        let previous =
+            isRejoining ? step.previousRejoining : step.previous(hasHealth: hasHealth, hasLocation: hasLocation)
+        guard let previous else { return }
         failure = nil
         show(previous, forward: false)
     }
@@ -188,11 +196,6 @@ public final class SignUpModel {
     }
 
     // MARK: 你的小队
-
-    func choose(_ choice: SquadDraft.Choice) {
-        squad.choice = choice
-        failure = nil
-    }
 
     func typeCode(_ text: String) {
         squad.typedCode = text
@@ -245,7 +248,7 @@ public final class SignUpModel {
         // Back on 你的小队 after the squad was joined or made: it is settled, so carry on rather
         // than join or make another.
         if joined != nil {
-            show(.sports)
+            show(afterSquad)
             return
         }
         guard canFinishSquad else { return }
@@ -269,7 +272,7 @@ public final class SignUpModel {
             self.joined = squad
             self.madeTheSquad = choice == .create
             self.teammates = squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
-            self.show(.sports)
+            self.show(self.afterSquad)
         }
     }
 

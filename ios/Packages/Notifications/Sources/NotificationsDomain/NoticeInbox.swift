@@ -18,7 +18,7 @@ public protocol NoticeSource: Sendable {
 
 /// 通知's data, behind the bell on 动态: the member's notices a page at a time, newest first, and
 /// whether any is newer than what they have seen (the bell's dot). Opening the page marks every
-/// one read; the ones that were new stay bold while it is open.
+/// one read; the ones that were new stay bold while it is open, until their row is tapped.
 @MainActor @Observable
 public final class NoticeInbox {
     /// Where loading stands.
@@ -52,7 +52,7 @@ public final class NoticeInbox {
     private var seenThrough: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
-    /// Notices the member opened from the home's banner (its button), read without 通知.
+    /// Notices the member opened from the home's banner (its button) or their row in 通知.
     private var opened: Set<NoticeID> = []
     /// 通知 is open on screen, from `open()` until `close()`.
     public private(set) var isOpen = false
@@ -117,6 +117,12 @@ public final class NoticeInbox {
         opened.formUnion(told.map(\.id))
         guard !hasUnread else { return }
         await markNewestSeen()
+    }
+
+    /// The member tapped the row of `notices` in 通知: it isn't new any more, so back on the page
+    /// it shows read. The page already marked them read on the server when it opened.
+    public func opened(_ notices: [Notice]) {
+        opened.formUnion(notices.map(\.id))
     }
 
     private func isNewerThanSeen(_ notice: Notice) -> Bool {

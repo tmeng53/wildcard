@@ -195,11 +195,19 @@ const SquadBody = z.object({ id: z.uuid(), inviteCode: z.string() });
 
 /** A squad `captain` made, with `others` in it too. */
 async function squadOf(captain: { token: string }, ...others: { token: string }[]) {
+  return squadIn('America/New_York', [captain, ...others]);
+}
+
+/** As `squadOf`, on `timeZone`'s clock: the first of `members` makes it. */
+async function squadIn(
+  timeZone: string,
+  [captain, ...others]: [{ token: string }, ...{ token: string }[]],
+) {
   const made = await call({
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团', timeZone: 'America/New_York' },
+    body: { version: 1, name: '早八跑团', timeZone },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
@@ -388,7 +396,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     const [me, mate, stranger] = [await signUp(), await signUp(), await signUp()];
     await profileOf(me, { nickname: '小米' });
     await profileOf(mate, { nickname: '阿杰', jerseyNumber: 7 });
-    const squad = await squadOf(me, mate);
+    // On the members' own clock (UTC), so the week and today below are the same dates on every clock.
+    const squad = await squadIn('UTC', [me, mate]);
     const elsewhere = await squadOf(await signUp());
     await alsoJoinedEarlier(db, { squad: elsewhere, member: mate.userId });
     await award({ squad: squad, weekStart: '2026-10-19', member: mate.userId }, [
@@ -618,6 +627,11 @@ describe('the team’s badges', () => {
     await rewards.putBadge({
       id: badge,
       names: { 'zh-Hans': '捉虫队', 'zh-Hant': '捉蟲隊', en: 'Bug Hunter' },
+      lines: {
+        'zh-Hans': '外卡专业捕虫团队 · 认证队员',
+        'zh-Hant': '外卡專業捕蟲團隊 · 認證隊員',
+        en: 'Certified member, Wildcard Bug Squad',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       offered: true,
@@ -636,6 +650,11 @@ describe('the team’s badges', () => {
     const shown = {
       id: badge,
       name: { zhHans: '捉虫队', en: 'Bug Hunter', zhHant: '捉蟲隊' },
+      line: {
+        zhHans: '外卡专业捕虫团队 · 认证队员',
+        en: 'Certified member, Wildcard Bug Squad',
+        zhHant: '外卡專業捕蟲團隊 · 認證隊員',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       times: 2,

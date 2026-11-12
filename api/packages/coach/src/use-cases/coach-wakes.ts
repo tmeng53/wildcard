@@ -28,14 +28,7 @@ import {
   weekText,
   type SquadWeek,
 } from '../domain/squad-week.js';
-import {
-  costMicros,
-  wakesDue,
-  weeksAround,
-  type NewWake,
-  type Wake,
-  type WakeStep,
-} from '../domain/wake.js';
+import { wakesDue, weeksAround, type NewWake, type Wake, type WakeStep } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -51,10 +44,10 @@ import type {
   CoachStores,
   CoachTimeZones,
   CoachTransaction,
+  CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
 import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
-import { offDutyWhy } from './off-duty.js';
 import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 /**
@@ -168,6 +161,8 @@ export interface CoachWakesDependencies {
   readonly settings: CoachSettingsStore;
   readonly catalog: CoachCatalogStore;
   readonly stores: CoachStores;
+  /** Counts each run to its squad and member, and says when the squad's AI budget is spent. */
+  readonly usage: CoachUsage;
   readonly transaction: CoachTransaction;
   readonly agent: CoachAgent;
   readonly squadWeek: SquadWeekSource;
@@ -301,10 +296,7 @@ async function previewDaily(
   const hiredCoach = (await deps.hiring.hired()).get(squad);
   const coach = (await deps.catalog.list()).find(({ id }) => id === hiredCoach);
   if (coach === undefined) return { ran: false, why: 'the squad has no coach' };
-  const offDuty = await offDutyWhy(
-    { usage: deps.stores.usage, clock: deps.clock, timeZonesAt: deps.timeZonesAt },
-    { squad, settings },
-  );
+  const offDuty = await deps.usage.offDutyWhy({ squad, model: settings.model });
   if (offDuty !== undefined) return { ran: false, why: `off duty today: ${offDuty}` };
   const zone = (await deps.timeZonesAt([squad], now))(squad);
   const day = wallClockAt(now, zone).day;
@@ -320,7 +312,7 @@ async function previewDaily(
     only: member,
   });
   if (thought === undefined) return { ran: false, why: 'nothing to wake for' };
-  const { run, draft, roster } = thought;
+  const { run, draft, roster, costMicros } = thought;
   const note = draft.memberNotes.get(member);
   const gift = draft.gifts.get(member);
   const reads = await noteReaders(deps, [member]);
@@ -353,7 +345,7 @@ async function previewDaily(
       body: shownBody(draft.files.get(path) ?? '', roster),
     })),
     steps: draft.steps,
-    costMicros: costMicros(run.usage, settings),
+    costMicros,
     ...(run.ok ? {} : { error: run.error }),
   };
 }
@@ -448,6 +440,18 @@ interface Thinking {
   readonly author: string | undefined;
   readonly challenge: Awaited<ReturnType<CoachStores['memberNotes']['challengeOf']>>;
   readonly day: string;
+  /** What the run cost, in US dollars' millionths. */
+  readonly costMicros: number;
+}
+
+/**
+ * Whether the squad's coach was its coach before, was fired and is back, and has not run for it
+ * since it came back (a wake skipped without running, as for a check-in no longer shared with
+ * AI, doesn't count).
+ */
+async function backAgain(deps: CoachWakesDependencies, squad: SquadId): Promise<boolean> {
+  const since = await deps.hiring.hiredBackAt(squad);
+  return since !== undefined && (await deps.usage.total({ squad, since })).wakes === 0;
 }
 
 /** These members, or only `only` of them when it is given. */
@@ -563,7 +567,7 @@ async function think(
     occasions: [
       ...new Set([...holidaysOn(settings.holidays, day), ...(await deps.occasions(day))]),
     ],
-    backAgain: await deps.hiring.backAgain(wake.squad),
+    backAgain: await backAgain(deps, wake.squad),
     recentNotes: daily
       ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
       : [],
@@ -638,17 +642,17 @@ async function think(
     // every kind shares the rest.
     cacheKey: `coach:${coach.id}`,
   });
-  // The tokens were spent whatever comes next, so they are counted first, on their own.
-  await deps.stores.usage.record({
+  // The tokens were spent whatever comes next, so they are counted first, on their own: to the
+  // member whose check-in or reply the wake answers, else to the squad alone. A run with no
+  // wake is an admin's preview.
+  const cost = await deps.usage.record({
     squad: wake.squad,
-    ...(wake.id === undefined ? {} : { wake: wake.id }),
-    coach: coach.id,
+    ...(author === undefined ? {} : { member: author }),
+    kind: wake.id === undefined ? 'preview' : 'wake',
     model: settings.model,
     usage: run.usage,
-    costMicros: costMicros(run.usage, settings),
-    at: deps.clock(),
   });
-  return { run, draft, stored, roster, thread, author, challenge, day };
+  return { run, draft, stored, roster, thread, author, challenge, day, costMicros: cost };
 }
 
 /**
@@ -670,12 +674,9 @@ async function runWake(
   },
 ): Promise<boolean> {
   try {
-    const offDuty = await offDutyWhy(
-      { usage: deps.stores.usage, clock: deps.clock, timeZonesAt: deps.timeZonesAt },
-      { squad: wake.squad, settings },
-    );
+    const offDuty = await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.model });
     if (offDuty !== undefined) {
-      await deps.stores.wakes.skip(wake.id, offDuty);
+      await deps.stores.wakes.skip(wake.id, `off duty: ${offDuty}`);
       return true;
     }
     const thought = await think(deps, { wake, settings, coach, now });

@@ -82,8 +82,8 @@ export function disclaimerDrafts(deps: {
     operationId: 'writeDisclaimerDrafts',
     summary: 'Three AI drafts for a disclaimer',
     description:
-      'Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails ' +
-      'doesn’t count. On any failure, show the dice suggestions instead of an error.',
+      'Each batch counts toward the AI budget of the member’s squad for the day. On any failure, ' +
+      'show the dice suggestions instead of an error.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -103,7 +103,7 @@ export function disclaimerDrafts(deps: {
       ),
       401: problem('No bearer token, or not a valid one'),
       ...jsonBodyFailures,
-      429: problem('The member has used today’s batches'),
+      429: problem('The squad’s AI budget for today, or everyone’s, is spent'),
       503: problem('Sign-in can’t be checked, or no drafts could be written, right now'),
     },
   });

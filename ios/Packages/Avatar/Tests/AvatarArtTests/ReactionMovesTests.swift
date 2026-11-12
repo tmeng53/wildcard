@@ -12,7 +12,8 @@ func reactionsPlayOnEveryLook(persona: Persona) throws {
         for look in Looks.squad {
             let figure = try PlaceholderCharacter.figure(wearing: look)
             let bound = try figure.bind(clip)
-            #expect(nearlyEqual(figure.pose(bound, at: clip.duration), figure.restPose), "\(id) ends at rest")
+            #expect(
+                nearlyEqual(armsBehind(figure.pose(bound, at: clip.duration)), figure.restPose), "\(id) ends at rest")
             expectOnCanvas(figure, bound, for: clip.duration, "\(id) \(persona.rawValue)")
         }
     }

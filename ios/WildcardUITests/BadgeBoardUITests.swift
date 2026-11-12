@@ -80,6 +80,7 @@ final class BadgeBoardUITests: XCTestCase {
         XCTAssertTrue(detail.waitForExistence(timeout: 5), "the team badge didn't open")
         XCTAssertTrue(app.staticTexts["点子王"].exists, "the team badge's card has no name")
         XCTAssertTrue(app.staticTexts["外卡团队"].exists, "the team badge's card doesn't say who gave it")
+        XCTAssertTrue(app.staticTexts["首席点子官"].exists, "the team badge's card has no line")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "45-me-team-badge-card")
         app.buttons["me.badgeCard.equip"].tap()

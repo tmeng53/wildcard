@@ -36,10 +36,12 @@ import {
   createCoachSettings,
   createPostgresCoachCatalog,
   createPostgresCoachHiring,
+  createCoachReport,
   createPostgresCoachReport,
   createPostgresCoachStores,
   createPostgresCoachSettings,
 } from '@wildcard/coach';
+import { createAiUsageSettings, createPostgresAiUsageSettings } from '@wildcard/ai-usage';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createMemes, createPostgresMemeStore } from '@wildcard/memes';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
@@ -75,6 +77,7 @@ import {
   switchesOn,
   adminOn,
   aiConsentOn,
+  aiUsageOn,
   config,
   noJobs,
   nudgesOn,
@@ -82,6 +85,7 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
+import { coachUsageIn } from '../flows/coach-usage.js';
 import { createSupabaseArtStorage } from '../adapters/supabase-art-storage.js';
 import { adminTool } from './admin-tool.js';
 import { artTools } from './tools/art.js';
@@ -93,6 +97,7 @@ import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { minimumBuildTools } from './tools/minimum-build.js';
 import { quickReactionTools } from './tools/quick-reactions.js';
 import { memeTools } from './tools/memes.js';
+import { aiUsageTools } from './tools/ai-usage.js';
 import { coachTools } from './tools/coach.js';
 import { sportTools } from './tools/sports.js';
 import { rewardTools } from './tools/rewards.js';
@@ -295,9 +300,15 @@ beforeAll(async () => {
                   hiring: createPostgresCoachHiring(scope),
                   catalog: createPostgresCoachCatalog(scope),
                 }),
-                report: createPostgresCoachReport(scope),
+                report: createCoachReport({
+                  store: createPostgresCoachReport(scope),
+                  usage: coachUsageIn(aiUsageOn(scope)),
+                }),
                 memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
                 clock: () => new Date(),
+              }),
+              ...aiUsageTools({
+                settings: createAiUsageSettings({ store: createPostgresAiUsageSettings(scope) }),
               }),
               // A tool that changes something, standing in for the meme tools.
               adminTool({
@@ -510,6 +521,8 @@ describe('the admin MCP server', () => {
       ['fire_coach', false],
       ['get_squad_coaching', true],
       ['edit_coach_files', false],
+      ['get_ai_usage_settings', true],
+      ['change_ai_usage_settings', false],
       ['rename_thing', false],
     ]);
     await client.close();
@@ -686,9 +699,9 @@ describe('the admin MCP server', () => {
       version: 1,
       writing: true,
       model: 'openai/gpt-6-luna',
-      batchesPerDay: 6,
       memeChance: 0.3,
     });
+    expect(drafts).not.toHaveProperty('batchesPerDay');
     expect(awards).toMatchObject({ version: 2, model: 'openai/gpt-6-luna' });
     const events = async (
       table: 'disclaimer_draft_setting_events' | 'weekly_award_setting_events',
@@ -702,29 +715,27 @@ describe('the admin MCP server', () => {
     try {
       const changed = await call('change_disclaimer_draft_settings', {
         model: 'anthropic/claude-haiku-5-5',
-        batchesPerDay: 7,
         // Not exact in a 4-byte float: the row and its log must still agree.
         memeChance: 0.15,
       });
       const expected = {
         ...drafts,
         model: 'anthropic/claude-haiku-5-5',
-        batchesPerDay: 7,
         memeChance: 0.15,
       };
       expect(JSON.parse(changed.text)).toStrictEqual(expected);
       expect(await read('get_disclaimer_draft_settings')).toStrictEqual(expected);
       // The same change again saves nothing new.
-      await call('change_disclaimer_draft_settings', { batchesPerDay: 7, memeChance: 0.15 });
+      await call('change_disclaimer_draft_settings', { memeChance: 0.15 });
       expect(await events('disclaimer_draft_setting_events')).toStrictEqual([expected]);
 
       // Two admins at once, each changing one thing: both changes stand.
       await Promise.all([
-        call('change_disclaimer_draft_settings', { batchesPerDay: 8 }),
+        call('change_disclaimer_draft_settings', { memeChance: 0.5 }),
         call('change_disclaimer_draft_settings', { writing: false }),
       ]);
       expect(await read('get_disclaimer_draft_settings')).toMatchObject({
-        batchesPerDay: 8,
+        memeChance: 0.5,
         writing: false,
       });
 
@@ -765,13 +776,55 @@ describe('the admin MCP server', () => {
       await call('change_disclaimer_draft_settings', {
         writing: drafts.writing,
         model: drafts.model,
-        batchesPerDay: drafts.batchesPerDay,
         memeChance: drafts.memeChance,
       });
       await call('change_weekly_award_settings', { moves: awards.moves, badges: awards.badges });
     }
     expect(await read('get_disclaimer_draft_settings')).toStrictEqual(drafts);
     expect(await read('get_weekly_award_settings')).toStrictEqual(awards);
+    await client.close();
+  });
+
+  it('reads and changes the AI prices and daily caps, logging each change once', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const read = async () =>
+      z.record(z.string(), z.json()).parse(JSON.parse((await call('get_ai_usage_settings')).text));
+    const before = await read();
+    expect(before).toMatchObject({ version: 1, prices: { 'openai/gpt-6-luna': {} } });
+    const logged = async () =>
+      (
+        await sql<{ settings: unknown }>`
+          select settings from public.ai_usage_setting_events
+          where changed_by = ${admin.userId} order by id
+        `.execute(db)
+      ).rows.map(({ settings }) => settings);
+    try {
+      const changed = await call('change_ai_usage_settings', { squadDailyCapMicros: 123_456 });
+      const expected = { ...before, squadDailyCapMicros: 123_456 };
+      expect(JSON.parse(changed.text)).toStrictEqual(expected);
+      expect(await read()).toStrictEqual(expected);
+      // The same change again saves nothing new.
+      await call('change_ai_usage_settings', { squadDailyCapMicros: 123_456 });
+      expect(await logged()).toStrictEqual([expected]);
+      // A provider the server doesn't know, a negative cap, or no change at all.
+      for (const args of [
+        { prices: { 'gemini/flash': before.prices } },
+        { dailyCapMicros: -1 },
+        {},
+      ]) {
+        expect((await call('change_ai_usage_settings', args)).isError).toBe(true);
+      }
+    } finally {
+      await call('change_ai_usage_settings', {
+        squadDailyCapMicros: before.squadDailyCapMicros,
+      });
+    }
+    expect(await read()).toStrictEqual(before);
     await client.close();
   });
 

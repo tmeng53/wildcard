@@ -1,13 +1,6 @@
 import type { LanguageModel } from '@wildcard/language-model';
 import type { DraftsOutcome } from '../domain/drafts.js';
-import type {
-  AiConsentCheck,
-  Clock,
-  DraftAllowance,
-  DraftSettingsStore,
-  MemesInUse,
-  Random,
-} from '../ports.js';
+import type { AiConsentCheck, DraftSettingsStore, MemesInUse, Random } from '../ports.js';
 import {
   writeDisclaimerDrafts,
   type WriteDisclaimerDraftsInput,
@@ -22,9 +15,7 @@ export function createDisclaimerDrafts(deps: {
   readonly model: LanguageModel;
   readonly settings: DraftSettingsStore;
   readonly memes: MemesInUse;
-  readonly allowance: DraftAllowance;
   readonly aiConsent: AiConsentCheck;
-  readonly clock: Clock;
   readonly random: Random;
 }): DisclaimerDrafts {
   return { write: (input) => writeDisclaimerDrafts(deps, input) };

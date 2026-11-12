@@ -246,4 +246,39 @@ describe('GET /me/notices: thanks', () => {
     expect(page.status).toBe(200);
     expect(page.body).toMatchObject({ notices: [{ kind: 'thanks', feedback, adopted: 'idea' }] });
   });
+
+  it('carries a letter from the team with what it gave', async () => {
+    const me = await signUp();
+    const words = (zhHans: string, en: string) => ({ zhHans, en, zhHant: zhHans });
+    const id = BroadcastId.parse(`thanks-${randomUUID().slice(0, 8)}`);
+    const letter = {
+      lines: words(
+        '你报的 bug 我们修好了。\n谢谢你！',
+        'We fixed the bug you reported.\nThank you!',
+      ),
+      presents: [
+        { kind: 'badge', id: 'bug-hunter' },
+        { kind: 'piece', id: 'thanks-bugnet' },
+      ],
+    };
+    await notices.put({
+      id,
+      value: BroadcastValue.parse({
+        version: 1,
+        title: words('你的建议被外卡团队采纳了', 'We used your idea!'),
+        style: 'banner',
+        letter,
+        gifts: [],
+        members: [me.userId],
+        startsAt: `${String(year)}-11-20T00:00:00Z`,
+      }),
+      by: NoticeMember.parse(me.userId),
+    });
+
+    const told = z
+      .object({ notices: z.array(z.object({ kind: z.string() }).loose()) })
+      .parse((await get('/me/notices', me.token)).body)
+      .notices.filter(({ kind }) => kind === 'broadcast');
+    expect(told).toMatchObject([{ broadcast: id, style: 'banner', teamLetter: letter }]);
+  });
 });

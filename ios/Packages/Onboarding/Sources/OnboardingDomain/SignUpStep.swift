@@ -43,6 +43,19 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
         madeTheSquad ? .scene : .entrance
     }
 
+    /// Where 你的小队 goes: on to 关于你 in a sign-up; for a member who was in a squad and is in none
+    /// now, who keeps everything else they saved (Tracy, 2026-11-11), straight to where joining or
+    /// making a squad ends.
+    public static func afterSquad(rejoining: Bool, madeTheSquad: Bool) -> SignUpStep {
+        rejoining ? afterWeek(madeTheSquad: madeTheSquad) : .sports
+    }
+
+    /// Where back goes for a member back in no squad: from 这周在哪练？ to the squad just made, and
+    /// nowhere from 加入小队, which is all they have to do.
+    public var previousRejoining: SignUpStep? {
+        self == .scene ? .squad : nil
+    }
+
     /// The step after this one on a phone with or without Health, and where location can be
     /// asked or not: 连上 Apple 健康 and 打开大概位置 are left out where they can't be done.
     public func next(hasHealth: Bool, hasLocation: Bool) -> SignUpStep? {
