@@ -618,3 +618,23 @@ export interface CoachGifting {
     readonly line: string;
   }): Promise<string | undefined>;
 }
+
+/**
+ * Passes on what a member asked for under a post (a feature they want, something broken) as
+ * feedback from them, filed like 意见反馈 (Tracy, 2026-11-12). Says why not, when it couldn't
+ * (the member's day's limit). Kept by the feedback module.
+ */
+export type CoachFeedback = (relay: {
+  readonly squad: SquadId;
+  readonly coach: CoachId;
+  /** Who asked for it. */
+  readonly member: string;
+  readonly checkIn: string;
+  /** The comment it was said in, when it wasn't the post itself. */
+  readonly comment?: string;
+  readonly kind: 'problem' | 'idea';
+  /** The coach's words of what they asked for. */
+  readonly text: string;
+  /** Their own words the coach heard it in. */
+  readonly quote: string;
+}) => Promise<string | undefined>;

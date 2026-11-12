@@ -70,6 +70,7 @@ export type {
   CoachStores,
   CoachMemberFacts,
   CoachMeme,
+  CoachFeedback,
   CoachGifting,
   CoachMemes,
   CoachWeather,

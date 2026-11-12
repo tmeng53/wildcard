@@ -31,6 +31,7 @@ import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type {
   AgentRun,
   CoachAgent,
+  CoachFeedback,
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
@@ -232,6 +233,7 @@ function wakes(
     memes,
     gifting,
     weatherOf,
+    relayFeedback,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -246,6 +248,7 @@ function wakes(
     readonly memes?: CoachMemes;
     readonly gifting?: CoachGifting;
     readonly weatherOf?: CoachWeather;
+    readonly relayFeedback?: CoachFeedback;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -278,6 +281,7 @@ function wakes(
     ...(memes === undefined ? {} : { memes }),
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
+    ...(relayFeedback === undefined ? {} : { relayFeedback }),
   });
 }
 
@@ -299,6 +303,7 @@ const quietPorts = {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
     give: () => Promise.resolve('no gifts in this test'),
   },
+  relayFeedback: () => Promise.resolve('no feedback in this test'),
   warn: () => undefined,
 } satisfies Partial<CoachWakesDependencies>;
 
@@ -459,6 +464,7 @@ describe('the coach', () => {
           'edit_file',
           'member_stats',
           'memes',
+          'relay_feedback',
           'reply',
           'react',
         ],
@@ -1930,6 +1936,100 @@ describe('the coach', () => {
       const checkIn = told[0]?.checkIn ?? '';
       const read = await createPostgresCoachActivity(fixture.trx).replies(fixture.squad, [checkIn]);
       expect(read).toMatchObject([{ checkIn, text: '@小乐 一起跑', mentions: [leo] }]);
+    });
+  });
+
+  it('passes on what a member asks of the app, from them, with their own words', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, mia, leo, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('有人打卡')
+          ? [
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '' } },
+              { tool: 'relay_feedback', input: { kind: 'problem', text: '照片传不上去' } },
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '想在动态上标地点' } },
+              { tool: 'reply', input: { text: '帮你转给团队了' } },
+            ]
+          : task.includes('要回的这句')
+            ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想看全队的月度总结' } }]
+            : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      const relayFeedback: CoachFeedback = (relay) => {
+        relayed.push(relay);
+        return Promise.resolve(undefined);
+      };
+      const post = '今天吃得很干净，要是能 tag 地点就好了';
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: post })),
+      };
+      await wakes({ ...fixture, week: withWords }, { agent, relayFeedback }).run();
+      expect(runs[0]?.tools).toContain('relay_feedback');
+      expect(runs[0]?.answers.slice(0, 3)).toStrictEqual([
+        'text 是空的，写上他想要什么。',
+        '会转给团队。',
+        '已换成这条，会转给团队。',
+      ]);
+      // The daily wake has no one's words to pass on.
+      expect(runs[1]?.tools).not.toContain('relay_feedback');
+      expect(relayed).toStrictEqual([
+        {
+          squad,
+          coach: 'xiaohun',
+          member: mia,
+          checkIn,
+          kind: 'idea',
+          text: '想在动态上标地点',
+          quote: post,
+        },
+      ]);
+
+      // Under a post, it is the reply's writer who asked, in the reply's words.
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 能出个月度总结吗',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const withAsk: SquadWeek = {
+        ...withWords,
+        checkIns: withWords.checkIns.map((each) => ({ ...each, comments: [asked] })),
+      };
+      await wakes(
+        { ...fixture, week: withAsk },
+        { agent, relayFeedback, at: new Date(now.getTime() + 2 * 60_000) },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      expect(relayed[1]).toStrictEqual({
+        squad,
+        coach: 'xiaohun',
+        member: leo,
+        checkIn,
+        comment: asked.id,
+        kind: 'idea',
+        text: '想看全队的月度总结',
+        quote: '@小混 能出个月度总结吗',
+      });
+    });
+  });
+
+  it('has nothing to pass on from a post without words', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('有人打卡')
+          ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想标地点' } }]
+          : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      await wakes(fixture, {
+        agent,
+        relayFeedback: (relay) => {
+          relayed.push(relay);
+          return Promise.resolve(undefined);
+        },
+      }).run();
+      expect(runs[0]?.answers).toStrictEqual(['他在这里没写字，没有能转的。']);
+      expect(relayed).toStrictEqual([]);
     });
   });
 
