@@ -84,8 +84,11 @@ export interface NoteBrief {
   readonly posts?: readonly WeekPost[];
   /** This week's whole plan, Monday first, and its 饮食小目标, when they could be read. */
   readonly plan?: { readonly week: readonly PlanDayFacts[]; readonly fuelGoals: readonly string[] };
-  /** Today's (and yesterday's) weather where they are, in words starting 今天, when known. */
-  readonly weather?: string;
+  /**
+   * Today's (and yesterday's) weather where they are, in words starting 今天, and the city their
+   * phone named there, when known.
+   */
+  readonly weather?: { readonly words: string; readonly city?: string };
 }
 
 /** The weekday of a `YYYY-MM-DD` day, Monday 0, as the plan counts it. */
@@ -109,12 +112,17 @@ function postsWords(posts: readonly WeekPost[]): string {
   return `这周发过的：${lines.join('，')}`;
 }
 
+/** `人在多伦多，今天雨…`, or `当地今天雨…` when the phone named no city. */
+function weatherLine({ words, city }: { readonly words: string; readonly city?: string }): string {
+  return city === undefined ? `当地${words}` : `人在${city}，${words}`;
+}
+
 /** One member's line in the daily task, for their morning note: their whole week, plan and posts. */
 export function briefLine(brief: NoteBrief): string {
   const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
   const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
   const posts = brief.posts === undefined ? '' : `；${postsWords(brief.posts)}`;
-  const weather = brief.weather === undefined ? '' : `；当地${brief.weather}`;
+  const weather = brief.weather === undefined ? '' : `；${weatherLine(brief.weather)}`;
   if (brief.plan === undefined) return `- ${brief.name}：${trained}${posts}${weather}。${language}`;
   const { week, fuelGoals } = brief.plan;
   const plan = week.map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`).join('，');

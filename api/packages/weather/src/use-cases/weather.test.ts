@@ -76,10 +76,7 @@ describe('places', () => {
     const weather = weatherWith();
     expect(
       await weather.savePlace(member, { latitude: 40.71283, longitude: -74.00601 }),
-    ).toStrictEqual({
-      latitude: 40.7,
-      longitude: -74,
-    });
+    ).toStrictEqual({ place: { latitude: 40.7, longitude: -74 } });
     await weather.savePlace(member, { latitude: 25.0339, longitude: 121.5645 });
     const rows = await db
       .selectFrom('member_places')
@@ -87,6 +84,26 @@ describe('places', () => {
       .where('member_id', '=', member)
       .execute();
     expect(rows).toStrictEqual([{ latitude: '25.0', longitude: '121.6' }]);
+  });
+
+  it('keeps the city the phone named with the place, and drops it with a place sent without one', async () => {
+    const member = await newMember();
+    const weather = weatherWith();
+    const cityOf = async () =>
+      (
+        await db
+          .selectFrom('member_places')
+          .select('city')
+          .where('member_id', '=', member)
+          .executeTakeFirstOrThrow()
+      ).city;
+    expect(
+      await weather.savePlace(member, { latitude: 43.6532, longitude: -79.3832, city: '多伦多' }),
+    ).toStrictEqual({ place: { latitude: 43.7, longitude: -79.4 }, city: '多伦多' });
+    expect(await cityOf()).toBe('多伦多');
+    // Somewhere the phone couldn't name: the city before may not be where they are now.
+    await weather.savePlace(member, { latitude: 44.1, longitude: -78.2 });
+    expect(await cityOf()).toBeNull();
   });
 
   it('forgets the place, and forgetting again is fine', async () => {
@@ -122,7 +139,7 @@ describe('the day’s weather', () => {
     const cell = freshCell();
     const { forecasts, asked } = countingForecasts();
     const weather = weatherWith(forecasts);
-    await weather.savePlace(ana, cell);
+    await weather.savePlace(ana, { ...cell, city: '多伦多' });
     await weather.savePlace(bo, { latitude: cell.latitude + 0.01, longitude: cell.longitude });
     const members = [
       { member: ana, timeZone: 'America/New_York' },
@@ -131,10 +148,14 @@ describe('the day’s weather', () => {
     ];
     const first = await weather.dayFor({ members, day: '2026-11-09' });
     const both = { today: RAIN, yesterday: RAIN };
-    expect(Object.fromEntries(first)).toStrictEqual({ [ana]: both, [bo]: both });
+    // Each with the city their own phone named, if any.
+    expect(Object.fromEntries(first)).toStrictEqual({
+      [ana]: { ...both, city: '多伦多' },
+      [bo]: both,
+    });
     // The next wake that day reads what was kept.
     const again = await weather.dayFor({ members, day: '2026-11-09' });
-    expect(again.get(ana)).toStrictEqual(both);
+    expect(again.get(ana)).toStrictEqual({ ...both, city: '多伦多' });
     expect(asked).toStrictEqual([{ place: cell, day: '2026-11-09', timeZone: 'America/New_York' }]);
   });
 

@@ -3352,6 +3352,13 @@
             "minimum": -180,
             "maximum": 180,
             "example": -74
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The city the phone’s approximate location is in, as iOS names it in the app’s language.",
+            "x-max-characters": 60,
+            "example": "多伦多"
           }
         },
         "required": [
@@ -3360,7 +3367,7 @@
           "longitude"
         ],
         "additionalProperties": false,
-        "description": "The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it."
+        "description": "The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach, with the city the phone named there, if it could, which the coach is told with the weather. A location sent without a city forgets the one before. Squadmates never see either, and the AI never sees the location itself."
       },
       "SquadList": {
         "type": "object",

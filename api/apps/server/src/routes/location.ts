@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { MemberId, type Weather } from '@wildcard/weather';
+import { CityName, MemberId, type Weather } from '@wildcard/weather';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -12,12 +12,15 @@ export const MemberLocation = z
     version: bodyVersion(1),
     latitude: z.number().min(-90).max(90).meta({ example: 40.7 }),
     longitude: z.number().min(-180).max(180).meta({ example: -74 }),
+    city: CityName.optional().meta({ example: '多伦多' }),
   })
   .meta({
     description:
       'The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), ' +
-      'and only the latest, to look up the weather there for the squad’s coach. Squadmates ' +
-      'and the AI never see it.',
+      'and only the latest, to look up the weather there for the squad’s coach, with the ' +
+      'city the phone named there, if it could, which the coach is told with the weather. ' +
+      'A location sent without a city forgets the one before. Squadmates never see either, ' +
+      'and the AI never sees the location itself.',
   })
   .openapi('MemberLocation');
 
@@ -67,12 +70,20 @@ export function location(deps: { readonly verifyToken: VerifyToken; readonly wea
 
   return new OpenAPIHono<SignedIn>()
     .openapi(save, async (c) => {
-      const { latitude, longitude } = c.req.valid('json');
+      const { latitude, longitude, city } = c.req.valid('json');
       const kept = await deps.weather.savePlace(MemberId.parse(c.var.caller.userId), {
         latitude,
         longitude,
+        city,
       });
-      return c.json({ version: 1 as const, ...kept }, 200);
+      return c.json(
+        {
+          version: 1 as const,
+          ...kept.place,
+          ...(kept.city === undefined ? {} : { city: kept.city }),
+        },
+        200,
+      );
     })
     .openapi(forget, async (c) => {
       await deps.weather.forgetPlace(MemberId.parse(c.var.caller.userId));
