@@ -10,6 +10,7 @@ import {
 } from '../domain/memory.js';
 import {
   instructionsOf,
+  saidLines,
   taskOf,
   type CoachThread,
   type DayTalk,
@@ -25,8 +26,8 @@ import {
   rosterOf,
   saidTo,
   postWhat,
-  weekText,
   type SquadWeek,
+  type WeekComment,
 } from '../domain/squad-week.js';
 import { wakesDue, weeksAround, type NewWake, type Wake, type WakeStep } from '../domain/wake.js';
 import type {
@@ -629,13 +630,22 @@ async function think(
       memes: deps.memes,
       noteTo,
       ...(gifting === undefined ? {} : { gifting }),
-      pastWeek: async (weeksAgo) =>
-        weekText(
-          await weekOf(deps, {
-            squad: wake.squad,
-            weekStart: mondayOf(dayBefore(week.weekStart, weeksAgo * 7)),
-          }),
-        ),
+      pastWeek: (weeksAgo) =>
+        weekOf(deps, {
+          squad: wake.squad,
+          weekStart: mondayOf(dayBefore(week.weekStart, weeksAgo * 7)),
+        }),
+      commentsOf: async (checkIn) => {
+        const [reply, answers, names] = await Promise.all([
+          deps.stores.replies.find(wake.squad, checkIn.id),
+          deps.stores.answers.ofCheckIn(wake.squad, checkIn.id),
+          coachNames(deps, week),
+        ]);
+        return saidLines(
+          saidOf({ comments: checkIn.comments, reply, answers, names, coach: coach.id, zone }),
+          roster,
+        );
+      },
     }),
     // Every wake of a coach begins with its same instructions, then its tools (each kind's own
     // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
@@ -1057,46 +1067,86 @@ async function threadOf(
   );
   const answered = answers.some(({ comment }) => toThisCoach.has(comment));
   if (answering.toCoach !== undefined && reply === undefined && !answered) return undefined;
-  // Other coaches go by their names in the squad's language, as members read them.
-  const language = week.language ?? 'zh-Hans';
-  const names = new Map<string, string>(
-    (await deps.catalog.list()).map((each) => [each.id, coachIn(each, language).name]),
-  );
-  const nameOf = (id: string): string => (id === coach.id ? '你' : (names.get(id) ?? '教练'));
-  const by = (id: string): CoachThread['said'][number]['by'] =>
-    id === coach.id ? 'you' : { coach: names.get(id) ?? '教练' };
-  // The reply to the check-in first, as the app shows it, then each comment with its answer
-  // right after it.
-  const answersOf = new Map(answers.map((each) => [each.comment, each]));
-  const replied = found?.text === undefined ? [] : [{ by: by(found.coach), text: found.text }];
-  const said: CoachThread['said'] = [
-    ...replied,
-    ...comments
-      .filter((each) => each.at <= answering.at)
-      .flatMap((comment) => {
-        const to = comment.toCoach ?? comment.mentionsCoach;
-        const answer = answersOf.get(comment.id);
-        return [
-          {
-            by: { member: comment.member },
-            text: comment.text,
-            when: clockWords(comment.at, zone),
-            ...(to === undefined
-              ? {}
-              : {
-                  to: {
-                    kind: comment.toCoach === undefined ? ('mention' as const) : ('reply' as const),
-                    coach: nameOf(to),
-                  },
-                }),
-            ...(comment.id === answering.id ? { answering: true } : {}),
-          },
-          ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
-        ];
-      }),
-  ];
+  const said = saidOf({
+    comments: comments.filter((each) => each.at <= answering.at),
+    reply: found,
+    answers,
+    names: await coachNames(deps, week),
+    coach: coach.id,
+    zone,
+    answering: answering.id,
+  });
   // Without the time now and each comment's, the coach takes an old @ for one just written.
   return { thread: { now: clockWords(now, zone), said }, commenter: answering.member };
+}
+
+/** Every coach's name in the squad's language, as members read them, by id. */
+async function coachNames(
+  deps: Pick<CoachWakesDependencies, 'catalog'>,
+  week: Pick<SquadWeek, 'language'>,
+): Promise<ReadonlyMap<string, string>> {
+  const language = week.language ?? 'zh-Hans';
+  return new Map(
+    (await deps.catalog.list()).map((each) => [each.id, coachIn(each, language).name]),
+  );
+}
+
+/**
+ * What was said under a check-in, as the app shows it: the coach's reply to it first, then each
+ * member's comment with the coach's answer to it right after it.
+ */
+function saidOf({
+  comments,
+  reply,
+  answers,
+  names,
+  coach,
+  zone,
+  answering,
+}: {
+  readonly comments: readonly WeekComment[];
+  readonly reply: { readonly coach: string; readonly text: string | undefined } | undefined;
+  readonly answers: readonly {
+    readonly comment: string;
+    readonly coach: string;
+    readonly text: string;
+  }[];
+  readonly names: ReadonlyMap<string, string>;
+  /** The coach at work, by id: it reads itself as 你. */
+  readonly coach: string;
+  readonly zone: string;
+  /** The comment the wake answers, if any. */
+  readonly answering?: string;
+}): CoachThread['said'] {
+  const nameOf = (id: string): string => (id === coach ? '你' : (names.get(id) ?? '教练'));
+  const by = (id: string): CoachThread['said'][number]['by'] =>
+    id === coach ? 'you' : { coach: names.get(id) ?? '教练' };
+  const answersOf = new Map(answers.map((each) => [each.comment, each]));
+  const replied = reply?.text === undefined ? [] : [{ by: by(reply.coach), text: reply.text }];
+  return [
+    ...replied,
+    ...comments.flatMap((comment) => {
+      const to = comment.toCoach ?? comment.mentionsCoach;
+      const answer = answersOf.get(comment.id);
+      return [
+        {
+          by: { member: comment.member },
+          text: comment.text,
+          when: clockWords(comment.at, zone),
+          ...(to === undefined
+            ? {}
+            : {
+                to: {
+                  kind: comment.toCoach === undefined ? ('mention' as const) : ('reply' as const),
+                  coach: nameOf(to),
+                },
+              }),
+          ...(comment.id === answering ? { answering: true } : {}),
+        },
+        ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
+      ];
+    }),
+  ];
 }
 
 /** The members a daily wake writes a morning note to. */

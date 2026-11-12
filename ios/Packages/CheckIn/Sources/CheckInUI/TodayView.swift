@@ -76,7 +76,6 @@ public struct TodayView: View {
         .environment(\.sceneTheme, theme)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
@@ -124,7 +123,7 @@ public struct TodayView: View {
                 coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
                 tapVacancy: model.tapVacancy, clock: model.now
             )
-            .overlay { MyPayoff(model: model, openPost: openPost) }
+            .overlay { MyPayoff(model: model) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
             .overlay(Color(Scrim.tint).opacity(model.isSceneDimmed ? Scrim.tintOpacity : 0))
             .ignoresSafeArea()
