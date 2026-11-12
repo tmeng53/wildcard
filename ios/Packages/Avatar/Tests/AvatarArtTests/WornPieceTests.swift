@@ -36,6 +36,36 @@ func everySleeveCoversTheShoulder(top: String) throws {
     }
 }
 
+/// The arms are drawn in front of everything worn, so a sleeve keeps its cloth around the
+/// arm: within the shoulder's circle, then a band along the arm that widens to the cuff.
+/// Cloth reaching in past that (a round shoulder lying on the chest) turns with the arm
+/// and covers a strap or a bag on the chest; that part of a top's look is drawn on its
+/// body instead, where it stays put under what is worn.
+@Test(arguments: PlaceholderCharacter.variants(for: "top"))
+func everySleeveKeepsToTheArm(top: String) throws {
+    var look = PlaceholderCharacter.lifter
+    look.variants["top"] = top
+    let figure = try PlaceholderCharacter.figure(wearing: look)
+    for id: PartID in ["armL", "armR"] {
+        let part = try figure.part(id)
+        guard let sleeve = part.slots.firstIndex(of: "top") else { continue }
+        let elbow = try #require(part.elbow).point
+        let toElbow = (x: elbow.x - part.pivot.x, y: elbow.y - part.pivot.y)
+        let length = (toElbow.x * toElbow.x + toElbow.y * toElbow.y).squareRoot()
+        let down = (x: toElbow.x / length, y: toElbow.y / length)
+        for shape in part.art[sleeve].shapes where shape.fill != nil {
+            for point in corners(shape.path) {
+                let offset = (x: point.x - part.pivot.x, y: point.y - part.pivot.y)
+                let along = offset.x * down.x + offset.y * down.y
+                let across = abs(offset.x * down.y - offset.y * down.x)
+                let inShoulder = (offset.x * offset.x + offset.y * offset.y).squareRoot() <= 11.6
+                let inBand = along >= 0 && across <= 11.6 + 5.6 * along / 34
+                #expect(inShoulder || inBand, "\(top) \(id) reaches \(point)")
+            }
+        }
+    }
+}
+
 /// Between the legs, a pair of shorts or trousers shows its own shade, not the top tucked
 /// under it, which reads as the trousers coming apart.
 @Test(arguments: PlaceholderCharacter.variants(for: "bottom"))
@@ -52,14 +82,19 @@ private struct Box {
     var minX = Double.infinity, minY = Double.infinity, maxX = -Double.infinity, maxY = -Double.infinity
 }
 
-/// Whether a closed path's outline, through its points, goes around `point` (even-odd).
-private func covers(_ path: [PathElement], _ point: Point) -> Bool {
-    let corners = path.compactMap { element -> Point? in
+/// A path's points, where each of its pieces ends.
+private func corners(_ path: [PathElement]) -> [Point] {
+    path.compactMap { element -> Point? in
         switch element {
         case .move(let end), .line(let end), .quadCurve(let end, _), .curve(let end, _, _): end
         case .close: nil
         }
     }
+}
+
+/// Whether a closed path's outline, through its points, goes around `point` (even-odd).
+private func covers(_ path: [PathElement], _ point: Point) -> Bool {
+    let corners = corners(path)
     var inside = false
     for (from, next) in zip(corners, corners.dropFirst() + corners.prefix(1))
     where (from.y > point.y) != (next.y > point.y)

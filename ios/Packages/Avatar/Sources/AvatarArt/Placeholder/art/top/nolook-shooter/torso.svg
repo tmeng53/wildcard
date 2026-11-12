@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
-  <circle cx="92.4" cy="222" r="10.8" fill="#E2703A"/>
-  <circle cx="147.6" cy="222" r="10.8" fill="#E2703A"/>
+  <circle cx="92.4" cy="222" r="11.4" fill="#E2703A"/>
+  <circle cx="147.6" cy="222" r="11.4" fill="#E2703A"/>
   <path d="M 80.4 224.4 C 80.4 210 92.4 204.6 105.6 204 L 134.4 204 C 147.6 204.6 159.6 210 159.6 224.4 L 158.4 265.2 C 159.6 276 151.2 282 141.6 282 L 98.4 282 C 88.8 282 80.4 276 81.6 265.2 Z" fill="#F4F6FA" stroke="#AFAEB9" stroke-width="2.64"/>
+  <path d="M 81.7 239 L 81.7 224.4 C 81.7 211 93 205.9 101.8 205.4 Q 109.2 222 94 236 Q 88 239.5 81.7 239 Z" fill="#E2703A"/>
+  <path d="M 158.3 239 L 158.3 224.4 C 158.3 211 147.0 205.9 138.2 205.4 Q 130.8 222 146.0 236 Q 152.0 239.5 158.3 239 Z" fill="#E2703A"/>
   <path d="M 101.4 205 Q 120 222 138.6 205" fill="none" stroke="#E2703A" stroke-width="4.4" stroke-linecap="round"/>
   <path d="M 106.8 236 Q 120 247.0 133.2 236" fill="none" stroke="#E2703A" stroke-width="4.2" stroke-linecap="round"/>
   <path d="M 112.08 241.28 L 109.88 245.68 M 120 243.92 L 120 248.76 M 127.92 241.28 L 130.12 245.68" fill="none" stroke="#E2703A" stroke-width="3.1500000000000004" stroke-linecap="round"/>
