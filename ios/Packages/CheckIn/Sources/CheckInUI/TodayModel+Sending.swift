@@ -33,8 +33,6 @@ extension TodayModel {
             guard outgoing == .sending(id) else { return }
             switch delivery {
             case .posted(let saved):
-                // My bubble opens the post now the server has it.
-                if payoff?.id == id { payoff?.post = saved }
                 outgoing = .sent(saved)
             case .waiting:
                 outgoing = .waiting
