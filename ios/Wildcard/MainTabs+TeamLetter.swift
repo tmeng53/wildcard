@@ -36,7 +36,7 @@ extension MainTabs {
     private func wear(_ presents: [TeamPresent]) async {
         // Read again only when the profile on hand misses a present, as one read before the
         // team's give_reward would.
-        if !presents.allSatisfy { profile.holds($0) } { await profile.reload() }
+        if !presents.allSatisfy({ profile.holds($0) }) { await profile.reload() }
         let badges = Set(profile.overview?.board.teamBadges.map(\.id) ?? [])
         let held = Set(profile.overview?.gifts ?? [])
         let badge = presents.lazy.compactMap { present -> String? in
