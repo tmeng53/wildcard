@@ -30,30 +30,37 @@ extension TodayModel {
     }
 
     /// A home screen widget's 打卡: the 训练 page started from `source`, as the home's card starts
-    /// it, so nothing goes out until the member sends it. A workout Health synced since the app
-    /// last read it, or one tapped before the home loaded on a cold launch, opens once they are
-    /// read; one posted or gone by then opens the kinds, as the widget's plain 打卡 does.
+    /// it, so nothing goes out until the member sends it (`AskedWorkout`). Before the server's home
+    /// is read, as on a cold launch, `load()` opens it once it is.
     public func openCheckIn(posting source: WorkoutSource) async {
         askedToPost = source
+        guard store.postedTrainingsKnown != nil else { return }
         if openAskedWorkout(finally: false) { return }
+        // A workout Health synced since the app last read it.
         await health?.refresh()
-        // Before the home is read, `load()` finishes it.
-        openAskedWorkout(finally: store.day != nil)
+        openAskedWorkout(finally: true)
     }
 
-    /// Opens the page for the workout a widget asked for once it is among today's, or, `finally`,
-    /// the kinds without it. Only from the scene: a page already open stays as it is.
+    /// Opens what a widget asked for once it is known, `finally` once the home and Health are read
+    /// as far as they will be. Only from the scene: a page already open stays as it is.
     @discardableResult
     func openAskedWorkout(finally: Bool) -> Bool {
-        guard let source = askedToPost, store.day != nil else { return false }
-        let offered = todaysWorkouts.first { $0.id == source && !$0.isPosted }?.imported
-        guard offered != nil || finally else { return false }
+        guard let source = askedToPost else { return false }
+        let todays: [TodaysWorkout]? =
+            if let health, health.isConnected, let day = store.day, let posted = store.postedTrainingsKnown {
+                health.today(day, in: timeZone, posted: posted)
+            } else {
+                nil
+            }
+        let outcome = AskedWorkout.resolve(source, among: todays, finally: finally)
+        if outcome == .wait { return false }
         askedToPost = nil
         guard step == .scene else { return true }
-        if let offered {
+        switch outcome {
+        case .open(let workout):
             isBurstOpen = false
-            pick(.trained, workout: offered)
-        } else {
+            pick(.trained, workout: workout)
+        case .kinds, .wait:
             openCheckIn()
         }
         return true
