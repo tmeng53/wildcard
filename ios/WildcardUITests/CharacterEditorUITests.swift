@@ -235,7 +235,10 @@ final class CharacterEditorUITests: XCTestCase {
         back.tap()
         let alert = app.alerts["Discard your changes?"]
         XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "back didn't ask before discarding")
-        alert.buttons["Keep Editing"].tap()
+        // iOS 26's alert lists its cancel button twice, as the compose page's test finds too.
+        let keepEditing = alert.buttons["editor.keepEditing"].firstMatch
+        XCTAssertEqual(keepEditing.label, "Keep Editing")
+        keepEditing.tap()
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "继续编辑 left the editor")
     }
 
