@@ -14,7 +14,7 @@ struct PlacePill: View {
     @State private var isPicking = false
 
     /// A long name is cut so the count beside it keeps its room.
-    private static let shownLength = 14
+    private static let shownLength = 10
 
     var body: some View {
         Group {
@@ -53,7 +53,7 @@ struct PlacePill: View {
 }
 
 /// One place Apple Maps found, as a row and a pin show it.
-struct FoundPlace: Identifiable, Hashable {
+struct FoundPlace: Identifiable, Hashable, Sendable {
     let place: Place
     let address: String?
     /// Metres from the phone, when the phone's place is known.
@@ -73,6 +73,8 @@ final class PlaceSearch {
     private(set) var found: [FoundPlace] = []
     private(set) var here: CLLocation?
     private var nearby: [FoundPlace] = []
+    /// What the member typed, so the nearby list never replaces a search's results.
+    private var typed = ""
 
     /// How far around the phone the nearby list looks.
     private static let radius: CLLocationDistance = 1000
@@ -83,11 +85,11 @@ final class PlaceSearch {
         here = location
         let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: Self.radius)
         nearby = await places(MKLocalSearch(request: request))
-        if found.isEmpty { found = nearby }
+        if typed.isEmpty { found = nearby }
     }
 
     func search(_ query: String) async {
-        let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else {
             found = nearby
             return
@@ -104,8 +106,19 @@ final class PlaceSearch {
         found = results
     }
 
+    /// Through the completion handler on the main queue, as `RouteSnapshot` does, so nothing
+    /// MapKit hands back crosses an actor.
     private func places(_ search: MKLocalSearch) async -> [FoundPlace] {
-        guard let response = try? await search.start() else { return [] }
+        let here = here
+        return await withCheckedContinuation { continuation in
+            search.start { response, _ in
+                continuation.resume(returning: Self.found(in: response, near: here))
+            }
+        }
+    }
+
+    private static func found(in response: MKLocalSearch.Response?, near here: CLLocation?) -> [FoundPlace] {
+        guard let response else { return [] }
         return response.mapItems.compactMap { item in
             let location = item.location
             guard let name = item.name,
@@ -177,8 +190,9 @@ struct PlacePickerSheet: View {
             await search.search(query)
         }
         .onChange(of: search.found) { _, found in
-            guard !found.isEmpty, search.here == nil else { return }
-            camera = .automatic
+            // Nearby places sit around the phone; a search's may be anywhere, so the map fits them.
+            guard !found.isEmpty else { return }
+            camera = query.isEmpty && search.here != nil ? .userLocation(fallback: .automatic) : .automatic
         }
     }
 

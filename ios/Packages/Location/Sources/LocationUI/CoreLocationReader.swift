@@ -49,7 +49,12 @@ public final class CoreLocationReader: NSObject, LocationReader {
     public func nearHere() async -> Coordinates? {
         guard Self.access(of: manager.authorizationStatus) == .allowed else { return nil }
         if manager.accuracyAuthorization == .reducedAccuracy {
-            _ = try? await manager.requestTemporaryFullAccuracyAuthorization(withPurposeKey: "NearbyPlaces")
+            // The completion form, so the manager never leaves the main actor.
+            await withCheckedContinuation { (answered: CheckedContinuation<Void, Never>) in
+                manager.requestTemporaryFullAccuracyAuthorization(withPurposeKey: "NearbyPlaces") { _ in
+                    answered.resume()
+                }
+            }
         }
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         defer { manager.desiredAccuracy = kCLLocationAccuracyReduced }

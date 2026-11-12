@@ -3,13 +3,13 @@ import CheckInDomain
 import Contracts
 import DesignSystem
 import DesignSystemUI
-import MapKit
 import SwiftUI
 
 /// Where a 训练 or a meal was, under its author on 动态 (Tracy, 2026-11-12): the place's kind's
-/// icon and its name. A tap opens it in Apple Maps, by Maps' own id when the place has one.
+/// icon and its name. A tap opens it in Apple Maps.
 public struct PlaceTag: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.openURL) private var openURL
     private let place: Place
 
     public init(_ place: Place) {
@@ -18,7 +18,7 @@ public struct PlaceTag: View {
 
     public var body: some View {
         Button {
-            Task { await open() }
+            if let mapsLink { openURL(mapsLink) }
         } label: {
             HStack(spacing: Space.xxs) {
                 Image(systemName: place.kind.symbol)
@@ -37,15 +37,20 @@ public struct PlaceTag: View {
         .accessibilityIdentifier("post.place")
     }
 
-    private func open() async {
-        let location = CLLocation(latitude: place.latitude, longitude: place.longitude)
-        var item: MKMapItem?
-        if let raw = place.appleID, let id = MKMapItem.Identifier(rawValue: raw) {
-            item = try? await MKMapItemRequest(mapItemIdentifier: id).mapItem
-        }
-        let shown = item ?? MKMapItem(location: location, address: nil)
-        if item == nil { shown.name = place.name }
-        shown.openInMaps()
+    /// Apple Maps' link to the place: by Maps' own id when it has one, so Maps shows its card;
+    /// else its name at its spot.
+    var mapsLink: URL? {
+        var parts = URLComponents(string: "https://maps.apple.com/place")
+        parts?.queryItems =
+            if let id = place.appleID {
+                [URLQueryItem(name: "place-id", value: id)]
+            } else {
+                [
+                    URLQueryItem(name: "name", value: place.name),
+                    URLQueryItem(name: "coordinate", value: "\(place.latitude),\(place.longitude)"),
+                ]
+            }
+        return parts?.url
     }
 }
 #endif
