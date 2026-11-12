@@ -76,6 +76,13 @@ export interface WeekPost {
 export interface NoteBrief {
   /** The member as the model knows them: 队员N. */
   readonly name: string;
+  /** The nickname squadmates know them by, if they gave one. */
+  readonly nickname?: string;
+  /** What they did before, ever: for a member who just joined, whom the coach knows nothing of. */
+  readonly record?: {
+    readonly trainedDays: number;
+    readonly topSport?: { readonly name: string; readonly checkIns: number };
+  };
   /** The language their app speaks, which their note is written in. */
   readonly language?: ReaderLanguage;
   /** Days this week with a 练了 so far. */
@@ -103,28 +110,40 @@ export function weekdayOf(day: string): string {
 
 /** What a member posted this week, day by day: `周一游泳 45 分钟、健康餐，周三请假条`. */
 function postsWords(posts: readonly WeekPost[]): string {
-  if (posts.length === 0) return '这周还没发过动态';
+  if (posts.length === 0) return '还没发过';
   const days = new Map<string, string[]>();
   for (const { day, what } of posts) days.set(day, [...(days.get(day) ?? []), what]);
-  const lines = [...days.entries()]
+  return [...days.entries()]
     .toSorted(([a], [b]) => a.localeCompare(b))
-    .map(([day, theirs]) => `${weekdayOf(day)}${theirs.join('、')}`);
-  return `这周发过的：${lines.join('，')}`;
+    .map(([day, theirs]) => `${weekdayOf(day)}${theirs.join('、')}`)
+    .join('，');
 }
 
-/** `人在多伦多，今天雨…`, or `当地今天雨…` when the phone named no city. */
-function weatherLine({ words, city }: { readonly words: string; readonly city?: string }): string {
-  return city === undefined ? `当地${words}` : `人在${city}，${words}`;
-}
-
-/** One member's line in the daily task, for their morning note: their whole week, plan and posts. */
-export function briefLine(brief: NoteBrief): string {
-  const language = brief.language === undefined ? '' : ` ${writeIn(brief.language)}`;
-  const trained = `这周已经练了 ${String(brief.trainedDays)} 天`;
-  const posts = brief.posts === undefined ? '' : `；${postsWords(brief.posts)}`;
-  const weather = brief.weather === undefined ? '' : `；${weatherLine(brief.weather)}`;
-  if (brief.plan === undefined) return `- ${brief.name}：${trained}${posts}${weather}。${language}`;
-  const { week, fuelGoals } = brief.plan;
-  const plan = week.map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`).join('，');
-  return `- ${brief.name}：本周出赛表：${plan}；${fuelWords(fuelGoals)}；${trained}${posts}${weather}。${language}`;
+/**
+ * One member's block in a task, for the note written to them: their week, plan and posts, one
+ * fact a line under their name.
+ */
+export function briefBlock(brief: NoteBrief): string {
+  const lines = [`### ${brief.name}${brief.nickname === undefined ? '' : `（${brief.nickname}）`}`];
+  if (brief.record !== undefined) {
+    const top = brief.record.topSport;
+    lines.push(
+      `- 以前一共练了：${String(brief.record.trainedDays)} 天${top === undefined ? '' : `，练得最多的是${top.name}（${String(top.checkIns)} 次）`}`,
+    );
+  }
+  if (brief.plan !== undefined) {
+    const plan = brief.plan.week
+      .map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`)
+      .join('，');
+    lines.push(`- 本周出赛表：${plan}`);
+    lines.push(
+      `- 饮食小目标：${brief.plan.fuelGoals.length === 0 ? '这周没定' : brief.plan.fuelGoals.join('、')}`,
+    );
+  }
+  lines.push(`- 这周练了：${String(brief.trainedDays)} 天`);
+  if (brief.posts !== undefined) lines.push(`- 这周发过：${postsWords(brief.posts)}`);
+  if (brief.weather?.city !== undefined) lines.push(`- 人在：${brief.weather.city}`);
+  if (brief.weather !== undefined) lines.push(`- 当地天气：${brief.weather.words}`);
+  if (brief.language !== undefined) lines.push(`- ${writeIn(brief.language)}`);
+  return lines.join('\n');
 }

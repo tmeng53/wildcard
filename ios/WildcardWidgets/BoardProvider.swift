@@ -11,36 +11,37 @@ import HomeWidgetUI
 import SportsUI
 import WidgetKit
 
-/// One moment of a widget: the board then, or why there is none.
+/// One moment of a widget: the board then, or why there is none, and whether it was set to show
+/// 本周出赛表.
 struct BoardEntry: TimelineEntry {
     let date: Date
     let state: WidgetState
-}
-
-/// The widgets have nothing to set; WidgetKit's async provider needs an intent all the same.
-struct BoardIntent: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Wildcard"
+    var showsSchedule = false
 }
 
 /// Reads the squad for the widgets: the home over our API, signed in with the app's shared
 /// session, or the copy the widget kept when the network fails, and today's workouts in Apple
 /// Health for the 打卡 capsule. The app also asks the widgets to read again whenever it leaves
 /// the screen, so a post shows at once.
-struct BoardProvider: AppIntentTimelineProvider {
+struct BoardProvider<Intent: BoardIntent>: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BoardEntry {
         Self.sample(at: Date())
     }
 
-    func snapshot(for configuration: BoardIntent, in context: Context) async -> BoardEntry {
-        context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+    func snapshot(for configuration: Intent, in context: Context) async -> BoardEntry {
+        var entry = context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        entry.showsSchedule = configuration.showsSchedule
+        return entry
     }
 
-    func timeline(for configuration: BoardIntent, in context: Context) async -> Timeline<BoardEntry> {
-        let (entry, zone) = await Self.read(at: Date())
+    func timeline(for configuration: Intent, in context: Context) async -> Timeline<BoardEntry> {
+        let read = await Self.read(at: Date())
+        var entry = read.entry
+        entry.showsSchedule = configuration.showsSchedule
         let next =
             entry.state == .unavailable
             ? entry.date.addingTimeInterval(WidgetState.retryInterval)
-            : WidgetBoard.nextLook(after: entry.date, in: zone)
+            : WidgetBoard.nextLook(after: entry.date, in: read.zone)
         return Timeline(entries: [entry], policy: .after(next))
     }
 

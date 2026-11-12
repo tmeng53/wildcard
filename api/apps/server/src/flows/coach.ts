@@ -91,12 +91,14 @@ export function coachSquadWeek(deps: {
           .toSorted((a, b) => a.reactedAt.getTime() - b.reactedAt.getTime())
           .map(({ member }) => member),
         comments: (week.comments.get(record.id) ?? []).map(
-          ({ id, member, text, commentedAt, replyToCoach, mentionsCoach }) => ({
+          ({ id, member, text, commentedAt, replyTo, replyToCoach, mentions, mentionsCoach }) => ({
             id,
             member,
             text,
             at: commentedAt,
+            ...(replyTo === undefined ? {} : { replyTo }),
             ...(replyToCoach === undefined ? {} : { toCoach: replyToCoach }),
+            ...(mentions === undefined ? {} : { mentions }),
             ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
           }),
         ),
@@ -122,9 +124,9 @@ function postedTimeOf(createdAt: Date, zone: string | undefined): Pick<WeekCheck
   return { postedTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` };
 }
 
-/** An entry without its member's line. */
+/** An entry without its member's line or place. */
 function withoutWords(
-  entry: Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay'>,
+  entry: Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place'>,
 ): Pick<WeekCheckIn, 'sport' | 'minutes' | 'restDay'> {
   const { sport, minutes, restDay } = entry;
   return {
@@ -134,24 +136,31 @@ function withoutWords(
   };
 }
 
-/** A check-in's sport, minutes and line, as the coach reads them. */
+/** A check-in's sport, minutes, line and place name, as the coach reads them. */
 function entryOf(
   record: CheckInRecord,
   sportNames: ReadonlyMap<string, string>,
-): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay'> {
+): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place'> {
   switch (record.kind) {
     case 'trained': {
-      const { sport, customSport, minutes, caption } = record.training;
+      const { sport, customSport, minutes, caption, place } = record.training;
       const name = customSport ?? sportNames.get(sport) ?? sport;
       return {
         sport: name,
         ...(minutes === undefined ? {} : { minutes }),
         ...(caption === undefined ? {} : { text: caption }),
+        // Only the place's name: never its coordinates (Tracy, 2026-11-12).
+        ...(place === undefined ? {} : { place: place.name }),
       };
     }
     case 'healthyMeal':
-    case 'cheatMeal':
-      return record.meal.caption === undefined ? {} : { text: record.meal.caption };
+    case 'cheatMeal': {
+      const { caption, place } = record.meal;
+      return {
+        ...(caption === undefined ? {} : { text: caption }),
+        ...(place === undefined ? {} : { place: place.name }),
+      };
+    }
     case 'disclaimer':
       return {
         text: record.disclaimer.text,

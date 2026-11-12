@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domain/memory.js';
+import {
+  editBody,
+  FILE_LIMIT,
+  fileRole,
+  storedPathOf,
+  type StoredPath,
+} from '../../domain/memory.js';
 import {
   Challenge,
   CHALLENGE_AMOUNT_MAX,
@@ -10,9 +16,9 @@ import {
   challengeText,
 } from '../../domain/challenge.js';
 import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
-import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
+import { CoachEmoji, HALF_WIDTH, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import {
-  checkInLine,
+  checkInBlock,
   weekText,
   type SquadWeek,
   type WeekCheckIn,
@@ -47,6 +53,11 @@ export interface WakeDraft {
   answerMentions: readonly string[];
   /** Whether the run marked the check-in's author's challenge today done, on its wake. */
   challengeDone: boolean;
+  /**
+   * What the member the wake answers asked of the app, which the run passes on to the team, on a
+   * check-in's or a reply's wake.
+   */
+  feedback: { readonly kind: 'problem' | 'idea'; readonly text: string } | undefined;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -180,6 +191,7 @@ export function toolbox({
   gifting,
   to,
   openChallenge = false,
+  relaying = 'nothing',
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -205,6 +217,12 @@ export function toolbox({
   readonly to?: string | undefined;
   /** On a check-in's wake, whether its author has a challenge today that can still be done. */
   readonly openChallenge?: boolean;
+  /**
+   * On a check-in's or a reply's wake, whether the member it answers said something there in
+   * their own words, which the coach may pass on to the team (`heard`), said nothing
+   * (`nothing`), or passing feedback on is off (`off`), when the tool isn't offered.
+   */
+  readonly relaying?: 'heard' | 'nothing' | 'off';
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   // Each week is read at most once a run, however many tools ask for it.
@@ -235,7 +253,7 @@ export function toolbox({
         path: z
           .string()
           .describe(
-            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事，me.md 记你自己（只有你读得到）',
+            `记到哪：${['squad.md', 'memory.md', 'me.md', 'people/队员N.md'].map((path) => `${path}（${fileRole(path)}）`).join('，')}`,
           ),
         fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
@@ -321,11 +339,15 @@ export function toolbox({
       }),
     );
   }
+  // Before each kind's own tools, and on every such wake, so the list stays the same and cached.
+  if ((kind === 'checkIn' || kind === 'comment') && relaying !== 'off') {
+    tools.push(relayFeedback(draft, relaying === 'heard'));
+  }
   if (kind === 'daily') {
     tools.push(
       defineTool(draft.steps, {
         name: 'post_note',
-        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字。`,
+        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('今天的一句') }),
         run: ({ text }) => {
           const line = text.trim();
@@ -376,7 +398,7 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
-        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
@@ -420,7 +442,7 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'answer',
-        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
@@ -439,6 +461,37 @@ export function toolbox({
     tools.push(lookAtPhotos(draft.steps, photos));
   }
   return tools;
+}
+
+/** The longest line a coach writes of what a member asked of the app. */
+export const RELAY_LIMIT = 200;
+
+/**
+ * Passing on to the team what the member the wake answers asked of the app itself, in their own
+ * words there (Tracy, 2026-11-12): saved with the run, then filed like 意见反馈, from them.
+ */
+function relayFeedback(draft: WakeDraft, heard: boolean): CoachTool {
+  return defineTool(draft.steps, {
+    name: 'relay_feedback',
+    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了就在回他的那句里像朋友一样随口提一句，用你自己的话，别像客服。`,
+    parameters: z.object({
+      kind: z.enum(['problem', 'idea']).describe('app 出了问题是 problem，想要新东西或改进是 idea'),
+      text: z
+        .string()
+        .describe(`他想要什么、哪里不对，说清楚，不写人名，不超过 ${String(RELAY_LIMIT)} 字`),
+    }),
+    run: ({ kind, text }) => {
+      if (!heard) return '他在这里没写字，没有能转的。';
+      const line = text.trim();
+      if (line === '') return 'text 是空的，写上他想要什么。';
+      if (line.length > RELAY_LIMIT) {
+        return `太长了：${String(line.length)} 字，最多 ${String(RELAY_LIMIT)} 字。`;
+      }
+      const replaced = draft.feedback !== undefined;
+      draft.feedback = { kind, text: line };
+      return replaced ? '已换成这条，会转给团队。' : '会转给团队。';
+    },
+  });
 }
 
 /** The furthest back the coach reads, in weeks before this one, as `squad_week` does. */
@@ -500,13 +553,18 @@ function postTools(
         .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       if (posts.length === 0) return `${member} 这段时间没有能看的动态。`;
       return [
-        `${member} 的动态（新的在前）：`,
+        `# ${member} 的动态（新的在前）`,
         ...posts.map((post) => {
-          const comments =
-            post.comments.length === 0 ? '' : ` · ${String(post.comments.length)} 条评论`;
-          return `- ${numberOf(post)}：${checkInLine({ ...post, comments: [] }, roster)}${comments}`;
+          const block = checkInBlock(post, {
+            roster,
+            heading: `## ${numberOf(post)} · `,
+            comments: false,
+          });
+          return post.comments.length === 0
+            ? block
+            : `${block}\n- 评论：${String(post.comments.length)} 条（用 post_comments 看）`;
         }),
-      ].join('\n');
+      ].join('\n\n');
     },
   });
   if (commentsOf === undefined) return [memberPosts];
@@ -590,7 +648,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字${HALF_WIDTH}。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),
@@ -706,7 +764,7 @@ function noteTool(
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
-      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
+      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}，对他说话用「你」。`,
       parameters: z.object({ member, text: z.string().describe('便条上的话') }),
       kept,
       run: write,
@@ -714,7 +772,7 @@ function noteTool(
   }
   return defineTool(draft.steps, {
     name: 'note_to',
-    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
+    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}，对他说话用「你」。`,
     parameters: z.object({
       member,
       text: z.string().describe('便条上的这一句'),

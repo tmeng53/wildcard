@@ -3012,6 +3012,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/TrainingView/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/photos`.
@@ -3026,6 +3028,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             ///   - workout:
             public init(
@@ -3034,6 +3037,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
                 workout: Components.Schemas.WorkoutView? = nil
             ) {
@@ -3042,6 +3046,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.place = place
                 self.photos = photos
                 self.workout = workout
             }
@@ -3051,6 +3056,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case place
                 case photos
                 case workout
             }
@@ -3059,6 +3065,55 @@ extension Components {
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
         public typealias Sport = Swift.String
+        /// A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Place`.
+        public struct Place: Codable, Hashable, Sendable {
+            /// Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/name`.
+            public var name: Swift.String
+            /// Apple Maps' identifier for the place, when Maps gave one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/appleId`.
+            public var appleId: Swift.String?
+            /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/category`.
+            public var category: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Place/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/Place/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `Place`.
+            ///
+            /// - Parameters:
+            ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+            ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                name: Swift.String,
+                appleId: Swift.String? = nil,
+                category: Swift.String? = nil,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.name = name
+                self.appleId = appleId
+                self.category = category
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case appleId
+                case category
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PhotoView`.
         public struct PhotoView: Codable, Hashable, Sendable {
             /// The photo’s name, as the check-in was saved with.
@@ -3518,6 +3573,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MealView/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/MealView/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/MealView/photos`.
@@ -3526,16 +3583,20 @@ extension Components {
             ///
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil
             ) {
                 self.caption = caption
+                self.place = place
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
+                case place
                 case photos
             }
         }
@@ -3888,6 +3949,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Training/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Training/photos`.
@@ -3902,6 +3965,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             ///   - workout:
             public init(
@@ -3910,6 +3974,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil,
                 workout: Components.Schemas.Workout? = nil
             ) {
@@ -3918,6 +3983,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.place = place
                 self.photos = photos
                 self.workout = workout
             }
@@ -3927,6 +3993,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case place
                 case photos
                 case workout
             }
@@ -4100,6 +4167,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Meal/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Meal/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Meal/photos`.
@@ -4108,16 +4177,20 @@ extension Components {
             ///
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil
             ) {
                 self.caption = caption
+                self.place = place
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
+                case place
                 case photos
             }
         }

@@ -144,6 +144,51 @@ describe('the squad’s week as the coach reads it', () => {
     ]);
   });
 
+  it('reads a tagged place’s name, never its coordinates, and none on a post only recorded', async () => {
+    const me = await signUp();
+    const squad = randomUUID();
+    const made = '2026-07-01T00:00:00.000Z';
+    const inviteCode = Array.from(squad.replaceAll('-', '').slice(0, 8), (digit) =>
+      '23456789ABCDEFGH'.charAt(Number.parseInt(digit, 16)),
+    ).join('');
+    await sql`insert into public.squads (id, name, invite_code, created_by, captain_id, created_at)
+      values (${squad}, '沙拉', ${inviteCode}, ${me.userId}, ${me.userId}, ${made})`.execute(db);
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${squad}, ${me.userId}, ${made})`.execute(db);
+    await sql`insert into public.squad_membership_events (squad_id, member_id, kind, actor_id, at)
+      values (${squad}, ${me.userId}, 'joined', ${me.userId}, ${made})`.execute(db);
+    const payload = JSON.stringify({
+      version: 1,
+      caption: '沙拉',
+      place: { name: 'Sweetgreen', latitude: 40.7448, longitude: -73.9881 },
+    });
+    const post = async ({ at, inFeed }: { at: string; inFeed: boolean }) => {
+      const id = randomUUID();
+      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload, in_feed)
+        values (${id}, ${me.userId}, '2026-08-04', ${at}, 'healthyMeal', ${payload}::jsonb, ${inFeed})`.execute(
+        db,
+      );
+      await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
+        values (${id}, ${squad}, 1)`.execute(db);
+    };
+    await post({ at: '2026-08-04T12:00:00.000Z', inFeed: true });
+    await post({ at: '2026-08-04T18:00:00.000Z', inFeed: false });
+
+    const week = await coachSquadWeek({
+      checkIns,
+      members,
+      squads,
+      sports,
+      scenes: scenesOn(db),
+      clock: () => now,
+    })({ squad: SquadId.parse(squad), weekStart: '2026-08-03' });
+    expect(week.checkIns.map(({ place, text }) => ({ place, text }))).toStrictEqual([
+      { place: 'Sweetgreen', text: '沙拉' },
+      { place: undefined, text: undefined },
+    ]);
+    expect(JSON.stringify(week)).not.toContain('40.7448');
+  });
+
   it('counts only what a member shared to the squad, never a post kept to themselves', async () => {
     const me = await signUp();
     const squad = randomUUID();

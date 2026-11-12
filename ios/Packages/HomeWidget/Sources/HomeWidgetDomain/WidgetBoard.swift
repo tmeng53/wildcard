@@ -89,6 +89,28 @@ public struct WidgetBoard: Hashable, Sendable {
         postedWorkout = workout == nil ? todays.first(where: \.isPosted)?.imported : nil
     }
 
+    /// One day of my week on 本周出赛表: how it stands and its sport, what I trained else what the
+    /// plan names (nil for a rest day, a 请假条 or a day with no sport).
+    public struct PlanDay: Hashable, Sendable {
+        /// 0 for Monday.
+        public let weekday: Int
+        public let status: WeekRecord.Day
+        public let activity: Activity?
+        public let isToday: Bool
+    }
+
+    /// My week Monday to Sunday, as 本周出赛表 shows it.
+    public var plan: [PlanDay] {
+        zip(week.days, week.activities).enumerated().map { index, day in
+            PlanDay(weekday: index, status: day.0, activity: day.1, isToday: index == week.today)
+        }
+    }
+
+    /// Today and the days after it this week, at most `count`: the small 本周出赛表's list.
+    public func planAhead(_ count: Int) -> [PlanDay] {
+        Array(plan.dropFirst(week.today).prefix(count))
+    }
+
     /// How many in the squad checked in today: 今天 x/y.
     public var checkedInToday: Int { mates.count { $0.status == .checkedIn } }
 

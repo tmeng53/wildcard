@@ -18,7 +18,7 @@ struct AppRoot: View {
     /// Where a tapped push goes (its notice's place), kept until the tabs open it.
     @State private var pushDestination: AppDestination?
     /// Where a tapped home screen widget asked to go, kept until the tabs open it.
-    @State private var widgetLink: WidgetLink?
+    @State private var widgetLink = LaunchOptions.widgetLink
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
     /// Pushes that arrived while the tabs were in front, which they tell in their own banner.
@@ -73,7 +73,7 @@ struct AppRoot: View {
                     }
                     if let link = widgetLink {
                         widgetLink = nil
-                        WildcardApp.open(link, today: today, tab: $tab)
+                        WildcardApp.open(link, today: today, tab: $tab, place: $pushDestination)
                     }
                 }
             }
@@ -105,7 +105,7 @@ struct AppRoot: View {
             // A home screen widget: open its place now, or once the tabs are up.
             if let link = WidgetLink(url: url) {
                 if case .tabs(let today, _, _, _, _, _) = app.screen {
-                    WildcardApp.open(link, today: today, tab: $tab)
+                    WildcardApp.open(link, today: today, tab: $tab, place: $pushDestination)
                 } else {
                     widgetLink = link
                 }

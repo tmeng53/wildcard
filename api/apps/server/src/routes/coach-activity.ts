@@ -177,10 +177,13 @@ export const CoachLetterBody = z
     from: CoachSpeakerBody.meta({ description: 'The coach who wrote it as it left: its 落款.' }),
     to: CoachSpeakerBody.meta({ description: 'The coach who took over: its 称呼.' }),
     day: z.iso.date().meta({ description: 'The day it is dated, on the squad’s clock.' }),
-    text: z.string().max(LETTER_LIMIT).meta({
-      description: 'Its body, without the 称呼 or 落款; lines apart by `\\n`.',
-      example: '这队交给你了，我先撤。',
-    }),
+    text: z
+      .string()
+      .max(LETTER_LIMIT * 2)
+      .meta({
+        description: 'Its body, without the 称呼 or 落款; lines apart by `\\n`.',
+        example: '这队交给你了，我先撤。',
+      }),
     at: z.iso.datetime().meta({ description: 'When it was written.' }),
   })
   .openapi('CoachLetter');
@@ -218,7 +221,7 @@ const CoachReplyBody = z
     }),
     text: z
       .string()
-      .max(REPLY_LIMIT)
+      .max(REPLY_LIMIT * 2)
       .nullable()
       .meta({
         description:
@@ -257,7 +260,7 @@ const CoachAnswerBody = z
     }),
     text: z
       .string()
-      .max(REPLY_LIMIT)
+      .max(REPLY_LIMIT * 2)
       .meta({
         description:
           'Its answer, shown among the post’s comments right after the reply it answers, as a ' +

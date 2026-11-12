@@ -12,6 +12,8 @@ final class WidgetUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         assertContentInside(app)
         keepScreenshot(named: "70-widgets")
+        app.swipeUp()
+        keepScreenshot(named: "70-widgets-schedule")
     }
 
     func testWidgetsInEnglish() {
@@ -19,6 +21,23 @@ final class WidgetUITests: XCTestCase {
         let app = launch(language: "en")
         assertContentInside(app)
         keepScreenshot(named: "70-widgets-en")
+        app.swipeUp()
+        keepScreenshot(named: "70-widgets-schedule-en")
+    }
+
+    /// 本周出赛表's tap opens 出赛表, in 我, from the app on the sample squad, opened from cold with
+    /// the widget's link as a tap on the widget opens it.
+    func testScheduleWidgetOpensTheSchedule() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-widget-link", "wildcard://widget/schedule",
+        ]
+        app.launch()
+        addTeardownBlock { @MainActor in XCUIApplication().terminate() }
+        let poster = app.descendants(matching: .any).matching(identifier: "schedule.poster").firstMatch
+        XCTAssertTrue(poster.waitForExistence(timeout: Self.wait), "the widget didn't open 出赛表")
     }
 
     private func launch(language: String) -> XCUIApplication {
@@ -36,7 +55,7 @@ final class WidgetUITests: XCTestCase {
     private func assertContentInside(_ app: XCUIApplication) {
         for name in [
             "widget.week", "widget.notice", "widget.squad", "widget.weekWorkout", "widget.squadWorkout",
-            "widget.weekPosted", "widget.squadWorkoutEight",
+            "widget.weekPosted", "widget.squadWorkoutEight", "widget.schedule", "widget.scheduleMedium",
         ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.waitForExistence(timeout: Self.wait), "\(name) didn't show")

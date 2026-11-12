@@ -5,7 +5,7 @@ import type { Coach } from '../domain/coach.js';
 import { letterTask, LETTER_LIMIT, tenuresOf, type CoachLetter } from '../domain/letter.js';
 import { memberOfPath, shownBody, shownPathOf } from '../domain/memory.js';
 import { instructionsOf, memoryBlock } from '../domain/prompt.js';
-import { lineProblem } from '../domain/reply.js';
+import { HALF_WIDTH, lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf } from '../domain/squad-week.js';
 import type {
@@ -180,7 +180,7 @@ function writeLetter(written: (text: string) => void): CoachTool {
   const parameters = z.object({ text: z.string().describe('信的正文') });
   return {
     name: 'write_letter',
-    description: `交上你的告别信，最多 ${String(LETTER_LIMIT)} 字。`,
+    description: `交上你的告别信，最多 ${String(LETTER_LIMIT)} 字${HALF_WIDTH}。`,
     parameters,
     run: (input) => {
       const parsed = parameters.safeParse(input);

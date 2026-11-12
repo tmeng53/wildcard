@@ -225,8 +225,10 @@ describe('the outgoing coach’s letter', () => {
       expect(run?.task).toContain('不写谁住哪、做什么工作、私下说过什么');
       expect(run?.task).toContain('- 队员1：米亚\n- 队员2：阿杰');
       // Its memory, members by the names the model knows them by.
-      expect(run?.task).toContain('【people/队员1.md】\n队员1 周三雷打不动游泳');
-      expect(run?.task).toContain('【squad.md】\n周日晚上最热闹');
+      expect(run?.task).toContain(
+        '### people/队员1.md（队员1这个人）\n```\n队员1 周三雷打不动游泳',
+      );
+      expect(run?.task).toContain('### squad.md（这个小队）\n```\n周日晚上最热闹');
       expect(run?.task).not.toContain('回来');
       // The tokens count toward the squad's budget, as a letter's.
       expect(fixture.usage.counted.runs).toStrictEqual([
@@ -286,7 +288,7 @@ describe('the outgoing coach’s letter', () => {
       const { agent, runs } = writingAgent(['长'.repeat(201), '队员2 交给你了', '短的。']);
       expect(await letters(fixture, { agent }).write(squad)).toMatchObject({ text: '短的。' });
       expect(runs[0]?.answers).toStrictEqual([
-        '太长了：201 字，最多 200 字。重写一封。',
+        '太长了：201 字（英文字母、数字、空格和标点算半个字），最多 200 字。重写一封。',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。重写一封。',
         '交上了。',
       ]);

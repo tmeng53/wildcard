@@ -363,10 +363,15 @@ extension WildcardApp {
         }
     }
 
-    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, or the 训练 page started
-    /// from the workout the widget's capsule offered.
-    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, the 训练 page started
+    /// from the workout the widget's capsule offered, or 出赛表, which `MainTabs` opens as a
+    /// notice's place.
+    static func open(
+        _ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>, place: Binding<AppDestination?>
+    ) {
         switch link {
+        case .schedule:
+            place.wrappedValue = .schedule
         case .today:
             open(nil, today: today, tab: tab)
         case .checkIn:

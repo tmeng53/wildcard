@@ -73,7 +73,7 @@ final class LightsUITests: XCTestCase {
 
     /// A tap off the card, above it, closes the card and its today.
     private func closePopup(_ today: XCUIElement, in app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: today, in: app)
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off the card left it open")
     }
 

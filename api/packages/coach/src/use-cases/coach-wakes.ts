@@ -1,6 +1,7 @@
 import { challengeOpen, type Challenge } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
+  memberOfPath,
   shownBody,
   shownPaths,
   squadSeed,
@@ -34,6 +35,7 @@ import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
+  CoachFeedback,
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
@@ -70,7 +72,7 @@ const RECENT_EMOJI = 8;
 /** How far back the daily wake reads the talk under check-ins, to remember from it. */
 const TALK_WINDOW_MS = 24 * 60 * 60_000;
 
-/** The file a squad's coach starts from: its name and who is in it. */
+/** The file a squad's coach starts from: its name. */
 const SEEDED = 'squad.md';
 
 /** What one run of the coach did. */
@@ -196,6 +198,13 @@ export interface CoachWakesDependencies {
   /** Of these members, the ones who keep the coach's messages on: only they get a morning note. */
   readonly wantNotes: (members: readonly string[]) => Promise<readonly string[]>;
   readonly gifting: CoachGifting;
+  /** Passes on to the team what a member asked of the app, filed as feedback from them. */
+  readonly relayFeedback: CoachFeedback;
+  /**
+   * Whether coaches pass feedback on that day: off until the privacy policy's notice of it runs
+   * out (the switch `coachFeedbackRelay`, Tracy 2026-11-12).
+   */
+  readonly relayingOn: (day: string) => Promise<boolean>;
   /** Told what went wrong after a wake's save, such as a gift that couldn't be given. */
   readonly warn: (message: string, details: Record<string, unknown>) => void;
 }
@@ -474,6 +483,8 @@ interface Thinking {
   readonly author: string | undefined;
   readonly challenge: Awaited<ReturnType<CoachStores['memberNotes']['challengeOf']>>;
   readonly day: string;
+  /** The words of the member the wake answers there, which the coach may pass on to the team. */
+  readonly heard: string | undefined;
   /** What the run cost, in US dollars' millionths. */
   readonly costMicros: number;
 }
@@ -550,12 +561,13 @@ async function think(
     answer: undefined,
     answerMentions: [],
     challengeDone: false,
+    feedback: undefined,
     steps: [],
   };
-  // A squad whose coach hasn't written its file yet starts from its name and who is in it,
+  // A squad whose coach hasn't written its file yet starts from its name,
   // saved with the run's other changes.
   if ((stored.get(SEEDED) ?? '') === '') {
-    draft.files.set(SEEDED, squadSeed(week, roster));
+    draft.files.set(SEEDED, squadSeed(week));
     draft.changed.add(SEEDED);
   }
   const daily = wake.reason.kind === 'daily';
@@ -572,10 +584,16 @@ async function think(
         ),
       )
     : welcomes;
+  // Whose pages the wake reads: everyone's on the squad's own wakes (the day's, the dream, a
+  // welcome), else only the people under the check-in, so a line to one never brings up
+  // another's things (Tracy, 2026-11-12).
+  const about = aboutWhom(week, wake.reason);
   const files = new Map(
-    shownPaths({ roster, coach: coach.id }).map((path) => {
+    shownPaths({ roster, coach: coach.id }).flatMap((path) => {
       const at = storedPathOf(path, { roster, coach: coach.id });
-      return [path, at === undefined ? undefined : draft.files.get(at)];
+      const member = at === undefined ? undefined : memberOfPath(at);
+      if (about !== undefined && member !== undefined && !about.has(member)) return [];
+      return [[path, at === undefined ? undefined : draft.files.get(at)] as const];
     }),
   );
   // The day the wake is for: its own, or the squad's today on its own clock.
@@ -594,6 +612,7 @@ async function think(
     : undefined;
   // On a check-in's wake, the challenge its author got on today's note and what they said.
   const author = addresseeOf(week, wake.reason);
+  const heard = heardOf(week, wake.reason);
   const challenge =
     wake.reason.kind === 'checkIn' && author !== undefined
       ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
@@ -634,6 +653,8 @@ async function think(
     ...(wake.reason.kind === 'daily' || wake.reason.kind === 'joined'
       ? {
           noteTo: await briefsOf(deps, {
+            // A member just joined: what they did before, since the coach knows nothing of them.
+            record: wake.reason.kind === 'joined',
             squad: wake.squad,
             week,
             roster,
@@ -663,6 +684,11 @@ async function think(
         challenge !== undefined &&
         challengeOpen(challenge) &&
         postedOn({ week, reason: wake.reason, day, zone }),
+      relaying: heard !== undefined ? 'heard' : 'nothing',
+      ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') &&
+      !(await deps.relayingOn(day))
+        ? { relaying: 'off' as const }
+        : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
@@ -700,7 +726,18 @@ async function think(
     model: settings.model,
     usage: run.usage,
   });
-  return { run, draft, stored, roster, thread, author, challenge, day, costMicros: cost };
+  return {
+    run,
+    draft,
+    stored,
+    roster,
+    thread,
+    author,
+    challenge,
+    day,
+    heard,
+    costMicros: cost,
+  };
 }
 
 /**
@@ -732,7 +769,7 @@ async function runWake(
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    const { run, draft, stored, roster, thread, author, challenge, day } = thought;
+    const { run, draft, stored, roster, thread, author, challenge, day, heard } = thought;
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
       await deps.stores.wakes.fail(wake.id, run.error);
@@ -759,6 +796,30 @@ async function runWake(
     }
     if (answer !== undefined && thread !== undefined) {
       await deps.answered({ ...answer, commenter: thread.commenter }).catch(() => undefined);
+    }
+    // What a member asked of the app is the feedback module's, filed after the run's save.
+    const { reason } = wake;
+    if (
+      draft.feedback !== undefined &&
+      author !== undefined &&
+      heard !== undefined &&
+      (reason.kind === 'checkIn' || reason.kind === 'comment')
+    ) {
+      const refused = await deps
+        .relayFeedback({
+          wake: wake.id,
+          squad: wake.squad,
+          coach: coach.id,
+          member: author,
+          checkIn: reason.checkIn,
+          ...(reason.kind === 'comment' ? { comment: reason.comment } : {}),
+          ...draft.feedback,
+          quote: heard,
+        })
+        .catch((error: unknown) => (error instanceof Error ? error.message : String(error)));
+      if (refused !== undefined) {
+        deps.warn('coach feedback not passed on', { squad: wake.squad, member: author, refused });
+      }
     }
     // Gifts are the unlocks module's, given after the run's save; one refused is only noted.
     for (const [member, { piece, line }] of draft.gifts) {
@@ -817,7 +878,9 @@ async function briefsOf(
     roster,
     members,
     day,
+    record = false,
   }: {
+    readonly record?: boolean;
     readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
@@ -849,9 +912,19 @@ async function briefsOf(
         (a, b) => a.day.localeCompare(b.day) || a.createdAt.getTime() - b.createdAt.getTime(),
       )
       .map((each) => ({ day: each.day, what: postWhat(each) }));
+    const nickname = week.members.find((each) => each.member === member)?.nickname;
     return [
       {
         name,
+        ...(nickname === undefined ? {} : { nickname }),
+        ...(record && mine !== undefined
+          ? {
+              record: {
+                trainedDays: mine.trainedDays,
+                ...(mine.topSport === undefined ? {} : { topSport: mine.topSport }),
+              },
+            }
+          : {}),
         language: languageOf(week, member),
         trainedDays,
         posts,
@@ -1070,10 +1143,19 @@ async function talksOf(
     talks.push({
       checkIn,
       ...(reply?.coach === coach.id && reply.text !== undefined ? { reply: reply.text } : {}),
-      said: lately.flatMap(({ id, member, text }) => {
+      said: lately.flatMap(({ id, member, text, toCoach, mentionsCoach, replyTo, mentions }) => {
         const answer = answers.get(id);
         return [
-          { member, text },
+          {
+            member,
+            text,
+            to: {
+              ...(toCoach === undefined ? {} : { toCoach }),
+              ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
+              ...(replyTo === undefined ? {} : { replyTo }),
+              ...(mentions === undefined ? {} : { mentions }),
+            },
+          },
           ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
         ];
       }),
@@ -1198,6 +1280,8 @@ function saidOf({
                   coach: nameOf(to),
                 },
               }),
+          ...(comment.replyTo === undefined ? {} : { replyTo: comment.replyTo }),
+          ...(comment.mentions === undefined ? {} : { mentions: comment.mentions }),
           ...(comment.id === answering ? { answering: true } : {}),
         },
         ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
@@ -1213,6 +1297,45 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes(consented);
+}
+
+/**
+ * What the member a check-in's or reply's wake answers said under that post, in their own words:
+ * the post's line, if it is theirs, then their comments there up to the one the wake answers, so
+ * what they asked is quoted with the yes that came after it. Undefined when they said nothing
+ * there, or the post was only recorded.
+ */
+function heardOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
+  if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
+  const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (checkIn === undefined || checkIn.unposted === true) return undefined;
+  const member = addresseeOf(week, reason);
+  const answering =
+    reason.kind === 'comment'
+      ? checkIn.comments.find(({ id }) => id === reason.comment)
+      : undefined;
+  const said = [
+    ...(checkIn.member === member && checkIn.text !== undefined ? [checkIn.text] : []),
+    ...(answering === undefined
+      ? []
+      : checkIn.comments
+          .filter((each) => each.member === member && each.at <= answering.at)
+          .map(({ text }) => text)),
+  ].filter((words) => words.trim() !== '');
+  return said.length === 0 ? undefined : said.join('\n');
+}
+
+/**
+ * The members a check-in's or reply's wake is about, whose pages it reads: the check-in's author
+ * and everyone who commented under it. Someone only @-ed there is left out; the model can still
+ * write to their page by name. `undefined` for the squad's own wakes (the day's, the dream, a
+ * welcome), which read every page.
+ */
+function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string> | undefined {
+  if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
+  const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (checkIn === undefined) return new Set();
+  return new Set([checkIn.member, ...checkIn.comments.map(({ member }) => member)]);
 }
 
 /**

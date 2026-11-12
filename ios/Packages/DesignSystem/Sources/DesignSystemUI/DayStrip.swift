@@ -67,7 +67,7 @@ public struct DayStrip<ID: Hashable & Sendable>: View {
     private func cell(_ day: Day, isPicked: Bool) -> some View {
         VStack(spacing: Space.xxs) {
             Group {
-                if day.isToday { Text(copy: "今天", bundle: .module) } else { DayCircle.name(day.weekday - 1) }
+                if day.isToday { Text(copy: "今天", bundle: .module) } else { WeekdayName.short(day.weekday - 1) }
             }
             .typeStyle(day.isToday ? TypeRamp.tabSelected : TypeRamp.tab)
             .foregroundStyle(Color(role: !day.isEnabled ? .fgSubtle : day.isToday ? .fgDefault : .fgMuted, in: theme))
@@ -107,7 +107,7 @@ public struct DayStrip<ID: Hashable & Sendable>: View {
 
     /// 今天 or 周日, then the date: VoiceOver reads which day it is.
     private func label(_ day: Day) -> Text {
-        let name = day.isToday ? Text(copy: "今天", bundle: .module) : DayCircle.fullName(day.weekday - 1)
+        let name = day.isToday ? Text(copy: "今天", bundle: .module) : WeekdayName.full(day.weekday - 1)
         return name + Text(verbatim: " \(day.date)")
     }
 }

@@ -161,6 +161,7 @@ import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachFeedback } from './flows/coach-feedback.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { adoptFeedback } from './flows/feedback-adoption.js';
 import { coachLineAlert, pushCoachLine } from './flows/comment-push.js';
@@ -579,6 +580,12 @@ const coachWeek = coachSquadWeek({
 const coachConsented = (ids: readonly string[]) =>
   aiConsent.currentAmong(ids.map((member) => ConsentMember.parse(member)));
 /** The coach's model: without OpenAI's key the coach never wakes or writes. */
+const feedbackInbox = createFeedbackInbox({
+  store: createPostgresFeedbackStore(db),
+  clock: () => new Date(),
+});
+const feedbackIssues =
+  config.feedbackIssues === undefined ? undefined : createGitHubIssueTracker(config.feedbackIssues);
 const coachAgent =
   openaiKey === undefined ? undefined : createOpenAICoachAgent({ apiKey: openaiKey });
 // The AI coach runs on OpenAI: without its key the coach never wakes, whatever the settings say.
@@ -647,6 +654,15 @@ const coachWakes =
           weekStart: giftWeekStart,
           clock: () => new Date(),
         }),
+        // What a member asks of the app under a post goes to us like 意见反馈 (Tracy, 2026-11-12).
+        relayFeedback: coachFeedback({
+          feedback: feedbackInbox,
+          issues: feedbackIssues,
+          photos,
+          log,
+        }),
+        // Off until the policy's notice of it runs out, then on by `put_switch` (Tracy, 2026-11-12).
+        relayingOn: async (day) => (await switches.states())('coachFeedbackRelay', day),
         warn: (message, details) => {
           log.warn(message, details);
         },
@@ -746,14 +762,8 @@ const app = createApp({
   switches,
   nudges,
   weather,
-  feedback: createFeedbackInbox({
-    store: createPostgresFeedbackStore(db),
-    clock: () => new Date(),
-  }),
-  issues:
-    config.feedbackIssues === undefined
-      ? undefined
-      : createGitHubIssueTracker(config.feedbackIssues),
+  feedback: feedbackInbox,
+  issues: feedbackIssues,
   notices,
   liveEvents,
   coachNames,
