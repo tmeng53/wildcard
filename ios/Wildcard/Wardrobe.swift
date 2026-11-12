@@ -62,9 +62,16 @@ final class Wardrobe {
     /// read again first so the gift is theirs.
     func wear(_ piece: String) async {
         await profile.reload()
-        guard var character = profile.overview?.character, let slot = PlaceholderCharacter.slot(holding: piece)
-        else { return }
-        character.outfit.variants[slot] = piece
+        await wearHeld([piece])
+    }
+
+    /// The member's character saved once wearing each of `pieces` in its slot, from the profile as
+    /// it was last read: the pieces are already known to be theirs.
+    func wearHeld(_ pieces: [String]) async {
+        guard var character = profile.overview?.character else { return }
+        let slotted = pieces.compactMap { piece in PlaceholderCharacter.slot(holding: piece).map { ($0, piece) } }
+        guard !slotted.isEmpty else { return }
+        for (slot, piece) in slotted { character.outfit.variants[slot] = piece }
         await profile.save(character)
     }
 
@@ -72,6 +79,12 @@ final class Wardrobe {
     /// character, read again first, trying `piece` on (just the editor for nil).
     func showGift(_ piece: String?) async {
         await profile.reload()
+        showWorn(piece)
+    }
+
+    /// The editor on the character as the profile holds it now, trying `piece` on: for a piece
+    /// just saved on it, with nothing to read first.
+    func showWorn(_ piece: String?) {
         editCharacter()
         if let piece { editor?.tryOn(piece) }
     }
