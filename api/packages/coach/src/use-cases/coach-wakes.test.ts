@@ -1404,11 +1404,17 @@ describe('the coach', () => {
         text: '跟队员2比谁更健康',
         at: new Date(now.getTime() - 5 * 60_000),
       });
+      // A commenter without an AI consent, under a post whose author has one.
+      const unconsented = await commentOn(fixture, {
+        member: leo,
+        text: '没同意的人的评论',
+        at: new Date(now.getTime() - 4 * 60_000),
+      });
       const earlier = '2026-10-19';
       const week: SquadWeek = {
         ...fixture.week,
         checkIns: [
-          ...fixture.week.checkIns.map((each) => ({ ...each, comments: [comment] })),
+          ...fixture.week.checkIns.map((each) => ({ ...each, comments: [comment, unconsented] })),
           {
             id: randomUUID(),
             member: leo,
@@ -1471,6 +1477,7 @@ describe('the coach', () => {
         '队员2 这段时间没有能看的动态。',
         '没有 队员7；队员是：队员1、队员2。',
       ]);
+      expect(JSON.stringify(runs)).not.toContain('没同意的人');
       const report = await createPostgresCoachReport(fixture.trx).squad(squad);
       expect(report.wakes[0]?.steps[1]).toStrictEqual({
         tool: 'post_comments',
