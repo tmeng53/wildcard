@@ -674,6 +674,26 @@ describe('when the coach wakes', () => {
     ).toBe(
       '## 和你的对话（过去一天，打卡下面，先后顺序）\n\n### 10-27 周二 · 队员1 · 训练：跑步 30 分钟\n- 你：「腿废了也算练」\n- 队员2：「我下周膝盖手术」\n- 你：「那这周先歇着」',
     );
+    // Yesterday's post points to the talk below only when the talk holds all its comments; the
+    // talk keeps only the last day's, so an older comment stays under the post.
+    const yesterdayWith = (said: { member: string | undefined; text: string }[]) =>
+      section(
+        taskOf({
+          reason: { kind: 'daily', day: '2026-10-28' },
+          week,
+          files: new Map(),
+          recentNotes: [],
+          yesterday: { day: '2026-10-27', checkIns: [first] },
+          talks: [{ checkIn: first, said }],
+        }),
+        '## 昨天',
+      );
+    expect(yesterdayWith([{ member: leo, text: '强' }])).toContain(
+      '\n- 点了表情：队员2\n- 评论：见下面「和你的对话」',
+    );
+    expect(yesterdayWith([{ member: undefined, text: '谢谢' }])).toContain(
+      '\n- 评论（先后顺序）：\n  - 队员2：「强」',
+    );
     expect(
       taskOf({
         reason: { kind: 'checkIn', checkIn: 'c2' },

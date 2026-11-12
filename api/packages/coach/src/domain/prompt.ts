@@ -1,4 +1,3 @@
-import { fileRole } from './memory.js';
 import { writeIn } from '@wildcard/language-model';
 
 import {
@@ -10,6 +9,7 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
+import { fileRole } from './memory.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
@@ -377,7 +377,16 @@ function yesterdayBlocks(
     talks,
   }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
 ): string[] {
-  const talkedUnder = new Set(talks.map(({ checkIn }) => checkIn.id));
+  // A post points to the talk below only when the talk holds every comment under it: the talk
+  // keeps only the last day's, and an older comment would otherwise be shown nowhere.
+  const talkedUnder = new Set(
+    talks
+      .filter(
+        ({ checkIn, said }) =>
+          said.filter(({ member }) => member !== undefined).length >= checkIn.comments.length,
+      )
+      .map(({ checkIn }) => checkIn.id),
+  );
   const heading = `## 昨天（${weekdayOf(day)}）小队的动态`;
   const posts =
     checkIns.length === 0
