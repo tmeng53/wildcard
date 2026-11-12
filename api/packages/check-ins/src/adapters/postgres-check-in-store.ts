@@ -358,6 +358,11 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sql<string>`payload ->> 'sport'`.as('sport'),
           sql<string | null>`payload ->> 'customSport'`.as('customSport'),
           sql<string | null>`payload ->> 'minutes'`.as('minutes'),
+          sql<string | null>`payload ->> 'startTime'`.as('startTime'),
+          sql<Date | null>`(
+            select started_at from check_in_workouts
+            where check_in_workouts.check_in_id = check_ins.id
+          )`.as('workoutStartedAt'),
         ])
         .select(
           sql<boolean>`exists (
@@ -428,6 +433,10 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sport: SportKey.parse(row.sport),
           ...(row.customSport === null ? {} : { customSport: row.customSport }),
           ...(row.minutes === null ? {} : { minutes: Number(row.minutes) }),
+          ...(row.startTime === null ? {} : { startTime: row.startTime }),
+          ...(row.workoutStartedAt === null
+            ? {}
+            : { workoutStartedAt: new Date(row.workoutStartedAt) }),
           inSquad: row.in_squad,
         })),
         healthyMealDays: meals.map((row) => row.day),

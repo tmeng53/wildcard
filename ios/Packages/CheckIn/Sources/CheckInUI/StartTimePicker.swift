@@ -4,9 +4,9 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// The start of a 训练 made by hand, at the front of the 开始 · 时长 row: 「--:--」 until one is
-/// picked, whose tap opens the flip clock on the phone's time; once picked, the time with a
-/// cross, whose tap clears it, as a second tap clears a length.
+/// The start of a 训练 made by hand, at the front of the 开始 · 时长 row: the time, whose tap opens
+/// the flip clock on it to pick another. Never cleared (Tracy, 2026-11-11: every 训练 has a start);
+/// only an edit of an older post shows 「--:--」 until one is picked, on the phone's time.
 struct StartTimePill: View {
     @Binding var startTime: StartTime?
     @State private var isPicking = false
@@ -14,16 +14,16 @@ struct StartTimePill: View {
     var body: some View {
         PickPill(
             Text(verbatim: startTime?.wire ?? "--:--"), systemImage: "clock", look: .solid,
-            isSelected: startTime != nil, isRemovable: startTime != nil
+            isSelected: startTime != nil, isRemovable: false
         ) {
-            if startTime == nil { isPicking = true } else { startTime = nil }
+            isPicking = true
         }
         .monospacedDigit()
         .accessibilityLabel(Text(copy: "开始时间", bundle: .module))
         .accessibilityValue(Text(verbatim: startTime?.wire ?? ""))
         .accessibilityIdentifier("compose.start")
         .sheet(isPresented: $isPicking) {
-            FlipClockSheet(start: Self.now) { picked in
+            FlipClockSheet(start: startTime ?? .phoneNow) { picked in
                 startTime = picked
                 isPicking = false
             } cancel: {
@@ -33,9 +33,11 @@ struct StartTimePill: View {
             .presentationDragIndicator(.visible)
         }
     }
+}
 
-    /// The phone's time, to the minute: where the clock opens.
-    private static var now: StartTime? {
+extension StartTime {
+    /// The phone's time, to the minute, on its own clock: a new 训练's start.
+    static var phoneNow: StartTime? {
         let parts = Calendar.current.dateComponents([.hour, .minute], from: .now)
         return try? StartTime(hour: parts.hour ?? 0, minute: parts.minute ?? 0)
     }
