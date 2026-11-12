@@ -2061,7 +2061,9 @@ describe('the coach', () => {
       ]);
       // The daily wake has no one's words to pass on.
       expect(runs[1]?.tools).not.toContain('relay_feedback');
-      expect(relayed).toStrictEqual([
+      // Each by the wake that passed it on, so a wake run twice passes it on once.
+      expect(typeof relayed[0]?.wake).toBe('number');
+      expect(relayed).toMatchObject([
         {
           squad,
           coach: 'xiaohun',
@@ -2107,7 +2109,7 @@ describe('the coach', () => {
         { ...fixture, week: withAsk },
         { agent, relayFeedback, at: new Date(now.getTime() + 3 * 60_000) },
       ).answer({ checkIn, comment: yes.id, coach: 'xiaohun', squads: [squad] });
-      expect(relayed[1]).toStrictEqual({
+      expect(relayed[1]).toMatchObject({
         squad,
         coach: 'xiaohun',
         member: leo,

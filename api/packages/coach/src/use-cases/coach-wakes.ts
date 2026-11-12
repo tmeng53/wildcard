@@ -797,6 +797,7 @@ async function runWake(
     ) {
       const refused = await deps
         .relayFeedback({
+          wake: wake.id,
           squad: wake.squad,
           coach: coach.id,
           member: author,

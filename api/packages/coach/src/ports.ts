@@ -633,6 +633,8 @@ export interface CoachGifting {
  * (the member's day's limit). Kept by the feedback module.
  */
 export type CoachFeedback = (relay: {
+  /** The wake that passes it on, so a wake run twice passes it on once. */
+  readonly wake: number;
   readonly squad: SquadId;
   readonly coach: CoachId;
   /** Who asked for it. */

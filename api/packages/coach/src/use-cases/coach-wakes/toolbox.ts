@@ -467,7 +467,7 @@ export const RELAY_LIMIT = 200;
 function relayFeedback(draft: WakeDraft, heard: boolean): CoachTool {
   return defineTool(draft.steps, {
     name: 'relay_feedback',
-    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了在回他的那句里说一声。`,
+    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了就在回他的那句里像朋友一样随口提一句，用你自己的话，别像客服。`,
     parameters: z.object({
       kind: z.enum(['problem', 'idea']).describe('app 出了问题是 problem，想要新东西或改进是 idea'),
       text: z
