@@ -45,7 +45,20 @@ export const CommentCreated = z.strictObject({
 });
 export type CommentCreated = z.infer<typeof CommentCreated>;
 
-export const ServerEvent = z.discriminatedUnion('kind', [CheckInCreated, CommentCreated]);
+/** A member who just joined a squad. */
+export const SquadJoined = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('squad.joined'),
+  squad: Id,
+  member: Id,
+});
+export type SquadJoined = z.infer<typeof SquadJoined>;
+
+export const ServerEvent = z.discriminatedUnion('kind', [
+  CheckInCreated,
+  CommentCreated,
+  SquadJoined,
+]);
 export type ServerEvent = z.infer<typeof ServerEvent>;
 
 /**
@@ -55,7 +68,7 @@ export type ServerEvent = z.infer<typeof ServerEvent>;
 export type PublishEvent = (event: ServerEvent) => Promise<void>;
 
 /** Who reacts to events: each a Pub/Sub subscription on the topic of its kind. */
-export const Subscriber = z.enum(['coach-look', 'comment-push', 'coach-answer']);
+export const Subscriber = z.enum(['coach-look', 'comment-push', 'coach-answer', 'coach-welcome']);
 export type Subscriber = z.infer<typeof Subscriber>;
 
 /** The kind of event each subscriber takes. */
@@ -63,6 +76,7 @@ export const SUBSCRIBERS = {
   'coach-look': 'check-in.created',
   'comment-push': 'comment.created',
   'coach-answer': 'comment.created',
+  'coach-welcome': 'squad.joined',
 } as const satisfies Record<Subscriber, ServerEvent['kind']>;
 
 /** What each subscriber does with its kind of event. Throwing has Pub/Sub deliver it again. */
@@ -72,7 +86,7 @@ export type EventHandlers = {
   ) => Promise<void>;
 };
 
-/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`. */
+/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`, `squad.joined` `squad-joined`. */
 export const topicOf = (kind: ServerEvent['kind']): string => kind.replace('.', '-');
 
 /** Runs one subscriber on an event; false when the event isn't of its kind. */
@@ -89,6 +103,9 @@ export async function deliver(
       await (subscriber === 'coach-answer'
         ? handlers['coach-answer'](event)
         : handlers['comment-push'](event));
+      return true;
+    case 'squad.joined':
+      await handlers['coach-welcome'](event);
       return true;
   }
 }

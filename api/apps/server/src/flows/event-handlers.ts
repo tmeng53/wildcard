@@ -5,8 +5,8 @@ import { notifyComment, type CommentPushDependencies } from './comment-push.js';
 
 /**
  * What the server does after each event (`events.ts`): the squads' coaches look at a new
- * check-in, a new comment is told to whom it concerns, and the coach it replies to or @s answers
- * it. Without a coach (no OpenAI key), the coach's part does nothing.
+ * check-in, a new comment is told to whom it concerns, the coach it replies to or @s answers
+ * it, and a squad's coach welcomes whoever joins it. Without a coach (no OpenAI key), the coach's part does nothing.
  */
 export function eventHandlers(deps: {
   readonly coach: CoachWakes | undefined;
@@ -23,6 +23,9 @@ export function eventHandlers(deps: {
     'coach-answer': async ({ checkIn, comment, coach, squads }) => {
       if (coach === undefined) return;
       await deps.coach?.answer({ checkIn, comment, coach, squads });
+    },
+    'coach-welcome': async ({ squad, member }) => {
+      await deps.coach?.welcome({ squad: CoachSquadId.parse(squad), member });
     },
   };
 }

@@ -195,6 +195,7 @@ export interface CoachWakes {
   day: string | null;
   id: Generated<Int8>;
   last_error: string | null;
+  member_id: string | null;
   reason: string;
   squad_id: string;
   state: Generated<string>;
