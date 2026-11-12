@@ -1675,7 +1675,7 @@ describe('a 训练 from Apple Health', () => {
     expect(await shown()).toBeUndefined();
   });
 
-  it('shows a meal’s 健康 and 好吃 to the squad, and an edit changes or clears them', async () => {
+  it('shows a meal’s 健康 and 好吃 to the squad, and an edit changes them and one without them keeps them', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const { day, createdAt } = todayAndNow();
@@ -1716,9 +1716,9 @@ describe('a 训练 from Apple Health', () => {
     expect(await edit({ rating: { healthy: 3, tasty: 6 } })).toBe(400);
     expect(await edit({ rating: { healthy: 3, tasty: 5 } })).toBe(200);
     expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
-    // An edit that leaves it out clears it, as with every field of the post.
-    expect(await edit({ caption: '沙拉' })).toBe(200);
-    expect(await shown()).toBeUndefined();
+    // An edit that leaves it out keeps it, as builds from before ratings send their edits.
+    expect(await edit({ caption: '沙拉配鸡胸' })).toBe(200);
+    expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
   });
 
   it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {

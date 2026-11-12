@@ -74,7 +74,7 @@ export async function editCheckIn(
     {
       ...recordFromDraft(
         {
-          ...keepingWorkout(edit, saved),
+          ...keepingRating(keepingWorkout(edit, saved), saved),
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
@@ -140,6 +140,17 @@ export async function deleteCheckIn(
  * in their order, when the edit took photos off. A build that knows workouts always sends the one it keeps:
  * it can strike numbers and take the tile off, never drop the workout itself.
  */
+/**
+ * The edit, keeping the saved meal's rating when it leaves `rating` out, as builds from before
+ * ratings do, so editing there never drops it. A rating can be changed, never taken off.
+ */
+function keepingRating(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
+  if (edit.kind === 'trained' || edit.kind === 'disclaimer') return edit;
+  if (saved.kind !== edit.kind || edit.meal.rating !== undefined) return edit;
+  const { rating } = saved.meal;
+  return rating === undefined ? edit : { ...edit, meal: { ...edit.meal, rating } };
+}
+
 function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
   if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
   const workout = saved.training.workout;
