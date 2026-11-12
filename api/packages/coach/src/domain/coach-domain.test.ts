@@ -455,7 +455,8 @@ describe('when the coach wakes', () => {
         '过去一天没人在打卡下面和你说话。',
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
-        '你最近写过：\n- 2026-10-31：周末也要动一动',
+        // What it wrote lately, and not to write the same shape again.
+        '你最近写过：\n- 2026-10-31：周末也要动一动\n今天这句跟这些都不一样：别用一样的开头、结尾和说法。',
         // The 战术板 in the squad's language: Simplified Chinese until the week says another.
         '战术板：用简体中文写。',
         '今天没有要写便条的人。',
@@ -537,7 +538,7 @@ describe('when the coach wakes', () => {
         .at(-1),
     ).toBe(
       [
-        '今天给这些人各写一张便条：',
+        '今天给这些人各写一张便条，每张只说这个人自己的事：',
         '- 队员1：本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；这周发过的：周一游泳 45 分钟、健康餐，周三力量；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
         '- 队员2：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息；这周没定饮食小目标；这周已经练了 0 天；这周还没发过动态。',
         '- 队员3：这周已经练了 1 天；当地今天晴，-2–5°C。',
@@ -644,7 +645,7 @@ describe('when the coach wakes', () => {
     expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
     expect(daily?.at(-1)).toBe(
       [
-        '今天给这些人各写一张便条：',
+        '今天给这些人各写一张便条，每张只说这个人自己的事：',
         '- 队员1：这周已经练了 1 天。 用繁體中文寫，照台灣的說法。',
         '- 队员2：这周已经练了 0 天。 Write in English.',
       ].join('\n'),

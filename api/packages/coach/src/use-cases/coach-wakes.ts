@@ -1,6 +1,7 @@
 import { challengeOpen, type Challenge } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
+  memberOfPath,
   shownBody,
   shownPaths,
   squadSeed,
@@ -531,10 +532,16 @@ async function think(
         ),
       )
     : [];
+  // Whose pages the wake reads: everyone's on the squad's own wakes (the day's, the dream),
+  // else only the people under the check-in, so a line to one never brings up another's things
+  // (Tracy, 2026-11-12).
+  const about = aboutWhom(week, wake.reason);
   const files = new Map(
-    shownPaths({ roster, coach: coach.id }).map((path) => {
+    shownPaths({ roster, coach: coach.id }).flatMap((path) => {
       const at = storedPathOf(path, { roster, coach: coach.id });
-      return [path, at === undefined ? undefined : draft.files.get(at)];
+      const member = at === undefined ? undefined : memberOfPath(at);
+      if (about !== undefined && member !== undefined && !about.has(member)) return [];
+      return [[path, at === undefined ? undefined : draft.files.get(at)] as const];
     }),
   );
   // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
@@ -1156,6 +1163,18 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes(consented);
+}
+
+/**
+ * The members a check-in's or reply's wake is about, whose pages it reads: the check-in's author
+ * and everyone who commented under it. `undefined` for the squad's own wakes (the day's, the
+ * dream), which read every page.
+ */
+function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string> | undefined {
+  if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
+  const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (checkIn === undefined) return new Set();
+  return new Set([checkIn.member, ...checkIn.comments.map(({ member }) => member)]);
 }
 
 /** Whom a line on this wake answers: the check-in's author, or the member who wrote to the coach. */

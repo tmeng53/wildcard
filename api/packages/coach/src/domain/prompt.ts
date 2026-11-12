@@ -254,11 +254,11 @@ export function taskOf({
   const notes =
     recentNotes.length === 0
       ? '你还没在战术板上写过。'
-      : `你最近写过：\n${recentNotes.map(({ day, text }) => `- ${day}：${text}`).join('\n')}`;
+      : `你最近写过：\n${recentNotes.map(({ day, text }) => `- ${day}：${text}`).join('\n')}\n今天这句跟这些都不一样：别用一样的开头、结尾和说法。`;
   const noteLine =
     noteTo.length === 0
       ? '今天没有要写便条的人。'
-      : `今天给这些人各写一张便条：\n${noteTo.map(briefLine).join('\n')}`;
+      : `今天给这些人各写一张便条，每张只说这个人自己的事：\n${noteTo.map(briefLine).join('\n')}`;
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
     ...occasion,
