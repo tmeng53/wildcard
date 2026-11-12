@@ -15,7 +15,7 @@ final class MeUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("128"), "the card has no lifetime count: \(card.label)")
         XCTAssertTrue(card.label.contains("3/5"), "the card has no 本周: \(card.label)")
         XCTAssertTrue(card.label.contains("22号"), "the card has no number: \(card.label)")
-        XCTAssertTrue(card.label.contains("SINCE 2026"), "the card has no join year: \(card.label)")
+        XCTAssertFalse(card.label.contains("SINCE"), "the card still shows a join year: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear the latest title: \(card.label)")
         XCTAssertTrue(card.label.contains("徽章"), "the card has no 徽章 count: \(card.label)")
         XCTAssertTrue(tabButton("tab.me", in: app).isSelected, "the 我 tab isn't the selected one")
@@ -57,8 +57,8 @@ final class MeUITests: XCTestCase {
             app.staticTexts["wall.counts"].label.contains("发过 2 条"),
             "the header has no counts: \(app.staticTexts["wall.counts"].label)")
         XCTAssertTrue(tile.frame.maxX <= app.frame.maxX && tile.frame.minX >= 0, "a tile runs off the screen")
-        // The newest, this morning's run, went to no squad: its tile says so in words.
-        XCTAssertTrue(tile.label.contains("仅自己可见"), "the private post's tile doesn't say 仅自己可见: \(tile.label)")
+        // The newest, this morning's run, was only recorded: its tile says so in words.
+        XCTAssertTrue(tile.label.contains("未发动态"), "the unposted run's tile doesn't say 未发动态: \(tile.label)")
         settle()
         keepScreenshot(named: "92-my-posts")
 
@@ -66,9 +66,9 @@ final class MeUITests: XCTestCase {
         tile.tap()
         let back = backButton(in: app)
         XCTAssertTrue(back.waitForExistence(timeout: 30), "a tile didn't open the post's page")
-        let onlyMe = app.descendants(matching: .any).matching(identifier: "post.onlyMe").firstMatch
-        XCTAssertTrue(onlyMe.waitForExistence(timeout: 10), "the private post's page doesn't say 仅自己可见")
-        XCTAssertTrue(onlyMe.frame.maxX <= app.frame.maxX, "仅自己可见 runs off the screen")
+        let unposted = app.descendants(matching: .any).matching(identifier: "post.unposted").firstMatch
+        XCTAssertTrue(unposted.waitForExistence(timeout: 10), "the unposted run's page doesn't say 未发动态")
+        XCTAssertTrue(unposted.frame.maxX <= app.frame.maxX, "未发动态 runs off the screen")
         waitFor(
             app.tabBars.firstMatch, "exists == false OR hittable == false", "the tab bar stayed over the post's page")
         settle()

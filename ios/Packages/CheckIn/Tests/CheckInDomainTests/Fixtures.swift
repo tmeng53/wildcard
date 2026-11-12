@@ -32,7 +32,7 @@ func sampleToday() -> SquadToday {
             entry(mate, .trained, since: 1_792_510_000_000), entry(myID, .notCheckedIn),
             entry(resting, .notCheckedIn, plannedRest: true),
         ],
-        today: TodayCounts(trained: 1, disclaimer: 0, resting: 1, everyoneTrained: false),
+        today: TodayCounts(trained: 1, disclaimer: 0, resting: 1),
         myWeek: MyWeek(
             firstDay: tuesday.weekStart, lastDay: tuesday.weekStart.adding(days: 6),
             week: WeekCount(trainedDays: 1, plannedDays: 5)),
@@ -59,7 +59,6 @@ actor ScriptedBackend: CheckInBackend {
     var uploadsBeforeFailing = Int.max
     private(set) var uploads: [UUID] = []
     private(set) var saves: [CheckIn] = []
-    private var reactionList: [CheckInID: [Reaction]] = [:]
 
     init(saved: Home? = nil, server: Home? = sampleHome()) {
         self.saved = saved
@@ -145,21 +144,6 @@ actor ScriptedBackend: CheckInBackend {
         server?.checkIns.removeAll { $0.id == checkIn }
     }
 
-    func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
-        if let failure { throw failure }
-        return reactionList[checkIn] ?? []
-    }
-
-    func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
-        if let failure { throw failure }
-        reactionList[checkIn] = [Reaction(member: myID, emoji: emoji, reactedAt: Timestamp(millisecondsSince1970: 0))]
-    }
-
-    func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
-        if let failure { throw failure }
-        reactionList[checkIn] = []
-    }
-
     var serverPokes = SquadPokes.none
     private(set) var pats: [MemberID] = []
     func set(pokes: SquadPokes) { serverPokes = pokes }
@@ -177,6 +161,11 @@ actor ScriptedBackend: CheckInBackend {
 
     var serverCoach: SidelineCoach?
     func set(coach: SidelineCoach?) { serverCoach = coach }
+
+    /// The coach kept on the device from an earlier load.
+    var keptCoach: SavedCoach?
+    func set(keptCoach: SavedCoach?) { self.keptCoach = keptCoach }
+    func savedCoach() async -> SavedCoach? { keptCoach }
 
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? {
         if let failure { throw failure }

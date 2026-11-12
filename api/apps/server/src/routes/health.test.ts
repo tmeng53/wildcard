@@ -28,7 +28,6 @@ import {
 } from '../test-kit/local-supabase.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
-  unusedWeekSummaryWords,
   unusedWeeklyAwards,
   unusedUnlocks,
   unusedGifts,
@@ -97,7 +96,6 @@ async function getHealth(db: Database) {
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
     rewards: noRewards,
-    weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
@@ -194,7 +192,6 @@ describe('an unknown route', () => {
       unlocks: unusedUnlocks,
       gifts: unusedGifts,
       rewards: noRewards,
-      weekSummaryWords: unusedWeekSummaryWords,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
       coachLetters: unusedCoachLetters,

@@ -26,6 +26,15 @@ struct SignUpStepTests {
         #expect(SignUpStep.scene.previous == .week)
     }
 
+    @Test func aMemberBackInNoSquadOnlyJoinsOrMakesOne() {
+        #expect(SignUpStep.afterSquad(rejoining: false, madeTheSquad: true) == .sports)
+        #expect(SignUpStep.afterSquad(rejoining: false, madeTheSquad: false) == .sports)
+        #expect(SignUpStep.afterSquad(rejoining: true, madeTheSquad: true) == .scene)
+        #expect(SignUpStep.afterSquad(rejoining: true, madeTheSquad: false) == .entrance)
+        #expect(SignUpStep.squad.previousRejoining == nil)
+        #expect(SignUpStep.scene.previousRejoining == .squad)
+    }
+
     @Test func aStepThatCantBeDoneIsSkippedBothWays() {
         #expect(SignUpStep.sports.next(hasHealth: true, hasLocation: true) == .health)
         #expect(SignUpStep.sports.next(hasHealth: false, hasLocation: true) == .location)

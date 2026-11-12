@@ -1,4 +1,5 @@
 #if os(iOS)
+import Contracts
 import DesignSystem
 import DesignSystemUI
 import MeDomain
@@ -35,9 +36,9 @@ public struct SquadmateCardPopup: View {
     }
 
     /// The member's own card wears a title from a badge's card; a squadmate's shows no 装备.
-    private var equip: ((String) -> Void)? {
+    private var equip: ((Wearable) -> Void)? {
         guard model.canEquip else { return nil }
-        return { title in Task { await model.equip(title) } }
+        return { wearable in Task { await model.equip(wearable) } }
     }
 
     private func standIn<Content: View>(_ content: () -> Content) -> some View {

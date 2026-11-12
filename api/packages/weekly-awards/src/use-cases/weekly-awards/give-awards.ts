@@ -94,6 +94,7 @@ export async function giveAwards(
     try {
       const settings = await deps.settings.current();
       ({ titles, words } = await writeTitles(deps.model, {
+        squad,
         settings,
         badges: withSportGlyphs(settings.badges, await deps.sportGlyphs()),
         memes: await deps.memes(),
@@ -155,6 +156,7 @@ type Titles = ReturnType<typeof titlesOf>;
 async function writeTitles(
   model: LanguageModel,
   {
+    squad,
     settings,
     badges,
     memes,
@@ -163,6 +165,8 @@ async function writeTitles(
     ending,
     language,
   }: {
+    /** The squad the awards are for, whose AI budget the calls are counted to. */
+    readonly squad: string;
     readonly settings: AwardSettings;
     readonly language: AwardsLanguage | undefined;
     /** The settings' badge catalog with the sports' icons among its glyphs. */
@@ -194,6 +198,7 @@ async function writeTitles(
         instructions: settings.instructions,
         prompt,
         reply,
+        payer: { squad },
       });
       return {
         titles: titlesOf(

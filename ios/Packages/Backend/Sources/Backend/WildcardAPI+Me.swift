@@ -17,7 +17,7 @@ extension WildcardAPI {
         }
         return CheckInTotals(
             trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
-            disclaimers: totals.disclaimers, topSport: topSport)
+            disclaimers: totals.disclaimers, topSport: topSport, streaks: CardStreaks(totals.streaks))
     }
 
     /// The member's 练了 for days `from` through `last` (at most 371), by day, the earliest made
@@ -58,6 +58,7 @@ extension WildcardAPI {
             return WildcardRecords(
                 trainedDays: wire.trainedDays, minutes: wire.minutes, longestMinutes: wire.longestMinutes,
                 longestStreak: try streak(wire.longestStreak), mealStreak: try streak(wire.mealStreak),
+                currentStreak: try streak(wire.currentStreak), currentMealStreak: try streak(wire.currentMealStreak),
                 hours: wire.hours, weekdays: wire.weekdays,
                 sports: try wire.sports.map { sport throws(ContractsError) in
                     .init(activity: try Activity(sport), days: sport.days)
@@ -85,12 +86,16 @@ extension WildcardAPI {
         try await call { _ = try await client.deleteMyBirthday().noContent }
     }
 
-    /// Wears one of the member's titles on their card, or the latest won again for nil; answers
-    /// the board as it stands. Safe to repeat.
-    public func equip(title: String?) async throws(APIError) -> TitleBoard {
-        let board = try await call {
-            try await client.putMyEquippedTitle(body: .json(.init(version: ._1, title: title))).ok.body.json
-        }
+    /// Wears one of the member's titles or team badges on their card, or the latest title won
+    /// again for nil; answers the board as it stands. Safe to repeat.
+    public func equip(_ wearable: Wearable?) async throws(APIError) -> TitleBoard {
+        let body: Components.Schemas.EquipTitle =
+            switch wearable {
+            case .title(let title): .init(version: ._1, title: title)
+            case .teamBadge(let id): .init(version: ._1, title: nil, teamBadge: id)
+            case nil: .init(version: ._1, title: nil)
+            }
+        let board = try await call { try await client.putMyEquippedTitle(body: .json(body)).ok.body.json }
         return try read { () throws(ContractsError) in try TitleBoard(board) }
     }
 
@@ -105,16 +110,16 @@ extension WildcardAPI {
             SquadmateCard(
                 character: try card.character.map(MemberCharacter.init),
                 jerseyNumber: try card.jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) },
-                squadPlace: card.squadPlace, joinedAt: card.joinedAt,
+                squadPlace: card.squadPlace,
                 totals: CheckInTotals(
                     trainedDays: card.trainedDays, healthyMeals: card.healthyMeals, cheatMeals: card.cheatMeals,
                     disclaimers: card.disclaimers,
                     topSport: try card.topSport.map { top throws(ContractsError) in
                         TopSport(activity: try Activity(top), checkIns: top.checkIns)
-                    }),
-                week: card.week.map { WeekCount(trainedDays: $0.trainedDays, plannedDays: $0.plannedDays) },
+                    }, streaks: CardStreaks(card.streaks)),
+                week: WeekCount(trainedDays: card.week.trainedDays, plannedDays: card.week.plannedDays),
                 board: try TitleBoard(card),
-                schedule: try card.week.flatMap(MateSchedule.init))
+                schedule: try MateSchedule(card.week))
         }
     }
 
@@ -221,6 +226,15 @@ public struct CheckInTotals: Hashable, Sendable {
     public let disclaimers: Int
     /// The sport with the most 练了 (最常练); nil before the first.
     public let topSport: TopSport?
+    /// The streaks still going; none from an older server.
+    public let streaks: CardStreaks
+}
+
+extension CardStreaks {
+    /// The API's streaks still going, a left-out one (broken, or an older server) as 0.
+    init(_ streaks: Components.Schemas.CurrentStreaks?) {
+        self.init(training: streaks?.training?.days ?? 0, meals: streaks?.meals?.days ?? 0)
+    }
 }
 
 /// The sport a member logged the most 练了 for, and how many.
@@ -237,22 +251,19 @@ public struct SquadmateCard: Hashable, Sendable {
     public let jerseyNumber: JerseyNumber?
     /// Their place in the squad, the first to join being 1.
     public let squadPlace: Int
-    /// When they signed up; nil before they saved a profile.
-    public let joinedAt: Date?
     public let totals: CheckInTotals
-    /// Their own 本周 x/y; nil from a server that doesn't send it.
-    public let week: WeekCount?
+    /// Their own 本周 x/y.
+    public let week: WeekCount
     public let board: TitleBoard
-    /// Their 出赛表 this week; nil from a server that doesn't send it.
-    public let schedule: MateSchedule?
+    /// Their 出赛表 this week.
+    public let schedule: MateSchedule
 }
 
 extension MateSchedule {
-    /// A squadmate's 出赛表 this week as the API sends it on their card; nil from a server that
-    /// sends only the week's count.
-    init?(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
-        guard let start = wire.weekStart, let days = wire.days, let marks = wire.marks else { return nil }
-        let planned = try [PlanDay](wire: days)
+    /// A squadmate's 出赛表 this week as the API sends it on their card.
+    init(_ wire: Components.Schemas.PlayerCard.WeekPayload) throws(ContractsError) {
+        let (start, marks) = (wire.weekStart, wire.marks)
+        let planned = try [PlanDay](wire: wire.days)
         guard planned.count == WeeklyPlan.dayCount else { throw .planLength(planned.count) }
         // A day's mark for each of the plan's days.
         guard marks.count == WeeklyPlan.dayCount else { throw .planLength(marks.count) }
@@ -268,9 +279,9 @@ extension MateSchedule {
         // A goal this build can't read is left out rather than the whole week.
         let fuel = (wire.fuelGoals ?? []).compactMap { try? FuelGoal($0) }
         let weekStart = try LocalDay(start)
-        // The squad's W1 when the server sends it, so every card shows the squad's week number.
-        let first = try (wire.squadFirstWeek ?? wire.firstWeek).map { day throws(ContractsError) in try LocalDay(day) }
-        let today = try wire.today.map { day throws(ContractsError) in try LocalDay(day) }
+        // The squad's W1, so every card shows the squad's week number.
+        let first = try LocalDay(wire.squadFirstWeek)
+        let today = try LocalDay(wire.today)
         // Seven of each, checked above, is all it refuses.
         guard
             let schedule = try? MateSchedule(

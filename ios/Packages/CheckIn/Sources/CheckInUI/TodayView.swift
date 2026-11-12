@@ -187,7 +187,6 @@ public struct TodayView: View {
             }
         }
         .overlay { letter }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownLetter)
     }
 
     /// The card at the top: the squad card, with the 今日赛况 tag as its last row from the evening
@@ -224,7 +223,7 @@ public struct TodayView: View {
                         id: mate.member.description,
                         status: StageStatus(training: mate.training, activity: nil, plannedRest: mate.plannedRest).ring,
                         isMe: mate.member == home.member,
-                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : nil)
+                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : "today.mateRing")
                 })
             let mine = myWeek(
                 home: home, day: day, week: week.mine,
@@ -238,13 +237,13 @@ public struct TodayView: View {
                         footer: { recapTag(recap, day: day) }
                     )
                     .opensSquad(openSquad)
-                    .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
+                    .onHome(model)
                     .collapses { foldCard(true) }
                     .morphs(cardMorph)
                 } else {
                     SquadCard(squad: squad, mine: mine, page: $cardPage, pickedDay: $pickedDay) { head($0) }
                         .opensSquad(openSquad)
-                        .challenge(complete: model.completeChallenge) { ChallengeCoachHead(model.myChallenge?.coach) }
+                        .onHome(model)
                         .collapses { foldCard(true) }
                         .morphs(cardMorph)
                 }
@@ -375,8 +374,14 @@ extension TodayView {
 }
 
 extension TodayView {
-    /// The coach's letter, over everything on the scene, the tab bar hidden under it.
-    @ViewBuilder private var letter: some View {
+    /// The coach's letter or the team's, over everything on the scene, the tab bar hidden under it.
+    private var letter: some View {
+        ZStack { letters }
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownLetter)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.shownTeamLetter)
+    }
+
+    @ViewBuilder private var letters: some View {
         if let shown = model.shownLetter {
             CoachLetterOverlay(
                 shown: shown, shownAt: model.letterShownAt, from: coachCenter, clock: model.now,
@@ -384,6 +389,9 @@ extension TodayView {
             )
             .id(shown)
             .transition(.opacity)
+        }
+        if let shown = model.shownTeamLetter {
+            TeamLetterOverlay(model: model, shown: shown).id(shown.broadcast.id).transition(.opacity)
         }
     }
 }

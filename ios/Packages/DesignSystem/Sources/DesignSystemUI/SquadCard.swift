@@ -116,6 +116,10 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     /// Today's challenge row's 我完成了 and coach's head (`challenge(complete:coach:)`).
     var completeChallenge: (() -> Void)?
     var challengeCoach: AnyView?
+    /// Opens the coach's card for today's challenge, from a tap on the coach's head.
+    var openChallenge: (() -> Void)?
+    /// Opens a member's player card, from a tap on their ring in the 今天 row.
+    private var openMember: ((SquadMember) -> Void)?
     /// How far a swipe up has lifted the card, while the finger is down.
     @State private var lift = 0.0
 
@@ -138,7 +142,8 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                 HStack(spacing: 0) {
                     SquadPage(
                         squad: squad, challenge: mine.challenge, challengeCoach: challengeCoach, avatar: avatar,
-                        footer: footer, openSquad: openSquad, completeChallenge: completeChallenge
+                        footer: footer, openSquad: openSquad, openMember: openMember,
+                        completeChallenge: completeChallenge, openChallenge: openChallenge
                     )
                     .squadCardPage()
                     .id(SquadCardPage.squad)
@@ -196,6 +201,13 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
         return card
     }
 
+    /// Each ring in the 今天 row is a button that opens `action` with its member (their player card).
+    public func opensMember(_ action: @escaping (SquadMember) -> Void) -> Self {
+        var card = self
+        card.openMember = action
+        return card
+    }
+
     /// A grabber under the page dots, and a swipe up, fold the card; `action` folds it.
     public func collapses(_ action: @escaping () -> Void) -> Self {
         var card = self
@@ -234,61 +246,6 @@ extension SquadCard where Footer == EmptyView {
     }
 }
 
-/// The squad page's top: its label and title on the left, the big score on the right. Given
-/// `open`, the title is a button with a chevron after it.
-private struct PageHeader: View {
-    @Environment(\.sceneTheme) private var theme
-    let label: Text
-    let title: String
-    let count: Int
-    let goal: Int
-    let unit: Text  // A word after the score (次).
-    var open: (() -> Void)?
-
-    var body: some View {
-        HStack(alignment: .bottom, spacing: Space.s) {
-            VStack(alignment: .leading, spacing: Space.xxs) {
-                SectionLabel(label)
-                if let open {
-                    Button(action: open) {
-                        HStack(spacing: Space.xxs) {
-                            titleText
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
-                                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                                .accessibilityHidden(true)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .accessibilityIdentifier("squadcard.squad")
-                } else {
-                    titleText
-                }
-            }
-            Spacer(minLength: 0)
-            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Score(count: count, goal: goal, size: .hero)
-                unit
-                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
-                    .foregroundStyle(Color(role: .fgSubtle, in: theme))
-                if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
-                    InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)
-                        .accessibilityLabel(Text(copy: "多练 \(count - goal) 次", bundle: .module))
-                        .accessibilityIdentifier("squadcard.extra")
-                }
-            }
-        }
-    }
-
-    private var titleText: some View {
-        Text(verbatim: title)
-            .typeStyle(TypeRamp.headline)
-            .foregroundStyle(Color(role: .fgDefault, in: theme))
-            .lineLimit(1)
-    }
-}
-
 private struct SquadPage<Avatar: View, Footer: View>: View {
     let squad: SquadWeek
     /// Today's accepted challenge, under everything else, so it is seen first (Tracy, 2026-11-09).
@@ -297,7 +254,9 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let avatar: (SquadMember) -> Avatar
     let footer: Footer?
     let openSquad: (() -> Void)?
+    let openMember: ((SquadMember) -> Void)?
     let completeChallenge: (() -> Void)?
+    let openChallenge: (() -> Void)?
 
     var body: some View {
         // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
@@ -319,7 +278,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
                 footer
             }
             if let challenge {
-                ChallengeRow(challenge: challenge, coach: challengeCoach, complete: completeChallenge)
+                ChallengeRow(
+                    challenge: challenge, coach: challengeCoach, complete: completeChallenge, open: openChallenge)
             }
         }
         .accessibilityElement(children: .contain)
@@ -337,8 +297,20 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     private func rings(avatarSize: Double, spacing: Double) -> some View {
         HStack(spacing: spacing) {
             ForEach(squad.members) { member in
-                StatusRing(status: member.status, avatarSize: avatarSize, playsHaptics: member.isMe) { avatar(member) }
+                let ring = StatusRing(status: member.status, avatarSize: avatarSize, playsHaptics: member.isMe) {
+                    avatar(member)
+                }
+                if let openMember {
+                    Button {
+                        openMember(member)
+                    } label: {
+                        ring
+                    }
+                    .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier(ifPresent: member.accessibilityIdentifier)
+                } else {
+                    ring.accessibilityIdentifier(ifPresent: member.accessibilityIdentifier)
+                }
             }
         }
     }

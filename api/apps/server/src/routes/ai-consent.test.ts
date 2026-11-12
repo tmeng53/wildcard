@@ -9,11 +9,7 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
-import {
-  createDisclaimerDrafts,
-  createPostgresDraftAllowance,
-  createPostgresDraftSettings,
-} from '@wildcard/disclaimer-drafts';
+import { createDisclaimerDrafts, createPostgresDraftSettings } from '@wildcard/disclaimer-drafts';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
@@ -43,7 +39,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -108,9 +103,7 @@ const app = createApp({
     },
     settings: createPostgresDraftSettings(db),
     memes: () => Promise.resolve([]),
-    allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
-    clock: () => new Date(),
     random: () => 0,
   }),
   push: pushOn(db),
@@ -120,7 +113,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -155,7 +147,11 @@ const SquadBody = z.object({
   members: z.array(z.object({ userId: z.uuid() })),
 });
 const makeSquad = (token: string) =>
-  call('PUT', `/squads/${randomUUID()}`, token, { version: 1, name: '早八跑团' });
+  call('PUT', `/squads/${randomUUID()}`, token, {
+    version: 1,
+    name: '早八跑团',
+    timeZone: 'America/New_York',
+  });
 
 describe('GET and PUT /me/ai-consent', () => {
   it('starts with no consent, records one to the current copy, and answers a repeat', async () => {

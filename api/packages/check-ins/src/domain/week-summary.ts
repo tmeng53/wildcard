@@ -98,7 +98,8 @@ const AWARDS: Record<AwardKind, AwardRule> = {
     let best: Required<Winner> | undefined;
     let bestAt = 0;
     for (const each of facts.members.flatMap(({ checkIns }) => checkIns)) {
-      if (!isLeave(each)) continue;
+      // A 请假条 only recorded (发布到动态 off) keeps its words to its author.
+      if (!isLeave(each) || !each.inFeed) continue;
       const value = reactionsOn(facts, each.id);
       const at = each.createdAt.getTime();
       const better =

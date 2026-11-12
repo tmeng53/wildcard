@@ -7,7 +7,7 @@ import {
   type Scene,
 } from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
-import type { AiConsentCheck, PickOutcome, SquadStore } from '../ports.js';
+import type { AiConsentCheck, PickOutcome, SquadExit, SquadStore } from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -35,6 +35,9 @@ export interface SquadAt {
   readonly members: readonly MemberId[];
 }
 
+/** Each squad's time zone: New York for one that never set one, so every squad has one. */
+export type SquadZones = (squad: SquadId) => TimeZone;
+
 /** Squads: creating one, joining by invite code, leaving, and who is in each. */
 export interface Squads {
   /**
@@ -54,6 +57,8 @@ export interface Squads {
   find(input: { squad: SquadId; viewer: MemberId }): Promise<Squad>;
   /** The squads a member is in now, the earliest joined first. */
   listMine(member: MemberId): Promise<Squad[]>;
+  /** The squad a member was last in, when they are in none now: how they came out of it. */
+  lastExit(member: MemberId): Promise<SquadExit | undefined>;
   /** The ids of the squads a member is in now: what other modules ask instead of reading tables. */
   squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
   /** The members in a squad now, in the order they joined. */
@@ -130,11 +135,11 @@ export interface Squads {
   /**
    * Each squad's time zone for the week starting `week` (a Monday, `YYYY-MM-DD`): the clock its
    * squad-wide moments keep that week, such as the 战报 freezing Sunday 8pm. New York for a squad
-   * that never set one.
+   * that never set one. Read once for the squads given; the lookup always has a zone.
    */
-  timeZonesFor(squads: readonly SquadId[], week: string): Promise<ReadonlyMap<SquadId, TimeZone>>;
+  timeZonesFor(squads: readonly SquadId[], week: string): Promise<SquadZones>;
   /** Each squad's time zone at a moment, as `timeZonesFor` for the week the squad is in then. */
-  timeZonesAt(squads: readonly SquadId[], moment: Date): Promise<ReadonlyMap<SquadId, TimeZone>>;
+  timeZonesAt(squads: readonly SquadId[], moment: Date): Promise<SquadZones>;
   /** Sets the squad's language from now on, for its captain. */
   setLanguage(input: {
     squad: SquadId;
@@ -184,6 +189,7 @@ export function createSquads(deps: {
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),
     find: (input) => findSquad(deps, input),
     listMine: (member) => deps.store.squadsOf(member),
+    lastExit: (member) => deps.store.lastExit(member),
     squadIdsOf: (member) => deps.store.squadIdsOf(member),
     membersOf: (squad) => deps.store.membersOf(squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
@@ -211,11 +217,11 @@ export function createSquads(deps: {
     timeZonesFor: async (squads, week) => {
       const settings = await deps.store.timeZones(squads);
       const parsed = SceneWeek.parse(week);
-      return new Map(squads.map((squad) => [squad, zoneFor(settings.get(squad) ?? [], parsed)]));
+      return (squad) => zoneFor(settings.get(squad) ?? [], parsed);
     },
     timeZonesAt: async (squads, moment) => {
       const settings = await deps.store.timeZones(squads);
-      return new Map(squads.map((squad) => [squad, zoneAt(settings.get(squad) ?? [], moment)]));
+      return (squad) => zoneAt(settings.get(squad) ?? [], moment);
     },
     setLanguage: (input) => setSquadLanguage(deps, input),
     languagesOf: (squads) => deps.store.languages(squads),

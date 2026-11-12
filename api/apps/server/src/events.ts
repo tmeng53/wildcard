@@ -1,5 +1,6 @@
 import { setTimeout as wait } from 'node:timers/promises';
 
+import { AUDIENCE_MAX } from '@wildcard/check-ins';
 import { z } from 'zod';
 
 import type { Log } from './log.js';
@@ -20,7 +21,7 @@ export const CheckInCreated = z.strictObject({
   version: z.literal(1),
   kind: z.literal('check-in.created'),
   checkIn: Id,
-  squads: z.array(Id).min(1).max(8),
+  squads: z.array(Id).min(1).max(AUDIENCE_MAX),
 });
 export type CheckInCreated = z.infer<typeof CheckInCreated>;
 
@@ -40,7 +41,7 @@ export const CommentCreated = z.strictObject({
   /** The coach it replies to or @s, which answers it. */
   coach: z.string().max(40).optional(),
   /** The squads the writer sees the check-in through. */
-  squads: z.array(Id).max(8),
+  squads: z.array(Id).max(AUDIENCE_MAX),
 });
 export type CommentCreated = z.infer<typeof CommentCreated>;
 

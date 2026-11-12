@@ -5,6 +5,8 @@ import Foundation
 public struct SquadTimeZone: Hashable, Sendable {
     /// Every squad's clock before it had one of its own.
     public static let newYork = "America/New_York"
+    /// `newYork` as a clock.
+    public static let newYorkClock = TimeZone(identifier: newYork) ?? .gmt
 
     /// The zone (an IANA name such as `Asia/Taipei`); a captain's change counts at once.
     public var timeZone: String

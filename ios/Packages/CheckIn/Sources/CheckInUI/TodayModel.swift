@@ -59,7 +59,7 @@ public final class TodayModel {
     /// anywhere outside its capsules closes it), a check-in is being written (the compose and
     /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
     public var showsTabBar: Bool {
-        guard !holdsTabBar, opening == nil, shownLetter == nil else { return false }
+        guard !holdsTabBar, opening == nil, shownLetter == nil, shownTeamLetter == nil else { return false }
         return switch step {
         case .scene: !isBurstOpen
         case .composing, .disclaimer: false
@@ -98,7 +98,7 @@ public final class TodayModel {
     public let health: HealthConnection?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
-    private let noSquad: @MainActor (Squad?) -> Void
+    private let noSquad: @MainActor () -> Void
     let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
     /// the lights are on for.
@@ -109,14 +109,14 @@ public final class TodayModel {
     ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
-    ///   - noSquad: called when a load finds the member in no squad any more, with the squad
-    ///     they were in: the captain removed them, or they left on another phone.
+    ///   - noSquad: called when a load finds the member in no squad any more: the captain
+    ///     removed them, or they left on another phone.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
         defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
-        noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
+        noSquad: @escaping @MainActor () -> Void = {}
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         together = TogetherStage(isOn: celebratesTogether)
@@ -143,6 +143,9 @@ public final class TodayModel {
     @ObservationIgnored public var openTeammate: (MemberID) -> Void = { _ in }
     /// Opens the squad's coach's card, from a tap on it on the sideline; the app sets it.
     @ObservationIgnored public var openCoach: () -> Void = {}
+    /// Opens the card of a challenge on its coach's page, from a tap on the coach's head on the
+    /// squad card's challenge row; the app sets it.
+    @ObservationIgnored public var openChallenge: (DayChallenge) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?
@@ -157,6 +160,9 @@ public final class TodayModel {
     /// Refused posts the member was told of and hasn't opened again, oldest first, for 重发.
     var failed: [PendingCheckIn] = []
     public internal(set) var celebration: Broadcast?
+    /// The team's letter over 今天, and how it draws and answers what the team gave (`+TeamLetter`).
+    var teamLetter: ShownTeamLetter?
+    @ObservationIgnored public var teamLetterPlaces: TeamLetterPlaces?
     public var isHomeInFront = true
     /// A screen covers the tabs (the editor, a 战报), where a banner would drop in unseen.
     public var isCovered = false
@@ -246,8 +252,7 @@ public final class TodayModel {
     /// The days a 请假条 can't go on: one with a 练了.
     var blockedForDisclaimer: Set<LocalDay> { store.disclaimerBlockedDays }
 
-    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member
-    /// writes on the scene itself.
+    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member writes on the scene itself.
     var isSceneDimmed: Bool { isBurstOpen }
 
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
@@ -272,7 +277,7 @@ public final class TodayModel {
     /// no squad any more, says so.
     private func showLoaded() {
         if store.phase == .noSquad {
-            noSquad(store.lostSquad)
+            noSquad()
             return
         }
         placeSquad()
@@ -315,11 +320,11 @@ public final class TodayModel {
         await writer.suggestions(for: reason, style: style)
     }
 
-    /// Posts `draft` to the squad (or only to me when not `shared`) for `day`, today when left out.
+    /// Posts `draft` to the squad, in its 动态 unless not `inFeed`, for `day`, today when left out.
     /// The page closes and the payoff plays once it is queued; it goes out behind the scene
     /// (`deliver`). False when it can never be posted; the open page says so.
     @discardableResult
-    func post(_ draft: CheckInDraft, shared: Bool, on day: LocalDay? = nil) async -> Bool {
+    func post(_ draft: CheckInDraft, inFeed: Bool, on day: LocalDay? = nil) async -> Bool {
         guard !isSending else { return false }
         isSending = true
         sendFailed = false
@@ -329,7 +334,7 @@ public final class TodayModel {
         let isBackfill = day.map { $0 != store.postableDays.last } ?? false
         let queued: PendingCheckIn
         do {
-            queued = try await store.queue(draft, shared: shared, on: day)
+            queued = try await store.queue(draft, inFeed: inFeed, on: day)
         } catch {
             sendFailed = true
             return false

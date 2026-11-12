@@ -1,4 +1,4 @@
-import { NEW_YORK, TimeZone, wallClockAt } from '@wildcard/time-zones';
+import { TimeZone, wallClockAt } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   LETTER_LIMIT,
@@ -153,7 +153,8 @@ const ChallengeCompleted = z
 const CoachMemberNoteBody = z
   .strictObject({
     id: z.int().positive().meta({
-      description: 'The note’s id, which putting it away (收下) and `coachNote` notices name.',
+      description:
+        'The note’s id, which its card on the coach’s page and `coachNote` notices name.',
     }),
     day: z.iso
       .date()
@@ -305,10 +306,6 @@ const CoachActivityBody = z
   })
   .openapi('CoachActivity');
 
-const CoachNotePutAway = z
-  .strictObject({ version: bodyVersion(1), noteId: z.int().positive() })
-  .openapi('CoachNotePutAway');
-
 const checkInIds = z
   .string()
   .optional()
@@ -378,35 +375,6 @@ export function coachActivity(deps: {
       400: problem('Not a valid squad id, or not valid check-in ids, or more than 100'),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
-      503: problem('Sign-in can’t be checked right now'),
-    },
-  });
-
-  const putAway = createRoute({
-    method: 'put',
-    path: '/squads/{squadId}/coach/notes/{noteId}/put-away',
-    operationId: 'putAwayCoachMemberNote',
-    summary: 'Put the caller’s morning note away (收下)',
-    description:
-      'The caller read their morning note (便条) on 今天 and put it away, so it no longer comes ' +
-      'back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.',
-    security: [{ bearer: [] }],
-    middleware: [requireCaller(deps.verifyToken)] as const,
-    request: {
-      params: z.strictObject({
-        squadId: SquadId,
-        noteId: z.coerce.number().int().positive().openapi({ type: 'integer' }),
-      }),
-    },
-    responses: {
-      200: {
-        description: 'Put away',
-        content: { 'application/json': { schema: CoachNotePutAway } },
-      },
-      400: problem('Not a valid squad or note id'),
-      401: problem('No bearer token, or not a valid one'),
-      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
-      404: problem('Not one of the caller’s notes in this squad (`COACH_NOTE_NOT_FOUND`)'),
       503: problem('Sign-in can’t be checked right now'),
     },
   });
@@ -534,8 +502,7 @@ export function coachActivity(deps: {
   /** Today on the squad's clock, the day a challenge counts on. */
   const todayOf = async (squad: z.infer<typeof SquadId>) => {
     const now = new Date();
-    return wallClockAt(now, (await deps.squads.timeZonesAt([squad], now)).get(squad) ?? NEW_YORK)
-      .day;
+    return wallClockAt(now, (await deps.squads.timeZonesAt([squad], now))(squad)).day;
   };
 
   return new OpenAPIHono<SignedIn>()
@@ -610,22 +577,11 @@ export function coachActivity(deps: {
       });
       return c.json({ version: 1 as const, noteId, ...kept }, 200);
     })
-    .openapi(putAway, async (c) => {
-      const { squadId, noteId } = c.req.valid('param');
-      const member = c.var.caller.userId;
-      await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
-      await deps.coachActivity.putAway({
-        squad: CoachSquadId.parse(squadId),
-        member,
-        note: noteId,
-      });
-      return c.json({ version: 1 as const, noteId }, 200);
-    })
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
-      const zone = (await deps.squads.timeZonesAt([squadId], new Date())).get(squadId) ?? NEW_YORK;
+      const zone = (await deps.squads.timeZonesAt([squadId], new Date()))(squadId);
       const {
         note,
         replies,

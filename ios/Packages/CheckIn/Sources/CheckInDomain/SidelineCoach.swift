@@ -23,3 +23,15 @@ public struct SidelineCoach: Hashable, Sendable {
         return note
     }
 }
+
+/// The squad's coach as last loaded, kept on the device: who stands on its sideline, or nobody.
+/// Its line and letter aren't kept; they come with the next load.
+public struct SavedCoach: Hashable, Sendable {
+    public let squad: SquadID
+    public let coach: CoachSpeaker?
+
+    public init(squad: SquadID, coach: CoachSpeaker?) {
+        self.squad = squad
+        self.coach = coach
+    }
+}

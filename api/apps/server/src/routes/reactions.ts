@@ -34,9 +34,6 @@ export const Reaction = z
   .openapi('Reaction');
 /** A reaction in a list, which carries the version. */
 export const ReactionEntry = z.strictObject(reactionFields).openapi('ReactionEntry');
-const ReactionList = z
-  .strictObject({ version: bodyVersion(1), reactions: z.array(ReactionEntry) })
-  .openapi('ReactionList');
 
 export const wireReaction = ({ member, emoji: left, reactedAt }: ReactionRecord) => ({
   member,
@@ -53,8 +50,8 @@ const failures = {
 };
 
 /**
- * Teammates' reactions on a check-in, like Strava's kudos: one per member, left in the app. `PUT` and `DELETE /check-ins/{checkInId}/reactions/mine`, and
- * `GET /check-ins/{checkInId}/reactions`.
+ * Teammates' reactions on a check-in, like Strava's kudos: one per member, left in the app with
+ * `PUT` and `DELETE /check-ins/{checkInId}/reactions/mine` and read with the post.
  */
 export function reactions(deps: {
   readonly verifyToken: VerifyToken;
@@ -100,25 +97,6 @@ export function reactions(deps: {
       ...failures,
     },
   });
-  const list = createRoute({
-    method: 'get',
-    path: '/check-ins/{checkInId}/reactions',
-    operationId: 'listCheckInReactions',
-    summary: 'A check-in’s reactions',
-    description: 'Oldest first, for its author and the teammates who can see it.',
-    security: [{ bearer: [] }],
-    middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { params },
-    responses: {
-      200: {
-        description: 'The reactions',
-        content: { 'application/json': { schema: ReactionList } },
-      },
-      400: problem('Not a check-in id'),
-      ...failures,
-    },
-  });
-
   return new OpenAPIHono<SignedIn>()
     .openapi(react, async (c) => {
       const reacted = await deps.checkIns.react({
@@ -135,12 +113,5 @@ export function reactions(deps: {
         member: MemberId.parse(c.var.caller.userId),
       });
       return c.body(null, 204);
-    })
-    .openapi(list, async (c) => {
-      const found = await deps.checkIns.listReactions({
-        checkIn: c.req.valid('param').checkInId,
-        viewer: MemberId.parse(c.var.caller.userId),
-      });
-      return c.json({ version: 1 as const, reactions: found.map(wireReaction) }, 200);
     });
 }

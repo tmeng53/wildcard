@@ -42,7 +42,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -111,7 +110,6 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     unlocks: unusedUnlocks,
     gifts: unusedGifts,
     rewards: noRewards,
-    weekSummaryWords: unusedWeekSummaryWords,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
     coachLetters: unusedCoachLetters,
@@ -150,7 +148,11 @@ async function squadOf(
   [creator, friend]: readonly [{ token: string }, { token: string }],
 ) {
   const id = randomUUID();
-  const made = await call('PUT', `/squads/${id}`, creator.token, { version: 1, name: '早八跑团' });
+  const made = await call('PUT', `/squads/${id}`, creator.token, {
+    version: 1,
+    name: '早八跑团',
+    timeZone: 'America/New_York',
+  });
   expect(made.status).toBe(201);
   const { inviteCode } = z.object({ inviteCode: z.string() }).parse(made.body);
   const joined = await call('POST', `/squad-invites/${inviteCode}/accept`, friend.token);

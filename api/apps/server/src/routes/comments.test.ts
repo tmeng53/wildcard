@@ -55,7 +55,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -145,7 +144,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -295,7 +293,7 @@ describe('/check-ins/{checkInId}/comments', () => {
       { id: first, member: ann.userId, text: '明天我也练腿' },
       { id: reply, member: tracy.userId, text: '电梯见', replyTo: ann.userId },
     ];
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: bo.token });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: bo.token });
     expect(listed).toMatchObject({ status: 200, body: { version: 1, comments: expected } });
     const today = new Date(Date.now() - 60_000).toISOString().slice(0, 10);
     const feed = await call('GET', {
@@ -374,7 +372,7 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(answersAsked.filter(({ checkIn: at }) => at === run)).toStrictEqual([
       { checkIn: run, comment: id, coach: 'xiaohun', squads: [squad] },
     ]);
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: tracy.token });
     expect(listed).toMatchObject({ body: { comments: [{ id, replyToCoach: 'xiaohun' }] } });
 
     // Never to a coach that said nothing here, nor to a coach and a member at once, nor a
@@ -441,8 +439,8 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(theirs).toMatchObject({ status: 403, body: { reason: 'NOT_YOUR_COMMENT' } });
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
-    expect(listed.body).toStrictEqual({ version: 1, comments: [] });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: tracy.token });
+    expect(listed.body).toMatchObject({ comments: [] });
   });
 
   it('lets a member who left the squad delete their own old comment, and nobody else’s', async () => {
@@ -465,7 +463,7 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(hidden).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
     expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
     expect((await call('DELETE', { path: mine, token: ann.token })).status).toBe(204);
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: tracy.token });
     expect(listed.body).toMatchObject({ comments: [{ text: '谢谢' }] });
   });
 
@@ -502,9 +500,9 @@ describe('/check-ins/{checkInId}/comments', () => {
   it('answers 404 to someone who shares no squad on the check-in, and 401 without sign-in', async () => {
     const [tracy, stranger] = [await signUp(), await signUp()];
     const run = await checkIn(tracy.token, await squadOf(tracy));
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: stranger.token });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: stranger.token });
     expect(listed).toMatchObject({ status: 404, body: { reason: 'CHECK_IN_NOT_FOUND' } });
-    expect((await call('GET', { path: `/check-ins/${run}/comments` })).status).toBe(401);
+    expect((await call('GET', { path: `/check-ins/${run}` })).status).toBe(401);
   });
 
   it('tells the author about a comment and the member replied to about a reply, never the writer', async () => {
@@ -598,7 +596,7 @@ describe('/check-ins/{checkInId}/comments', () => {
       status: 201,
       body: { id, mentions: [bo.userId], mentionsCoach: 'xiaohun' },
     });
-    const listed = await call('GET', { path: `/check-ins/${run}/comments`, token: tracy.token });
+    const listed = await call('GET', { path: `/check-ins/${run}`, token: tracy.token });
     expect(listed).toMatchObject({
       body: { comments: [{ id, mentions: [bo.userId], mentionsCoach: 'xiaohun' }] },
     });

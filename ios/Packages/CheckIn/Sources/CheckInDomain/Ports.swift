@@ -26,10 +26,6 @@ public protocol CheckInBackend: Sendable {
     /// Deletes the member's own check-in, with its photos and what teammates left on it; fine
     /// when it is gone already.
     func delete(_ checkIn: CheckInID) async throws(CheckInError)
-    func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction]
-    /// Sets the member's one reaction on a check-in, replacing any earlier one.
-    func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError)
-    func removeReaction(from checkIn: CheckInID) async throws(CheckInError)
     /// Whom the member patted today in `squad` (拍一拍) and who patted them in the last day.
     func pokes(in squad: SquadID) async throws(CheckInError) -> SquadPokes
     /// Pats a teammate. Once a day each: patting them again the same day changes nothing.
@@ -37,6 +33,9 @@ public protocol CheckInBackend: Sendable {
     /// The coach the squad hired, standing on the home's sideline, with its newest 战术板 line;
     /// nil while the squad has none.
     func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach?
+    /// The coach `coach(in:)` last loaded, read from the device without the network, so the home
+    /// shows it at once with its kept copy; nil before the first load, or after signing out.
+    func savedCoach() async -> SavedCoach?
     /// Whether the squad's coach has anything on its page the member hasn't seen (a card in its
     /// stack: its 战术板 line, their morning note, a challenge or a gift), for the dot on its phone.
     func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool

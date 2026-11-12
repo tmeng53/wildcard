@@ -1,4 +1,8 @@
-import { LanguageModelUnavailableError, type LanguageModel } from '@wildcard/language-model';
+import {
+  LanguageModelUnavailableError,
+  type ProviderModel,
+  type TokenUsage,
+} from '@wildcard/language-model';
 import OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod';
 
@@ -11,7 +15,7 @@ const TIMEOUT_MS = 8_000;
 /** Three drafts of up to 80 characters fit in a few hundred tokens; the rest is for reasoning. */
 const MAX_OUTPUT_TOKENS = 4_096;
 
-/** The language model on OpenAI's Responses API, with structured output. */
+/** The language model on OpenAI's Responses API, with structured output, and the tokens it used. */
 export function createOpenAILanguageModel(options: {
   readonly apiKey: string;
   /**
@@ -25,7 +29,7 @@ export function createOpenAILanguageModel(options: {
   readonly baseURL?: string;
   /** Tests only: answers requests from recorded responses. */
   readonly fetch?: typeof fetch;
-}): LanguageModel {
+}): ProviderModel {
   const client = new OpenAI({
     apiKey: options.apiKey,
     // Never the environment's: an OPENAI_BASE_URL meant for another tool must not redirect
@@ -56,15 +60,37 @@ export function createOpenAILanguageModel(options: {
       } catch (error) {
         throw new LanguageModelUnavailableError({ cause: error });
       }
-      // A refusal or a cut-off answer has nothing to parse.
+      const usage = usageOf(response.usage);
+      // A refusal or a cut-off answer has nothing to parse, but its tokens were spent.
       if (response.status !== 'completed' || response.output_parsed === null) {
         throw new LanguageModelUnavailableError({
           cause: new Error(
             `The model stopped with ${String(response.status)} (${String(response.incomplete_details?.reason)})`,
           ),
+          usage,
         });
       }
-      return response.output_parsed;
+      return { reply: response.output_parsed, usage };
     },
+  };
+}
+
+/** The tokens a response used, as OpenAI reports them; cached ones are part of the input. */
+function usageOf(
+  usage:
+    | {
+        readonly input_tokens: number;
+        readonly input_tokens_details?: { readonly cached_tokens?: number } | null;
+        readonly output_tokens: number;
+      }
+    | null
+    | undefined,
+): TokenUsage {
+  const inputTokens = usage?.input_tokens ?? 0;
+  return {
+    requests: 1,
+    inputTokens,
+    cachedInputTokens: Math.min(usage?.input_tokens_details?.cached_tokens ?? 0, inputTokens),
+    outputTokens: usage?.output_tokens ?? 0,
   };
 }

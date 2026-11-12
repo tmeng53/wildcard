@@ -7,11 +7,14 @@ import ScheduleDomain
 import SportsUI
 import SwiftUI
 
-/// Under a past week: each title the week's awards gave the member, with its 颁奖词. The poster
-/// carries the stickers; their words sit here, clear of the lanes.
+/// Under a past week: each title the week's awards gave the member, with its badge in the badge's
+/// own colour and its 颁奖词. The poster carries the stickers; their words sit here, clear of the
+/// lanes, in the page's colours whichever week shows.
 struct WeekAwards: View {
     let titles: [AwardTitle]
     @Environment(\.sceneTheme) private var theme
+    /// The badge beside a title's words, the size of the badge board's small ones.
+    private static let badgeSize: Double = 26
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.cardGap) {
@@ -22,9 +25,9 @@ struct WeekAwards: View {
                             .typeStyle(TypeRamp.headline)
                             .foregroundStyle(Color(role: .fgDefault, in: theme))
                     } icon: {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                            .foregroundStyle(Color(role: .fgAccent, in: theme))
+                        TitleBadgeView(
+                            shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
+                            glyph: title.badge.glyph, size: Self.badgeSize)
                     }
                     Text(verbatim: title.speech)
                         .typeStyle(TypeRamp.body)

@@ -51,7 +51,9 @@ struct AppRoot: View {
                     if finished != nil { Task { await app.finishSignUp(landingOn: signUp.landing) } }
                 }
                 .onChange(of: signUp.joinedSquad) { _, squad in
-                    if let squad { SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad) }
+                    if let squad {
+                        SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad, rejoining: signUp.isRejoining)
+                    }
                 }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
@@ -95,18 +97,7 @@ struct AppRoot: View {
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }
-        .alert(
-            Text(copy: "你已不在 \(app.lostSquadName ?? "") 小队", bundle: .main),
-            isPresented: Binding(
-                get: { app.lostSquadName != nil },
-                set: { shown in if !shown { app.lostSquadName = nil } })
-        ) {
-            Button {
-                app.lostSquadName = nil
-            } label: {
-                Text(copy: "确认", bundle: .main)
-            }
-        }
+        .removalAlert(Binding(get: { app.removedFromName }, set: { app.removedFromName = $0 }))
         .task { await app.run() }
         // An invite link: universal links come here in a SwiftUI app.
         .onOpenURL { url in

@@ -162,7 +162,6 @@ export function taskOf({
   yesterday,
   occasions = [],
   backAgain = false,
-  canSeePhotos = false,
   challenge,
   gifting,
 }: {
@@ -186,8 +185,6 @@ export function taskOf({
   readonly occasions?: readonly string[];
   /** Whether the coach coached this squad before, was fired and is back, and speaks for the first time since. */
   readonly backAgain?: boolean;
-  /** On a reply's wake, whether the coach can look at the check-in's photos this time. */
-  readonly canSeePhotos?: boolean;
   /** On a check-in's wake, the challenge the coach set its author today and their answer. */
   readonly challenge?: {
     readonly challenge: Challenge;
@@ -237,7 +234,7 @@ export function taskOf({
     // Without this the model answers from the words alone and guesses what the photos show.
     const photoCount = checkIn.photos?.length ?? 0;
     const photos =
-      canSeePhotos && photoCount > 0
+      photoCount > 0
         ? [
             `这条打卡有 ${String(photoCount)} 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。`,
           ]

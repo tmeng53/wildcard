@@ -37,13 +37,20 @@ import type {
   CoachMemes,
   CoachPhotoUrls,
   CoachTool,
+  CoachUsage,
   CoachWeather,
 } from '../ports.js';
 import { createCoachActivity } from './coach-activity.js';
 import { createCoachNoteDelivery } from './coach-note-delivery.js';
+import { createCoachReport } from './coach-report.js';
 import { createCoachHiring } from './coach-hiring.js';
 import { createCoachSettings } from './coach-settings.js';
-import { createCoachWakes, type CoachAnswered, type CoachReplied } from './coach-wakes.js';
+import {
+  createCoachWakes,
+  type CoachAnswered,
+  type CoachReplied,
+  type CoachWakesDependencies,
+} from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
 // transaction it rolls back, so the seeded settings stay as they are for the other tests.
@@ -56,11 +63,57 @@ afterAll(() => db.destroy());
 
 class RolledBack extends Error {}
 
+/** What a wake's task tells a coach hired back, until it first runs for the squad again. */
+const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请回来了。';
+
 /** 10:00 in New York on a Sunday: past the daily wake's hour. */
 const now = new Date('2026-11-01T15:00:00Z');
 
+/** One run as the usage ledger counted it. */
+type CountedRun = Parameters<CoachUsage['record']>[0] & {
+  readonly at: Date;
+  readonly costMicros: number;
+};
+
+/**
+ * The AI usage ledger as the coach sees it, kept in memory (the ledger's own tests run it on
+ * Postgres, prices and caps included): each run at $0.25 a million input tokens and $2 a million
+ * output, and off duty while `offDuty` gives a reason.
+ */
+function countedUsage(offDuty: () => string | undefined = () => undefined) {
+  const runs: CountedRun[] = [];
+  const usage: CoachUsage = {
+    offDutyWhy: () => Promise.resolve(offDuty()),
+    record: (entry) => {
+      const costMicros = Math.ceil(
+        ((entry.usage.inputTokens - entry.usage.cachedInputTokens) * 250_000 +
+          entry.usage.outputTokens * 2_000_000) /
+          1_000_000,
+      );
+      runs.push({ ...entry, at: new Date(), costMicros });
+      return Promise.resolve(costMicros);
+    },
+    total: ({ squad, since }) => {
+      const counted = runs.filter((run) => run.squad === squad && run.at >= (since ?? run.at));
+      const sum = (of: (run: CountedRun) => number) =>
+        counted.reduce((total, run) => total + of(run), 0);
+      return Promise.resolve({
+        wakes: counted.length,
+        requests: sum((run) => run.usage.requests),
+        inputTokens: sum((run) => run.usage.inputTokens),
+        cachedInputTokens: sum((run) => run.usage.cachedInputTokens),
+        outputTokens: sum((run) => run.usage.outputTokens),
+        costMicros: sum((run) => run.costMicros),
+      });
+    },
+  };
+  return { usage, runs };
+}
+
 interface Fixture {
   readonly trx: Kysely<CoachTables>;
+  /** What the fixture's coach ran, as the usage ledger counted it. */
+  readonly counted: ReturnType<typeof countedUsage>;
   readonly squad: SquadId;
   readonly mia: string;
   readonly leo: string;
@@ -93,7 +146,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
       await sql`delete from public.squad_coaches`.execute(trx);
       const squad = SquadId.parse(squadId);
       await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
-        { coaching: true, inputMicrosPerMillion: 250_000, outputMicrosPerMillion: 2_000_000 },
+        { coaching: true },
         MemberId.parse(mia),
       );
       // A run wakes every squad with a coach: other test files' squads, committed while this
@@ -119,7 +172,7 @@ async function rolledBack(test: (fixture: Fixture) => Promise<void>) {
           },
         ],
       };
-      await test({ trx, squad, mia, leo, checkIn, week });
+      await test({ trx, counted: countedUsage(), squad, mia, leo, checkIn, week });
       throw new RolledBack();
     })
     .catch((error: unknown) => {
@@ -164,9 +217,10 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
  * every week) and whose members all agreed to AI use unless `consented` says who did.
  */
 function wakes(
-  { trx, squad, week }: Fixture,
+  { trx, squad, week, counted }: Fixture,
   {
     agent,
+    usage = counted.usage,
     at = now,
     weeks,
     consented,
@@ -180,6 +234,7 @@ function wakes(
     weatherOf,
   }: {
     readonly agent: CoachAgent;
+    readonly usage?: CoachUsage;
     readonly at?: Date;
     readonly weeks?: Readonly<Record<string, SquadWeek>>;
     readonly consented?: readonly string[];
@@ -198,6 +253,7 @@ function wakes(
     settings: createPostgresCoachSettings(trx),
     catalog: createPostgresCoachCatalog(trx),
     stores,
+    usage,
     // Already in the test's transaction, which is rolled back at the end.
     transaction: (work) => work(stores),
     agent,
@@ -213,6 +269,7 @@ function wakes(
       ),
     hiring: ownSquadOnly(createPostgresCoachHiring(trx), squad),
     clock: () => at,
+    ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
@@ -223,6 +280,27 @@ function wakes(
     ...(weatherOf === undefined ? {} : { weatherOf }),
   });
 }
+
+/**
+ * The ports a test doesn't look at: every squad on New York's clock, no facts, memes, weather,
+ * occasions or gifts, every member wanting notes, photos at a test address.
+ */
+const quietPorts = {
+  photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
+  memberFacts: () => Promise.resolve([]),
+  timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  memes: () => Promise.resolve([]),
+  weatherOf: () => Promise.resolve(new Map()),
+  occasions: () => Promise.resolve([]),
+  replied: () => Promise.resolve(),
+  answered: () => Promise.resolve(),
+  wantNotes: (members) => Promise.resolve(members),
+  gifting: {
+    options: () => Promise.resolve({ pool: [], open: new Map() }),
+    give: () => Promise.resolve('no gifts in this test'),
+  },
+  warn: () => undefined,
+} satisfies Partial<CoachWakesDependencies>;
 
 /**
  * The hiring store, seeing only the fixture's squad among the squads with a coach: other
@@ -275,12 +353,14 @@ describe('the coach', () => {
       settings: createPostgresCoachSettings(db),
       catalog: createPostgresCoachCatalog(db),
       stores: createPostgresCoachStores(db),
+      usage: countedUsage().usage,
       transaction: () => Promise.reject(new Error('nothing to save')),
       agent,
       squadWeek: () => Promise.reject(new Error('no squad to read')),
       aiConsented: () => Promise.reject(new Error('no one to ask')),
       hiring: createPostgresCoachHiring(db),
       clock: () => now,
+      ...quietPorts,
     }).run();
     expect(run).toStrictEqual({ coaching: false, squads: 0, queued: 0, done: 0, failed: 0 });
     expect(runs).toHaveLength(0);
@@ -371,8 +451,26 @@ describe('the coach', () => {
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'recall', 'remember', 'edit_file', 'reply', 'react'],
-        ['squad_week', 'recall', 'remember', 'edit_file', 'post_note', 'note_to'],
+        [
+          'squad_week',
+          'recall',
+          'remember',
+          'edit_file',
+          'member_stats',
+          'memes',
+          'reply',
+          'react',
+        ],
+        [
+          'squad_week',
+          'recall',
+          'remember',
+          'edit_file',
+          'member_stats',
+          'memes',
+          'post_note',
+          'note_to',
+        ],
       ]);
       expect(runs[0]?.task).toContain('队员1 训练 跑步');
       expect(runs[0]?.answers).toStrictEqual([
@@ -534,12 +632,15 @@ describe('the coach', () => {
       expect(
         (await activity.squad({ squad, checkIns: [], reader: leo })).memberNote,
       ).toBeUndefined();
-      // Put away on one phone, it shows on none; only its own member can.
-      await expect(
-        activity.putAway({ squad, member: leo, note: miaNote.id }),
-      ).rejects.toBeInstanceOf(CoachNoteNotFoundError);
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
-      await activity.putAway({ squad, member: fixture.mia, note: miaNote.id });
+      // Seen on one phone (its card swiped away), it shows on none; another member's swipe
+      // does nothing to it.
+      const seen = { squad, kind: 'note', id: String(miaNote.id) } as const;
+      await activity.markSeen({ ...seen, member: leo });
+      expect(
+        (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote?.id,
+      ).toBe(miaNote.id);
+      await activity.markSeen({ ...seen, member: fixture.mia });
+      await activity.markSeen({ ...seen, member: fixture.mia });
       expect(
         (await activity.squad({ squad, checkIns: [], reader: fixture.mia })).memberNote,
       ).toBeUndefined();
@@ -560,14 +661,17 @@ describe('the coach', () => {
           })
         ).memberNote,
       ).toBeUndefined();
-      // 12,000 in at $0.25 and 800 out at $2 per million tokens: 4,600 millionths a wake.
-      const usage = await sql<{ requests: number; input_tokens: string; cost_micros: string }>`
-        select requests, input_tokens, cost_micros from public.coach_usage where squad_id = ${squad} order by id`.execute(
-        trx,
-      );
-      expect(usage.rows).toStrictEqual([
-        { requests: 2, input_tokens: '12000', cost_micros: '4600' },
-        { requests: 2, input_tokens: '12000', cost_micros: '4600' },
+      // Each wake counted to the squad, the check-in's to its author.
+      expect(
+        fixture.counted.runs.map(({ squad: of, member, kind, model }) => ({
+          of,
+          member,
+          kind,
+          model,
+        })),
+      ).toStrictEqual([
+        { of: squad, member: fixture.mia, kind: 'wake', model: 'openai/gpt-6-luna' },
+        { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
       ]);
 
       // Run again: nothing new to wake for, and nothing runs twice.
@@ -629,7 +733,10 @@ describe('the coach', () => {
       expect(runs[2]?.task).toContain('夜里，整理你的记性。');
       expect(runs[2]?.task).toContain('【memory.md】\n队名：squad\n队名：squad');
 
-      const report = await createPostgresCoachReport(trx).squad(squad, tomorrow);
+      const report = await createCoachReport({
+        store: createPostgresCoachReport(trx),
+        usage: fixture.counted.usage,
+      }).squad(squad, tomorrow);
       expect(report).toMatchObject({
         coach: 'xiaohun',
         files: [
@@ -708,8 +815,9 @@ describe('the coach', () => {
     });
   });
 
-  it('knows a coach hired back until it first runs for the squad', async () => {
-    await rolledBack(async ({ trx, squad, mia }) => {
+  it('knows when a coach was hired back, and is greeted as one until it first runs', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
       const by = MemberId.parse(mia);
       const catalog = createPostgresCoachCatalog(trx);
       const store = createPostgresCoachHiring(trx);
@@ -721,26 +829,23 @@ describe('the coach', () => {
       await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
 
       // Its first coach is new to the squad, and so is the next.
-      expect(await store.backAgain(squad)).toBe(false);
+      expect(await store.hiredBackAt(squad)).toBeUndefined();
       await hiring.change({ squad, coach: nuannuan, by });
-      expect(await store.backAgain(squad)).toBe(false);
+      expect(await store.hiredBackAt(squad)).toBeUndefined();
       // The first one hired again is back.
       await hiring.change({ squad, coach: xiaohun, by });
-      expect(await store.backAgain(squad)).toBe(true);
-      // A wake finished without running (its check-in no longer shared with AI) tells it nothing.
-      await sql`
-        insert into public.coach_wakes (squad_id, reason, day, state, claimed_at)
-        values (${squad}, 'daily', '2026-11-08', 'done', now())`.execute(trx);
-      expect(await store.backAgain(squad)).toBe(true);
-      // Once it has run for the squad, it is just its coach again.
-      await sql`
-        insert into public.coach_usage
-          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros)
-        values (${squad}, 'xiaohun', 'gpt-test', 1, 10, 10, 1)`.execute(trx);
-      expect(await store.backAgain(squad)).toBe(false);
+      const { rows } = await sql<{ now: Date }>`select now() as now`.execute(trx);
+      expect(await store.hiredBackAt(squad)).toStrictEqual(rows[0]?.now);
+
+      // Its first wake tells it it is back; once it has run for the squad, it is just its coach.
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent }).run();
+      expect(runs[0]?.task).toContain(BACK_AGAIN);
+      expect(runs.slice(1).some(({ task }) => task.includes(BACK_AGAIN))).toBe(false);
+
       // No coach, nothing to be back.
       await hiring.fire({ squad, by });
-      expect(await store.backAgain(squad)).toBe(false);
+      expect(await store.hiredBackAt(squad)).toBeUndefined();
     });
   });
 
@@ -1081,37 +1186,41 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done', tries: 1, last_error: null },
         { reason: 'daily', state: 'failed', tries: 3, last_error: 'ModelBehaviorError: no' },
       ]);
-      const counts = await sql<{ files: string; notes: string; usage: string }>`
+      const counts = await sql<{ files: string; notes: string }>`
         select (select count(*) from public.coach_files where squad_id = ${squad}) as files,
-          (select count(*) from public.coach_notes where squad_id = ${squad}) as notes,
-          (select count(*) from public.coach_usage where squad_id = ${squad}) as usage`.execute(
+          (select count(*) from public.coach_notes where squad_id = ${squad}) as notes`.execute(
         trx,
       );
-      expect(counts.rows).toStrictEqual([{ files: '0', notes: '0', usage: '6' }]);
+      expect(counts.rows).toStrictEqual([{ files: '0', notes: '0' }]);
+      // A failed run's tokens were spent all the same: every try counted.
+      expect(fixture.counted.runs).toHaveLength(6);
     });
   });
 
-  it('is off duty for the rest of the day once the squad spent its cap, and back the next', async () => {
+  it('skips its wakes while the squad’s AI budget is spent, saying why, and runs once it isn’t', async () => {
     await rolledBack(async (fixture) => {
-      const { trx, squad, mia } = fixture;
-      // One wake costs 12,000 input and 800 output tokens: 4,600 micros at the fixture's prices.
-      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
-        { squadDailyCapMicros: 4_600 },
-        MemberId.parse(mia),
+      const { trx, squad } = fixture;
+      let spent = true;
+      const { usage } = countedUsage(() =>
+        spent ? 'the squad spent 4600 of its 4600 micros today' : undefined,
       );
       const { agent, runs } = scriptedAgent(() => []);
-      expect(await wakes(fixture, { agent }).run()).toMatchObject({ done: 3, failed: 0 });
-      expect(runs).toHaveLength(1);
-      const tomorrow = new Date(now.getTime() + 86_400_000);
-      await wakes(fixture, { agent, at: tomorrow }).run();
-      // Back the next day: the night's dream comes first and spends this day's cap.
+      await wakes(fixture, { agent, usage }).run();
+      expect(runs).toHaveLength(0);
+      spent = false;
+      await wakes(fixture, { agent, usage, at: new Date(now.getTime() + 86_400_000) }).run();
+      // The next day: the night's dream over the check-in, then the daily wake.
       expect(runs).toHaveLength(2);
       const states = await sql<{ reason: string; state: string; last_error: string | null }>`
         select reason, state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
         trx,
       );
       expect(states.rows).toStrictEqual([
-        { reason: 'checkIn', state: 'done', last_error: null },
+        {
+          reason: 'checkIn',
+          state: 'skipped',
+          last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
+        },
         {
           reason: 'dream',
           state: 'skipped',
@@ -1123,47 +1232,8 @@ describe('the coach', () => {
           last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
         },
         { reason: 'dream', state: 'done', last_error: null },
-        {
-          reason: 'daily',
-          state: 'skipped',
-          last_error: 'off duty: the squad spent 4600 of its 4600 micros today',
-        },
+        { reason: 'daily', state: 'done', last_error: null },
       ]);
-    });
-  });
-
-  it('is off duty everywhere once every squad together spent the day’s cap', async () => {
-    await rolledBack(async (fixture) => {
-      const { trx, squad, mia } = fixture;
-      const other = SquadId.parse(randomUUID());
-      await sql`insert into public.squads (id, name, invite_code) values (${other}, 'other', ${other})`.execute(
-        trx,
-      );
-      // Another squad spent the whole day's cap this morning.
-      await sql`insert into public.coach_usage
-          (squad_id, coach_id, model, requests, input_tokens, output_tokens, cost_micros, at)
-        values (${other}, 'xiaohun', 'openai/gpt-6-luna', 1, 1, 1, 9000, ${new Date(now.getTime() - 3_600_000)})`.execute(
-        trx,
-      );
-      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
-        { dailyCapMicros: 9_000 },
-        MemberId.parse(mia),
-      );
-      const { agent, runs } = scriptedAgent(() => []);
-      await wakes(fixture, { agent }).run();
-      expect(runs).toHaveLength(0);
-      const states = await sql<{ state: string; last_error: string }>`
-        select state, last_error from public.coach_wakes where squad_id = ${squad} order by id`.execute(
-        trx,
-      );
-      expect(states.rows.map(({ state }) => state)).toStrictEqual([
-        'skipped',
-        'skipped',
-        'skipped',
-      ]);
-      expect(states.rows[0]?.last_error).toBe(
-        'off duty: every squad spent 9000 of the 9000 micros today',
-      );
     });
   });
 
@@ -1216,7 +1286,7 @@ describe('the coach', () => {
 
       // Each call, with what the tool answered: a read by its length only.
       const weekLength = weekText(fixture.week).length;
-      const report = await createPostgresCoachReport(trx).squad(squad, now);
+      const report = await createPostgresCoachReport(trx).squad(squad);
       expect(report.wakes[1]?.steps).toStrictEqual([
         { tool: 'squad_week', input: {}, output: `（${String(weekLength)} 字）` },
         { tool: 'react', input: { emoji: '🔥' }, output: '已点 🔥。' },
@@ -1273,7 +1343,7 @@ describe('the coach', () => {
         '已回复。',
       ]);
       expect(asked).toStrictEqual([['m/a.jpg', 'm/b.jpg']]);
-      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad);
       expect(report.wakes[0]?.steps.slice(0, 2)).toStrictEqual([
         { tool: 'look_at_photos', input: {}, output: '（2 张照片）' },
         { tool: 'look_at_photos', input: {}, output: '已经看过了。' },
@@ -1341,21 +1411,12 @@ describe('the coach', () => {
       expect(reads).toBe(1);
       expect(runs[0]?.tools).toContain('memes');
       expect(runs[0]?.answers[0]).toBe('- 「对自己很好」：照顾自己（小红书上流行）');
-      const report = await createPostgresCoachReport(fixture.trx).squad(squad, now);
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad);
       expect(report.wakes[0]?.steps[0]).toStrictEqual({
         tool: 'memes',
         input: {},
         output: '（22 字）',
       });
-    });
-  });
-
-  it('has no meme tool without the library', async () => {
-    await rolledBack(async (fixture) => {
-      const { squad, checkIn } = fixture;
-      const { agent, runs } = scriptedAgent(() => []);
-      await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [squad] });
-      expect(runs[0]?.tools).not.toContain('memes');
     });
   });
 
@@ -1677,7 +1738,7 @@ describe('the coach', () => {
     });
   });
 
-  it('tells an @ about a post with photos that it hasn’t seen them, only when it can look', async () => {
+  it('tells an @ about a post with photos that it hasn’t seen them', async () => {
     await rolledBack(async (fixture) => {
       const { squad, leo, checkIn } = fixture;
       const asked = await commentOn(fixture, {
@@ -1707,30 +1768,6 @@ describe('the coach', () => {
       ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
       expect(seeing.runs[0]?.task).toContain(hint);
       expect(seeing.runs[0]?.tools).toContain('look_at_photos');
-    });
-    await rolledBack(async (fixture) => {
-      const { squad, leo, checkIn } = fixture;
-      const asked = await commentOn(fixture, {
-        member: leo,
-        text: '@小混 你看看我们吃了啥',
-        at: new Date(now.getTime() + 60_000),
-        mentionsCoach: 'xiaohun',
-      });
-      const week: SquadWeek = {
-        ...fixture.week,
-        checkIns: fixture.week.checkIns.map((each) =>
-          each.id === checkIn ? { ...each, photos: ['m/a.jpg'], comments: [asked] } : each,
-        ),
-      };
-      // Without photo URLs it can't look, so it isn't told to.
-      const blind = scriptedAgent(() => []);
-      await wakes(
-        { ...fixture, week },
-        { agent: blind.agent, at: new Date(now.getTime() + 2 * 60_000) },
-      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
-      expect(blind.runs[0]?.task).toContain('有人在评论里 @ 你。');
-      expect(blind.runs[0]?.task).not.toContain('look_at_photos');
-      expect(blind.runs[0]?.tools).not.toContain('look_at_photos');
     });
   });
 
@@ -2016,9 +2053,7 @@ describe('the coach', () => {
       };
       expect(await wakes(fixture, { agent, replied }).run()).toMatchObject({ queued: 3, done: 3 });
       expect(told).toStrictEqual([]);
-      const usage = await sql<{ wake_id: string | null }>`
-        select wake_id from public.coach_usage where squad_id = ${squad} order by id`.execute(trx);
-      expect(usage.rows.map(({ wake_id }) => wake_id === null)).toStrictEqual([true, false]);
+      expect(fixture.counted.runs.map(({ kind }) => kind)).toStrictEqual(['wake', 'wake']);
       // The reply to a check-in that went is dropped, and the wake still ends.
       const replies =
         await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
@@ -2132,14 +2167,17 @@ describe('the coach', () => {
       });
       expect(preview.ran && preview.files.map(({ path }) => path)).toContain(`people/${mia}.md`);
       expect(given).toStrictEqual([]);
-      const saved = await sql<{ notes: string; board: string; wakes: string; usage: string }>`
+      const saved = await sql<{ notes: string; board: string; wakes: string }>`
         select
           (select count(*) from public.coach_member_notes where squad_id = ${squad}) as notes,
           (select count(*) from public.coach_notes where squad_id = ${squad}) as board,
-          (select count(*) from public.coach_wakes where squad_id = ${squad}) as wakes,
-          (select count(*) from public.coach_usage where squad_id = ${squad} and wake_id is null) as usage
+          (select count(*) from public.coach_wakes where squad_id = ${squad}) as wakes
       `.execute(trx);
-      expect(saved.rows).toStrictEqual([{ notes: '0', board: '0', wakes: '0', usage: '1' }]);
+      expect(saved.rows).toStrictEqual([{ notes: '0', board: '0', wakes: '0' }]);
+      // Its tokens are counted all the same, as a preview, to the squad: an admin asked for it.
+      expect(
+        fixture.counted.runs.map(({ kind, member, costMicros }) => ({ kind, member, costMicros })),
+      ).toStrictEqual([{ kind: 'preview', member: undefined, costMicros: 4600 }]);
       expect(
         await wakes(fixture, { agent, gifting }).preview({ squad, member: randomUUID() }),
       ).toStrictEqual({

@@ -70,14 +70,14 @@ extension SquadStage {
     }
 
     /// Where `member` is `seconds` into the day's loop: people on a track, lane or wall move
-    /// along it at its speed, evenly spaced; everyone else stays on their spot,
-    /// facing the middle.
+    /// along it at its speed, evenly spaced; at a station they face the middle; everyone else
+    /// stands on their spot as drawn, never mirrored, so what they hold is in the same hand as on
+    /// their player card.
     public func position(of member: MemberID, at seconds: Double) -> StagePosition? {
         switch placements[member] {
         case .floor(let point)?:
             return StagePosition(
-                point: point, facing: point.x > StageLayout.mySpot.x ? -1 : 1,
-                scale: StageLayout.scale(atDepth: point.y))
+                point: point, facing: 1, scale: StageLayout.scale(atDepth: point.y))
         case .station(let kind, let slot)?:
             guard let station = layout.station(kind) else { return nil }
             return Self.position(on: station, slot: slot, at: seconds)

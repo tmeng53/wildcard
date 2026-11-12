@@ -8,7 +8,7 @@ import {
   type CoachCatalogAdmin,
   type CoachHiring,
   type CoachMemoryAdmin,
-  type CoachReportStore,
+  type CoachReport,
   type CoachSettingsAdmin,
 } from '@wildcard/coach';
 import { z } from 'zod';
@@ -23,7 +23,7 @@ interface CoachToolDependencies {
   readonly settings: CoachSettingsAdmin;
   readonly coaches: CoachCatalogAdmin;
   readonly hiring: CoachHiring;
-  readonly report: CoachReportStore;
+  readonly report: CoachReport;
   readonly memory: CoachMemoryAdmin;
   readonly clock: () => Date;
 }
@@ -36,8 +36,9 @@ export function getCoachSettings({ settings }: CoachToolDependencies) {
     description:
       'Shows what every AI coach runs with now: whether coaching is on (for every squad that ' +
       'hired a coach), the model (openai/…), the rules every coach follows (Chinese; each ' +
-      'coach’s soul comes after them), and the model’s prices per million input, cached input ' +
-      'and output tokens in millionths of a US dollar, which each wake’s cost is counted at.',
+      'coach’s soul comes after them), how hard it thinks, how each kind of wake goes, the hour ' +
+      'morning notes arrive and the holiday calendar. What its calls cost and may spend a day ' +
+      'is get_ai_usage_settings’.',
     changes: false,
     input: z.strictObject({}),
     run: async () => settings.current(),
@@ -52,7 +53,8 @@ export function changeCoachSettings({ settings }: CoachToolDependencies) {
     description:
       'Changes any of the coach settings; the rest stay as they are. Applies to the next wake. ' +
       'Coaching on, every squad that hired a coach (hire_coach) has one; off, no coach wakes. ' +
-      'When the model changes, set its prices too. Returns the settings now.',
+      'Before the model changes, give it a price with change_ai_usage_settings: without one ' +
+      'the coach is off duty. Returns the settings now.',
     changes: true,
     input: CoachSettingsChange.refine((input) => Object.keys(input).length > 0, {
       message: 'Name at least one setting to change',
@@ -145,8 +147,8 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
       'and each coach’s own page, coaches/<coach id>.md, which only that coach reads, as me.md), ' +
       'its last 14 战术板 lines, its last 20 wakes (checkIn, comment or daily, state, tries, why ' +
       'the last try failed, and each tool call of its runs in order: the tool, its arguments and ' +
-      'what it answered, a read by its length only) and the tokens and cost (millionths of a US dollar) of every wake so ' +
-      'far and of the last 7 days. Members’ own words are in the files: read, don’t share.',
+      'what it answered, a read by its length only) and the tokens and cost (millionths of a US dollar) of its runs (wakes, ' +
+      'letters, previews) so far and of the last 7 days. Members’ own words are in the files: read, don’t share.',
     changes: false,
     input: z.strictObject({ squad: SquadId.describe('The squad’s id.') }),
     run: async ({ squad }) => report.squad(squad, clock()),

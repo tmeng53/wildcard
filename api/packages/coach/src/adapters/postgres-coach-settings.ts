@@ -27,12 +27,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         reasoning: row.reasoning,
         rules: row.rules,
         wakes: row.wakes,
-        inputMicrosPerMillion: row.input_micros_per_million,
-        cachedInputMicrosPerMillion: row.cached_input_micros_per_million,
-        outputMicrosPerMillion: row.output_micros_per_million,
         noteHour: row.note_hour,
-        squadDailyCapMicros: row.squad_daily_cap_micros,
-        dailyCapMicros: row.daily_cap_micros,
         holidays: StoredHolidays.parse(row.holidays).days,
       });
     },
@@ -44,12 +39,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         reasoning: settings.reasoning,
         rules: settings.rules,
         wakes: settings.wakes,
-        input_micros_per_million: settings.inputMicrosPerMillion,
-        cached_input_micros_per_million: settings.cachedInputMicrosPerMillion,
-        output_micros_per_million: settings.outputMicrosPerMillion,
         note_hour: settings.noteHour,
-        squad_daily_cap_micros: settings.squadDailyCapMicros,
-        daily_cap_micros: settings.dailyCapMicros,
         holidays: JSON.stringify({ version: 1, days: settings.holidays }),
       };
       // One statement: the row changes only when something differs, and the log gets the whole
@@ -60,7 +50,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
             .updateTable('coach_settings')
             .set(columns)
             .where(
-              sql<boolean>`(coaching, model, reasoning, rules, wakes, input_micros_per_million, cached_input_micros_per_million, output_micros_per_million, note_hour, squad_daily_cap_micros, daily_cap_micros, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.reasoning}, ${columns.rules}, ${columns.wakes}, ${columns.input_micros_per_million}::integer, ${columns.cached_input_micros_per_million}::integer, ${columns.output_micros_per_million}::integer, ${columns.note_hour}::integer, ${columns.squad_daily_cap_micros}::integer, ${columns.daily_cap_micros}::integer, ${columns.holidays}::jsonb)`,
+              sql<boolean>`(coaching, model, reasoning, rules, wakes, note_hour, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.reasoning}, ${columns.rules}, ${columns.wakes}, ${columns.note_hour}::integer, ${columns.holidays}::jsonb)`,
             )
             .returning('only_row'),
         )

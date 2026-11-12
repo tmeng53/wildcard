@@ -8,7 +8,6 @@ import Foundation
 /// starts from a given home and counts each post the way the API does.
 public actor InMemoryCheckInBackend: CheckInBackend {
     private var current: Home?
-    private var reactionsByCheckIn: [CheckInID: [Reaction]] = [:]
     private var photoCount = 0
     private var squadPokes: SquadPokes
     private var sidelineCoach: SidelineCoach?
@@ -138,13 +137,12 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                 outfit: StandInCharacter.look(of: member), persona: StandInCharacter.persona(of: member)))
     }
 
-    /// Today's counts of the sample squad's `members`, never 全员上场.
+    /// Today's counts of the sample squad's `members`.
     private static func counts(of members: [SquadmateToday]) -> TodayCounts {
         TodayCounts(
             trained: members.count { $0.training == .trained },
             disclaimer: members.count { $0.training == .disclaimer },
-            resting: members.count { $0.plannedRest && $0.training == .notCheckedIn },
-            everyoneTrained: false)
+            resting: members.count { $0.plannedRest && $0.training == .notCheckedIn })
     }
 
     /// The sample squad's check-ins today: three 练了 and a 请假条.
@@ -209,6 +207,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func savedHome() async -> Home? { current }
 
+    public func savedCoach() async -> SavedCoach? {
+        current.map { SavedCoach(squad: $0.squad.id, coach: sidelineCoach?.coach) }
+    }
+
     public func home() async throws(CheckInError) -> Home? { current }
 
     public func upload(_ photo: PreparedPhoto) async throws(CheckInError) -> PhotoRef {
@@ -248,22 +250,6 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func delete(_ checkIn: CheckInID) async throws(CheckInError) {
         current?.checkIns.removeAll { $0.id == checkIn }
-    }
-
-    public func reactions(to checkIn: CheckInID) async throws(CheckInError) -> [Reaction] {
-        reactionsByCheckIn[checkIn] ?? []
-    }
-
-    public func react(_ emoji: Emoji, to checkIn: CheckInID) async throws(CheckInError) {
-        guard let member = current?.member else { throw .notInSquad }
-        var list = (reactionsByCheckIn[checkIn] ?? []).filter { $0.member != member }
-        list.append(Reaction(member: member, emoji: emoji, reactedAt: Timestamp(Date())))
-        reactionsByCheckIn[checkIn] = list
-    }
-
-    public func removeReaction(from checkIn: CheckInID) async throws(CheckInError) {
-        guard let member = current?.member else { throw .notInSquad }
-        reactionsByCheckIn[checkIn]?.removeAll { $0.member == member }
     }
 
     /// The sample squad's member has no profile to keep a zone on.

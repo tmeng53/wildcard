@@ -14,8 +14,12 @@ public struct CheckIn: Hashable, Sendable {
     public let postedDay: LocalDay
     /// When it was made, for ordering on the track. Not used to pick the day.
     public let createdAt: Timestamp
-    /// The squads it was sent to. Squads not listed see the member as not checked in.
+    /// The squads it was sent to: the member's squad, or none for one made before joining any.
+    /// Squads not listed see the member as not checked in.
     public let audience: Audience
+    /// 发布到动态: whether it is a post in its squads' 动态. One that isn't still counts for them
+    /// (their week, the member's card), but only its author sees it. Never changed after posting.
+    public let inFeed: Bool
     public let entry: Entry
 
     /// How many days before the day it is posted a check-in may count for (补打卡). The API's
@@ -25,7 +29,7 @@ public struct CheckIn: Hashable, Sendable {
     /// `postedDay` left out is `day`: the check-in was posted the day it counts for.
     public init(
         id: CheckInID, member: MemberID, day: LocalDay, postedDay: LocalDay? = nil, createdAt: Timestamp,
-        audience: Audience, entry: Entry
+        audience: Audience, inFeed: Bool = true, entry: Entry
     ) {
         self.id = id
         self.member = member
@@ -33,6 +37,7 @@ public struct CheckIn: Hashable, Sendable {
         self.postedDay = postedDay ?? day
         self.createdAt = createdAt
         self.audience = audience
+        self.inFeed = inFeed
         self.entry = entry
     }
 
@@ -172,24 +177,17 @@ public struct Caption: Hashable, Sendable {
     }
 }
 
-/// The squads a check-in is shared to: at most `maxSquads`, no repeats. A post is the
-/// member's own; one shared to no squad only they see.
+/// The squads a check-in is shared to, no repeats: the member's squad, or none for a post only
+/// they see. A member is in one squad at a time; posts made earlier may list several, and the
+/// API keeps the limit.
 public struct Audience: Hashable, Sendable {
-    /// The most squads one post can be shared to, as the API allows. A member is in one squad at a time now, but
-    /// posts made earlier may list several, and they must still read.
-    public static let maxSquads = 3
-
     /// In the order the member picked them.
     public let squads: [SquadID]
 
     public init(_ squads: [SquadID]) throws(ContractsError) {
-        guard squads.count <= Self.maxSquads else { throw .audienceSize(squads.count) }
         guard Set(squads).count == squads.count else { throw .repeatedSquad }
         self.squads = squads
     }
-
-    /// Shared to no squad: 仅自己可见, only its author sees it.
-    public var isOnlyMe: Bool { squads.isEmpty }
 }
 
 /// A check-in's photos: one to `maxCount`, no repeats, in the order the member set.

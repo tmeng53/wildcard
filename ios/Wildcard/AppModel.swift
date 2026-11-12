@@ -54,8 +54,8 @@ final class AppModel {
     private(set) var isSigningIn = false {
         didSet { if isSigningIn, !oldValue { coverSince = .now } }
     }
-    /// The squad the member is no longer in (removed, or left on another phone), said once.
-    var lostSquadName: String?
+    /// The squad whose captain removed the member, said once on this phone.
+    var removedFromName: String?
     /// Whether the signed-in member is an admin, read as the tabs open: 设置 then offers 预览注册.
     private(set) var isAdmin = false
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
@@ -193,14 +193,14 @@ final class AppModel {
         if case .tabs(let today, _, _, _, _, _) = screen { await today.load() }
     }
 
-    /// The member left their squad on 小队设置: sign-up's squad step, as for a member in none.
+    /// The member left their squad on 小队设置: 加入小队, as for any member in none.
     func leftSquad() async {
-        await openHome(saysLost: false)
+        await openHome()
     }
 
-    /// 今天 found the member in no squad any more: sign-up's squad step, saying which squad.
-    private func removedFromSquad(_ squad: Squad?) async {
-        if showsTabs { await openHome(lost: squad) }
+    /// 今天 found the member in no squad any more: 加入小队, saying so first if they were removed.
+    private func lostSquad() async {
+        if showsTabs { await openHome() }
     }
 
     /// Reads the catalog again, as the app comes back to the front: a sport, dice line or art
@@ -211,7 +211,9 @@ final class AppModel {
             Self.show(fresh)
             mustUpdate = Self.mustUpdate(fresh)
         }
-        await art.update(to: (fresh ?? catalog.kept()).art)
+        let artChanged = await art.update(to: (fresh ?? catalog.kept()).art)
+        // 今天 made its characters from the art before: it makes them again from the new.
+        if artChanged, case .tabs(let today, _, _, _, _, _) = screen { today.artChanged() }
     }
 
     /// Back in the app: 今天 reads the squad's scene again, which a teammate may have picked
@@ -226,10 +228,10 @@ final class AppModel {
         try? await account.signOut()
     }
 
-    /// Opens 今天 on the member's home, or sign-up in no squad, saying which squad was lost.
+    /// Opens 今天 on the member's home; in no squad, 加入小队 for a member who was in one, else
+    /// sign-up.
     private func openHome(
-        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil,
-        lost: Squad? = nil, saysLost: Bool = true
+        continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
     ) async {
         // Only called once the account says who is signed in, so it is read from memory.
         guard case .signedIn(let member)? = try? await account.restore() else {
@@ -243,13 +245,7 @@ final class AppModel {
         guard case .signedIn(member)? = try? await account.restore() else { return }
         switch store.phase {
         case .noSquad:
-            // Consent is the account's: a member who agreed before, and left their squad since,
-            // isn't asked again. Not knowing asks, and agreeing again is safe.
-            let agreed = (try? await api.hasAgreedToAI()) ?? false
-            let model = (agreed ? nil : signUp) ?? newSignUp(hasAgreedToAI: agreed)
-            model.signedIn(name: name)
-            if saysLost, let squad = lost ?? store.lostSquad { lostSquadName = squad.name }
-            screen = .signUp(model)
+            screen = .signUp(await squadless(continuing: signUp, name: name))
         case .signedOut:
             await signedOut()
         case .loading where store.home == nil, .offline where store.home == nil:
@@ -283,12 +279,14 @@ final class AppModel {
 
     /// 今天 under the tab bar, on the member's squad's home; on a picked scene they drop onto it.
     private func openTabs(on home: Home, store: TodayStore, landingOn scene: SceneTheme?) async {
+        // In a squad again: a later removal is told afresh, even from the same squad.
+        RemovalNotice.forget()
         // Zones wait for this member's own birthday: one signed in before never lends theirs.
         Self.health.birthday = nil
         let today = TodayModel(
             store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
             health: Self.health, posted: posted,
-            noSquad: { [weak self] squad in Task { await self?.removedFromSquad(squad) } })
+            noSquad: { [weak self] in Task { await self?.lostSquad() } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),
             confirm: confirmDeletion, signOut: { [weak self] in await self?.signOut() },
@@ -368,7 +366,7 @@ final class AppModel {
     private func resumedSignUp(in squad: SquadID) async -> SignUpModel? {
         guard let progress = SignUpProgress.saved, progress.squad == squad else { return nil }
         let model = newSignUp(hasAgreedToAI: true, takesInvite: false)
-        return await model.resume(in: squad, madeIt: progress.madeIt) ? model : nil
+        return await model.resume(in: squad, madeIt: progress.madeIt, rejoining: progress.rejoining) ? model : nil
     }
 }
 

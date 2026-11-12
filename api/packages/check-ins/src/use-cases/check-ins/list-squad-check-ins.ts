@@ -21,7 +21,8 @@ export interface SquadPost {
 /**
  * A squad's feed for a range of days posted on (a 补打卡 shows on the day it was posted), newest
  * first, for one of its members, each with its reactions and
- * comments. Only check-ins from members still in the squad: leaving a squad takes your check-ins
+ * comments. Only posts (发布到动态: a check-in only recorded isn't in it, not even for its
+ * author) from members still in the squad: leaving a squad takes your check-ins
  * out of it. Someone else's check-in shows only the squads the viewer is in among its audience,
  * and, as everywhere, only the responses of members of the squads the viewer sees it through.
  */
@@ -42,7 +43,9 @@ export async function listSquadCheckIns(
   const viewerSquads = await membership.squadIdsOf(viewer);
   if (!viewerSquads.has(squad)) throw new SquadNotJoinedError(squad);
   const members = await membership.membersOf(squad);
-  const checkIns = await store.listForSquad({ ...days, squad, members, by: 'postedDay' });
+  const checkIns = (await store.listForSquad({ ...days, squad, members, by: 'postedDay' })).filter(
+    ({ inFeed }) => inFeed,
+  );
   const ids = checkIns.map(({ id }) => id);
   const [reactionsOf, commentsOf, squadsOfAuthor] = await Promise.all([
     reactions.listForAll(ids),

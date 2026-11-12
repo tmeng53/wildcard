@@ -1,7 +1,7 @@
 // @wildcard/coach: the AI coach. The coaches a squad can hire (their identity and soul) and the
 // settings every coach runs with, both kept in the database and changed through the admin
 // tools; each squad hiring and firing its coach; and the coach at work: woken for each check-in and once a day, it reads the squad's
-// week, keeps the squad's memory files, posts the 战术板 line, replies and reacts to check-ins, and counts its tokens per squad;
+// week, keeps the squad's memory files, posts the 战术板 line, replies and reacts to check-ins, and counts its tokens to its squad and member;
 // and when a squad changes coach, the outgoing one leaves the next a letter its members read.
 // Coaching is off until it is switched on.
 
@@ -50,7 +50,6 @@ export {
 export { LETTER_LIMIT, type CoachLetter } from './domain/letter.js';
 export { CoachEmoji, REPLY_LIMIT, type CoachAnswer, type CoachReply } from './domain/reply.js';
 export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
-export type { TokenUsage } from './domain/wake.js';
 export type { MemberFacts, PlanDayFacts } from './domain/member-facts.js';
 export type {
   AgentRun,
@@ -76,9 +75,11 @@ export type {
   CoachWeather,
   CoachOccasions,
   CoachPhotoUrls,
+  CoachTimeZones,
   CoachTool,
   ToolAnswer,
   CoachTransaction,
+  CoachUsage,
   SquadCoaching,
   SquadWeekSource,
   UsageTotal,
@@ -108,6 +109,7 @@ export {
 } from './use-cases/coach-note-delivery.js';
 export { createCoachCatalog, type CoachCatalogAdmin } from './use-cases/coach-catalog.js';
 export { createCoachHiring, type CoachHiring } from './use-cases/coach-hiring.js';
+export { createCoachReport, type CoachReport } from './use-cases/coach-report.js';
 export {
   createCoachLetters,
   type CoachLettered,

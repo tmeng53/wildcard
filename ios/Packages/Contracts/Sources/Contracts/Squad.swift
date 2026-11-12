@@ -19,3 +19,15 @@ public struct Squad: Hashable, Sendable {
         self.captain = captain
     }
 }
+
+/// The squad a member in none was last in, and whether its captain took them out of it.
+public struct SquadExit: Hashable, Sendable {
+    public let id: SquadID
+    public let name: String
+    /// True when its captain removed the member; false when they left it themselves.
+    public let wasRemoved: Bool
+
+    public init(id: SquadID, name: String, wasRemoved: Bool) {
+        (self.id, self.name, self.wasRemoved) = (id, name, wasRemoved)
+    }
+}

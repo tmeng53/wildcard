@@ -31,6 +31,18 @@ public struct Broadcast: Hashable, Sendable {
         }
     }
 
+    /// A letter from the team (感谢信): opened from an envelope over 今天 in place of its style,
+    /// its lines under the member's name, signed 外卡团队, with what the team gave them under it.
+    public struct Letter: Hashable, Sendable {
+        /// Its words, a line break per line.
+        public let lines: CatalogNames
+        public let presents: [TeamPresent]
+
+        public init(lines: CatalogNames, presents: [TeamPresent]) {
+            (self.lines, self.presents) = (lines, presents)
+        }
+    }
+
     /// The same for every member told it, such as `thanksgiving-soon`.
     public let id: String
     public let title: CatalogNames
@@ -42,14 +54,22 @@ public struct Broadcast: Hashable, Sendable {
     /// The store's sign, prop or piece drawn beside its words; nil draws its own symbol.
     public let icon: Gift?
     public let gifts: [Gift]
+    /// Nil for a notice that is no letter.
+    public let letter: Letter?
 
     public init(
         id: String, title: CatalogNames, body: CatalogNames?, action: Action?, style: Style, icon: Gift? = nil,
-        gifts: [Gift]
+        gifts: [Gift], letter: Letter? = nil
     ) {
         (self.id, self.title, self.body, self.action, self.style) = (id, title, body, action, style)
-        (self.icon, self.gifts) = (icon, gifts)
+        (self.icon, self.gifts, self.letter) = (icon, gifts, letter)
     }
+}
+
+/// Something the team gave the member, which its letter draws: a piece or a team badge, by id.
+public enum TeamPresent: Hashable, Sendable {
+    case piece(String)
+    case badge(String)
 }
 
 /// A place in the app: where a notice goes, in 通知, in the home's banner and from its push, the
@@ -85,8 +105,14 @@ public enum AppDestination: Hashable, Sendable {
     case waitingCoachNote
     /// 我.
     case profile
+    /// 衣橱 in the character editor, trying this piece on (nil: just the editor).
+    case wardrobe(piece: String?)
+    /// 我's player card turned to its badge board (徽章).
+    case badges
     /// 通知, behind the bell on 动态.
     case notices
+    /// 今天, with a letter from the team (感谢信) opened over it again.
+    indirect case teamLetter(Broadcast)
 }
 
 extension Notice {
@@ -102,7 +128,7 @@ extension Notice {
         case .comment(_, let checkIn): .post(checkIn)
         case .coachNote(let note): .coachNote(note)
         case .coachLetter(let letter): .coachLetter(letter)
-        case .broadcast(let broadcast): broadcast.action?.destination
+        case .broadcast(let broadcast): broadcast.letter == nil ? broadcast.action?.destination : .teamLetter(broadcast)
         // 小队, whose first card is the weekly goal.
         case .goalSuggestion: .squad
         }

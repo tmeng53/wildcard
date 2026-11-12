@@ -73,7 +73,7 @@ extension InMemoryFeedSource {
     private static func sampleCoach(on posts: [FeedPost], now: Date, mia: MemberID) -> CoachActivity {
         let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
         let note = CoachNote(
-            day: LocalDay(at: now, in: CoachNote.timeZone), text: localized("今天谁先动，谁就是队长"),
+            day: LocalDay(at: now, in: SquadTimeZone.newYorkClock), text: localized("今天谁先动，谁就是队长"),
             coach: maotou, writtenAt: now.addingTimeInterval(-3600))
         func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?, mentioning: [MemberID] = []) -> CoachReply? {
             guard let post else { return nil }
@@ -213,11 +213,9 @@ private struct SamplePosts {
         training(sport, minutes: minutes, [photo], caption)
     }
 
-    /// My run this morning, shared to no squad: only 我的动态 shows it, saying 仅自己可见.
+    /// My run this morning, only recorded (发布到动态 off): only 我的动态 shows it, saying 未发动态.
     func runOnMyOwn(_ viewer: MemberID) -> FeedPost {
-        post(
-            viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")),
-            audience: try? Audience([]))
+        post(viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")), inFeed: false)
     }
 
     func meal(_ photo: String, _ caption: String) -> Meal {
@@ -227,7 +225,7 @@ private struct SamplePosts {
     func post(
         _ author: MemberID, _ daysAgo: Int, _ hour: Int, _ minute: Int, _ entry: CheckIn.Entry,
         reactions: [(MemberID, String)] = [],
-        comments: [(MemberID, MemberID?, String)] = [], audience: Audience? = nil
+        comments: [(MemberID, MemberID?, String)] = [], inFeed: Bool = true
     ) -> FeedPost {
         let day = today.adding(days: -daysAgo)
         let made = time(on: day, hour, minute)
@@ -235,7 +233,7 @@ private struct SamplePosts {
         return FeedPost(
             checkIn: CheckIn(
                 id: CheckInID(UUID()), member: author, day: day, createdAt: Timestamp(made),
-                audience: audience ?? self.audience,
+                audience: audience, inFeed: inFeed,
                 entry: entry),
             reactions: Responses(
                 reactions.enumerated().compactMap { index, pair in

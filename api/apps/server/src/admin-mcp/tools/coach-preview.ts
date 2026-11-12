@@ -25,7 +25,7 @@ export function previewCoachDaily({ preview, squads }: CoachPreviewToolDependenc
       'the gift and line it would give, the memory files it would change and every tool call. ' +
       'Nothing is saved or sent: no card, notice or push reaches anyone, and the one-gift-a-week ' +
       'limit is untouched. It calls the model once, so it costs like a ' +
-      'wake (`costMicros`, millionths of a US dollar), counted against the squad’s daily cap; ' +
+      'wake (`costMicros`, millionths of a US dollar), counted to the squad’s daily AI budget; ' +
       '`ran: false` says why it didn’t run (no coach, off duty). Works while coaching is off. ' +
       'With `deliver: true`, only for yourself as the member, the note and its challenge are ' +
       'saved as a real note of today, each time you ask: it is pushed and shows on your coach ' +

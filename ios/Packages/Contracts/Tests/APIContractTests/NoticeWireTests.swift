@@ -4,7 +4,7 @@ import Foundation
 import Testing
 
 private func entry(
-    action: String?, style: String = "banner", gifts: String = "[]", icon: String = "null"
+    action: String?, style: String = "banner", gifts: String = "[]", icon: String = "null", letter: String = ""
 ) throws -> Notice? {
     let button =
         action.map {
@@ -13,7 +13,7 @@ private func entry(
     let json = #"""
         {"id": 7, "kind": "broadcast", "at": "2026-11-20T08:00:00Z", "broadcast": "soon",
          "title": {"zhHans": "商店街上新了", "en": "New in the stores", "zhHant": "商店街上新了"},
-         "style": "\#(style)", "gifts": \#(gifts), "icon": \#(icon)\#(button)}
+         "style": "\#(style)", "gifts": \#(gifts), "icon": \#(icon)\#(button)\#(letter)}
         """#
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
@@ -48,6 +48,9 @@ private func entry(
     #expect(try entry(action: "me")?.destination == .profile)
     #expect(try entry(action: "notices")?.destination == .notices)
     #expect(try entry(action: "coaches")?.destination == .coaches)
+    #expect(try entry(action: "wardrobe")?.destination == .wardrobe(piece: nil))
+    #expect(try entry(action: "wardrobe/thanks-bulb")?.destination == .wardrobe(piece: "thanks-bulb"))
+    #expect(try entry(action: "badges")?.destination == .badges)
 }
 
 @Test func aPlaceThisBuildDoesntKnowShowsNoButtonAndAnUnknownStyleIsABanner() throws {
@@ -100,4 +103,22 @@ private func entry(
     // Without whom it is to, this build can't show it.
     let partial = json.replacingOccurrences(of: #""toCoach": "papa", "#, with: "")
     #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
+}
+
+@Test func aLetterFromTheTeamReadsWithWhatItGaveAndOpensOverToday() throws {
+    let letter = #"""
+        , "teamLetter": {"lines": {"zhHans": "修好了。\n谢谢你！", "en": "Fixed.\nThank you!", "zhHant": "修好了。\n謝謝你！"},
+         "presents": [{"kind": "badge", "id": "bug-hunter"}, {"kind": "piece", "id": "thanks-bugnet"}, {"kind": "voucher", "id": "x"}]}
+        """#
+    let notice = try #require(try entry(action: "wardrobe/thanks-bugnet", letter: letter))
+    guard case .broadcast(let broadcast) = notice.subject else {
+        Issue.record("not a broadcast")
+        return
+    }
+    #expect(broadcast.letter?.lines.localized(in: ["en"]) == "Fixed.\nThank you!")
+    // A kind this build doesn't draw is left out.
+    #expect(broadcast.letter?.presents == [.badge("bug-hunter"), .piece("thanks-bugnet")])
+    // Its row opens the letter again, not the button older builds show.
+    #expect(notice.destination == .teamLetter(broadcast))
+    #expect(try entry(action: "wardrobe/thanks-bugnet")?.destination == .wardrobe(piece: "thanks-bugnet"))
 }

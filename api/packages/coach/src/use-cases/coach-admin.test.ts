@@ -62,8 +62,6 @@ describe('the coach settings', () => {
       coaching: false,
       model: 'openai/gpt-6-luna',
       reasoning: 'low',
-      inputMicrosPerMillion: 0,
-      outputMicrosPerMillion: 0,
     });
     expect(settings.rules).toContain('不提谁没打卡');
   });
@@ -72,11 +70,8 @@ describe('the coach settings', () => {
     await rolledBack(async (trx, admin) => {
       const settings = createCoachSettings({ store: createPostgresCoachSettings(trx) });
       const before = await settings.current();
-      const changed = await settings.change(
-        { coaching: true, inputMicrosPerMillion: 1_250_000 },
-        admin,
-      );
-      const expected = { ...before, coaching: true, inputMicrosPerMillion: 1_250_000 };
+      const changed = await settings.change({ coaching: true, noteHour: 9 }, admin);
+      const expected = { ...before, coaching: true, noteHour: 9 };
       expect(changed).toStrictEqual(expected);
       expect(await settings.current()).toStrictEqual(expected);
 

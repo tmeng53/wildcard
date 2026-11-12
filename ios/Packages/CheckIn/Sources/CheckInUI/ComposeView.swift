@@ -88,9 +88,7 @@ public struct ComposeView: View {
             }
         }
         .actionBar(isShown: !model.isEditing && model.shareSquad != nil) {
-            if let squad = model.shareSquad {
-                ShareRow(squad: squad, isShared: $model.isShared)
-            }
+            FeedSwitchRow(inFeed: $model.inFeed)
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .sheet(isPresented: $isPickingSport) {

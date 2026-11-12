@@ -63,7 +63,6 @@ import {
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
-  unusedWeekSummaryWords,
   unusedFeedback,
 } from '../test-kit/weekly-awards.js';
 import { catalogOn } from '../test-kit/public-routes.js';
@@ -142,7 +141,6 @@ const app = createApp({
     }),
     clock: () => new Date(),
   },
-  weekSummaryWords: unusedWeekSummaryWords,
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards,
@@ -169,14 +167,17 @@ async function call({
   path,
   token,
   body,
+  language,
 }: {
   readonly method: string;
   readonly path: string;
   readonly token?: string | undefined;
   readonly body?: unknown;
+  readonly language?: string;
 }) {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   if (token !== undefined) headers.authorization = `Bearer ${token}`;
+  if (language !== undefined) headers['accept-language'] = language;
   const response = await app.request(path, {
     method,
     headers,
@@ -194,11 +195,19 @@ const SquadBody = z.object({ id: z.uuid(), inviteCode: z.string() });
 
 /** A squad `captain` made, with `others` in it too. */
 async function squadOf(captain: { token: string }, ...others: { token: string }[]) {
+  return squadIn('America/New_York', [captain, ...others]);
+}
+
+/** As `squadOf`, on `timeZone`'s clock: the first of `members` makes it. */
+async function squadIn(
+  timeZone: string,
+  [captain, ...others]: [{ token: string }, ...{ token: string }[]],
+) {
   const made = await call({
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团' },
+    body: { version: 1, name: '早八跑团', timeZone },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
@@ -387,7 +396,8 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     const [me, mate, stranger] = [await signUp(), await signUp(), await signUp()];
     await profileOf(me, { nickname: '小米' });
     await profileOf(mate, { nickname: '阿杰', jerseyNumber: 7 });
-    const squad = await squadOf(me, mate);
+    // On the members' own clock (UTC), so the week and today below are the same dates on every clock.
+    const squad = await squadIn('UTC', [me, mate]);
     const elsewhere = await squadOf(await signUp());
     await alsoJoinedEarlier(db, { squad: elsewhere, member: mate.userId });
     await award({ squad: squad, weekStart: '2026-10-19', member: mate.userId }, [
@@ -481,9 +491,14 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
       worn: '冷面杀手',
     });
     expect(JSON.stringify(card.body)).not.toContain('别的小队');
+    // The 外卡 too: the run went elsewhere, so this squad sees no streak.
+    const streaksOf = (body: unknown) => z.object({ streaks: z.unknown() }).parse(body).streaks;
+    expect(streaksOf(card.body)).toStrictEqual({});
     // The member's own card counts everything they posted, as 我 does.
     const mine = await call({ method: 'GET', path, token: mate.token });
     expect(z.object({ trainedDays: z.int() }).parse(mine.body).trainedDays).toBe(1);
+    const day = createdAt.toISOString().slice(0, 10);
+    expect(streaksOf(mine.body)).toStrictEqual({ training: { days: 1, from: day, to: day } });
     // Their week on the card is the one their own home counts.
     const theirToday = await call({
       method: 'GET',
@@ -551,6 +566,7 @@ describe('GET /squads/{squadId}/members/{memberId}/card', () => {
     });
     expect(shared.status).toBe(201);
     const again = await call({ method: 'GET', path, token: me.token });
+    expect(streaksOf(again.body)).toStrictEqual({ training: { days: 1, from: day, to: day } });
     const { marks, days } = z
       .object({ week: z.object({ marks: z.array(z.unknown()), days: z.array(z.unknown()) }) })
       .parse(again.body).week;
@@ -611,6 +627,11 @@ describe('the team’s badges', () => {
     await rewards.putBadge({
       id: badge,
       names: { 'zh-Hans': '捉虫队', 'zh-Hant': '捉蟲隊', en: 'Bug Hunter' },
+      lines: {
+        'zh-Hans': '外卡专业捕虫团队 · 认证队员',
+        'zh-Hant': '外卡專業捕蟲團隊 · 認證隊員',
+        en: 'Certified member, Wildcard Bug Squad',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       offered: true,
@@ -629,6 +650,11 @@ describe('the team’s badges', () => {
     const shown = {
       id: badge,
       name: { zhHans: '捉虫队', en: 'Bug Hunter', zhHant: '捉蟲隊' },
+      line: {
+        zhHans: '外卡专业捕虫团队 · 认证队员',
+        en: 'Certified member, Wildcard Bug Squad',
+        zhHant: '外卡專業捕蟲團隊 · 認證隊員',
+      },
       glyph: 'ladybug.fill',
       tone: '#E65345',
       times: 2,
@@ -649,5 +675,91 @@ describe('the team’s badges', () => {
     expect((await call({ method: 'GET', path: '/me/titles', token: me.token })).body).toMatchObject(
       { teamBadges: [] },
     );
+  });
+});
+
+describe('wearing a team badge', () => {
+  it('wears one the member holds instead of a title, on the board, the card and the home', async () => {
+    const me = await signUp();
+    const mate = await signUp();
+    await profileOf(me, { nickname: '小米' });
+    await profileOf(mate, { nickname: '阿杰' });
+    const squad = await squadOf(me, mate);
+    const badge = `idea-${randomUUID().slice(0, 8)}`;
+    await rewards.putBadge({
+      id: badge,
+      names: { 'zh-Hans': '点子王', 'zh-Hant': '點子王', en: 'Idea King' },
+      glyph: 'lightbulb.fill',
+      tone: '#F2B33D',
+      offered: true,
+    });
+    await rewards.putTrigger({ kind: 'badge', id: badge, way: 'team', offered: true });
+    const equip = (body: object, token = mate.token) =>
+      call({ method: 'PUT', path: '/me/equipped-title', token, body: { version: 1, ...body } });
+
+    // Not held yet: refused, and nothing is worn.
+    const early = await equip({ title: null, teamBadge: badge });
+    expect([early.status, reason(early)]).toStrictEqual([400, 'BADGE_NOT_HELD']);
+
+    await rewards.give({
+      member: RewardMember.parse(mate.userId),
+      reward: { kind: 'badge', id: badge },
+      admin: RewardMember.parse(randomUUID()),
+    });
+    // A title with it is refused.
+    const both = await equip({ title: '早八战神', teamBadge: badge });
+    expect([both.status, reason(both)]).toStrictEqual([400, 'BADGE_NOT_HELD']);
+
+    const worn = await equip({ title: null, teamBadge: badge });
+    expect(worn.status).toBe(200);
+    expect(worn.body).toMatchObject({ wornTeamBadge: badge });
+    expect(worn.body).not.toHaveProperty('worn');
+    expect(worn.body).not.toHaveProperty('equipped');
+    expect(
+      (await call({ method: 'GET', path: '/me/titles', token: mate.token })).body,
+    ).toMatchObject({ wornTeamBadge: badge });
+    expect(
+      (
+        await call({
+          method: 'GET',
+          path: `/squads/${squad}/members/${mate.userId}/card`,
+          token: me.token,
+        })
+      ).body,
+    ).toMatchObject({ wornTeamBadge: badge });
+
+    // Beside their name on the home: its name in the reader's language, on a ticket.
+    const titleOnHome = async (language: string) => {
+      const today = await call({
+        method: 'GET',
+        path: `/squads/${squad}/today`,
+        token: me.token,
+        language,
+      });
+      return z
+        .object({
+          members: z.array(z.object({ member: z.string(), title: z.unknown().optional() })),
+        })
+        .parse(today.body)
+        .members.find(({ member }) => member === mate.userId)?.title;
+    };
+    const ticket = { shape: 'ticket', colour: badge, tone: '#F2B33D', glyph: 'lightbulb.fill' };
+    expect(await titleOnHome('en-US')).toStrictEqual({ title: 'Idea King', badge: ticket });
+    expect(await titleOnHome('zh-Hant-TW')).toStrictEqual({ title: '點子王', badge: ticket });
+
+    // Taken off with nothing chosen: no title won yet, so nothing is worn.
+    const off = await equip({ title: null });
+    expect(off.status).toBe(200);
+    expect(off.body).not.toHaveProperty('wornTeamBadge');
+    expect(await titleOnHome('zh-CN')).toBeUndefined();
+
+    // Each change is logged with the profile, the badge too.
+    const logged = await db
+      .selectFrom('profile_events')
+      .select('equipped_team_badge')
+      .where('member_id', '=', mate.userId)
+      .orderBy('id')
+      .execute();
+    expect(logged.slice(-2).map((row) => row.equipped_team_badge)).toStrictEqual([badge, null]);
   });
 });

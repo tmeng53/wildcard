@@ -48,14 +48,14 @@ private func sampleFeed() async -> (FeedStore, InMemoryFeedSource) {
     #expect(feed.characters[viewer]?.look.variants["body"] == "peach")
 }
 
-/// My run shared to no squad is on my own wall, first, and never in the squad's 动态.
-@MainActor @Test func myPrivatePostIsOnlyOnMyWall() async throws {
+/// My run only recorded (发布到动态 off) is on my own wall, first, and never in the squad's 动态.
+@MainActor @Test func myUnpostedRunIsOnlyOnMyWall() async throws {
     let (feed, source) = await sampleFeed()
-    #expect(!feed.sections.flatMap(\.posts).contains { $0.checkIn.audience.isOnlyMe })
+    #expect(!feed.sections.flatMap(\.posts).contains { !$0.checkIn.inFeed })
     let wall = try await source.myPosts(kind: nil, after: nil)
     #expect(wall.posts.count == 2)
-    #expect(wall.posts.first?.checkIn.audience.isOnlyMe == true)
-    #expect(wall.posts.last?.checkIn.audience.isOnlyMe == false)
+    #expect(wall.posts.first?.checkIn.inFeed == false)
+    #expect(wall.posts.last?.checkIn.inFeed == true)
 }
 
 /// Reactions go through the in-memory server as through the API: one each, never on my own.

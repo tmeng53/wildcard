@@ -8,6 +8,12 @@ import {
   createAiConsent,
   createPostgresConsentStore,
 } from '@wildcard/ai-consent';
+import {
+  createAiUsage,
+  createAiUsageSettings,
+  createPostgresAiUsageLedger,
+  createPostgresAiUsageSettings,
+} from '@wildcard/ai-usage';
 import { createArt, createPostgresArtStore } from '@wildcard/art';
 import {
   MemberId as CheckInMember,
@@ -16,9 +22,7 @@ import {
   createPostgresCheckInStore,
   createPostgresCommentStore,
   createPostgresReactionStore,
-  createPostgresWeekSummaryWords,
   createPostgresWeeklyPlanStore,
-  createWeekSummaryWords,
   createWeeklyPlans,
   createPostgresQuickReactions,
   createQuickReactions,
@@ -37,6 +41,7 @@ import {
   createPostgresCoachNoteDelivery,
   createPostgresCoachHiring,
   createPostgresCoachLetters,
+  createCoachReport,
   createPostgresCoachReport,
   createPostgresCoachSettings,
   createPostgresCoachStores,
@@ -50,7 +55,6 @@ import {
   createDiceLines,
   createDraftSettings,
   createPostgresDiceLines,
-  createPostgresDraftAllowance,
   createPostgresDraftSettings,
 } from '@wildcard/disclaimer-drafts';
 import {
@@ -69,7 +73,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { NEW_YORK } from '@wildcard/time-zones';
+import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -95,6 +99,7 @@ import {
   MemberId as PushMember,
 } from '@wildcard/push';
 import {
+  MemberId as SquadsMember,
   SquadId as SquadsSquad,
   createPostgresSquadStore,
   createSquads,
@@ -131,6 +136,7 @@ import {
 
 import { createAnthropicLanguageModel } from './adapters/anthropic-language-model.js';
 import { byProvider } from './adapters/language-models.js';
+import { coachUsageIn } from './flows/coach-usage.js';
 import { createOpenAICoachAgent } from './adapters/openai-coach-agent.js';
 import { createOpenAILanguageModel } from './adapters/openai-language-model.js';
 import { createMemoryRateLimit } from './adapters/memory-rate-limit.js';
@@ -146,13 +152,13 @@ import { pubSubEvents } from './adapters/pubsub-events.js';
 import { googleScheduler, jobsTokenScheduler } from './adapters/scheduler.js';
 import { createSupabaseOAuthConsent } from './adapters/supabase-oauth-consent.js';
 import { listAdminLog } from './admin-mcp/tools/admin-log.js';
+import { aiUsageTools } from './admin-mcp/tools/ai-usage.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
-import { weekSummaryWordTools } from './admin-mcp/tools/week-summary-words.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
@@ -166,7 +172,6 @@ import { minimumBuildTools } from './admin-mcp/tools/minimum-build.js';
 import { quickReactionTools } from './admin-mcp/tools/quick-reactions.js';
 import { switchTools } from './admin-mcp/tools/switches.js';
 import { campaignTools } from './admin-mcp/tools/campaigns.js';
-import { newYorkDay } from './new-york-day.js';
 import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
@@ -250,12 +255,30 @@ const providers = (options: {
     ? {}
     : { anthropic: createAnthropicLanguageModel({ apiKey: anthropicKey, ...options }) }),
 });
-const model = byProvider(providers({}), () => new DisclaimerWriterOffError());
-// The awards are written in a job nobody waits on: a longer answer, given more time.
-const awardsModel = byProvider(
-  providers({ timeoutMs: 120_000, maxOutputTokens: 16_384 }),
-  () => new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
+// Every model call is counted to the member and squad it was for, against the squad's daily AI
+// budget (Tracy, 2026-11-10). The squads module is made below; it is only asked once a call comes.
+const aiUsage = createAiUsage({
+  settings: createPostgresAiUsageSettings(db),
+  ledger: createPostgresAiUsageLedger(db),
+  timeZonesAt: (ids, at) => squadZonesAt(ids, at),
+  squadOf: async (member) => [...(await squads.squadIdsOf(SquadsMember.parse(member)))][0],
+  clock: () => new Date(),
+});
+// 请假条 drafts wait on the squad's budget: once it is spent, the app shows its dice.
+const model = aiUsage.meter(
+  byProvider(providers({}), () => new DisclaimerWriterOffError()),
+  { feature: 'disclaimer-drafts', capped: true },
 );
+// The awards are written in a job nobody waits on: a longer answer, given more time. They are
+// counted to the squad but never held back by its budget: the 战报 waits on them.
+const awardsModel = aiUsage.meter(
+  byProvider(
+    providers({ timeoutMs: 120_000, maxOutputTokens: 16_384 }),
+    () => new AwardsWriterUnavailableError({ cause: new AwardsModelMissingError() }),
+  ),
+  { feature: 'weekly-awards', capped: false },
+);
+const coachUsage = coachUsageIn(aiUsage);
 if (openaiKey === undefined && anthropicKey === undefined) {
   log.info('no language model key: AI drafts are off and weekly awards stay pending');
 }
@@ -330,12 +353,15 @@ const squads = createSquads({
   aiConsent: hasAiConsent,
 });
 // A coach's gift week runs on its squad's clock, as the coach's day does.
-const giftWeekStart = squadWeekStart((ids, moment) =>
-  squads.timeZonesAt(
+// Each squad's zone (小队时区) for the modules that name squads by plain ids.
+const squadZonesAt = async (ids: readonly string[], moment: Date) => {
+  const zones = await squads.timeZonesAt(
     ids.map((squad) => SquadsSquad.parse(squad)),
     moment,
-  ),
-);
+  );
+  return (squad: string) => zones(SquadsSquad.parse(squad));
+};
+const giftWeekStart = squadWeekStart(squadZonesAt);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
@@ -388,14 +414,14 @@ const unlockSources = (scope: Database) => ({
   // follows; a previewer also counts those in preview, on their pretend day.
   switches: async (member: string) => {
     const was = await switchesOn(scope).historyFor(member);
-    return (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+    return (id: string, at: Date) => was(id, { at, day: wallClockAt(at, NEW_YORK).day });
   },
   // A previewer keeps only what the switches as really set give them, so a preview ends clean.
   keptSwitches: async (member: string) => {
     const was = await switchesOn(scope).keptHistoryFor(member);
     return was === undefined
       ? undefined
-      : (id: string, at: Date) => was(id, { at, day: newYorkDay(at) });
+      : (id: string, at: Date) => was(id, { at, day: wallClockAt(at, NEW_YORK).day });
   },
 });
 /**
@@ -563,6 +589,7 @@ const coachWakes =
         settings: createPostgresCoachSettings(db),
         catalog: createPostgresCoachCatalog(db),
         stores: createPostgresCoachStores(db),
+        usage: coachUsage,
         transaction: postgresCoachTransaction(db),
         agent: coachAgent,
         squadWeek: coachWeek,
@@ -570,11 +597,7 @@ const coachWakes =
         hiring: createPostgresCoachHiring(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
-        timeZonesAt: (ids, moment) =>
-          squads.timeZonesAt(
-            ids.map((squad) => SquadsSquad.parse(squad)),
-            moment,
-          ),
+        timeZonesAt: squadZonesAt,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
@@ -761,9 +784,7 @@ const app = createApp({
         background,
         styles,
       })),
-    allowance: createPostgresDraftAllowance(db),
     aiConsent: hasAiConsent,
-    clock: () => new Date(),
     random: Math.random,
   }),
   push,
@@ -776,16 +797,12 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
     letters: createPostgresCoachLetters(db),
     memory: createPostgresCoachStores(db).memory,
-    usage: createPostgresCoachStores(db).usage,
+    usage: coachUsage,
     squadWeek: coachWeek,
     aiConsented: coachConsented,
     clock: () => new Date(),
     ...(coachAgent === undefined ? {} : { agent: coachAgent }),
-    timeZonesAt: (ids, moment) =>
-      squads.timeZonesAt(
-        ids.map((squad) => SquadsSquad.parse(squad)),
-        moment,
-      ),
+    timeZonesAt: squadZonesAt,
     // Every member finds the letter in 通知, to read again.
     lettered: async (letter, told) => {
       await tellAfter(db, {
@@ -807,7 +824,6 @@ const app = createApp({
     },
   }),
   coachActivity,
-  weekSummaryWords: () => createPostgresWeekSummaryWords(db).current(),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
@@ -862,12 +878,12 @@ const app = createApp({
       ...disclaimerDiceTools({
         dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
       }),
+      ...aiUsageTools({
+        settings: createAiUsageSettings({ store: createPostgresAiUsageSettings(scope) }),
+      }),
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
-      }),
-      ...weekSummaryWordTools({
-        words: createWeekSummaryWords({ store: createPostgresWeekSummaryWords(scope) }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
@@ -920,7 +936,7 @@ const app = createApp({
           hiring: createPostgresCoachHiring(scope),
           catalog: createPostgresCoachCatalog(scope),
         }),
-        report: createPostgresCoachReport(scope),
+        report: createCoachReport({ store: createPostgresCoachReport(scope), usage: coachUsage }),
         memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
         clock: () => new Date(),
       }),

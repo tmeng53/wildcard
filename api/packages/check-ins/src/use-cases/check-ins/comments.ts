@@ -2,6 +2,7 @@ import type { CheckInId, MemberId, SquadId } from '../../domain/check-in.js';
 import { MAX_MENTIONS, type Comment, type CommentId } from '../../domain/comment.js';
 import type { CommentText } from '../../domain/text.js';
 import {
+  CheckInNotFoundError,
   CommentIdConflictError,
   NotYourCommentError,
   ReplyToCoachNotFoundError,
@@ -74,6 +75,8 @@ export async function commentOnCheckIn(
   }: CommentInput,
 ): Promise<Commented> {
   const { checkIn, through } = await findVisibleCheckIn(deps, { id, viewer: member });
+  // A check-in only recorded (发布到动态 off) is no post to talk under, its author's included.
+  if (!checkIn.inFeed) throw new CheckInNotFoundError(id);
   const needTeammates = (replyTo !== undefined && replyTo !== checkIn.member) || asked.length > 0;
   const teammates = needTeammates
     ? await deps.membership.membersOfAny(through)

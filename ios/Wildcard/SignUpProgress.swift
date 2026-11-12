@@ -9,21 +9,25 @@ enum SignUpProgress {
         var version = 1
         let squad: SquadID
         let madeIt: Bool
+        /// A member back in no squad, who only joined or made one; absent in older saves.
+        var rejoining: Bool?
     }
 
     private static let key = "signUpProgress"
 
-    static func save(squad: SquadID, madeIt: Bool) {
-        guard let data = try? JSONEncoder().encode(Saved(squad: squad, madeIt: madeIt)) else { return }
+    static func save(squad: SquadID, madeIt: Bool, rejoining: Bool) {
+        guard let data = try? JSONEncoder().encode(Saved(squad: squad, madeIt: madeIt, rejoining: rejoining))
+        else { return }
         UserDefaults.standard.set(data, forKey: key)
     }
 
-    /// The squad of a sign-up that hasn't reached 上场, and whether the member made it.
-    static var saved: (squad: SquadID, madeIt: Bool)? {
+    /// The squad of a sign-up that hasn't reached 上场, whether the member made it, and whether they
+    /// were back in no squad, only joining or making one.
+    static var saved: (squad: SquadID, madeIt: Bool, rejoining: Bool)? {
         guard let data = UserDefaults.standard.data(forKey: key),
             let saved = try? JSONDecoder().decode(Saved.self, from: data), saved.version == 1
         else { return nil }
-        return (saved.squad, saved.madeIt)
+        return (saved.squad, saved.madeIt, saved.rejoining ?? false)
     }
 
     static func clear() {

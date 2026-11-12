@@ -19,7 +19,7 @@ import type { SportGlyph } from '../domain/badges.js';
 import type { PromptMeme } from '../domain/prompt.js';
 import { WeekStart } from '../domain/schedule.js';
 import { AwardsModelMissingError, AwardsWriterUnavailableError } from '../errors.js';
-import type { LanguageModel } from '@wildcard/language-model';
+import type { LanguageModel, ModelPayer } from '@wildcard/language-model';
 import { createWeeklyAwards } from './weekly-awards.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database. The
@@ -72,12 +72,12 @@ function setup(
   } = {},
 ) {
   const asked: string[] = [];
-  const settingsAsked: { model: string; instructions: string }[] = [];
+  const settingsAsked: { model: string; instructions: string; payer: ModelPayer }[] = [];
   const model: LanguageModel = {
-    answer: async ({ model, instructions, prompt, reply: shape }) => {
+    answer: async ({ model, instructions, prompt, reply: shape, payer }) => {
       const next = answers[Math.min(asked.length, answers.length - 1)];
       asked.push(prompt);
-      settingsAsked.push({ model, instructions });
+      settingsAsked.push({ model, instructions, payer });
       if (next === undefined) throw new Error('no answer set');
       return shape.parse(await next());
     },
@@ -156,6 +156,8 @@ describe('createWeeklyAwards', () => {
     const given = await awards.give({ squad, weekStart: week, members });
     // The settings' model and instructions, and the moves as the settings describe them.
     expect(settingsAsked[0]?.model).toBe('openai/gpt-6-luna');
+    // Counted to the squad, whose AI budget pays.
+    expect(settingsAsked[0]?.payer).toStrictEqual({ squad });
     expect(settingsAsked[0]?.instructions).toMatch(
       /^你在给一个朋友运动打卡 App 的小队写「本周颁奖」/u,
     );

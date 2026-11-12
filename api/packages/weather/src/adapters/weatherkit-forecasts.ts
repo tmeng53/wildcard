@@ -1,5 +1,6 @@
 import { createPrivateKey, sign, type KeyObject } from 'node:crypto';
 
+import { wallClockAt } from '@wildcard/time-zones';
 import { z } from 'zod';
 
 import type { DayWeather } from '../domain/day-weather.js';
@@ -91,7 +92,9 @@ export function createWeatherKitForecasts(
       }
       const days = DailyForecast.parse(await response.json()).forecastDaily?.days ?? [];
       const on = (wanted: string) => {
-        const found = days.find((each) => dayOn(each.forecastStart, timeZone) === wanted);
+        const found = days.find(
+          (each) => wallClockAt(new Date(each.forecastStart), timeZone).day === wanted,
+        );
         return found === undefined ? undefined : dayWeather(found);
       };
       const today = on(day);
@@ -142,17 +145,6 @@ function dayPart(part: z.infer<typeof DayPartForecast> | undefined): DayWeather[
 /** Midnight UTC of the day before `day`, which WeatherKit's `dailyStart` takes. */
 function dayBefore(day: string): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) - 24 * 60 * 60 * 1000).toISOString();
-}
-
-/** The `YYYY-MM-DD` an instant falls on, on `timeZone`'s clock. */
-function dayOn(instant: string, timeZone: string): string {
-  // en-CA writes dates as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(instant));
 }
 
 /** The ES256 JWT WeatherKit's REST API takes. */

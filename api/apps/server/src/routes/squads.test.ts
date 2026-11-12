@@ -44,7 +44,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -121,7 +120,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -168,7 +166,12 @@ async function call({
 }
 
 const create = (token: string, { id = randomUUID(), name }: { id?: string; name: unknown }) =>
-  call({ method: 'PUT', path: `/squads/${id}`, token, body: { version: 1, name } });
+  call({
+    method: 'PUT',
+    path: `/squads/${id}`,
+    token,
+    body: { version: 1, name, timeZone: 'America/New_York' },
+  });
 
 const SquadBody = z.object({
   id: z.uuid(),
@@ -177,7 +180,12 @@ const SquadBody = z.object({
   inviteCode: z.string(),
   members: z.array(z.object({ userId: z.uuid(), joinedAt: z.string() })),
 });
-const SquadListBody = z.object({ squads: z.array(SquadBody) });
+const SquadListBody = z.object({
+  squads: z.array(SquadBody),
+  lastSquad: z
+    .object({ id: z.uuid(), name: z.string(), how: z.enum(['left', 'removed']) })
+    .optional(),
+});
 
 /** A squad the member creates; its body. */
 async function newSquad(token: string, name = '早八跑团') {
@@ -247,7 +255,7 @@ describe('PUT /squads/{squadId}', () => {
     const refused = await call({
       method: 'PUT',
       path: `/squads/${randomUUID()}`,
-      body: { version: 1, name: 'a' },
+      body: { version: 1, name: 'a', timeZone: 'America/New_York' },
     });
     expect([refused.status, reason(refused)]).toStrictEqual([401, 'AUTH_TOKEN_MISSING']);
   });
@@ -337,6 +345,7 @@ describe('reading and leaving squads', () => {
     const list = await call({ method: 'GET', path: '/me/squads', token: me.token });
     expect(list.status).toBe(200);
     expect(SquadListBody.parse(list.body).squads.map(({ name }) => name)).toStrictEqual(['一']);
+    expect(SquadListBody.parse(list.body).lastSquad).toBeUndefined();
 
     const seen = await call({ method: 'GET', path: `/squads/${mine.id}`, token: friend.token });
     expect([seen.status, reason(seen)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
@@ -371,7 +380,10 @@ describe('reading and leaving squads', () => {
     });
     expect(leftAgain.status).toBe(204);
     const after = await call({ method: 'GET', path: '/me/squads', token: me.token });
-    expect(SquadListBody.parse(after.body).squads).toStrictEqual([]);
+    expect(SquadListBody.parse(after.body)).toMatchObject({
+      squads: [],
+      lastSquad: { id: mine.id, name: '一', how: 'left' },
+    });
     const gone = await call({ method: 'GET', path: `/squads/${mine.id}`, token: me.token });
     expect(reason(gone)).toBe('SQUAD_NOT_JOINED');
   });
@@ -455,6 +467,19 @@ describe('the captain’s settings', () => {
     expect(byBo.status).toBe(204);
     const seen = await call({ method: 'GET', path: `/squads/${squad.id}`, token: bo.token });
     expect(memberIds(seen.body)).toStrictEqual([ann.userId, bo.userId]);
+    const removed = await call({ method: 'GET', path: '/me/squads', token: cy.token });
+    expect(SquadListBody.parse(removed.body)).toMatchObject({
+      squads: [],
+      lastSquad: { id: squad.id, name: squad.name, how: 'removed' },
+    });
+    const elsewhere = await newSquad(cy.token, '新队');
+    const rejoined = SquadListBody.parse(
+      (await call({ method: 'GET', path: '/me/squads', token: cy.token })).body,
+    );
+    expect([rejoined.squads.map(({ id }) => id), rejoined.lastSquad]).toStrictEqual([
+      [elsewhere.id],
+      undefined,
+    ]);
 
     await call({
       method: 'DELETE',
@@ -732,7 +757,7 @@ describe('the squad’s weekly goal', () => {
       method: 'PUT',
       path: `/squads/${id}`,
       token: me.token,
-      body: { version: 1, name: '练得多', daysPerMember: 5 },
+      body: { version: 1, name: '练得多', daysPerMember: 5, timeZone: 'America/New_York' },
     });
     expect(created.status).toBe(201);
     const { inviteCode } = SquadBody.parse(created.body);
@@ -919,25 +944,15 @@ describe('the squad’s time zone', () => {
     expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
   });
 
-  it('keeps the creator’s own zone when an older build sends none', async () => {
+  it('refuses a squad made without a time zone', async () => {
     const me = await signUp();
-    const saved = await call({
+    const refused = await call({
       method: 'PUT',
-      path: '/me/profile',
+      path: `/squads/${randomUUID()}`,
       token: me.token,
-      body: { version: 1, timeZone: 'America/Los_Angeles' },
+      body: { version: 1, name: '早八跑团' },
     });
-    expect(saved.status).toBe(200);
-    const squad = await newSquad(me.token);
-    expect((await zoneOf(me.token, squad.id)).body).toMatchObject({
-      timeZone: 'America/Los_Angeles',
-    });
-    // Without a profile yet, New York, as every squad kept before.
-    const other = await signUp();
-    const plain = await newSquad(other.token);
-    expect((await zoneOf(other.token, plain.id)).body).toMatchObject({
-      timeZone: 'America/New_York',
-    });
+    expect([refused.status, reason(refused)]).toStrictEqual([400, 'REQUEST_INVALID']);
   });
 });
 

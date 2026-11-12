@@ -50,8 +50,8 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
 }
 
 @MainActor @Test func theHomeHasTheMembersOwnCheckInsForTheirWeek() async throws {
-    // The member's own week comes from their check-ins wherever they went: one kept to themselves
-    // shows up on their home, which the squad's list alone would miss.
+    // The member's own week comes from their own check-ins: one only recorded (发布到动态 off)
+    // shows up on their home, which the squad's 动态 alone would miss.
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     let shown = try await stack.squad(of: author)
@@ -62,7 +62,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     let day = try #require(today.day)
     let elsewhere = CheckIn(
         id: CheckInID(UUID()), member: author.id, day: day, createdAt: Timestamp(Date()),
-        audience: try Audience([]), entry: .healthyMeal(Meal(caption: try Caption("沙拉"))))
+        audience: try Audience([shown]), inFeed: false, entry: .healthyMeal(Meal(caption: try Caption("沙拉"))))
     _ = try await author.api.save(elsewhere)
 
     await today.load()
@@ -73,12 +73,12 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     )
 }
 
-@MainActor @Test func aWorkoutKeptToThemselvesAsLastWeeksStaysPosted() async throws {
-    // A Health workout posted as a 补打卡 a week back, to no squad: neither this week's list nor
-    // the squad's has it, yet the home must still know it went out, or it would be offered again.
+@MainActor @Test func anUnpostedWorkoutAsLastWeeksStaysPosted() async throws {
+    // A Health workout posted as a 补打卡 a week back, only recorded: neither this week's list nor
+    // the squad's 动态 has it, yet the home must still know it went out, or it would be offered again.
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
-    _ = try await stack.squad(of: author)
+    let squad = try await stack.squad(of: author)
     let directory = scratch()
     let today = store(author, directory: directory)
     await today.load()
@@ -90,7 +90,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
         summary: WorkoutSummary(durationSec: 1800))
     let backfill = CheckIn(
         id: CheckInID(UUID()), member: author.id, day: day.adding(days: -CheckIn.backfillDays), postedDay: day,
-        createdAt: Timestamp(Date()), audience: try Audience([]),
+        createdAt: Timestamp(Date()), audience: try Audience([squad]), inFeed: false,
         entry: .trained(Training(activity: .sport("run"), minutes: try WorkoutMinutes(30), workout: workout)))
     _ = try await author.api.save(backfill)
 
@@ -227,36 +227,6 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(tablet.pending.isEmpty)
 }
 
-@MainActor @Test func aTeammateReactsAndTheAuthorSeesIt() async throws {
-    let stack = try LocalStack()
-    let author = try await stack.signedInMember()
-    let mate = try await stack.signedInMember()
-    _ = try await stack.squad(of: author, mate)
-    let authors = store(author, directory: scratch())
-    await authors.load()
-    guard
-        case .posted(let saved) = try await authors.post(
-            .trained(.sport("run"), nil, PostBody(photos: [], caption: "")))
-    else {
-        Issue.record("expected posted")
-        return
-    }
-
-    let mates = store(mate, directory: scratch())
-    await mates.load()
-    try await mates.react(.heart, to: saved.id)
-    try await mates.react(try Emoji("😂"), to: saved.id)
-
-    try await authors.loadReactions(to: saved.id)
-    #expect(authors.reactions[saved.id]?.map(\.member) == [mate.id])
-    #expect(authors.reactions[saved.id]?.map(\.emoji) == [try Emoji("😂")])
-    #expect(authors.myReaction(on: saved.id) == nil)
-
-    try await mates.removeReaction(from: saved.id)
-    try await authors.loadReactions(to: saved.id)
-    #expect(authors.reactions[saved.id] == [])
-}
-
 /// Stands in for the dice, so the test sees when it answered.
 private struct Dice: DisclaimerWriter {
     func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
@@ -268,6 +238,8 @@ private struct Dice: DisclaimerWriter {
     let stack = try LocalStack()
     let author = try await stack.signedInMember()
     try await author.api.agreeToAI(copyVersion: 3)
+    // A member in no squad has no AI budget, so they'd get the dice by 429 before the key matters.
+    _ = try await stack.squad(of: author)
     // The local API runs without ANTHROPIC_API_KEY, so it answers 503.
     await #expect(throws: APIError.unavailable) {
         try await author.api.disclaimerDrafts(reason: "早上没起来", style: .funny)

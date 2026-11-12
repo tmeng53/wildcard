@@ -30,14 +30,12 @@ struct LightsFlipTests {
     }
 
     /// Sleepers wake 0.1 s apart from 0.45 s, their "z z" gone in 0.15 s, their 请假条 back once
-    /// they stand; the first one's line from 1.7 s.
+    /// they stand.
     @Test func theSquadWakesOneAfterAnother() {
         #expect([0, 1, 2].map(lit.start(ofSleeper:)) == [0.45, 0.55, 0.65])
         #expect(lit.sleep(ofSleeper: 1, at: 0.5, dozeDuration: 3.4) == 1)
         #expect(lit.sleep(ofSleeper: 1, at: 0.75, dozeDuration: 3.4) == 0)
         #expect(lit.sign(ofSleeper: 0, at: 2.9) == 0 && near(lit.sign(ofSleeper: 0, at: 3.05), 0.5))
-        #expect(!lit.showsLine(at: 1.6, hold: 1.6) && lit.showsLine(at: 1.7, hold: 1.6))
-        #expect(!lit.showsLine(at: 3.3, hold: 1.6))
     }
 
     /// Switching off, everyone dozes off together and the "z z" come back after the doze.
@@ -46,16 +44,14 @@ struct LightsFlipTests {
         #expect(dark.sleep(ofSleeper: 0, at: 3.4, dozeDuration: 3.4) == 0)
         #expect(dark.sleep(ofSleeper: 0, at: 3.7, dozeDuration: 3.4) == 1)
         #expect(dark.sign(ofSleeper: 0, at: 0) == 1 && dark.sign(ofSleeper: 0, at: 0.2) == 0)
-        #expect(!dark.showsLine(at: 2, hold: 1.6))
     }
 
-    /// Reduce Motion: a 0.2 s crossfade, no flicker, flash or line, and poses swap at once.
+    /// Reduce Motion: a 0.2 s crossfade, no flicker or flash, and poses swap at once.
     @Test func reduceMotionCrossfades() {
         let calm = LightsFlip(isOn: true, reduceMotion: true)
         #expect(near(calm.darkness(at: 0.1), 0.5) && calm.darkness(at: 0.2) == 0)
         #expect(calm.lamps(at: 0.08) == 0 && calm.flash(at: 0.2) == 0)
         #expect(calm.start(ofSleeper: 2) == 0 && calm.sign(ofSleeper: 2, at: 0) == 1)
-        #expect(!calm.showsLine(at: 2, hold: 1.6))
     }
 
     /// The night runs 23:00 to 6:00 and is named by the day it began, so the lights stay on past
