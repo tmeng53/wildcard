@@ -572,6 +572,15 @@ importers:
 
   packages/places:
     dependencies:
+      '@wildcard/errors':
+        specifier: workspace:*
+        version: link:../errors
+      '@wildcard/place-ids':
+        specifier: workspace:*
+        version: link:../place-ids
+      '@wildcard/typed-text':
+        specifier: workspace:*
+        version: link:../typed-text
       kysely:
         specifier: 0.29.7
         version: 0.29.7

@@ -6,8 +6,8 @@ import { nameText } from '@wildcard/typed-text';
 // check-ins tagged with one, the places a member saved).
 //
 // The place a member tags a 训练 or a meal with (Tracy, 2026-11-12): one they picked from Apple
-// Maps on the phone, never where the phone was. The squad sees its name and opens it in Maps;
-// the coach reads only its name.
+// Maps on the phone, or one a squad's member added, never where the phone was. The squad sees
+// its name and opens it in Maps; the coach reads only its name.
 
 /** A place's name as Apple Maps gives it: trimmed, 1 to 100 characters, one line. */
 const PlaceName = nameText({
@@ -24,6 +24,9 @@ export const Place = z
       .max(200)
       .optional()
       .meta({ description: "Apple Maps' identifier for the place, when Maps gave one." }),
+    squadPlaceId: z.uuid().optional().meta({
+      description: "The id of the place a squad's member added, when it is one (and not Maps').",
+    }),
     category: z
       .string()
       .regex(/^[A-Za-z]{1,60}$/)
@@ -35,8 +38,8 @@ export const Place = z
   .meta({
     id: 'Place',
     description:
-      "A place the member picked in Apple Maps: its name, Maps' id and category, and the " +
-      "place's own coordinates, never the phone's.",
+      "A place the member picked in Apple Maps (its name, Maps' id and category) or one their " +
+      "squad added (its id), and the place's own coordinates, never the phone's.",
   });
 export type Place = z.infer<typeof Place>;
 
@@ -52,7 +55,9 @@ export const PlaceKey = z
   )
   .brand<'PlaceKey'>()
   .meta({
-    description: "Which place: `apple:` and Apple Maps' identifier.",
+    description:
+      "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a " +
+      "squad's member added.",
     example: 'apple:I6FD7682FD36BB3BE',
   });
 export type PlaceKey = z.infer<typeof PlaceKey>;

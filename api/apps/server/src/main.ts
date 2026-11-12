@@ -73,7 +73,12 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -518,6 +523,12 @@ const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
   clock: () => new Date(),
 });
+const squadPlaces = createSquadPlaces({
+  store: createPostgresSquadPlaceStore(db),
+  // Who is in which squad is the squads module's to keep: places ask it.
+  membership: squads,
+  clock: () => new Date(),
+});
 // Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
 // places are still kept, and no one has weather.
 const weather = createWeather({
@@ -780,6 +791,7 @@ const app = createApp({
   nudges,
   placeRatings,
   savedPlaces,
+  squadPlaces,
   weather,
   feedback: feedbackInbox,
   issues: feedbackIssues,
