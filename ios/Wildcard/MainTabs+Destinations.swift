@@ -132,6 +132,7 @@ extension MainTabs {
     func closeProfilePages() {
         profile.closeDeletion()
         if !profile.isDeletionOpen { showsSettings = false }
+        profile.feedbackPage = nil
         showsSchedule = false
         wardrobe.showsShop = false
         wardrobe.editor = nil

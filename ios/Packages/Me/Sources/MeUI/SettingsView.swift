@@ -21,8 +21,6 @@ struct SettingsView: View {
     @State private var isHealthOpen = false
     @State private var isBirthdayOpen = false
     @State private var isWidgetGuideOpen = false
-    /// 意见反馈 while it is open, a fresh page each time.
-    @State private var feedback: FeedbackModel?
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -45,7 +43,7 @@ struct SettingsView: View {
                 if let health = destinations.health { HealthSettingsView(health: health) }
             }
             .navigationDestination(isPresented: feedbackOpen) {
-                if let feedback {
+                if let feedback = model.feedbackPage {
                     FeedbackView(
                         model: feedback, character: model.overview?.character, writeReview: destinations.writeReview
                     )
@@ -56,7 +54,7 @@ struct SettingsView: View {
     }
 
     private var feedbackOpen: Binding<Bool> {
-        Binding(get: { feedback != nil }, set: { if !$0 { feedback = nil } })
+        Binding(get: { model.feedbackPage != nil }, set: { if !$0 { model.feedbackPage = nil } })
     }
 
     /// 注销账号 is open; the system's back closes it as 先不注销 does.
@@ -172,7 +170,7 @@ struct SettingsView: View {
         MenuGroup(Text(copy: "关于", bundle: .module)) {
             // Also the app's 联系我们 (App Review 1.2): the page shows the support email too.
             ListRow(Text(copy: "意见反馈", bundle: .module)) {
-                feedback = FeedbackModel(service: model.feedback, app: .current, newID: UUID.init)
+                model.feedbackPage = FeedbackModel(service: model.feedback, app: .current, newID: UUID.init)
             }
             .accessibilityIdentifier("me.feedback")
             ListRow(Text(copy: "隐私政策", bundle: .module)) {
