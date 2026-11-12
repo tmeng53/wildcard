@@ -308,7 +308,7 @@ public final class ComposeModel {
         let body = PostBody(
             photos: picked, caption: line, workout: trained ? postedWorkout : nil,
             startTime: trained && workout == nil ? startTime : nil,
-            trainedWith: trained && goesToSquad ? (try? TrainedWith(pickedMates)) ?? .none : .none)
+            trainedWith: trained && goesToFeed ? (try? TrainedWith(pickedMates)) ?? .none : .none)
         return switch kind {
         case .trained: .trained(currentActivity, postedMinutes, body)
         case .healthyMeal: .healthyMeal(body)

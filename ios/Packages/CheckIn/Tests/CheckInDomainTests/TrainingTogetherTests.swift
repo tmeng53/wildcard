@@ -6,11 +6,11 @@ import Testing
 /// A squadmate's 训练 on Tuesday, posted at 10:00 in Los Angeles.
 private func training(
     by member: MemberID, _ sport: Sport = "run", start: StartTime? = nil, minutes: Int? = nil,
-    naming: [MemberID] = [], day: LocalDay = tuesday, squads: [SquadID] = [squadID]
+    naming: [MemberID] = [], day: LocalDay = tuesday, squads: [SquadID] = [squadID], inFeed: Bool = true
 ) throws -> CheckIn {
     CheckIn(
         id: CheckInID(UUID()), member: member, day: day, postedDay: day, createdAt: Timestamp(tuesdayMorning),
-        audience: try Audience(squads),
+        audience: try Audience(squads), inFeed: inFeed,
         entry: .trained(
             Training(
                 activity: .sport(sport), minutes: try minutes.map(WorkoutMinutes.init), startTime: start,
@@ -64,12 +64,13 @@ private func training(
     #expect(together.hints.map(\.startTime) == [try StartTime(hour: 9, minute: 0)])
 }
 
-@Test func otherDaysOtherSquadsMealsAndMyOwnAreNotOffered() throws {
+@Test func otherDaysOtherSquadsOffTheFeedMealsAndMyOwnAreNotOffered() throws {
     let elsewhere = SquadID(id(11))
     let home = sampleHome(checkIns: [
         try training(by: mate, day: tuesday.adding(days: -1)),
         try training(by: mate, squads: [elsewhere]),
         try training(by: mate, squads: []),
+        try training(by: mate, naming: [myID], inFeed: false),
         try training(by: myID),
         CheckIn(
             id: CheckInID(UUID()), member: resting, day: tuesday, postedDay: tuesday,

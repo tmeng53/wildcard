@@ -107,6 +107,7 @@ export async function editCheckIn(
   await checkTrainedWith(deps.membership, {
     member,
     audience: edited.audience,
+    inFeed: edited.inFeed,
     added: trainedWithOf(edited).filter((each) => !before.has(each)),
   });
   const outcome = await deps.store.update(edited);

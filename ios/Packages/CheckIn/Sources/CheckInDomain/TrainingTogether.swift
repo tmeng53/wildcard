@@ -45,14 +45,14 @@ public struct TrainingTogether: Hashable, Sendable {
 
     /// What `home` offers for a 训练 on `day` that started at `start` on the member's clock (a
     /// Health workout's start, else the start picked by hand); with no start, every squadmate who
-    /// trained that day. Only 训练 shared to the member's squad count.
+    /// trained that day. Only 训练 posted in the squad's 动态 count.
     public init(home: Home, on day: LocalDay, around start: StartTime?) {
         let mates = home.today.members.filter { $0.member != home.member }
         let ids = Set(mates.map(\.member))
         var seen = Set<MemberID>()
         var hints: [Hint] = []
         let posts = home.checkIns.reversed().filter {
-            ids.contains($0.member) && $0.day == day && $0.audience.squads.contains(home.squad.id)
+            ids.contains($0.member) && $0.day == day && $0.inFeed && $0.audience.squads.contains(home.squad.id)
         }
         for checkIn in posts {
             guard case .trained(let training) = checkIn.entry else { continue }
@@ -111,7 +111,7 @@ extension Home {
     /// in this home shared to the squad and naming the member.
     public func hint(along post: CheckInID) -> TrainingTogether.Hint? {
         guard let checkIn = checkIns.first(where: { $0.id == post }), checkIn.member != member,
-            checkIn.audience.squads.contains(squad.id), case .trained(let training) = checkIn.entry,
+            checkIn.inFeed, checkIn.audience.squads.contains(squad.id), case .trained(let training) = checkIn.entry,
             training.trainedWith.members.contains(member)
         else { return nil }
         return TrainingTogether.Hint(

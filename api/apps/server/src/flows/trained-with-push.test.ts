@@ -22,6 +22,7 @@ const profile = {
   jerseyNumber: null,
   joinedAt: new Date(0),
   equippedTitle: null,
+  equippedTeamBadge: null,
 };
 
 /** The flow with fakes: notices written once a member a post, as the unique index keeps them. */

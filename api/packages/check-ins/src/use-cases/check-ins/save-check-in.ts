@@ -149,6 +149,7 @@ async function insertCheckIn(
   await checkTrainedWith(membership, {
     member,
     audience: checkIn.audience,
+    inFeed: checkIn.inFeed,
     added: trainedWithOf(checkIn),
   });
 

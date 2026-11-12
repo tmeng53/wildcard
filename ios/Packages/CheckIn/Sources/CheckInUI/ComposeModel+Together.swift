@@ -4,19 +4,20 @@ import Contracts
 
 /// 一起练 on the compose page: the squadmates a 训练 was done with, and the hints that pick them.
 extension ComposeModel {
-    /// Whether the post goes to a squad, so 一起练 can name anyone in it: a new post while shared,
-    /// an edit of one that went to a squad.
-    var goesToSquad: Bool {
+    /// Whether the post is in the squad's 动态, so 一起练 can name anyone in it: a new post while
+    /// 发布到动态 is on, an edit of one posted there. One only recorded names no one, since the
+    /// squadmates named couldn't see it.
+    var goesToFeed: Bool {
         switch purpose {
-        case .new(let squad): squad != nil && isShared
-        case .edit(let checkIn): !checkIn.audience.isOnlyMe
+        case .new(let squad): squad != nil && inFeed
+        case .edit(let checkIn): checkIn.inFeed
         }
     }
 
     /// What 一起练 offers now: the squadmates and those who trained around the same time. None for
-    /// a post kept to the member or other than a 训练, so the row hides.
+    /// a check-in only recorded or other than a 训练, so the row hides.
     var together: TrainingTogether {
-        guard kind == .trained, goesToSquad else { return .none }
+        guard kind == .trained, goesToFeed else { return .none }
         return offer(day, workout, workout == nil ? startTime : nil)
     }
 

@@ -3465,7 +3465,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded
+            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to, or on one off the 动态 (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/400`.
             ///

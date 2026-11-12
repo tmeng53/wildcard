@@ -44,10 +44,10 @@ import Testing
         #expect(model.hasChanges)
     }
 
-    @Test func aPostKeptToMeNamesNoOne() {
+    @Test func aCheckInOnlyRecordedNamesNoOne() {
         let model = page()
         model.toggle(mate: mia)
-        model.isShared = false
+        model.inFeed = false
         if case .trained(_, _, let body) = model.draft { #expect(body.trainedWith.isEmpty) }
         #expect(model.together == .none)
     }

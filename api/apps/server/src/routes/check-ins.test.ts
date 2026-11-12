@@ -1593,7 +1593,7 @@ describe('a 训练 from Apple Health', () => {
     const id = randomUUID();
     const put = async (
       trainedWith: readonly string[],
-      { at = id, audience = [squad] }: { at?: string; audience?: string[] } = {},
+      { at = id, inFeed = true }: { at?: string; inFeed?: boolean } = {},
     ) => {
       const { status, body } = await call({
         method: 'PUT',
@@ -1603,7 +1603,8 @@ describe('a 训练 from Apple Health', () => {
           version: 1,
           day,
           createdAt,
-          audience,
+          audience: [squad],
+          inFeed,
           kind: 'trained',
           training: { sport: 'run', trainedWith },
         },
@@ -1613,8 +1614,8 @@ describe('a 训练 from Apple Health', () => {
     const refused = [400, 'TRAINED_WITH_NOT_SQUADMATE'];
     expect(await put([stranger.userId], { at: randomUUID() })).toStrictEqual(refused);
     expect(await put([me.userId], { at: randomUUID() })).toStrictEqual(refused);
-    // A post only the member sees names no one.
-    expect(await put([mia.userId], { at: randomUUID(), audience: [] })).toStrictEqual(refused);
+    // A check-in only recorded, off the squad's 动态, names no one.
+    expect(await put([mia.userId], { at: randomUUID(), inFeed: false })).toStrictEqual(refused);
     expect(await put([mia.userId, mia.userId], { at: randomUUID() })).toStrictEqual([
       400,
       'REQUEST_INVALID',

@@ -94,8 +94,8 @@ export class SquadNotJoinedError extends AppError {
 
 /**
  * Thrown for a 训练 naming someone it was done with (一起练) who isn't in a squad it is shared
- * to, or the member themselves. Tags go to squadmates only, so a post shared to no squad names
- * no one. The app offers only the squad's members: read the squad again.
+ * to, or the member themselves. Tags go to squadmates who can see it, so a check-in only
+ * recorded, off the squad's 动态, names no one. The app offers only the squad's members: read the squad again.
  */
 export class TrainedWithNotSquadmateError extends AppError {
   override readonly name = 'TrainedWithNotSquadmateError';
