@@ -88,6 +88,9 @@ squad_of() {
     call POST "/squad-invites/$invite_code/accept" "$token"
     expect 201
   done
+  # Every journey's posts are stamped $now, taken before any squad was made, and a member sees
+  # others' posts only from when they joined: so these members joined an hour before it.
+  psql "$DB_URL" -qc "update public.squad_members set joined_at = timestamptz '$now' - interval '1 hour' where squad_id = '$squad'"
 }
 
 new_id() { node -p 'crypto.randomUUID()'; }
