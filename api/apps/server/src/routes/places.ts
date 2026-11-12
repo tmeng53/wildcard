@@ -1,0 +1,303 @@
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import {
+  LocalDay,
+  MemberId,
+  Place,
+  SportKey,
+  SquadId,
+  type CheckInRecord,
+  type CheckIns,
+} from '@wildcard/check-ins';
+import { PlaceKey, Stars, type PlaceRatings } from '@wildcard/places';
+import type { Squads } from '@wildcard/squads';
+
+import { bodyVersion } from '../body-version.js';
+import {
+  byPlace,
+  detailOf,
+  keyOf,
+  summaryOf,
+  type PlaceDetail,
+  type PlaceSummary,
+} from '../flows/squad-places.js';
+import type { VerifyToken } from '../ports.js';
+import { jsonBodyFailures, problem } from '../problem.js';
+import { requireCaller, type SignedIn } from '../require-caller.js';
+import { PlaceNotFoundError } from '../errors.js';
+
+/** How far back 小队地图's 今天 looks: the app keeps the posts of the viewer's own today. */
+const RECENT_MS = 2 * 86_400_000;
+
+const placeKey = PlaceKey.meta({
+  description: "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+});
+
+const summaryFields = {
+  key: placeKey,
+  place: Place.meta({ description: 'The place as the newest post there tagged it.' }),
+  visits: z
+    .int()
+    .min(1)
+    .meta({ description: '小队来过 N 次: posts in the squad’s 动态 tagged with it.' }),
+  people: z.int().min(1).meta({ description: '来过的队友 N 人: how many people posted them.' }),
+  stars: z
+    .number()
+    .min(1)
+    .max(5)
+    .nullable()
+    .meta({
+      description:
+        '小队评分: the squad’s members’ standing scores, averaged to one decimal; null before ' +
+        'any of them gave one.',
+      example: 4.3,
+    }),
+  raters: z.int().min(0).meta({ description: 'How many of the squad’s members gave a score.' }),
+  lastAt: z.iso.datetime().meta({ description: 'When the newest post there was made, in UTC.' }),
+};
+
+const Visit = z
+  .strictObject({
+    checkIn: z.uuid(),
+    member: z.uuid().meta({ description: 'Who posted it.' }),
+    kind: z.enum(['trained', 'healthyMeal', 'cheatMeal']),
+    sport: SportKey.optional().meta({ description: 'A 训练’s sport.' }),
+    customSport: z.string().optional().meta({ description: 'A custom sport’s name.' }),
+    day: LocalDay,
+    createdAt: z.iso.datetime(),
+    key: placeKey,
+  })
+  .openapi('PlaceVisit');
+
+const SquadPlaces = z
+  .strictObject({
+    version: bodyVersion(1),
+    places: z
+      .array(z.strictObject(summaryFields).openapi('PlaceSummary'))
+      .meta({ description: '小队地图’s 常去: every place, most visited first.' }),
+    recent: z.array(Visit).meta({
+      description:
+        'Posts tagged with a place in the last two days, newest first: 小队地图’s 今天 shows ' +
+        'those of the viewer’s own today.',
+    }),
+  })
+  .openapi('SquadPlaces');
+
+const PlaceDetailView = z
+  .strictObject({
+    version: bodyVersion(1),
+    ...summaryFields,
+    myStars: Stars.nullable().meta({ description: 'The viewer’s own score; null before one.' }),
+    sports: z
+      .array(
+        z.strictObject({
+          sport: SportKey,
+          customSport: z.string().optional(),
+          count: z.int().min(1),
+        }),
+      )
+      .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
+    meals: z
+      .strictObject({
+        healthyMeal: z.int().min(0),
+        cheatMeal: z.int().min(0),
+        healthy: z.number().nullable().meta({ description: 'Rated meals’ 健康, averaged.' }),
+        tasty: z.number().nullable().meta({ description: 'Rated meals’ 好吃, averaged.' }),
+        calorieValue: z
+          .number()
+          .nullable()
+          .meta({ description: 'Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.' }),
+      })
+      .meta({ description: '大家在这里吃: meals by kind, and what rated ones scored.' }),
+    posts: z.array(Visit).meta({ description: '动态: the posts tagged with it, newest first.' }),
+  })
+  .openapi('PlaceDetail');
+
+const PlaceRatingChange = z
+  .strictObject({ version: bodyVersion(1), stars: Stars })
+  .openapi('PlaceRatingChange');
+const PlaceRatingView = z
+  .strictObject({ version: bodyVersion(1), key: placeKey, stars: Stars })
+  .openapi('PlaceRatingView');
+
+const signedInFailures = {
+  401: problem('No bearer token, or not a valid one'),
+  503: problem('Sign-in can’t be checked right now'),
+};
+
+function visitOf(record: CheckInRecord, key: PlaceKey): z.infer<typeof Visit> | undefined {
+  const base = {
+    checkIn: record.id,
+    member: record.member,
+    day: record.day,
+    createdAt: record.createdAt.toISOString(),
+    key,
+  };
+  switch (record.kind) {
+    case 'trained':
+      return {
+        ...base,
+        kind: 'trained',
+        sport: record.training.sport,
+        ...(record.training.customSport === undefined
+          ? {}
+          : { customSport: record.training.customSport }),
+      };
+    case 'healthyMeal':
+    case 'cheatMeal':
+      return { ...base, kind: record.kind };
+    case 'disclaimer':
+      return undefined;
+  }
+}
+
+const visitsOf = (records: readonly CheckInRecord[], key: PlaceKey) =>
+  records.flatMap((record) => visitOf(record, key) ?? []);
+
+function wireSummary(summary: PlaceSummary) {
+  return {
+    key: summary.key,
+    place: summary.place,
+    visits: summary.visits,
+    people: summary.people,
+    stars: summary.stars ?? null,
+    raters: summary.raters,
+    lastAt: summary.lastAt.toISOString(),
+  };
+}
+
+function wireDetail(detail: PlaceDetail): z.infer<typeof PlaceDetailView> {
+  return {
+    version: 1,
+    ...wireSummary(detail),
+    myStars: detail.myStars ?? null,
+    sports: detail.sports.map(({ sport, customSport, count }) => ({
+      sport,
+      ...(customSport === undefined ? {} : { customSport }),
+      count,
+    })),
+    meals: {
+      healthyMeal: detail.meals.healthyMeal,
+      cheatMeal: detail.meals.cheatMeal,
+      healthy: detail.meals.healthy ?? null,
+      tasty: detail.meals.tasty ?? null,
+      calorieValue: detail.meals.calorieValue ?? null,
+    },
+    posts: visitsOf(detail.posts, detail.key),
+  };
+}
+
+/**
+ * A squad's places (地点页, 小队地图) and members' scores for them. It spans modules: the
+ * check-ins keep the posts tagged with a place, the places module the scores, the squads who is
+ * in the squad now (only current members' scores count).
+ */
+export function places(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly checkIns: Pick<CheckIns, 'placedPosts'>;
+  readonly squads: Pick<Squads, 'membersOf'>;
+  readonly placeRatings: PlaceRatings;
+  readonly clock?: () => Date;
+}) {
+  const clock = deps.clock ?? (() => new Date());
+
+  const list = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/places',
+    operationId: 'listSquadPlaces',
+    summary: 'The places the squad’s posts were tagged with (小队地图)',
+    description:
+      'Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the ' +
+      'squad’s current members’.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ squadId: SquadId }) },
+    responses: {
+      200: { description: 'The places', content: { 'application/json': { schema: SquadPlaces } } },
+      400: problem('Not a valid squad id'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      ...signedInFailures,
+    },
+  });
+
+  const read = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/places/{key}',
+    operationId: 'getSquadPlace',
+    summary: 'One place’s page (地点页)',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ squadId: SquadId, key: placeKey }) },
+    responses: {
+      200: {
+        description: 'The place',
+        content: { 'application/json': { schema: PlaceDetailView } },
+      },
+      400: problem('Not a valid squad id or place'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      404: problem('No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`)'),
+      ...signedInFailures,
+    },
+  });
+
+  const rate = createRoute({
+    method: 'put',
+    path: '/me/place-ratings/{key}',
+    operationId: 'ratePlace',
+    summary: 'Give the caller’s score for a place (我的评分)',
+    description:
+      'One score a member and place, standing over any earlier one; the same again changes ' +
+      'nothing, so it is safe to repeat. Squadmates see the average over their squad.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ key: placeKey }),
+      body: { required: true, content: { 'application/json': { schema: PlaceRatingChange } } },
+    },
+    responses: {
+      200: {
+        description: 'The score stands',
+        content: { 'application/json': { schema: PlaceRatingView } },
+      },
+      400: problem('Not a valid place or score'),
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
+  return new OpenAPIHono<SignedIn>()
+    .openapi(list, async (c) => {
+      const { squadId } = c.req.valid('param');
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const posts = await deps.checkIns.placedPosts({ squad: squadId, viewer });
+      const grouped = byPlace(posts);
+      const members = await deps.squads.membersOf(squadId);
+      const scores = await deps.placeRatings.ofAll({ places: [...grouped.keys()], members });
+      const summaries = [...grouped].map(([key, each]) =>
+        summaryOf({ key, posts: each, scores: scores.get(key) ?? new Map() }),
+      );
+      summaries.sort((a, b) => b.visits - a.visits || b.lastAt.getTime() - a.lastAt.getTime());
+      const since = clock().getTime() - RECENT_MS;
+      const recent = posts.flatMap((post) => {
+        const key = keyOf(post);
+        if (key === undefined || post.createdAt.getTime() < since) return [];
+        return visitOf(post, key) ?? [];
+      });
+      return c.json({ version: 1 as const, places: summaries.map(wireSummary), recent }, 200);
+    })
+    .openapi(read, async (c) => {
+      const { squadId, key } = c.req.valid('param');
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const posts = byPlace(await deps.checkIns.placedPosts({ squad: squadId, viewer })).get(key);
+      if (posts === undefined) throw new PlaceNotFoundError(key);
+      const members = await deps.squads.membersOf(squadId);
+      const scores = await deps.placeRatings.of({ place: key, members });
+      return c.json(wireDetail(detailOf({ key, posts, scores, viewer })), 200);
+    })
+    .openapi(rate, async (c) => {
+      const { key } = c.req.valid('param');
+      const { stars } = c.req.valid('json');
+      const member = MemberId.parse(c.var.caller.userId);
+      await deps.placeRatings.rate({ member, place: key, stars });
+      return c.json({ version: 1 as const, key, stars }, 200);
+    });
+}

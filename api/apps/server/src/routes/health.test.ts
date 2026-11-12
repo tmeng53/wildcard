@@ -23,6 +23,7 @@ import {
   aiConsentOn,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
   weatherOn,
   pushOn,
 } from '../test-kit/local-supabase.js';
@@ -103,6 +104,7 @@ async function getHealth(db: Database) {
     ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    placeRatings: placeRatingsOn(db),
     weather: weatherOn(db),
     log: createLog((line) => lines.push(line)),
     jobs: noJobs,
@@ -201,6 +203,7 @@ describe('an unknown route', () => {
       ...unusedFeedback,
       aiConsent: aiConsentOn(db),
       nudges: nudgesOn(db),
+      placeRatings: placeRatingsOn(db),
       weather: weatherOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,

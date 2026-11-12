@@ -41,6 +41,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
   weatherOn,
   pushOn,
   signUp,
@@ -148,6 +149,7 @@ const deps = {
   publicRoutes: unlimitedPublicRoutes,
   aiConsent: aiConsentOn(db),
   nudges,
+  placeRatings: placeRatingsOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
 };
