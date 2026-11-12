@@ -115,6 +115,12 @@ export interface CoachWakes {
     readonly squads: readonly SquadId[];
   }): Promise<void>;
   /**
+   * Has the squad's coach, if it has one, welcome a member who just joined it, now (Tracy,
+   * 2026-11-12): queues the member's welcome and runs the squad's waiting wakes. Does nothing
+   * while coaching is off. What doesn't finish now, the next `run` does.
+   */
+  welcome(input: { readonly squad: SquadId; readonly member: string }): Promise<void>;
+  /**
    * For testing a prompt (Tracy, 2026-11-08): runs today's daily wake of the member's squad now,
    * for that member alone, and says what the coach would write and give, saving and sending
    * nothing; only its tokens are recorded, against the squad's caps, which it keeps to like any
@@ -185,6 +191,8 @@ export interface CoachWakesDependencies {
   readonly replied: CoachReplied;
   /** Told each answer to a member's reply once it is saved; the server tells that member. */
   readonly answered: CoachAnswered;
+  /** Told each welcome once it is saved, delivered already; the server tells the new member. */
+  readonly welcomed: CoachWelcomed;
   /** Of these members, the ones who keep the coach's messages on: only they get a morning note. */
   readonly wantNotes: (members: readonly string[]) => Promise<readonly string[]>;
   readonly gifting: CoachGifting;
@@ -203,6 +211,16 @@ export type CoachAnswered = (answer: {
   readonly text: string;
   /** Whom it @s, by member id: the server tells them too. */
   readonly mentions: readonly string[];
+}) => Promise<void>;
+
+/** A welcome the coach just saved for a member who joined its squad: a note only they read. */
+export type CoachWelcomed = (welcome: {
+  readonly squad: SquadId;
+  readonly member: string;
+  readonly coach: CoachId;
+  readonly note: number;
+  readonly day: string;
+  readonly text: string;
 }) => Promise<void>;
 
 /** A reply the coach just saved to a check-in: its line, its emoji or both. */
@@ -281,6 +299,19 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       await drain(deps, { squads, hired, coaches, settings, now });
     },
 
+    welcome: async ({ squad, member }) => {
+      const now = deps.clock();
+      const settings = await deps.settings.current();
+      if (!settings.coaching) return;
+      const hired = await deps.hiring.hired();
+      if (!hired.has(squad)) return;
+      // The day on the squad's clock, as its daily wake counts days.
+      const { day } = wallClockAt(now, (await deps.timeZonesAt([squad], now))(squad));
+      await deps.stores.wakes.enqueue([{ squad, reason: { kind: 'joined', member, day } }], now);
+      const coaches = new Map((await deps.catalog.list()).map((each) => [each.id, each]));
+      await drain(deps, { squads: [squad], hired, coaches, settings, now });
+    },
+
     preview: async (input) => previewDaily(deps, input),
   };
 }
@@ -322,7 +353,8 @@ async function previewDaily(
     ? note !== undefined &&
       reads.length > 0 &&
       run.ok &&
-      (await deps.stores.memberNotes.save({ squad, member, coach: coach.id, day, ...note }))
+      (await deps.stores.memberNotes.save({ squad, member, coach: coach.id, day, ...note })) !==
+        undefined
     : undefined;
   const giftable = (
     await deps.gifting.options({ squad, members: await deps.aiConsented([member]) })
@@ -416,7 +448,7 @@ async function wakeWeek(
   { wake, now }: { readonly wake: NewWake; readonly now: Date },
 ): Promise<SquadWeek | undefined> {
   const { reason } = wake;
-  if (reason.kind === 'daily' || reason.kind === 'dream') {
+  if (reason.kind === 'daily' || reason.kind === 'dream' || reason.kind === 'joined') {
     return weekOf(deps, { squad: wake.squad, weekStart: mondayOf(reason.day) });
   }
   // A check-in may count for a day up to a week before it was posted (补打卡), so its week may
@@ -485,6 +517,14 @@ async function think(
   const week = await wakeWeek(deps, { wake, now });
   // Nothing to wake for: the check-in went, is no longer shared, or its week is over.
   if (week === undefined) return undefined;
+  // A welcome goes only to a member still in the squad who agreed to AI use and keeps the
+  // coach's messages on, as a morning note does.
+  const joiner = wake.reason.kind === 'joined' ? wake.reason.member : undefined;
+  const welcomes =
+    joiner !== undefined && week.members.some(({ member }) => member === joiner)
+      ? await noteReaders(deps, [joiner])
+      : [];
+  if (joiner !== undefined && welcomes.length === 0) return undefined;
   const roster = rosterOf(week);
   // The files as the model reads them, by stored path, with members by their names now.
   const stored = new Map(
@@ -531,10 +571,10 @@ async function think(
           only,
         ),
       )
-    : [];
-  // Whose pages the wake reads: everyone's on the squad's own wakes (the day's, the dream),
-  // else only the people under the check-in, so a line to one never brings up another's things
-  // (Tracy, 2026-11-12).
+    : welcomes;
+  // Whose pages the wake reads: everyone's on the squad's own wakes (the day's, the dream, a
+  // welcome), else only the people under the check-in, so a line to one never brings up
+  // another's things (Tracy, 2026-11-12).
   const about = aboutWhom(week, wake.reason);
   const files = new Map(
     shownPaths({ roster, coach: coach.id }).flatMap((path) => {
@@ -544,11 +584,8 @@ async function think(
       return [[path, at === undefined ? undefined : draft.files.get(at)] as const];
     }),
   );
-  // The day the wake is for: the daily wake's own, or the squad's today on its own clock.
-  const day =
-    wake.reason.kind === 'daily' || wake.reason.kind === 'dream'
-      ? wake.reason.day
-      : wallClockAt(now, zone).day;
+  // The day the wake is for: its own, or the squad's today on its own clock.
+  const day = 'day' in wake.reason ? wake.reason.day : wallClockAt(now, zone).day;
   // Who may get a gift today: members who agreed to AI use and got none this week.
   const gifting = daily
     ? await deps.gifting.options({
@@ -600,14 +637,14 @@ async function think(
           })
         : [],
     talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
-    ...(wake.reason.kind === 'daily'
+    ...(wake.reason.kind === 'daily' || wake.reason.kind === 'joined'
       ? {
           noteTo: await briefsOf(deps, {
             squad: wake.squad,
             week,
             roster,
             members: noteTo,
-            day: wake.reason.day,
+            day,
           }),
         }
       : {}),
@@ -721,7 +758,8 @@ async function runWake(
       return saved;
     });
     // After the save, and never undoing it: telling the member is the caller's to log if it fails.
-    const { reply, answer } = saved;
+    const { reply, answer, welcome } = saved;
+    if (welcome !== undefined) await deps.welcomed(welcome).catch(() => undefined);
     if (reply !== undefined && author !== undefined) {
       await deps.replied({ ...reply, author }).catch(() => undefined);
     }
@@ -885,9 +923,7 @@ function photosOf(
   photoUrls: CoachPhotoUrls,
   { week, wake }: { readonly week: SquadWeek; readonly wake: NewWake },
 ): { readonly photos?: () => Promise<readonly string[]> } {
-  if (wake.reason.kind === 'daily' || wake.reason.kind === 'dream') {
-    return {};
-  }
+  if (wake.reason.kind !== 'checkIn' && wake.reason.kind !== 'comment') return {};
   const { checkIn } = wake.reason;
   const paths = week.checkIns.find(({ id }) => id === checkIn)?.photos ?? [];
   return paths.length === 0 ? {} : { photos: () => photoUrls(paths) };
@@ -922,6 +958,7 @@ async function saveDraft(
 ): Promise<{
   readonly reply?: Omit<Parameters<CoachReplied>[0], 'author'>;
   readonly answer?: Omit<Parameters<CoachAnswered>[0], 'commenter'>;
+  readonly welcome?: Parameters<CoachWelcomed>[0];
 }> {
   const files = [...draft.changed]
     .map((path) => ({ path, body: draft.files.get(path) ?? '' }))
@@ -949,6 +986,25 @@ async function saveDraft(
         wake: wake.id,
       });
     }
+  }
+  if (wake.reason.kind === 'joined') {
+    const { member, day } = wake.reason;
+    const note = draft.memberNotes.get(member);
+    if (note === undefined) return {};
+    // Delivered as it is saved: the member just joined, so it reaches them now, not the next
+    // morning.
+    const id = await stores.memberNotes.save({
+      squad,
+      member,
+      coach: coach.id,
+      day,
+      text: note.text,
+      wake: wake.id,
+      deliveredNow: true,
+    });
+    return id === undefined
+      ? {}
+      : { welcome: { squad, member, coach: coach.id, note: id, day, text: note.text } };
   }
   if (wake.reason.kind === 'checkIn' && draft.challengeDone && challenge !== undefined) {
     await stores.memberNotes.complete({ ...challenge, by: 'coach' });
@@ -1020,10 +1076,19 @@ async function talksOf(
     talks.push({
       checkIn,
       ...(reply?.coach === coach.id && reply.text !== undefined ? { reply: reply.text } : {}),
-      said: lately.flatMap(({ id, member, text }) => {
+      said: lately.flatMap(({ id, member, text, toCoach, mentionsCoach, replyTo, mentions }) => {
         const answer = answers.get(id);
         return [
-          { member, text },
+          {
+            member,
+            text,
+            to: {
+              ...(toCoach === undefined ? {} : { toCoach }),
+              ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
+              ...(replyTo === undefined ? {} : { replyTo }),
+              ...(mentions === undefined ? {} : { mentions }),
+            },
+          },
           ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
         ];
       }),
@@ -1148,6 +1213,8 @@ function saidOf({
                   coach: nameOf(to),
                 },
               }),
+          ...(comment.replyTo === undefined ? {} : { replyTo: comment.replyTo }),
+          ...(comment.mentions === undefined ? {} : { mentions: comment.mentions }),
           ...(comment.id === answering ? { answering: true } : {}),
         },
         ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
@@ -1168,8 +1235,8 @@ async function noteReaders(
 /**
  * The members a check-in's or reply's wake is about, whose pages it reads: the check-in's author
  * and everyone who commented under it. Someone only @-ed there is left out; the model can still
- * write to their page by name. `undefined` for the squad's own wakes (the day's, the
- * dream), which read every page.
+ * write to their page by name. `undefined` for the squad's own wakes (the day's, the dream, a
+ * welcome), which read every page.
  */
 function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string> | undefined {
   if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
@@ -1178,7 +1245,10 @@ function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string>
   return new Set([checkIn.member, ...checkIn.comments.map(({ member }) => member)]);
 }
 
-/** Whom a line on this wake answers: the check-in's author, or the member who wrote to the coach. */
+/**
+ * Whom a line on this wake is for: the check-in's author, the member who wrote to the coach, or
+ * the member it welcomes.
+ */
 function addresseeOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
   if (reason.kind === 'checkIn') {
     return week.checkIns.find(({ id }) => id === reason.checkIn)?.member;
@@ -1188,5 +1258,6 @@ function addresseeOf(week: SquadWeek, reason: Wake['reason']): string | undefine
       .find(({ id }) => id === reason.checkIn)
       ?.comments.find(({ id }) => id === reason.comment)?.member;
   }
+  if (reason.kind === 'joined') return reason.member;
   return undefined;
 }

@@ -91,12 +91,14 @@ export function coachSquadWeek(deps: {
           .toSorted((a, b) => a.reactedAt.getTime() - b.reactedAt.getTime())
           .map(({ member }) => member),
         comments: (week.comments.get(record.id) ?? []).map(
-          ({ id, member, text, commentedAt, replyToCoach, mentionsCoach }) => ({
+          ({ id, member, text, commentedAt, replyTo, replyToCoach, mentions, mentionsCoach }) => ({
             id,
             member,
             text,
             at: commentedAt,
+            ...(replyTo === undefined ? {} : { replyTo }),
             ...(replyToCoach === undefined ? {} : { toCoach: replyToCoach }),
+            ...(mentions === undefined ? {} : { mentions }),
             ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
           }),
         ),

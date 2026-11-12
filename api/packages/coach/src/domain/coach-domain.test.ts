@@ -13,7 +13,7 @@ import {
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
+import { instructionsOf, NOTE_LIMIT, saidLines, taskOf } from './prompt.js';
 import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -74,6 +74,35 @@ describe('the squad’s week, as the model reads it', () => {
       ].join('\n'),
     );
     expect(weekText(week)).not.toContain(mia);
+  });
+
+  it('says whom each comment replies to and @s, a teammate or the coach', () => {
+    const roster = rosterOf(week);
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    const comments = [
+      { id: 'k1', member: leo, text: '强', at: new Date(0) },
+      { id: 'k2', member: mia, text: '你也来', at: new Date(0), replyTo: leo },
+      { id: 'k3', member: leo, text: '看', at: new Date(0), mentions: [mia], mentionsCoach: 'mao' },
+      { id: 'k4', member: mia, text: '谢谢', at: new Date(0), toCoach: 'mao' },
+    ];
+    expect(checkInLine({ ...first, reactedBy: [], comments }, roster)).toBe(
+      '10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 评论：队员2「强」；队员1（回复队员2）「你也来」；队员2（@队员1，@教练）「看」；队员1（回复教练）「谢谢」',
+    );
+    expect(
+      saidLines(
+        [
+          { by: { member: mia }, text: '你也来', replyTo: leo },
+          {
+            by: { member: leo },
+            text: '看',
+            mentions: [mia],
+            to: { kind: 'mention', coach: '你' },
+          },
+        ],
+        roster,
+      ),
+    ).toStrictEqual(['- 队员1（回复队员2）：「你也来」', '- 队员2（@队员1，@你）：「看」']);
   });
 
   it('calls a planned rest 计划休息, not a 请假条', () => {
@@ -355,7 +384,7 @@ describe('when the coach wakes', () => {
         // Who wrote the line to answer comes first: here not the post's author.
         '队员1回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
         // Who is who, with the nicknames it calls people by, so it never guesses a name.
-        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2',
+        '谁是谁：队员1「米亚」、队员2',
         // Everything said under the post, another coach's lines too, so nothing is hidden.
         '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
         // The time now, so an old @ isn't taken for one just written.
@@ -451,12 +480,12 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '新的一天：2026-11-01，周日。',
-        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2',
+        '谁是谁：队员1「米亚」、队员2',
         '过去一天没人在打卡下面和你说话。',
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
-        // What it wrote lately, and not to write the same shape again.
-        '你最近写过：\n- 2026-10-31：周末也要动一动\n今天这句跟这些都不一样：别用一样的开头、结尾和说法。',
+        // What it wrote lately.
+        '你最近写过：\n- 2026-10-31：周末也要动一动',
         // The 战术板 in the squad's language: Simplified Chinese until the week says another.
         '战术板：用简体中文写。',
         '今天没有要写便条的人。',
@@ -538,7 +567,7 @@ describe('when the coach wakes', () => {
         .at(-1),
     ).toBe(
       [
-        '今天给这些人各写一张便条，每张只说这个人自己的事：',
+        '今天给这些人各写一张便条：',
         '- 队员1：本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息；这周的饮食小目标：喝够水、少吃外卖；这周已经练了 2 天；这周发过的：周一游泳 45 分钟、健康餐，周三力量；当地今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C。',
         '- 队员2：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息；这周没定饮食小目标；这周已经练了 0 天；这周还没发过动态。',
         '- 队员3：这周已经练了 1 天；当地今天晴，-2–5°C。',
@@ -598,7 +627,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁（说话时叫昵称）：队员1「米亚」、队员2\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁：队员1「米亚」、队员2\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -610,7 +639,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁（说话时叫昵称）：队员1「米亚」、队员2\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁：队员1「米亚」、队员2\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
   });
 
@@ -645,7 +674,7 @@ describe('when the coach wakes', () => {
     expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
     expect(daily?.at(-1)).toBe(
       [
-        '今天给这些人各写一张便条，每张只说这个人自己的事：',
+        '今天给这些人各写一张便条：',
         '- 队员1：这周已经练了 1 天。 用繁體中文寫，照台灣的說法。',
         '- 队员2：这周已经练了 0 天。 Write in English.',
       ].join('\n'),

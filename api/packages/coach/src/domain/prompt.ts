@@ -12,12 +12,14 @@ import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
+  addressedWords,
   checkInLine,
   languageOf,
   rosterOf,
   rosterText,
   type SquadWeek,
   type WeekCheckIn,
+  type WeekComment,
 } from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
@@ -79,6 +81,10 @@ export interface CoachThread {
     readonly when?: string;
     /** Which coach a member's comment replies to or @s, by its name, `你` for this one. */
     readonly to?: { readonly kind: 'reply' | 'mention'; readonly coach: string };
+    /** The teammate a member's comment replies to, by member id. */
+    readonly replyTo?: string;
+    /** The teammates a member's comment @s, by member id. */
+    readonly mentions?: readonly string[];
     /** The comment this wake answers. */
     readonly answering?: boolean;
   }[];
@@ -92,15 +98,22 @@ export function saidLines(
   said: CoachThread['said'],
   roster: ReadonlyMap<string, string>,
 ): string[] {
-  return said.map(({ by, text, when, to, answering }) => {
+  return said.map(({ by, text, when, to, replyTo, mentions, answering }) => {
     const who =
       by === 'you'
         ? '你'
         : 'member' in by
           ? (roster.get(by.member) ?? '队员')
           : `${by.coach}（教练）`;
-    const toWhom =
-      to === undefined ? '' : to.kind === 'reply' ? `（回复${to.coach}）` : `（@${to.coach}）`;
+    const toWhom = addressedWords(
+      {
+        ...(to?.kind === 'reply' ? { toCoach: to.coach } : {}),
+        ...(to?.kind === 'mention' ? { mentionsCoach: to.coach } : {}),
+        ...(replyTo === undefined ? {} : { replyTo }),
+        ...(mentions === undefined ? {} : { mentions }),
+      },
+      { roster, coach: (coach) => coach },
+    );
     return `- ${when === undefined ? '' : `${when} `}${who}${toWhom}：「${text}」${answering === true ? '（要回的这句）' : ''}`;
   });
 }
@@ -115,6 +128,8 @@ export interface DayTalk {
     /** The member who wrote it, or `undefined` for the coach. */
     readonly member: string | undefined;
     readonly text: string;
+    /** Whom a member's comment replies to or @s. */
+    readonly to?: Pick<WeekComment, 'toCoach' | 'mentionsCoach' | 'replyTo' | 'mentions'>;
   }[];
 }
 
@@ -163,7 +178,7 @@ export function taskOf({
   readonly recentEmoji?: readonly string[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
-  /** On a daily wake, who to write a morning note to, with their day's plan. */
+  /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
   readonly yesterday?: YesterdayFacts;
@@ -233,6 +248,19 @@ export function taskOf({
     ].join('\n\n');
   }
   const roster = rosterOf(week);
+  if (reason.kind === 'joined') {
+    const name = roster.get(reason.member);
+    const brief = noteTo.find((each) => each.name === name);
+    if (name === undefined || brief === undefined) return undefined;
+    return [
+      `${name}刚加入小队，今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
+      whoIsWho,
+      briefLine(brief),
+      ...occasion,
+      filesLine,
+      WELCOME,
+    ].join('\n\n');
+  }
   if (reason.kind === 'dream') {
     // Nothing new to learn from: the memory stays as it is, and the night costs nothing.
     if (
@@ -254,11 +282,11 @@ export function taskOf({
   const notes =
     recentNotes.length === 0
       ? '你还没在战术板上写过。'
-      : `你最近写过：\n${recentNotes.map(({ day, text }) => `- ${day}：${text}`).join('\n')}\n今天这句跟这些都不一样：别用一样的开头、结尾和说法。`;
+      : `你最近写过：\n${recentNotes.map(({ day, text }) => `- ${day}：${text}`).join('\n')}`;
   const noteLine =
     noteTo.length === 0
       ? '今天没有要写便条的人。'
-      : `今天给这些人各写一张便条，每张只说这个人自己的事：\n${noteTo.map(briefLine).join('\n')}`;
+      : `今天给这些人各写一张便条：\n${noteTo.map(briefLine).join('\n')}`;
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
     ...occasion,
@@ -272,6 +300,12 @@ export function taskOf({
     ...giftBlock(gifting, roster),
   ].join('\n\n');
 }
+
+/**
+ * What a welcome asks (Tracy, 2026-11-12: 让他给新人介绍自己 然后欢迎新人): one note, no
+ * challenge, since a newcomer gets theirs with the next morning's note.
+ */
+const WELCOME = '给他写一张便条（note_to）：先介绍你自己，再欢迎他。';
 
 /** The fact a coach hired back is told on its first wake since; what it says is its own. */
 const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请回来了。';
@@ -359,8 +393,8 @@ function talksBlock(talks: readonly DayTalk[], roster: ReadonlyMap<string, strin
       `- ${checkInLine({ ...checkIn, comments: [] }, roster)}`,
       ...(reply === undefined ? [] : [`  你：「${reply}」`]),
       ...said.map(
-        ({ member, text }) =>
-          `  ${member === undefined ? '你' : (roster.get(member) ?? '队员')}：「${text}」`,
+        ({ member, text, to }) =>
+          `  ${member === undefined ? '你' : `${roster.get(member) ?? '队员'}${to === undefined ? '' : addressedWords(to, { roster })}`}：「${text}」`,
       ),
     ].join('\n'),
   );

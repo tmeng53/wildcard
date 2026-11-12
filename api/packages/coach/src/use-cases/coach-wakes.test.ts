@@ -50,6 +50,7 @@ import {
   type CoachAnswered,
   type CoachReplied,
   type CoachWakesDependencies,
+  type CoachWelcomed,
 } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
@@ -226,6 +227,7 @@ function wakes(
     consented,
     replied,
     answered,
+    welcomed,
     photoUrls,
     memberFacts,
     wantNotes,
@@ -240,6 +242,7 @@ function wakes(
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
     readonly answered?: CoachAnswered;
+    readonly welcomed?: CoachWelcomed;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
     readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
@@ -272,6 +275,7 @@ function wakes(
     ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
+    ...(welcomed === undefined ? {} : { welcomed }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
     ...(wantNotes === undefined ? {} : { wantNotes }),
@@ -294,6 +298,7 @@ const quietPorts = {
   occasions: () => Promise.resolve([]),
   replied: () => Promise.resolve(),
   answered: () => Promise.resolve(),
+  welcomed: () => Promise.resolve(),
   wantNotes: (members) => Promise.resolve(members),
   gifting: {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
@@ -381,9 +386,7 @@ describe('the coach', () => {
 
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
-      expect(daily?.task).toContain(
-        '今天给这些人各写一张便条，每张只说这个人自己的事：\n- 队员1：',
-      );
+      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
       expect(daily?.task).not.toContain('- 队员2：这周');
       expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
     });
@@ -500,7 +503,7 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条，每张只说这个人自己的事：\n- 队员1：这周已经练了 1 天；这周发过的：周日跑步。 用简体中文写。\n- 队员2：这周已经练了 0 天；这周还没发过动态。 用简体中文写。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天；这周发过的：周日跑步。 用简体中文写。\n- 队员2：这周已经练了 0 天；这周还没发过动态。 用简体中文写。',
       );
       // With yesterday's posts, here none.
       expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
@@ -914,6 +917,85 @@ describe('the coach', () => {
     });
   });
 
+  it('welcomes a member who joins at once, introducing itself in a note only they read', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, leo } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('刚加入小队')
+          ? [{ tool: 'note_to', input: { member: '队员2', text: '我是小混，欢迎你来' } }]
+          : [],
+      );
+      const told: Parameters<CoachWelcomed>[0][] = [];
+      const welcomed: CoachWelcomed = (welcome) => {
+        told.push(welcome);
+        return Promise.resolve();
+      };
+      const coach = wakes(fixture, { agent, welcomed, at: now });
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.task).toContain('队员2刚加入小队，今天是 2026-11-01，周日。');
+      expect(runs[0]?.task).toContain('给他写一张便条（note_to）：先介绍你自己，再欢迎他。');
+      // Only the note: no 战术板, no gift, no reply.
+      expect(runs[0]?.tools).toContain('note_to');
+      expect(runs[0]?.tools).not.toContain('post_note');
+      expect(runs[0]?.tools).not.toContain('reply');
+      expect(runs[0]?.answers).toStrictEqual(['便条写好了，给 队员2。']);
+      const notes = await sql<{ id: string; challenge_title: string | null; delivered: boolean }>`
+        select n.id, n.challenge_title, d.note_id is not null as delivered
+        from public.coach_member_notes n
+        left join public.coach_member_note_deliveries d on d.note_id = n.id
+        where n.member_id = ${leo}`.execute(trx);
+      expect(
+        notes.rows.map(({ challenge_title, delivered }) => ({ challenge_title, delivered })),
+      ).toStrictEqual([{ challenge_title: null, delivered: true }]);
+      expect(told).toStrictEqual([
+        {
+          squad,
+          member: leo,
+          coach: 'xiaohun',
+          note: Number(notes.rows[0]?.id),
+          day: '2026-11-01',
+          text: '我是小混，欢迎你来',
+        },
+      ]);
+      // Delivered already, so the morning delivery never pushes it.
+      const delivery = createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(trx) });
+      expect((await delivery.waiting(now)).filter(({ member }) => member === leo)).toStrictEqual(
+        [],
+      );
+      // Joining again the same day isn't welcomed twice.
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+      // A member whose account went before the welcome was queued gets none, and nothing throws.
+      await coach.welcome({ squad, member: randomUUID() });
+      expect(runs).toHaveLength(1);
+    });
+  });
+
+  it('welcomes no one who hasn’t agreed to AI use, nor while coaching is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent, consented: [mia] }).welcome({ squad, member: leo });
+      expect(runs).toHaveLength(0);
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { coaching: false },
+        MemberId.parse(mia),
+      );
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).welcome({
+        squad,
+        member: leo,
+      });
+      expect(runs).toHaveLength(0);
+      const queued = await sql<{ n: number }>`
+        select count(*)::int as n from public.coach_wakes where squad_id = ${squad} and reason = 'joined'`.execute(
+        trx,
+      );
+      // The first was queued and let go; none while coaching is off.
+      expect(queued.rows[0]?.n).toBe(1);
+    });
+  });
+
   it('answers an @ of it at once, even where it said nothing yet, and the job catches a missed one', async () => {
     await rolledBack(async (fixture) => {
       const { squad, leo, checkIn } = fixture;
@@ -1134,7 +1216,7 @@ describe('the coach', () => {
         '过去一天打卡下面的对话（先后顺序）：\n- 11-01 周日 队员1 训练 跑步',
       );
       expect(runs.at(-1)?.task).toContain(
-        '  你：「周日也跑？」\n  队员2：「你也跑吗」\n  你：「你也来跑」\n  队员1：「那你喊大声点」\n  你：「喊破嗓子」',
+        '  你：「周日也跑？」\n  队员2（回复教练）：「你也跑吗」\n  你：「你也来跑」\n  队员1（回复教练）：「那你喊大声点」\n  你：「喊破嗓子」',
       );
       const activity = await createCoachActivity({
         store: createPostgresCoachActivity(trx),
@@ -1827,7 +1909,7 @@ describe('the coach', () => {
       expect(daily?.task).not.toContain('没同意的人');
       // Only the consented member gets a note.
       expect(daily?.task).toContain(
-        '今天给这些人各写一张便条，每张只说这个人自己的事：\n- 队员1：这周已经练了 0 天；这周还没发过动态。',
+        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天；这周还没发过动态。',
       );
       expect(daily?.task).not.toContain('- 队员2：');
     });
@@ -2125,9 +2207,7 @@ describe('the coach', () => {
       expect(onCheckIn).not.toContain('people/队员2.md');
       expect(onCheckIn).not.toContain('冰淇淋');
       // Who is who, with nicknames, so it never guesses a name.
-      expect(onCheckIn?.split('\n\n')).toContain(
-        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2、队员3「安」',
-      );
+      expect(onCheckIn?.split('\n\n')).toContain('谁是谁：队员1「米亚」、队员2、队员3「安」');
       // The day's wake is the squad's: every page.
       const daily = runs.find(({ task }) => task.startsWith('新的一天'))?.task;
       expect(daily).toContain('【people/队员3.md】\n昨晚吃了冰淇淋');

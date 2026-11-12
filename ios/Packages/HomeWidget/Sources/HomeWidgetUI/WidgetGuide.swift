@@ -51,8 +51,8 @@ public struct WidgetGuide: View {
     private var previews: some View {
         VStack(spacing: Space.s) {
             Group {
-                scaled(.small) { WeekWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
-                scaled(.medium) { SquadWidget(board: SampleBoard.board(on: day)) { _ in PostWorkoutLabel() } }
+                scaled(.small) { WeekWidget(board: SampleBoard.board(on: day)) }
+                scaled(.medium) { SquadWidget(board: SampleBoard.board(on: day)) }
             }
             // The widgets always wear the gym's colours on the home screen, whatever the squad's scene.
             .environment(\.sceneTheme, .gym)

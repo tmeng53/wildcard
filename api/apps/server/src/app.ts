@@ -197,7 +197,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', location(deps));
-  app.route('/', squads(deps));
+  app.route('/', squads({ ...deps, publish }));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(
     '/',
