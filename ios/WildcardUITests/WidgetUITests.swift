@@ -25,18 +25,17 @@ final class WidgetUITests: XCTestCase {
         keepScreenshot(named: "70-widgets-schedule-en")
     }
 
-    /// 本周出赛表's tap opens 出赛表, in 我, from the app on the sample squad.
-    func testScheduleWidgetOpensTheSchedule() throws {
+    /// 本周出赛表's tap opens 出赛表, in 我, from the app on the sample squad, opened from cold with
+    /// the widget's link as a tap on the widget opens it.
+    func testScheduleWidgetOpensTheSchedule() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-widget-link", "wildcard://widget/schedule",
         ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        let home = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
-        XCTAssertTrue(home.waitForExistence(timeout: Self.wait), "今天 didn't open")
-        app.open(try XCTUnwrap(URL(string: "wildcard://widget/schedule")))
         let poster = app.descendants(matching: .any).matching(identifier: "schedule.poster").firstMatch
         XCTAssertTrue(poster.waitForExistence(timeout: Self.wait), "the widget didn't open 出赛表")
     }

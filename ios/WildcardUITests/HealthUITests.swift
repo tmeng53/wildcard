@@ -146,14 +146,12 @@ final class HealthUITests: XCTestCase {
 
     /// A home screen widget's 打卡 on a workout opens the app on the 训练 page started from it,
     /// as the home's card does, and posts nothing by itself: here the swim, not the newest, so the
-    /// page follows the widget's workout.
-    func testWidgetCapsuleOpensThePrefilledTraining() throws {
-        let app = launch()
-        let card = app.descendants(matching: .any).matching(identifier: "today.health").firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "no Apple Health card on 今天")
-        let link = try XCTUnwrap(
-            URL(string: "wildcard://widget/check-in?provider=apple_health&workout=sample-swim"))
-        app.open(link)
+    /// page follows the widget's workout. The app opens from cold with the widget's link, as a tap
+    /// on the widget opens it, once the home and Health are read.
+    func testWidgetCapsuleOpensThePrefilledTraining() {
+        let app = launch(extra: [
+            "-widget-link", "wildcard://widget/check-in?provider=apple_health&workout=sample-swim",
+        ])
         let score = app.descendants(matching: .any).matching(identifier: "compose.score").firstMatch
         XCTAssertTrue(score.waitForExistence(timeout: Self.wait), "the widget's 打卡 didn't open the 训练 page")
         XCTAssertTrue(app.buttons["compose.health.sample-swim"].isSelected, "the page didn't start from the swim")
