@@ -135,12 +135,6 @@ export async function deleteCheckIn(
 }
 
 /**
- * The edit with the saved post's workout when it leaves `workout` out, as builds from before
- * workouts do, so editing there never drops it. The tiles move back to right after the photos,
- * in their order, when the edit took photos off. A build that knows workouts always sends the one it keeps:
- * it can strike numbers and take the tile off, never drop the workout itself.
- */
-/**
  * The edit, keeping the saved meal's rating when it leaves `rating` out, as builds from before
  * ratings do, so editing there never drops it. A rating can be changed, never taken off.
  */
@@ -151,6 +145,12 @@ function keepingRating(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
   return rating === undefined ? edit : { ...edit, meal: { ...edit.meal, rating } };
 }
 
+/**
+ * The edit with the saved post's workout when it leaves `workout` out, as builds from before
+ * workouts do, so editing there never drops it. The tiles move back to right after the photos,
+ * in their order, when the edit took photos off. A build that knows workouts always sends the one it keeps:
+ * it can strike numbers and take the tile off, never drop the workout itself.
+ */
 function keepingWorkout(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
   if (edit.kind !== 'trained' || saved.kind !== 'trained') return edit;
   const workout = saved.training.workout;
