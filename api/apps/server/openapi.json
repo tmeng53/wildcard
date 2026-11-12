@@ -4171,7 +4171,7 @@
           },
           "text": {
             "type": "string",
-            "maxLength": 200,
+            "maxLength": 400,
             "description": "Its body, without the 称呼 or 落款; lines apart by `\\n`.",
             "example": "这队交给你了，我先撤。"
           },
@@ -4926,7 +4926,7 @@
               "string",
               "null"
             ],
-            "maxLength": 100,
+            "maxLength": 200,
             "description": "Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted."
           },
           "emoji": {
@@ -4982,7 +4982,7 @@
           },
           "text": {
             "type": "string",
-            "maxLength": 100,
+            "maxLength": 200,
             "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
           },
           "mentions": {
