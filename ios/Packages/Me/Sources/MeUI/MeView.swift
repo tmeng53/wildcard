@@ -35,6 +35,8 @@ public struct MeDestinations {
     public var location: LocationSharing?
     /// 设置 › 桌面小组件, how to put the home screen widgets on; nil shows no row.
     public var widgetGuide: AnyView?
+    /// 设置 › 小队设置, the squad's own settings page, which 小队's gear opens too; nil shows no row.
+    public var squadSettings: AnyView?
     /// What this phone saw of the member's badge board, for NEW, and the turns to it a notice
     /// asks for; nil shows no NEW.
     public var badgeMarks: BadgeMarks?
@@ -44,8 +46,9 @@ public struct MeDestinations {
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
         previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
-        widgetGuide: AnyView? = nil, badgeMarks: BadgeMarks? = nil
+        widgetGuide: AnyView? = nil, squadSettings: AnyView? = nil, badgeMarks: BadgeMarks? = nil
     ) {
+        self.squadSettings = squadSettings
         self.badgeMarks = badgeMarks
         self.previewSignUp = previewSignUp
         self.widgetGuide = widgetGuide
