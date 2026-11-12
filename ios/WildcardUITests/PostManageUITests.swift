@@ -118,9 +118,21 @@ final class PostManageUITests: XCTestCase {
         XCTAssertTrue(manage.isHittable, "my post isn't on screen")
         let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
             .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
-        XCTAssertNotNil(photos, "my post's cover isn't under its 「…」")
-        photos?.swipeLeft()
+        guard let photos else { return XCTFail("my post's cover isn't under its 「…」") }
+        // One flick at the cover's middle now and then leaves the pager on the photo (red on
+        // main 11-11 and 11-12, green between with nothing changed): drag level across the cover
+        // just under the 「…」, which is on screen, and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
+        let row = (manage.frame.midY - photos.frame.minY) / photos.frame.height
+        var turns = 0
+        while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
+            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row + 0.1))
+            from.press(
+                forDuration: 0.05,
+                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row + 0.1)),
+                withVelocity: .default, thenHoldForDuration: 0)
+            turns += 1
+        }
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
         settle()
         keepScreenshot(named: "52-feed-heart-rate-cover")
