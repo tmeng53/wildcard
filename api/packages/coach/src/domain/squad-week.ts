@@ -135,40 +135,64 @@ export function postWhat(checkIn: WeekCheckIn): string {
   return checkIn.minutes === undefined ? sport : `${sport} ${String(checkIn.minutes)} 分钟`;
 }
 
-/** One check-in as a line the model reads. */
-export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
-  const who = roster.get(checkIn.member) ?? '队员';
-  const parts = [
-    `${dayWords(checkIn.day)} ${who} ${checkIn.restDay === true ? PLANNED_REST : KIND_WORDS[checkIn.kind]}`,
-  ];
+/** A check-in's heading as the model reads it: `11-11 周三 · 队员2 · 力量 50 分钟`. */
+export function checkInTitle(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
+  const what =
+    checkIn.kind === 'trained' && checkIn.restDay !== true
+      ? `${KIND_WORDS.trained}：${postWhat(checkIn)}`
+      : postWhat(checkIn);
+  return `${dayWords(checkIn.day)} · ${roster.get(checkIn.member) ?? '队员'} · ${what}`;
+}
+
+/** One comment as a list item: `- 队员2（回复队员1）：「其实是牛奶」`. */
+function commentItem(comment: WeekComment, roster: ReadonlyMap<string, string>): string {
+  return `- ${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster, coach: () => '你' })}：「${comment.text}」`;
+}
+
+/**
+ * One check-in as a Markdown block (Tracy, 2026-11-12: one line each was too hard to read): its
+ * heading, then one fact a line, its comments under it one a line in order.
+ */
+export function checkInBlock(
+  checkIn: WeekCheckIn,
+  {
+    roster,
+    heading = '### ',
+    comments = true,
+  }: {
+    readonly roster: ReadonlyMap<string, string>;
+    readonly heading?: string;
+    /** `false` leaves the comments out, `'below'` says they are in the talk under the posts. */
+    readonly comments?: boolean | 'below';
+  },
+): string {
+  const lines = [`${heading}${checkInTitle(checkIn, roster)}`];
   if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
-    parts.push(
-      `（补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发）`,
+    lines.push(
+      `- 补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
     );
   } else if (checkIn.postedTime !== undefined) {
-    parts.push(`（本人当地 ${checkIn.postedTime} 发）`);
+    lines.push(`- 本人当地 ${checkIn.postedTime} 发`);
   }
-  if (checkIn.sport !== undefined) parts.push(checkIn.sport);
-  if (checkIn.unposted === true) parts.push('（只记录，没发动态）');
-  if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
-  if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
+  if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
+  if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
-    parts.push(`（${String(checkIn.photos.length)} 张照片）`);
+    lines.push(`- 照片：${String(checkIn.photos.length)} 张`);
   }
-  const line = [parts.join(' ')];
   if (checkIn.reactedBy.length > 0) {
-    line.push(
-      `点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
+    lines.push(
+      `- 点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
     );
   }
-  if (checkIn.comments.length > 0) {
-    const comments = checkIn.comments.map(
-      (comment) =>
-        `${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster })}「${comment.text}」`,
+  if (comments === 'below') {
+    lines.push('- 评论：见下面「和你的对话」');
+  } else if (comments && checkIn.comments.length > 0) {
+    lines.push(
+      '- 评论（先后顺序）：',
+      ...checkIn.comments.map((comment) => `  ${commentItem(comment, roster)}`),
     );
-    line.push(`评论：${comments.join('；')}`);
   }
-  return line.join(' · ');
+  return lines.join('\n');
 }
 
 /**
@@ -181,25 +205,27 @@ export function rosterText(week: Pick<SquadWeek, 'members'>): string {
   const roster = rosterOf(week);
   const members = week.members.map(({ member, nickname }) => {
     const name = roster.get(member) ?? '队员';
-    return nickname === undefined ? name : `${name}「${nickname}」`;
+    return nickname === undefined ? `- ${name}` : `- ${name}：${nickname}`;
   });
-  return `谁是谁：${members.join('、')}`;
+  return ['## 谁是谁（队员N：昵称）', ...members].join('\n');
 }
 
 /** The week as the `squad_week` tool answers it. */
 export function weekText(week: SquadWeek): string {
   const roster = rosterOf(week);
-  const members = week.members.map(
-    ({ member, nickname }) =>
-      `${roster.get(member) ?? '队员'}${nickname === undefined ? '' : `（昵称：${nickname}）`}`,
-  );
-  const checkIns = week.checkIns.map((checkIn) => `- ${checkInLine(checkIn, roster)}`);
   return [
-    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
-    `本周从 ${week.weekStart}（周一）开始。`,
-    `队员：${members.join('，')}`,
-    checkIns.length === 0 ? '这周还没有人打卡。' : `打卡：\n${checkIns.join('\n')}`,
-  ].join('\n');
+    [
+      '# 本周',
+      ...(week.name === undefined ? [] : [`- 队名：${week.name}`]),
+      `- 从 ${week.weekStart}（周一）开始`,
+    ].join('\n'),
+    rosterText(week),
+    week.checkIns.length === 0
+      ? '## 打卡\n这周还没有人打卡。'
+      : ['## 打卡', ...week.checkIns.map((checkIn) => checkInBlock(checkIn, { roster }))].join(
+          '\n\n',
+        ),
+  ].join('\n\n');
 }
 
 /**
