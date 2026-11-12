@@ -236,9 +236,18 @@ struct WildcardApp: App {
         }
     }
 
-    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
+    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, or the 训练 page started
+    /// from the workout the widget's capsule offered.
     static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
+        switch link {
+        case .today:
+            open(nil, today: today, tab: tab)
+        case .checkIn:
+            open(.checkIn, today: today, tab: tab)
+        case .postWorkout(let source):
+            tab.wrappedValue = .today
+            Task { await today.openCheckIn(posting: source) }
+        }
     }
 
     /// After a post, once the cheer has played: the first one brings up the permission prompt.

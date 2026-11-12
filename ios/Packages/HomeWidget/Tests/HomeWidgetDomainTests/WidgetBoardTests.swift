@@ -68,6 +68,17 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
     #expect(WidgetBoard(home: done, day: tuesday).weekLink == .today)
 }
 
+@Test func theCapsulesTapOpensTheTrainingPageForItsWorkout() {
+    let late = run("late", endedHoursBefore: 1)
+    let offered = WidgetBoard(home: home(), day: tuesday, health: [late])
+    #expect(offered.weekLink == .postWorkout(late.id))
+    #expect(offered.workoutLink == .postWorkout(late.id))
+    // Once it is posted the capsule says 已打卡 and opens nothing of its own.
+    let done = WidgetBoard(home: home(checkIns: [posted(late)]), day: tuesday, health: [late])
+    #expect(done.workoutLink == nil)
+    #expect(done.weekLink == .today)
+}
+
 @Test func aCopyFromYesterdayStartsTodayOpen() {
     // Thursday, a training day in my plan.
     let thursday = tuesday.adding(days: 2)
@@ -94,10 +105,17 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
 }
 
 @Test func linksGoThereAndBack() {
-    for link in WidgetLink.allCases {
+    let ride = WidgetLink.postWorkout(WorkoutSource(provider: WorkoutSource.appleHealth, id: "A1B2-C3&D=4"))
+    for link in [WidgetLink.today, .checkIn, ride] {
         #expect(WidgetLink(url: link.url) == link)
     }
     #expect(WidgetLink.checkIn.url.absoluteString == "wildcard://widget/check-in")
+    #expect(
+        WidgetLink.postWorkout(WorkoutSource(provider: WorkoutSource.appleHealth, id: "sample-swim")).url.absoluteString
+            == "wildcard://widget/check-in?provider=apple_health&workout=sample-swim")
+    // A workout link missing its provider opens 打卡 as the plain one does.
+    #expect(WidgetLink(url: URL(string: "wildcard://widget/check-in?workout=x") ?? WidgetLink.today.url) == .checkIn)
+    #expect(WidgetLink(url: URL(string: "wildcard://widget/feed") ?? WidgetLink.today.url) == nil)
     #expect(WidgetLink(url: URL(string: "https://wildcardsquad.com/join/K7M2QX9P") ?? WidgetLink.today.url) == nil)
 }
 
@@ -148,53 +166,4 @@ private func posted(_ workout: ImportedWorkout, by member: MemberID = viewer) ->
     // A sport the list has nothing like is picked by hand in the app.
     let unlisted = ImportedWorkout(workout: late.workout, activity: nil)
     #expect(WidgetBoard(home: home(), day: tuesday, health: [early, unlisted]).workout?.id.id == "early")
-}
-
-@Test func postsTheOfferedWorkoutWithItsMapAndChartFirst() {
-    let plain = run("late", endedHoursBefore: 1).workout
-    let workout = ImportedWorkout(
-        workout: Workout(
-            source: plain.source, startedAt: plain.startedAt, endedAt: plain.endedAt, summary: plain.summary,
-            series: WorkoutSeries(heartRate: [
-                HeartRatePoint(seconds: 0, bpm: 120), HeartRatePoint(seconds: 60, bpm: 150),
-            ]),
-            route: [RoutePoint(lat: 34.05, lon: -118.25), RoutePoint(lat: 34.06, lon: -118.24)]),
-        activity: .sport("run"), restingBpm: 60)
-    let born = (try? LocalDay("1995-03-01")).map(Birthday.init(sent:))
-    let board = WidgetBoard(home: home(), day: tuesday, health: [workout])
-    let now = Timestamp(tuesdayMorning)
-    let post = board.checkIn(
-        posting: "late", from: home(), sharing: HealthSharing(), id: CheckInID(id(60)), at: now)
-    #expect(post?.member == viewer)
-    #expect(post?.day == tuesday)
-    #expect(post?.audience == (try? Audience([squadID])))
-    guard case .trained(let training) = post?.entry else {
-        Issue.record("a 训练")
-        return
-    }
-    #expect(training.activity == .sport("run"))
-    #expect(training.minutes == workout.minutes)
-    #expect(training.workout?.route?.count == 2)
-    #expect(training.workout?.tilePosition == 1)
-    #expect(training.workout?.chartPosition == 2)
-    // Routes off in 设置 › Apple 健康: the chart alone, as the cover.
-    var noRoute = HealthSharing()
-    noRoute.route = false
-    // With my birthday, the board's workout carries the chart's zones, as the app places them.
-    let zoned = WidgetBoard(home: home(), day: tuesday, health: [workout.withZones(birthday: born, in: losAngeles)])
-    let chartOnly = zoned.checkIn(posting: "late", from: home(), sharing: noRoute, id: CheckInID(id(61)), at: now)
-    guard case .trained(let charted) = chartOnly?.entry else {
-        Issue.record("a 训练")
-        return
-    }
-    #expect(charted.workout?.route == nil)
-    #expect(charted.workout?.tilePosition == 1)
-    #expect(charted.workout?.series != nil)
-    #expect(charted.workout?.series?.zones != nil)
-    #expect(training.workout?.series?.zones == nil)
-    // Only the workout the board still offers.
-    #expect(
-        board.checkIn(
-            posting: "early", from: home(), sharing: HealthSharing(), id: CheckInID(id(62)), at: now)
-            == nil)
 }

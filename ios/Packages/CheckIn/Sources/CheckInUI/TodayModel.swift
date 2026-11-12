@@ -96,6 +96,8 @@ public final class TodayModel {
     let store: TodayStore
     /// Apple Health, for the home's card and a 训练's chips; nil where the app has none.
     public let health: HealthConnection?
+    /// The workout a widget's 打卡 asked to start a 训练 from, until it opens (`openAskedWorkout`).
+    var askedToPost: WorkoutSource?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor (Squad?) -> Void
@@ -260,6 +262,7 @@ public final class TodayModel {
         await store.load()
         showLoaded()
         await health?.refresh()
+        openAskedWorkout(finally: true)
     }
 
     /// How often the home is read again while 今天 is on screen, so teammates' posts show up.
@@ -282,11 +285,6 @@ public final class TodayModel {
         }
         placeSquad()
         Task { await playOpening() }
-    }
-
-    /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
-    public func openCheckIn() {
-        if step == .scene { isBurstOpen = true }
     }
 
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
