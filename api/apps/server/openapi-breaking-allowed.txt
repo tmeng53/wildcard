@@ -36,3 +36,9 @@ GET /me/award-totals api path removed without deprecation
 PUT /squads/{squadId}/coach/notes/{noteId}/put-away api path removed without deprecation
 GET /squads/{squadId}/weeks/{weekStart}/summary api path removed without deprecation
 PUT /squads/{squadId} the request property `timeZone` became required
+# A coach's lines count English as half (Tracy, 2026-11-12), so a line may hold up to twice its
+# limit in characters. The app's generated client never checks maxLength and shows every line
+# wrapped, so installed builds read the longer ones as they are.
+GET /squads/{squadId}/coach/activity the `answers/items/text` response property's maxLength was increased from `100` to `200` for the response status `200`
+GET /squads/{squadId}/coach/activity the `replies/items/text` response property's maxLength was increased from `100` to `200` for the response status `200`
+POST /squads/{squadId}/coach/letter the `letter/text` response property's maxLength was increased from `200` to `400` for the response status `200`
