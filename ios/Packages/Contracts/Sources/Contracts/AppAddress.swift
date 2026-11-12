@@ -30,22 +30,6 @@ extension AppDestination {
         }
     }
 
-    /// Its address, without the scheme; nil for a place only a notice opens (a pat, a note, a
-    /// letter), which has none.
-    public var address: String? {
-        if let word = Self.places.first(where: { $0.value == self })?.key { return word }
-        switch self {
-        case .store(let store): return "store/\(store)"
-        case .wardrobe(let piece?): return "wardrobe/\(piece)"
-        case .post(let id): return "post/\(id)"
-        case .recap(nil, let week): return "recap/\(week)"
-        default: return nil
-        }
-    }
-
-    /// Its link, `wildcard://<address>`; nil without an address.
-    public var link: URL? { address.flatMap { URL(string: "\(Self.scheme)://\($0)") } }
-
     /// The places named by a word alone.
     private static let places: [String: AppDestination] = [
         "stores": .stores, "notices": .notices, "schedule": .schedule, "squad": .squad, "coaches": .coaches,

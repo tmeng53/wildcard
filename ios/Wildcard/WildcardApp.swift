@@ -329,6 +329,10 @@ struct WildcardApp: App {
                 }
             }
             .task { await Self.moveSampleSquad(today: today) }
+            // A place in the app by its address, as `AppRoot` opens it on the real backend.
+            .onOpenURL { url in
+                if let place = AppDestination(address: url.absoluteString) { pushDestination = place }
+            }
         }
     }
 
