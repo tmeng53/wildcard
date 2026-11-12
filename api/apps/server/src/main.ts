@@ -73,6 +73,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
@@ -502,6 +503,11 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+// The places each member saved (收藏).
+const savedPlaces = createSavedPlaces({
+  store: createPostgresSavedPlaceStore(db),
+  clock: () => new Date(),
+});
 // Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
 // places are still kept, and no one has weather.
 const weather = createWeather({
@@ -758,6 +764,7 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  savedPlaces,
   weather,
   feedback: feedbackInbox,
   issues: feedbackIssues,
