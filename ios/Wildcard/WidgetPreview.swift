@@ -45,6 +45,9 @@ struct WidgetPreview: View {
                 face(
                     SquadWidget(board: SampleBoard.board(on: day, workout: true, size: 8)),
                     size: .medium, identifier: "widget.squadWorkoutEight")
+                // Either set to 本周出赛表 in 编辑小组件.
+                face(ScheduleWidget(board: board, size: .small), size: .small, identifier: "widget.schedule")
+                face(ScheduleWidget(board: board, size: .medium), size: .medium, identifier: "widget.scheduleMedium")
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)

@@ -73,7 +73,7 @@ struct AppRoot: View {
                     }
                     if let link = widgetLink {
                         widgetLink = nil
-                        WildcardApp.open(link, today: today, tab: $tab)
+                        WildcardApp.open(link, today: today, tab: $tab, place: $pushDestination)
                     }
                 }
             }
@@ -105,7 +105,7 @@ struct AppRoot: View {
             // A home screen widget: open its place now, or once the tabs are up.
             if let link = WidgetLink(url: url) {
                 if case .tabs(let today, _, _, _, _, _) = app.screen {
-                    WildcardApp.open(link, today: today, tab: $tab)
+                    WildcardApp.open(link, today: today, tab: $tab, place: $pushDestination)
                 } else {
                     widgetLink = link
                 }

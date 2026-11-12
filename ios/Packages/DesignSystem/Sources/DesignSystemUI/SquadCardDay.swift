@@ -35,7 +35,7 @@ struct DayCircle: View {
                 }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Self.name(weekday))
+        .accessibilityLabel(WeekdayName.short(weekday))
         .accessibilityValue(value)
     }
 
@@ -51,7 +51,7 @@ struct DayCircle: View {
     private var scale: Double { diameter / SquadCardMetrics.day }
 
     private var label: Text {
-        size == .compact && isToday ? Text(copy: "今天", bundle: .module) : Self.name(weekday)
+        size == .compact && isToday ? Text(copy: "今天", bundle: .module) : WeekdayName.short(weekday)
     }
 
     @ViewBuilder private var circle: some View {
@@ -111,32 +111,8 @@ struct DayCircle: View {
         case .open, .planned: Text(copy: "还没练", bundle: .module)
         }
     }
-
-    /// 周一 to 周日, for the picked day's line.
-    static func fullName(_ weekday: Int) -> Text {
-        switch weekday {
-        case 0: Text(copy: "周一", bundle: .module)
-        case 1: Text(copy: "周二", bundle: .module)
-        case 2: Text(copy: "周三", bundle: .module)
-        case 3: Text(copy: "周四", bundle: .module)
-        case 4: Text(copy: "周五", bundle: .module)
-        case 5: Text(copy: "周六", bundle: .module)
-        default: Text(copy: "周日", bundle: .module)
-        }
-    }
-
-    static func name(_ weekday: Int) -> Text {
-        switch weekday {
-        case 0: Text(copy: "一", bundle: .module)
-        case 1: Text(copy: "二", bundle: .module)
-        case 2: Text(copy: "三", bundle: .module)
-        case 3: Text(copy: "四", bundle: .module)
-        case 4: Text(copy: "五", bundle: .module)
-        case 5: Text(copy: "六", bundle: .module)
-        default: Text(copy: "日", bundle: .module)
-        }
-    }
 }
+
 /// The picked day's line under the calendar: 今天 · 跑步 32 分钟, with its meals on the right. A day
 /// with more than one session shows the first and how many more (「玩耍 60 分钟 +2 项」, Tracy
 /// 2026-11-09), so the line never runs into the meals.
@@ -150,7 +126,7 @@ struct DayLine: View {
         HStack(alignment: .firstTextBaseline, spacing: Space.m) {
             HStack(alignment: .firstTextBaseline, spacing: 0) {
                 Group {
-                    if isToday { Text(copy: "今天", bundle: .module) } else { DayCircle.fullName(weekday) }
+                    if isToday { Text(copy: "今天", bundle: .module) } else { WeekdayName.full(weekday) }
                     Text(verbatim: " · ")
                 }
                 .typeStyle(TypeRamp.footnoteEmphasis)
