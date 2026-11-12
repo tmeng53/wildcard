@@ -3652,6 +3652,10 @@
             "type": "boolean",
             "description": "True when the caller is in it already."
           },
+          "needsApproval": {
+            "type": "boolean",
+            "description": "True when joining asks the captain first (入队需要审核): accepting answers 202 with the request."
+          },
           "daysPerMember": {
             "type": "integer",
             "minimum": 1,
@@ -3673,6 +3677,7 @@
           "memberCount",
           "full",
           "joined",
+          "needsApproval",
           "daysPerMember",
           "looks"
         ],

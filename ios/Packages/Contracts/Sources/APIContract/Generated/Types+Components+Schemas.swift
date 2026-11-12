@@ -6072,6 +6072,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
+            /// True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/needsApproval`.
+            public var needsApproval: Swift.Bool
             /// The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/daysPerMember`.
@@ -6088,6 +6092,7 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
+            ///   - needsApproval: True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
             ///   - daysPerMember: The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
@@ -6096,6 +6101,7 @@ extension Components {
                 memberCount: Swift.Int,
                 full: Swift.Bool,
                 joined: Swift.Bool,
+                needsApproval: Swift.Bool,
                 daysPerMember: Swift.Int,
                 looks: [Components.Schemas.Look]
             ) {
@@ -6104,6 +6110,7 @@ extension Components {
                 self.memberCount = memberCount
                 self.full = full
                 self.joined = joined
+                self.needsApproval = needsApproval
                 self.daysPerMember = daysPerMember
                 self.looks = looks
             }
@@ -6113,6 +6120,7 @@ extension Components {
                 case memberCount
                 case full
                 case joined
+                case needsApproval
                 case daysPerMember
                 case looks
             }

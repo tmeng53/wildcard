@@ -157,6 +157,11 @@ const SquadInvite = z
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
     joined: z.boolean().meta({ description: 'True when the caller is in it already.' }),
+    needsApproval: z.boolean().meta({
+      description:
+        'True when joining asks the captain first (入队需要审核): accepting answers 202 with the ' +
+        'request.',
+    }),
     daysPerMember: daysPerMemberField.meta({
       description: 'The squad’s weekly goal (人均 N 次) as its captain last set it.',
     }),
@@ -546,14 +551,23 @@ export function squads(
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {
-      const { name, memberCount, full, joined, members, daysPerMember } =
+      const { name, memberCount, full, joined, needsApproval, members, daysPerMember } =
         await deps.squads.previewInvite({
           inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
           viewer: caller(c.var.caller.userId),
         });
       const looks = await looksOf(members);
       return c.json(
-        { version: 1 as const, name, memberCount, full, joined, daysPerMember, looks },
+        {
+          version: 1 as const,
+          name,
+          memberCount,
+          full,
+          joined,
+          needsApproval,
+          daysPerMember,
+          looks,
+        },
         200,
       );
     })

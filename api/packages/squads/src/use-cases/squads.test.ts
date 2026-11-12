@@ -282,6 +282,7 @@ describe('joining by invite code', () => {
       daysPerMember: 3,
       members: [ann],
       joined: false,
+      needsApproval: false,
     });
     expect(await squads.previewInvite({ inviteCode: squad.inviteCode, viewer: ann })).toMatchObject(
       {

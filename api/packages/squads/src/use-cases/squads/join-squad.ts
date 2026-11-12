@@ -6,6 +6,7 @@ import {
   SQUADS_PER_MEMBER,
   type MemberId,
   type Squad,
+  type SquadId,
 } from '../../domain/squad.js';
 import {
   AiConsentRequiredError,
@@ -52,10 +53,7 @@ export async function joinSquad(
   if (squad === undefined) throw new InviteCodeUnknownError();
   if (isMemberOf(squad, member)) return { squad, joined: false };
   if (!(await aiConsent(member))) throw new AiConsentRequiredError();
-  const needsOk =
-    (joinApprovalOn === undefined || (await joinApprovalOn())) &&
-    (await store.joinApprovals([squad.id])).get(squad.id) === true;
-  if (needsOk) {
+  if (await needsCaptainsOk({ store, joinApprovalOn }, squad.id)) {
     const outcome = await store.askToJoin({ squad: squad.id, member, note });
     if (outcome.asked === false) return refuse(store, { outcome: outcome.refused, squad });
     return { request: outcome.request, asked: outcome.asked === 'asked' };
@@ -63,6 +61,21 @@ export async function joinSquad(
   const outcome = await store.join(squad.id, member);
   if (outcome !== 'joined') return refuse(store, { outcome, squad });
   return { squad: await found(store, squad), joined: true };
+}
+
+/** Whether opening the squad's invite asks its captain rather than joining (入队需要审核). */
+export async function needsCaptainsOk(
+  {
+    store,
+    joinApprovalOn,
+  }: {
+    readonly store: SquadStore;
+    readonly joinApprovalOn?: (() => Promise<boolean>) | undefined;
+  },
+  squad: SquadId,
+): Promise<boolean> {
+  if (joinApprovalOn !== undefined && !(await joinApprovalOn())) return false;
+  return (await store.joinApprovals([squad])).get(squad) === true;
 }
 
 async function refuse(

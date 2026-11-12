@@ -309,6 +309,7 @@ describe('joining by invite code', () => {
         memberCount: 1,
         full: false,
         joined: false,
+        needsApproval: false,
         daysPerMember: 3,
         looks: [],
       },
@@ -440,6 +441,12 @@ describe('asking the captain to join (入队申请)', () => {
     });
     expect(setting.body).toStrictEqual({ version: 1, required: true });
 
+    const preview = await call({
+      method: 'GET',
+      path: `/squad-invites/${squad.inviteCode}`,
+      token: asker.token,
+    });
+    expect(preview.body).toMatchObject({ needsApproval: true, joined: false });
     const asked = await ask(asker.token, { inviteCode: squad.inviteCode, note: ' 我是小橘 ' });
     expect(asked.status).toBe(202);
     const request = RequestBody.parse(asked.body);
@@ -967,6 +974,7 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
         memberCount: 3,
         full: false,
         joined: false,
+        needsApproval: false,
         daysPerMember: 3,
         looks,
       },
