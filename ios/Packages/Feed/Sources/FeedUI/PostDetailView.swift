@@ -84,6 +84,9 @@ public struct PostDetailView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             .scrollDisabled(model.lifted)
+            // Pulled down, the page reads the post again: comments and reactions that came while
+            // it was open and no notice told this member of.
+            .refreshable { await model.loadPage(id) }
             // The coach's answer to a reply comes after it was sent: bring it into view.
             .onChange(of: model.coachAnswers(on: post.id).count) { before, after in
                 guard after > before, let last = model.coachAnswers(on: post.id).last else { return }
