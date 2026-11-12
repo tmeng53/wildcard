@@ -1,6 +1,6 @@
 # Builds the app, signs it and uploads it to TestFlight. It runs every 3 hours for the latest
-# `main`, only when ios/ or this workflow changed since the last build that uploaded (nothing is
-# built otherwise), and by hand from `main` (Actions → testflight → Run workflow), which always
+# `main`, only when ios/ or this workflow changed since the last build that uploaded and verify's
+# UI tests (`ios`) passed on that very commit (nothing is built otherwise), and by hand from `main` (Actions → testflight → Run workflow), which always
 # builds. A scheduled run is best effort: GitHub may start it late or skip it, so run it by hand
 # when a build is needed now.
 # Each build makes a new Apple Development certificate (see below), so builds are kept few and the
@@ -49,7 +49,8 @@ env:
   TEAM_ID: WFY3YV6SPP
 
 jobs:
-  # A scheduled run builds only if ios/ (or this workflow) changed since the last run that uploaded.
+  # A scheduled run builds only if ios/ (or this workflow) changed since the last run that uploaded
+  # and the latest commit has a green iOS run.
   changes:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -71,15 +72,29 @@ jobs:
           fi
           last="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/testflight.yml/runs?status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty')"
           if [ -z "$last" ] || ! git cat-file -e "$last^{commit}" 2>/dev/null; then
-            echo "No earlier uploaded build: build."
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          elif [ -n "$(git diff --name-only "$last" HEAD -- ios .github/workflows/testflight.yml)" ]; then
-            echo "ios/ changed since $last: build."
-            echo "build=true" >> "$GITHUB_OUTPUT"
-          else
+            echo "No earlier uploaded build."
+          elif [ -z "$(git diff --name-only "$last" HEAD -- ios .github/workflows/testflight.yml)" ]; then
             echo "ios/ is unchanged since the last uploaded build $last: nothing to build."
             echo "build=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          # A scheduled upload needs a green UI-test run on this very commit: a verify run (scheduled
+          # or by hand) whose `ios` jobs ran and all passed. A later run that skipped them (nothing
+          # changed) doesn't hide it. Otherwise wait for the next schedule.
+          sha="$(git rev-parse HEAD)"
+          runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/verify.yml/runs?branch=main&head_sha=$sha&status=completed&per_page=20" \
+            --jq '.workflow_runs[] | select(.event == "schedule" or .event == "workflow_dispatch") | .id')"
+          for run in $runs; do
+            ios="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run/jobs?per_page=50" \
+              --jq '[.jobs[] | select(.name | startswith("ios ")) | .conclusion] | if length > 0 and all(. == "success") then "green" else "red" end')"
+            if [ "$ios" = "green" ]; then
+              echo "iOS run $run passed for $sha: build."
+              echo "build=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "No green iOS run on main for $sha: nothing to build."
+          echo "build=false" >> "$GITHUB_OUTPUT"
 
   upload:
     needs: changes
