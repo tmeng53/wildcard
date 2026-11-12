@@ -222,34 +222,6 @@ struct WildcardApp: App {
         return feed
     }
 
-    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
-    /// the check-in kinds open).
-    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        switch destination {
-        case .feed:
-            tab.wrappedValue = .feed
-        case .checkIn:
-            tab.wrappedValue = .today
-            today.openCheckIn()
-        case nil:
-            tab.wrappedValue = .today
-        }
-    }
-
-    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, or the 训练 page started
-    /// from the workout the widget's capsule offered.
-    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        switch link {
-        case .today:
-            open(nil, today: today, tab: tab)
-        case .checkIn:
-            open(.checkIn, today: today, tab: tab)
-        case .postWorkout(let source):
-            tab.wrappedValue = .today
-            Task { await today.openCheckIn(posting: source) }
-        }
-    }
-
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
     private static func askForNotifications() {
         guard LaunchOptions.asksForNotifications else { return }
@@ -354,5 +326,36 @@ struct WildcardApp: App {
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
         await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
+    }
+}
+
+/// Where a tapped notification or home screen widget opens.
+extension WildcardApp {
+    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
+    /// the check-in kinds open).
+    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        switch destination {
+        case .feed:
+            tab.wrappedValue = .feed
+        case .checkIn:
+            tab.wrappedValue = .today
+            today.openCheckIn()
+        case nil:
+            tab.wrappedValue = .today
+        }
+    }
+
+    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, or the 训练 page started
+    /// from the workout the widget's capsule offered.
+    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        switch link {
+        case .today:
+            open(nil, today: today, tab: tab)
+        case .checkIn:
+            open(.checkIn, today: today, tab: tab)
+        case .postWorkout(let source):
+            tab.wrappedValue = .today
+            Task { await today.openCheckIn(posting: source) }
+        }
     }
 }
