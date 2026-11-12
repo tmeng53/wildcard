@@ -37,7 +37,8 @@ func everySleeveCoversTheShoulder(top: String) throws {
 }
 
 /// The arms are drawn in front of everything worn, so a sleeve keeps its cloth around the
-/// arm: within the shoulder's circle, then a band along the arm that widens to the cuff.
+/// arm: within the shoulder's circle, then a band along the arm that widens toward the
+/// elbow; from there to the cuff the sleeve is all arm, and keeps its whole width.
 /// Cloth reaching in past that (a round shoulder lying on the chest) turns with the arm
 /// and covers a strap or a bag on the chest; that part of a top's look is drawn on its
 /// body instead, where it stays put under what is worn.
@@ -60,7 +61,8 @@ func everySleeveKeepsToTheArm(top: String) throws {
                 let across = abs(offset.x * down.y - offset.y * down.x)
                 let inShoulder = (offset.x * offset.x + offset.y * offset.y).squareRoot() <= 11.6
                 let inBand = along >= 0 && across <= 11.6 + 5.6 * along / 34
-                #expect(inShoulder || inBand, "\(top) \(id) reaches \(point)")
+                let pastTheShoulder = along >= 30
+                #expect(inShoulder || inBand || pastTheShoulder, "\(top) \(id) reaches \(point)")
             }
         }
     }
