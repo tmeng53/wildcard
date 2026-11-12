@@ -69,9 +69,6 @@ public final class TodayStore {
     var openedLetterID: Int?
     /// What changed in the squad since the home shown before, not yet told (`takeNews()`).
     public internal(set) var news = SquadNews()
-    /// The squad the member was in when the server last said they are in none: they left it, or
-    /// the captain removed them.
-    public private(set) var lostSquad: Squad?
     /// Stores and props the member unlocked that the home hasn't told yet, the earliest first
     /// (`takeUnlocks()`).
     public internal(set) var unlocked: [Unlock] = []
@@ -168,7 +165,6 @@ public final class TodayStore {
                 let earlier = savedHome
                 savedHome = fresh
                 news = news.adding(SquadNews(from: earlier, to: fresh))
-                lostSquad = nil
                 for saved in earlier?.checkIns ?? [] where saved.member == fresh.member && saved.day == day {
                     fold(saved)
                 }
@@ -177,7 +173,6 @@ public final class TodayStore {
                 // or gone once the squad's day is over.
                 if acceptedChallenge != nil, let home = savedHome { await loadChallenge(in: home) }
             } else {
-                if let squad = savedHome?.squad { lostSquad = squad }
                 savedHome = nil
                 phase = .noSquad
             }

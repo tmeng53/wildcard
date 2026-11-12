@@ -44,7 +44,8 @@ extension TodayModel {
         /// keep: it stays until it is tapped or swiped away.
         var hasButton: Bool {
             switch news {
-            case .broadcast(let broadcast): broadcast.action != nil || broadcast.style == .celebration
+            case .broadcast(let broadcast):
+                broadcast.action != nil || broadcast.style == .celebration || broadcast.letter != nil
             case .goalSuggestion: true
             case .sendFailed: true
             case .moved, .unlocked, .more, .told: false
@@ -144,7 +145,8 @@ extension TodayModel {
         _ broadcast: Broadcast, open: @escaping (AppDestination) -> Void, shown: @escaping (Broadcast) -> Void
     ) {
         let news = NoticeNews.broadcast(broadcast)
-        guard notice?.news != news, celebration != broadcast, !pendingNotices.contains(where: { $0.news == news })
+        guard notice?.news != news, celebration != broadcast, teamLetter?.broadcast != broadcast,
+            !pendingNotices.contains(where: { $0.news == news })
         else { return }
         openDestination = open
         let next = Notice(news: news)
@@ -194,7 +196,9 @@ extension TodayModel {
         guard let index = pendingNotices.firstIndex(where: canShowNow) else { return }
         let next = pendingNotices.remove(at: index)
         shownInRow = pendingNotices.isEmpty ? 0 : shownInRow + 1
-        if case .broadcast(let broadcast) = next.news, broadcast.style == .celebration {
+        if case .broadcast(let broadcast) = next.news, broadcast.letter != nil {
+            teamLetter = ShownTeamLetter(broadcast: broadcast, isSealed: true, shownAt: now())
+        } else if case .broadcast(let broadcast) = next.news, broadcast.style == .celebration {
             celebration = broadcast
         } else {
             notice = next
@@ -205,12 +209,15 @@ extension TodayModel {
     /// Whether the next notice can be told: nothing told is on screen, and no check-in, burst,
     /// opening or screen over the tabs is in front.
     var isFreeForNotices: Bool {
-        notice == nil && celebration == nil && opening == nil && step == .scene && !isBurstOpen && !isCovered
+        notice == nil && celebration == nil && teamLetter == nil && opening == nil && step == .scene && !isBurstOpen
+            && !isCovered
     }
 
-    /// A celebration is a card on 今天's scene; every other notice drops in over any page.
+    /// A celebration is a card on 今天's scene, and a letter flies in over it; every other notice
+    /// drops in over any page.
     private func canShowNow(_ waiting: Notice) -> Bool {
-        guard case .broadcast(let broadcast) = waiting.news, broadcast.style == .celebration else { return true }
+        guard case .broadcast(let broadcast) = waiting.news, broadcast.style == .celebration || broadcast.letter != nil
+        else { return true }
         return isHomeInFront
     }
 

@@ -122,6 +122,10 @@ const TeamBadgeBody = z
   .strictObject({
     id: z.string().meta({ description: 'The badge’s id.', example: 'bug-hunter' }),
     name: LocalizedWords,
+    line: LocalizedWords.optional().meta({
+      description:
+        'What its card says under its name, as a title’s 颁奖词 does; left out, nothing.',
+    }),
     glyph: z.string().meta({
       description: 'The SF Symbol on it, by name. An app whose iOS doesn’t have it draws a star.',
       example: 'ladybug.fill',
@@ -334,6 +338,15 @@ function wireBoard(inputs: WornInputs, speechIn: (squad: SquadId) => boolean) {
     teamBadges: teamBadges.map(({ badge, times, latestAt }) => ({
       id: badge.id,
       name: { zhHans: badge.names['zh-Hans'], en: badge.names.en, zhHant: badge.names['zh-Hant'] },
+      ...(badge.lines === undefined
+        ? {}
+        : {
+            line: {
+              zhHans: badge.lines['zh-Hans'],
+              en: badge.lines.en,
+              zhHant: badge.lines['zh-Hant'],
+            },
+          }),
       glyph: badge.glyph,
       tone: badge.tone,
       times,

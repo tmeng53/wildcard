@@ -1537,28 +1537,6 @@
         }
       }
     },
-    "card.since %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SINCE %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SINCE %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SINCE %@"
-          }
-        }
-      }
-    },
     "card.number %@" : {
       "localizations" : {
         "en" : {

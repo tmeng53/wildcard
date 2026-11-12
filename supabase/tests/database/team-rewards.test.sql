@@ -1,7 +1,7 @@
 -- What the team and events give: dedicated badges and vouchers in their catalogs, logged and never
 -- deleted; `event` triggers; grants by event once an occurrence; and which feedback we adopted.
 begin;
-select plan(23);
+select plan(25);
 
 insert into auth.users (id, email) values ('e3000000-0000-0000-0000-000000000001', 'tia@example.com');
 
@@ -23,6 +23,18 @@ update public.badges set tone = '#1F2128' where id = 'bug-hunter';
 select is(
   (select array_agg(op order by id) from public.reward_catalog_events where value ->> 'id' = 'bug-hunter'),
   array['INSERT', 'UPDATE'], 'a badge''s change is logged once, and a save that changed nothing is not'
+);
+select throws_ok(
+  $$update public.badges set lines = '{"zh-Hans": "认证队员", "zh-Hant": "認證隊員", "en": "Certified"}' where id = 'bug-hunter'$$,
+  '23514', null, 'a badge''s line carries its version'
+);
+update public.badges
+  set lines = '{"version": 1, "zh-Hans": "认证队员", "zh-Hant": "認證隊員", "en": "Certified"}'
+  where id = 'bug-hunter';
+select is(
+  (select value -> 'lines' ->> 'zh-Hans' from public.reward_catalog_events
+    where value ->> 'id' = 'bug-hunter' order by id desc limit 1),
+  '认证队员', 'a badge''s new line is logged with it'
 );
 select throws_ok($$delete from public.badges$$, '42501', null, 'a badge is never deleted');
 select throws_ok(

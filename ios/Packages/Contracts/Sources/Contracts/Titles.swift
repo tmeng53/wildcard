@@ -81,6 +81,8 @@ public struct TeamBadge: Hashable, Sendable, Identifiable {
     /// Its catalog id (`bug-hunter`).
     public var id: String
     public var name: CatalogNames
+    /// What its card says under its name, as a title's 颁奖词 does; nil when the team wrote none.
+    public var line: CatalogNames?
     /// The SF Symbol's name; the drawing falls back to a star for one this iOS doesn't have.
     public var glyph: String
     /// Its colour as `#RRGGBB`.
@@ -90,9 +92,12 @@ public struct TeamBadge: Hashable, Sendable, Identifiable {
     /// When it was given the last time; nil from servers before it, and on the sample squad.
     public var latestAt: Date?
 
-    public init(id: String, name: CatalogNames, glyph: String, tone: String, times: Int, latestAt: Date? = nil) {
-        (self.id, self.name, self.glyph, self.tone, self.times, self.latestAt) = (
-            id, name, glyph, tone, times, latestAt
+    public init(
+        id: String, name: CatalogNames, line: CatalogNames? = nil, glyph: String, tone: String, times: Int,
+        latestAt: Date? = nil
+    ) {
+        (self.id, self.name, self.line, self.glyph, self.tone, self.times, self.latestAt) = (
+            id, name, line, glyph, tone, times, latestAt
         )
     }
 

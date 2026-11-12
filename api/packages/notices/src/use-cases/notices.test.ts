@@ -200,6 +200,15 @@ describe('broadcasts', () => {
     return { box, gifts, failGifts: () => (giving = false), giveAgain: () => (giving = true) };
   };
 
+  it('takes a letter from the team with each present once', () => {
+    const lines = words('谢谢你');
+    const present = { kind: 'badge', id: 'idea-king' } as const;
+    expect(value({ letter: { lines, presents: [present] } }).letter?.presents).toEqual([present]);
+    expect(() =>
+      value({ letter: { lines, presents: [present, { kind: 'badge', id: 'idea-king' }] } }),
+    ).toThrow(/each present once/);
+  });
+
   it('tells each member a running broadcast once, on their newest page, with its words now', async () => {
     const [me, admin] = [await newMember(), await newMember()];
     const id = unique('soon');

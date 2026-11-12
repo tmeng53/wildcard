@@ -220,6 +220,21 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return withMembers(rows);
     },
 
+    async lastExit(member) {
+      const last = await db
+        .selectFrom('squad_membership_events')
+        .innerJoin('squads', 'squads.id', 'squad_membership_events.squad_id')
+        .select(['squad_membership_events.squad_id', 'squad_membership_events.kind', 'squads.name'])
+        .where('squad_membership_events.member_id', '=', member)
+        .orderBy('squad_membership_events.id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      if (last === undefined || (last.kind !== 'left' && last.kind !== 'removed')) return undefined;
+      // A later join of another squad logs its own event, so the last one being an exit means
+      // the member is in no squad now.
+      return { squad: SquadId.parse(last.squad_id), name: last.name, how: last.kind };
+    },
+
     async squadIdsOf(member) {
       const rows = await db
         .selectFrom('squad_members')
