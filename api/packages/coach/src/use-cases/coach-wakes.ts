@@ -35,6 +35,7 @@ import type {
   AiConsented,
   CoachAgent,
   CoachCatalogStore,
+  CoachFeedback,
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
@@ -196,6 +197,13 @@ export interface CoachWakesDependencies {
   /** Of these members, the ones who keep the coach's messages on: only they get a morning note. */
   readonly wantNotes: (members: readonly string[]) => Promise<readonly string[]>;
   readonly gifting: CoachGifting;
+  /** Passes on to the team what a member asked of the app, filed as feedback from them. */
+  readonly relayFeedback: CoachFeedback;
+  /**
+   * Whether coaches pass feedback on that day: off until the privacy policy's notice of it runs
+   * out (the switch `coachFeedbackRelay`, Tracy 2026-11-12).
+   */
+  readonly relayingOn: (day: string) => Promise<boolean>;
   /** Told what went wrong after a wake's save, such as a gift that couldn't be given. */
   readonly warn: (message: string, details: Record<string, unknown>) => void;
 }
@@ -474,6 +482,8 @@ interface Thinking {
   readonly author: string | undefined;
   readonly challenge: Awaited<ReturnType<CoachStores['memberNotes']['challengeOf']>>;
   readonly day: string;
+  /** The words of the member the wake answers there, which the coach may pass on to the team. */
+  readonly heard: string | undefined;
   /** What the run cost, in US dollars' millionths. */
   readonly costMicros: number;
 }
@@ -550,6 +560,7 @@ async function think(
     answer: undefined,
     answerMentions: [],
     challengeDone: false,
+    feedback: undefined,
     steps: [],
   };
   // A squad whose coach hasn't written its file yet starts from its name,
@@ -600,6 +611,7 @@ async function think(
     : undefined;
   // On a check-in's wake, the challenge its author got on today's note and what they said.
   const author = addresseeOf(week, wake.reason);
+  const heard = heardOf(week, wake.reason);
   const challenge =
     wake.reason.kind === 'checkIn' && author !== undefined
       ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
@@ -669,6 +681,11 @@ async function think(
         challenge !== undefined &&
         challengeOpen(challenge) &&
         postedOn({ week, reason: wake.reason, day, zone }),
+      relaying: heard !== undefined ? 'heard' : 'nothing',
+      ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') &&
+      !(await deps.relayingOn(day))
+        ? { relaying: 'off' as const }
+        : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
@@ -706,7 +723,18 @@ async function think(
     model: settings.model,
     usage: run.usage,
   });
-  return { run, draft, stored, roster, thread, author, challenge, day, costMicros: cost };
+  return {
+    run,
+    draft,
+    stored,
+    roster,
+    thread,
+    author,
+    challenge,
+    day,
+    heard,
+    costMicros: cost,
+  };
 }
 
 /**
@@ -738,7 +766,7 @@ async function runWake(
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    const { run, draft, stored, roster, thread, author, challenge, day } = thought;
+    const { run, draft, stored, roster, thread, author, challenge, day, heard } = thought;
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
       await deps.stores.wakes.fail(wake.id, run.error);
@@ -765,6 +793,30 @@ async function runWake(
     }
     if (answer !== undefined && thread !== undefined) {
       await deps.answered({ ...answer, commenter: thread.commenter }).catch(() => undefined);
+    }
+    // What a member asked of the app is the feedback module's, filed after the run's save.
+    const { reason } = wake;
+    if (
+      draft.feedback !== undefined &&
+      author !== undefined &&
+      heard !== undefined &&
+      (reason.kind === 'checkIn' || reason.kind === 'comment')
+    ) {
+      const refused = await deps
+        .relayFeedback({
+          wake: wake.id,
+          squad: wake.squad,
+          coach: coach.id,
+          member: author,
+          checkIn: reason.checkIn,
+          ...(reason.kind === 'comment' ? { comment: reason.comment } : {}),
+          ...draft.feedback,
+          quote: heard,
+        })
+        .catch((error: unknown) => (error instanceof Error ? error.message : String(error)));
+      if (refused !== undefined) {
+        deps.warn('coach feedback not passed on', { squad: wake.squad, member: author, refused });
+      }
     }
     // Gifts are the unlocks module's, given after the run's save; one refused is only noted.
     for (const [member, { piece, line }] of draft.gifts) {
@@ -1230,6 +1282,32 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes(consented);
+}
+
+/**
+ * What the member a check-in's or reply's wake answers said under that post, in their own words:
+ * the post's line, if it is theirs, then their comments there up to the one the wake answers, so
+ * what they asked is quoted with the yes that came after it. Undefined when they said nothing
+ * there, or the post was only recorded.
+ */
+function heardOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
+  if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
+  const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (checkIn === undefined || checkIn.unposted === true) return undefined;
+  const member = addresseeOf(week, reason);
+  const answering =
+    reason.kind === 'comment'
+      ? checkIn.comments.find(({ id }) => id === reason.comment)
+      : undefined;
+  const said = [
+    ...(checkIn.member === member && checkIn.text !== undefined ? [checkIn.text] : []),
+    ...(answering === undefined
+      ? []
+      : checkIn.comments
+          .filter((each) => each.member === member && each.at <= answering.at)
+          .map(({ text }) => text)),
+  ].filter((words) => words.trim() !== '');
+  return said.length === 0 ? undefined : said.join('\n');
 }
 
 /**

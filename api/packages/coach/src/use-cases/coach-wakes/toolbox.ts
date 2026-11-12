@@ -47,6 +47,11 @@ export interface WakeDraft {
   answerMentions: readonly string[];
   /** Whether the run marked the check-in's author's challenge today done, on its wake. */
   challengeDone: boolean;
+  /**
+   * What the member the wake answers asked of the app, which the run passes on to the team, on a
+   * check-in's or a reply's wake.
+   */
+  feedback: { readonly kind: 'problem' | 'idea'; readonly text: string } | undefined;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -180,6 +185,7 @@ export function toolbox({
   gifting,
   to,
   openChallenge = false,
+  relaying = 'nothing',
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -205,6 +211,12 @@ export function toolbox({
   readonly to?: string | undefined;
   /** On a check-in's wake, whether its author has a challenge today that can still be done. */
   readonly openChallenge?: boolean;
+  /**
+   * On a check-in's or a reply's wake, whether the member it answers said something there in
+   * their own words, which the coach may pass on to the team (`heard`), said nothing
+   * (`nothing`), or passing feedback on is off (`off`), when the tool isn't offered.
+   */
+  readonly relaying?: 'heard' | 'nothing' | 'off';
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   // Each week is read at most once a run, however many tools ask for it.
@@ -320,6 +332,10 @@ export function toolbox({
         },
       }),
     );
+  }
+  // Before each kind's own tools, and on every such wake, so the list stays the same and cached.
+  if ((kind === 'checkIn' || kind === 'comment') && relaying !== 'off') {
+    tools.push(relayFeedback(draft, relaying === 'heard'));
   }
   if (kind === 'daily') {
     tools.push(
@@ -439,6 +455,37 @@ export function toolbox({
     tools.push(lookAtPhotos(draft.steps, photos));
   }
   return tools;
+}
+
+/** The longest line a coach writes of what a member asked of the app. */
+export const RELAY_LIMIT = 200;
+
+/**
+ * Passing on to the team what the member the wake answers asked of the app itself, in their own
+ * words there (Tracy, 2026-11-12): saved with the run, then filed like 意见反馈, from them.
+ */
+function relayFeedback(draft: WakeDraft, heard: boolean): CoachTool {
+  return defineTool(draft.steps, {
+    name: 'relay_feedback',
+    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了就在回他的那句里像朋友一样随口提一句，用你自己的话，别像客服。`,
+    parameters: z.object({
+      kind: z.enum(['problem', 'idea']).describe('app 出了问题是 problem，想要新东西或改进是 idea'),
+      text: z
+        .string()
+        .describe(`他想要什么、哪里不对，说清楚，不写人名，不超过 ${String(RELAY_LIMIT)} 字`),
+    }),
+    run: ({ kind, text }) => {
+      if (!heard) return '他在这里没写字，没有能转的。';
+      const line = text.trim();
+      if (line === '') return 'text 是空的，写上他想要什么。';
+      if (line.length > RELAY_LIMIT) {
+        return `太长了：${String(line.length)} 字，最多 ${String(RELAY_LIMIT)} 字。`;
+      }
+      const replaced = draft.feedback !== undefined;
+      draft.feedback = { kind, text: line };
+      return replaced ? '已换成这条，会转给团队。' : '会转给团队。';
+    },
+  });
 }
 
 /** The furthest back the coach reads, in weeks before this one, as `squad_week` does. */

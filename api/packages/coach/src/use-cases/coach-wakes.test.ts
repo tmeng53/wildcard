@@ -31,6 +31,7 @@ import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type {
   AgentRun,
   CoachAgent,
+  CoachFeedback,
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
@@ -234,6 +235,8 @@ function wakes(
     memes,
     gifting,
     weatherOf,
+    relayFeedback,
+    relayingOn,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -249,6 +252,8 @@ function wakes(
     readonly memes?: CoachMemes;
     readonly gifting?: CoachGifting;
     readonly weatherOf?: CoachWeather;
+    readonly relayFeedback?: CoachFeedback;
+    readonly relayingOn?: (day: string) => Promise<boolean>;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -282,6 +287,8 @@ function wakes(
     ...(memes === undefined ? {} : { memes }),
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
+    ...(relayFeedback === undefined ? {} : { relayFeedback }),
+    ...(relayingOn === undefined ? {} : { relayingOn }),
   });
 }
 
@@ -304,6 +311,8 @@ const quietPorts = {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
     give: () => Promise.resolve('no gifts in this test'),
   },
+  relayFeedback: () => Promise.resolve('no feedback in this test'),
+  relayingOn: () => Promise.resolve(true),
   warn: () => undefined,
 } satisfies Partial<CoachWakesDependencies>;
 
@@ -464,6 +473,7 @@ describe('the coach', () => {
           'edit_file',
           'member_stats',
           'memes',
+          'relay_feedback',
           'reply',
           'react',
         ],
@@ -2014,6 +2024,145 @@ describe('the coach', () => {
       const checkIn = told[0]?.checkIn ?? '';
       const read = await createPostgresCoachActivity(fixture.trx).replies(fixture.squad, [checkIn]);
       expect(read).toMatchObject([{ checkIn, text: '@小乐 一起跑', mentions: [leo] }]);
+    });
+  });
+
+  it('passes on what a member asks of the app, from them, with all they said there', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, mia, leo, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('有人打卡')
+          ? [
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '' } },
+              { tool: 'relay_feedback', input: { kind: 'problem', text: '照片传不上去' } },
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '想在动态上标地点' } },
+              { tool: 'reply', input: { text: '帮你转给团队了' } },
+            ]
+          : task.includes('要回的这句')
+            ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想看全队的月度总结' } }]
+            : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      const relayFeedback: CoachFeedback = (relay) => {
+        relayed.push(relay);
+        return Promise.resolve(undefined);
+      };
+      const post = '今天吃得很干净，要是能 tag 地点就好了';
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: post })),
+      };
+      await wakes({ ...fixture, week: withWords }, { agent, relayFeedback }).run();
+      expect(runs[0]?.tools).toContain('relay_feedback');
+      expect(runs[0]?.answers.slice(0, 3)).toStrictEqual([
+        'text 是空的，写上他想要什么。',
+        '会转给团队。',
+        '已换成这条，会转给团队。',
+      ]);
+      // The daily wake has no one's words to pass on.
+      expect(runs[1]?.tools).not.toContain('relay_feedback');
+      // Each by the wake that passed it on, so a wake run twice passes it on once.
+      expect(typeof relayed[0]?.wake).toBe('number');
+      expect(relayed).toMatchObject([
+        {
+          squad,
+          coach: 'xiaohun',
+          member: mia,
+          checkIn,
+          kind: 'idea',
+          text: '想在动态上标地点',
+          quote: post,
+        },
+      ]);
+
+      // Under a post, it is the reply's writer who asked, quoted in all they said there up to
+      // the yes the wake answers: not the post's author's line, nor what came after.
+      const wish = await commentOn(fixture, {
+        member: leo,
+        text: '要是能出个月度总结就好了',
+        at: new Date(now.getTime() + 60_000),
+      });
+      const fromMia = await commentOn(fixture, {
+        member: mia,
+        text: '同意',
+        at: new Date(now.getTime() + 90_000),
+      });
+      const yes = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 帮我转给团队吧',
+        at: new Date(now.getTime() + 120_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const later = await commentOn(fixture, {
+        member: leo,
+        text: '谢谢',
+        at: new Date(now.getTime() + 150_000),
+      });
+      const withAsk: SquadWeek = {
+        ...withWords,
+        checkIns: withWords.checkIns.map((each) => ({
+          ...each,
+          comments: [wish, fromMia, yes, later],
+        })),
+      };
+      await wakes(
+        { ...fixture, week: withAsk },
+        { agent, relayFeedback, at: new Date(now.getTime() + 3 * 60_000) },
+      ).answer({ checkIn, comment: yes.id, coach: 'xiaohun', squads: [squad] });
+      expect(relayed[1]).toMatchObject({
+        squad,
+        coach: 'xiaohun',
+        member: leo,
+        checkIn,
+        comment: yes.id,
+        kind: 'idea',
+        text: '想看全队的月度总结',
+        quote: '要是能出个月度总结就好了\n@小混 帮我转给团队吧',
+      });
+    });
+  });
+
+  it('offers nothing to pass on while passing feedback on is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const asked: string[] = [];
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: '想要标地点' })),
+      };
+      await wakes(
+        { ...fixture, week: withWords },
+        {
+          agent,
+          relayingOn: (day) => {
+            asked.push(day);
+            return Promise.resolve(false);
+          },
+        },
+      ).run();
+      expect(runs[0]?.task.startsWith('有人打卡')).toBe(true);
+      expect(runs[0]?.tools).not.toContain('relay_feedback');
+      expect(asked).toStrictEqual(['2026-11-01']);
+    });
+  });
+
+  it('has nothing to pass on from a post without words', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('有人打卡')
+          ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想标地点' } }]
+          : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      await wakes(fixture, {
+        agent,
+        relayFeedback: (relay) => {
+          relayed.push(relay);
+          return Promise.resolve(undefined);
+        },
+      }).run();
+      expect(runs[0]?.answers).toStrictEqual(['他在这里没写字，没有能转的。']);
+      expect(relayed).toStrictEqual([]);
     });
   });
 

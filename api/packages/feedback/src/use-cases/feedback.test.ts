@@ -52,13 +52,15 @@ function inboxAt(start: string) {
   };
 }
 
-const message = (member: MemberId, body = '  The photo keeps spinning.  ') => ({
+const message = (
+  member: MemberId,
+  { body = '  The photo keeps spinning.  ', screenshots = [`${member}/${randomUUID()}`] } = {},
+) => ({
   id: FeedbackId.parse(randomUUID()),
   member,
   kind: 'problem' as const,
   body,
-  screenshots: [`${member}/${randomUUID()}`],
-  app,
+  source: { from: 'app' as const, screenshots, app },
 });
 
 describe('sending feedback', () => {
@@ -82,7 +84,7 @@ describe('sending feedback', () => {
       {
         kind: 'problem',
         body: 'The photo keeps spinning.',
-        screenshots: draft.screenshots,
+        screenshots: draft.source.screenshots,
         app: { version: 1, ...app },
       },
     ]);
@@ -91,19 +93,82 @@ describe('sending feedback', () => {
   it('refuses an empty message, a long one and a fourth screenshot', async () => {
     const member = await newMember();
     const { inbox } = inboxAt('2026-11-08T04:00:00.000Z');
-    await expect(inbox.send(message(member, '   '))).rejects.toBeInstanceOf(FeedbackInvalidError);
-    await expect(inbox.send(message(member, '字'.repeat(1001)))).rejects.toBeInstanceOf(
+    await expect(inbox.send(message(member, { body: '   ' }))).rejects.toBeInstanceOf(
+      FeedbackInvalidError,
+    );
+    await expect(inbox.send(message(member, { body: '字'.repeat(1001) }))).rejects.toBeInstanceOf(
       FeedbackInvalidError,
     );
     await expect(
-      inbox.send({ ...message(member), screenshots: ['a', 'b', 'c', 'd'] }),
+      inbox.send(message(member, { screenshots: ['a', 'b', 'c', 'd'] })),
     ).rejects.toBeInstanceOf(FeedbackInvalidError);
-    await expect(inbox.send(message(member, '字'.repeat(1000)))).resolves.toMatchObject({
+    await expect(inbox.send(message(member, { body: '字'.repeat(1000) }))).resolves.toMatchObject({
       outcome: 'created',
     }); // Emoji take up to 16 UTF-16 units each; the app counts each as one character.
     await expect(
-      inbox.send(message(member, '字'.repeat(990) + '👍🏽'.repeat(6))),
+      inbox.send(message(member, { body: '字'.repeat(990) + '👍🏽'.repeat(6) })),
     ).resolves.toMatchObject({ outcome: 'created' });
+  });
+
+  it('keeps what a coach passed on, with where and the member’s words, and files it like any', async () => {
+    const member = await newMember();
+    const { inbox, at } = inboxAt('2026-11-08T04:00:00.000Z');
+    const [squad, checkIn, comment] = [randomUUID(), randomUUID(), randomUUID()];
+    const relayed = {
+      id: FeedbackId.parse(randomUUID()),
+      member,
+      kind: 'idea' as const,
+      body: '想在动态上标地点',
+      source: {
+        from: 'coach' as const,
+        coach: 'maotou',
+        squad,
+        checkIn,
+        comment,
+        quote: '@毛头 要是能 tag 地点就好了',
+      },
+    };
+    await expect(inbox.send(relayed)).resolves.toMatchObject({ outcome: 'created' });
+    const row = await db
+      .selectFrom('feedback')
+      .select(['screenshots', 'app', 'relayed'])
+      .where('id', '=', relayed.id)
+      .executeTakeFirstOrThrow();
+    expect(row).toStrictEqual({
+      screenshots: [],
+      app: null,
+      relayed: {
+        version: 1,
+        coach: 'maotou',
+        squad,
+        checkIn,
+        comment,
+        quote: '@毛头 要是能 tag 地点就好了',
+      },
+    });
+    at('2026-11-08T05:00:00.000Z');
+    const waiting = await inbox.toFile(0, 1000);
+    expect(waiting.find(({ id }) => id === relayed.id)).toStrictEqual({
+      ...relayed,
+      at: new Date('2026-11-08T04:00:00.000Z'),
+    });
+    await expect(
+      inbox.send({
+        ...relayed,
+        id: FeedbackId.parse(randomUUID()),
+        source: { ...relayed.source, quote: ' ' },
+      }),
+    ).rejects.toBeInstanceOf(FeedbackInvalidError);
+  });
+
+  it('keeps a message from one place only', async () => {
+    const member = await newMember();
+    await expect(
+      sql`insert into public.feedback (id, member_id, kind, body, app, relayed, at)
+        values (${randomUUID()}, ${member}, 'idea', 'x', '{"version": 1}', '{"version": 1}', now())`.execute(
+        db,
+      ),
+    ).rejects.toThrow(/feedback_one_source/);
   });
 
   it('takes 10 messages a day, still takes a retry, and more the next day', async () => {
