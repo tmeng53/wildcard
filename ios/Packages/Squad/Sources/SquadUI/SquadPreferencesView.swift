@@ -28,6 +28,17 @@ public struct SquadPreferencesView: View {
     }
 
     public var body: some View {
+        if settings == nil, case .failed = model.load {
+            // Opened from 我 before 小队 read the squad, and the read failed.
+            SquadFailed { Task { await model.reload() } }
+                .background(Color(role: .bgCanvas, in: theme))
+                .pushedPage()
+        } else {
+            page
+        }
+    }
+
+    private var page: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
                 Text(copy: "小队设置", bundle: .module)
