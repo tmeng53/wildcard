@@ -156,6 +156,10 @@ final class MeUITests: XCTestCase {
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(entry.frame), "球衣号码 runs off the screen: \(entry.frame)")
         settle()
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertFalse(
+            tabBar.exists && tabBar.isHittable && tabBar.frame.intersects(app.buttons["editor.done"].frame),
+            "the tab bar covers 换装's 保存")
         keepScreenshot(named: "48-editor-jersey-number")
         entry.tap()
         let wheel = app.pickerWheels.firstMatch
@@ -313,6 +317,10 @@ extension MeUITests {
         XCTAssertTrue(app.buttons["feedback.review"].exists, "写评价 is missing")
         XCTAssertFalse(app.buttons["feedback.send"].isEnabled, "发送 works with nothing written")
         settle()
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertFalse(
+            tabBar.exists && tabBar.isHittable && tabBar.frame.intersects(app.buttons["feedback.send"].frame),
+            "the tab bar covers 意见反馈's 发送")
         keepScreenshot(named: "95-feedback")
 
         let text = app.textViews["feedback.text"]
