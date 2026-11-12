@@ -4,7 +4,7 @@ import {
   type CoachGifting,
 } from '@wildcard/coach';
 import { createPostgresSquadStore, SquadId } from '@wildcard/squads';
-import { NEW_YORK, momentAt, mondayOf, wallClockAt } from '@wildcard/time-zones';
+import { momentAt, mondayOf, wallClockAt } from '@wildcard/time-zones';
 import {
   CoachId,
   createCoachGifts,
@@ -28,12 +28,12 @@ import type { Database } from '../ports.js';
 /** When the squad's week began at `now`, on its clock (小队时区). */
 export type SquadWeekStart = (squad: string, now: Date) => Promise<Date>;
 
-/** A squad's week start from its time zones, New York's for a squad without one. */
+/** A squad's week start from its time zones. */
 export function squadWeekStart(
-  timeZonesAt: (squads: readonly string[], moment: Date) => Promise<ReadonlyMap<string, string>>,
+  timeZonesAt: (squads: readonly string[], moment: Date) => Promise<(squad: string) => string>,
 ): SquadWeekStart {
   return async (squad, now) => {
-    const zone = (await timeZonesAt([squad], now)).get(squad) ?? NEW_YORK;
+    const zone = (await timeZonesAt([squad], now))(squad);
     return momentAt({ day: mondayOf(wallClockAt(now, zone).day), hour: 0, zone });
   };
 }

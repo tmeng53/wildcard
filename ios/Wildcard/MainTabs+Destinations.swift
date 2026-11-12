@@ -34,6 +34,18 @@ extension MainTabs {
             selection = .today
             todayPages = []
             Task { await today.trainAlong(post) }
+        case .wardrobe(let piece):
+            // 衣橱 in the editor, trying the piece on.
+            showsNotices = false
+            selection = .profile
+            closeProfilePages()
+            Task { await wardrobe.showGift(piece) }
+        case .badges:
+            // 我's player card turned to its badge board.
+            showsNotices = false
+            selection = .profile
+            closeProfilePages()
+            wardrobe.badgeMarks.showBoard()
         default:
             showsNotices = false
             openTab(for: destination)
@@ -49,6 +61,7 @@ extension MainTabs {
         case .pats: today.replayPatsOnMe()
         case .coachNote, .waitingCoachNote: openCoachDeck()
         case .coachLetter(let letter): today.showAgain(letter)
+        case .teamLetter(let broadcast): today.showAgain(broadcast)
         default: break
         }
     }
@@ -80,7 +93,7 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .teamLetter:
             openToday(destination)
         case .schedule:
             selection = .profile
@@ -97,7 +110,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store, .trainAlong:
+        case .post, .unlock, .stores, .store, .wardrobe, .badges, .trainAlong:
             break
         }
     }

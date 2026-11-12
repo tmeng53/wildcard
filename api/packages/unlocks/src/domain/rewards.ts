@@ -109,6 +109,14 @@ export const BadgeNames = z.strictObject({
 });
 export type BadgeNames = z.infer<typeof BadgeNames>;
 
+/** What a badge's card says under its name, as a title's 颁奖词 does, in each language. */
+export const BadgeLines = z.strictObject({
+  'zh-Hans': z.string().trim().min(1).max(30),
+  'zh-Hant': z.string().trim().min(1).max(30),
+  en: z.string().trim().min(1).max(60),
+});
+export type BadgeLines = z.infer<typeof BadgeLines>;
+
 /**
  * A dedicated badge (捉虫队, 点子王): the team's own, drawn as a ticket, never one the weekly awards'
  * model picks. `offered = false` stops new grants; who has it keeps it.
@@ -116,6 +124,9 @@ export type BadgeNames = z.infer<typeof BadgeNames>;
 export const BadgeEdit = z.strictObject({
   id: CatalogRewardId,
   names: BadgeNames,
+  lines: BadgeLines.optional().meta({
+    description: 'What its card says under its name, in each language; left out, nothing.',
+  }),
   glyph: z
     .string()
     .regex(/^[a-z0-9]+(\.[a-z0-9]+)*$/)

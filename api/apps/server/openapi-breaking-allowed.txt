@@ -26,3 +26,13 @@ GET /squads/{squadId}/check-ins the `posts/items/checkIn/oneOf[#/components/sche
 # installed build has one to mark seen; one read before the change only fails to stay seen.
 PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen removed the enum value `answer` from the `path` request parameter `kind`
 PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen removed the enum value `reply` from the `path` request parameter `kind`
+# Builds from before the coach's page (#611, 2026-11-08) are made to update (`set_minimum_build`),
+# so what only they used goes: no build since reads a post's comments or reactions on their own
+# (the post brings both), the award totals or the old 战报 summary, or puts a morning note away
+# (seeing its card does), and every build since sends the squad's time zone when it makes one.
+GET /check-ins/{checkInId}/comments api path removed without deprecation
+GET /check-ins/{checkInId}/reactions api path removed without deprecation
+GET /me/award-totals api path removed without deprecation
+PUT /squads/{squadId}/coach/notes/{noteId}/put-away api path removed without deprecation
+GET /squads/{squadId}/weeks/{weekStart}/summary api path removed without deprecation
+PUT /squads/{squadId} the request property `timeZone` became required

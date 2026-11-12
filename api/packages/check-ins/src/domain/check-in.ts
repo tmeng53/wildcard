@@ -31,12 +31,19 @@ const Moment = z.iso
   .transform((text) => new Date(Math.floor(Date.parse(text))));
 
 /**
- * The squads a check-in is shared to, in the order the member picked: up to 3, no repeats.
- * A post is the member's own; one shared to no squad only they see.
+ * The most squads one post lists. A member is in one squad at a time, but posts made before that
+ * may list up to this many, and their edits and events still carry them.
+ */
+export const AUDIENCE_MAX = 3;
+
+/**
+ * The squads a check-in goes to, in the order the member picked: up to `AUDIENCE_MAX`, no
+ * repeats. A check-in made in a squad always goes to it (an empty one from an older build is sent
+ * to the member's squads, off the feed); one made before joining any goes to none.
  */
 export const Audience = z
   .array(SquadId)
-  .max(3)
+  .max(AUDIENCE_MAX)
   .refine((squads) => new Set(squads).size === squads.length, {
     message: 'Must not list a squad twice',
   });
@@ -178,6 +185,15 @@ const draftFields = {
   day: LocalDay,
   createdAt: Moment,
   audience: Audience,
+  inFeed: z
+    .boolean()
+    .optional()
+    .meta({
+      description:
+        '发布到动态: true (the default) also posts it in the squads’ 动态; false only records it, ' +
+        'counted for the squads like any other but not in their 动态. Older builds leave it out ' +
+        'and send an empty audience for a check-in that isn’t posted.',
+    }),
 };
 
 /**
@@ -237,6 +253,11 @@ export type CheckInRecord = Entry & {
   readonly postedDay?: LocalDay;
   readonly createdAt: Date;
   readonly audience: readonly SquadId[];
+  /**
+   * Whether it is a post in its squads' 动态 (发布到动态). One that isn't still counts for them,
+   * but only its author sees it, reacts to it or comments on it. Never changed after posting.
+   */
+  readonly inFeed: boolean;
 };
 
 /** The record a member's draft makes. */
@@ -244,7 +265,15 @@ export function recordFromDraft(
   draft: CheckInDraft,
   { id, member }: { readonly id: CheckInId; readonly member: MemberId },
 ): CheckInRecord {
-  const base = { id, member, day: draft.day, createdAt: draft.createdAt, audience: draft.audience };
+  const base = {
+    id,
+    member,
+    day: draft.day,
+    createdAt: draft.createdAt,
+    audience: draft.audience,
+    // An older build's empty audience in a squad meant 仅自己可见, which is now off the feed.
+    inFeed: draft.inFeed ?? draft.audience.length > 0,
+  };
   switch (draft.kind) {
     case 'trained':
       return { ...base, kind: draft.kind, training: withoutNoOne(draft.training) };
@@ -271,7 +300,7 @@ export function trainedWithOf(entry: Entry): readonly MemberId[] {
 
 /**
  * Whether a retry carries the same check-in as the one saved under its id: the same member,
- * kind, day, moment (to the millisecond), fields and audience in the same order.
+ * kind, day, moment (to the millisecond), fields, audience in the same order and 发布到动态.
  */
 export function isSameCheckIn(saved: CheckInRecord, retry: CheckInRecord): boolean {
   // The day posted on comes from the save, not the draft, so it isn't compared.

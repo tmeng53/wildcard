@@ -189,6 +189,26 @@ export const NoticeEntry = z
           'The picture beside its words (`broadcast`): a store’s sign, a prop or a piece the app ' +
           'draws; left out, or one this build doesn’t draw, shows its own symbol.',
       }),
+    teamLetter: z
+      .strictObject({
+        lines: LocalizedWords.meta({
+          description: 'Its words under the member’s name, a line break per line; signed 外卡团队.',
+        }),
+        presents: z
+          .array(
+            z.strictObject({
+              kind: z.string().meta({ description: '`piece` or `badge`. Skip another.' }),
+              id: z.string().meta({ description: 'The piece’s or team badge’s id.' }),
+            }),
+          )
+          .meta({ description: 'What the team gave the caller, drawn under it with 立刻穿上.' }),
+      })
+      .optional()
+      .meta({
+        description:
+          'A letter from the team (`broadcast`), opened from an envelope over 今天 and from this ' +
+          'notice, in place of its `style`; left out for a notice without one.',
+      }),
     gifts: z
       .array(
         z.strictObject({
@@ -454,7 +474,7 @@ function wireNotice(
     case 'broadcast': {
       const told = names.broadcast(notice.subject.broadcast);
       if (told === undefined) return undefined;
-      const { title, body, action, style, icon, gifts } = told.value;
+      const { title, body, action, style, icon, letter, gifts } = told.value;
       return {
         ...common,
         broadcast: told.id,
@@ -463,6 +483,7 @@ function wireNotice(
         ...(action === undefined ? {} : { action }),
         style,
         ...(icon === undefined ? {} : { icon }),
+        ...(letter === undefined ? {} : { teamLetter: letter }),
         ...(gifts.length === 0 ? {} : { gifts }),
       };
     }

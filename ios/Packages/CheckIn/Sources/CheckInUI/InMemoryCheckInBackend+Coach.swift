@@ -17,7 +17,7 @@ extension InMemoryCheckInBackend {
         let coach = CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words))
         let line = String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words)
         let note = CoachNote(
-            day: LocalDay(at: now, in: CoachNote.timeZone), text: line, coach: coach,
+            day: LocalDay(at: now, in: SquadTimeZone.newYorkClock), text: line, coach: coach,
             writtenAt: now.addingTimeInterval(-3600))
         return SidelineCoach(coach: coach, note: note)
     }
@@ -34,7 +34,7 @@ extension InMemoryCheckInBackend {
         return CoachLetter(
             id: 1, squad: squad,
             from: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)),
-            to: papa, day: LocalDay(at: now, in: CoachNote.timeZone),
+            to: papa, day: LocalDay(at: now, in: SquadTimeZone.newYorkClock),
             text: words.localizedString(
                 forKey:
                     "这队交给你了，我先撤。\n小美周三雷打不动去游泳，周五一定请假，别问，问就是加班。\n阿杰在备战半马，跑完要人夸，夸具体点，他听得出来是不是敷衍。\n大鹏不爱说话，练完只发图，回个表情就够了。\n这队周日晚上最热闹，战报一出全在线。\n器材室那条毯子留给你，午觉在那儿睡最舒服。",

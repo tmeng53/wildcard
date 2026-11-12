@@ -60,6 +60,9 @@ public actor DeviceOutbox: Outbox {
         let postedDay: LocalDay?
         let createdAt: Timestamp
         let audience: [SquadID]
+        /// 发布到动态; missing on posts kept before it, where an empty audience meant not posted
+        /// (the server takes it the same way).
+        let inFeed: Bool?
         let kind: String
         let sport: String?
         let customSport: String?
@@ -83,6 +86,7 @@ public actor DeviceOutbox: Outbox {
             postedDay = post.postedDay
             createdAt = post.createdAt
             audience = post.audience.squads
+            inFeed = post.inFeed
             photos = post.draft.photos.map {
                 StoredPhoto(
                     id: $0.id, path: post.uploaded[$0.id]?.path, width: $0.size?.width, height: $0.size?.height)
@@ -165,7 +169,8 @@ public actor DeviceOutbox: Outbox {
             }
             return PendingCheckIn(
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
-                audience: try Audience(audience), draft: draft, uploaded: uploaded)
+                audience: try Audience(audience), inFeed: inFeed ?? !audience.isEmpty, draft: draft,
+                uploaded: uploaded)
         }
     }
 }

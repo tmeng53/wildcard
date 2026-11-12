@@ -140,3 +140,13 @@ export class RewardNotTeamGivenError extends AppError {
     super(`${reward} is not one the team gives (put_reward_trigger with way team adds that).`);
   }
 }
+
+export class BadgeNotHeldError extends AppError {
+  override readonly name = 'BadgeNotHeldError';
+  readonly reason = 'BADGE_NOT_HELD';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly badge: string) {
+    super(`The member doesn’t hold the badge ${badge}.`);
+  }
+}

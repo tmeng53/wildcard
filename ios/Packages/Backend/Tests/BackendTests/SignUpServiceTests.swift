@@ -218,3 +218,32 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(resumed.squad == joined)
     #expect(resumed.character == saved)
 }
+
+@Test func aMemberTheCaptainRemovedKeepsTheirCharacterAndLearnsWhichSquad() async throws {
+    let stack = try LocalStack()
+    let (captain, member) = (try await stack.signedInMember(), try await stack.signedInMember())
+    let (captainSignUp, signUp) = (APISignUpService(api: captain.api), APISignUpService(api: member.api))
+    #expect(try await signUp.character() == nil)
+    #expect(try await member.api.lastSquad() == nil)
+
+    try await captainSignUp.save(try character("阿杰", body: "shiba", persona: .energetic))
+    try await captainSignUp.agreeToAI()
+    let squad = try await captainSignUp.create(
+        named: try SquadName("晨跑搭子"), daysPerMember: 3, timeZone: "America/New_York")
+    let code = try InviteCode(try #require(await captain.api.mySquad()).inviteCode)
+    let made = try character("小林", body: "calico", persona: .shy)
+    try await signUp.save(made)
+    try await signUp.agreeToAI()
+    _ = try await signUp.join(code)
+    #expect(try await member.api.lastSquad() == nil)
+
+    try await captain.api.remove(member.id, from: squad.id)
+    #expect(try await member.api.lastSquad() == SquadExit(id: squad.id, name: "晨跑搭子", wasRemoved: true))
+    #expect(try await signUp.character()?.nickname == made.nickname)
+
+    // Making another squad ends it; leaving that one says so, not removed.
+    let own = try await signUp.create(named: try SquadName("小林的队"), daysPerMember: 3, timeZone: "America/New_York")
+    #expect(try await member.api.lastSquad() == nil)
+    try await member.api.remove(member.id, from: own.id)
+    #expect(try await member.api.lastSquad() == SquadExit(id: own.id, name: "小林的队", wasRemoved: false))
+}

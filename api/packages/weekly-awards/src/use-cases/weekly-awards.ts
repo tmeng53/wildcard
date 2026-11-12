@@ -5,7 +5,9 @@ import {
   type Awards,
   type AwardsState,
   type ShownBoardTitle,
+  type ShownMemberAwards,
   type Failures,
+  type MemberAwards,
   type MemberId,
   type SquadId,
   type TitlesWon,
@@ -20,7 +22,7 @@ import type {
   MemesInUse,
   SportGlyphs,
 } from '../ports.js';
-import { shownBadge } from '../domain/badges.js';
+import { DEFAULT_BADGE, shownBadge } from '../domain/badges.js';
 import { giveAwards, type GiveAwardsInput } from './weekly-awards/give-awards.js';
 
 /** Each squad's weekly awards (本周颁奖). */
@@ -56,6 +58,11 @@ export interface WeeklyAwards {
    * the latest first. A member who won nothing has an empty board.
    */
   boards(members: readonly MemberId[]): Promise<ReadonlyMap<MemberId, readonly ShownBoardTitle[]>>;
+  /**
+   * These titles as the 战报 shows them: each with its badge in its colour's tone, and the
+   * default badge for a title won before titles came with one.
+   */
+  shownTitles(members: readonly MemberAwards[]): Promise<readonly ShownMemberAwards[]>;
   /** A squad's frozen 战报 for the week, or `undefined` before it is frozen. */
   story(input: {
     readonly squad: SquadId;
@@ -102,6 +109,17 @@ export function createWeeklyAwards(deps: {
           })),
         ]),
       );
+    },
+    shownTitles: async (members) => {
+      if (members.length === 0) return [];
+      const { badges } = await deps.settings.current();
+      return members.map(({ member, titles }) => ({
+        member,
+        titles: titles.map((title) => ({
+          ...title,
+          badge: shownBadge(title.badge ?? DEFAULT_BADGE, badges),
+        })),
+      }));
     },
     story: ({ squad, weekStart }) => deps.stories.find(squad, weekStart),
     storyWeeks: ({ squad }) => deps.stories.weeks(squad),

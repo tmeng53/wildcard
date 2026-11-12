@@ -1,14 +1,15 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { LocalDay, MemberId, SquadId, type CheckIns } from '@wildcard/check-ins';
 import type { Character, Members } from '@wildcard/members';
-import { wornOf, type WeeklyAwards } from '@wildcard/weekly-awards';
+import { MemberId as RewardMember, type HeldBadge, type Rewards } from '@wildcard/unlocks';
+import type { WeeklyAwards } from '@wildcard/weekly-awards';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
 import { problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { CharacterBody } from './character.js';
-import { WornTitleBody } from './titles.js';
+import { readerOf, wornTitleOf, WornTitleBody } from './titles.js';
 
 const count = (description: string) => z.int().min(0).meta({ description });
 
@@ -28,7 +29,8 @@ const MemberToday = z.strictObject({
   title: WornTitleBody.optional().meta({
     description:
       'The weekly title they wear (头衔), shown beside their name: the one they equipped, else ' +
-      'their latest. Missing before their first.',
+      'their latest; or the team badge they chose, its name in the reader’s language on a ' +
+      '`ticket`. Missing before their first.',
   }),
   day: LocalDay.meta({
     description: 'The member’s own today: their local date in their time zone.',
@@ -120,6 +122,8 @@ export function squadToday(deps: {
   readonly checkIns: CheckIns;
   readonly members: Members;
   readonly awards: WeeklyAwards;
+  /** The team badges a member who chose one to wear holds. */
+  readonly rewards: Pick<Rewards, 'badgesOf'>;
 }) {
   const route = createRoute({
     method: 'get',
@@ -158,9 +162,29 @@ export function squadToday(deps: {
       deps.members.squadmates(everyone),
       deps.awards.boards(everyone),
     ]);
+    // Only those wearing a team badge need theirs: at most the squad's 8.
+    const held = new Map<string, readonly HeldBadge[]>(
+      await Promise.all(
+        everyone
+          .filter((member) => (squadmates.get(member)?.equippedTeamBadge ?? null) !== null)
+          .map(
+            async (member) =>
+              [member, await deps.rewards.badgesOf(RewardMember.parse(member))] as const,
+          ),
+      ),
+    );
+    const reader = readerOf(c.req.header('accept-language'));
     const titleOf = (member: (typeof everyone)[number]) => {
-      const worn = wornOf(boards.get(member) ?? [], squadmates.get(member)?.equippedTitle);
-      return worn === undefined ? {} : { title: { title: worn.title, badge: worn.badge } };
+      const worn = wornTitleOf(
+        {
+          board: boards.get(member) ?? [],
+          equipped: squadmates.get(member)?.equippedTitle,
+          equippedTeamBadge: squadmates.get(member)?.equippedTeamBadge,
+          teamBadges: held.get(member) ?? [],
+        },
+        reader,
+      );
+      return worn === undefined ? {} : { title: worn };
     };
     return c.json(
       {

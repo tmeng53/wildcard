@@ -1,4 +1,4 @@
-import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
+import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 import { z } from 'zod';
 
 import type { Coach } from '../domain/coach.js';
@@ -8,7 +8,6 @@ import { instructionsOf, memoryBlock } from '../domain/prompt.js';
 import { lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf } from '../domain/squad-week.js';
-import { costMicros, weekStartOf } from '../domain/wake.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -16,11 +15,11 @@ import type {
   CoachLetterStore,
   CoachMemoryStore,
   CoachSettingsStore,
+  CoachTimeZones,
   CoachTool,
-  CoachUsageStore,
+  CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
-import { offDutyWhy } from './off-duty.js';
 
 /**
  * How long after a change of coach its letter may still be written: the app asks at once, so a
@@ -47,16 +46,13 @@ export function createCoachLetters(deps: {
   readonly catalog: CoachCatalogStore;
   readonly letters: CoachLetterStore;
   readonly memory: CoachMemoryStore;
-  readonly usage: CoachUsageStore;
+  readonly usage: CoachUsage;
   readonly squadWeek: SquadWeekSource;
   readonly aiConsented: AiConsented;
   readonly clock: () => Date;
   /** Without it no letter is written: there is no model to write it. */
   readonly agent?: CoachAgent;
-  readonly timeZonesAt?: (
-    squads: readonly SquadId[],
-    moment: Date,
-  ) => Promise<ReadonlyMap<string, string>>;
+  readonly timeZonesAt: CoachTimeZones;
   readonly lettered?: CoachLettered;
 }): CoachLetters {
   return {
@@ -70,16 +66,14 @@ export function createCoachLetters(deps: {
       const { agent } = deps;
       const settings = await deps.settings.current();
       if (agent === undefined || !settings.coaching) return undefined;
-      const offDuty = await offDutyWhy(
-        { usage: deps.usage, clock: deps.clock, timeZonesAt: deps.timeZonesAt },
-        { squad, settings },
-      );
-      if (offDuty !== undefined) return undefined;
+      if ((await deps.usage.offDutyWhy({ squad, model: settings.model })) !== undefined) {
+        return undefined;
+      }
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
       const from = coaches.get(handover.from);
       const to = coaches.get(handover.to);
       if (from === undefined || to === undefined) return undefined;
-      const zone = (await deps.timeZonesAt?.([squad], now))?.get(squad) ?? NEW_YORK;
+      const zone = (await deps.timeZonesAt([squad], now))(squad);
       const day = wallClockAt(now, zone).day;
       // Read before the try is claimed, so a failed read leaves the change one to try again.
       const task = await taskFor(deps, { squad, from, to, coaches, zone, day });
@@ -100,21 +94,14 @@ export function createCoachLetters(deps: {
         ],
         cacheKey: `coach:${from.id}`,
       });
-      // The tokens were spent whatever comes next: they count toward the squad's cap.
-      await deps.usage.record({
-        squad,
-        coach: from.id,
-        model: settings.model,
-        usage: run.usage,
-        costMicros: costMicros(run.usage, settings),
-        at: deps.clock(),
-      });
+      // The tokens were spent whatever comes next: they count toward the squad's budget.
+      await deps.usage.record({ squad, kind: 'letter', model: settings.model, usage: run.usage });
       // A letter handed in counts even if the run then ran out of time saying it was done.
       if (text === undefined) return undefined;
       await deps.letters.save({ handover, day, text });
       const letter = await deps.letters.ofHandover(handover.hireEvent);
       if (letter !== undefined && deps.lettered !== undefined) {
-        const week = await deps.squadWeek({ squad, weekStart: weekStartOf(day) });
+        const week = await deps.squadWeek({ squad, weekStart: mondayOf(day) });
         // After the save, and never undoing it.
         await deps
           .lettered(
@@ -154,7 +141,7 @@ async function taskFor(
     readonly day: string;
   },
 ): Promise<string> {
-  const week = await deps.squadWeek({ squad, weekStart: weekStartOf(day) });
+  const week = await deps.squadWeek({ squad, weekStart: mondayOf(day) });
   const consented = new Set(await deps.aiConsented(week.members.map(({ member }) => member)));
   const roster = rosterOf(week);
   const nicknames = new Map(

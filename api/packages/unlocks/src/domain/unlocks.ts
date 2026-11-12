@@ -9,8 +9,12 @@ export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
 export const UNLOCK_KINDS = ['store', 'prop', 'piece'] as const;
+/** What a member unlocked: a `prop` only from before every prop was open (Tracy, 2026-11-09). */
 export const UnlockKind = z.enum(UNLOCK_KINDS);
 export type UnlockKind = z.infer<typeof UnlockKind>;
+
+/** What a rule opens or an admin gives now: props never need unlocking. */
+export const UnlockableKind = UnlockKind.exclude(['prop']);
 
 /** A store's or prop's id in the app's art, such as `deuce` or `racket`. */
 export const ItemId = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
@@ -312,35 +316,31 @@ export function toGo({
   });
 }
 
-/** Stores, props and pieces an admin gives a member, whatever they trained. */
+/** Stores and pieces an admin gives a member, whatever they trained. */
 export const UnlockGift = z.strictObject({
   member: MemberId.describe('The member’s id.'),
   items: z
     .array(
       z
-        .strictObject({ kind: UnlockKind, id: z.string().max(48) })
+        .strictObject({ kind: UnlockableKind, id: z.string().max(48) })
         .refine(({ kind, id }) => idFits(kind, id), { message: 'the id doesn’t fit its kind' }),
     )
     .max(100)
     .optional()
-    .describe(
-      'The stores, props and pieces to give, each by kind and id; leave out for every one.',
-    ),
+    .describe('The stores and pieces to give, each by kind and id; leave out for every one.'),
 });
 export type UnlockGift = z.infer<typeof UnlockGift>;
 
 /** A rule as an admin adds or changes it. Its start is kept from when it was added. */
 export const UnlockRuleEdit = z
   .strictObject({
-    kind: UnlockKind.describe(
-      '`store` for a 商店街 store, `prop` for a prop, `piece` for a clothing piece in a store.',
+    kind: UnlockableKind.describe(
+      '`store` for a 商店街 store, `piece` for a clothing piece in a store. Props need no rule.',
     ),
     id: z
       .string()
       .max(48)
-      .describe(
-        'The id in the app’s art: a store or prop such as `deuce` or `racket`, a piece such as `lap-bib`.',
-      ),
+      .describe('The id in the app’s art: a store such as `deuce`, a piece such as `lap-bib`.'),
     sports: z
       .array(SportId)
       .max(20)

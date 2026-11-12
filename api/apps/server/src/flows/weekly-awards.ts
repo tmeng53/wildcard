@@ -1,3 +1,4 @@
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import {
   CheckInId,
   MemberId as CheckInMember,
@@ -28,7 +29,7 @@ import {
   topCheckInOf,
   type AwardsState,
   type Failures,
-  type MemberAwards,
+  type ShownMemberAwards,
   type MemberWeek,
   SquadId,
   type StoryMember,
@@ -157,9 +158,7 @@ async function awardsTimeFor(
   { squad, weekStart }: { readonly squad: SquadId; readonly weekStart: WeekStart },
 ): Promise<Date> {
   const id = SquadsSquad.parse(squad);
-  const zone = (await deps.squads.timeZonesFor([id], weekStart)).get(id);
-  if (zone === undefined) throw new Error(`No time zone for squad ${squad}`);
-  return awardsTimeOf(weekStart, zone);
+  return awardsTimeOf(weekStart, (await deps.squads.timeZonesFor([id], weekStart))(id));
 }
 
 /** One week's awards for every squad that checked in before them, as `giveWeeklyAwards`. */
@@ -272,7 +271,7 @@ export interface SquadStory {
   /** Everyone in the squad at the awards, in the order they joined, less accounts deleted since. */
   readonly members: readonly StoryMember[];
   /** The titles, in the members' order: empty until ready, or when nobody checked in. */
-  readonly titles: readonly MemberAwards[];
+  readonly titles: readonly ShownMemberAwards[];
   /** The top 3 by days trained, the crown winner in the middle, and who finished their plan. */
   readonly podium?: Podium<string>;
   /** The squad's meals; who ate more of what is in each member's part. */
@@ -356,8 +355,9 @@ export async function squadStory(
   )[0];
   // From the members' frozen days, less accounts deleted since: someone else steps up.
   const podium = podiumOf(members);
-  const titles =
-    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [];
+  const titles = await deps.awards.shownTitles(
+    state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [],
+  );
   const anyone = members.some(({ checkedIn }) => checkedIn);
   return {
     squad: { id: squad, name: story.name },
@@ -487,7 +487,10 @@ async function frozenStory(
     members: week.members.map(({ member, checkIns }, index): StoryMember => {
       const page = pages.members[index];
       if (page?.member !== member) throw new Error('The 战报’s pages don’t match its members');
-      const hottest = topCheckInOf(checkIns.map((record) => weekCheckIn(record, week)));
+      // 你最火的一条 is a post: a check-in only recorded (发布到动态 off) is never on a page.
+      const hottest = topCheckInOf(
+        checkIns.filter(({ inFeed }) => inFeed).map((record) => weekCheckIn(record, week)),
+      );
       const best = pages.bestDisclaimer;
       return {
         member: MemberId.parse(member),
@@ -565,8 +568,8 @@ async function memberWeeks(
       const profile = await deps.members.findProfile(member);
       return {
         member: MemberId.parse(member),
-        // A member who checked in has saved a time zone; UTC only for one who never did.
-        timeZone: profile?.timeZone ?? 'UTC',
+        // A member who checked in has saved a time zone.
+        timeZone: profile?.timeZone ?? UNSAVED_MEMBER_ZONE,
         checkIns: checkIns.map((record) => weekCheckIn(record, squadWeek)),
       };
     }),
@@ -576,6 +579,8 @@ function weekCheckIn(
   record: CheckInRecord,
   { reactions, comments }: Pick<SquadWeekCheckIns, 'reactions' | 'comments'>,
 ): WeekCheckIn {
+  // A check-in only recorded (发布到动态 off) counts, but its words and photos stay its author's.
+  if (!record.inFeed) return unpostedWeekCheckIn(record);
   const counts: Record<string, number> = {};
   for (const { emoji } of reactions.get(record.id) ?? []) counts[emoji] = (counts[emoji] ?? 0) + 1;
   const base = {
@@ -607,6 +612,29 @@ function weekCheckIn(
         text: record.disclaimer.text,
         ...(record.disclaimer.restDay === true ? { restDay: true } : {}),
       };
+  }
+}
+
+/** A check-in only recorded, as the awards read it: its kind and sport, without words or photos. */
+function unpostedWeekCheckIn(record: CheckInRecord): WeekCheckIn {
+  const base = {
+    id: record.id,
+    day: record.day,
+    createdAt: record.createdAt,
+    kind: record.kind,
+    photos: [],
+    reactions: {},
+    comments: [],
+  };
+  switch (record.kind) {
+    case 'trained':
+      // What they did is the record, as squadmates see it on the member's card.
+      return { ...base, sport: record.training.customSport ?? record.training.sport };
+    case 'healthyMeal':
+    case 'cheatMeal':
+      return base;
+    case 'disclaimer':
+      return record.disclaimer.restDay === true ? { ...base, restDay: true } : base;
   }
 }
 

@@ -20,7 +20,7 @@
     {"part": "head", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.5, "v": 4, "ease": "easeInOut"}, {"t": 1.2, "v": -4, "ease": "easeInOut"}, {"t": 1.9, "v": 0, "ease": "easeInOut"}]},
     {"part": "mouthOpen", "channel": "opacity", "keys": [{"t": 0, "v": 0}, {"t": 2.3200000000000003, "v": 0}, {"t": 2.35, "v": 1}, {"t": 2.95, "v": 1}, {"t": 3, "v": 0}]},
     {"part": "mouthSmile", "channel": "opacity", "keys": [{"t": 0, "v": 1}, {"t": 2.3200000000000003, "v": 1}, {"t": 2.35, "v": 0}, {"t": 2.95, "v": 0}, {"t": 3, "v": 1}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 2.25, "v": 1, "ease": "hold"}, {"t": 2.6, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 2.25, "v": 1, "ease": "hold"}, {"t": 2.6, "v": 0, "ease": "hold"}]}
+    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 2.233, "v": 1, "ease": "hold"}, {"t": 2.6, "v": 0, "ease": "hold"}]},
+    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 2.233, "v": 1, "ease": "hold"}, {"t": 2.6, "v": 0, "ease": "hold"}]}
   ]
 }

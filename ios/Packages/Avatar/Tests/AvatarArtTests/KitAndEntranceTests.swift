@@ -260,6 +260,6 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
         #expect(!clip.loops, "\(id)")
         let bound = try figure.bind(clip)
         expectOnCanvas(figure, bound, for: clip.duration, id)
-        #expect(nearlyEqual(figure.pose(bound, at: clip.duration), figure.restPose), "\(id)")
+        #expect(nearlyEqual(armsBehind(figure.pose(bound, at: clip.duration)), figure.restPose), "\(id)")
     }
 }

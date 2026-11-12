@@ -156,13 +156,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /check-ins/{checkInId}/reactions/mine`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/mine/delete(removeMyReaction)`.
     func removeMyReaction(_ input: Operations.RemoveMyReaction.Input) async throws -> Operations.RemoveMyReaction.Output
-    /// A check-in’s reactions
-    ///
-    /// Oldest first, for its author and the teammates who can see it.
-    ///
-    /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
-    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
-    func listCheckInReactions(_ input: Operations.ListCheckInReactions.Input) async throws -> Operations.ListCheckInReactions.Output
     /// Comment on a check-in
     ///
     /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
@@ -177,13 +170,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /check-ins/{checkInId}/comments/{commentId}`.
     /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/{commentId}/delete(deleteComment)`.
     func deleteComment(_ input: Operations.DeleteComment.Input) async throws -> Operations.DeleteComment.Output
-    /// A check-in’s comments
-    ///
-    /// Oldest first, for its author and the teammates who can see it.
-    ///
-    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
-    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
-    func listCheckInComments(_ input: Operations.ListCheckInComments.Input) async throws -> Operations.ListCheckInComments.Output
     /// Get push notifications on this phone
     ///
     /// The app calls this whenever iOS hands it a device token (every launch, once notifications are allowed). Safe to repeat. A token names one install, so a phone someone else signed in on before moves to the caller.
@@ -404,13 +390,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
     func answerCoachChallenge(_ input: Operations.AnswerCoachChallenge.Input) async throws -> Operations.AnswerCoachChallenge.Output
-    /// Put the caller’s morning note away (收下)
-    ///
-    /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
-    ///
-    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/put-away`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/put-away/put(putAwayCoachMemberNote)`.
-    func putAwayCoachMemberNote(_ input: Operations.PutAwayCoachMemberNote.Input) async throws -> Operations.PutAwayCoachMemberNote.Output
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
     /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.
@@ -481,16 +460,9 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /me/events`.
     /// - Remark: Generated from `#/paths//me/events/get(streamMyEvents)`.
     func streamMyEvents(_ input: Operations.StreamMyEvents.Input) async throws -> Operations.StreamMyEvents.Output
-    /// A squad’s week: its awards and counts (周日战报)
-    ///
-    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
-    ///
-    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
-    func getSquadWeekSummary(_ input: Operations.GetSquadWeekSummary.Input) async throws -> Operations.GetSquadWeekSummary.Output
     /// Three AI drafts for a disclaimer
     ///
-    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    /// Each batch counts toward the AI budget of the member’s squad for the day. On any failure, show the dice suggestions instead of an error.
     ///
     /// - Remark: HTTP `POST /disclaimer-drafts`.
     /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
@@ -551,13 +523,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/story`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/story/get(getSquadWeekStory)`.
     func getSquadWeekStory(_ input: Operations.GetSquadWeekStory.Input) async throws -> Operations.GetSquadWeekStory.Output
-    /// The weekly titles the signed-in member has won
-    ///
-    /// Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.
-    ///
-    /// - Remark: HTTP `GET /me/award-totals`.
-    /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
-    func getMyAwardTotals(_ input: Operations.GetMyAwardTotals.Input) async throws -> Operations.GetMyAwardTotals.Output
     /// The signed-in member’s badge board
     ///
     /// Every weekly title they won, with its badge, the weeks and award lines (徽章板), and the one they wear.
@@ -890,21 +855,6 @@ extension APIProtocol {
             headers: headers
         ))
     }
-    /// A check-in’s reactions
-    ///
-    /// Oldest first, for its author and the teammates who can see it.
-    ///
-    /// - Remark: HTTP `GET /check-ins/{checkInId}/reactions`.
-    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/reactions/get(listCheckInReactions)`.
-    public func listCheckInReactions(
-        path: Operations.ListCheckInReactions.Input.Path,
-        headers: Operations.ListCheckInReactions.Input.Headers = .init()
-    ) async throws -> Operations.ListCheckInReactions.Output {
-        try await listCheckInReactions(Operations.ListCheckInReactions.Input(
-            path: path,
-            headers: headers
-        ))
-    }
     /// Comment on a check-in
     ///
     /// Writes the caller’s comment under a check-in they can see, their own included. Comments are never edited; the same comment under the same id again changes nothing, so it is safe to repeat.
@@ -933,21 +883,6 @@ extension APIProtocol {
         headers: Operations.DeleteComment.Input.Headers = .init()
     ) async throws -> Operations.DeleteComment.Output {
         try await deleteComment(Operations.DeleteComment.Input(
-            path: path,
-            headers: headers
-        ))
-    }
-    /// A check-in’s comments
-    ///
-    /// Oldest first, for its author and the teammates who can see it.
-    ///
-    /// - Remark: HTTP `GET /check-ins/{checkInId}/comments`.
-    /// - Remark: Generated from `#/paths//check-ins/{checkInId}/comments/get(listCheckInComments)`.
-    public func listCheckInComments(
-        path: Operations.ListCheckInComments.Input.Path,
-        headers: Operations.ListCheckInComments.Input.Headers = .init()
-    ) async throws -> Operations.ListCheckInComments.Output {
-        try await listCheckInComments(Operations.ListCheckInComments.Input(
             path: path,
             headers: headers
         ))
@@ -1424,21 +1359,6 @@ extension APIProtocol {
             body: body
         ))
     }
-    /// Put the caller’s morning note away (收下)
-    ///
-    /// The caller read their morning note (便条) on 今天 and put it away, so it no longer comes back as `memberNote` on any of their phones; 通知 keeps it. Safe to repeat.
-    ///
-    /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/put-away`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/put-away/put(putAwayCoachMemberNote)`.
-    public func putAwayCoachMemberNote(
-        path: Operations.PutAwayCoachMemberNote.Input.Path,
-        headers: Operations.PutAwayCoachMemberNote.Input.Headers = .init()
-    ) async throws -> Operations.PutAwayCoachMemberNote.Output {
-        try await putAwayCoachMemberNote(Operations.PutAwayCoachMemberNote.Input(
-            path: path,
-            headers: headers
-        ))
-    }
     /// What the squad’s coach said (战术板, replies and reactions)
     ///
     /// The newest 战术板 line, and the coach’s reply (a line, an emoji or both) to each of the check-ins asked about that has one, its answers to members’ replies to it there, and the caller’s own morning note, and the letter the coach now was left when it took over. Only for the squad’s members. They stay after the squad fires its coach.
@@ -1591,24 +1511,9 @@ extension APIProtocol {
     public func streamMyEvents(headers: Operations.StreamMyEvents.Input.Headers = .init()) async throws -> Operations.StreamMyEvents.Output {
         try await streamMyEvents(Operations.StreamMyEvents.Input(headers: headers))
     }
-    /// A squad’s week: its awards and counts (周日战报)
-    ///
-    /// From check-ins sent to the squad by everyone in it now, against their weekly plans. A week runs Monday to Sunday on each member’s own clock. Only winners are named and only the signed-in member’s own counts are shown, so nobody is ranked last. Reactions count only from members of the squad now. Any week that has started can be read; until `final`, it is still being played. Only for members of the squad. The words come in the language of the request’s `Accept-Language` they are written in (Chinese or English) that it weighs highest, Chinese otherwise; the app leaves that header to the system, which lists the phone’s languages.
-    ///
-    /// - Remark: HTTP `GET /squads/{squadId}/weeks/{weekStart}/summary`.
-    /// - Remark: Generated from `#/paths//squads/{squadId}/weeks/{weekStart}/summary/get(getSquadWeekSummary)`.
-    public func getSquadWeekSummary(
-        path: Operations.GetSquadWeekSummary.Input.Path,
-        headers: Operations.GetSquadWeekSummary.Input.Headers = .init()
-    ) async throws -> Operations.GetSquadWeekSummary.Output {
-        try await getSquadWeekSummary(Operations.GetSquadWeekSummary.Input(
-            path: path,
-            headers: headers
-        ))
-    }
     /// Three AI drafts for a disclaimer
     ///
-    /// Each member gets 6 batches in any 24 hours (the first and 5 more). A batch that fails doesn’t count. On any failure, show the dice suggestions instead of an error.
+    /// Each batch counts toward the AI budget of the member’s squad for the day. On any failure, show the dice suggestions instead of an error.
     ///
     /// - Remark: HTTP `POST /disclaimer-drafts`.
     /// - Remark: Generated from `#/paths//disclaimer-drafts/post(writeDisclaimerDrafts)`.
@@ -1738,15 +1643,6 @@ extension APIProtocol {
             path: path,
             headers: headers
         ))
-    }
-    /// The weekly titles the signed-in member has won
-    ///
-    /// Every title from the Sunday 战报’s awards (本周颁奖) in all their squads, for 周奖 on their player card in 我. Counts only go up, until a squad is deleted.
-    ///
-    /// - Remark: HTTP `GET /me/award-totals`.
-    /// - Remark: Generated from `#/paths//me/award-totals/get(getMyAwardTotals)`.
-    public func getMyAwardTotals(headers: Operations.GetMyAwardTotals.Input.Headers = .init()) async throws -> Operations.GetMyAwardTotals.Output {
-        try await getMyAwardTotals(Operations.GetMyAwardTotals.Input(headers: headers))
     }
     /// The signed-in member’s badge board
     ///

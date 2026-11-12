@@ -31,7 +31,9 @@ final class CoachLetterUITests: XCTestCase {
 
         let seal = app.buttons["today.letter.seal"]
         XCTAssertTrue(seal.waitForExistence(timeout: 30), "the written letter never came as an envelope")
-        XCTAssertFalse(handover.exists, "「交接中」 stays after the letter came")
+        // 「交接中」 fades out over `CoachHandover.chipFade` as the old coach leaves, and the
+        // envelope flies out `envelopeAfter` into that fade, so both show for a moment by design.
+        waitFor(handover, "exists == false", "「交接中」 stays after the letter came", timeout: 5)
         settle()
         assertInside(seal, app)
         keepScreenshot(named: "91b-coach-letter-sealed")

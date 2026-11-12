@@ -92,12 +92,18 @@ public struct APIScheduleBackend: ScheduleBackend {
         case .case1(let ready):
             let mine = ready.titles.first { UUID(uuidString: $0.member).map(MemberID.init) == member }
             return (
-                mine?.titles.map { AwardTitle(title: $0.title, speech: $0.speech) } ?? [],
+                Self.awardTitles(mine?.titles ?? []),
                 SceneID(rawValue: ready.sceneId)
             )
         case .case2(let pending):
             return ([], SceneID(rawValue: pending.sceneId))
         }
+    }
+
+    /// A member's titles in a story, each with its badge; the default badge from servers before
+    /// the story sent one.
+    static func awardTitles(_ titles: [Components.Schemas.StoryTitle]) -> [AwardTitle] {
+        titles.map { AwardTitle(title: $0.title, speech: $0.speech, badge: $0.badge.map(TitleBadge.init) ?? .plain) }
     }
 
     /// How each day of the week went: a 练了 over a 请假条, Monday first, with every sport a

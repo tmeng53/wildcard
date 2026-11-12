@@ -51,7 +51,7 @@ public struct TitleBadgeView: View {
                 .scaleEffect(Self.topScale)
                 .offset(x: Self.edge * Self.shadeShare * unit, y: Self.edge * Self.shadeShare * unit)
             outline.fill(Color(colors.face)).frame(width: square, height: square).scaleEffect(Self.topScale)
-            Highlight()
+            Highlight(shape: shape)
                 .stroke(
                     Color(role: .fgOnInk, in: .gym).opacity(Self.highlightOpacity),
                     style: StrokeStyle(lineWidth: Self.highlightWidth * unit, lineCap: .round)
@@ -157,15 +157,28 @@ private struct BadgeOutline: Shape {
     }
 }
 
-/// The highlight: a short arc near the top left of the face, as light catching it.
+/// The highlight: a short arc near the top left of the face, as light catching it. The ticket
+/// lies lower and flatter than the other shapes, whose top it would stick out of, so its arc sits
+/// inside the ticket's own top left.
 private struct Highlight: Shape {
+    let shape: TitleBadgeView.Shape
+
     func path(in rect: CGRect) -> Path {
         let unit = min(rect.width, rect.height) / 48
+        func point(_ across: Double, _ down: Double) -> CGPoint {
+            CGPoint(x: rect.minX + across * unit, y: rect.minY + down * unit)
+        }
         var path = Path()
-        path.move(to: CGPoint(x: rect.minX + 13 * unit, y: rect.minY + 16 * unit))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX + 25.5 * unit, y: rect.minY + 9.4 * unit),
-            control: CGPoint(x: rect.minX + 18 * unit, y: rect.minY + 10.5 * unit))
+        if shape == .ticket {
+            // The ticket's face, scaled to the top's 0.8, runs from 12 to 36 down and 6.4 to 41.6
+            // across: the arc stays above its left notch, inside its rounded corner and clear of
+            // the glyph.
+            path.move(to: point(10.5, 19))
+            path.addQuadCurve(to: point(17.5, 15), control: point(12, 15.5))
+        } else {
+            path.move(to: point(13, 16))
+            path.addQuadCurve(to: point(25.5, 9.4), control: point(18, 10.5))
+        }
         return path
     }
 }

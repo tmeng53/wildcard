@@ -58,7 +58,7 @@ public struct APIMeService: MeService {
                 board: board,
                 unlocks: standing.unlocks,
                 stock: standing.stock, claimed: standing.claimed, gifts: standing.gifts, weekGlance: glance,
-                record: record, birthday: member.birthday)
+                record: record, birthday: member.birthday, streaks: totals.streaks)
         }
     }
 
@@ -149,9 +149,9 @@ public struct APIMeService: MeService {
         }
     }
 
-    /// Wears one of the member's titles (nil: the latest won again).
-    public func equip(_ title: String?) async throws(MeError) -> TitleBoard {
-        try await me { () throws(APIError) in try await api.equip(title: title) }
+    /// Wears one of the member's titles or team badges (nil: the latest title won again).
+    public func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
+        try await me { () throws(APIError) in try await api.equip(wearable) }
     }
 
     public func claim(piece: String) async throws(MeError) {
@@ -200,12 +200,12 @@ public struct APISquadmateCards: SquadmateCards {
                     persona: character.map { Persona($0.look) } ?? .energetic),
                 number: PlayerCardFace.number(picked: card.jerseyNumber, place: card.squadPlace),
                 // The sheet fills in the squad's name it was opened from.
-                squadName: nil, joinedAt: card.joinedAt,
+                squadName: nil,
                 counts: LifetimeCounts(
                     trainedDays: card.totals.trainedDays, healthyMeals: card.totals.healthyMeals,
                     cheatMeals: card.totals.cheatMeals, disclaimers: card.totals.disclaimers),
                 week: card.week, board: card.board,
-                schedule: card.schedule)
+                schedule: card.schedule, streaks: card.totals.streaks)
         }
     }
 }

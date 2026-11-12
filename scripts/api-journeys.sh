@@ -3,7 +3,7 @@
 # (api/apps/server/dist), real members signed up through Supabase Auth, photos uploaded to
 # Supabase Storage. Each step prints one line; any unexpected answer stops the run.
 #   scripts/api-journeys.sh [check-in] [photo-upload] [squad] [disclaimer-drafts] [weekly-plan]
-#     [squad-today] [week-summary] [reactions] [comments] [devices] [daily-push] [weekly-awards] [coach] [account] [admin-mcp]   (no arguments: all)
+#     [squad-today] [reactions] [comments] [devices] [daily-push] [weekly-awards] [coach] [account] [admin-mcp]   (no arguments: all)
 # Needs `supabase start`, pnpm, node, curl, jq and psql. The verify-wildcard skill's features/ files
 # say what each line means and which rows to check.
 set -euo pipefail
@@ -11,11 +11,11 @@ set -euo pipefail
 shopt -s inherit_errexit 2>/dev/null || true
 cd "$(dirname "$0")/.."
 
-journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today week-summary reactions comments devices daily-push weekly-awards coach account admin-mcp}"
+journeys="${*:-check-in photo-upload squad disclaimer-drafts weekly-plan squad-today reactions comments devices daily-push weekly-awards coach account admin-mcp}"
 for journey in $journeys; do
   case "$journey" in
-    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | week-summary | reactions | comments | devices | daily-push | weekly-awards | coach | account | admin-mcp) ;;
-    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, week-summary, reactions, comments, devices, daily-push, weekly-awards, coach, account, admin-mcp)" >&2 && exit 2 ;;
+    check-in | photo-upload | squad | disclaimer-drafts | weekly-plan | squad-today | reactions | comments | devices | daily-push | weekly-awards | coach | account | admin-mcp) ;;
+    *) echo "api-journeys: unknown journey $journey (check-in, photo-upload, squad, disclaimer-drafts, weekly-plan, squad-today, reactions, comments, devices, daily-push, weekly-awards, coach, account, admin-mcp)" >&2 && exit 2 ;;
   esac
 done
 want() { [[ " $journeys " == *" $1 "* ]]; }
@@ -79,7 +79,7 @@ agree_to_ai() {
 # (each agreeing to the AI copy first): sets $squad and $invite_code.
 squad_of() {
   for token in "$@"; do agree_to_ai "$token"; done
-  call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 "}'
+  call PUT "/squads/$(new_id)" "$1" '{"version":1,"name":" 早八跑团 ","timeZone":"America/New_York"}'
   expect 201
   squad="$(jq -r .id <<<"$body")"
   invite_code="$(jq -r .inviteCode <<<"$body")"
@@ -115,7 +115,7 @@ read -r mate mate_token <<<"$(sign_up)"
 read -r outsider outsider_token <<<"$(sign_up)"
 for m in "$me" "$mate" "$outsider"; do [[ "$m" =~ ^[0-9a-f-]{36}$ ]] || fail "sign-up failed"; done
 if want squad; then
-  call PUT "/squads/$(new_id)" "$me_token" '{"version":1,"name":"早八跑团"}'
+  call PUT "/squads/$(new_id)" "$me_token" '{"version":1,"name":"早八跑团","timeZone":"America/New_York"}'
   expect 400 AI_CONSENT_REQUIRED
   echo "squad: making a squad before agreeing to the AI terms refused (400 AI_CONSENT_REQUIRED)"
 fi
@@ -338,9 +338,9 @@ if want disclaimer-drafts; then
   expect 401 AUTH_TOKEN_MISSING
   echo "disclaimer-drafts: an unknown style refused (400), a signed-out caller refused (401)"
 
-  used="$(psql "$DB_URL" -tAc "select count(*) from public.disclaimer_draft_requests where member_id = '$me'")"
-  [ "$used" = 0 ] || fail "nothing was shown, so no batch should count: $used"
-  echo "disclaimer-drafts: no batch counted"
+  used="$(psql "$DB_URL" -tAc "select count(*) from public.ai_usage where member_id = '$me'")"
+  [ "$used" = 0 ] || fail "no model was called, so no AI usage should count: $used"
+  echo "disclaimer-drafts: no AI usage counted"
 fi
 
 if want weekly-plan; then
@@ -521,53 +521,6 @@ if want squad-today; then
   squad="$shared_squad"
 fi
 
-if want week-summary; then
-  # A squad of its own for this week's 战报. Ace plans a week of rest, and one 练了 makes that
-  # day a training day and completes it;
-  # the writer posts a 请假条 and the fan laughs at it.
-  shared_squad="$squad"
-  read -r ace ace_token <<<"$(sign_up)"
-  read -r writer writer_token <<<"$(sign_up)"
-  read -r fan fan_token <<<"$(sign_up)"
-  read -r zone today monday <<<"$(noon_zone)"
-  for token in "$ace_token" "$writer_token" "$fan_token"; do
-    call PUT /me/profile "$token" "{\"version\":1,\"timeZone\":\"$zone\"}"
-    expect 200
-  done
-  squad_of "$ace_token" "$writer_token" "$fan_token"
-  call PUT "/me/weekly-plans/$monday" "$ace_token" "$(jq -cn '{version: 1, days: [range(7) | {kind: "rest"}]}')"
-  expect 200
-  # Planned days count from the day a member joined, so these members joined weeks ago.
-  psql "$DB_URL" -qc "update public.profiles set created_at = now() - interval '30 days' where member_id in ('$ace', '$writer', '$fan')"
-  call PUT "/check-ins/$(new_id)" "$ace_token" "$(check_in_of "$squad" "$today" trained '"training":{"sport":"run"}')"
-  expect 201
-  excuse="$(new_id)"
-  call PUT "/check-ins/$excuse" "$writer_token" "$(check_in_of "$squad" "$today" disclaimer '"disclaimer":{"text":"腿还在酸"}')"
-  expect 201
-  call PUT "/check-ins/$excuse/reactions/mine" "$fan_token" '{"version":1,"emoji":"😂"}'
-  expect 201
-  echo "week-summary: squad=$squad in $zone ($today) ace trained on a week planned all rest, writer posted a 请假条, fan laughed at it"
-
-  call GET "/squads/$squad/weeks/$monday/summary" "$fan_token"
-  expect 200
-  [ "$(jq -c '[.final, [.awards[] | [.kind, [.winners[] | [.member, .value, .checkIn]]]]]' <<<"$body")" = \
-    "$(jq -cn --arg a "$ace" --arg w "$writer" --arg e "$excuse" \
-      '[false, [["planCompleted",[[$a,1,null]]],["crown",[[$a,1,null]]],["bestDisclaimer",[[$w,1,$e]]]]]')" ] ||
-    fail "ace should complete the plan and wear the crown, and the writer's 请假条 be the best; not final yet: $body"
-  echo "week-summary: still being played; podium and crown ace (1 day), best 请假条 writer's (1 reaction)"
-  [ "$(jq -c '[[.squadTotals.stats[] | select(.kind == "trainedDays" or .kind == "plannedDays" or .kind == "checkIns") | .value], [.squadTotals.reactions[] | select(.emoji == "😂") | .count], [.me.reactions[] | select(.emoji == "😂") | .given]]' <<<"$body")" = \
-    '[[1,11,2],[1],[1]]' ] ||
-    fail "the squad should have 1 of 11 days trained in 2 check-ins and one 😂, given by the fan: $body"
-  echo "week-summary: squad 1/11 days in 2 check-ins, one 😂, which the fan sees as given"
-
-  call GET "/squads/$squad/weeks/$(days_after "$monday" 7)/summary" "$fan_token"
-  expect 400 WEEK_NOT_STARTED
-  call GET "/squads/$squad/weeks/$monday/summary" "$outsider_token"
-  expect 403 SQUAD_NOT_JOINED
-  echo "week-summary: next week refused (400 WEEK_NOT_STARTED), outsider refused (403 SQUAD_NOT_JOINED)"
-  squad="$shared_squad"
-fi
-
 if want reactions; then
   post="$(new_id)"
   call PUT "/check-ins/$post" "$me_token" "$(check_in_of "$squad" "$day" trained '"training":{"sport":"run"}')"
@@ -581,7 +534,7 @@ if want reactions; then
   expect 200
   echo "reactions: mate left ❤️ (201), again (200), then changed it to 😂 (200)"
 
-  call GET "/check-ins/$post/reactions" "$me_token"
+  call GET "/check-ins/$post" "$me_token"
   expect 200
   [ "$(jq -c '[.reactions[] | [.member, .emoji]]' <<<"$body")" = "$(jq -cn --arg m "$mate" '[[$m,"😂"]]')" ] ||
     fail "the author should see one reaction, mate's 😂: $body"
@@ -591,7 +544,7 @@ if want reactions; then
   expect 400 OWN_CHECK_IN_REACTION
   call PUT "/check-ins/$post/reactions/mine" "$outsider_token" "$(reaction ❤️)"
   expect 404 CHECK_IN_NOT_FOUND
-  call GET "/check-ins/$post/reactions" "$outsider_token"
+  call GET "/check-ins/$post" "$outsider_token"
   expect 404 CHECK_IN_NOT_FOUND
   call PUT "/check-ins/$post/reactions/mine" "$mate_token" "$(reaction 稳)"
   expect 400 REQUEST_INVALID
@@ -622,14 +575,13 @@ if want comments; then
   reply="$(new_id)"
   call PUT "/check-ins/$post/comments/$reply" "$me_token" "{\"version\":1,\"text\":\"谢谢\",\"replyTo\":\"$mate\"}"
   expect 201
-  call GET "/check-ins/$post/comments" "$mate_token"
-  expect 200
-  [ "$(jq -c '[.comments[] | [.member, .text, .replyTo]]' <<<"$body")" = "$(jq -cn --arg m "$mate" --arg a "$me" '[[$m,"冲！",null],[$a,"谢谢",$m]]')" ] ||
-    fail "mate should read both, oldest first, the author's a reply to mate: $body"
-  call GET "/check-ins/$post" "$me_token"
-  expect 200
-  [ "$(jq '.comments | length' <<<"$body")" = 2 ] || fail "the post's page should carry both comments: $body"
-  echo "comments: the author replied to mate (201); both read them oldest first, here and on the post's page"
+  for reader in "$mate_token" "$me_token"; do
+    call GET "/check-ins/$post" "$reader"
+    expect 200
+    [ "$(jq -c '[.comments[] | [.member, .text, .replyTo]]' <<<"$body")" = "$(jq -cn --arg m "$mate" --arg a "$me" '[[$m,"冲！",null],[$a,"谢谢",$m]]')" ] ||
+      fail "both should read both on the post's page, oldest first, the author's a reply to mate: $body"
+  done
+  echo "comments: the author replied to mate (201); both read them oldest first on the post's page"
 
   call PUT "/check-ins/$post/comments/$(new_id)" "$outsider_token" '{"version":1,"text":"嗨"}'
   expect 404 CHECK_IN_NOT_FOUND
@@ -933,7 +885,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_week_summary_words,change_week_summary_words,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,get_unlock_rules,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_ai_usage_settings,change_ai_usage_settings,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -966,7 +918,7 @@ if want admin-mcp; then
   echo "admin-mcp: the log holds the two changes, newest first, and no reads ($logged)"
 
   tool get_disclaimer_draft_settings '{}'
-  [ "$(jq -r '"\(.model) \(.writing) \(.batchesPerDay)"' <<<"$result")" = "openai/gpt-6-luna true 6" ] ||
+  [ "$(jq -r '"\(.model) \(.writing) \(.memeChance)"' <<<"$result")" = "openai/gpt-6-luna true 0.3" ] ||
     fail "get_disclaimer_draft_settings: $result"
   tool change_disclaimer_draft_settings '{"writing":false}'
   [ "$(jq -r .writing <<<"$result")" = false ] || fail "change_disclaimer_draft_settings: $result"
@@ -979,17 +931,6 @@ if want admin-mcp; then
   tool get_weekly_award_settings '{}'
   [ "$(jq -r .model <<<"$result")" = openai/gpt-6-luna ] || fail "get_weekly_award_settings: $result"
   echo "admin-mcp: read the AI settings (openai/gpt-6-luna), turned drafts off and on, logged once each ($changes); an unknown provider refused"
-
-  tool get_week_summary_words '{}'
-  [ "$(jq -r '.awards.crown.title["zh-Hans"]' <<<"$result")" = 皇冠 ] || fail "get_week_summary_words: $result"
-  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡次数","en":"Check-ins","zh-Hant":"打卡次數"}}}'
-  [ "$(jq -r '.stats.checkIns["zh-Hans"]' <<<"$result")" = 打卡次数 ] || fail "change_week_summary_words: $result"
-  tool change_week_summary_words '{"stats":{"checkIns":{"zh-Hans":"打卡","en":"Check-ins","zh-Hant":"打卡"}}}'
-  tool change_week_summary_words '{"awards":{"medal":{"symbol":"medal","title":{"zh-Hans":"奖牌","en":"Medal","zh-Hant":"獎牌"},"winner":{"zh-Hans":{"one":"{n}","other":"{n}"},"en":{"one":"{n}","other":"{n}"},"zh-Hant":{"one":"{n}","other":"{n}"}}}}}'
-  [ "$is_error" = true ] || fail "an award the API doesn't have: $result"
-  words="$(psql "$DB_URL" -tAc "select string_agg(words#>>'{stats,checkIns,zh-Hans}', ',' order by id) from public.week_summary_word_events where changed_by = '$admin'")"
-  [ "$words" = "打卡次数,打卡" ] || fail "the words log should hold the two changes, not the refusal: $words"
-  echo "admin-mcp: renamed a 战报 count and back, logged once each ($words); an unknown award refused"
 
   tool get_disclaimer_dice '{}'
   dice="$(jq -c '.lines' <<<"$result")"

@@ -40,6 +40,7 @@ import {
   switchesOn,
   adminOn,
   aiConsentOn,
+  aiUsageOn,
   config,
   noJobs,
   nudgesOn,
@@ -47,9 +48,9 @@ import {
   pushOn,
   signUp,
 } from '../test-kit/local-supabase.js';
+import { coachUsageIn } from '../flows/coach-usage.js';
 import {
   unusedWeeklyAwards,
-  unusedWeekSummaryWords,
   unusedUnlocks,
   ignoredNotices,
   unusedFeedback,
@@ -117,7 +118,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: createCoachHiring({
     hiring: createPostgresCoachHiring(db),
     catalog: createPostgresCoachCatalog(db),
@@ -129,10 +129,11 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
     letters: createPostgresCoachLetters(db),
     memory: createPostgresCoachStores(db).memory,
-    usage: createPostgresCoachStores(db).usage,
+    usage: coachUsageIn(aiUsageOn(db)),
     squadWeek: () => Promise.reject(new Error('unused')),
     aiConsented: () => Promise.reject(new Error('unused')),
     clock: () => new Date(),
+    timeZonesAt: () => Promise.reject(new Error('unused')),
   }),
   ...ignoredNotices,
   ...unusedFeedback,
@@ -184,7 +185,7 @@ async function squadOf(captain: { token: string }, ...others: { token: string }[
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团' },
+    body: { version: 1, name: '早八跑团', timeZone: 'America/New_York' },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);

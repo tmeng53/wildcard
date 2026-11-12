@@ -253,6 +253,9 @@ jobs:
           # What scripts/api-compat.sh compares openapi.json with: the PR's base, or main before
           # the push.
           API_COMPAT_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          # What new migrations must be numbered after (scripts/migration-order.sh): the base
+          # branch's tip, not the merge base, so a PR can't slip in under one merged since it began.
+          MIGRATIONS_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
       # The verify-wildcard API journeys, over HTTP against the built server.
       - run: scripts/api-journeys.sh
       # The image the deploy workflow ships builds, starts and reaches the database.

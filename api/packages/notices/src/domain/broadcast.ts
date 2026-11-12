@@ -21,13 +21,15 @@ const words = (max: number) =>
 
 /**
  * Where a button goes in the app: `stores` (商店街), `store/<storeId>`, `schedule` (出赛表),
- * `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today` or `me`. The app shows no button for
- * one it doesn't know, so a place added later is safe to send to older builds.
+ * `squad` (小队), `coaches` (教练招聘会), `feed` (动态), `post/<checkInId>`, `today`, `me`,
+ * `wardrobe` (衣橱), `wardrobe/<pieceId>` (衣橱, trying that piece on) or `badges` (the badge
+ * board). The app shows no button for one it doesn't know, so a place added later is safe to
+ * send to older builds.
  */
 export const Destination = z
   .string()
   .regex(
-    /^(stores|notices|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|coaches|feed|post\/[0-9a-f-]{36}|today|me)$/,
+    /^(stores|notices|store\/[a-z][A-Za-z0-9]{0,39}|schedule|squad|coaches|feed|post\/[0-9a-f-]{36}|today|me|wardrobe|wardrobe\/[a-z][a-z0-9-]{0,47}|badges)$/,
   );
 export type Destination = z.infer<typeof Destination>;
 
@@ -35,12 +37,39 @@ export type Destination = z.infer<typeof Destination>;
 export const BroadcastStyle = z.enum(['banner', 'celebration']);
 export type BroadcastStyle = z.infer<typeof BroadcastStyle>;
 
-/** A store, prop or piece given with it, by kind and id as the unlocks module names them. */
-export const BroadcastGift = z.strictObject({
+/** A store, prop or piece the app draws, by kind and id as the unlocks module names them. */
+const ArtItem = z.strictObject({
   kind: z.enum(['store', 'prop', 'piece']),
   id: z.string().min(1).max(48),
 });
+
+/** A store or piece given with it. Props need no gift: every member holds every one. */
+export const BroadcastGift = ArtItem.extend({ kind: z.enum(['store', 'piece']) });
 export type BroadcastGift = z.infer<typeof BroadcastGift>;
+
+/** A badge or piece the team gave the member, drawn on its letter. */
+export const LetterPresent = z.strictObject({
+  kind: z.enum(['piece', 'badge']),
+  id: z.string().min(1).max(48),
+});
+export type LetterPresent = z.infer<typeof LetterPresent>;
+
+/**
+ * A letter from the team (感谢信, Tracy 2026-11-11), opened from an envelope over 今天: its lines
+ * under the member's name, signed 外卡团队, with what the team gave them drawn under it and
+ * 立刻穿上. Give the presents with `give_reward` first; the letter only shows them.
+ */
+export const BroadcastLetter = z.strictObject({
+  lines: words(300),
+  presents: z
+    .array(LetterPresent)
+    .max(4)
+    .refine(
+      (presents) => new Set(presents.map((p) => `${p.kind}:${p.id}`)).size === presents.length,
+      'each present once',
+    ),
+});
+export type BroadcastLetter = z.infer<typeof BroadcastLetter>;
 
 /** What a broadcast says and when it runs, as an admin writes it and it is stored. */
 export const BroadcastValue = z
@@ -53,7 +82,8 @@ export const BroadcastValue = z
         label: words(16).describe('The button’s words, a few characters, in each language.'),
         destination: Destination.describe(
           'Where it opens: `stores`, `store/<storeId>`, `notices` (通知), `schedule`, `squad`, `feed`, ' +
-            '`post/<checkInId>`, `today` or `me`.',
+            '`post/<checkInId>`, `today`, `me`, `wardrobe` (衣橱), `wardrobe/<pieceId>` (衣橱, ' +
+            'trying that piece on) or `badges` (the badge board).',
         ),
       })
       .optional()
@@ -62,15 +92,21 @@ export const BroadcastValue = z
       '`banner`: the home’s notice banner. `celebration`: the full-screen opening (a build ' +
         'without it shows the banner).',
     ),
-    icon: BroadcastGift.optional().describe(
+    icon: ArtItem.optional().describe(
       'A store’s sign, a prop or a piece the app already draws, beside its words (such as ' +
         '`{ "kind": "store", "id": "powder" }`); left out, a sparkle. A build without it shows the sparkle.',
+    ),
+    letter: BroadcastLetter.optional().describe(
+      'A letter from the team opened from an envelope over 今天, instead of the banner or ' +
+        'celebration: `lines` (its words under the member’s name, a line break per line, signed ' +
+        '外卡团队) and `presents` (badges or pieces the team gave them with give_reward, drawn ' +
+        'under it with 立刻穿上). A build without letters shows `style`, so keep a title and button.',
     ),
     gifts: z
       .array(BroadcastGift)
       .max(10)
       .describe(
-        'Stores, props or pieces unlocked for each member when they are told (they show as ' +
+        'Stores or pieces unlocked for each member when they are told (they show as ' +
           'NEW in the 商店街); may be empty.',
       ),
     members: z

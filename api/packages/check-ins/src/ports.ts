@@ -9,7 +9,6 @@ import type { Emoji, Reaction, SaveOutcome } from './domain/reaction.js';
 import type { FuelGoals } from './domain/fuel-goal.js';
 import type { PlanDays, TrainedBy, WeekStart } from './domain/weekly-plan.js';
 import type { QuickReactions } from './domain/quick-reactions.js';
-import type { WeekSummaryWords } from './domain/week-summary-words.js';
 
 /** What saving a new check-in did. Uniqueness is the database's to decide, so two saves at once can't both pass. */
 export type InsertOutcome =
@@ -53,7 +52,7 @@ export interface CheckInStore {
   photoHistory(id: CheckInId): Promise<PhotoPath[]>;
   /** Everything `member` ever checked in, counted by kind. */
   totals(member: MemberId): Promise<CheckInTotals>;
-  /** The same counts of only what `member` shared to `squad`: none of their 仅自己可见 posts. */
+  /** The same counts of only what `member` sent to `squad`: nothing from before they joined it. */
   totalsSharedTo(query: {
     readonly member: MemberId;
     readonly squad: SquadId;
@@ -86,6 +85,14 @@ export interface CheckInStore {
     readonly from: string;
     readonly to: string;
   }): Promise<TrainingDay[]>;
+  /**
+   * The days `member` checked in a 训练 and the days they checked in a meal (健康餐 or 坦白放纵餐),
+   * each day once, earliest first; with `squad`, only what they shared to it.
+   */
+  streakDays(query: { readonly member: MemberId; readonly squad?: SquadId }): Promise<{
+    readonly trained: readonly LocalDay[];
+    readonly meals: readonly LocalDay[];
+  }>;
   /**
    * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
    * to `squad`; the days the member logged a 健康餐; and the reactions between the member and
@@ -276,20 +283,6 @@ export interface WeeklyPlanStore {
 export type MemberCalendar = (
   member: MemberId,
 ) => Promise<{ readonly timeZone: string; readonly joinedAt: Date } | undefined>;
-
-/** Where the Sunday summary's words are kept: one value, and a log of every change to it. */
-export interface WeekSummaryWordsStore {
-  /**
-   * The words now. `forUpdate` holds the row until the caller's transaction ends, so two
-   * admins changing them at once apply one change after the other.
-   */
-  current(options?: { readonly forUpdate?: boolean }): Promise<WeekSummaryWords>;
-  /**
-   * Saves `words` with `by` as who changed them, unless they are the words already: then
-   * nothing is saved or logged. Says whether anything changed.
-   */
-  save(words: WeekSummaryWords, by: MemberId): Promise<boolean>;
-}
 
 /** Where the reaction bar's quick emoji are kept: one value, and a log of every change to it. */
 export interface QuickReactionsStore {

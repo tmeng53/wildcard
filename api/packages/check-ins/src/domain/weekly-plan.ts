@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 
+import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 import { z } from 'zod';
 
 import { PlanDayStartedError, WeekOverError, WeekTooFarAheadError } from '../errors.js';
@@ -181,7 +182,7 @@ export function addDays(day: LocalDay, count: number): LocalDay {
 
 /** The Monday of the week `day` is in. */
 export function weekStartOf(day: LocalDay): WeekStart {
-  return WeekStart.parse(addDays(day, 1 - weekdayOf(day)));
+  return WeekStart.parse(mondayOf(day));
 }
 
 /**
@@ -190,15 +191,7 @@ export function weekStartOf(day: LocalDay): WeekStart {
  * through 补打卡.
  */
 export function localDayAt(moment: Date, timeZone: string): LocalDay {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(moment);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((candidate) => candidate.type === type)?.value ?? '';
-  return LocalDay.parse(`${part('year')}-${part('month')}-${part('day')}`);
+  return LocalDay.parse(wallClockAt(moment, timeZone).day);
 }
 
 /**

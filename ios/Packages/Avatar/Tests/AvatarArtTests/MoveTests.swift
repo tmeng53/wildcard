@@ -12,7 +12,7 @@ func everyMovePlaysOnEveryLook(persona: Persona) throws {
         for move in Move.allCases {
             let clip = try figure.bind(PlaceholderCharacter.clip(for: move, persona: persona))
             #expect(!clip.clip.loops && clip.clip.name == move.rawValue)
-            #expect(nearlyEqual(figure.pose(clip, at: clip.clip.duration), figure.restPose), "\(move)")
+            #expect(nearlyEqual(armsBehind(figure.pose(clip, at: clip.clip.duration)), figure.restPose), "\(move)")
             expectOnCanvas(
                 figure, clip, for: clip.clip.duration, "\(move) \(persona.rawValue)",
                 sideways: PlaceholderCharacter.moveReachSideways, above: PlaceholderCharacter.moveReachAbove)

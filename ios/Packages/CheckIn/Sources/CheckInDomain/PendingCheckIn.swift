@@ -12,6 +12,8 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
     public let postedDay: LocalDay
     public let createdAt: Timestamp
     public let audience: Audience
+    /// 发布到动态: off only records it.
+    public let inFeed: Bool
     public let draft: CheckInDraft
     /// The draft's photos already uploaded, by `PreparedPhoto.id`, so a retry doesn't upload
     /// them again.
@@ -19,7 +21,7 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
 
     public init(
         id: CheckInID, member: MemberID, day: LocalDay, postedDay: LocalDay? = nil, createdAt: Timestamp,
-        audience: Audience, draft: CheckInDraft, uploaded: [UUID: PhotoRef] = [:]
+        audience: Audience, inFeed: Bool = true, draft: CheckInDraft, uploaded: [UUID: PhotoRef] = [:]
     ) {
         self.id = id
         self.member = member
@@ -27,6 +29,7 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
         self.postedDay = postedDay ?? day
         self.createdAt = createdAt
         self.audience = audience
+        self.inFeed = inFeed
         self.draft = draft
         self.uploaded = uploaded
     }
@@ -63,7 +66,7 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
                 }
             return CheckIn(
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt, audience: audience,
-                entry: entry)
+                inFeed: inFeed, entry: entry)
         } catch {
             // `PostBody` and `Disclaimer` already keep to these rules.
             throw .refused

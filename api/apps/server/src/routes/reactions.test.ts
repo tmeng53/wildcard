@@ -38,7 +38,6 @@ import {
   unusedUnlocks,
   unusedGifts,
   noRewards,
-  unusedWeekSummaryWords,
   unusedCoachHiring,
   unusedCoachActivity,
   unusedCoachLetters,
@@ -103,7 +102,6 @@ const app = createApp({
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
-  weekSummaryWords: unusedWeekSummaryWords,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
   coachLetters: unusedCoachLetters,
@@ -195,7 +193,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
 
     for (const viewer of [tracy, bo]) {
       const listed = await call('GET', {
-        path: `/check-ins/${run}/reactions`,
+        path: `/check-ins/${run}`,
         token: viewer.token,
       });
       expect(listed.status).toBe(200);
@@ -240,10 +238,11 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     await call('PUT', { path, token: ann.token, body: { version: 1, emoji: '❤️' } });
     await call('PUT', { path, token: bo.token, body: { version: 1, emoji: '😂' } });
 
-    expect(
-      await call('GET', { path: `/check-ins/${run}/reactions`, token: ann.token }),
-    ).toMatchObject({ status: 200, body: { reactions: [{ member: ann.userId, emoji: '❤️' }] } });
-    const forTracy = await call('GET', { path: `/check-ins/${run}/reactions`, token: tracy.token });
+    expect(await call('GET', { path: `/check-ins/${run}`, token: ann.token })).toMatchObject({
+      status: 200,
+      body: { reactions: [{ member: ann.userId, emoji: '❤️' }] },
+    });
+    const forTracy = await call('GET', { path: `/check-ins/${run}`, token: tracy.token });
     expect(forTracy.body).toMatchObject({
       reactions: [{ member: ann.userId }, { member: bo.userId }],
     });
@@ -256,11 +255,9 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     await call('PUT', { path, token: ann.token, body: { version: 1, emoji: '❤️' } });
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
     expect((await call('DELETE', { path, token: ann.token })).status).toBe(204);
-    expect(
-      await call('GET', { path: `/check-ins/${run}/reactions`, token: ann.token }),
-    ).toStrictEqual({
+    expect(await call('GET', { path: `/check-ins/${run}`, token: ann.token })).toMatchObject({
       status: 200,
-      body: { version: 1, reactions: [] },
+      body: { reactions: [] },
     });
   });
 
@@ -280,7 +277,7 @@ describe('PUT /check-ins/{checkInId}/reactions/mine', () => {
     for (const [method, route] of [
       ['PUT', path],
       ['DELETE', path],
-      ['GET', `/check-ins/${run}/reactions`],
+      ['GET', `/check-ins/${run}`],
     ] as const) {
       expect(
         await call(method, {

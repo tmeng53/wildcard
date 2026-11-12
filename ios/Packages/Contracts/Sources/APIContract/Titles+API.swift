@@ -27,7 +27,10 @@ extension BoardTitle {
 
 extension TeamBadge {
     public init(_ wire: Components.Schemas.TeamBadge) {
-        self.init(id: wire.id, name: CatalogNames(wire.name), glyph: wire.glyph, tone: wire.tone, times: wire.times)
+        self.init(
+            id: wire.id, name: CatalogNames(wire.name), line: wire.line.map { CatalogNames($0.value1) },
+            glyph: wire.glyph,
+            tone: wire.tone, times: wire.times, latestAt: wire.latestAt)
     }
 }
 
@@ -35,13 +38,13 @@ extension TitleBoard {
     public init(_ wire: Components.Schemas.TitleBoard) throws(ContractsError) {
         self.init(
             titles: try wire.titles.map { title throws(ContractsError) in try BoardTitle(title) }, worn: wire.worn,
-            teamBadges: wire.teamBadges.map(TeamBadge.init))
+            teamBadges: wire.teamBadges.map(TeamBadge.init), wornTeamBadge: wire.wornTeamBadge)
     }
 
     /// A squadmate's board, from their card.
     public init(_ wire: Components.Schemas.PlayerCard) throws(ContractsError) {
         self.init(
             titles: try wire.titles.map { title throws(ContractsError) in try BoardTitle(title) }, worn: wire.worn,
-            teamBadges: wire.teamBadges.map(TeamBadge.init))
+            teamBadges: wire.teamBadges.map(TeamBadge.init), wornTeamBadge: wire.wornTeamBadge)
     }
 }

@@ -13,6 +13,12 @@ extension Squad {
     }
 }
 
+extension SquadExit {
+    public init(_ wire: Components.Schemas.SquadExit) throws(ContractsError) {
+        self.init(id: try SquadID(wire: wire.id), name: wire.name, wasRemoved: wire.how == .removed)
+    }
+}
+
 extension SquadScene {
     public init(_ wire: Components.Schemas.SquadScene) throws(ContractsError) {
         let pickers = try wire.pickers.members.map { member throws(ContractsError) in try MemberID(wire: member) }
@@ -53,8 +59,7 @@ extension SquadToday {
             squad: try SquadID(wire: wire.squad),
             members: try wire.members.map { member throws(ContractsError) in try SquadmateToday(member) },
             today: TodayCounts(
-                trained: wire.today.trained, disclaimer: wire.today.disclaimer, resting: wire.today.resting,
-                everyoneTrained: wire.today.everyoneTrained),
+                trained: wire.today.trained, disclaimer: wire.today.disclaimer, resting: wire.today.resting),
             myWeek: MyWeek(
                 firstDay: try LocalDay(wire.me.week.from), lastDay: try LocalDay(wire.me.week.to),
                 week: WeekCount(trainedDays: wire.me.week.trainedDays, plannedDays: wire.me.week.plannedDays)),

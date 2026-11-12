@@ -22,7 +22,7 @@ Ids, dates and the time zone differ each run; the shape doesn't. Copied from a r
 server: {"version":1,"status":"ok"}
 members: me=<id> mate=<id> outsider=<id> squad=<id>
 reactions: mate left ❤️ (201), again (200), then changed it to 😂 (200)
-reactions: the author sees one reaction, mate's 😂
+reactions: the author sees one reaction on the post, mate's 😂
 reactions: own check-in refused (400 OWN_CHECK_IN_REACTION), outsider sees nothing (404), text that isn't one emoji refused (400)
 reactions: mate took it off (204, again 204), no row left
 api-journeys: ok (reactions)

@@ -34,6 +34,11 @@ export interface WeekCheckIn {
   readonly reactedBy: readonly string[];
   /** Teammates' comments, oldest first. */
   readonly comments: readonly WeekComment[];
+  /**
+   * True when it was only recorded, not posted in the 动态 (发布到动态 off): it counts, but its
+   * words and photos stay with its author and the coach never answers under it.
+   */
+  readonly unposted?: true;
 }
 
 /** A comment on a check-in. */
@@ -119,6 +124,7 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
     parts.push(`（本人当地 ${checkIn.postedTime} 发）`);
   }
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
+  if (checkIn.unposted === true) parts.push('（只记录，没发动态）');
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
   if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {

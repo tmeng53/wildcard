@@ -17,7 +17,7 @@ import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
 import { lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
-import { costMicros, wakesDue, weekStartOf, weeksAround } from './wake.js';
+import { wakesDue, weeksAround } from './wake.js';
 
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
@@ -209,11 +209,6 @@ describe('the memory files', () => {
 });
 
 describe('when the coach wakes', () => {
-  it('finds the Monday of a day’s week', () => {
-    expect(weekStartOf('2026-11-01')).toBe('2026-10-26');
-    expect(weekStartOf('2026-10-26')).toBe('2026-10-26');
-  });
-
   it('looks in every week a member’s own day can be in', () => {
     // 10am Sunday in New York is already Monday east of UTC+10.
     expect(weeksAround(new Date('2026-11-01T15:00:00Z'))).toStrictEqual([
@@ -226,6 +221,24 @@ describe('when the coach wakes', () => {
       '2026-11-02',
     ]);
     expect(weeksAround(new Date('2026-11-04T17:00:00Z'))).toStrictEqual(['2026-11-02']);
+  });
+
+  it('never wakes for a check-in only recorded, not posted', () => {
+    const unposted: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) => ({ ...each, unposted: true as const })),
+    };
+    expect(
+      wakesDue({
+        squad,
+        week: unposted,
+        now: new Date('2026-11-01T14:00:00Z'),
+        timeZone: 'America/New_York',
+      }),
+    ).toStrictEqual([
+      { squad, reason: { kind: 'dream', day: '2026-11-01' } },
+      { squad, reason: { kind: 'daily', day: '2026-11-01' } },
+    ]);
   });
 
   it('wakes for check-ins of the last hour, to dream from 3am and once a day from 6am on the squad’s clock', () => {
@@ -372,10 +385,10 @@ describe('when the coach wakes', () => {
         said: [{ by: { member: mia }, text: '你看看我吃了啥', answering: true }],
       },
     } as const;
-    expect(taskOf({ ...asked, canSeePhotos: true })?.split('\n\n')).toContain(
+    expect(taskOf(asked)?.split('\n\n')).toContain(
       '这条打卡有 2 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。',
     );
-    expect(taskOf(asked)).not.toContain('look_at_photos');
+    expect(taskOf({ ...asked, week })).not.toContain('look_at_photos');
     // On a holiday the coach is told, after the talk and before its files.
     expect(
       taskOf({
@@ -395,34 +408,6 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBeUndefined();
-  });
-
-  it('counts a wake’s cost at the settings’ prices, cached input at its own, rounded up', () => {
-    const prices = {
-      inputMicrosPerMillion: 100_000,
-      cachedInputMicrosPerMillion: 10_000,
-      outputMicrosPerMillion: 500_000,
-    };
-    // GPT-6 Luna: 2,000 uncached in at $0.10, 10,000 cached at $0.01, 800 out at $0.50.
-    expect(
-      costMicros(
-        { requests: 3, inputTokens: 12_000, cachedInputTokens: 10_000, outputTokens: 800 },
-        prices,
-      ),
-    ).toBe(200 + 100 + 400);
-    // Nothing cached: every input token at the full price.
-    expect(
-      costMicros(
-        { requests: 3, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 },
-        prices,
-      ),
-    ).toBe(1_200 + 400);
-    expect(
-      costMicros(
-        { requests: 1, inputTokens: 1, cachedInputTokens: 0, outputTokens: 0 },
-        { inputMicrosPerMillion: 1, cachedInputMicrosPerMillion: 0, outputMicrosPerMillion: 0 },
-      ),
-    ).toBe(1);
   });
 
   it('puts the wakes setting after the soul, its limits filled in, and never the 口头禅', () => {

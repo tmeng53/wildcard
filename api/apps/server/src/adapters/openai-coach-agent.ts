@@ -9,7 +9,8 @@ import {
   type Usage,
 } from '@openai/agents-core';
 import { OpenAIProvider } from '@openai/agents-openai';
-import type { AgentRun, CoachAgent, TokenUsage, ToolAnswer } from '@wildcard/coach';
+import type { AgentRun, CoachAgent, ToolAnswer } from '@wildcard/coach';
+import type { TokenUsage } from '@wildcard/language-model';
 import OpenAI from 'openai';
 
 type ToolOutput = ToolOutputText | ToolOutputImage;

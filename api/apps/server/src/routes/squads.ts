@@ -15,7 +15,7 @@ import {
 } from '@wildcard/squads';
 import type { CheckIns } from '@wildcard/check-ins';
 import type { Members } from '@wildcard/members';
-import { NEW_YORK, isKnownTimeZone, mondayOf, wallClockAt } from '@wildcard/time-zones';
+import { isKnownTimeZone, mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 import { bodyVersion } from '../body-version.js';
 import type { RateLimit, VerifyToken } from '../ports.js';
@@ -62,11 +62,26 @@ export const Squad = z
   })
   .openapi('Squad');
 
+const SquadExit = z
+  .strictObject({
+    id: SquadId,
+    name: z.string(),
+    how: z.enum(['left', 'removed']).meta({
+      description: '`left`: the member left it; `removed`: its captain took them out.',
+    }),
+  })
+  .openapi('SquadExit');
+
 const SquadList = z
   .strictObject({
     version: bodyVersion(1),
     squads: z.array(Squad).meta({
       description: `The member’s squads, the earliest joined first: at most ${String(SQUADS_PER_MEMBER)}.`,
+    }),
+    lastSquad: SquadExit.optional().meta({
+      description:
+        'In no squad now, the squad the member was last in and how they came out of it; left ' +
+        'out while they are in a squad, or were never in one.',
     }),
   })
   .openapi('SquadList');
@@ -88,11 +103,10 @@ const NewSquad = z
         'when left out. The captain changes it later with `PUT /squads/{squadId}/weekly-goal`.',
       default: DEFAULT_DAYS_PER_MEMBER,
     }),
-    timeZone: squadTimeZoneField.optional().meta({
+    timeZone: squadTimeZoneField.meta({
       description:
-        'The squad’s time zone (小队时区), the creator’s pick, counting from their week now; their ' +
-        'own profile’s zone when left out. The captain changes it later with ' +
-        '`PUT /squads/{squadId}/time-zone`.',
+        'The squad’s time zone (小队时区), the creator’s pick, counting from their week now. The ' +
+        'captain changes it later with `PUT /squads/{squadId}/time-zone`.',
     }),
   })
   .openapi('NewSquad');
@@ -428,17 +442,23 @@ export function squads(deps: {
 
   const signedInRoutes = new OpenAPIHono<SignedIn>()
     .openapi(listMine, async (c) => {
-      const mine = await deps.squads.listMine(caller(c.var.caller.userId));
-      return c.json({ version: 1 as const, squads: mine.map(wire) }, 200);
+      const member = caller(c.var.caller.userId);
+      const mine = await deps.squads.listMine(member);
+      const last = mine.length === 0 ? await deps.squads.lastExit(member) : undefined;
+      return c.json(
+        {
+          version: 1 as const,
+          squads: mine.map(wire),
+          ...(last === undefined
+            ? {}
+            : { lastSquad: { id: last.squad, name: last.name, how: last.how } }),
+        },
+        200,
+      );
     })
     .openapi(create, async (c) => {
       const creator = caller(c.var.caller.userId);
-      const { name, daysPerMember } = c.req.valid('json');
-      // Builds from before 小队时区 send none: the creator's own clock.
-      const timeZone =
-        c.req.valid('json').timeZone ??
-        (await deps.members.findProfile(creator))?.timeZone ??
-        NEW_YORK;
+      const { name, daysPerMember, timeZone } = c.req.valid('json');
       const { squad, created } = await deps.squads.create({
         id: c.req.valid('param').squadId,
         creator,

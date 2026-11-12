@@ -30,6 +30,18 @@ private func records(hours: [Int: Int] = [:], weekdays: [Int] = [0, 0, 0, 0, 0, 
     #expect(records(minutes: 59).hoursTrained == 0)
 }
 
+@Test func theRunStillGoingBreaksTheRecordOnceItReachesIt() throws {
+    let run = { (days: Int) in
+        WildcardRecords.Streak(
+            days: days, first: try LocalDay(year: 2026, month: 11, day: 1),
+            last: try LocalDay(year: 2026, month: 11, day: 1))
+    }
+    #expect(WildcardRecords.breaksRecord(current: try run(6), longest: try run(6)))
+    #expect(!WildcardRecords.breaksRecord(current: try run(3), longest: try run(6)))
+    #expect(!WildcardRecords.breaksRecord(current: nil, longest: try run(6)))
+    #expect(!WildcardRecords.breaksRecord(current: nil, longest: nil))
+}
+
 @Test func aFailedReadSaysSo() async {
     let service = FakeService(sample)
     await service.fail(with: .unavailable)

@@ -149,7 +149,9 @@ describe('commenting on a check-in', () => {
         commentedAt: new Date('2026-10-18T20:06:00.000Z'),
       },
     ];
-    expect(await checkIns.listComments({ checkIn: run.id, viewer: bo })).toStrictEqual(expected);
+    expect(
+      await checkIns.post({ id: run.id, viewer: bo }).then(({ comments }) => comments),
+    ).toStrictEqual(expected);
     const [post] = await checkIns.listForSquad({
       viewer: tracy,
       squad,
@@ -177,7 +179,9 @@ describe('commenting on a check-in', () => {
     await expect(
       checkIns.comment({ checkIn: run.id, id, member: tracy, text: text('加油') }),
     ).rejects.toStrictEqual(new CommentIdConflictError(id));
-    expect(await checkIns.listComments({ checkIn: run.id, viewer: tracy })).toHaveLength(1);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ comments }) => comments),
+    ).toHaveLength(1);
   });
 
   it('keeps whom a comment @s who can see the check-in, in order, up to 8, and no one else', async () => {
@@ -205,7 +209,9 @@ describe('commenting on a check-in', () => {
     });
     expect(written.comment.mentions).toStrictEqual([bo, tracy]);
     expect(written.comment.mentionsCoach).toBeUndefined();
-    const [saved] = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    const [saved] = await checkIns
+      .post({ id: run.id, viewer: tracy })
+      .then(({ comments }) => comments);
     expect(saved?.mentions).toStrictEqual([bo, tracy]);
     // A retry is the same comment, even once someone it @s has left (the server saw other @s).
     await sql`delete from public.squad_members where squad_id = ${squad} and member_id = ${bo}`.execute(
@@ -226,7 +232,9 @@ describe('commenting on a check-in', () => {
 
     // A mentioned account deleted takes only its @ with it.
     await sql`delete from auth.users where id = ${bo}`.execute(db);
-    const [kept] = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    const [kept] = await checkIns
+      .post({ id: run.id, viewer: tracy })
+      .then(({ comments }) => comments);
     expect(kept?.mentions).toStrictEqual([tracy]);
   });
 
@@ -269,7 +277,9 @@ describe('commenting on a check-in', () => {
       mentionsCoach: 'someone-else',
     });
     expect(other.comment.mentionsCoach).toBeUndefined();
-    const listed = await checkIns.listComments({ checkIn: run.id, viewer: tracy });
+    const listed = await checkIns
+      .post({ id: run.id, viewer: tracy })
+      .then(({ comments }) => comments);
     expect(listed.map(({ mentionsCoach }) => mentionsCoach)).toStrictEqual(['xiaohun', undefined]);
   });
 
@@ -301,7 +311,9 @@ describe('commenting on a check-in', () => {
     ).rejects.toStrictEqual(new NotYourCommentError());
     await checkIns.deleteComment({ checkIn: run.id, id, member: ann });
     await checkIns.deleteComment({ checkIn: run.id, id, member: ann });
-    expect(await checkIns.listComments({ checkIn: run.id, viewer: tracy })).toStrictEqual([]);
+    expect(
+      await checkIns.post({ id: run.id, viewer: tracy }).then(({ comments }) => comments),
+    ).toStrictEqual([]);
   });
 
   it('answers not found for a check-in you share no squad on', async () => {
@@ -314,7 +326,7 @@ describe('commenting on a check-in', () => {
     for (const attempt of [
       () => checkIns.comment({ checkIn: run.id, id: newId(), member: stranger, text: text('嗨') }),
       () => checkIns.deleteComment({ checkIn: run.id, id: anns, member: stranger }),
-      () => checkIns.listComments({ checkIn: run.id, viewer: stranger }),
+      () => checkIns.post({ id: run.id, viewer: stranger }).then(({ comments }) => comments),
     ]) {
       await expect(attempt()).rejects.toStrictEqual(new CheckInNotFoundError(run.id));
     }
@@ -328,7 +340,7 @@ describe('commenting on a check-in', () => {
     await checkIns.comment({ checkIn: run.id, id: newId(), member: bo, text: text('冲') });
     await checkIns.comment({ checkIn: run.id, id: newId(), member: ann, text: text('好') });
 
-    const seen = await checkIns.listComments({ checkIn: run.id, viewer: ann });
+    const seen = await checkIns.post({ id: run.id, viewer: ann }).then(({ comments }) => comments);
     expect(seen.map(({ member }) => member)).toStrictEqual([ann]);
   });
 

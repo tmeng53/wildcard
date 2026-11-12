@@ -2,11 +2,13 @@ import AvatarArt
 import CharacterEditorUI
 import Contracts
 import MeDomain
+import MeUI
 import Observation
 
 /// Where 我 dresses the member: 商店街, kept for the shopfront's dot and opened in 我's place, and
 /// the character editor over everything. An unlock opens here, from the home's banner and 通知
 /// alike.
+/// It also keeps what this phone saw of the member's badges, for NEW on 我's badge board.
 @MainActor @Observable
 final class Wardrobe {
     /// 商店街 for the member as 我 last read them; made again when that changes (while it is open,
@@ -32,6 +34,17 @@ final class Wardrobe {
         member().map { DeviceWardrobeMarks(member: $0) } ?? sampleMarks
     }
 
+    /// What this phone saw of the member's badge board, for NEW: made again for another member.
+    @ObservationIgnored private var badges: (member: String?, marks: BadgeMarks)?
+
+    var badgeMarks: BadgeMarks {
+        let member = member()
+        if let badges, badges.member == member { return badges.marks }
+        let marks = BadgeMarks(member: member)
+        badges = (member, marks)
+        return marks
+    }
+
     /// Whether 我's shopfront wears its dot.
     var hasNews: Bool { shop?.hasUnseenNews ?? false }
 
@@ -55,11 +68,12 @@ final class Wardrobe {
         await profile.save(character)
     }
 
-    /// 去衣橱看看 after a gift is opened: the editor on the member's character, wearing it.
-    func showGift(_ piece: String) async {
+    /// 去衣橱看看 after a gift is opened, and a notice's place in 衣橱: the editor on the member's
+    /// character, read again first, trying `piece` on (just the editor for nil).
+    func showGift(_ piece: String?) async {
         await profile.reload()
         editCharacter()
-        editor?.tryOn(piece)
+        if let piece { editor?.tryOn(piece) }
     }
 
     /// 我's shopfront: the street as it was last made at once, then read again, so a store that

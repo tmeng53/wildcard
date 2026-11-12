@@ -42,8 +42,7 @@ export async function squadsAwardedIn(
   const zones = await deps.squads.timeZonesFor(candidates, week);
   const due = new Map<string, Awarded>();
   for (const squad of candidates) {
-    const zone = zones.get(squad);
-    if (zone === undefined) continue;
+    const zone = zones(squad);
     const at = awardsTimeOf(week, zone);
     if (at <= now) due.set(squad, { zone, at });
   }

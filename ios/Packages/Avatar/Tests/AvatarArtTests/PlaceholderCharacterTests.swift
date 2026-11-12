@@ -85,8 +85,10 @@ func everyPersonaHasAnIdleACheerAndAWelcome(persona: Persona) throws {
         let oneShot = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
         #expect(oneShot.clip.name == name && !oneShot.clip.loops)
         // It lands where the idle starts (half-closed eyes included, for deadpan), so handing
-        // back to idle doesn't jump either.
-        #expect(nearlyEqual(figure.pose(oneShot, at: oneShot.clip.duration), figure.pose(idle, at: 0)), "\(name)")
+        // back to idle doesn't jump either. Its arms may end in front (`armsBehind`).
+        #expect(
+            nearlyEqual(armsBehind(figure.pose(oneShot, at: oneShot.clip.duration)), figure.pose(idle, at: 0)),
+            "\(name)")
     }
 }
 
@@ -157,6 +159,15 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "warmup-cap"]))
     #expect(try figure.index("crown") > figure.index("flapL") && figure.index("crown") > figure.index("flapR"))
     #expect(try figure.part("crown").art.count == 2)
+}
+
+/// The pose with every arm behind the body. A one-shot may end with an arm in front: the
+/// crossfade keeps it there, and `Performance` hands it back behind once the idle has it clear of
+/// the body, where even a long sleeve's cuff doesn't cover it.
+func armsBehind(_ pose: Pose) -> Pose {
+    var behind = pose
+    for index in behind.parts.indices { behind.parts[index].front = 0 }
+    return behind
 }
 
 /// The same pose, give or take floating-point rounding. A part turned a full circle (a swimmer's
@@ -296,7 +307,6 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(choices.props.filter { !$0.isOpen }.isEmpty)
     #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [

@@ -1,49 +1,33 @@
-import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
+import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
+import type { MemberId, SquadId } from '../../domain/check-in.js';
 import {
+  currentRun,
   memberRecords,
   sportDays,
   squadRecords,
   type MemberRecords,
   type RecordTraining,
   type SquadRecords,
+  type Streak,
 } from '../../domain/records.js';
-import { addDays, weekStartOf } from '../../domain/weekly-plan.js';
+import { localDayAt } from '../../domain/weekly-plan.js';
 import type {
   CheckInStore,
+  Clock,
   MemberCalendar,
   SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
-import { findWeeklyPlan } from '../weekly-plans.js';
+import { currentStreaks } from './current-streaks.js';
+import { restDays } from './rest-days.js';
 
 /** 外卡记录: the member's records, and how they stand in their squad when they are in one. */
 export interface Records extends MemberRecords {
+  /** The days trained in a row still going, as the player card's 外卡 counts them. */
+  readonly currentStreak?: Streak;
+  /** The days in a row with a 健康餐 still going, beside `mealStreak`. */
+  readonly currentMealStreak?: Streak;
   readonly squad?: SquadRecords & { readonly id: SquadId };
-}
-
-/** The days the member's plans made rest days, over the weeks from `from` to `to`. */
-async function restDays(
-  deps: { readonly plans: WeeklyPlanStore },
-  { member, days }: { readonly member: MemberId; readonly days: readonly LocalDay[] },
-): Promise<Set<LocalDay>> {
-  const sorted = [...days].sort();
-  const first = sorted[0];
-  const last = sorted.at(-1);
-  if (first === undefined || last === undefined) return new Set();
-  const weeks: LocalDay[] = [];
-  for (let week = weekStartOf(first); week <= last; week = addDays(week, 7)) weeks.push(week);
-  const plans = await Promise.all(
-    weeks.map((weekStart) =>
-      findWeeklyPlan({ store: deps.plans }, { member, weekStart: weekStartOf(weekStart) }),
-    ),
-  );
-  return new Set(
-    plans.flatMap((plan) =>
-      plan.days.flatMap((day, index) =>
-        day.kind === 'rest' ? [addDays(plan.weekStart, index)] : [],
-      ),
-    ),
-  );
 }
 
 export async function records(
@@ -52,6 +36,7 @@ export async function records(
     readonly membership: SquadMembership;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
+    readonly clock: Clock;
   },
   member: MemberId,
 ): Promise<Records> {
@@ -70,21 +55,31 @@ export async function records(
   for (const training of rows.trainings) {
     byMember.set(training.member, [...(byMember.get(training.member) ?? []), training]);
   }
-  const timeZoneOf = async (id: MemberId) => (await deps.calendarOf(id))?.timeZone ?? 'UTC';
+  const timeZoneOf = async (id: MemberId) =>
+    (await deps.calendarOf(id))?.timeZone ?? UNSAVED_MEMBER_ZONE;
   const mine = byMember.get(member) ?? [];
-  const me = memberRecords({
-    trainings: mine,
-    healthyMealDays: rows.healthyMealDays,
-    restDays: await restDays(deps, { member, days: mine.map((training) => training.day) }),
-    timeZone: await timeZoneOf(member),
-  });
+  const timeZone = await timeZoneOf(member);
+  const current = (await currentStreaks(deps, { member })).training;
+  const currentMeals = currentRun(new Set(rows.healthyMealDays), {
+    today: localDayAt(deps.clock(), timeZone),
+  }).streak;
+  const me = {
+    ...memberRecords({
+      trainings: mine,
+      healthyMealDays: rows.healthyMealDays,
+      restDays: await restDays(deps, { member, days: mine.map((training) => training.day) }),
+      timeZone,
+    }),
+    ...(current === undefined ? {} : { currentStreak: current }),
+    ...(currentMeals === undefined ? {} : { currentMealStreak: currentMeals }),
+  };
   if (squad === undefined) return me;
   const shared = mine.filter((training) => training.inSquad);
   const squadMe = memberRecords({
     trainings: shared,
     healthyMealDays: [],
     restDays: new Set(),
-    timeZone: await timeZoneOf(member),
+    timeZone,
   });
   const mateRecords = new Map(
     await Promise.all(

@@ -59,6 +59,11 @@ const checkInFields = {
       'The squads it went to, in the member’s order. On someone else’s check-in, only the ' +
       'viewer’s own squads are listed.',
   }),
+  inFeed: z.boolean().meta({
+    description:
+      '发布到动态: whether it is a post in its squads’ 动态. One that isn’t still counts for ' +
+      'them, but only its author sees it.',
+  }),
 };
 
 /** How long a photo's view URL works. The app lists again for fresh ones. */
@@ -187,18 +192,33 @@ const MyPostQuery = z.strictObject({
 /** One check-in with what teammates left on it: a post's own page. */
 const Post = z.strictObject({ version: bodyVersion(1), ...postFields }).openapi('Post');
 
-/**
- * Installed builds from before the replies were removed (#180) still require `replies` on each
- * post and fail to read the whole feed without it, so every post keeps an empty one. It stays out
- * of the contract: newer builds ignore keys they don't know. Remove it once no installed build
- * predates #180.
- */
-const installedBuildsReplies: { readonly replies: readonly never[] } = { replies: [] };
-
 const count = (description: string) => z.int().nonnegative().meta({ description });
+
+const Streak = z
+  .strictObject({
+    days: count('Days in the run.'),
+    from: LocalDay.meta({ description: 'Its first day.' }),
+    to: LocalDay.meta({ description: 'Its last day.' }),
+  })
+  .openapi('RecordStreak');
+
+const CurrentStreaks = z
+  .strictObject({
+    training: Streak.optional(),
+    meals: Streak.optional(),
+  })
+  .meta({
+    description:
+      'Streaks still going on the member’s clock, the player card’s 外卡: `training`, days ' +
+      'trained in a row, a planned rest day between them neither breaking nor adding; `meals`, ' +
+      'days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or ' +
+      'yesterday while today has none yet, and is left out once broken.',
+  })
+  .openapi('CurrentStreaks');
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
+  streaks: CurrentStreaks.optional(),
   trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
@@ -256,14 +276,6 @@ const customSport = z
   .optional()
   .meta({ description: 'The name of a `custom` sport; a listed sport has none.' });
 
-const Streak = z
-  .strictObject({
-    days: count('Days in the run.'),
-    from: LocalDay.meta({ description: 'Its first day.' }),
-    to: LocalDay.meta({ description: 'Its last day.' }),
-  })
-  .openapi('RecordStreak');
-
 const MateCount = z
   .strictObject({
     memberId: z.uuid(),
@@ -282,15 +294,17 @@ const Cheers = z
 const MemberRecords = z
   .strictObject({
     version: bodyVersion(1),
-    trainedDays: count('Days with a 练了.'),
-    minutes: count('Minutes of every 练了 that says how long it took.'),
-    longestMinutes: count('The longest single 练了; left out when none says how long.').optional(),
+    trainedDays: count('Days with a 训练.'),
+    minutes: count('Minutes of every 训练 that says how long it took.'),
+    longestMinutes: count('The longest single 训练; left out when none says how long.').optional(),
     // Described on the object: a described reference becomes a wrapper type in generated clients.
     longestStreak: Streak.optional(),
     mealStreak: Streak.optional(),
-    hours: z.array(count('练了 posted in this hour.')).min(24).max(24).meta({
+    currentStreak: Streak.optional(),
+    currentMealStreak: Streak.optional(),
+    hours: z.array(count('训练 posted in this hour.')).min(24).max(24).meta({
       description:
-        '练了 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
+        '训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
     }),
     weekdays: z
       .array(count('Days trained on this weekday.'))
@@ -336,7 +350,10 @@ const MemberRecords = z
     description:
       '外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them ' +
       'neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left ' +
-      'out before the first.',
+      'out before the first. `currentStreak` and `currentMealStreak`: the same runs still ' +
+      'going on the member’s clock (today not counted against them until it is over; a week ' +
+      'of rest days in a row breaks training), left out once broken; one is the record when ' +
+      'its days reach the longest.',
   })
   .openapi('MemberRecords');
 
@@ -387,6 +404,7 @@ function wire(record: CheckInRecord, urls: ViewUrls) {
     postedDay: record.postedDay ?? record.day,
     createdAt: record.createdAt.toISOString(),
     audience: [...record.audience],
+    inFeed: record.inFeed,
   };
   switch (record.kind) {
     case 'trained': {
@@ -676,7 +694,8 @@ export function checkIns(deps: {
         draft: c.req.valid('json'),
       });
       const body = wire(checkIn, await viewUrls(deps, [checkIn]));
-      if (created && checkIn.audience.length > 0) {
+      // The coach answers posts; a check-in only recorded has nothing to answer under.
+      if (created && checkIn.inFeed && checkIn.audience.length > 0) {
         await deps.publish({
           version: 1,
           kind: 'check-in.created',
@@ -721,7 +740,6 @@ export function checkIns(deps: {
             checkIn: wire(checkIn, urls),
             reactions: reactions.map(wireReaction),
             comments: comments.map(wireComment),
-            ...installedBuildsReplies,
           })),
         },
         200,
@@ -783,8 +801,12 @@ export function checkIns(deps: {
       );
     })
     .openapi(totals, async (c) => {
-      const counts = await deps.checkIns.totals(MemberId.parse(c.var.caller.userId));
-      return c.json({ version: 1 as const, ...counts }, 200);
+      const member = MemberId.parse(c.var.caller.userId);
+      const [counts, streaks] = await Promise.all([
+        deps.checkIns.totals(member),
+        deps.checkIns.currentStreaks({ member }),
+      ]);
+      return c.json({ version: 1 as const, ...counts, streaks }, 200);
     })
     .openapi(memberRecords, async (c) => {
       const found = await deps.checkIns.records(MemberId.parse(c.var.caller.userId));

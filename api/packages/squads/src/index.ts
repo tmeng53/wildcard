@@ -51,6 +51,7 @@ export type {
   JoinOutcome,
   NewSquad,
   SceneWeekAt,
+  SquadExit,
   SquadStore,
 } from './ports.js';
 export {
@@ -59,7 +60,7 @@ export {
   type SquadScene,
   type SquadScenes,
 } from './use-cases/squad-scenes.js';
-export { createSquads, type SquadAt, type Squads } from './use-cases/squads.js';
+export { createSquads, type SquadAt, type Squads, type SquadZones } from './use-cases/squads.js';
 export type { InvitePreview, PublicInvitePreview } from './use-cases/squads/preview-invite.js';
 export type { SquadTimeZone } from './use-cases/squads/time-zone.js';
 export type { WeeklyGoal } from './use-cases/squads/weekly-goal.js';

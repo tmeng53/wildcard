@@ -37,12 +37,6 @@ export interface DisclaimerDiceEvents {
   id: Generated<Int8>;
 }
 
-export interface DisclaimerDraftRequests {
-  id: Generated<string>;
-  member_id: string;
-  requested_at: Timestamp;
-}
-
 export interface DisclaimerDraftSettingEvents {
   at: Generated<Timestamp>;
   changed_by: string | null;
@@ -51,7 +45,6 @@ export interface DisclaimerDraftSettingEvents {
 }
 
 export interface DisclaimerDraftSettings {
-  batches_per_day: number;
   instructions: string;
   meme_chance: number;
   model: string;
@@ -62,7 +55,6 @@ export interface DisclaimerDraftSettings {
 export interface DB {
   disclaimer_dice: DisclaimerDice;
   disclaimer_dice_events: DisclaimerDiceEvents;
-  disclaimer_draft_requests: DisclaimerDraftRequests;
   disclaimer_draft_setting_events: DisclaimerDraftSettingEvents;
   disclaimer_draft_settings: DisclaimerDraftSettings;
 }

@@ -35,8 +35,7 @@ export interface MemberWeek {
 /**
  * A member's own week as their player card shows it to a squadmate: their days trained, from all
  * their check-ins wherever they went, against their plan, in the week the squad's clock is in
- * (`squadZone`, so every squadmate sees the same week at once, Tracy 2026-11-09; else their own
- * time zone, else the viewer's); and the card's back, their 出赛表 for this
+ * (`squadZone`, so every squadmate sees the same week at once, Tracy 2026-11-09); and the card's back, their 出赛表 for this
  * week only (never another week's), whose marks come only from the posts shared to the squad the
  * card is read in, so a squadmate never learns what a post they can't see was.
  */
@@ -56,12 +55,12 @@ export async function memberWeek(
     readonly member: MemberId;
     readonly viewer: MemberId;
     readonly squad: SquadId;
-    readonly squadZone?: string;
+    readonly squadZone: string;
   },
 ): Promise<MemberWeek> {
   const zones = await zonesOf(deps.calendarOf, { members: [member, viewer], viewer });
-  const { zone, joinedOn } = zones[0] ?? { zone: 'UTC', joinedOn: undefined };
-  const today = localDayAt(deps.clock(), squadZone ?? zone);
+  const joinedOn = zones[0]?.joinedOn;
+  const today = localDayAt(deps.clock(), squadZone);
   const week = weekOf(today);
   const weekStart = WeekStart.parse(week.from);
   const [plan, trainedBy, theirs, fuelGoals] = await Promise.all([
@@ -86,8 +85,8 @@ export async function memberWeek(
 
 /**
  * A member's plan for a week as `squad` may see it (`daysSeenBy`): a day a 训练 the squad can't
- * see turned reads as the member planned it, so a 仅自己可见 post never reaches the squad, or its
- * coach, through the plan.
+ * see turned reads as the member planned it, so a check-in sent elsewhere never reaches the squad,
+ * or its coach, through the plan.
  */
 export async function planSharedTo(
   deps: {

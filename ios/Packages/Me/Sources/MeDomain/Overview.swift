@@ -20,6 +20,20 @@ public struct LifetimeCounts: Hashable, Sendable {
     public static let zero = LifetimeCounts(trainedDays: 0, healthyMeals: 0, cheatMeals: 0, disclaimers: 0)
 }
 
+/// The streaks still going that the player card's 外卡 show (Tracy, 2026-11-10): days trained in
+/// a row, a planned rest day neither breaking nor adding, and days in a row with a meal checked
+/// in (健康餐 or 坦白放纵餐). A broken one is 0, and its 外卡 isn't shown.
+public struct CardStreaks: Hashable, Sendable {
+    public var training: Int
+    public var meals: Int
+
+    public init(training: Int, meals: Int) {
+        (self.training, self.meals) = (max(training, 0), max(meals, 0))
+    }
+
+    public static let none = CardStreaks(training: 0, meals: 0)
+}
+
 /// The member's character as 我 shows it: how it looks and moves, and its name.
 public struct MeCharacter: Hashable, Sendable {
     public var nickname: String
@@ -94,6 +108,8 @@ public struct MeOverview: Hashable, Sendable {
     /// saved a profile.
     public var joinedAt: Date?
     public var counts: LifetimeCounts
+    /// The streaks still going, on the card's 外卡.
+    public var streaks: CardStreaks
     /// 本周 x/y; nil while the member has no plan for the week.
     public var week: WeekCount?
     /// This week's days for the 出赛表 tile; nil when they couldn't be read (the tile then shows
@@ -133,8 +149,10 @@ public struct MeOverview: Hashable, Sendable {
         dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
         board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
-        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil
+        weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil,
+        streaks: CardStreaks = .none
     ) {
+        self.streaks = streaks
         self.birthday = birthday
         self.gifts = gifts
         self.weekGlance = weekGlance
@@ -161,7 +179,8 @@ public struct MeOverview: Hashable, Sendable {
     public var card: PlayerCardFace {
         PlayerCardFace(
             character: character, number: cardNumber,
-            squadName: squadName, joinedAt: joinedAt, counts: counts, week: week, board: board)
+            squadName: squadName, counts: counts, week: week, board: board,
+            streaks: streaks)
     }
 }
 
@@ -171,24 +190,23 @@ public struct PlayerCardFace: Hashable, Sendable {
     /// The number on it; nil with neither a pick nor a place in a squad.
     public var number: JerseyNumber?
     public var squadName: String?
-    /// When they signed up: the year on the card.
-    public var joinedAt: Date?
     public var counts: LifetimeCounts
-    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (an older server, or no plan this week).
+    /// The streaks still going, on the card's 外卡; a squadmate's from what they shared with the squad.
+    public var streaks: CardStreaks
+    /// 本周 x/y, theirs for a squadmate; nil when it isn't known (no plan this week).
     public var week: WeekCount?
     public var board: TitleBoard
-    /// A squadmate's 出赛表 this week, on their card's back; nil on the member's own card and from
-    /// an older server.
+    /// A squadmate's 出赛表 this week, on their card's back; nil on the member's own card.
     public var schedule: MateSchedule?
 
     public init(
-        character: MeCharacter, number: JerseyNumber?, squadName: String?, joinedAt: Date?, counts: LifetimeCounts,
-        week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil
+        character: MeCharacter, number: JerseyNumber?, squadName: String?, counts: LifetimeCounts,
+        week: WeekCount?, board: TitleBoard, schedule: MateSchedule? = nil, streaks: CardStreaks = .none
     ) {
+        self.streaks = streaks
         self.character = character
         self.number = number
         self.squadName = squadName
-        self.joinedAt = joinedAt
         self.counts = counts
         self.week = week
         self.board = board
@@ -213,31 +231,29 @@ public struct MateSchedule: Hashable, Sendable {
     public let marks: [DayMark]
     /// Empty when they set none, and then the card says nothing about them.
     public let fuel: [FuelGoal]
-    /// The week the card counts as W1: their squad's first week (else, from older servers, the
-    /// week they joined); nil before they saved a profile.
-    public let firstWeek: LocalDay?
-    /// Today on the squad's clock (on theirs from older servers); nil from older servers.
-    public let today: LocalDay?
+    /// The week the card counts as W1: their squad's first week.
+    public let firstWeek: LocalDay
+    /// Today on the squad's clock.
+    public let today: LocalDay
 
     public init(
-        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay?,
-        today: LocalDay? = nil
+        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay,
+        today: LocalDay
     ) throws(MeError) {
         guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
         (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
         (self.firstWeek, self.today) = (firstWeek, today)
     }
 
-    /// The row shaded as 今天, Monday 0: their today on their calendar, else `fallback` (the
-    /// viewer's, for older servers); nil when that day isn't in this week.
-    public func todayIndex(else fallback: LocalDay) -> Int? {
-        let day = today ?? fallback
-        return day.weekStart == weekStart ? day.weekday - 1 : nil
+    /// The row shaded as 今天, Monday 0: their today on the squad's clock; nil when that day isn't
+    /// in this week.
+    public var todayIndex: Int? {
+        today.weekStart == weekStart ? today.weekday - 1 : nil
     }
 
     /// The week's number on the card (W3): the squad's week, the same on every squadmate's card
-    /// and 出赛表; W1 without it.
+    /// and 出赛表.
     public var weekNumber: Int {
-        firstWeek.map { weekStart.weekNumber(since: $0) } ?? 1
+        weekStart.weekNumber(since: firstWeek)
     }
 }

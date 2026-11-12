@@ -2,6 +2,7 @@ import { sql, type Kysely } from 'kysely';
 import { z } from 'zod';
 
 import {
+  BadgeLines,
   BadgeNames,
   EventName,
   GivenKind,
@@ -16,6 +17,13 @@ import type { RewardStore } from '../ports.js';
 import type { DB } from './tables.js';
 
 /** A badge's words as stored, with their own `version`. */
+const StoredLines = BadgeLines.extend({ version: z.literal(1) }).transform(
+  (stored): BadgeLines => ({
+    'zh-Hans': stored['zh-Hans'],
+    'zh-Hant': stored['zh-Hant'],
+    en: stored.en,
+  }),
+);
 const StoredNames = BadgeNames.extend({ version: z.literal(1) }).transform(
   (stored): BadgeNames => ({
     'zh-Hans': stored['zh-Hans'],
@@ -45,9 +53,15 @@ export function createPostgresRewardStore(db: Kysely<DB>): RewardStore {
       return rows.map(badgeOf);
     },
 
-    async putBadge({ id, names, glyph, tone, offered }) {
+    async putBadge({ id, names, lines, glyph, tone, offered }) {
       await addReward({ kind: 'badge', id });
-      const changed = { names: JSON.stringify({ version: 1, ...names }), glyph, tone, offered };
+      const changed = {
+        names: JSON.stringify({ version: 1, ...names }),
+        lines: lines === undefined ? null : JSON.stringify({ version: 1, ...lines }),
+        glyph,
+        tone,
+        offered,
+      };
       await db
         .insertInto('badges')
         .values({ id, ...changed })
@@ -201,6 +215,7 @@ export function createPostgresRewardStore(db: Kysely<DB>): RewardStore {
         .select([
           'badges.id',
           'badges.names',
+          'badges.lines',
           'badges.glyph',
           'badges.tone',
           'badges.offered',
@@ -209,7 +224,14 @@ export function createPostgresRewardStore(db: Kysely<DB>): RewardStore {
         ])
         .where('grants.member_id', '=', member)
         .where('grants.reward_kind', '=', 'badge')
-        .groupBy(['badges.id', 'badges.names', 'badges.glyph', 'badges.tone', 'badges.offered'])
+        .groupBy([
+          'badges.id',
+          'badges.names',
+          'badges.lines',
+          'badges.glyph',
+          'badges.tone',
+          'badges.offered',
+        ])
         .orderBy('latest_at', 'desc')
         .orderBy('badges.id')
         .execute();
@@ -249,6 +271,7 @@ export function createPostgresRewardStore(db: Kysely<DB>): RewardStore {
 function badgeOf(row: {
   id: string;
   names: unknown;
+  lines: unknown;
   glyph: string;
   tone: string;
   offered: boolean;
@@ -256,6 +279,7 @@ function badgeOf(row: {
   return {
     id: row.id,
     names: StoredNames.parse(row.names),
+    ...(row.lines === null ? {} : { lines: StoredLines.parse(row.lines) }),
     glyph: row.glyph,
     tone: row.tone,
     offered: row.offered,

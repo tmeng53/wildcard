@@ -14,12 +14,13 @@ CoachSidelineUITests 55
 ComposePhotoUITests 87
 DailyPushUITests 55
 FeedUITests 430
+HomeScreenWidgetUITests 100
 LanguageUITests 116
 LightsUITests 64
 LoadingUITests 82
 MeUITests 345
 NightlyRecapUITests 33
-NoticeBellUITests 137
+NoticeBellUITests 160
 NoticeUITests 60
 NotificationPromptUITests 58
 OpeningUITests 37
@@ -40,5 +41,5 @@ TodayCapsuleUITests 100
 TodayUITests 269
 TogetherUITests 81
 UnlockNoticeUITests 337
-WelcomeUITests 42
 WeekChallengeUITests 20
+WelcomeUITests 42

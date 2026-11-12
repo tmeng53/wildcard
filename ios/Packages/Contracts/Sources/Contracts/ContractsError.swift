@@ -16,8 +16,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case trainedWith(Int)
     /// A caption with a line break; it is one line.
     case multilineCaption
-    /// A check-in sent to no squads, or more than `Audience.maxSquads`.
-    case audienceSize(Int)
     /// A check-in that lists the same squad twice.
     case repeatedSquad
     /// A weekly plan that doesn't have exactly seven days.

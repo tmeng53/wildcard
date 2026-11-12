@@ -11,7 +11,6 @@ import {
 } from '@wildcard/squads';
 import type { Scenes } from '@wildcard/scenes';
 import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
-import { NEW_YORK } from '@wildcard/time-zones';
 import {
   awardsTimeOf,
   weeksMaybeAwarded,
@@ -213,9 +212,13 @@ export function squadScene(deps: {
     sceneWeekAt: async (moment, squad) => {
       const zones = new Map<string, string>();
       for (const week of weeksMaybeAwarded(moment)) {
-        zones.set(week, (await deps.squads.timeZonesFor([squad], week)).get(squad) ?? NEW_YORK);
+        zones.set(week, (await deps.squads.timeZonesFor([squad], week))(squad));
       }
-      return sceneWeekAt(moment, (week) => zones.get(week) ?? NEW_YORK);
+      return sceneWeekAt(moment, (week) => {
+        const zone = zones.get(week);
+        if (zone === undefined) throw new Error(`No zone read for week ${week}.`);
+        return zone;
+      });
     },
     openScenes: (week) => deps.scenes.openOn(week),
     crownHolders: async ({ squad, week, viewer }) => {

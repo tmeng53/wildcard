@@ -1,3 +1,5 @@
+import Foundation
+
 /// 头衔徽章: the weekly titles a member won in the Sunday 战报, each with the badge the AI picked
 /// for it, the one they wear on their player card and beside their name, and their badge board.
 
@@ -79,16 +81,35 @@ public struct TeamBadge: Hashable, Sendable, Identifiable {
     /// Its catalog id (`bug-hunter`).
     public var id: String
     public var name: CatalogNames
+    /// What its card says under its name, as a title's 颁奖词 does; nil when the team wrote none.
+    public var line: CatalogNames?
     /// The SF Symbol's name; the drawing falls back to a star for one this iOS doesn't have.
     public var glyph: String
     /// Its colour as `#RRGGBB`.
     public var tone: String
     /// How many times it was given: ×N on the board.
     public var times: Int
+    /// When it was given the last time; nil from servers before it, and on the sample squad.
+    public var latestAt: Date?
 
-    public init(id: String, name: CatalogNames, glyph: String, tone: String, times: Int) {
-        (self.id, self.name, self.glyph, self.tone, self.times) = (id, name, glyph, tone, times)
+    public init(
+        id: String, name: CatalogNames, line: CatalogNames? = nil, glyph: String, tone: String, times: Int,
+        latestAt: Date? = nil
+    ) {
+        (self.id, self.name, self.line, self.glyph, self.tone, self.times, self.latestAt) = (
+            id, name, line, glyph, tone, times, latestAt
+        )
     }
+
+    /// Its badge as a title's is drawn: a ticket in its own colour.
+    public var badge: TitleBadge { TitleBadge(shape: "ticket", colour: id, tone: tone, glyph: glyph) }
+}
+
+/// What a member may wear on their card's front and beside their name: one of their weekly
+/// titles, by its words, or a badge the team gave them, by its id.
+public enum Wearable: Hashable, Sendable {
+    case title(String)
+    case teamBadge(String)
 }
 
 /// Every title a member won, in all their squads, the one they wear, and the team's badges.
@@ -96,20 +117,45 @@ public struct TitleBoard: Hashable, Sendable {
     /// The latest won first.
     public var titles: [BoardTitle]
     /// The title worn on the card's front: the one equipped, else the latest won; nil before the
-    /// first.
+    /// first, and while a team badge is worn.
     public var worn: String?
-    /// The team's badges, the latest got first; never worn as a title.
+    /// The team's badges, the latest got first.
     public var teamBadges: [TeamBadge]
+    /// The team badge worn on the card's front instead of a title, by its id; nil unless the
+    /// member chose one.
+    public var wornTeamBadge: String?
 
-    public init(titles: [BoardTitle], worn: String?, teamBadges: [TeamBadge] = []) {
-        (self.titles, self.worn, self.teamBadges) = (titles, worn, teamBadges)
+    public init(titles: [BoardTitle], worn: String?, teamBadges: [TeamBadge] = [], wornTeamBadge: String? = nil) {
+        (self.titles, self.worn, self.teamBadges, self.wornTeamBadge) = (titles, worn, teamBadges, wornTeamBadge)
     }
 
     public static let empty = TitleBoard(titles: [], worn: nil)
 
-    /// The worn title with its badge.
-    public var wornTitle: WornTitle? {
-        titles.first { $0.title == worn }.map { WornTitle(title: $0.title, badge: $0.badge) }
+    /// What is worn on the card's front, with its badge: the team badge chosen, named in the first
+    /// of `languages` there are words in, else the title worn.
+    public func wornTitle(in languages: [String]) -> WornTitle? {
+        if let badge = teamBadges.first(where: { $0.id == wornTeamBadge }) {
+            return WornTitle(title: badge.name.localized(in: languages), badge: badge.badge)
+        }
+        return titles.first { $0.title == worn }.map { WornTitle(title: $0.title, badge: $0.badge) }
+    }
+
+    /// Whether `wearable` is what the card's front wears.
+    public func wears(_ wearable: Wearable) -> Bool {
+        switch wearable {
+        case .title(let title): wornTeamBadge == nil && worn == title
+        case .teamBadge(let id): wornTeamBadge == id
+        }
+    }
+
+    /// Wears `wearable` at once, as the API will once it saves; nil wears the latest title won
+    /// again.
+    public mutating func wear(_ wearable: Wearable?) {
+        switch wearable {
+        case .title(let title): (worn, wornTeamBadge) = (title, nil)
+        case .teamBadge(let id): (worn, wornTeamBadge) = (nil, id)
+        case nil: (worn, wornTeamBadge) = (titles.first?.title, nil)
+        }
     }
 
     /// Every badge held, each title's and the team's, counting each repeat: 徽章 on the card's

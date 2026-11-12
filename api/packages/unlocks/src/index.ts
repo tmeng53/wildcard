@@ -34,6 +34,7 @@ export {
 } from './domain/unlocks.js';
 export {
   BadgeEdit,
+  BadgeLines,
   BadgeNames,
   CatalogRewardId,
   EventName,
@@ -67,6 +68,7 @@ export {
   type GiftRequest,
 } from './domain/gifts.js';
 export {
+  BadgeNotHeldError,
   GiftAlreadyOwnedError,
   GiftMemberNotInSquadError,
   GiftNoCoachError,

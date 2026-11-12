@@ -1,3 +1,4 @@
+import APIContract
 import AccountDomain
 import Contracts
 import Foundation
@@ -132,4 +133,26 @@ private func posted(_ entry: CheckIn.Entry, on day: LocalDay, at milliseconds: I
     #expect(ScheduleError(.account(.signedOut)) == .signedOut)
     #expect(ScheduleError(.account(.credentialRejected)) == .signedOut)
     #expect(ScheduleError(.account(.unavailable)) == .notSent)
+}
+
+@Test func aStoryTitleKeepsItsBadgeAndOneFromAnOlderServerGetsTheDefault() throws {
+    let json = Data(
+        """
+        [
+          {"title": "网球担当", "speech": "三次站上网球场", "move": "pump",
+           "badge": {"shape": "shield", "colour": "tennis", "tone": "#4F6B22", "glyph": "tennisball.fill"}},
+          {"title": "早起冠军", "speech": "三次在七点前打卡", "move": "cheer"}
+        ]
+        """.utf8)
+    let titles = try JSONDecoder().decode([Components.Schemas.StoryTitle].self, from: json)
+
+    #expect(
+        APIScheduleBackend.awardTitles(titles) == [
+            AwardTitle(
+                title: "网球担当", speech: "三次站上网球场",
+                badge: TitleBadge(shape: "shield", colour: "tennis", tone: "#4F6B22", glyph: "tennisball.fill")),
+            AwardTitle(
+                title: "早起冠军", speech: "三次在七点前打卡",
+                badge: TitleBadge(shape: "circle", colour: "gym", glyph: "star.fill")),
+        ])
 }

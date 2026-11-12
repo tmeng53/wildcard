@@ -3,10 +3,11 @@ import Foundation
 
 // Making and joining squads, the squad step of sign-up, and pats between squadmates.
 extension WildcardAPI {
-    /// Makes a squad under its own id with the member in it, and its goal, 人均 `daysPerMember`
-    /// 天 (the API's 3 when nil). Safe to retry with the same id: the squad already made answers.
+    /// Makes a squad under its own id with the member in it, its goal, 人均 `daysPerMember` 次
+    /// (the API's 3 when nil), and its time zone (小队时区), an IANA name. Safe to retry with the
+    /// same id: the squad already made answers.
     public func createSquad(
-        _ id: SquadID, named name: SquadName, daysPerMember: Int? = nil, timeZone: String? = nil
+        _ id: SquadID, named name: SquadName, daysPerMember: Int? = nil, timeZone: String
     ) async throws(APIError) -> Squad {
         let wire = try await call {
             switch try await client.createSquad(

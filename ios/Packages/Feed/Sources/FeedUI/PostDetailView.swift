@@ -42,7 +42,10 @@ public struct PostDetailView: View {
             if let post = model.store.post(id) {
                 page(post)
                     .safeAreaInset(edge: .bottom, spacing: 0) {
-                        CommentComposer(model: model, post: post, isTyping: $isTyping)
+                        // A check-in only recorded (发布到动态 off) is no post to talk under.
+                        if post.checkIn.inFeed {
+                            CommentComposer(model: model, post: post, isTyping: $isTyping)
+                        }
                     }
             } else if model.store.phase != .loading {
                 gone

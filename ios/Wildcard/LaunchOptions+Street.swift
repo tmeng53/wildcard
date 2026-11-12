@@ -4,6 +4,15 @@ import Foundation
 
 /// The sample member's 商店街 for the UI tests.
 extension LaunchOptions {
+    /// What the team gave the sample member: with `-uitest-broadcast thanks`, the letter's piece.
+    static var teamGifts: [String] {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count,
+            arguments[flag + 1] == "thanks"
+        else { return [] }
+        return ["warmup-beanie"]
+    }
+
     /// The sample member's 商店街, as the server works it out for someone who just started, in
     /// November: WARM-UP open with its newer pieces boxed (they take any 练了), DEUCE CLUB's too once
     /// `-uitest-unlocked` has opened it, the other stores still to earn, and POWDER DAY closed.

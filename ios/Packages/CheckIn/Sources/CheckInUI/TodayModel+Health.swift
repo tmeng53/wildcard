@@ -38,7 +38,7 @@ extension TodayModel {
                 self?.store.home?.together(on: day, workout: workout, startTime: startTime) ?? .none
             },
             save: { [weak self] model in
-                await self?.post(model.draft, shared: model.isShared, on: model.day) ?? false
+                await self?.post(model.draft, inFeed: model.inFeed, on: model.day) ?? false
             },
             close: { [weak self] in self?.cancel() })
         if kind == .trained, let workout { model.pick(workout) }

@@ -73,6 +73,9 @@ public struct JerseyNumberView: View {
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("number.page")
         .pushedPage()
+        // A brand page wherever it opens: it is pushed in the editor's cover over 我, whose stack
+        // doesn't inherit 我's tone, so without this 保存 wore the gym scene's steel blue.
+        .accentTone(.brand)
     }
 
     /// Every number the API takes, 00 to 99.

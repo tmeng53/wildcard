@@ -142,6 +142,8 @@ private actor Flag {
     #expect(records.minutes == 40)
     #expect(records.longestMinutes == 40)
     #expect(records.longestStreak?.days == 1)
+    #expect(records.currentStreak?.days == 1)
+    #expect(records.currentMealStreak == nil)
     #expect(records.sports == [.init(activity: .sport("run"), days: 1)])
     #expect(records.hours.reduce(0, +) == 1)
     let partner = try #require(records.squad?.partner)
