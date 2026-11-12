@@ -12,9 +12,9 @@ export function listAppRoutes() {
     name: 'list_app_routes',
     title: 'List the places in the app',
     description:
-      'Shows every place in the app a button may open, by its address (such as store/powder or ' +
-      'coach; wildcard:// before it is optional): the pattern, what it opens and a sample. A ' +
-      'build that does not know an address shows no button for it.',
+      'Shows every place in the app a button may open, by its address, written bare (such as ' +
+      'store/powder or coach; the app also opens it as a wildcard:// link): the pattern, what it ' +
+      'opens and a sample. A build that does not know an address shows no button for it.',
     changes: false,
     input: z.strictObject({}),
     run: () => Promise.resolve({ version: 1, scheme: APP_SCHEME, routes: APP_ROUTES }),

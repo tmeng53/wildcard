@@ -32,6 +32,20 @@ extension MainTabs {
         }
     }
 
+    /// A link to the coach (`wildcard://coach`): its page, or 教练招聘会 for a squad without a
+    /// coach, which has no page to show; the home is read first if it wasn't yet.
+    func openCoachOrHiring() {
+        selection = .today
+        Task {
+            if today.home == nil { await today.load() }
+            if deckCoach == nil {
+                todayPages = [.coach(.market)]
+            } else {
+                openCoachDeck()
+            }
+        }
+    }
+
     /// Opens the coach's page on 今天, made for the squad 今天 is on.
     func openCoachDeck() {
         // A note's 通知 row or push can come before 今天 was ever shown (the app opened on 动态,

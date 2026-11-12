@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { APP_ROUTES, AppAddress, routeOf, routesJson } from './index.js';
 
 describe('AppAddress', () => {
-  it('takes every route’s sample, with or without the scheme', () => {
+  it('takes every route’s sample, written bare', () => {
     for (const route of APP_ROUTES) {
       expect(AppAddress.safeParse(route.sample).success).toBe(true);
-      expect(AppAddress.safeParse(`wildcard://${route.sample}`).success).toBe(true);
+      expect(AppAddress.safeParse(`wildcard://${route.sample}`).success).toBe(false);
       expect(routeOf(route.sample)?.pattern).toBe(route.pattern);
     }
   });
@@ -39,6 +39,9 @@ describe('AppAddress', () => {
       'badges/idea-king',
       'post/not-a-uuid',
       'recap/last-week',
+      'recap/2026-13-45',
+      'coach/',
+      'post/7B0C1F4E-2D3A-4B5C-8D9E-0F1A2B3C4D5E',
       'store/powder/extra',
       'https://example.com',
       '',

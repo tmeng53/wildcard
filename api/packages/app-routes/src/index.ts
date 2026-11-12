@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 // @wildcard/app-routes: every place in the app a link may open, by its address (Tracy,
-// 2026-11-12: where a button goes is data, never a release). An address is a path such as
-// `store/powder`, alone or after `wildcard://`; the app opens it with one router
+// 2026-11-12: where a button goes is data, never a release). An address is a bare path such as
+// `store/powder` (the app also opens it as `wildcard://store/powder`); the app opens it with one router
 // (`AppDestination(address:)`), and a build that doesn't know one shows no button. Adding a page
 // to the app adds its route here and in the app's router, once; from then on any notice, card or
 // push may open it. `routes.json` beside this package is its copy for the app's tests
@@ -31,7 +31,7 @@ export const APP_ROUTES: readonly AppRoute[] = [
     pattern: 'recap/<weekStart>',
     opens: 'the squad’s 战报 for the week starting that Monday',
     sample: 'recap/2026-11-02',
-    id: '^\\d{4}-\\d{2}-\\d{2}$',
+    id: '^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$',
   },
   { pattern: 'feed', opens: '动态', sample: 'feed' },
   {
@@ -76,12 +76,12 @@ const idPatterns = new Map(
 /** The scheme of a link into the app. */
 export const APP_SCHEME = 'wildcard';
 
-/** The route `address` is on, with or without `wildcard://`; undefined for none. */
+/**
+ * The route `address` is on; undefined for none. Addresses are kept bare (`store/powder`), so
+ * builds from before links read them too; the app also opens one as `wildcard://<address>`.
+ */
 export function routeOf(address: string): AppRoute | undefined {
-  const path = address.startsWith(`${APP_SCHEME}://`)
-    ? address.slice(`${APP_SCHEME}://`.length)
-    : address;
-  const [word = '', id, ...rest] = path.split('/');
+  const [word = '', id, ...rest] = address.split('/');
   if (rest.length > 0) return undefined;
   return APP_ROUTES.find((route) => {
     const [routeWord, routeId] = route.pattern.split('/');
@@ -98,7 +98,7 @@ export function routesJson(): string {
 
 /**
  * A place in the app: an address on one of the routes, such as `store/powder`, `post/<id>` or
- * `wildcard://coach`. A build that doesn't know it shows no button, so a route added later is
+ * `coach`, written bare. A build that doesn't know it shows no button, so a route added later is
  * safe to send to older builds.
  */
 export const AppAddress = z

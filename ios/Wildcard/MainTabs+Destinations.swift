@@ -45,7 +45,8 @@ extension MainTabs {
     }
 
     /// 今天 itself, with today's pats on me again; a morning note opens the coach's page, where
-    /// it is one of its cards, as `coach` does; `checkIn` opens the check-in kinds.
+    /// it is one of its cards; `coach` opens it too (教练招聘会 without a coach), `checkIn` the
+    /// check-in kinds.
     private func openToday(_ destination: AppDestination) {
         selection = .today
         todayPages = []
@@ -54,7 +55,7 @@ extension MainTabs {
         case .coachNote, .waitingCoachNote: openCoachDeck()
         case .coachLetter(let letter): today.showAgain(letter)
         case .teamLetter(let broadcast): today.showAgain(broadcast)
-        case .coach: openCoachDeck()
+        case .coach: openCoachOrHiring()
         case .checkIn: today.openCheckIn()
         default: break
         }

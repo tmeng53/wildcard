@@ -30,7 +30,7 @@
       "pattern": "recap/<weekStart>",
       "opens": "the squad’s 战报 for the week starting that Monday",
       "sample": "recap/2026-11-02",
-      "id": "^\\d{4}-\\d{2}-\\d{2}$"
+      "id": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
     },
     {
       "pattern": "feed",
