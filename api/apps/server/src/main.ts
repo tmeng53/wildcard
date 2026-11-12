@@ -658,6 +658,8 @@ const coachWakes =
           photos,
           log,
         }),
+        // Off until the policy's notice of it runs out, then on by `put_switch` (Tracy, 2026-11-12).
+        relayingOn: async (day) => (await switches.states())('coachFeedbackRelay', day),
         warn: (message, details) => {
           log.warn(message, details);
         },

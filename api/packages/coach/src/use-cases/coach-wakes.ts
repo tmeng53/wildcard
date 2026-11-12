@@ -198,6 +198,11 @@ export interface CoachWakesDependencies {
   readonly gifting: CoachGifting;
   /** Passes on to the team what a member asked of the app, filed as feedback from them. */
   readonly relayFeedback: CoachFeedback;
+  /**
+   * Whether coaches pass feedback on that day: off until the privacy policy's notice of it runs
+   * out (the switch `coachFeedbackRelay`, Tracy 2026-11-12).
+   */
+  readonly relayingOn: (day: string) => Promise<boolean>;
   /** Told what went wrong after a wake's save, such as a gift that couldn't be given. */
   readonly warn: (message: string, details: Record<string, unknown>) => void;
 }
@@ -669,7 +674,11 @@ async function think(
         challenge !== undefined &&
         challengeOpen(challenge) &&
         postedOn({ week, reason: wake.reason, day, zone }),
-      relaying: heard !== undefined,
+      relaying: heard !== undefined ? 'heard' : 'nothing',
+      ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') &&
+      !(await deps.relayingOn(day))
+        ? { relaying: 'off' as const }
+        : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
@@ -1257,18 +1266,29 @@ async function noteReaders(
 }
 
 /**
- * The words the member a check-in's or reply's wake answers said there: the post's line, or the
- * reply. Undefined when they said none, or the post was only recorded.
+ * What the member a check-in's or reply's wake answers said under that post, in their own words:
+ * the post's line, if it is theirs, then their comments there up to the one the wake answers, so
+ * what they asked is quoted with the yes that came after it. Undefined when they said nothing
+ * there, or the post was only recorded.
  */
 function heardOf(week: SquadWeek, reason: Wake['reason']): string | undefined {
   if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
   const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
   if (checkIn === undefined || checkIn.unposted === true) return undefined;
-  const words =
-    reason.kind === 'checkIn'
-      ? checkIn.text
-      : checkIn.comments.find(({ id }) => id === reason.comment)?.text;
-  return words === undefined || words.trim() === '' ? undefined : words;
+  const member = addresseeOf(week, reason);
+  const answering =
+    reason.kind === 'comment'
+      ? checkIn.comments.find(({ id }) => id === reason.comment)
+      : undefined;
+  const said = [
+    ...(checkIn.member === member && checkIn.text !== undefined ? [checkIn.text] : []),
+    ...(answering === undefined
+      ? []
+      : checkIn.comments
+          .filter((each) => each.member === member && each.at <= answering.at)
+          .map(({ text }) => text)),
+  ].filter((words) => words.trim() !== '');
+  return said.length === 0 ? undefined : said.join('\n');
 }
 
 /**

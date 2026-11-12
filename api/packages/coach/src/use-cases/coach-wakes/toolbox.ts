@@ -185,7 +185,7 @@ export function toolbox({
   gifting,
   to,
   openChallenge = false,
-  relaying = false,
+  relaying = 'nothing',
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -213,9 +213,10 @@ export function toolbox({
   readonly openChallenge?: boolean;
   /**
    * On a check-in's or a reply's wake, whether the member it answers said something there in
-   * their own words, which the coach may pass on to the team.
+   * their own words, which the coach may pass on to the team (`heard`), said nothing
+   * (`nothing`), or passing feedback on is off (`off`), when the tool isn't offered.
    */
-  readonly relaying?: boolean;
+  readonly relaying?: 'heard' | 'nothing' | 'off';
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   // Each week is read at most once a run, however many tools ask for it.
@@ -333,7 +334,9 @@ export function toolbox({
     );
   }
   // Before each kind's own tools, and on every such wake, so the list stays the same and cached.
-  if (kind === 'checkIn' || kind === 'comment') tools.push(relayFeedback(draft, relaying));
+  if ((kind === 'checkIn' || kind === 'comment') && relaying !== 'off') {
+    tools.push(relayFeedback(draft, relaying === 'heard'));
+  }
   if (kind === 'daily') {
     tools.push(
       defineTool(draft.steps, {
@@ -464,7 +467,7 @@ export const RELAY_LIMIT = 200;
 function relayFeedback(draft: WakeDraft, heard: boolean): CoachTool {
   return defineTool(draft.steps, {
     name: 'relay_feedback',
-    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队。只转他自己对 app 说的，一次一条，再转会换掉。转了在回他的那句里顺口说一声。`,
+    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了在回他的那句里说一声。`,
     parameters: z.object({
       kind: z.enum(['problem', 'idea']).describe('app 出了问题是 problem，想要新东西或改进是 idea'),
       text: z

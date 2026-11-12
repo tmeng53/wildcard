@@ -236,6 +236,7 @@ function wakes(
     gifting,
     weatherOf,
     relayFeedback,
+    relayingOn,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -252,6 +253,7 @@ function wakes(
     readonly gifting?: CoachGifting;
     readonly weatherOf?: CoachWeather;
     readonly relayFeedback?: CoachFeedback;
+    readonly relayingOn?: (day: string) => Promise<boolean>;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -286,6 +288,7 @@ function wakes(
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
     ...(relayFeedback === undefined ? {} : { relayFeedback }),
+    ...(relayingOn === undefined ? {} : { relayingOn }),
   });
 }
 
@@ -309,6 +312,7 @@ const quietPorts = {
     give: () => Promise.resolve('no gifts in this test'),
   },
   relayFeedback: () => Promise.resolve('no feedback in this test'),
+  relayingOn: () => Promise.resolve(true),
   warn: () => undefined,
 } satisfies Partial<CoachWakesDependencies>;
 
@@ -2023,7 +2027,7 @@ describe('the coach', () => {
     });
   });
 
-  it('passes on what a member asks of the app, from them, with their own words', async () => {
+  it('passes on what a member asks of the app, from them, with all they said there', async () => {
     await rolledBack(async (fixture) => {
       const { squad, mia, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
@@ -2069,31 +2073,74 @@ describe('the coach', () => {
         },
       ]);
 
-      // Under a post, it is the reply's writer who asked, in the reply's words.
-      const asked = await commentOn(fixture, {
+      // Under a post, it is the reply's writer who asked, quoted in all they said there up to
+      // the yes the wake answers: not the post's author's line, nor what came after.
+      const wish = await commentOn(fixture, {
         member: leo,
-        text: '@小混 能出个月度总结吗',
+        text: '要是能出个月度总结就好了',
         at: new Date(now.getTime() + 60_000),
+      });
+      const fromMia = await commentOn(fixture, {
+        member: mia,
+        text: '同意',
+        at: new Date(now.getTime() + 90_000),
+      });
+      const yes = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 帮我转给团队吧',
+        at: new Date(now.getTime() + 120_000),
         mentionsCoach: 'xiaohun',
+      });
+      const later = await commentOn(fixture, {
+        member: leo,
+        text: '谢谢',
+        at: new Date(now.getTime() + 150_000),
       });
       const withAsk: SquadWeek = {
         ...withWords,
-        checkIns: withWords.checkIns.map((each) => ({ ...each, comments: [asked] })),
+        checkIns: withWords.checkIns.map((each) => ({
+          ...each,
+          comments: [wish, fromMia, yes, later],
+        })),
       };
       await wakes(
         { ...fixture, week: withAsk },
-        { agent, relayFeedback, at: new Date(now.getTime() + 2 * 60_000) },
-      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+        { agent, relayFeedback, at: new Date(now.getTime() + 3 * 60_000) },
+      ).answer({ checkIn, comment: yes.id, coach: 'xiaohun', squads: [squad] });
       expect(relayed[1]).toStrictEqual({
         squad,
         coach: 'xiaohun',
         member: leo,
         checkIn,
-        comment: asked.id,
+        comment: yes.id,
         kind: 'idea',
         text: '想看全队的月度总结',
-        quote: '@小混 能出个月度总结吗',
+        quote: '要是能出个月度总结就好了\n@小混 帮我转给团队吧',
       });
+    });
+  });
+
+  it('offers nothing to pass on while passing feedback on is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const asked: string[] = [];
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: '想要标地点' })),
+      };
+      await wakes(
+        { ...fixture, week: withWords },
+        {
+          agent,
+          relayingOn: (day) => {
+            asked.push(day);
+            return Promise.resolve(false);
+          },
+        },
+      ).run();
+      expect(runs[0]?.task.startsWith('有人打卡')).toBe(true);
+      expect(runs[0]?.tools).not.toContain('relay_feedback');
+      expect(asked).toStrictEqual(['2026-11-01']);
     });
   });
 
