@@ -23,16 +23,19 @@ private struct CardPopup<Card: View>: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The card grows, text and all, to the width inside the page's gutters (Tracy, 2026-11-12:
-    /// the card bigger), and shrinks only where the screen is too short for it.
+    /// the card bigger), and shrinks only where the screen is too short for it above the tab bar.
     private func scale(in space: CGSize) -> Double {
         guard cardSize.width > 0, cardSize.height > 0 else { return 1 }
         let width = (space.width - Space.m * 2) / cardSize.width
-        let height = (space.height - Space.m * 2) / cardSize.height
+        let height = (space.height - Self.tabBar - Space.m * 2) / cardSize.height
         return min(width, height, Self.largest)
     }
 
     /// A card on an iPad or a wide window stops growing here.
     private static var largest: Double { 1.4 }
+    /// The system tab bar floats over the foot of the safe area; the card and its 轻点翻面 stay
+    /// above it.
+    private static var tabBar: Double { Space.xxl }
 
     func body(content: Content) -> some View {
         content.overlay {
@@ -53,6 +56,7 @@ private struct CardPopup<Card: View>: ViewModifier {
                             .onGeometryChange(for: CGSize.self, of: \.size) { cardSize = $0 }
                             .scaleEffect(scale(in: proxy.size))
                             .padding(proxy.safeAreaInsets)
+                            .padding(.bottom, Self.tabBar)
                             .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
                             .accessibilityAddTraits(.isModal)
                             .accessibilityAction(.escape) { isPresented = false }
