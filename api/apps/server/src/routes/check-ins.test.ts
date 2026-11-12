@@ -890,6 +890,43 @@ describe('GET /me/records', () => {
     expect(body).not.toHaveProperty('currentMealStreak');
   });
 
+  it('puts each 训练 on the hour it started: the start picked, else its workout’s', async () => {
+    // No time zone on the profile: the member's clock is UTC.
+    const me = await signUp();
+    const madeAt = new Date(Date.now() - 60_000);
+    const day = madeAt.toISOString().slice(0, 10);
+    const startedAt = new Date(madeAt.getTime() - 3 * 60 * 60_000);
+    const put = async (training: Readonly<Record<string, unknown>>) => {
+      const body = {
+        version: 1,
+        day,
+        createdAt: madeAt.toISOString(),
+        audience: [],
+        kind: 'trained',
+        training: { sport: 'run', ...training },
+      };
+      const path = `/check-ins/${randomUUID()}`;
+      expect((await call({ method: 'PUT', path, token: me.token, body })).status).toBe(201);
+    };
+    const picked = (madeAt.getUTCHours() + 7) % 24;
+    await put({ startTime: `${String(picked).padStart(2, '0')}:20` });
+    await put({
+      workout: {
+        provider: 'apple_health',
+        providerWorkoutId: randomUUID(),
+        startedAt: startedAt.toISOString(),
+        endedAt: new Date(startedAt.getTime() + 30 * 60_000).toISOString(),
+        summary: { durationSec: 1800 },
+      },
+    });
+
+    const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
+    const hours = Array.from({ length: 24 }, () => 0);
+    hours[picked] = 1;
+    hours[startedAt.getUTCHours()] = (hours[startedAt.getUTCHours()] ?? 0) + 1;
+    expect(body).toMatchObject({ hours });
+  });
+
   it('stands the member against squadmates only on what they sent the squad', async () => {
     const [me, coco] = [await signUp(), await signUp()];
     const today = new Date().toISOString().slice(0, 10);

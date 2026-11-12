@@ -301,10 +301,15 @@ const MemberRecords = z
     mealStreak: Streak.optional(),
     currentStreak: Streak.optional(),
     currentMealStreak: Streak.optional(),
-    hours: z.array(count('训练 posted in this hour.')).min(24).max(24).meta({
-      description:
-        '训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.',
-    }),
+    hours: z
+      .array(count('训练 started in this hour.'))
+      .min(24)
+      .max(24)
+      .meta({
+        description:
+          '训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else ' +
+          'the Health workout’s, else the hour posted; a 补打卡 without a start is left out.',
+      }),
     weekdays: z
       .array(count('Days trained on this weekday.'))
       .min(7)

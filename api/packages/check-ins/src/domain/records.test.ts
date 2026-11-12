@@ -149,7 +149,7 @@ describe('memberRecords', () => {
     expect(records.mealStreak).toEqual({ days: 3, from: '2026-11-01', to: '2026-11-03' });
   });
 
-  it('puts each training on the clock of the hour it was posted, leaving out 补打卡', () => {
+  it('puts a training without a start on the hour it was posted, leaving out 补打卡', () => {
     expect(records.hours[19]).toBe(2);
     expect(records.hours[10]).toBe(1);
     expect(records.hours.reduce((sum, count) => sum + count, 0)).toBe(3);
@@ -157,6 +157,39 @@ describe('memberRecords', () => {
 
   it('counts days by weekday, Monday first', () => {
     expect(records.weekdays).toEqual([1, 1, 0, 1, 0, 0, 0]);
+  });
+
+  it('puts a training on the hour it started: the start picked, else its workout’s', () => {
+    const started = memberRecords({
+      trainings: [
+        // Posted at 11pm in New York, started at 7:30am by hand.
+        training({ day: '2026-11-03', hourUtc: 4 }, { startTime: '07:30' }),
+        // Posted at 11pm in New York, its Health workout began at 6pm there.
+        training(
+          { day: '2026-11-03', hourUtc: 4 },
+          { workoutStartedAt: new Date('2026-11-03T23:00:00Z') },
+        ),
+        // Both: the start picked wins over the workout's.
+        training(
+          { day: '2026-11-04', hourUtc: 4 },
+          { startTime: '09:00', workoutStartedAt: new Date('2026-11-04T23:00:00Z') },
+        ),
+        // A 补打卡 with a start picked keeps it.
+        training(
+          { day: '2026-11-01', hourUtc: 4 },
+          { postedDay: '2026-11-03', startTime: '12:05' },
+        ),
+      ],
+      healthyMealDays: [],
+      restDays: new Set(),
+      timeZone: NEW_YORK,
+    });
+    expect(started.hours[7]).toBe(1);
+    expect(started.hours[18]).toBe(1);
+    expect(started.hours[12]).toBe(1);
+    expect(started.hours[9]).toBe(1);
+    expect(started.hours[23]).toBe(0);
+    expect(started.hours.reduce((sum, count) => sum + count, 0)).toBe(4);
   });
 
   it('ranks sports by days', () => {

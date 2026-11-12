@@ -63,6 +63,8 @@ struct WildcardApp: App {
     @State private var recap: RecapShelf
     @State private var editor: CharacterEditorModel?
     @State private var signUp: SignUpModel?
+    /// The squad the sample member was removed from, with `-onboarding-rejoin`.
+    @State private var removedFrom: String?
     /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
     /// made their squad only once the squad is dropping onto the scene they picked, so the
     /// tabs never show the squad's old scene first.
@@ -118,12 +120,7 @@ struct WildcardApp: App {
             initialValue: AppConfig.current.map {
                 AppModel(config: $0, usesApple: usesApple, posted: Self.askForNotifications)
             })
-        if LaunchOptions.showsOnboarding {
-            _signUp = State(
-                initialValue: SignUpModel(
-                    service: InMemorySignUpService.sampleSquad(), nickname: "",
-                    now: LaunchOptions.signUpTime, health: Self.sampleHealth(), location: Self.sampleLocation))
-        }
+        if LaunchOptions.showsOnboarding { _signUp = State(initialValue: Self.sampleSignUp()) }
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
@@ -139,6 +136,16 @@ struct WildcardApp: App {
         AppCopyLines.install(SharedCopy.inAppGroup?.read() ?? CatalogClient.bundled.copy)
         // The catalog this build ships with; with a backend, `AppModel` shows the kept or newer one.
         AppModel.show(CatalogClient.bundled, keepsCopy: false)
+    }
+
+    /// Sign-up on the sample squad; with `-onboarding-rejoin`, for a member back in no squad, who
+    /// made their character and agreed to AI before.
+    private static func sampleSignUp() -> SignUpModel {
+        SignUpModel(
+            service: InMemorySignUpService.sampleSquad(
+                character: LaunchOptions.rejoins ? InMemorySignUpService.sampleCharacter : nil),
+            nickname: "", now: LaunchOptions.signUpTime, hasAgreedToAI: LaunchOptions.rejoins,
+            health: sampleHealth(), location: sampleLocation)
     }
 
     /// Approximate location on the sample squad: not asked yet, allowed when asked, in New York.
@@ -267,8 +274,13 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(
-                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
+            // As from 我, it is a page on a NavigationStack, whose bar holds its buttons.
+            NavigationStack {
+                CharacterEditorView(
+                    model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in }
+                )
+                .toolbarVisibility(CharacterEditorDemo.context == .profile ? .automatic : .hidden, for: .navigationBar)
+            }
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 ContinueWithApple {
@@ -288,6 +300,12 @@ struct WildcardApp: App {
             }
             // As on the real backend's open screen.
             .loadingCover(isSigningIn) { LaunchCover() }
+            .removalAlert($removedFrom)
+            .task {
+                // Once: a language switch makes the view again, and its task with it.
+                guard LaunchOptions.rejoins, !signUp.isRejoining, await signUp.rejoin() else { return }
+                removedFrom = InMemorySignUpService.formerSquadName
+            }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }
                 Task {

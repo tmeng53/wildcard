@@ -64,6 +64,23 @@ final class NoticeBellUITests: XCTestCase {
         waitFor(tabButton("tab.today", in: app), "selected == true", "the scene row didn't open 今天")
     }
 
+    /// A row that opens a post over 通知 isn't new any more once back on the page.
+    func testATappedRowIsReadBackOnNotices() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        let bell = app.buttons["notices.bell"]
+        XCTAssertTrue(bell.waitForExistence(timeout: Self.wait), "no bell on 动态")
+        bell.tap()
+        let comment = app.buttons["notices.row.8"]
+        XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "通知 didn't open")
+        XCTAssertEqual(comment.value as? String, "新", "the post's row wasn't new")
+        comment.tap()
+        waitFor(comment, "exists == false OR hittable == false", "the post's row didn't open the post")
+        backButton(in: app).tap()
+        XCTAssertTrue(comment.waitForExistence(timeout: Self.wait), "back didn't return to 通知")
+        waitFor(comment, "value != '新'", "the tapped row stayed new")
+    }
+
     /// The coach's morning note's row opens the coach's page, where the note is one of its cards.
     func testTheNoteRowOpensTheCoachsPage() {
         continueAfterFailure = false

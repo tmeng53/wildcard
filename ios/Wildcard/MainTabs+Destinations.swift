@@ -132,9 +132,25 @@ extension MainTabs {
     func closeProfilePages() {
         profile.closeDeletion()
         if !profile.isDeletionOpen { showsSettings = false }
+        profile.feedbackPage = nil
         showsSchedule = false
         wardrobe.showsShop = false
+        wardrobe.editor = nil
         (wall, post) = (nil, nil)
+    }
+
+    /// 换装 is pushed over 商店街 while the street is open, else over 我; the system's back closes it
+    /// without saving.
+    func showsEditor(overShop: Bool) -> Binding<Bool> {
+        Binding(
+            get: { wardrobe.editor != nil && wardrobe.showsShop == overShop },
+            set: { if !$0 { wardrobe.editor = nil } })
+    }
+
+    @ViewBuilder var profileEditor: some View {
+        if let editor = wardrobe.editor {
+            ProfileEditor(model: editor, profile: profile, today: today) { wardrobe.editor = nil }
+        }
     }
 
     /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.

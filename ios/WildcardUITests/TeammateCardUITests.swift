@@ -112,8 +112,10 @@ final class TeammateCardUITests: XCTestCase {
             "her board shows the 周日揭晓 slot")
         let toSchedule = app.buttons["me.cardBackToSchedule"]
         XCTAssertTrue(toSchedule.exists, "her board has no way back to her 出赛表")
+        // The same 「‹ side」 back as 穿搭's, naming the side it is on.
+        XCTAssertTrue(toSchedule.label.contains("徽章"), "her board's back isn't 「‹ 徽章」: \(toSchedule.label)")
         toSchedule.tap()
-        XCTAssertTrue(schedule.waitForExistence(timeout: 5), "「‹ 出赛表」 didn't bring her 出赛表 back")
+        XCTAssertTrue(schedule.waitForExistence(timeout: 5), "「‹ 徽章」 didn't bring her 出赛表 back")
         openBoard.tap()
         XCTAssertTrue(badges.firstMatch.waitForExistence(timeout: 5), "her badge board didn't open again")
     }

@@ -16,13 +16,28 @@ public actor InMemorySignUpService: SignUpService {
     private(set) var agreedToAI = false
     private(set) var scene: SceneID?
 
-    public init(sample: JoinedSquad) {
+    /// `character`: one saved before, for a member back in no squad.
+    /// A member who made their character before (`character`) was in a squad, so agreed to AI then.
+    public init(sample: JoinedSquad, character: NewCharacter? = nil) {
         self.sample = sample
+        self.character = character
+        agreedToAI = character != nil
+    }
+
+    /// The squad the sample member was in before, whose captain removed them.
+    public static var formerSquadName: String { String(copyKey: "晨跑搭子", bundle: Bundle.module) }
+
+    /// A calico in the warm-up kit, Tracy, for a member who made their character before.
+    public static var sampleCharacter: NewCharacter? {
+        guard let nickname = try? Nickname("Tracy") else { return nil }
+        return NewCharacter(
+            outfit: Outfit(["body": "calico", "cheeks": "rosy", "top": "warmup-tee", "bottom": "warmup-shorts"]),
+            persona: .energetic, nickname: nickname)
     }
 
     /// 周三不练腿俱乐部: four teammates, one of each species but the person, a persona each,
     /// 14 of 22 planned days done this week, as the home screen is reviewed against.
-    public static func sampleSquad() -> InMemorySignUpService {
+    public static func sampleSquad(character: NewCharacter? = nil) -> InMemorySignUpService {
         let teammates: [(String, String, Persona)] = [
             ("可可", "calico", .drama), ("阿杰", "shiba", .energetic), ("米娅", "rabbit", .deadpan),
             ("豆豆", "bear", .shy),
@@ -38,7 +53,8 @@ public actor InMemorySignUpService: SignUpService {
                         ), persona: persona
                     )
                 },
-                weekGoal: 3 * teammates.count, weekDone: 9, daysPerMember: 3))
+                weekGoal: 3 * teammates.count, weekDone: 9, daysPerMember: 3),
+            character: character)
     }
 
     public func preview(_ code: InviteCode) async throws(SignUpError) -> SquadPreview {
@@ -86,6 +102,8 @@ public actor InMemorySignUpService: SignUpService {
         guard squad == self.squad?.id, self.scene == nil || self.scene == scene else { throw .rejected }
         self.scene = scene
     }
+
+    public func character() async throws(SignUpError) -> NewCharacter? { character }
 
     public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
         guard let joined = self.squad, joined.id == squad else { throw .rejected }

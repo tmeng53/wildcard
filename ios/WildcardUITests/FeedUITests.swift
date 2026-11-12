@@ -222,6 +222,12 @@ final class FeedUITests: XCTestCase {
         waitFor(rows.element(boundBy: 3), "exists == true", "the sent comment didn't show")
         XCTAssertFalse(app.buttons["post.cancelReply"].exists, "still replying after sending")
 
+        // Pulled down, the page stays open and keeps every comment, the one just sent too: a
+        // read that dropped what the member sent, or left the page, would fail here.
+        app.scrollViews.firstMatch.swipeDown(velocity: .fast)
+        waitFor(rows.element(boundBy: 3), "exists == true", "pulling to refresh lost a comment")
+        XCTAssertTrue(backButton(in: app).exists, "pulling to refresh left the post's page")
+
         backButton(in: app).tap()
         XCTAssertTrue(app.buttons["tab.feed"].waitForExistence(timeout: Self.wait), "the tab bar didn't come back")
         waitFor(comments, "label CONTAINS '全部 4 条评论'", "the card doesn't count the new comment")
@@ -248,7 +254,9 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(checkIn, in: app)
         keepScreenshot(named: "47-feed-empty")
         checkIn.tap()
-        waitFor(app.buttons["tab.today"], "isSelected == true", "去打卡 didn't open 今天")
+        // By its place in the bar when need be: opened straight on 动态, the system's bar may not
+        // carry the tabs' identifiers, so `tab.today` alone is never found.
+        waitFor(tabButton("tab.today", in: app), "isSelected == true", "去打卡 didn't open 今天")
     }
 
     /// 动态 opened with no server and nothing read before: 网络开小差了 with 再试一次, not a
