@@ -90,6 +90,19 @@ describe('the squad’s week, as the model reads it', () => {
     expect(weekText(week)).not.toContain(mia);
   });
 
+  it('names the place a post was tagged with', () => {
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    expect(
+      checkInBlock(
+        { ...first, place: 'Equinox Flatiron', comments: [] },
+        { roster: rosterOf(week) },
+      ),
+    ).toBe(
+      '### 10-27 周二 · 队员1 · 训练：跑步 30 分钟\n- 地点：「Equinox Flatiron」\n- 写的：「腿废了」\n- 点了表情：队员2',
+    );
+  });
+
   it('says whom each comment replies to and @s, a teammate or the coach', () => {
     const roster = rosterOf(week);
     const [first] = week.checkIns;

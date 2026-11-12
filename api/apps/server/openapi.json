@@ -1381,6 +1381,9 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -1401,6 +1404,45 @@
         "type": "string",
         "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
         "description": "A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`."
+      },
+      "Place": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+            "x-max-characters": 100
+          },
+          "appleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Apple Maps' identifier for the place, when Maps gave one."
+          },
+          "category": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{1,60}$",
+            "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "name",
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false,
+        "description": "A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's."
       },
       "PhotoView": {
         "type": "object",
@@ -1772,6 +1814,9 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -2052,6 +2097,9 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -2204,6 +2252,9 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
           },
           "photos": {
             "type": "array",

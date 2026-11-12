@@ -7,8 +7,7 @@ import SportsUI
 import SwiftUI
 
 /// The team's letter on 今天 (感谢信, Tracy 2026-11-11): what the team gave, drawn from the
-/// wardrobe and the member's badge board, and 立刻穿上, which wears it all and opens 衣橱 wearing it,
-/// as a coach's gift's 立刻穿上 and 去衣橱看看 do.
+/// wardrobe and the member's badge board, and 立刻穿上, which opens 衣橱 trying it on.
 extension MainTabs {
     /// What 今天 opens over itself: the coach's pages, and the team's letter's places.
     func opensPagesFromToday() {
@@ -29,27 +28,16 @@ extension MainTabs {
             wear: { presents in Task { await wear(presents) } })
     }
 
-    /// 立刻穿上: the badge worn on the member's card and the pieces in their slots, saved side by
-    /// side, then 衣橱 trying the first piece on (the badge board when it gave no piece). Only what
-    /// the member holds, from the profile the letter's tiles were drawn from, never read again
-    /// (each read of it is ten calls); 今天 is read again after, without holding up the page.
+    /// 立刻穿上 (Tracy 2026-11-12: take me there to choose, don't save it): 衣橱 trying the letter's
+    /// pieces on, nothing saved until the member saves it there; the badge board when it gave
+    /// only a badge, where the member wears it or not. Only what the member holds, read again only
+    /// when the profile on hand misses a present, as one read before the team's give_reward would.
     private func wear(_ presents: [TeamPresent]) async {
-        // Read again only when the profile on hand misses a present, as one read before the
-        // team's give_reward would.
         if !presents.allSatisfy({ profile.holds($0) }) { await profile.reload() }
-        let badges = Set(profile.overview?.board.teamBadges.map(\.id) ?? [])
-        let held = Set(profile.overview?.gifts ?? [])
-        let badge = presents.lazy.compactMap { present -> String? in
-            if case .badge(let id) = present, badges.contains(id) { id } else { nil }
-        }.first
         let pieces = presents.compactMap { present -> String? in
-            if case .piece(let id) = present, held.contains(id) { id } else { nil }
+            if case .piece(let id) = present, profile.holds(present) { id } else { nil }
         }
-        let equipping = Task { if let badge { _ = await profile.equip(.teamBadge(badge)) } }
-        await wardrobe.wearHeld(pieces)
-        await equipping.value
-        if let piece = pieces.first { showCloset(trying: piece, readAgain: false) } else { open(.badges) }
-        Task { await today.load() }
+        if pieces.isEmpty { open(.badges) } else { showCloset(trying: pieces, readAgain: false) }
     }
 }
 

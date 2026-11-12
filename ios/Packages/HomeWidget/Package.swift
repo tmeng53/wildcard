@@ -49,5 +49,7 @@ let package = Package(
                 "HomeWidgetDomain", "Contracts", .product(name: "CheckInDomain", package: "CheckIn"),
                 .product(name: "HealthDomain", package: "Health"),
             ]),
+        // Reads HomeWidgetUI's sources and catalog as files, so it runs on Linux too.
+        .testTarget(name: "HomeWidgetUITests"),
     ]
 )

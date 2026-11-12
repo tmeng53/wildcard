@@ -11,6 +11,8 @@ public enum WidgetLink: Hashable, Sendable {
     /// The 训练 page, started from the workout Health synced, as 今天's Health card starts it:
     /// the capsule's 打卡. Nothing is posted until the member sends it there.
     case postWorkout(WorkoutSource)
+    /// 出赛表, in 我: 本周出赛表's tap.
+    case schedule
 
     private static let scheme = "wildcard"
     private static let host = "widget"
@@ -26,6 +28,8 @@ public enum WidgetLink: Hashable, Sendable {
             parts.path = "/today"
         case .checkIn:
             parts.path = "/check-in"
+        case .schedule:
+            parts.path = "/schedule"
         case .postWorkout(let source):
             parts.path = "/check-in"
             parts.queryItems = [
@@ -46,6 +50,8 @@ public enum WidgetLink: Hashable, Sendable {
         switch parts.path {
         case "/today":
             self = .today
+        case "/schedule":
+            self = .schedule
         case "/check-in":
             if let provider = query(Self.provider), let id = query(Self.workout) {
                 self = .postWorkout(WorkoutSource(provider: provider, id: id))
