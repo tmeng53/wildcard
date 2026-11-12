@@ -41,6 +41,21 @@ public final class CoreLocationReader: NSObject, LocationReader {
         }
     }
 
+    /// Where the phone is now, as near as the member lets it be, for 添加位置's nearby places
+    /// (Tracy, 2026-11-12): with location allowed, iOS asks once a session for precise location
+    /// (`NearbyPlaces` in the Info.plist's `NSLocationTemporaryUsageDescriptionDictionary`); said
+    /// no, the approximate one. Nil when location isn't allowed: the page then only searches.
+    /// Never asks for location itself, and the phone's position never leaves the phone.
+    public func nearHere() async -> Coordinates? {
+        guard Self.access(of: manager.authorizationStatus) == .allowed else { return nil }
+        if manager.accuracyAuthorization == .reducedAccuracy {
+            _ = try? await manager.requestTemporaryFullAccuracyAuthorization(withPurposeKey: "NearbyPlaces")
+        }
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        defer { manager.desiredAccuracy = kCLLocationAccuracyReduced }
+        return await current()
+    }
+
     private static func access(of status: CLAuthorizationStatus) -> LocationAccess {
         switch status {
         case .notDetermined: .notAsked
