@@ -93,6 +93,7 @@ import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
 import { appCopyTools } from './tools/app-copy.js';
+import { appRouteTools } from './tools/app-routes.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { minimumBuildTools } from './tools/minimum-build.js';
 import { quickReactionTools } from './tools/quick-reactions.js';
@@ -235,6 +236,7 @@ beforeAll(async () => {
               ...disclaimerDiceTools({
                 dice: createDiceLines({ store: createPostgresDiceLines(scope) }),
               }),
+              ...appRouteTools(),
               ...minimumBuildTools({
                 minimum: createMinimumBuilds({ store: createPostgresMinimumBuild(scope) }),
               }),
@@ -479,6 +481,7 @@ describe('the admin MCP server', () => {
       ['change_weekly_award_settings', false],
       ['get_disclaimer_dice', true],
       ['change_disclaimer_dice', false],
+      ['list_app_routes', true],
       ['get_minimum_build', true],
       ['set_minimum_build', false],
       ['get_quick_reactions', true],

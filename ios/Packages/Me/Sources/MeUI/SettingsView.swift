@@ -246,7 +246,7 @@ private struct MenuGroup<Rows: View>: View {
 extension FeedbackApp {
     /// This app on this phone: its version and build, iOS, the model (iPhone17,3) and the
     /// language picked in the app.
-    @MainActor static var current: FeedbackApp {
+    @MainActor public static var current: FeedbackApp {
         let info = Bundle.main.infoDictionary ?? [:]
         var system = utsname()
         uname(&system)

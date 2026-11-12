@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "routes": [
+    {
+      "pattern": "today",
+      "opens": "今天",
+      "sample": "today"
+    },
+    {
+      "pattern": "check-in",
+      "opens": "今天, with the check-in kinds open (打卡)",
+      "sample": "check-in"
+    },
+    {
+      "pattern": "coach",
+      "opens": "the squad coach’s own page (its cards), over 今天",
+      "sample": "coach"
+    },
+    {
+      "pattern": "squad",
+      "opens": "小队",
+      "sample": "squad"
+    },
+    {
+      "pattern": "coaches",
+      "opens": "教练招聘会",
+      "sample": "coaches"
+    },
+    {
+      "pattern": "recap/<weekStart>",
+      "opens": "the squad’s 战报 for the week starting that Monday",
+      "sample": "recap/2026-11-02",
+      "id": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    {
+      "pattern": "feed",
+      "opens": "动态",
+      "sample": "feed"
+    },
+    {
+      "pattern": "post/<checkInId>",
+      "opens": "one post’s own page",
+      "sample": "post/7b0c1f4e-2d3a-4b5c-8d9e-0f1a2b3c4d5e",
+      "id": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    {
+      "pattern": "notices",
+      "opens": "通知, behind the bell on 动态",
+      "sample": "notices"
+    },
+    {
+      "pattern": "me",
+      "opens": "我",
+      "sample": "me"
+    },
+    {
+      "pattern": "badges",
+      "opens": "我’s player card turned to its badge board (徽章)",
+      "sample": "badges"
+    },
+    {
+      "pattern": "schedule",
+      "opens": "出赛表",
+      "sample": "schedule"
+    },
+    {
+      "pattern": "my-posts",
+      "opens": "我的动态, the member’s own posts",
+      "sample": "my-posts"
+    },
+    {
+      "pattern": "settings",
+      "opens": "我’s 设置",
+      "sample": "settings"
+    },
+    {
+      "pattern": "feedback",
+      "opens": "意见反馈",
+      "sample": "feedback"
+    },
+    {
+      "pattern": "stores",
+      "opens": "商店街",
+      "sample": "stores"
+    },
+    {
+      "pattern": "store/<storeId>",
+      "opens": "one store on 商店街",
+      "sample": "store/powder",
+      "id": "^[a-z][A-Za-z0-9]{0,39}$"
+    },
+    {
+      "pattern": "wardrobe",
+      "opens": "衣橱 in the character editor",
+      "sample": "wardrobe"
+    },
+    {
+      "pattern": "wardrobe/<pieceId>",
+      "opens": "衣橱, trying that piece on",
+      "sample": "wardrobe/lap-bib",
+      "id": "^[a-z][a-z0-9-]{0,47}$"
+    }
+  ]
+}

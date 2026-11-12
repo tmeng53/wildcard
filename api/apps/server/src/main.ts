@@ -155,6 +155,7 @@ import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiUsageTools } from './admin-mcp/tools/ai-usage.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { appCopyTools } from './admin-mcp/tools/app-copy.js';
+import { appRouteTools } from './admin-mcp/tools/app-routes.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -913,6 +914,7 @@ const app = createApp({
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
       ...minimumBuildTools({ minimum: minimumBuildsOn(scope) }),
+      ...appRouteTools(),
       ...quickReactionTools({ reactions: quickReactionsOn(scope) }),
       ...sceneTools({
         scenes: createScenes({

@@ -20,6 +20,7 @@
     "@wildcard/ai-consent": "workspace:*",
     "@wildcard/ai-usage": "workspace:*",
     "@wildcard/app-copy": "workspace:*",
+    "@wildcard/app-routes": "workspace:*",
     "@wildcard/art": "workspace:*",
     "@wildcard/campaigns": "workspace:*",
     "@wildcard/check-ins": "workspace:*",

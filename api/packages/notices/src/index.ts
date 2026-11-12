@@ -8,7 +8,6 @@ export {
   BroadcastId,
   BroadcastStyle,
   BroadcastValue,
-  Destination,
   isRunning,
   type Broadcast,
 } from './domain/broadcast.js';

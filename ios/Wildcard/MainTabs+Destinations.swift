@@ -1,6 +1,8 @@
 import Contracts
 import FeedDomain
 import FeedUI
+import MeDomain
+import MeUI
 import NotificationsUI
 import SwiftUI
 
@@ -43,7 +45,7 @@ extension MainTabs {
     }
 
     /// 今天 itself, with today's pats on me again; a morning note opens the coach's page, where
-    /// it is one of its cards.
+    /// it is one of its cards, as `coach` does; `checkIn` opens the check-in kinds.
     private func openToday(_ destination: AppDestination) {
         selection = .today
         todayPages = []
@@ -52,6 +54,8 @@ extension MainTabs {
         case .coachNote, .waitingCoachNote: openCoachDeck()
         case .coachLetter(let letter): today.showAgain(letter)
         case .teamLetter(let broadcast): today.showAgain(broadcast)
+        case .coach: openCoachDeck()
+        case .checkIn: today.openCheckIn()
         default: break
         }
     }
@@ -83,12 +87,10 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .teamLetter:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .teamLetter, .coach, .checkIn:
             openToday(destination)
-        case .schedule:
-            selection = .profile
-            closeProfilePages()
-            showsSchedule = true
+        case .schedule, .settings, .feedback, .myPosts:
+            openOnMe(destination)
         case .squad:
             selection = .today
             todayPages = [.squad]
@@ -102,6 +104,21 @@ extension MainTabs {
             showsNotices = true
         case .post, .unlock, .stores, .store, .wardrobe, .badges:
             break
+        }
+    }
+
+    /// A page over 我, with every other one closed: 出赛表, 设置, 意见反馈 over 设置, or 我的动态.
+    private func openOnMe(_ destination: AppDestination) {
+        selection = .profile
+        closeProfilePages()
+        switch destination {
+        case .schedule: showsSchedule = true
+        case .settings: showsSettings = true
+        case .feedback:
+            showsSettings = true
+            profile.feedbackPage = FeedbackModel(service: profile.feedback, app: .current, newID: UUID.init)
+        case .myPosts: wall = PostWallStore(source: myPosts)
+        default: break
         }
     }
 
