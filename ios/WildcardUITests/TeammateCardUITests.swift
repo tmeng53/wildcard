@@ -141,7 +141,7 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
         XCTAssertGreaterThan(card.frame.width, window.width * 0.85, "the card doesn't grow to the page: \(card.frame)")
         // A tap off it, above it, closes it.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: card, in: app)
         XCTAssertTrue(
             card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
         XCTAssertTrue(row.isHittable, "小队 isn't back under the card")
