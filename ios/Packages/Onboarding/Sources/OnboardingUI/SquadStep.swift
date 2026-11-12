@@ -18,7 +18,7 @@ struct SquadStep: View {
     var body: some View {
         StepPage(
             step: .squad, title: title, character: model.myCharacter,
-            onBack: model.isRejoining ? nil : model.back
+            onBack: backAction
         ) {
             VStack(alignment: .leading, spacing: Space.xs) {
                 PickRow(Text(copy: "加入小队", bundle: .module), systemImage: "person.2", isSelected: isJoining) {
@@ -56,6 +56,14 @@ struct SquadStep: View {
     }
 
     private var isJoining: Bool { model.squad.choice == .join }
+
+    /// No way back for a member back in no squad. Spelled out, since a ternary of `nil` and a method
+    /// reference crashes the type checker.
+    private var backAction: (() -> Void)? {
+        guard !model.isRejoining else { return nil }
+        let model = model
+        return { model.back() }
+    }
 
     private var title: Text {
         model.isRejoining ? Text(copy: "加入小队", bundle: .module) : Text(copy: "你的小队", bundle: .module)
