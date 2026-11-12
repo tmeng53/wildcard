@@ -15,6 +15,7 @@ import {
   checkInLine,
   languageOf,
   rosterOf,
+  rosterText,
   type SquadWeek,
   type WeekCheckIn,
 } from './squad-week.js';
@@ -181,6 +182,7 @@ export function taskOf({
   readonly gifting?: GiftOptions;
 }): string | undefined {
   const filesLine = memoryBlock(files);
+  const whoIsWho = rosterText(week);
   const occasion = [...occasionBlock(occasions), ...(backAgain ? [BACK_AGAIN] : [])];
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
@@ -193,6 +195,7 @@ export function taskOf({
       `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
       ...(challenge === undefined ? [] : [challengeLine(challenge)]),
       ...occasion,
+      whoIsWho,
       emoji,
       writeIn(languageOf(week, checkIn.member)),
       filesLine,
@@ -212,8 +215,15 @@ export function taskOf({
             `这条打卡有 ${String(photoCount)} 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。`,
           ]
         : [];
+    // Who wrote the line to answer, named up front: the post's author is often someone else.
+    const askedBy = thread.said.find((each) => each.answering === true)?.by;
+    const asker =
+      askedBy !== undefined && askedBy !== 'you' && 'member' in askedBy
+        ? (roster.get(askedBy.member) ?? '有人')
+        : '有人';
     return [
-      `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? `${asker}在评论里 @ 你` : `${asker}回复你`}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      whoIsWho,
       `这条下面的评论区（先后顺序）：\n${said.join('\n')}`,
       `现在是 ${thread.now}。`,
       ...photos,
@@ -234,6 +244,7 @@ export function taskOf({
     }
     return [
       '夜里，整理你的记性。',
+      whoIsWho,
       ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
       talksBlock(talks, roster),
       filesLine,
@@ -251,6 +262,7 @@ export function taskOf({
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
     ...occasion,
+    whoIsWho,
     ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
     talksBlock(talks, roster),
     filesLine,

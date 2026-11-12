@@ -511,10 +511,10 @@ async function think(
     challengeDone: false,
     steps: [],
   };
-  // A squad whose coach hasn't written its file yet starts from its name and who is in it,
+  // A squad whose coach hasn't written its file yet starts from its name,
   // saved with the run's other changes.
   if ((stored.get(SEEDED) ?? '') === '') {
-    draft.files.set(SEEDED, squadSeed(week, roster));
+    draft.files.set(SEEDED, squadSeed(week));
     draft.changed.add(SEEDED);
   }
   const daily = wake.reason.kind === 'daily';

@@ -146,6 +146,21 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   return line.join(' · ');
 }
 
+/**
+ * Who is who, as every task opens with it: each member's roster name with the nickname their
+ * squadmates know them by. The model reads everyone as 队员N but must speak to people by their
+ * nicknames, so it is told them each time; without it, it guessed names from the talk and mixed
+ * people up (Tracy, 2026-11-12).
+ */
+export function rosterText(week: Pick<SquadWeek, 'members'>): string {
+  const roster = rosterOf(week);
+  const members = week.members.map(({ member, nickname }) => {
+    const name = roster.get(member) ?? '队员';
+    return nickname === undefined ? name : `${name}「${nickname}」`;
+  });
+  return `谁是谁（说话时叫昵称）：${members.join('、')}`;
+}
+
 /** The week as the `squad_week` tool answers it. */
 export function weekText(week: SquadWeek): string {
   const roster = rosterOf(week);

@@ -175,16 +175,9 @@ describe('the memory files', () => {
     expect(CoachFilePath.safeParse('coaches/../x.md').success).toBe(false);
   });
 
-  it('start a squad’s file from its name and who is in it', () => {
-    expect(squadSeed({ ...week, name: '周末不睡懒觉' }, rosterOf(week))).toBe(
-      [
-        '# 小队',
-        '队名：周末不睡懒觉',
-        '队员（昵称会变，以 squad_week 为准）：',
-        '- 队员1：昵称「米亚」',
-        '- 队员2',
-      ].join('\n'),
-    );
+  it('start a squad’s file from its name, never a copy of who is in it that goes stale', () => {
+    expect(squadSeed({ name: '周末不睡懒觉' })).toBe('# 小队\n队名：周末不睡懒觉');
+    expect(squadSeed({})).toBe('# 小队');
   });
 
   it('edit by replacing text found once, or adding at the end', () => {
@@ -359,7 +352,10 @@ describe('when the coach wakes', () => {
     });
     expect(task).toBe(
       [
-        '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
+        // Who wrote the line to answer comes first: here not the post's author.
+        '队员1回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
+        // Who is who, with the nicknames it calls people by, so it never guesses a name.
+        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2',
         // Everything said under the post, another coach's lines too, so nothing is hidden.
         '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
         // The time now, so an old @ isn't taken for one just written.
@@ -455,6 +451,7 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '新的一天：2026-11-01，周日。',
+        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2',
         '过去一天没人在打卡下面和你说话。',
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
@@ -556,7 +553,7 @@ describe('when the coach wakes', () => {
         files: new Map(),
         recentNotes: [],
         yesterday: { day: '2026-10-27', checkIns: [posted] },
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe(
       '昨天（周二）小队的动态：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
@@ -567,7 +564,7 @@ describe('when the coach wakes', () => {
         files: new Map(),
         recentNotes: [],
         yesterday: { day: '2026-10-28', checkIns: [] },
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe('昨天（周三）小队没人发动态。');
     // The last day's talk under check-ins, for it to remember from.
     const [first] = week.checkIns;
@@ -588,7 +585,7 @@ describe('when the coach wakes', () => {
             ],
           },
         ],
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe(
       '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
     );
@@ -600,7 +597,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁（说话时叫昵称）：队员1「米亚」、队员2\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -612,7 +609,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁（说话时叫昵称）：队员1「米亚」、队员2\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
   });
 

@@ -524,10 +524,10 @@ describe('the coach', () => {
         trx,
       );
       expect(files.rows).toStrictEqual([
-        // The first wake starts the squad's file from who is in it.
+        // The first wake starts the squad's file; who is in it is in every task instead.
         {
           path: 'squad.md',
-          body: `# 小队\n队员（昵称会变，以 squad_week 为准）：\n- {队员:${fixture.mia}}：昵称「米亚」\n- {队员:${leo}}`,
+          body: '# 小队',
           member_id: null,
         },
         // Members named in a file are stored by id, so a name follows them when 队员N shifts.
