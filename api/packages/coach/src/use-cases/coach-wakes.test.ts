@@ -1369,6 +1369,12 @@ describe('the coach', () => {
       expect(runs).toHaveLength(0);
       await wakes(fixture, { agent, ended: true, at: new Date(now.getTime() + 86_400_000) }).run();
       expect(runs).toHaveLength(0);
+      // Nor for a check-in whose event comes in after everyone left.
+      await wakes(fixture, { agent, ended: true }).checkedIn({
+        checkIn: fixture.checkIn,
+        squads: [fixture.squad],
+      });
+      expect(runs).toHaveLength(0);
     });
   });
 

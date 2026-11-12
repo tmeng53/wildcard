@@ -418,10 +418,18 @@ async function drain(
     readonly now: Date;
   },
 ): Promise<{ readonly done: number; readonly failed: number }> {
+  // However a wake was queued (a check-in, a reply, a late retry), none runs once its squad ended.
+  const ended = await deps.ended(squads);
+  const live = squads.filter((squad) => !ended.has(squad));
+  if (live.length === 0) return { done: 0, failed: 0 };
   let done = 0;
   let failed = 0;
   while (deps.clock().getTime() - now.getTime() < RUN_BUDGET_MS) {
-    const wakes = await deps.stores.wakes.claim({ squads, limit: AT_ONCE, now: deps.clock() });
+    const wakes = await deps.stores.wakes.claim({
+      squads: live,
+      limit: AT_ONCE,
+      now: deps.clock(),
+    });
     if (wakes.length === 0) break;
     const worked = await Promise.all(
       wakes.map(async (wake) => {
