@@ -61,7 +61,6 @@ export { createRewards, type Rewards, type RewardsAdmin } from './use-cases/rewa
 export {
   CoachId,
   GiftPieceEdit,
-  GIFT_LINE_LIMIT,
   GivenBy,
   type CoachGift,
   type GiftPiece,

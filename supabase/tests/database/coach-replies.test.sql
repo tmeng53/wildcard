@@ -27,7 +27,7 @@ select throws_ok($$insert into public.coach_replies (squad_id, check_in_id, coac
   '23514', null, 'a reply says or reacts something');
 select throws_ok($$insert into public.coach_replies (squad_id, check_in_id, coach_id, text)
   values ('33333333-3333-4333-8333-333333333333', '55555555-5555-4555-8555-555555555555', 'xiaohun', repeat('跑', 201))$$,
-  '23514', null, 'a reply holds at most 200 characters (100 counted, English as half)');
+  '23514', null, 'a reply holds at most 200 characters, its longest in any language');
 select throws_ok($$update public.coach_replies set text = '改'$$, '42501', null, 'a reply is never changed');
 select throws_ok($$delete from public.coach_replies$$, '42501', null, 'a reply is never removed');
 -- Refused like the other coach logs' truncates (settings_log_append_only, which raises before or while reading the row).

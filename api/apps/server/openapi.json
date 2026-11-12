@@ -4698,7 +4698,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 8,
+            "maxLength": 16,
             "description": "What to do, in a few words.",
             "example": "喝水"
           },
@@ -4711,13 +4711,13 @@
           },
           "unit": {
             "type": "string",
-            "maxLength": 4,
+            "maxLength": 8,
             "description": "The amount’s unit, the coach’s own word.",
             "example": "杯"
           },
           "line": {
             "type": "string",
-            "maxLength": 24,
+            "maxLength": 48,
             "description": "The coach talking to the member under the title, about why; left out on older notes.",
             "example": "泳池泡久了也会渴，别等口干。"
           },
