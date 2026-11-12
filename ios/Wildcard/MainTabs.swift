@@ -204,7 +204,8 @@ struct MainTabs: View {
     private var showsTabBar: Bool {
         switch selection {
         case .today: todayPages.isEmpty ? today.showsTabBar : !squadRevealing
-        case .profile: !profile.isDeletionOpen && post == nil
+        // 换装 is pushed with its own 保存 bar: the tab bar goes, as the page's own hiding misses it.
+        case .profile: !profile.isDeletionOpen && post == nil && wardrobe.editor == nil
         case .feed: feedPages.isEmpty
         }
     }
