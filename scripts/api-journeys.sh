@@ -89,8 +89,9 @@ squad_of() {
     expect 201
   done
   # Every journey's posts are stamped $now, taken before any squad was made, and a member sees
-  # others' posts only from when they joined: so these members joined an hour before it.
-  psql "$DB_URL" -qc "update public.squad_members set joined_at = timestamptz '$now' - interval '1 hour' where squad_id = '$squad'"
+  # others' posts only from when they joined: so the joins move back together, in their order,
+  # until the last is an hour before it.
+  psql "$DB_URL" -qc "update public.squad_members set joined_at = joined_at - ((select max(joined_at) from public.squad_members where squad_id = '$squad') - timestamptz '$now' + interval '1 hour') where squad_id = '$squad'"
 }
 
 new_id() { node -p 'crypto.randomUUID()'; }
