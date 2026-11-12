@@ -144,6 +144,27 @@ final class HealthUITests: XCTestCase {
         keepScreenshot(named: "75-health-compose-ski")
     }
 
+    /// A home screen widget's 打卡 on a workout opens the app on the 训练 page started from it,
+    /// as the home's card does, and posts nothing by itself: here the swim, not the newest, so the
+    /// page follows the widget's workout.
+    func testWidgetCapsuleOpensThePrefilledTraining() throws {
+        let app = launch()
+        let card = app.descendants(matching: .any).matching(identifier: "today.health").firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "no Apple Health card on 今天")
+        let link = try XCTUnwrap(
+            URL(string: "wildcard://widget/check-in?provider=apple_health&workout=sample-swim"))
+        app.open(link)
+        let score = app.descendants(matching: .any).matching(identifier: "compose.score").firstMatch
+        XCTAssertTrue(score.waitForExistence(timeout: Self.wait), "the widget's 打卡 didn't open the 训练 page")
+        XCTAssertTrue(app.buttons["compose.health.sample-swim"].isSelected, "the page didn't start from the swim")
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(identifier: "strip.laps").firstMatch.exists,
+            "the swim's laps aren't on the 成绩条")
+        XCTAssertTrue(app.buttons["compose.post"].exists, "nothing to send it with")
+        settle()
+        keepScreenshot(named: "76-health-widget-compose")
+    }
+
     /// Back home, the card's ✕ puts its workout away, and the card offers the next one instead.
     private func putAwayFromTheCard(in app: XCUIApplication) {
         let summary = app.descendants(matching: .any).matching(identifier: "today.health.summary").firstMatch

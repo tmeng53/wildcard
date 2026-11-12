@@ -29,29 +29,43 @@ extension MainTabs {
             wear: { presents in Task { await wear(presents) } })
     }
 
-    /// 立刻穿上: the badge worn on the member's card, each piece in its slot, then 衣橱 trying the
-    /// first piece on (the badge board when it gave no piece). Only what the member holds, read
-    /// again first, since the letter only shows what `give_reward` gave.
+    /// 立刻穿上: the badge worn on the member's card and the pieces in their slots, saved side by
+    /// side, then 衣橱 trying the first piece on (the badge board when it gave no piece). Only what
+    /// the member holds, from the profile the letter's tiles were drawn from, never read again
+    /// (each read of it is ten calls); 今天 is read again after, without holding up the page.
     private func wear(_ presents: [TeamPresent]) async {
-        await profile.reload()
+        // Read again only when the profile on hand misses a present, as one read before the
+        // team's give_reward would.
+        if !presents.allSatisfy({ profile.holds($0) }) { await profile.reload() }
         let badges = Set(profile.overview?.board.teamBadges.map(\.id) ?? [])
         let held = Set(profile.overview?.gifts ?? [])
-        var pieces: [String] = []
-        for present in presents {
-            switch present {
-            case .badge(let badge) where badges.contains(badge): await profile.equip(.teamBadge(badge))
-            case .piece(let piece) where held.contains(piece): pieces.append(piece)
-            case .badge, .piece: continue
-            }
+        let badge = presents.lazy.compactMap { present -> String? in
+            if case .badge(let id) = present, badges.contains(id) { id } else { nil }
+        }.first
+        let pieces = presents.compactMap { present -> String? in
+            if case .piece(let id) = present, held.contains(id) { id } else { nil }
         }
-        for piece in pieces { await wardrobe.wear(piece) }
-        await today.load()
-        open(pieces.first.map { .wardrobe(piece: $0) } ?? .badges)
+        let equipping = Task { if let badge { _ = await profile.equip(.teamBadge(badge)) } }
+        await wardrobe.wearHeld(pieces)
+        await equipping.value
+        if let piece = pieces.first { showCloset(trying: piece, readAgain: false) } else { open(.badges) }
+        Task { await today.load() }
+    }
+}
+
+extension MeModel {
+    /// Whether the profile on hand already has `present`: a badge on the board, a piece among
+    /// the team's and coaches' gifts.
+    fileprivate func holds(_ present: TeamPresent) -> Bool {
+        switch present {
+        case .badge(let id): overview?.board.teamBadges.contains { $0.id == id } ?? false
+        case .piece(let id): overview?.gifts.contains(id) ?? false
+        }
     }
 }
 
 /// A piece as the wardrobe draws it, or a team badge's ticket from the member's badge board,
-/// which is read first when 我 hasn't been yet.
+/// which is read again when the profile on hand doesn't have it yet.
 private struct TeamPresentPicture: View {
     let present: TeamPresent
     let profile: MeModel
@@ -70,7 +84,7 @@ private struct TeamPresentPicture: View {
                     Color.clear
                 }
             }
-            .task { if profile.overview == nil { await profile.reload() } }
+            .task { if !profile.holds(present) { await profile.reload() } }
         }
     }
 }

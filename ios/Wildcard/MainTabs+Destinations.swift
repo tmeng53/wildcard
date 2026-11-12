@@ -29,11 +29,7 @@ extension MainTabs {
             closeProfilePages()
             wardrobe.openShop()
         case .wardrobe(let piece):
-            // 衣橱 in the editor, trying the piece on.
-            showsNotices = false
-            selection = .profile
-            closeProfilePages()
-            Task { await wardrobe.showGift(piece) }
+            showCloset(trying: piece)
         case .badges:
             // 我's player card turned to its badge board.
             showsNotices = false
@@ -125,6 +121,15 @@ extension MainTabs {
         case .profile:
             closeProfilePages()
         }
+    }
+
+    /// 衣橱 in the editor, trying `piece` on, on the profile read again first unless it was just
+    /// saved wearing it (`readAgain: false`).
+    func showCloset(trying piece: String?, readAgain: Bool = true) {
+        showsNotices = false
+        selection = .profile
+        closeProfilePages()
+        if readAgain { Task { await wardrobe.showGift(piece) } } else { wardrobe.showWorn(piece) }
     }
 
     /// 我 back on its own page: 设置, 出赛表, 商店街, 我的动态 and a post over it all closed. 设置

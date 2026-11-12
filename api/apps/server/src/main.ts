@@ -702,6 +702,21 @@ const coachWakes =
           );
           await tellCoachMentions({ squad, checkIn, coachName, text, mentions, told: [author] });
         },
+        // A welcome is delivered as it is saved: the newcomer finds it in 通知 and on the coach's
+        // page now, with no push, since they are in the app as they join (Tracy, 2026-11-12).
+        welcomed: async ({ squad, member, coach, note, day, text }) => {
+          await tellAfter(db, {
+            told: [
+              {
+                member: NoticeMember.parse(member),
+                squad: NoticeSquad.parse(squad),
+                kind: 'coachNote',
+                subject: { version: 1, note, coach, day, text },
+              },
+            ],
+            what: 'a coach welcome',
+          });
+        },
         // So does the member whose reply to the coach it answered.
         answered: async ({ squad, checkIn, comment, commenter, coach, text, mentions }) => {
           await tellAfter(db, {

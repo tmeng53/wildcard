@@ -162,7 +162,7 @@ export function taskOf({
   readonly recentEmoji?: readonly string[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
-  /** On a daily wake, who to write a morning note to, with their day's plan. */
+  /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
   readonly yesterday?: YesterdayFacts;
@@ -223,6 +223,18 @@ export function taskOf({
     ].join('\n\n');
   }
   const roster = rosterOf(week);
+  if (reason.kind === 'joined') {
+    const name = roster.get(reason.member);
+    const brief = noteTo.find((each) => each.name === name);
+    if (name === undefined || brief === undefined) return undefined;
+    return [
+      `${name}刚加入小队，今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
+      briefLine(brief),
+      ...occasion,
+      filesLine,
+      WELCOME,
+    ].join('\n\n');
+  }
   if (reason.kind === 'dream') {
     // Nothing new to learn from: the memory stays as it is, and the night costs nothing.
     if (
@@ -260,6 +272,12 @@ export function taskOf({
     ...giftBlock(gifting, roster),
   ].join('\n\n');
 }
+
+/**
+ * What a welcome asks (Tracy, 2026-11-12: 让他给新人介绍自己 然后欢迎新人): one note, no
+ * challenge, since a newcomer gets theirs with the next morning's note.
+ */
+const WELCOME = '给他写一张便条（note_to）：先介绍你自己，再欢迎他。';
 
 /** The fact a coach hired back is told on its first wake since; what it says is its own. */
 const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请回来了。';
