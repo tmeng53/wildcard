@@ -241,7 +241,7 @@ enum LaunchOptions {
         ProcessInfo.processInfo.arguments.contains("-uitest-patted")
     }
 
-    /// `-uitest-bubble-hold`: a pat's bubble, a notice on 今天 and 商店街's 「已放进衣橱」 stay up
+    /// `-uitest-bubble-hold`: a pat's bubble, a notice on 今天, 已发出 and 商店街's 「已放进衣橱」 stay up
     /// for a minute instead of a few seconds, so a UI test checks them without racing their timers.
     static var bubbleHold: Double? {
         ProcessInfo.processInfo.arguments.contains("-uitest-bubble-hold") ? 60 : nil
