@@ -18,7 +18,7 @@ import {
   createPostgresCoachStores,
 } from '../adapters/postgres-coach-stores.js';
 import { CoachId } from '../domain/coach.js';
-import { MemberId, SquadId } from '../domain/settings.js';
+import { CoachModel, MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
   CoachNoteNoChallengeError,
@@ -193,13 +193,27 @@ interface Step {
  * per task, and records every task and every answer.
  */
 function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
-  const runs: { task: string; instructions: string; tools: string[]; answers: string[] }[] = [];
+  const runs: {
+    task: string;
+    instructions: string;
+    tools: string[];
+    answers: string[];
+    model: string;
+    reasoning: string;
+  }[] = [];
   const agent: CoachAgent = {
-    async run({ instructions, task, tools }): Promise<AgentRun> {
+    async run({ instructions, task, tools, model, reasoning }): Promise<AgentRun> {
       const steps = script(task);
       const usage = { requests: 2, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 };
       const answers: string[] = [];
-      runs.push({ task, instructions, tools: tools.map(({ name }) => name), answers });
+      runs.push({
+        task,
+        instructions,
+        tools: tools.map(({ name }) => name),
+        answers,
+        model,
+        reasoning,
+      });
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
       for (const step of steps) {
         const tool: CoachTool | undefined = tools.find(({ name }) => name === step.tool);
@@ -309,6 +323,7 @@ const quietPorts = {
   wantNotes: (members) => Promise.resolve(members),
   gifting: {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
+    given: () => Promise.resolve([]),
     give: () => Promise.resolve('no gifts in this test'),
   },
   relayFeedback: () => Promise.resolve('no feedback in this test'),
@@ -749,7 +764,7 @@ describe('the coach', () => {
       await wakes(fixture, { agent, at: tomorrow }).run();
       // Both earlier wakes added a line; the new hire dreams over yesterday with them, then wakes
       // for the day.
-      expect(runs[2]?.task).toContain('# 夜里，整理你的记性');
+      expect(runs[2]?.task).toContain('# 夜里\n今天是');
       expect(runs[2]?.task).toContain(
         '### memory.md（你和大家之间的事）\n```\n队名：squad\n队名：squad',
       );
@@ -1736,6 +1751,7 @@ describe('the coach', () => {
               members.filter((each) => each === mia).map((each) => [each, ['gift-cap']]),
             ),
           }),
+        given: () => Promise.resolve([]),
         give: (input) => {
           given.push(input);
           return Promise.resolve(undefined);
@@ -2212,8 +2228,9 @@ describe('the coach', () => {
       const tomorrow = new Date(now.getTime() + 86_400_000);
       await wakes(fixture, { agent, at: tomorrow }).run();
       const dream = runs[2];
-      expect(dream?.task).toContain('## 昨天（周日）小队的动态');
-      expect(dream?.task).toContain('前后矛盾的，留最新的。');
+      expect(dream?.task).toContain('## 过去七天（10-26 周一 到 11-01 周日）小队的动态');
+      expect(dream?.task).toContain('## 和你的对话（过去七天，打卡下面，先后顺序）');
+      expect(dream?.task).toContain('明天醒来你只记得它们。');
       expect(dream?.tools).toContain('rewrite_file');
       expect(dream?.tools).not.toContain('post_note');
       expect(dream?.tools).not.toContain('reply');
@@ -2242,6 +2259,78 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done' },
         { reason: 'daily', state: 'done' },
       ]);
+    });
+  });
+
+  it('dreams on its own model over the week before: posts, 战术板, notes and gifts', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { dreamModel: CoachModel.parse('openai/gpt-6-sol'), dreamReasoning: 'medium' },
+        MemberId.parse(mia),
+      );
+      // A 战术板 line from Friday, written by an earlier wake.
+      const stores = createPostgresCoachStores(trx);
+      await stores.wakes.enqueue([{ squad, reason: { kind: 'daily', day: '2026-10-30' } }], now);
+      const [earlier] = await stores.wakes.claim({ squads: [squad], limit: 1, now });
+      if (earlier === undefined) throw new Error('no wake claimed');
+      await stores.notes.save({
+        squad,
+        coach: CoachId.parse('xiaohun'),
+        day: '2026-10-30',
+        text: '周五去爬山',
+        wake: earlier.id,
+      });
+      await stores.wakes.finish(earlier.id);
+      // A post from Wednesday, five days before the night.
+      const wednesday = randomUUID();
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: [
+          {
+            id: wednesday,
+            member: leo,
+            day: '2026-10-28',
+            createdAt: new Date('2026-10-28T12:00:00Z'),
+            kind: 'trained',
+            sport: '游泳',
+            reactedBy: [],
+            comments: [],
+          },
+          ...fixture.week.checkIns,
+        ],
+      };
+      const gifting: CoachGifting = {
+        options: () => Promise.resolve({ pool: [], open: new Map() }),
+        given: ({ members }) =>
+          Promise.resolve(
+            members.includes(leo)
+              ? [
+                  {
+                    member: leo,
+                    piece: 'gift-scarf',
+                    line: '冷了',
+                    at: now,
+                    opened: { worn: true },
+                  },
+                ]
+              : [],
+          ),
+        give: () => Promise.resolve('no gifts in this test'),
+      };
+      const { agent, runs } = scriptedAgent(() => []);
+      const tomorrow = new Date(now.getTime() + 86_400_000);
+      await wakes({ ...fixture, week }, { agent, gifting, at: tomorrow }).run();
+      const dream = runs.find(({ task }) => task.startsWith('# 夜里'));
+      expect(dream).toMatchObject({ model: 'openai/gpt-6-sol', reasoning: 'medium' });
+      expect(dream?.task).toContain('### 10-28 周三 · 队员2 · 训练：游泳');
+      expect(dream?.task).toContain('## 你写的战术板（全队看得到）\n- 10-30 周五：「周五去爬山」');
+      expect(dream?.task).toContain(
+        '## 你送的礼物（只有收到的人知道）\n- 队员2：gift-scarf，你说「冷了」；拆开了，当场穿上了',
+      );
+      // The day's wakes keep the day's model.
+      const daily = runs.find(({ task }) => task.startsWith('# 新的一天'));
+      expect(daily).toMatchObject({ model: 'openai/gpt-6-luna', reasoning: 'low' });
     });
   });
 
@@ -2308,8 +2397,9 @@ describe('the coach', () => {
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const dream = runs.find(({ task }) => task.startsWith('# 夜里'));
+      // Each note, under whom it went to, with how its challenge went.
       expect(dream?.task).toContain(
-        '## 昨天的挑战\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
+        '## 你写的便条（只有收到的人看得到）\n\n### 队员1\n- 11-01 周日：「多喝水」\n  - 挑战「喝水 8 杯」：完成了\n\n### 队员2\n- 11-01 周日：「早餐加个蛋」\n  - 挑战「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
       );
     });
   });
@@ -2543,6 +2633,7 @@ describe('the coach', () => {
             pool: [{ id: 'gift-scarf', description: '红围巾' }],
             open: new Map(members.map((each) => [each, []])),
           }),
+        given: () => Promise.resolve([]),
         give: (input) => {
           given.push(input);
           return Promise.resolve(undefined);

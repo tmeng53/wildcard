@@ -96,3 +96,18 @@ export function challengeOpen({
 }): boolean {
   return answer !== 'declined' && completion === undefined;
 }
+
+/** A note that reached its member, with how its challenge went if it set one. */
+export interface DeliveredNote {
+  readonly member: string;
+  /** The squad's day it was for, `YYYY-MM-DD`. */
+  readonly day: string;
+  readonly text: string;
+  readonly challenge?: {
+    readonly challenge: Challenge;
+    readonly answer: ChallengeAnswer | undefined;
+    /** Why they let it go, if they said. */
+    readonly reason: string | undefined;
+    readonly completion: ChallengeCompletion | undefined;
+  };
+}

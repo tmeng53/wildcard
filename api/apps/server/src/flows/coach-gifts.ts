@@ -94,6 +94,22 @@ export function coachGifting(deps: {
         open,
       };
     },
+    given: async ({ squad, coach, members, since }) => {
+      const given = await Promise.all(
+        members.map(async (member) =>
+          (await deps.gifts.of(MemberId.parse(member)))
+            .filter((gift) => gift.squad === squad && gift.coach === coach && gift.givenAt >= since)
+            .map((gift) => ({
+              member,
+              piece: gift.piece,
+              ...(gift.line === undefined ? {} : { line: gift.line }),
+              at: gift.givenAt,
+              ...(gift.opened === undefined ? {} : { opened: { worn: gift.opened.worn } }),
+            })),
+        ),
+      );
+      return given.flat().sort((a, b) => a.at.getTime() - b.at.getTime());
+    },
     give: async ({ squad, member, coach, piece, line }) => {
       try {
         await giveCoachGift(deps, {

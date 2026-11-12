@@ -1,7 +1,7 @@
 -- The AI coach: one row of settings, never deleted; coaches never deleted and keeping their
 -- ids; and logs that only grow.
 begin;
-select plan(14);
+select plan(17);
 
 select is((select count(*)::int from public.coach_settings), 1, 'the coach starts with its settings');
 select is((select coaching from public.coach_settings), false, 'coaching starts off');
@@ -9,6 +9,9 @@ select throws_ok($$delete from public.coach_settings$$, '42501', null, 'the coac
 select throws_ok($$update public.coach_settings set model = 'anthropic/claude-haiku-5-5'$$, '23514', null, 'the coach runs on an OpenAI model');
 select is((select reasoning from public.coach_settings), 'low', 'the coach thinks a little before it answers');
 select throws_ok($$update public.coach_settings set reasoning = 'loads'$$, '23514', null, 'the coach thinks at a level the model knows');
+select is((select dream_model = model from public.coach_settings), true, 'the dream starts on the day''s model');
+select is((select dream_reasoning from public.coach_settings), 'high', 'the dream thinks hard');
+select throws_ok($$update public.coach_settings set dream_model = 'anthropic/claude-haiku-5-5'$$, '23514', null, 'the dream runs on an OpenAI model');
 select throws_ok($$delete from public.coaches where id = 'xiaohun'$$, '42501', null, 'a coach is never deleted');
 select throws_ok($$update public.coaches set id = 'xiaohun2' where id = 'xiaohun'$$, '42501', null, 'a coach keeps its id');
 select throws_ok($$update public.coach_catalog_events set coach = '{"version": 2}'$$, '42501', null, 'the coaches'' log refuses an update');

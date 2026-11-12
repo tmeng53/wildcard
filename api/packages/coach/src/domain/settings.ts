@@ -76,6 +76,14 @@ const fields = {
     ),
   model: CoachModel,
   reasoning: CoachReasoning,
+  // The night's dream rewrites the squad's memory, which every later wake goes on, so it may
+  // run on a stronger model, thinking harder, than the day's wakes (Tracy, 2026-11-12).
+  dreamModel: CoachModel.describe(
+    'The model of the night’s dream, which rewrites the squad’s memory: openai/model. It needs a price in the AI usage settings, like model.',
+  ),
+  dreamReasoning: CoachReasoning.describe(
+    'How hard the dream’s model thinks: none, minimal, low, medium or high. Thinking is billed as output tokens.',
+  ),
   rules: z
     .string()
     .min(1)
@@ -110,3 +118,13 @@ export type CoachSettings = z.infer<typeof CoachSettings>;
 /** What an admin changes: any of the settings, the rest staying as they are. */
 export const CoachSettingsChange = z.strictObject(fields).partial();
 export type CoachSettingsChange = z.infer<typeof CoachSettingsChange>;
+
+/** The model a wake runs on and how hard it thinks: the dream's own, else the day's. */
+export function modelOf(
+  settings: Pick<CoachSettings, 'model' | 'reasoning' | 'dreamModel' | 'dreamReasoning'>,
+  kind: string,
+): { readonly model: CoachModel; readonly reasoning: CoachReasoning } {
+  return kind === 'dream'
+    ? { model: settings.dreamModel, reasoning: settings.dreamReasoning }
+    : { model: settings.model, reasoning: settings.reasoning };
+}

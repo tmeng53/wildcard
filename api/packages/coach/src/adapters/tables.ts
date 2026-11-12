@@ -178,6 +178,8 @@ export interface CoachSettingEvents {
 
 export interface CoachSettings {
   coaching: boolean;
+  dream_model: string;
+  dream_reasoning: Generated<string>;
   holidays: Generated<Json>;
   model: string;
   note_hour: Generated<number>;
