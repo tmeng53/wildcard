@@ -210,7 +210,7 @@ enum LaunchOptions {
 
     /// On the sample squad, `-onboarding`: open sign-up, then 今天 once it is done.
     static var showsOnboarding: Bool {
-        ProcessInfo.processInfo.arguments.contains("-onboarding")
+        ProcessInfo.processInfo.arguments.contains("-onboarding") || rejoins
     }
 
     /// The moment sign-up starts at: noon on this week's Monday with `-uitest-monday`, so the

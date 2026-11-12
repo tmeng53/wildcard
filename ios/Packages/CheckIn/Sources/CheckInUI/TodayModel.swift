@@ -98,7 +98,7 @@ public final class TodayModel {
     public let health: HealthConnection?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
-    private let noSquad: @MainActor (Squad?) -> Void
+    private let noSquad: @MainActor () -> Void
     let now: () -> Date
     /// Keeps when the latest pat I was shown arrived, so each pat on me plays once, and the night
     /// the lights are on for.
@@ -109,14 +109,14 @@ public final class TodayModel {
     ///     the app has read it.
     ///   - posted: called each time a check-in lands, after the payoff starts; the app asks for
     ///     notifications after the first.
-    ///   - noSquad: called when a load finds the member in no squad any more, with the squad
-    ///     they were in: the captain removed them, or they left on another phone.
+    ///   - noSquad: called when a load finds the member in no squad any more: the captain
+    ///     removed them, or they left on another phone.
     public init(
         store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
         defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
-        noSquad: @escaping @MainActor (Squad?) -> Void = { _ in }
+        noSquad: @escaping @MainActor () -> Void = {}
     ) {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         together = TogetherStage(isOn: celebratesTogether)
@@ -277,7 +277,7 @@ public final class TodayModel {
     /// no squad any more, says so.
     private func showLoaded() {
         if store.phase == .noSquad {
-            noSquad(store.lostSquad)
+            noSquad()
             return
         }
         placeSquad()

@@ -5695,21 +5695,27 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadList/squads`.
             public var squads: [Components.Schemas.Squad]
+            /// - Remark: Generated from `#/components/schemas/SquadList/lastSquad`.
+            public var lastSquad: Components.Schemas.SquadExit?
             /// Creates a new `SquadList`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - squads: The member’s squads, the earliest joined first: at most 1.
+            ///   - lastSquad:
             public init(
                 version: Components.Schemas.SquadList.VersionPayload,
-                squads: [Components.Schemas.Squad]
+                squads: [Components.Schemas.Squad],
+                lastSquad: Components.Schemas.SquadExit? = nil
             ) {
                 self.version = version
                 self.squads = squads
+                self.lastSquad = lastSquad
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case squads
+                case lastSquad
             }
         }
         /// - Remark: Generated from `#/components/schemas/Squad`.
@@ -5808,6 +5814,46 @@ extension Components {
                 case createdAt
                 case captain
                 case members
+            }
+        }
+        /// In no squad now, the squad the member was last in and how they came out of it; left out while they are in a squad, or were never in one.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SquadExit`.
+        public struct SquadExit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadExit/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SquadExit/name`.
+            public var name: Swift.String
+            /// `left`: the member left it; `removed`: its captain took them out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
+            @frozen public enum HowPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case left = "left"
+                case removed = "removed"
+            }
+            /// `left`: the member left it; `removed`: its captain took them out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
+            public var how: Components.Schemas.SquadExit.HowPayload
+            /// Creates a new `SquadExit`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name:
+            ///   - how: `left`: the member left it; `removed`: its captain took them out.
+            public init(
+                id: Swift.String,
+                name: Swift.String,
+                how: Components.Schemas.SquadExit.HowPayload
+            ) {
+                self.id = id
+                self.name = name
+                self.how = how
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case how
             }
         }
         /// - Remark: Generated from `#/components/schemas/NewSquad`.

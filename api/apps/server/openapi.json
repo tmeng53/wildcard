@@ -3377,6 +3377,9 @@
               "$ref": "#/components/schemas/Squad"
             },
             "description": "The member’s squads, the earliest joined first: at most 1."
+          },
+          "lastSquad": {
+            "$ref": "#/components/schemas/SquadExit"
           }
         },
         "required": [
@@ -3455,6 +3458,33 @@
           "members"
         ],
         "additionalProperties": false
+      },
+      "SquadExit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "how": {
+            "type": "string",
+            "enum": [
+              "left",
+              "removed"
+            ],
+            "description": "`left`: the member left it; `removed`: its captain took them out."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "how"
+        ],
+        "additionalProperties": false,
+        "description": "In no squad now, the squad the member was last in and how they came out of it; left out while they are in a squad, or were never in one."
       },
       "NewSquad": {
         "type": "object",
