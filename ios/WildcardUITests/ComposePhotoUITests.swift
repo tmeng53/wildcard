@@ -115,6 +115,8 @@ final class ComposePhotoUITests: XCTestCase {
         app.launchArguments += [
             "-uitest-photos", "3", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
             "-uitest-noon", "-today.cardPage", "0",
+            // 已发出 holds a minute, so a slow simulator still finds its 查看.
+            "-uitest-bubble-hold",
         ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }

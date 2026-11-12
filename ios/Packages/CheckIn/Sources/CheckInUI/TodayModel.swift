@@ -44,6 +44,8 @@ public final class TodayModel {
     private(set) var celebrations = 0
     /// How long a notice at the top stays up.
     let noticeHold: Double
+    /// How long 已发出 or 没网 holds 打卡's spot, in seconds.
+    let outgoingHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -111,6 +113,7 @@ public final class TodayModel {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         together = TogetherStage(isOn: celebratesTogether)
         noticeHold = bubbleHold ?? Motion.noticeHold
+        outgoingHold = bubbleHold ?? Self.defaultOutgoingHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
