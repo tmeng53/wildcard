@@ -34,7 +34,9 @@ extension MainTabs {
     /// the member holds, from the profile the letter's tiles were drawn from, never read again
     /// (each read of it is ten calls); 今天 is read again after, without holding up the page.
     private func wear(_ presents: [TeamPresent]) async {
-        if profile.overview == nil { await profile.reload() }
+        // Read again only when the profile on hand misses a present, as one read before the
+        // team's give_reward would.
+        if !presents.allSatisfy { profile.holds($0) } { await profile.reload() }
         let badges = Set(profile.overview?.board.teamBadges.map(\.id) ?? [])
         let held = Set(profile.overview?.gifts ?? [])
         let badge = presents.lazy.compactMap { present -> String? in
@@ -51,8 +53,19 @@ extension MainTabs {
     }
 }
 
+extension MeModel {
+    /// Whether the profile on hand already has `present`: a badge on the board, a piece among
+    /// the team's and coaches' gifts.
+    fileprivate func holds(_ present: TeamPresent) -> Bool {
+        switch present {
+        case .badge(let id): overview?.board.teamBadges.contains { $0.id == id } ?? false
+        case .piece(let id): overview?.gifts.contains(id) ?? false
+        }
+    }
+}
+
 /// A piece as the wardrobe draws it, or a team badge's ticket from the member's badge board,
-/// which is read first when 我 hasn't been yet.
+/// which is read again when the profile on hand doesn't have it yet.
 private struct TeamPresentPicture: View {
     let present: TeamPresent
     let profile: MeModel
@@ -71,7 +84,7 @@ private struct TeamPresentPicture: View {
                     Color.clear
                 }
             }
-            .task { if profile.overview == nil { await profile.reload() } }
+            .task { if !profile.holds(present) { await profile.reload() } }
         }
     }
 }
