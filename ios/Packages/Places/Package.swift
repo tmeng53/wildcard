@@ -31,6 +31,8 @@ let package = Package(
             dependencies: [
                 "Contracts", .product(name: "DesignSystem", package: "DesignSystem"),
                 .product(name: "CheckInDomain", package: "CheckIn"),
+                // The sample squad's numbers, counted from its 动态.
+                .product(name: "FeedDomain", package: "Feed"),
             ]),
         .target(
             name: "PlacesUI",
@@ -50,7 +52,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PlacesDomainTests",
-            dependencies: ["PlacesDomain", "Contracts", .product(name: "DesignSystem", package: "DesignSystem")]),
+            dependencies: [
+                "PlacesDomain", "Contracts", .product(name: "DesignSystem", package: "DesignSystem"),
+                .product(name: "FeedDomain", package: "Feed"),
+            ]),
         // The String Catalog read as a file; runs on Linux too.
         .testTarget(name: "PlacesUITests", dependencies: ["PlacesUI"]),
     ]

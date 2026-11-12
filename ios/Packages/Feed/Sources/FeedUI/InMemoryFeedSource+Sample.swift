@@ -228,7 +228,9 @@ private struct SamplePosts {
     /// Mia's salad, tagged with the restaurant it came from and rated, as 动态 shows a place and
     /// a meal's 成绩条.
     var taggedSalad: CheckIn.Entry {
-        let place = try? Place(name: "Sweetgreen", category: "restaurant", latitude: 40.7448, longitude: -73.9881)
+        let place = try? Place(
+            name: "Sweetgreen", appleID: "ISampleSweetgreen", category: "restaurant", latitude: 40.7448,
+            longitude: -73.9881)
         return .healthyMeal(meal("salad", "今天的草，吃得很体面", at: place, healthy: 5, tasty: 4))
     }
 

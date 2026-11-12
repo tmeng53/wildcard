@@ -6,10 +6,14 @@ import Testing
 
 @MainActor
 struct PlacePageStoreTests {
-    private static let squad = SquadID(UUID(uuidString: "00000000-0000-0000-0000-0000000000a1")!)
-    nonisolated private static let member = MemberID(UUID(uuidString: "00000000-0000-0000-0000-0000000000b1")!)
-    private static let gym = try! Place(
-        name: "Equinox Flatiron", appleID: "I1", category: "fitnessCenter", latitude: 40.74, longitude: -73.99)
+    private static let squad = SquadID(UUID())
+    nonisolated private static let member = MemberID(UUID())
+    private let gym: Place
+
+    init() throws {
+        gym = try Place(
+            name: "Equinox Flatiron", appleID: "I1", category: "fitnessCenter", latitude: 40.74, longitude: -73.99)
+    }
 
     private actor Source: PlaceSource {
         var detail: PlaceDetail?
@@ -27,9 +31,10 @@ struct PlacePageStoreTests {
         }
 
         func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] {
-            [
+            guard let nickname = try? Nickname("小鱼") else { return [:] }
+            return [
                 PlacePageStoreTests.member: MemberCharacter(
-                    nickname: try! Nickname("小鱼"), look: CharacterLook(persona: "energetic", variants: [:]))
+                    nickname: nickname, look: CharacterLook(persona: "energetic", variants: [:]))
             ]
         }
 
@@ -42,7 +47,7 @@ struct PlacePageStoreTests {
 
     @Test func aPlaceTheSquadNeverTaggedLoadsAsTheEmptyCardWithMapsFacts() async {
         let source = Source()
-        let store = PlacePageStore(place: Self.gym, squad: Self.squad, source: source, directory: Directory())
+        let store = PlacePageStore(place: gym, squad: Self.squad, source: source, directory: Directory())
         #expect(store.phase == .loading)
         await store.load()
         #expect(store.phase == .loaded)
@@ -52,15 +57,15 @@ struct PlacePageStoreTests {
         #expect(await source.asked.map(\.rawValue) == ["apple:I1"])
     }
 
-    @Test func theSquadsPostsAndAuthorsLoad() async {
+    @Test func theSquadsPostsAndAuthorsLoad() async throws {
         let visit = PlaceVisit(
             id: CheckInID(UUID()), author: Self.member, kind: .trained, activity: .sport("cycling"),
-            day: try! LocalDay("2026-11-12"), minutes: 45, score: .stars(5))
+            day: try LocalDay("2026-11-12"), minutes: 45, score: .stars(5))
         let detail = PlaceDetail(
-            place: Self.gym, visits: 1, people: 1, stars: 5, sports: [SportCount(.sport("cycling"), count: 1)],
+            place: gym, visits: 1, people: 1, stars: 5, sports: [SportCount(.sport("cycling"), count: 1)],
             meals: .none, posts: [visit])
         let store = PlacePageStore(
-            place: Self.gym, squad: Self.squad, source: Source(detail: detail), directory: Directory())
+            place: gym, squad: Self.squad, source: Source(detail: detail), directory: Directory())
         await store.load()
         #expect(store.posts == [visit])
         #expect(store.characters[Self.member]?.nickname.text == "小鱼")
@@ -71,7 +76,7 @@ struct PlacePageStoreTests {
         let lot = try Place(name: "楼下", latitude: 40.5, longitude: -73.5)
         let store = PlacePageStore(place: lot, squad: Self.squad, source: source, directory: Directory())
         await store.load()
-        let alone = PlacePageStore(place: Self.gym, squad: nil, source: source, directory: Directory())
+        let alone = PlacePageStore(place: gym, squad: nil, source: source, directory: Directory())
         await alone.load()
         #expect(store.phase == .loaded)
         #expect(alone.phase == .loaded)
@@ -80,7 +85,7 @@ struct PlacePageStoreTests {
 
     @Test func anUnreachableServerLeavesTheCardEmptyAndSaysSo() async {
         let store = PlacePageStore(
-            place: Self.gym, squad: Self.squad, source: Source(failure: .unavailable), directory: Directory())
+            place: gym, squad: Self.squad, source: Source(failure: .unavailable), directory: Directory())
         await store.load()
         #expect(store.phase == .offline)
         #expect(store.detail == nil)
