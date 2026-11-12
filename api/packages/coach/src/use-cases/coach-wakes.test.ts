@@ -966,6 +966,9 @@ describe('the coach', () => {
       // Joining again the same day isn't welcomed twice.
       await coach.welcome({ squad, member: leo });
       expect(runs).toHaveLength(1);
+      // A member whose account went before the welcome was queued gets none, and nothing throws.
+      await coach.welcome({ squad, member: randomUUID() });
+      expect(runs).toHaveLength(1);
     });
   });
 

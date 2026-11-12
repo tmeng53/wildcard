@@ -107,22 +107,15 @@ function insertWake(
         .returning('id')
         .execute();
     case 'joined':
-      return insert
-        .values({
-          squad_id: squad,
-          reason: 'joined',
-          member_id: reason.member,
-          day: reason.day,
-          created_at: now,
-        })
-        .onConflict((conflict) =>
-          conflict
-            .columns(['squad_id', 'member_id', 'day'])
-            .where('reason', '=', 'joined')
-            .doNothing(),
-        )
-        .returning('id')
-        .execute();
+      // Nothing when the member deleted their account before the welcome was queued.
+      return sql<{ id: string }>`
+        insert into public.coach_wakes (squad_id, reason, member_id, day, created_at)
+        select ${squad}, 'joined', id, ${reason.day}::date, ${now}
+        from auth.users where id = ${reason.member}::uuid
+        on conflict (squad_id, member_id, day) where reason = 'joined' do nothing
+        returning id`
+        .execute(db)
+        .then(({ rows }) => rows);
   }
 }
 
