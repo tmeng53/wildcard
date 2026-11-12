@@ -4,8 +4,9 @@ import type { SquadId } from './settings.js';
 import { saidTo, type SquadWeek } from './squad-week.js';
 
 // When a coach wakes: for each check-in shared to its squad, to learn from it, for each reply a
-// member writes to it under a check-in, to answer, once a day for the squad's 战术板 line, and
-// once a night before that to tidy its memory (its dream: Tracy, 2026-11-08).
+// member writes to it under a check-in, to answer, once a day for the squad's 战术板 line, once a
+// night before that to tidy its memory (its dream: Tracy, 2026-11-08), and when someone joins the
+// squad, to introduce itself and welcome them (Tracy, 2026-11-12).
 // The daily wake keeps the squad's own clock (小队时区), as its 战报 does; each member's note then
 // reaches them on their own clock.
 
@@ -15,7 +16,9 @@ export type WakeReason =
   | { readonly kind: 'comment'; readonly checkIn: string; readonly comment: string }
   | { readonly kind: 'daily'; readonly day: string }
   /** The night before `day`'s daily wake: the coach rewrites its memory from the day before. */
-  | { readonly kind: 'dream'; readonly day: string };
+  | { readonly kind: 'dream'; readonly day: string }
+  /** A member just joined the squad, on `day` on the squad's clock: the coach welcomes them. */
+  | { readonly kind: 'joined'; readonly member: string; readonly day: string };
 
 export interface NewWake {
   readonly squad: SquadId;

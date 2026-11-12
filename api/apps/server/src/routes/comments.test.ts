@@ -161,6 +161,7 @@ const app = createApp({
     coach: {
       run: () => Promise.reject(new Error('unused')),
       preview: () => Promise.reject(new Error('unused')),
+      welcome: () => Promise.resolve(),
       answer: (asked) => {
         answersAsked.push(asked);
         return Promise.resolve();

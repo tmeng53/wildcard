@@ -48,7 +48,13 @@ export {
   SquadId,
 } from './domain/settings.js';
 export { LETTER_LIMIT, type CoachLetter } from './domain/letter.js';
-export { CoachEmoji, REPLY_LIMIT, type CoachAnswer, type CoachReply } from './domain/reply.js';
+export {
+  CoachEmoji,
+  lineLength,
+  REPLY_LIMIT,
+  type CoachAnswer,
+  type CoachReply,
+} from './domain/reply.js';
 export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
 export type { MemberFacts, PlanDayFacts } from './domain/member-facts.js';
 export type {
@@ -70,6 +76,7 @@ export type {
   CoachStores,
   CoachMemberFacts,
   CoachMeme,
+  CoachFeedback,
   CoachGifting,
   CoachMemes,
   CoachWeather,

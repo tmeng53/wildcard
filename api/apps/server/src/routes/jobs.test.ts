@@ -24,6 +24,7 @@ function app(answer: EventHandlers['coach-answer']) {
   const handlers: EventHandlers = {
     'coach-look': () => Promise.resolve(),
     'comment-push': () => Promise.resolve(),
+    'coach-welcome': () => Promise.resolve(),
     'coach-answer': async (event) => {
       answered.push(event);
       await answer(event);

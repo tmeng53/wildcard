@@ -13,8 +13,8 @@ import {
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, NOTE_LIMIT, taskOf } from './prompt.js';
-import { lineProblem, REPLY_LIMIT } from './reply.js';
+import { instructionsOf, NOTE_LIMIT, saidLines, taskOf } from './prompt.js';
+import { lineLength, lineProblem, REPLY_LIMIT } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInLine, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { wakesDue, weeksAround } from './wake.js';
@@ -82,6 +82,35 @@ describe('the squad’s week, as the model reads it', () => {
     expect(checkInLine({ ...first, place: 'Equinox Flatiron' }, rosterOf(week))).toBe(
       '10-27 周二 队员1 训练 跑步 30 分钟 在「Equinox Flatiron」 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
+  });
+
+  it('says whom each comment replies to and @s, a teammate or the coach', () => {
+    const roster = rosterOf(week);
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    const comments = [
+      { id: 'k1', member: leo, text: '强', at: new Date(0) },
+      { id: 'k2', member: mia, text: '你也来', at: new Date(0), replyTo: leo },
+      { id: 'k3', member: leo, text: '看', at: new Date(0), mentions: [mia], mentionsCoach: 'mao' },
+      { id: 'k4', member: mia, text: '谢谢', at: new Date(0), toCoach: 'mao' },
+    ];
+    expect(checkInLine({ ...first, reactedBy: [], comments }, roster)).toBe(
+      '10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 评论：队员2「强」；队员1（回复队员2）「你也来」；队员2（@队员1，@教练）「看」；队员1（回复教练）「谢谢」',
+    );
+    expect(
+      saidLines(
+        [
+          { by: { member: mia }, text: '你也来', replyTo: leo },
+          {
+            by: { member: leo },
+            text: '看',
+            mentions: [mia],
+            to: { kind: 'mention', coach: '你' },
+          },
+        ],
+        roster,
+      ),
+    ).toStrictEqual(['- 队员1（回复队员2）：「你也来」', '- 队员2（@队员1，@你）：「看」']);
   });
 
   it('calls a planned rest 计划休息, not a 请假条', () => {
@@ -183,16 +212,9 @@ describe('the memory files', () => {
     expect(CoachFilePath.safeParse('coaches/../x.md').success).toBe(false);
   });
 
-  it('start a squad’s file from its name and who is in it', () => {
-    expect(squadSeed({ ...week, name: '周末不睡懒觉' }, rosterOf(week))).toBe(
-      [
-        '# 小队',
-        '队名：周末不睡懒觉',
-        '队员（昵称会变，以 squad_week 为准）：',
-        '- 队员1：昵称「米亚」',
-        '- 队员2',
-      ].join('\n'),
-    );
+  it('start a squad’s file from its name, never a copy of who is in it that goes stale', () => {
+    expect(squadSeed({ name: '周末不睡懒觉' })).toBe('# 小队\n队名：周末不睡懒觉');
+    expect(squadSeed({})).toBe('# 小队');
   });
 
   it('edit by replacing text found once, or adding at the end', () => {
@@ -367,7 +389,10 @@ describe('when the coach wakes', () => {
     });
     expect(task).toBe(
       [
-        '有人回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
+        // Who wrote the line to answer comes first: here not the post's author.
+        '队员1回复你。这条打卡：10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2',
+        // Who is who, with the nicknames it calls people by, so it never guesses a name.
+        '谁是谁：队员1「米亚」、队员2',
         // Everything said under the post, another coach's lines too, so nothing is hidden.
         '这条下面的评论区（先后顺序）：\n- 鸭梨娜（教练）：「第一次跑就跑完了」\n- 10-27 周二 20:01 队员2：「强」\n- 队员2（回复鸭梨娜）：「谢谢」\n- 鸭梨娜（教练）：「不客气」\n- 队员2（@你）：「教练你也跑吗」\n- 你：「我负责喊」\n- 队员1（回复你）：「那你喊大声点」（要回的这句）',
         // The time now, so an old @ isn't taken for one just written.
@@ -463,9 +488,11 @@ describe('when the coach wakes', () => {
     expect(task).toBe(
       [
         '新的一天：2026-11-01，周日。',
+        '谁是谁：队员1「米亚」、队员2',
         '过去一天没人在打卡下面和你说话。',
         // What it remembers, in full: it forgets everything else between wakes.
         '你的记性（你只记得这些）：\n【memory.md】\n米亚爱跑步\n还是空的：squad.md',
+        // What it wrote lately.
         '你最近写过：\n- 2026-10-31：周末也要动一动',
         // The 战术板 in the squad's language: Simplified Chinese until the week says another.
         '战术板：用简体中文写。',
@@ -564,7 +591,7 @@ describe('when the coach wakes', () => {
         files: new Map(),
         recentNotes: [],
         yesterday: { day: '2026-10-27', checkIns: [posted] },
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe(
       '昨天（周二）小队的动态：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
     );
@@ -575,7 +602,7 @@ describe('when the coach wakes', () => {
         files: new Map(),
         recentNotes: [],
         yesterday: { day: '2026-10-28', checkIns: [] },
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe('昨天（周三）小队没人发动态。');
     // The last day's talk under check-ins, for it to remember from.
     const [first] = week.checkIns;
@@ -596,7 +623,7 @@ describe('when the coach wakes', () => {
             ],
           },
         ],
-      })?.split('\n\n')[1],
+      })?.split('\n\n')[2],
     ).toBe(
       '过去一天打卡下面的对话（先后顺序）：\n- 10-27 周二 队员1 训练 跑步 30 分钟 「腿废了」 · 点了表情：队员2\n  你：「腿废了也算练」\n  队员2：「我下周膝盖手术」\n  你：「那这周先歇着」',
     );
@@ -608,7 +635,7 @@ describe('when the coach wakes', () => {
         recentNotes: [],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁：队员1「米亚」、队员2\n\n你最近没点过表情。\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
     // The emoji it reacted with lately, so it varies them.
     expect(
@@ -620,7 +647,7 @@ describe('when the coach wakes', () => {
         recentEmoji: ['🔥', '🔥', '💪'],
       }),
     ).toBe(
-      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
+      '有人打卡：11-01 周日 队员2 请假条 「下雨」\n\n谁是谁：队员1「米亚」、队员2\n\n你最近点过的表情（新的在前）：🔥 🔥 💪\n\n用简体中文写。\n\n你的记性（你只记得这些）：\n还是空的：memory.md',
     );
   });
 
@@ -780,7 +807,22 @@ describe('a line members read', () => {
       ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 100)),
     ).toStrictEqual([named, named, named]);
     expect(lineProblem('全体队员加油', 100)).toBeUndefined();
-    expect(lineProblem('跑跑跑', 2)).toBe('太长了：3 字，最多 2 字。');
+    expect(lineProblem('跑跑跑', 2)).toBe(
+      '太长了：3 字（英文字母、数字、空格和标点算半个字），最多 2 字。',
+    );
     expect(lineProblem('', 2)).toBe('这句是空的。');
+  });
+
+  it('counts English as half, so it gets as much room as Chinese', () => {
+    expect(lineLength('跑步')).toBe(2);
+    expect(lineLength('Run 5k!')).toBe(3.5);
+    expect(lineLength('Nice 💪')).toBe(3.5);
+    expect(lineProblem('a'.repeat(200), 100)).toBeUndefined();
+    expect(lineProblem('a'.repeat(201), 100)).toBe(
+      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+    );
+    expect(lineProblem('跑'.repeat(101), 100)).toBe(
+      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+    );
   });
 });

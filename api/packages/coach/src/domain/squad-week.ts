@@ -53,6 +53,31 @@ export interface WeekComment {
   readonly toCoach?: string;
   /** The coach it @s (@毛头), when it does. */
   readonly mentionsCoach?: string;
+  /** The teammate it replies to (回复 Mia：…), by member id, when it does. */
+  readonly replyTo?: string;
+  /** The teammates it @s, by member id, in the order written. */
+  readonly mentions?: readonly string[];
+}
+
+/**
+ * Whom a comment answers or @s, as the model reads it after its writer: `（回复队员2，@队员3）`,
+ * the coach by `coach` (`教练`, `你` or its name). Empty when it is said to no one in particular.
+ */
+export function addressedWords(
+  comment: Pick<WeekComment, 'toCoach' | 'mentionsCoach' | 'replyTo' | 'mentions'>,
+  {
+    roster,
+    coach = () => '教练',
+  }: { readonly roster: ReadonlyMap<string, string>; readonly coach?: (id: string) => string },
+): string {
+  const name = (member: string): string => roster.get(member) ?? '队员';
+  const parts = [
+    ...(comment.replyTo === undefined ? [] : [`回复${name(comment.replyTo)}`]),
+    ...(comment.toCoach === undefined ? [] : [`回复${coach(comment.toCoach)}`]),
+    ...(comment.mentions ?? []).map((member) => `@${name(member)}`),
+    ...(comment.mentionsCoach === undefined ? [] : [`@${coach(comment.mentionsCoach)}`]),
+  ];
+  return parts.length === 0 ? '' : `（${parts.join('，')}）`;
 }
 
 /** The coach a comment talks to, by replying to it or @-ing it, if any. */
@@ -141,12 +166,27 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   }
   if (checkIn.comments.length > 0) {
     const comments = checkIn.comments.map(
-      ({ member, text, toCoach, mentionsCoach }) =>
-        `${roster.get(member) ?? '队员'}${toCoach === undefined ? (mentionsCoach === undefined ? '' : '@教练') : '回复教练'}「${text}」`,
+      (comment) =>
+        `${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster })}「${comment.text}」`,
     );
     line.push(`评论：${comments.join('；')}`);
   }
   return line.join(' · ');
+}
+
+/**
+ * Who is who, as every task opens with it: each member's roster name with the nickname their
+ * squadmates know them by. The model reads everyone as 队员N but must speak to people by their
+ * nicknames, so it is told them each time; without it, it guessed names from the talk and mixed
+ * people up (Tracy, 2026-11-12).
+ */
+export function rosterText(week: Pick<SquadWeek, 'members'>): string {
+  const roster = rosterOf(week);
+  const members = week.members.map(({ member, nickname }) => {
+    const name = roster.get(member) ?? '队员';
+    return nickname === undefined ? name : `${name}「${nickname}」`;
+  });
+  return `谁是谁：${members.join('、')}`;
 }
 
 /** The week as the `squad_week` tool answers it. */

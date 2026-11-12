@@ -195,7 +195,10 @@ export interface MemberNote {
 
 /** The coach's notes to each member: one a member a wake; a day's newest challenge stands. */
 export interface CoachMemberNoteStore {
-  /** Saves the member's note unless its wake wrote them one; says whether this one was saved. */
+  /**
+   * Saves the member's note unless its wake wrote them one; answers the new note's id, or
+   * `undefined` when none was saved.
+   */
   save(note: {
     readonly squad: SquadId;
     readonly member: string;
@@ -205,7 +208,12 @@ export interface CoachMemberNoteStore {
     readonly challenge?: Challenge;
     /** The wake that wrote it; none for a preview an admin sent to themselves. */
     readonly wake?: number;
-  }): Promise<boolean>;
+    /**
+     * Marks it delivered as it is saved, for a note the server tells at once (a welcome), so the
+     * morning delivery never takes it up.
+     */
+    readonly deliveredNow?: boolean;
+  }): Promise<number | undefined>;
   /**
    * The newest challenge the member's notes of `day` (the squad's day) set, and their answer;
    * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
@@ -618,3 +626,25 @@ export interface CoachGifting {
     readonly line: string;
   }): Promise<string | undefined>;
 }
+
+/**
+ * Passes on what a member asked for under a post (a feature they want, something broken) as
+ * feedback from them, filed like 意见反馈 (Tracy, 2026-11-12). Says why not, when it couldn't
+ * (the member's day's limit). Kept by the feedback module.
+ */
+export type CoachFeedback = (relay: {
+  /** The wake that passes it on, so a wake run twice passes it on once. */
+  readonly wake: number;
+  readonly squad: SquadId;
+  readonly coach: CoachId;
+  /** Who asked for it. */
+  readonly member: string;
+  readonly checkIn: string;
+  /** The comment it was said in, when it wasn't the post itself. */
+  readonly comment?: string;
+  readonly kind: 'problem' | 'idea';
+  /** The coach's words of what they asked for. */
+  readonly text: string;
+  /** Their own words the coach heard it in. */
+  readonly quote: string;
+}) => Promise<string | undefined>;

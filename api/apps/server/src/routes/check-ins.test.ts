@@ -114,6 +114,7 @@ const app = createApp({
     coach: {
       run: () => Promise.reject(new Error('unused')),
       preview: () => Promise.reject(new Error('unused')),
+      welcome: () => Promise.resolve(),
       answer: () => Promise.reject(new Error('unused')),
       checkedIn: (asked) => {
         looked.push(asked);
