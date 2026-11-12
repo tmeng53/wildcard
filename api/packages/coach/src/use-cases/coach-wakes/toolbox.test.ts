@@ -69,11 +69,16 @@ describe('recall', () => {
       kind: 'checkIn',
     }).find(({ name }) => name === 'recall');
     expect(await recall?.run({ query: '半马 歌' })).toBe(
-      '【people/队员1.md】- 想跑半马\n【me.md】- 半马那天我去加油',
+      '【me.md】- 半马那天我去加油\n【people/队员1.md】- 想跑半马',
+    );
+    // A file the task lists as still empty is there to look in, never a missing one.
+    expect(await recall?.run({ path: 'squad.md' })).toBe(
+      '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
     );
     // A read: its answer is kept by its length only, since it holds members' words.
     expect(draft.steps).toStrictEqual([
       { tool: 'recall', input: { query: '半马 歌' }, output: '（39 字）' },
+      { tool: 'recall', input: { path: 'squad.md' }, output: '（29 字）' },
     ]);
     expect(draft.changed.size).toBe(0);
   });

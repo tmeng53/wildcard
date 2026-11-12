@@ -9,6 +9,7 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
+import { sliceWhole } from './memory.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
@@ -143,7 +144,7 @@ function headOf(text: string): string {
     if (next.length > HEAD_LIMIT) break;
     head = next;
   }
-  return head === '' ? text.slice(0, HEAD_LIMIT) : head;
+  return head === '' ? sliceWhole(text, HEAD_LIMIT) : head;
 }
 
 /**

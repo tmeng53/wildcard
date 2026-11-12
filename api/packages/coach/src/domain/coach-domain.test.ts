@@ -11,6 +11,7 @@ import {
   storedBody,
   storedPathOf,
   recallLines,
+  sliceWhole,
   RECALL_LIMIT,
 } from './memory.js';
 import { factsText } from './member-facts.js';
@@ -820,6 +821,14 @@ describe('memory on a waking day', () => {
       yesterday: { day: '2026-10-31', checkIns: week.checkIns },
     });
     expect(task).toContain('- 第 39 件事');
+  });
+});
+
+describe('sliceWhole', () => {
+  it('cuts before a character it would split in half', () => {
+    expect(sliceWhole('跑🏃步', 2)).toBe('跑');
+    expect(sliceWhole('跑🏃步', 3)).toBe('跑🏃');
+    expect(sliceWhole('跑步', 5)).toBe('跑步');
   });
 });
 

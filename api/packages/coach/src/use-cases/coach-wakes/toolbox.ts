@@ -5,6 +5,7 @@ import {
   FILE_LIMIT,
   recallLines,
   shownPathOf,
+  shownPaths,
   storedPathOf,
   type StoredPath,
 } from '../../domain/memory.js';
@@ -235,7 +236,8 @@ export function toolbox({
       }),
       run: ({ path, query }) => {
         const view = { roster, coach };
-        const shown = new Map<string, string>();
+        // Every file the task lists, an empty one too, so recall never says a listed file is missing.
+        const shown = new Map(shownPaths(view).map((name) => [name, '']));
         for (const [stored, body] of draft.files) {
           const name = shownPathOf(stored, view);
           if (name !== undefined) shown.set(name, body);

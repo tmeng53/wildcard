@@ -149,6 +149,13 @@ export function squadSeed(
 /** The most `recall` answers with, in characters. */
 export const RECALL_LIMIT = 2000;
 
+/** The text's first `end` UTF-16 units, one fewer if the cut would split a surrogate pair. */
+export function sliceWhole(text: string, end: number): string {
+  const code = text.charCodeAt(end - 1);
+  const splits = end < text.length && code >= 0xd800 && code <= 0xdbff;
+  return text.slice(0, splits ? end - 1 : end);
+}
+
 /**
  * The lines of the coach's files that match what it looks for, in each file's order (the night
  * keeps what matters most at the top): every line of the files asked for, or only those holding
@@ -187,7 +194,7 @@ export function recallLines(
   for (const line of found) {
     // A line longer than the whole answer is cut, so it is never left out for good.
     if (shown.length === 0 && line.length > RECALL_LIMIT) {
-      shown.push(`${line.slice(0, RECALL_LIMIT - 1)}…`);
+      shown.push(`${sliceWhole(line, RECALL_LIMIT - 1)}…`);
       length = RECALL_LIMIT;
       continue;
     }
