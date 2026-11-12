@@ -70,7 +70,7 @@ const RECENT_EMOJI = 8;
 /** How far back the daily wake reads the talk under check-ins, to remember from it. */
 const TALK_WINDOW_MS = 24 * 60 * 60_000;
 
-/** The file a squad's coach starts from: its name and who is in it. */
+/** The file a squad's coach starts from: its name. */
 const SEEDED = 'squad.md';
 
 /** What one run of the coach did. */
@@ -1167,7 +1167,8 @@ async function noteReaders(
 
 /**
  * The members a check-in's or reply's wake is about, whose pages it reads: the check-in's author
- * and everyone who commented under it. `undefined` for the squad's own wakes (the day's, the
+ * and everyone who commented under it. Someone only @-ed there is left out; the model can still
+ * write to their page by name. `undefined` for the squad's own wakes (the day's, the
  * dream), which read every page.
  */
 function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string> | undefined {

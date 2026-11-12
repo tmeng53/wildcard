@@ -2090,9 +2090,18 @@ describe('the coach', () => {
     });
   });
 
-  it('shows a check-in’s wake only the pages of the people under it, the day’s every page', async () => {
+  it('shows a check-in’s or reply’s wake only the pages of the people under it, the day’s every page', async () => {
     await rolledBack(async (fixture) => {
-      const { trx, squad, mia, leo } = fixture;
+      const { trx, squad, mia, leo, checkIn } = fixture;
+      // A third member, who has nothing to do with 米亚's check-in.
+      const ann = randomUUID();
+      await sql`insert into auth.users (id, email) values (${ann}, ${`${ann}@example.com`})`.execute(
+        trx,
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        members: [...fixture.week.members, { member: ann, nickname: '安' }],
+      };
       // Each member has a page, written by an earlier wake.
       const stores = createPostgresCoachStores(trx);
       await stores.wakes.enqueue([{ squad, reason: { kind: 'dream', day: '2026-10-31' } }], now);
@@ -2103,22 +2112,45 @@ describe('the coach', () => {
         wake: earlier.id,
         files: [
           { path: `people/${mia}.md`, body: '爱跑步' },
-          { path: `people/${leo}.md`, body: '昨晚吃了冰淇淋' },
+          { path: `people/${leo}.md`, body: '怕下雨' },
+          { path: `people/${ann}.md`, body: '昨晚吃了冰淇淋' },
         ],
       });
       await stores.wakes.finish(earlier.id);
       const { agent, runs } = scriptedAgent(() => []);
-      await wakes(fixture, { agent }).run();
-      // 米亚's check-in, with no one under it: her page, never 队员2's.
-      const checkIn = runs.find(({ task }) => task.startsWith('有人打卡'))?.task;
-      expect(checkIn).toContain('【people/队员1.md】\n爱跑步');
-      expect(checkIn).not.toContain('people/队员2.md');
-      expect(checkIn).not.toContain('冰淇淋');
+      await wakes({ ...fixture, week }, { agent }).run();
+      // 米亚's check-in, with no one under it yet: her page alone.
+      const onCheckIn = runs.find(({ task }) => task.startsWith('有人打卡'))?.task;
+      expect(onCheckIn).toContain('【people/队员1.md】\n爱跑步');
+      expect(onCheckIn).not.toContain('people/队员2.md');
+      expect(onCheckIn).not.toContain('冰淇淋');
       // Who is who, with nicknames, so it never guesses a name.
-      expect(checkIn?.split('\n\n')).toContain('谁是谁（说话时叫昵称）：队员1「米亚」、队员2');
+      expect(onCheckIn?.split('\n\n')).toContain(
+        '谁是谁（说话时叫昵称）：队员1「米亚」、队员2、队员3「安」',
+      );
       // The day's wake is the squad's: every page.
       const daily = runs.find(({ task }) => task.startsWith('新的一天'))?.task;
-      expect(daily).toContain('【people/队员2.md】\n昨晚吃了冰淇淋');
+      expect(daily).toContain('【people/队员3.md】\n昨晚吃了冰淇淋');
+      // Leo @s the coach under it: his page joins 米亚's, 安's stays out, and the task says who asks.
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '下雨还跑吗',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const withComment: SquadWeek = {
+        ...week,
+        checkIns: week.checkIns.map((each) => ({ ...each, comments: [asked] })),
+      };
+      await wakes(
+        { ...fixture, week: withComment },
+        { agent, at: new Date(now.getTime() + 2 * 60_000) },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      const onReply = runs.find(({ task }) => task.includes('要回的这句'))?.task;
+      expect(onReply).toContain('队员2在评论里 @ 你。');
+      expect(onReply).toContain('【people/队员1.md】\n爱跑步');
+      expect(onReply).toContain('【people/队员2.md】\n怕下雨');
+      expect(onReply).not.toContain('冰淇淋');
     });
   });
 
