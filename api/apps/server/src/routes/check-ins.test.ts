@@ -170,6 +170,13 @@ async function squadOf(
     });
     expect(joined.status).toBe(201);
   }
+  // Joined before the fixed days these tests post on: a member sees only what the squad posted
+  // after they joined.
+  await db
+    .updateTable('squad_members')
+    .set({ joined_at: new Date('2026-09-01T00:00:00Z') })
+    .where('squad_id', '=', id)
+    .execute();
   return id;
 }
 

@@ -23,7 +23,8 @@ export interface SquadPost {
  * first, for one of its members, each with its reactions and
  * comments. Only posts (发布到动态: a check-in only recorded isn't in it, not even for its
  * author) from members still in the squad: leaving a squad takes your check-ins
- * out of it. Someone else's check-in shows only the squads the viewer is in among its audience,
+ * out of it. Others' posts only from when the viewer (last) joined: what the squad posted before
+ * isn't theirs to read (Tracy, 2026-11-11). Someone else's check-in shows only the squads the viewer is in among its audience,
  * and, as everywhere, only the responses of members of the squads the viewer sees it through.
  */
 export async function listSquadCheckIns(
@@ -42,9 +43,14 @@ export async function listSquadCheckIns(
 ): Promise<SquadPost[]> {
   const viewerSquads = await membership.squadIdsOf(viewer);
   if (!viewerSquads.has(squad)) throw new SquadNotJoinedError(squad);
-  const members = await membership.membersOf(squad);
+  const [members, joined] = await Promise.all([
+    membership.membersOf(squad),
+    membership.joinedAt(viewer, squad),
+  ]);
   const checkIns = (await store.listForSquad({ ...days, squad, members, by: 'postedDay' })).filter(
-    ({ inFeed }) => inFeed,
+    (checkIn) =>
+      checkIn.inFeed &&
+      (checkIn.member === viewer || (joined !== undefined && checkIn.createdAt >= joined)),
   );
   const ids = checkIns.map(({ id }) => id);
   const [reactionsOf, commentsOf, squadsOfAuthor] = await Promise.all([

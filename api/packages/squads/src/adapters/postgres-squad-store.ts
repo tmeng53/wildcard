@@ -255,6 +255,16 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return rows.map((row) => MemberId.parse(row.member_id));
     },
 
+    async joinedAt(member, squad) {
+      const row = await db
+        .selectFrom('squad_members')
+        .select('joined_at')
+        .where('member_id', '=', member)
+        .where('squad_id', '=', squad)
+        .executeTakeFirst();
+      return row?.joined_at;
+    },
+
     async membersAt(squad, moment) {
       const rows = await db
         .selectFrom('squad_membership_events')

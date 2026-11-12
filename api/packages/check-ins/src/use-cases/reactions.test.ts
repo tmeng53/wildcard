@@ -71,7 +71,7 @@ async function newSquad(...members: MemberId[]) {
 }
 
 async function join(squad: SquadId, member: MemberId) {
-  await sql`insert into public.squad_members (squad_id, member_id) values (${squad}, ${member})`.execute(
+  await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${squad}, ${member}, '2026-09-01T00:00:00Z')`.execute(
     db,
   );
 }

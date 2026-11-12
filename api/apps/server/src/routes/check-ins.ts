@@ -549,7 +549,7 @@ export function checkIns(deps: {
       'The squad’s feed: check-ins sent to the squad by members still in it and posted on a day ' +
       'in the range (`postedDay`), newest posted first, ' +
       'each with the reactions and comments of the teammates the viewer shares a squad with. ' +
-      'Only for members of the squad.',
+      'Others’ posts only from when the viewer joined the squad. Only for members of the squad.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: z.strictObject({ squadId: SquadId }), query: DayRange },

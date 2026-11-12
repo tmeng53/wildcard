@@ -81,6 +81,8 @@ export interface SquadStore {
   squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
   /** The members in `squad` now, in the order they joined. */
   membersOf(squad: SquadId): Promise<MemberId[]>;
+  /** When `member` last joined `squad`, while they are in it; `undefined` when they aren't. */
+  joinedAt(member: MemberId, squad: SquadId): Promise<Date | undefined>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /**

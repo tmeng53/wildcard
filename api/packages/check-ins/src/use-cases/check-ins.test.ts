@@ -94,7 +94,7 @@ async function newSquad(...members: MemberId[]) {
     db,
   );
   for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member})`.execute(
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${id}, ${member}, '2026-09-01T00:00:00Z')`.execute(
       db,
     );
   }
@@ -625,6 +625,26 @@ describe('listing check-ins', () => {
       { id: theirs, audience: [squad] },
       { id: mine, audience: [squad] },
     ]);
+  });
+
+  it('shows a newcomer only what the squad posted after they joined', async () => {
+    const [me, newcomer] = [await newMember(), await newMember()];
+    const squad = await newSquad(me);
+    const before = await save(me, { audience: [squad], createdAt: '2026-10-18T09:00:00.000Z' });
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at)
+      values (${squad}, ${newcomer}, '2026-10-18T10:00:00.000Z')`.execute(db);
+    const after = await save(me, { audience: [squad], createdAt: '2026-10-18T11:00:00.000Z' });
+    const days = { from: '2026-10-18', to: '2026-10-18' };
+    const feedOf = async (viewer: MemberId) =>
+      (await checkIns.listForSquad({ viewer, squad, days })).map(({ checkIn }) => checkIn.id);
+    expect(await feedOf(newcomer)).toStrictEqual([after]);
+    // Who was there sees both.
+    expect(await feedOf(me)).toStrictEqual([after, before]);
+    // Nor can the newcomer open, react to or comment on the older post by its id.
+    await expect(checkIns.post({ id: before, viewer: newcomer })).rejects.toMatchObject({
+      reason: 'CHECK_IN_NOT_FOUND',
+    });
+    expect((await checkIns.post({ id: after, viewer: newcomer })).checkIn.id).toBe(after);
   });
 
   it('keeps to the days asked for', async () => {

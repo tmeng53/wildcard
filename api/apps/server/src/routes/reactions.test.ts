@@ -118,7 +118,7 @@ async function squadOf(...members: readonly { readonly userId: string }[]) {
     db,
   );
   for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member.userId})`.execute(
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${id}, ${member.userId}, '2026-09-01T00:00:00Z')`.execute(
       db,
     );
   }

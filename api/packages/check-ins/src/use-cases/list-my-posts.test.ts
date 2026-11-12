@@ -67,7 +67,7 @@ async function newSquad(...members: MemberId[]) {
     db,
   );
   for (const member of members) {
-    await sql`insert into public.squad_members (squad_id, member_id) values (${id}, ${member})`.execute(
+    await sql`insert into public.squad_members (squad_id, member_id, joined_at) values (${id}, ${member}, '2026-09-01T00:00:00Z')`.execute(
       db,
     );
   }

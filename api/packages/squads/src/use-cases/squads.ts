@@ -63,6 +63,11 @@ export interface Squads {
   squadIdsOf(member: MemberId): Promise<ReadonlySet<SquadId>>;
   /** The members in a squad now, in the order they joined. */
   membersOf(squad: SquadId): Promise<MemberId[]>;
+  /**
+   * When a member last joined a squad, while they are in it; `undefined` when they aren't. What
+   * happened there before is not theirs to read.
+   */
+  joinedAt(member: MemberId, squad: SquadId): Promise<Date | undefined>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
   /** The members in a squad at a moment, in the order they (last) joined, from its log. */
@@ -192,6 +197,7 @@ export function createSquads(deps: {
     lastExit: (member) => deps.store.lastExit(member),
     squadIdsOf: (member) => deps.store.squadIdsOf(member),
     membersOf: (squad) => deps.store.membersOf(squad),
+    joinedAt: (member, squad) => deps.store.joinedAt(member, squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
     membersAt: (squad, moment) => deps.store.membersAt(squad, moment),
     squadAt: async ({ squad, week, moment, open }) => {
