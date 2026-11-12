@@ -323,7 +323,7 @@ const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请
  * week it looks back on and the memory it leaves for the morning.
  */
 const DREAM = [
-  '这次醒来是为了整理你的记性：上面是过去七天，小队发了什么，你说了什么，你给的挑战谁接了、谁做了、谁没接，没接时说了什么，大家跟你聊了什么。',
+  '这次醒来是为了整理你的记性。上面是过去七天的动态。',
   '你的记性就是上面这几个文件，明天醒来你只记得它们。rewrite_file 会把一个文件整个换成你写的样子。',
 ].join('\n');
 
