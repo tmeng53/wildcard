@@ -1,7 +1,7 @@
 -- The coach at work: one coach a squad, hires logged; one wake per check-in and per squad-day; files and notes that only
 -- grow, until the squad ends or (for a member's page) the member's account goes.
 begin;
-select plan(19);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('11111111-1111-4111-8111-111111111111', 'mia@example.com'),
@@ -29,6 +29,17 @@ select throws_ok($$insert into public.coach_wakes (squad_id, reason, day)
 select throws_ok($$insert into public.coach_wakes (squad_id, reason, day)
   values ('33333333-3333-4333-8333-333333333333', 'checkIn', '2026-11-01')$$,
   '23514', null, 'a check-in wake names its check-in');
+insert into public.coach_wakes (squad_id, reason, member_id, day)
+  values ('33333333-3333-4333-8333-333333333333', 'joined', '22222222-2222-4222-8222-222222222222', '2026-11-01');
+select throws_ok($$insert into public.coach_wakes (squad_id, reason, member_id, day)
+  values ('33333333-3333-4333-8333-333333333333', 'joined', '22222222-2222-4222-8222-222222222222', '2026-11-01')$$,
+  '23505', null, 'one welcome a member a squad a day');
+select throws_ok($$insert into public.coach_wakes (squad_id, reason, day)
+  values ('33333333-3333-4333-8333-333333333333', 'joined', '2026-11-02')$$,
+  '23514', null, 'a welcome names whom it welcomes');
+select throws_ok($$insert into public.coach_wakes (squad_id, reason, member_id, day)
+  values ('33333333-3333-4333-8333-333333333333', 'daily', '22222222-2222-4222-8222-222222222222', '2026-11-02')$$,
+  '23514', null, 'only a welcome names a member');
 update public.coach_wakes set state = 'running' where id = 1;
 select throws_ok($$update public.coach_wakes set state = 'running' where id = 2$$,
   '23505', null, 'a squad runs one wake at a time');
@@ -79,6 +90,8 @@ select is((select changed_by from public.squad_coach_events), null, 'a hire outl
 delete from auth.users where id = '22222222-2222-4222-8222-222222222222';
 select is((select array_agg(path order by path) from public.coach_files),
   array['coaches/xiaohun.md', 'memory.md'], 'a member''s page goes with them, a coach''s stays');
+select is((select count(*)::int from public.coach_wakes where reason = 'joined'), 0,
+  'a member''s welcome goes with them');
 delete from public.squads where id = '33333333-3333-4333-8333-333333333333';
 select is(
   (select count(*)::int from public.coach_files) + (select count(*)::int from public.coach_notes)
