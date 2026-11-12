@@ -94,6 +94,23 @@ export const NoticeSubjects = {
     weeks: z.int().positive(),
     daysPerMember: z.int().min(1).max(7),
   }),
+  /**
+   * Someone asked to join the squad the member captains (入队申请): the push's words, naming
+   * them, and the request to answer.
+   */
+  joinRequest: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    request: z.uuid(),
+    member: MemberId,
+  }),
+  /** The captain answered the member's request to join: let in (`approved`) or not. */
+  joinAnswered: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    request: z.uuid(),
+    approved: z.boolean(),
+  }),
   /** A broadcast every member is told (`broadcast.ts`); its words are read when shown. */
   broadcast: z.strictObject({ version: z.literal(1), broadcast: BroadcastId }),
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
@@ -126,6 +143,8 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
   z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
   z.object({ kind: z.literal('thanks'), subject: NoticeSubjects.thanks }),
+  z.object({ kind: z.literal('joinRequest'), subject: NoticeSubjects.joinRequest }),
+  z.object({ kind: z.literal('joinAnswered'), subject: NoticeSubjects.joinAnswered }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

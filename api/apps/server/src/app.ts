@@ -66,6 +66,7 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { squadJoinRequests } from './routes/squad-join-requests.js';
 import { squadLanguage } from './routes/squad-language.js';
 import { squadTimeZone } from './routes/squad-time-zone.js';
 import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
@@ -198,6 +199,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', location(deps));
   app.route('/', squads({ ...deps, publish }));
+  app.route('/', squadJoinRequests({ ...deps, publish }));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(
     '/',

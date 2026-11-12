@@ -163,6 +163,13 @@ async function squadOf(
     body: { version: 1, name: 'squad', timeZone: 'America/New_York' },
   });
   const { id, inviteCode } = z.object({ id: z.uuid(), inviteCode: z.string() }).parse(created.body);
+  // Friends join straight in, without the captain's OK (入队需要审核 off).
+  await call({
+    method: 'PUT',
+    path: `/squads/${id}/join-approval`,
+    token: creator.token,
+    body: { version: 1, required: false },
+  });
   for (const member of others) {
     const joined = await call({
       method: 'POST',

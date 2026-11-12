@@ -4,6 +4,13 @@ import { sql, type Kysely, type Selectable, type Transaction } from 'kysely';
 import { z } from 'zod';
 
 import { InviteCode } from '../domain/invite-code.js';
+import {
+  JOIN_APPROVAL_DEFAULT,
+  JoinNote,
+  JoinRequestId,
+  type JoinRequest,
+  type JoinRequestAnswerKind,
+} from '../domain/join-request.js';
 import { Scene, SceneWeek } from '../domain/scene.js';
 import {
   captainOf,
@@ -17,7 +24,13 @@ import {
 import { zoneFor, type TimeZoneSetting } from '../domain/time-zone.js';
 import { DaysPerMember, goalFor } from '../domain/weekly-goal.js';
 import { SquadTimeZoneUnknownError } from '../errors.js';
-import type { CaptainOutcome, CreateOutcome, JoinOutcome, SquadStore } from '../ports.js';
+import type {
+  AnswerOutcome,
+  CaptainOutcome,
+  CreateOutcome,
+  JoinOutcome,
+  SquadStore,
+} from '../ports.js';
 import type { DB, Squads } from './tables.js';
 
 /** The tables this store reads and writes, as generated from the migrations. */
@@ -30,6 +43,8 @@ const UNIQUE_RULES: Record<string, 'idTaken' | 'inviteCodeTaken' | undefined> = 
 };
 
 const Constraint = z.object({ constraint: z.string() });
+
+const AnswerKind = z.enum(['approved', 'declined', 'withdrawn', 'cancelled']);
 
 /** The squad store on Postgres (`supabase/migrations`). */
 export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
@@ -149,6 +164,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .values({ squad_id: squad, member_id: member, kind, actor_id: actor })
       .execute();
     const left = before.members.filter((each) => each.member !== member);
+    // A squad everyone left has ended: nobody can be let in any more.
+    if (left.length === 0) await closeWaiting(trx, { squad, kind: 'cancelled', actor: null });
     const captain = captainOf(before.captain === member ? null : before.captain, left);
     if (captain !== before.stored) {
       await saveSettings(trx, { squad, actor, kind: 'captainChanged', name: before.name, captain });
@@ -189,6 +206,110 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .where('member_id', '=', member)
       .executeTakeFirstOrThrow();
     return Number(count);
+  }
+
+  /** The requests to join, newest first, each with its squad's name and its answer if any. */
+  function joinRequests(trx: Kysely<SquadTables>) {
+    return trx
+      .selectFrom('squad_join_requests as r')
+      .innerJoin('squads as s', 's.id', 'r.squad_id')
+      .leftJoin('squad_join_request_answers as a', 'a.request_id', 'r.id')
+      .select([
+        'r.id',
+        'r.squad_id',
+        's.name',
+        'r.member_id',
+        'r.note',
+        'r.asked_at',
+        'a.kind',
+        'a.at as answered_at',
+      ]);
+  }
+
+  function asRequest(row: {
+    readonly id: string;
+    readonly squad_id: string;
+    readonly name: string;
+    readonly member_id: string;
+    readonly note: string | null;
+    readonly asked_at: Date;
+    readonly kind: string | null;
+    readonly answered_at: Date | null;
+  }): JoinRequest {
+    return {
+      id: JoinRequestId.parse(row.id),
+      squad: SquadId.parse(row.squad_id),
+      squadName: SquadName.parse(row.name),
+      member: MemberId.parse(row.member_id),
+      ...(row.note === null ? {} : { note: JoinNote.parse(row.note) }),
+      askedAt: row.asked_at,
+      ...(row.kind === null || row.answered_at === null
+        ? {}
+        : { answer: { kind: AnswerKind.parse(row.kind), at: row.answered_at } }),
+    };
+  }
+
+  /** Answers every waiting request of the member, or to the squad, with `kind`. */
+  async function closeWaiting(
+    trx: Transaction<SquadTables>,
+    {
+      kind,
+      actor,
+      ...which
+    }: ({ readonly member: MemberId } | { readonly squad: SquadId }) & {
+      readonly kind: JoinRequestAnswerKind;
+      readonly actor: MemberId | null;
+    },
+  ) {
+    const waiting = await trx
+      .selectFrom('squad_join_requests as r')
+      .leftJoin('squad_join_request_answers as a', 'a.request_id', 'r.id')
+      .select('r.id')
+      .where('a.request_id', 'is', null)
+      .where(
+        'member' in which ? 'r.member_id' : 'r.squad_id',
+        '=',
+        'member' in which ? which.member : which.squad,
+      )
+      .execute();
+    if (waiting.length === 0) return;
+    await trx
+      .insertInto('squad_join_request_answers')
+      .values(waiting.map(({ id }) => ({ request_id: id, kind, actor_id: actor })))
+      .execute();
+  }
+
+  /** Why `member` can't join the squad now, from its locked members; undefined when they can. */
+  async function joinRefusal(
+    trx: Transaction<SquadTables>,
+    { squad, member }: { readonly squad: SquadId; readonly member: MemberId },
+  ): Promise<Exclude<JoinOutcome, 'joined'> | undefined> {
+    const members = await trx
+      .selectFrom('squad_members')
+      .select('member_id')
+      .where('squad_id', '=', squad)
+      .execute();
+    if (members.length === 0) return 'ended';
+    if (members.some((row) => row.member_id === member)) return 'alreadyMember';
+    if ((await squadCount(trx, member)) >= SQUADS_PER_MEMBER) return 'squadLimit';
+    if (members.length >= SQUAD_MEMBER_LIMIT) return 'squadFull';
+    return undefined;
+  }
+
+  /** Puts the member in the squad, with the log's entry. */
+  async function addMember(
+    trx: Transaction<SquadTables>,
+    {
+      squad,
+      member,
+      actor,
+    }: { readonly squad: SquadId; readonly member: MemberId; readonly actor: MemberId },
+  ) {
+    await trx.insertInto('squad_members').values({ squad_id: squad, member_id: member }).execute();
+    await trx
+      .insertInto('squad_membership_events')
+      .values({ squad_id: squad, member_id: member, kind: 'joined', actor_id: actor })
+      .execute();
   }
 
   return {
@@ -305,14 +426,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
             .insertInto('squad_events')
             .values({ squad_id: id, actor_id: creator, kind: 'created', name, captain_id: creator })
             .execute();
-          await trx
-            .insertInto('squad_members')
-            .values({ squad_id: id, member_id: creator })
-            .execute();
-          await trx
-            .insertInto('squad_membership_events')
-            .values({ squad_id: id, member_id: creator, kind: 'joined', actor_id: creator })
-            .execute();
+          await addMember(trx, { squad: id, member: creator, actor: creator });
+          await closeWaiting(trx, { member: creator, kind: 'cancelled', actor: creator });
           await trx
             .insertInto('squad_weekly_goals')
             .values({
@@ -354,23 +469,10 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .where('id', '=', squad)
           .forUpdate()
           .executeTakeFirstOrThrow();
-        const members = await trx
-          .selectFrom('squad_members')
-          .select('member_id')
-          .where('squad_id', '=', squad)
-          .execute();
-        if (members.length === 0) return 'ended';
-        if (members.some((row) => row.member_id === member)) return 'alreadyMember';
-        if ((await squadCount(trx, member)) >= SQUADS_PER_MEMBER) return 'squadLimit';
-        if (members.length >= SQUAD_MEMBER_LIMIT) return 'squadFull';
-        await trx
-          .insertInto('squad_members')
-          .values({ squad_id: squad, member_id: member })
-          .execute();
-        await trx
-          .insertInto('squad_membership_events')
-          .values({ squad_id: squad, member_id: member, kind: 'joined', actor_id: member })
-          .execute();
+        const refused = await joinRefusal(trx, { squad, member });
+        if (refused !== undefined) return refused;
+        await addMember(trx, { squad, member, actor: member });
+        await closeWaiting(trx, { member, kind: 'cancelled', actor: member });
         return 'joined';
       });
     },
@@ -566,6 +668,131 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           .values({ squad_id: squad, language, set_by: actor })
           .execute();
         return 'changed';
+      });
+    },
+
+    async joinApprovals(squads) {
+      if (squads.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('squad_join_approvals')
+        .select(['squad_id', 'required'])
+        .where('squad_id', 'in', squads)
+        .orderBy('id')
+        .execute();
+      // The newest row of each squad stands.
+      const set = new Map(rows.map((row) => [SquadId.parse(row.squad_id), row.required]));
+      return new Map(squads.map((squad) => [squad, set.get(squad) ?? JOIN_APPROVAL_DEFAULT]));
+    },
+
+    setJoinApproval({ squad, actor, required }) {
+      return asCaptain({ squad, actor }, async (trx) => {
+        const latest = await trx
+          .selectFrom('squad_join_approvals')
+          .select('required')
+          .where('squad_id', '=', squad)
+          .orderBy('id', 'desc')
+          .limit(1)
+          .executeTakeFirst();
+        if ((latest?.required ?? JOIN_APPROVAL_DEFAULT) === required) return 'unchanged';
+        await trx
+          .insertInto('squad_join_approvals')
+          .values({ squad_id: squad, required, set_by: actor })
+          .execute();
+        return 'changed';
+      });
+    },
+
+    askToJoin({ squad, member, note }) {
+      return db.transaction().execute(async (trx) => {
+        await lockMember(trx, member);
+        await trx
+          .selectFrom('squads')
+          .select('id')
+          .where('id', '=', squad)
+          .forUpdate()
+          .executeTakeFirstOrThrow();
+        const refused = await joinRefusal(trx, { squad, member });
+        if (refused !== undefined) return { asked: false as const, refused };
+        const waiting = await joinRequests(trx)
+          .where('r.member_id', '=', member)
+          .where('a.request_id', 'is', null)
+          .executeTakeFirst();
+        if (waiting?.squad_id === squad && (waiting.note ?? undefined) === note) {
+          return { asked: 'alreadyAsked' as const, request: asRequest(waiting) };
+        }
+        // One squad waited on at a time: asking another withdraws the earlier request.
+        await closeWaiting(trx, { member, kind: 'withdrawn', actor: member });
+        const { id } = await trx
+          .insertInto('squad_join_requests')
+          .values({ squad_id: squad, member_id: member, note: note ?? null })
+          .returning('id')
+          .executeTakeFirstOrThrow();
+        const saved = await joinRequests(trx).where('r.id', '=', id).executeTakeFirstOrThrow();
+        return { asked: 'asked' as const, request: asRequest(saved) };
+      });
+    },
+
+    async latestJoinRequest(member) {
+      const row = await joinRequests(db)
+        .where('r.member_id', '=', member)
+        .orderBy('r.asked_at', 'desc')
+        .orderBy('r.id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      return row === undefined ? undefined : asRequest(row);
+    },
+
+    async joinRequest(id) {
+      const row = await joinRequests(db).where('r.id', '=', id).executeTakeFirst();
+      return row === undefined ? undefined : asRequest(row);
+    },
+
+    async waitingJoinRequests(squad) {
+      const rows = await joinRequests(db)
+        .where('r.squad_id', '=', squad)
+        .where('a.request_id', 'is', null)
+        .orderBy('r.asked_at')
+        .orderBy('r.id')
+        .execute();
+      return rows.map(asRequest);
+    },
+
+    answerJoinRequest({ squad, request, actor, approve }) {
+      return db.transaction().execute(async (trx): Promise<AnswerOutcome> => {
+        const row = await trx
+          .selectFrom('squad_join_requests')
+          .select(['member_id', 'squad_id'])
+          .where('id', '=', request)
+          .executeTakeFirst();
+        if (row?.squad_id !== squad) return 'unknown';
+        const member = MemberId.parse(row.member_id);
+        // The member first, then the squad, as a join takes them.
+        await lockMember(trx, member);
+        const now = await lockSquad(trx, squad);
+        if (now?.captain !== actor) return 'notCaptain';
+        const answered = await trx
+          .selectFrom('squad_join_request_answers')
+          .select('kind')
+          .where('request_id', '=', request)
+          .executeTakeFirst();
+        if (answered !== undefined) return 'answered';
+        if (approve) {
+          const refused = await joinRefusal(trx, { squad, member });
+          if (refused === 'squadFull' || refused === 'squadLimit') return refused;
+          if (refused === undefined) await addMember(trx, { squad, member, actor });
+        }
+        await trx
+          .insertInto('squad_join_request_answers')
+          .values({ request_id: request, kind: approve ? 'approved' : 'declined', actor_id: actor })
+          .execute();
+        return approve ? 'approved' : 'declined';
+      });
+    },
+
+    async withdrawJoinRequest(member) {
+      await db.transaction().execute(async (trx) => {
+        await lockMember(trx, member);
+        await closeWaiting(trx, { member, kind: 'withdrawn', actor: member });
       });
     },
 
