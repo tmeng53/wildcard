@@ -6,7 +6,7 @@ import MeUI
 import Observation
 
 /// Where 我 dresses the member: 商店街, kept for the shopfront's dot and opened in 我's place, and
-/// the character editor over everything. An unlock opens here, from the home's banner and 通知
+/// the character editor pushed over 我 or the street. An unlock opens here, from the home's banner and 通知
 /// alike.
 /// It also keeps what this phone saw of the member's badges, for NEW on 我's badge board.
 @MainActor @Observable

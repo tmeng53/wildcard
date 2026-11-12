@@ -11,51 +11,18 @@ import SwiftUI
 struct OutfitBack: View {
     let face: PlayerCardFace
     let toSchedule: () -> Void
-    @Environment(\.sceneTheme) private var theme
-
-    private var ink: Color { Color(role: .fgOnInk, in: theme) }
-    private var muted: Color { Color(role: .fgOnInkMuted, in: theme) }
     /// Read once the side shows, since it reads art files.
     @State private var worn: [WornPiece] = []
     private var pieces: Int { worn.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(face.character.nickname)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(ink)
-                    .lineLimit(1)
-                Spacer(minLength: Space.s)
-                if let number = face.number {
-                    Text(verbatim: "#\(number.text)")
-                        .typeStyle(TypeRamp.scoreSmall)
-                        .foregroundStyle(muted)
-                        .monospacedDigit()
-                }
-            }
-            HStack(alignment: .firstTextBaseline) {
-                Button(action: toSchedule) {
-                    Label {
-                        Text(copy: "穿搭", bundle: .module)
-                    } icon: {
-                        Image(systemName: "chevron.left")
-                    }
-                    .typeStyle(TypeRamp.calloutEmphasis)
-                    .foregroundStyle(ink)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityIdentifier("me.cardOutfitBack")
-                Spacer(minLength: Space.xs)
-                if pieces > 0 {
-                    Text(copy: "card.outfit.count \(pieces)", bundle: .module)
-                        .typeStyle(TypeRamp.caption)
-                        .foregroundStyle(muted)
-                }
-            }
-            .padding(.top, Space.xs)
-            .padding(.bottom, Space.xs)
-            .overlay(alignment: .bottom) { Hairline(on: .ink) }
+            CardSideHeader(
+                face: face,
+                back: CardSideHeader.Back(
+                    title: Text(copy: "穿搭", bundle: .module),
+                    count: pieces > 0 ? Text(copy: "card.outfit.count \(pieces)", bundle: .module) : nil,
+                    identifier: "me.cardOutfitBack", action: toSchedule))
             ScrollView {
                 WornOutfitList(outfit: face.character.outfit, pieces: worn)
                     .padding(.vertical, Space.xxs)
