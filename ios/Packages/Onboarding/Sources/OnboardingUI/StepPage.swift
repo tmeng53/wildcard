@@ -13,7 +13,8 @@ struct StepPage<Content: View, Actions: View>: View {
     let title: Text
     /// The character beside the title; nil where the step draws it itself.
     let character: CastMember?
-    let onBack: () -> Void
+    /// Nil on a page with no way back, which shows no header.
+    let onBack: (() -> Void)?
     @ViewBuilder let content: Content
     @ViewBuilder let actions: Actions
     @Environment(\.sceneTheme) private var theme
@@ -22,14 +23,16 @@ struct StepPage<Content: View, Actions: View>: View {
     static var characterSize: CGSize { CGSize(width: 96, height: 128) }
 
     var body: some View {
-        page.swipesBack(perform: onBack)
+        page.swipesBack(isEnabled: onBack != nil) { onBack?() }
     }
 
     private var page: some View {
         VStack(spacing: 0) {
-            StepHeader(step: step.number, of: SignUpStep.counted.count, onBack: onBack)
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.top, Space.xs)
+            if let onBack {
+                StepHeader(step: step.number, of: SignUpStep.counted.count, onBack: onBack)
+                    .padding(.horizontal, Space.pageMargin)
+                    .padding(.top, Space.xs)
+            }
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
                     HStack(alignment: .bottom, spacing: Space.s) {

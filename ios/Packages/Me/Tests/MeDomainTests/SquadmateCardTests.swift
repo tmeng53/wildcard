@@ -13,7 +13,7 @@ struct SquadmateCardTests {
 
     @Test func aSquadmatesCardLoadsWithTheirSquadsName() async throws {
         let face = PlayerCardFace(
-            character: sample.character, number: try JerseyNumber(7), squadName: nil, joinedAt: nil,
+            character: sample.character, number: try JerseyNumber(7), squadName: nil,
             counts: .zero, week: nil, board: try board())
         let member = MemberID(UUID())
         let squad = SquadID(UUID())
@@ -36,7 +36,7 @@ struct SquadmateCardTests {
         let service = FakeService(overview)
         let page = model(service)
         let face = PlayerCardFace(
-            character: sample.character, number: nil, squadName: "毛头教队", joinedAt: nil, counts: .zero,
+            character: sample.character, number: nil, squadName: "毛头教队", counts: .zero,
             week: nil, board: try board())
         let card = SquadmateCardModel(
             member: MemberID(UUID()), squad: SquadID(UUID()), squadName: nil,
@@ -61,7 +61,7 @@ struct SquadmateCardTests {
     @Test func aSquadmatesCardWearsNothing() async throws {
         let service = FakeService(sample)
         let face = PlayerCardFace(
-            character: sample.character, number: nil, squadName: nil, joinedAt: nil, counts: .zero, week: nil,
+            character: sample.character, number: nil, squadName: nil, counts: .zero, week: nil,
             board: try board())
         let card = SquadmateCardModel(
             member: MemberID(UUID()), squad: SquadID(UUID()), squadName: nil,
