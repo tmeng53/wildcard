@@ -451,8 +451,28 @@ describe('the coach', () => {
       // The check-in's wake ran first: it may edit files and reply and react to the check-in, but
       // not post on the 战术板; the daily wake posts but replies to nothing.
       expect(runs.map(({ tools }) => tools)).toStrictEqual([
-        ['squad_week', 'remember', 'edit_file', 'member_stats', 'memes', 'reply', 'react'],
-        ['squad_week', 'remember', 'edit_file', 'member_stats', 'memes', 'post_note', 'note_to'],
+        [
+          'squad_week',
+          'member_posts',
+          'post_comments',
+          'remember',
+          'edit_file',
+          'member_stats',
+          'memes',
+          'reply',
+          'react',
+        ],
+        [
+          'squad_week',
+          'member_posts',
+          'post_comments',
+          'remember',
+          'edit_file',
+          'member_stats',
+          'memes',
+          'post_note',
+          'note_to',
+        ],
       ]);
       expect(runs[0]?.task).toContain('队员1 训练 跑步');
       expect(runs[0]?.answers).toStrictEqual([
@@ -1373,6 +1393,90 @@ describe('the coach', () => {
       expect(asked).toStrictEqual([{ squad, members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
       expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+    });
+  });
+
+  it('looks up a member’s posts, and the comments under one, only when it asks', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, checkIn, mia, leo } = fixture;
+      const comment = await commentOn(fixture, {
+        member: mia,
+        text: '跟队员2比谁更健康',
+        at: new Date(now.getTime() - 5 * 60_000),
+      });
+      const earlier = '2026-10-19';
+      const week: SquadWeek = {
+        ...fixture.week,
+        checkIns: [
+          ...fixture.week.checkIns.map((each) => ({ ...each, comments: [comment] })),
+          {
+            id: randomUUID(),
+            member: leo,
+            day: '2026-10-31',
+            createdAt: new Date('2026-10-31T15:00:00Z'),
+            kind: 'healthyMeal',
+            text: '没同意的人的饭',
+            reactedBy: [],
+            comments: [],
+          },
+        ],
+      };
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('有人打卡')
+          ? [
+              { tool: 'member_posts', input: { member: '队员1' } },
+              { tool: 'post_comments', input: { post: '动态1' } },
+              { tool: 'post_comments', input: { post: '动态2' } },
+              { tool: 'post_comments', input: { post: '动态9' } },
+              { tool: 'member_posts', input: { member: '队员2', weeks: 0 } },
+              { tool: 'member_posts', input: { member: '队员7' } },
+            ]
+          : [],
+      );
+      await wakes(fixture, {
+        agent,
+        consented: [mia],
+        weeks: {
+          [week.weekStart]: week,
+          [earlier]: {
+            weekStart: earlier,
+            members: week.members,
+            checkIns: [
+              {
+                id: randomUUID(),
+                member: mia,
+                day: '2026-10-20',
+                createdAt: new Date('2026-10-20T15:00:00Z'),
+                kind: 'trained',
+                sport: '游泳',
+                minutes: 30,
+                unposted: true,
+                reactedBy: [],
+                comments: [],
+              },
+            ],
+          },
+        },
+      }).checkedIn({ checkIn, squads: [squad] });
+      expect(runs[0]?.answers).toStrictEqual([
+        [
+          '队员1 的动态（新的在前）：',
+          '- 动态1：11-01 周日 队员1 训练 跑步 · 1 条评论',
+          '- 动态2：10-20 周二 队员1 训练 游泳 （只记录，没发动态） 30 分钟',
+        ].join('\n'),
+        '动态1 的评论区：\n- 11-01 周日 09:55 队员1：「跟队员2比谁更健康」',
+        '动态2 只记录，没发动态，没有评论。',
+        '没有 动态9；能看的是：动态1、动态2。',
+        // Without an AI consent, nothing they posted is read.
+        '队员2 这段时间没有能看的动态。',
+        '没有 队员7；队员是：队员1、队员2。',
+      ]);
+      const report = await createPostgresCoachReport(fixture.trx).squad(squad);
+      expect(report.wakes[0]?.steps[1]).toStrictEqual({
+        tool: 'post_comments',
+        input: { post: '动态1' },
+        output: '（42 字）',
+      });
     });
   });
 

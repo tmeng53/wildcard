@@ -83,6 +83,27 @@ export interface CoachThread {
   }[];
 }
 
+/**
+ * A post's comment section as the model reads it, one line each in order: who said it (队员N,
+ * 你, or another coach by name), when, and whom a member's comment replies to or @s.
+ */
+export function saidLines(
+  said: CoachThread['said'],
+  roster: ReadonlyMap<string, string>,
+): string[] {
+  return said.map(({ by, text, when, to, answering }) => {
+    const who =
+      by === 'you'
+        ? '你'
+        : 'member' in by
+          ? (roster.get(by.member) ?? '队员')
+          : `${by.coach}（教练）`;
+    const toWhom =
+      to === undefined ? '' : to.kind === 'reply' ? `（回复${to.coach}）` : `（@${to.coach}）`;
+    return `- ${when === undefined ? '' : `${when} `}${who}${toWhom}：「${text}」${answering === true ? '（要回的这句）' : ''}`;
+  });
+}
+
 /** One check-in's talk on a daily wake: what the coach and members said under it lately. */
 export interface DayTalk {
   readonly checkIn: WeekCheckIn;
@@ -181,17 +202,7 @@ export function taskOf({
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined || thread === undefined) return undefined;
     const roster = rosterOf(week);
-    const said = thread.said.map(({ by, text, when, to, answering }) => {
-      const who =
-        by === 'you'
-          ? '你'
-          : 'member' in by
-            ? (roster.get(by.member) ?? '队员')
-            : `${by.coach}（教练）`;
-      const toWhom =
-        to === undefined ? '' : to.kind === 'reply' ? `（回复${to.coach}）` : `（@${to.coach}）`;
-      return `- ${when === undefined ? '' : `${when} `}${who}${toWhom}：「${text}」${answering === true ? '（要回的这句）' : ''}`;
-    });
+    const said = saidLines(thread.said, roster);
     const answering = checkIn.comments.find(({ id }) => id === reason.comment);
     // Without this the model answers from the words alone and guesses what the photos show.
     const photoCount = checkIn.photos?.length ?? 0;

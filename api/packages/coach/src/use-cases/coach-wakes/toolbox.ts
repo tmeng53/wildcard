@@ -11,7 +11,12 @@ import {
 } from '../../domain/challenge.js';
 import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
 import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
-import { weekText, type SquadWeek } from '../../domain/squad-week.js';
+import {
+  checkInLine,
+  weekText,
+  type SquadWeek,
+  type WeekCheckIn,
+} from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
 import type { CoachMemes, CoachTool, ToolAnswer } from '../../ports.js';
 
@@ -170,6 +175,7 @@ export function toolbox({
   facts,
   pastWeek,
   memes,
+  commentsOf,
   noteTo = [],
   gifting,
   to,
@@ -185,8 +191,10 @@ export function toolbox({
   readonly photos?: () => Promise<readonly string[]>;
   /** The members' stats and this week's plans, as the model reads them. */
   readonly facts?: () => Promise<string>;
-  /** A week before this one, as the model reads it. */
-  readonly pastWeek?: (weeksAgo: number) => Promise<string>;
+  /** A week before this one, as the model may read it. */
+  readonly pastWeek?: (weeksAgo: number) => Promise<SquadWeek>;
+  /** What was said under a post, one line each, the coach's own lines too. */
+  readonly commentsOf?: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   /** The memes in use now, for humour. */
   readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
@@ -199,6 +207,14 @@ export function toolbox({
   readonly openChallenge?: boolean;
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
+  // Each week is read at most once a run, however many tools ask for it.
+  const weeks = new Map<number, Promise<SquadWeek>>([[0, Promise.resolve(week)]]);
+  const weekAgo = (weeksAgo: number): Promise<SquadWeek> => {
+    const read =
+      weeks.get(weeksAgo) ?? (pastWeek === undefined ? Promise.resolve(week) : pastWeek(weeksAgo));
+    weeks.set(weeksAgo, read);
+    return read;
+  };
   const tools = [
     defineTool(draft.steps, {
       name: 'squad_week',
@@ -208,9 +224,9 @@ export function toolbox({
       parameters: z.object({
         weeks_ago: z.number().int().min(0).max(4).optional().describe('看几周前，0 或不填是这周'),
       }),
-      run: async ({ weeks_ago: weeksAgo = 0 }) =>
-        weeksAgo === 0 || pastWeek === undefined ? weekText(week) : await pastWeek(weeksAgo),
+      run: async ({ weeks_ago: weeksAgo = 0 }) => weekText(await weekAgo(weeksAgo)),
     }),
+    ...postTools(draft.steps, { roster, weekAgo, commentsOf }),
     defineTool(draft.steps, {
       name: 'remember',
       description:
@@ -491,6 +507,103 @@ export function toolbox({
     tools.push(lookAtPhotos(draft.steps, photos));
   }
   return tools;
+}
+
+/** The furthest back the coach reads, in weeks before this one, as `squad_week` does. */
+const WEEKS_BACK = 4;
+
+/**
+ * Looking a member's posts up, and the comments under one on demand: a comment that asks about
+ * someone (谁更健康) is answered from what they posted, not guessed. The posts are those the
+ * squad's week holds, so only what was shared to this squad, from members with a current AI
+ * consent; one only recorded (发布到动态 off) shows what was done, never its words, and has no
+ * comments. Each listed post gets a number (动态N) for the run, which `post_comments` takes.
+ */
+function postTools(
+  steps: WakeStep[],
+  {
+    roster,
+    weekAgo,
+    commentsOf,
+  }: {
+    readonly roster: ReadonlyMap<string, string>;
+    readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
+    readonly commentsOf: ((checkIn: WeekCheckIn) => Promise<readonly string[]>) | undefined;
+  },
+): CoachTool[] {
+  const listed = new Map<string, WeekCheckIn>();
+  const numberOf = (checkIn: WeekCheckIn): string => {
+    const known = [...listed].find(([, each]) => each.id === checkIn.id)?.[0];
+    if (known !== undefined) return known;
+    const number = `动态${String(listed.size + 1)}`;
+    listed.set(number, checkIn);
+    return number;
+  };
+  const memberPosts = defineTool(steps, {
+    name: 'member_posts',
+    reads: true,
+    description:
+      '看一个队员最近发的动态，新的在前：每条是什么、写了什么、几张照片、几条评论。评论里有人问到某个人、要拿人比较，或者你想知道一个人最近怎么样，就先看他的动态再说，别猜。',
+    parameters: z.object({
+      member: z.string().describe('看谁：队员N'),
+      weeks: z
+        .number()
+        .int()
+        .min(0)
+        .max(WEEKS_BACK)
+        .optional()
+        .describe(`再往前看几周，0 是只看这周，不填是这周和上周，最多 ${String(WEEKS_BACK)}`),
+    }),
+    run: async ({ member, weeks = 1 }) => {
+      const id = [...roster].find(([, name]) => name === member.trim())?.[0];
+      if (id === undefined) {
+        return `没有 ${member}；队员是：${[...roster.values()].join('、')}。`;
+      }
+      const read = await Promise.all(
+        Array.from({ length: weeks + 1 }, (_, weeksAgo) => weekAgo(weeksAgo)),
+      );
+      const posts = read
+        .flatMap(({ checkIns }) => checkIns)
+        .filter((each) => each.member === id)
+        .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      if (posts.length === 0) return `${member} 这段时间没有能看的动态。`;
+      return [
+        `${member} 的动态（新的在前）：`,
+        ...posts.map((post) => {
+          const comments =
+            post.comments.length === 0 ? '' : ` · ${String(post.comments.length)} 条评论`;
+          return `- ${numberOf(post)}：${checkInLine({ ...post, comments: [] }, roster)}${comments}`;
+        }),
+      ].join('\n');
+    },
+  });
+  if (commentsOf === undefined) return [memberPosts];
+  const postComments = defineTool(steps, {
+    name: 'post_comments',
+    reads: true,
+    description:
+      '看一条动态下面的评论区，先后顺序，你自己说过的也在里面。动态的编号从 member_posts 来。',
+    parameters: z.object({ post: z.string().describe('哪条：动态N') }),
+    run: async ({ post }) => {
+      const checkIn = listed.get(post.trim());
+      if (checkIn === undefined) {
+        return listed.size === 0
+          ? `没有 ${post}；先用 member_posts 找到那条动态。`
+          : `没有 ${post}；能看的是：${[...listed.keys()].join('、')}。`;
+      }
+      if (checkIn.unposted === true) return `${post} 只记录，没发动态，没有评论。`;
+      let said: readonly string[];
+      try {
+        said = await commentsOf(checkIn);
+      } catch {
+        return '评论现在查不到，先不提。';
+      }
+      return said.length === 0
+        ? `${post} 下面还没有评论。`
+        : `${post} 的评论区：\n${said.join('\n')}`;
+    },
+  });
+  return [memberPosts, postComments];
 }
 
 /**
