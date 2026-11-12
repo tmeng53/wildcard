@@ -60,14 +60,14 @@ private func home(members: [MemberID], captain: MemberID, squad: SquadID = squad
     #expect(moved.takeNews() == SquadNews())
 }
 
-@MainActor @Test func aMemberNoLongerInTheSquadKnowsWhichTheyLost() async {
+@MainActor @Test func aMemberNoLongerInTheSquadHasNoHome() async {
     let backend = ScriptedBackend()
     let today = store(backend)
     await today.load()
-    #expect(today.lostSquad == nil)
+    #expect(today.phase == .current)
 
     await backend.set(server: nil)
     await today.refresh()
     #expect(today.phase == .noSquad)
-    #expect(today.lostSquad?.name == "周三不练腿")
+    #expect(today.home == nil)
 }

@@ -123,6 +123,14 @@ public struct WildcardAPI: Sendable {
         return try read { () throws(ContractsError) in try Squad(wire) }
     }
 
+    /// In no squad now, the squad the member was last in and how they came out of it; nil while
+    /// they are in one, or were never in one.
+    public func lastSquad() async throws(APIError) -> SquadExit? {
+        let list = try await call { try await client.listMySquads().ok.body.json }
+        guard list.squads.isEmpty, let wire = list.lastSquad else { return nil }
+        return try read { () throws(ContractsError) in try SquadExit(wire) }
+    }
+
     /// The squad's today: every member's day, today's counts, the member's 本周 and the squad's.
     public func today(of squad: SquadID) async throws(APIError) -> SquadToday {
         let wire = try await todayWire(of: squad)

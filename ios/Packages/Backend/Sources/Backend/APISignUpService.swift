@@ -80,13 +80,16 @@ public struct APISignUpService: SignUpService {
 
     /// The squad the member is already in, as joining it returned it, and the character on
     /// their profile.
-    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
-        let (found, member) = try await signUp { () throws(APIError) in (try await api.squad(squad), try await api.me())
-        }
-        let character = member.profile?.character.map { saved in
+    public func character() async throws(SignUpError) -> NewCharacter? {
+        let member = try await signUp { () throws(APIError) in try await api.me() }
+        return member.profile?.character.map { saved in
             NewCharacter(outfit: Outfit(saved.look), persona: Persona(saved.look), nickname: saved.nickname)
         }
-        return ResumedSignUp(squad: try await joined(found), character: character)
+    }
+
+    public func resume(in squad: SquadID) async throws(SignUpError) -> ResumedSignUp {
+        let found = try await signUp { () throws(APIError) in try await api.squad(squad) }
+        return ResumedSignUp(squad: try await joined(found), character: try await character())
     }
 
     public func stock() async -> StreetStock? {

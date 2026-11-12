@@ -358,7 +358,7 @@ extension MainTabs {
                     teammateOnHome = true
                     teammate = homeCard(of: $0)
                 }
-                opensCoachPagesFromToday()
+                opensPagesFromToday()
             }
             .navigationDestination(for: TodayPage.self) { page in
                 switch page {

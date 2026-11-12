@@ -33,7 +33,7 @@ public struct UnlockWords {
 /// 通知, opened from the bell on 动态 (the approved bell design): everything the member was told,
 /// under 今天, 本周 and 更早, newest first (what was said on one post in a day is one row), the
 /// ones that were new in bold with a dot. Opening it
-/// marks them all read. A tap on a row goes where it points. Empty, the member's character
+/// marks them all read. A tap on a row goes where it points, and the row shows read from then on. Empty, the member's character
 /// stands there with 还没有通知.
 public struct NoticesView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -111,6 +111,8 @@ public struct NoticesView: View {
                     .padding(.top, Space.s)
                 ForEach(section.entries) { entry in
                     Button {
+                        // Back from a post it opened, the row isn't new any more.
+                        inbox.opened(entry.notices)
                         // The same place its banner and its push open.
                         if let destination = entry.notice.destination { open(destination) }
                     } label: {

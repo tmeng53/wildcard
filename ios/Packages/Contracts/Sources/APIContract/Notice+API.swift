@@ -121,6 +121,17 @@ extension Notice {
             },
             gifts: (wire.gifts ?? []).compactMap { gift in
                 Unlock.Kind(rawValue: gift.kind).map { Broadcast.Gift(kind: $0, id: gift.id) }
+            },
+            letter: wire.teamLetter.map { letter in
+                Broadcast.Letter(
+                    lines: CatalogNames(letter.lines.value1),
+                    presents: letter.presents.compactMap { present in
+                        switch present.kind {
+                        case "piece": .piece(present.id)
+                        case "badge": .badge(present.id)
+                        default: nil
+                        }
+                    })
             })
     }
 }
