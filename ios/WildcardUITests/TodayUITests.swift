@@ -77,7 +77,8 @@ final class TodayUITests: XCTestCase {
     /// bring the typed words back, post: back on the scene the line stays off it, the
     /// squad bar doesn't move, and 动态 has it.
     func testDisclaimer() {
-        let app = launch(language: "zh-Hans", photos: 0)
+        // 已发出 holds a minute, so a slow simulator still finds its 查看.
+        let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-bubble-hold"])
         _ = topCard(in: app)
         let field = openDisclaimer(in: app)
         let close = app.buttons["disclaimer.close"]
@@ -130,8 +131,7 @@ final class TodayUITests: XCTestCase {
             "the count doesn't match the excuse")
         post.tap()
 
-        // The character holds up the 请假条 sign; its words stay in 动态, off the scene. 已发出
-        // holds 打卡's spot for 3 seconds, so the checks and the shot come quickly after it.
+        // The character holds up the 请假条 sign; its words stay in 动态, off the scene.
         waitFor(field, "exists == false", "the 请假条 page didn't close")
         let outgoing = app.buttons["today.outgoing"]
         waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
