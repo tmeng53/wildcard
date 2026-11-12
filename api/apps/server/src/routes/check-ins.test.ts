@@ -1617,6 +1617,63 @@ describe('a 训练 from Apple Health', () => {
     expect(await shown()).toBeUndefined();
   });
 
+  it('shows a meal’s place to the squad, and an edit changes or clears it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const place = {
+      name: 'Sweetgreen',
+      appleId: 'I6FD7682FD36BB3BE',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    };
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'healthyMeal',
+            meal: { place },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const shown = async () =>
+      z
+        .object({ checkIn: z.object({ meal: z.object({ place: z.unknown().optional() }) }) })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.meal.place;
+    expect(await shown()).toStrictEqual(place);
+
+    const edit = async (meal: Record<string, unknown>) =>
+      (
+        await call({
+          method: 'PATCH',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: { version: 1, kind: 'healthyMeal', meal },
+        })
+      ).status;
+    expect(await edit({ place: { ...place, name: 'Whole Foods', appleId: undefined } })).toBe(200);
+    expect(await shown()).toStrictEqual({
+      name: 'Whole Foods',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    });
+    // An edit that leaves it out clears it, as with every field of the post.
+    expect(await edit({ caption: '沙拉' })).toBe(200);
+    expect(await shown()).toBeUndefined();
+  });
+
   it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

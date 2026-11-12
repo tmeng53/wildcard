@@ -22,6 +22,7 @@ export {
   SquadId,
   Training,
   photosOf,
+  placeOf,
   storedDisclaimerFields,
   storedMealFields,
   storedTrainingFields,
@@ -29,6 +30,7 @@ export {
   type Entry,
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
+export { Place } from './domain/place.js';
 export { Workout, WorkoutView, workoutView } from './domain/workout.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange, MyDayRange, RecordRange, Unshared } from './domain/day-range.js';

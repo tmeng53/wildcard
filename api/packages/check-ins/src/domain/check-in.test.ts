@@ -47,6 +47,45 @@ describe('CheckInDraft', () => {
     ).toStrictEqual(['ok', 'ok', 'ok', 'ok', 'ok']);
   });
 
+  it('takes a place on a 训练 or meal, never on a 请假条', () => {
+    const place = {
+      name: ' Sweetgreen ',
+      appleId: 'I6FD7682FD36BB3BE',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    };
+    const meal = CheckInDraft.parse({ ...base, kind: 'healthyMeal', meal: { place } });
+    expect(meal.kind === 'healthyMeal' && meal.meal.place).toStrictEqual({
+      ...place,
+      name: 'Sweetgreen',
+    });
+    expect(issues({ ...base, kind: 'trained', training: { sport: 'run', place } })).toBe('ok');
+    expect(
+      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '困', place } }),
+    ).toStrictEqual(['disclaimer']);
+    expect(
+      issues({ ...base, kind: 'cheatMeal', meal: { place: { ...place, latitude: 91 } } }),
+    ).toStrictEqual(['meal.place.latitude']);
+    expect(
+      issues({ ...base, kind: 'cheatMeal', meal: { place: { ...place, name: ' ' } } }),
+    ).toStrictEqual(['meal.place.name']);
+    const record = recordFromDraft(meal, {
+      id: CheckInId.parse('0b6f6d2e-1c3a-4d5e-8f9a-0b1c2d3e4f5a'),
+      member: MemberId.parse('1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f'),
+    });
+    expect(storedPayload(record)).toStrictEqual({
+      version: 1,
+      place: { ...place, name: 'Sweetgreen' },
+    });
+    expect(
+      entryFromStored({ kind: 'healthyMeal', payload: storedPayload(record), photos: [] }),
+    ).toStrictEqual({
+      kind: 'healthyMeal',
+      meal: { place: { ...place, name: 'Sweetgreen' } },
+    });
+  });
+
   it('keeps the moment to the millisecond, whatever the offset', () => {
     const parse = (createdAt: string) =>
       CheckInDraft.parse({ ...trained, createdAt }).createdAt.toISOString();

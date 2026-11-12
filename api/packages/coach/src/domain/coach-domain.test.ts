@@ -76,6 +76,14 @@ describe('the squad’s week, as the model reads it', () => {
     expect(weekText(week)).not.toContain(mia);
   });
 
+  it('names the place a post was tagged with', () => {
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    expect(checkInLine({ ...first, place: 'Equinox Flatiron' }, rosterOf(week))).toBe(
+      '10-27 周二 队员1 训练 跑步 30 分钟 在「Equinox Flatiron」 「腿废了」 · 点了表情：队员2 · 评论：队员2「强」',
+    );
+  });
+
   it('calls a planned rest 计划休息, not a 请假条', () => {
     const [, leave] = week.checkIns;
     if (leave === undefined) throw new Error('no check-in');

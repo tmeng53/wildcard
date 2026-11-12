@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { z } from 'zod';
 
 import { Photos, type PhotoRef } from './photos.js';
+import { Place } from './place.js';
 import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
 import { Workout } from './workout.js';
@@ -73,6 +74,7 @@ export const storedTrainingFields = {
   minutes: WorkoutMinutes.optional(),
   startTime: StartTime.optional(),
   caption: Caption.optional(),
+  place: Place.optional(),
 };
 const trainingFields = {
   ...storedTrainingFields,
@@ -97,7 +99,7 @@ function customSportMatches(
   }
 }
 
-export const storedMealFields = { caption: Caption.optional() };
+export const storedMealFields = { caption: Caption.optional(), place: Place.optional() };
 const mealFields = { ...storedMealFields, photos: Photos.optional() };
 export const storedDisclaimerFields = {
   text: DisclaimerText,
@@ -284,6 +286,19 @@ export function isSameCheckIn(saved: CheckInRecord, retry: CheckInRecord): boole
 
 function contents(record: CheckInRecord) {
   return { ...record, createdAt: record.createdAt.getTime(), audience: [...record.audience] };
+}
+
+/** The place a 训练 or meal was tagged with; a 请假条 has none. */
+export function placeOf(entry: Entry): Place | undefined {
+  switch (entry.kind) {
+    case 'trained':
+      return entry.training.place;
+    case 'healthyMeal':
+    case 'cheatMeal':
+      return entry.meal.place;
+    case 'disclaimer':
+      return undefined;
+  }
 }
 
 /** A 训练's workout; other kinds have none. */
