@@ -34,10 +34,10 @@ func moment(now: Date = Date()) throws -> (day: LocalDay, createdAt: Timestamp) 
 func checkIn(
     by member: SignedInMember, to squad: SquadID, _ entry: CheckIn.Entry, daysAgo: Int = 0
 ) throws -> CheckIn {
-    let now = try moment()
     let day = try moment(now: Date().addingTimeInterval(-Double(daysAgo) * 86_400)).day
+    // Made now, after the squad was joined: teammates see only what was posted after they joined.
     return CheckIn(
-        id: CheckInID(UUID()), member: member.id, day: day, createdAt: now.createdAt,
+        id: CheckInID(UUID()), member: member.id, day: day, createdAt: Timestamp(Date()),
         audience: try Audience([squad]), entry: entry)
 }
 
