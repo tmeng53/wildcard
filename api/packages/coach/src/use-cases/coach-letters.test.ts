@@ -286,7 +286,7 @@ describe('the outgoing coach’s letter', () => {
       const { agent, runs } = writingAgent(['长'.repeat(201), '队员2 交给你了', '短的。']);
       expect(await letters(fixture, { agent }).write(squad)).toMatchObject({ text: '短的。' });
       expect(runs[0]?.answers).toStrictEqual([
-        '太长了：201 字（英文字母、数字、空格和标点算半个），最多 200 字。重写一封。',
+        '太长了：201 字（英文字母、数字、空格和标点算半个字），最多 200 字。重写一封。',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。重写一封。',
         '交上了。',
       ]);

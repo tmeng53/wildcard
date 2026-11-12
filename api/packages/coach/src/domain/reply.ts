@@ -10,6 +10,9 @@ import { z } from 'zod';
  */
 export const REPLY_LIMIT = 100;
 
+/** How the model is told a line's length is counted, after each limit it reads. */
+export const HALF_WIDTH = '（英文字母、数字、空格和标点算半个字）';
+
 /**
  * How long a line members read is, as a limit counts it: a Chinese character (or any other
  * outside ASCII, an emoji too) is one, and an ASCII letter, digit, space or mark is half, since
@@ -38,7 +41,7 @@ export function lineProblem(text: string, limit: number): string | undefined {
   if (text === '') return '这句是空的。';
   const length = Math.ceil(lineLength(text));
   if (length > limit) {
-    return `太长了：${String(length)} 字（英文字母、数字、空格和标点算半个），最多 ${String(limit)} 字。`;
+    return `太长了：${String(length)} 字${HALF_WIDTH}，最多 ${String(limit)} 字。`;
   }
   if (/队员\s*[0-9０-９]+/.test(text))
     return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';

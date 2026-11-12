@@ -1,3 +1,4 @@
+import { lineLength } from '@wildcard/coach';
 import {
   GIFT_LINE_LIMIT,
   GiftPieceEdit,
@@ -236,9 +237,11 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
         .string()
         .trim()
         .min(1)
-        .max(GIFT_LINE_LIMIT)
+        .refine((line) => Math.ceil(lineLength(line)) <= GIFT_LINE_LIMIT, {
+          message: `At most ${String(GIFT_LINE_LIMIT)} characters, English letters, digits, spaces and marks counting as half.`,
+        })
         .describe(
-          `What the coach says with it, in the member’s language, up to ${String(GIFT_LINE_LIMIT)} characters.`,
+          `What the coach says with it, in the member’s language, up to ${String(GIFT_LINE_LIMIT)} characters (English letters, digits, spaces and marks count as half).`,
         ),
     }),
     run: async (input, { admin }) => {

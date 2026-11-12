@@ -773,7 +773,7 @@ describe('a line members read', () => {
     ).toStrictEqual([named, named, named]);
     expect(lineProblem('全体队员加油', 100)).toBeUndefined();
     expect(lineProblem('跑跑跑', 2)).toBe(
-      '太长了：3 字（英文字母、数字、空格和标点算半个），最多 2 字。',
+      '太长了：3 字（英文字母、数字、空格和标点算半个字），最多 2 字。',
     );
     expect(lineProblem('', 2)).toBe('这句是空的。');
   });
@@ -784,10 +784,10 @@ describe('a line members read', () => {
     expect(lineLength('Nice 💪')).toBe(3.5);
     expect(lineProblem('a'.repeat(200), 100)).toBeUndefined();
     expect(lineProblem('a'.repeat(201), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个），最多 100 字。',
+      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
     );
     expect(lineProblem('跑'.repeat(101), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个），最多 100 字。',
+      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
     );
   });
 });

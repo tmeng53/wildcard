@@ -10,7 +10,7 @@ import {
   challengeText,
 } from '../../domain/challenge.js';
 import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
-import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
+import { CoachEmoji, HALF_WIDTH, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import {
   checkInLine,
   weekText,
@@ -325,7 +325,7 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'post_note',
-        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字。`,
+        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('今天的一句') }),
         run: ({ text }) => {
           const line = text.trim();
@@ -338,7 +338,7 @@ export function toolbox({
       }),
       defineTool(draft.steps, {
         name: 'note_to',
-        description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
+        description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}，对他说话用「你」。`,
         parameters: z.object({
           member: z.string().describe('写给谁：队员N'),
           text: z.string().describe('便条上的这一句'),
@@ -444,7 +444,7 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
-        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
@@ -488,7 +488,7 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'answer',
-        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
@@ -658,7 +658,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字${HALF_WIDTH}。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),

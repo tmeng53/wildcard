@@ -1,5 +1,6 @@
 import type { Coach, CoachId } from './coach.js';
 import type { SquadId } from './settings.js';
+import { HALF_WIDTH } from './reply.js';
 
 // The letter a coach leaves when its squad changes coach (换教练): the outgoing coach writes it
 // once, in its own voice, to the squad and the next coach, saying goodbye and handing the squad
@@ -80,7 +81,7 @@ export function letterTask({
       '- 可以提跟这个小队一起的事，只挑大家乐意被当众提起的；记性里没有的不编。',
       '- 这不是教练之间的交接笔记：不写谁住哪、做什么工作、私下说过什么，不写体重、身材、伤病。',
       '- 叫队员用昵称。',
-      `- 只写正文，称呼和落款不写，最多 ${String(LETTER_LIMIT)} 字。写好用 write_letter 交。`,
+      `- 只写正文，称呼和落款不写，最多 ${String(LETTER_LIMIT)} 字${HALF_WIDTH}。写好用 write_letter 交。`,
     ].join('\n'),
   ].join('\n\n');
 }
