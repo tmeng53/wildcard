@@ -127,21 +127,10 @@ export function editBody(
 }
 
 /**
- * The first `squad.md` of a squad whose coach hasn't written one: its name and who is in it, by
- * the names the model knows them by, for the coach to build on.
+ * The first `squad.md` of a squad whose coach hasn't written one: its name, for the coach to build
+ * on. Who is in it and their nicknames aren't copied in: every task says who is who as they are
+ * now, and a copy here went stale and named people wrongly (Tracy, 2026-11-12).
  */
-export function squadSeed(
-  week: Pick<SquadWeek, 'name' | 'members'>,
-  roster: ReadonlyMap<string, string>,
-): string {
-  const members = week.members.map(({ member, nickname }) => {
-    const name = roster.get(member) ?? '队员';
-    return nickname === undefined ? `- ${name}` : `- ${name}：昵称「${nickname}」`;
-  });
-  return [
-    '# 小队',
-    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
-    '队员（昵称会变，以 squad_week 为准）：',
-    ...members,
-  ].join('\n');
+export function squadSeed(week: Pick<SquadWeek, 'name'>): string {
+  return ['# 小队', ...(week.name === undefined ? [] : [`队名：${week.name}`])].join('\n');
 }

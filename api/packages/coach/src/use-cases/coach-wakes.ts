@@ -1,6 +1,7 @@
 import { challengeOpen, type Challenge } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
+  memberOfPath,
   shownBody,
   shownPaths,
   squadSeed,
@@ -69,7 +70,7 @@ const RECENT_EMOJI = 8;
 /** How far back the daily wake reads the talk under check-ins, to remember from it. */
 const TALK_WINDOW_MS = 24 * 60 * 60_000;
 
-/** The file a squad's coach starts from: its name and who is in it. */
+/** The file a squad's coach starts from: its name. */
 const SEEDED = 'squad.md';
 
 /** What one run of the coach did. */
@@ -551,10 +552,10 @@ async function think(
     challengeDone: false,
     steps: [],
   };
-  // A squad whose coach hasn't written its file yet starts from its name and who is in it,
+  // A squad whose coach hasn't written its file yet starts from its name,
   // saved with the run's other changes.
   if ((stored.get(SEEDED) ?? '') === '') {
-    draft.files.set(SEEDED, squadSeed(week, roster));
+    draft.files.set(SEEDED, squadSeed(week));
     draft.changed.add(SEEDED);
   }
   const daily = wake.reason.kind === 'daily';
@@ -571,10 +572,16 @@ async function think(
         ),
       )
     : welcomes;
+  // Whose pages the wake reads: everyone's on the squad's own wakes (the day's, the dream, a
+  // welcome), else only the people under the check-in, so a line to one never brings up
+  // another's things (Tracy, 2026-11-12).
+  const about = aboutWhom(week, wake.reason);
   const files = new Map(
-    shownPaths({ roster, coach: coach.id }).map((path) => {
+    shownPaths({ roster, coach: coach.id }).flatMap((path) => {
       const at = storedPathOf(path, { roster, coach: coach.id });
-      return [path, at === undefined ? undefined : draft.files.get(at)];
+      const member = at === undefined ? undefined : memberOfPath(at);
+      if (about !== undefined && member !== undefined && !about.has(member)) return [];
+      return [[path, at === undefined ? undefined : draft.files.get(at)] as const];
     }),
   );
   // The day the wake is for: its own, or the squad's today on its own clock.
@@ -1069,10 +1076,19 @@ async function talksOf(
     talks.push({
       checkIn,
       ...(reply?.coach === coach.id && reply.text !== undefined ? { reply: reply.text } : {}),
-      said: lately.flatMap(({ id, member, text }) => {
+      said: lately.flatMap(({ id, member, text, toCoach, mentionsCoach, replyTo, mentions }) => {
         const answer = answers.get(id);
         return [
-          { member, text },
+          {
+            member,
+            text,
+            to: {
+              ...(toCoach === undefined ? {} : { toCoach }),
+              ...(mentionsCoach === undefined ? {} : { mentionsCoach }),
+              ...(replyTo === undefined ? {} : { replyTo }),
+              ...(mentions === undefined ? {} : { mentions }),
+            },
+          },
           ...(answer === undefined ? [] : [{ member: undefined, text: answer }]),
         ];
       }),
@@ -1197,6 +1213,8 @@ function saidOf({
                   coach: nameOf(to),
                 },
               }),
+          ...(comment.replyTo === undefined ? {} : { replyTo: comment.replyTo }),
+          ...(comment.mentions === undefined ? {} : { mentions: comment.mentions }),
           ...(comment.id === answering ? { answering: true } : {}),
         },
         ...(answer === undefined ? [] : [{ by: by(answer.coach), text: answer.text }]),
@@ -1212,6 +1230,19 @@ async function noteReaders(
 ): Promise<readonly string[]> {
   const consented = await deps.aiConsented(members);
   return deps.wantNotes(consented);
+}
+
+/**
+ * The members a check-in's or reply's wake is about, whose pages it reads: the check-in's author
+ * and everyone who commented under it. Someone only @-ed there is left out; the model can still
+ * write to their page by name. `undefined` for the squad's own wakes (the day's, the dream, a
+ * welcome), which read every page.
+ */
+function aboutWhom(week: SquadWeek, reason: Wake['reason']): ReadonlySet<string> | undefined {
+  if (reason.kind !== 'checkIn' && reason.kind !== 'comment') return undefined;
+  const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (checkIn === undefined) return new Set();
+  return new Set([checkIn.member, ...checkIn.comments.map(({ member }) => member)]);
 }
 
 /**

@@ -12,11 +12,14 @@ import { briefLine, weekdayOf, type NoteBrief } from './member-facts.js';
 import { REPLY_LIMIT } from './reply.js';
 import type { CoachSettings } from './settings.js';
 import {
+  addressedWords,
   checkInLine,
   languageOf,
   rosterOf,
+  rosterText,
   type SquadWeek,
   type WeekCheckIn,
+  type WeekComment,
 } from './squad-week.js';
 import type { WakeReason } from './wake.js';
 
@@ -78,6 +81,10 @@ export interface CoachThread {
     readonly when?: string;
     /** Which coach a member's comment replies to or @s, by its name, `你` for this one. */
     readonly to?: { readonly kind: 'reply' | 'mention'; readonly coach: string };
+    /** The teammate a member's comment replies to, by member id. */
+    readonly replyTo?: string;
+    /** The teammates a member's comment @s, by member id. */
+    readonly mentions?: readonly string[];
     /** The comment this wake answers. */
     readonly answering?: boolean;
   }[];
@@ -91,15 +98,22 @@ export function saidLines(
   said: CoachThread['said'],
   roster: ReadonlyMap<string, string>,
 ): string[] {
-  return said.map(({ by, text, when, to, answering }) => {
+  return said.map(({ by, text, when, to, replyTo, mentions, answering }) => {
     const who =
       by === 'you'
         ? '你'
         : 'member' in by
           ? (roster.get(by.member) ?? '队员')
           : `${by.coach}（教练）`;
-    const toWhom =
-      to === undefined ? '' : to.kind === 'reply' ? `（回复${to.coach}）` : `（@${to.coach}）`;
+    const toWhom = addressedWords(
+      {
+        ...(to?.kind === 'reply' ? { toCoach: to.coach } : {}),
+        ...(to?.kind === 'mention' ? { mentionsCoach: to.coach } : {}),
+        ...(replyTo === undefined ? {} : { replyTo }),
+        ...(mentions === undefined ? {} : { mentions }),
+      },
+      { roster, coach: (coach) => coach },
+    );
     return `- ${when === undefined ? '' : `${when} `}${who}${toWhom}：「${text}」${answering === true ? '（要回的这句）' : ''}`;
   });
 }
@@ -114,6 +128,8 @@ export interface DayTalk {
     /** The member who wrote it, or `undefined` for the coach. */
     readonly member: string | undefined;
     readonly text: string;
+    /** Whom a member's comment replies to or @s. */
+    readonly to?: Pick<WeekComment, 'toCoach' | 'mentionsCoach' | 'replyTo' | 'mentions'>;
   }[];
 }
 
@@ -181,6 +197,7 @@ export function taskOf({
   readonly gifting?: GiftOptions;
 }): string | undefined {
   const filesLine = memoryBlock(files);
+  const whoIsWho = rosterText(week);
   const occasion = [...occasionBlock(occasions), ...(backAgain ? [BACK_AGAIN] : [])];
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
@@ -193,6 +210,7 @@ export function taskOf({
       `有人打卡：${checkInLine(checkIn, rosterOf(week))}`,
       ...(challenge === undefined ? [] : [challengeLine(challenge)]),
       ...occasion,
+      whoIsWho,
       emoji,
       writeIn(languageOf(week, checkIn.member)),
       filesLine,
@@ -212,8 +230,15 @@ export function taskOf({
             `这条打卡有 ${String(photoCount)} 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。`,
           ]
         : [];
+    // Who wrote the line to answer, named up front: the post's author is often someone else.
+    const askedBy = thread.said.find((each) => each.answering === true)?.by;
+    const asker =
+      askedBy !== undefined && askedBy !== 'you' && 'member' in askedBy
+        ? (roster.get(askedBy.member) ?? '有人')
+        : '有人';
     return [
-      `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? '有人在评论里 @ 你' : '有人回复你'}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      `${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? `${asker}在评论里 @ 你` : `${asker}回复你`}。这条打卡：${checkInLine({ ...checkIn, comments: [] }, roster)}`,
+      whoIsWho,
       `这条下面的评论区（先后顺序）：\n${said.join('\n')}`,
       `现在是 ${thread.now}。`,
       ...photos,
@@ -229,6 +254,7 @@ export function taskOf({
     if (name === undefined || brief === undefined) return undefined;
     return [
       `${name}刚加入小队，今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
+      whoIsWho,
       briefLine(brief),
       ...occasion,
       filesLine,
@@ -246,6 +272,7 @@ export function taskOf({
     }
     return [
       '夜里，整理你的记性。',
+      whoIsWho,
       ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
       talksBlock(talks, roster),
       filesLine,
@@ -263,6 +290,7 @@ export function taskOf({
   return [
     `新的一天：${reason.day}，${weekdayOf(reason.day)}。`,
     ...occasion,
+    whoIsWho,
     ...(yesterday === undefined ? [] : [yesterdayBlock(yesterday, roster)]),
     talksBlock(talks, roster),
     filesLine,
@@ -365,8 +393,8 @@ function talksBlock(talks: readonly DayTalk[], roster: ReadonlyMap<string, strin
       `- ${checkInLine({ ...checkIn, comments: [] }, roster)}`,
       ...(reply === undefined ? [] : [`  你：「${reply}」`]),
       ...said.map(
-        ({ member, text }) =>
-          `  ${member === undefined ? '你' : (roster.get(member) ?? '队员')}：「${text}」`,
+        ({ member, text, to }) =>
+          `  ${member === undefined ? '你' : `${roster.get(member) ?? '队员'}${to === undefined ? '' : addressedWords(to, { roster })}`}：「${text}」`,
       ),
     ].join('\n'),
   );
