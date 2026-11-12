@@ -26,6 +26,8 @@ export interface WeekCheckIn {
   readonly minutes?: number;
   /** The member's line: a caption, or a 请假条's text. */
   readonly text?: string;
+  /** The name of the place the member tagged it with, never its coordinates. */
+  readonly place?: string;
   /** For a 请假条: true when it is a planned rest (休息), not leave. */
   readonly restDay?: true;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
@@ -151,6 +153,7 @@ export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, st
   if (checkIn.sport !== undefined) parts.push(checkIn.sport);
   if (checkIn.unposted === true) parts.push('（只记录，没发动态）');
   if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
+  if (checkIn.place !== undefined) parts.push(`在「${checkIn.place}」`);
   if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
     parts.push(`（${String(checkIn.photos.length)} 张照片）`);
