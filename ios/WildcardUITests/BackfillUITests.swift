@@ -49,8 +49,11 @@ final class BackfillUITests: XCTestCase {
         caption.typeText("补一顿沙拉")
         app.buttons["compose.post"].tap()
         XCTAssertTrue(caption.waitForNonExistence(timeout: Self.wait), "the post didn't land")
-        app.buttons["tab.feed"].tap()
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
+        // 已发出's 查看 opens the post in 动态.
+        let outgoing = app.buttons["today.outgoing"]
+        waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
+        outgoing.tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "查看 didn't open 动态")
         let label = app.staticTexts.matching(identifier: "post.backfill").firstMatch
         XCTAssertTrue(label.waitForExistence(timeout: Self.wait), "the post isn't marked as a 补打卡")
         XCTAssertEqual(label.label, "补昨天的")
