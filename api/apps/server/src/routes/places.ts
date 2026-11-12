@@ -5,6 +5,8 @@ import {
   Place,
   SportKey,
   SquadId,
+  calorieValue,
+  photosOf,
   type CheckInRecord,
   type CheckIns,
 } from '@wildcard/check-ins';
@@ -20,7 +22,9 @@ import {
   type PlaceDetail,
   type PlaceSummary,
 } from '../flows/squad-places.js';
-import type { VerifyToken } from '../ports.js';
+import type { Log } from '../log.js';
+import type { PhotoStorage, VerifyToken } from '../ports.js';
+import { PhotoView, viewUrls } from './check-ins.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { PlaceNotFoundError } from '../errors.js';
@@ -65,6 +69,19 @@ const Visit = z
     day: LocalDay,
     createdAt: z.iso.datetime(),
     key: placeKey,
+    cover: PhotoView.optional().meta({
+      description:
+        'The post’s first photo, for its tile; missing when it has none (or its file is gone).',
+    }),
+    minutes: z.int().min(1).optional().meta({ description: 'A 训练’s minutes, when it has them.' }),
+    stars: Stars.nullable().meta({
+      description:
+        'A 训练’s tile score: the poster’s standing score for this place; null if they gave ' +
+        'none, and for a meal.',
+    }),
+    calorieValue: z.number().min(0.2).max(5).nullable().meta({
+      description: 'A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.',
+    }),
   })
   .openapi('PlaceVisit');
 
@@ -124,13 +141,33 @@ const signedInFailures = {
   503: problem('Sign-in can’t be checked right now'),
 };
 
-function visitOf(record: CheckInRecord, key: PlaceKey): z.infer<typeof Visit> | undefined {
+/** What a post's tile needs besides the post: its poster's score here and the photo URLs. */
+interface VisitContext {
+  readonly key: PlaceKey;
+  readonly scores: ReadonlyMap<MemberId, Stars>;
+  readonly urls: Awaited<ReturnType<typeof viewUrls>>;
+}
+
+function visitOf(record: CheckInRecord, at: VisitContext): z.infer<typeof Visit> | undefined {
+  const [first] = photosOf(record);
+  const url = first === undefined ? undefined : at.urls.get(first.path);
+  const cover =
+    first === undefined || url === undefined
+      ? {}
+      : {
+          cover: {
+            path: first.path,
+            url: url.href,
+            ...(first.size === undefined ? {} : { size: first.size }),
+          },
+        };
   const base = {
     checkIn: record.id,
     member: record.member,
     day: record.day,
     createdAt: record.createdAt.toISOString(),
-    key,
+    key: at.key,
+    ...cover,
   };
   switch (record.kind) {
     case 'trained':
@@ -141,17 +178,24 @@ function visitOf(record: CheckInRecord, key: PlaceKey): z.infer<typeof Visit> | 
         ...(record.training.customSport === undefined
           ? {}
           : { customSport: record.training.customSport }),
+        ...(record.training.minutes === undefined ? {} : { minutes: record.training.minutes }),
+        stars: at.scores.get(record.member) ?? null,
+        calorieValue: null,
       };
     case 'healthyMeal':
-    case 'cheatMeal':
-      return { ...base, kind: record.kind };
+    case 'cheatMeal': {
+      const { rating } = record.meal;
+      return {
+        ...base,
+        kind: record.kind,
+        stars: null,
+        calorieValue: rating === undefined ? null : calorieValue(rating),
+      };
+    }
     case 'disclaimer':
       return undefined;
   }
 }
-
-const visitsOf = (records: readonly CheckInRecord[], key: PlaceKey) =>
-  records.flatMap((record) => visitOf(record, key) ?? []);
 
 function wireSummary(summary: PlaceSummary) {
   return {
@@ -165,7 +209,10 @@ function wireSummary(summary: PlaceSummary) {
   };
 }
 
-function wireDetail(detail: PlaceDetail): z.infer<typeof PlaceDetailView> {
+function wireDetail(
+  detail: PlaceDetail,
+  at: Omit<VisitContext, 'key'>,
+): z.infer<typeof PlaceDetailView> {
   return {
     version: 1,
     ...wireSummary(detail),
@@ -182,7 +229,7 @@ function wireDetail(detail: PlaceDetail): z.infer<typeof PlaceDetailView> {
       tasty: detail.meals.tasty ?? null,
       calorieValue: detail.meals.calorieValue ?? null,
     },
-    posts: visitsOf(detail.posts, detail.key),
+    posts: detail.posts.flatMap((post) => visitOf(post, { ...at, key: detail.key }) ?? []),
   };
 }
 
@@ -196,6 +243,8 @@ export function places(deps: {
   readonly checkIns: Pick<CheckIns, 'placedPosts'>;
   readonly squads: Pick<Squads, 'membersOf'>;
   readonly placeRatings: PlaceRatings;
+  readonly photos: PhotoStorage;
+  readonly log: Log;
   readonly clock?: () => Date;
 }) {
   const clock = deps.clock ?? (() => new Date());
@@ -234,7 +283,10 @@ export function places(deps: {
       },
       400: problem('Not a valid squad id or place'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
-      404: problem('No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`)'),
+      404: problem(
+        'No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`): the app shows the ' +
+          'place empty. A caller not in the squad gets 403, never 404.',
+      ),
       ...signedInFailures,
     },
   });
@@ -277,10 +329,12 @@ export function places(deps: {
       );
       summaries.sort((a, b) => b.visits - a.visits || b.lastAt.getTime() - a.lastAt.getTime());
       const since = clock().getTime() - RECENT_MS;
-      const recent = posts.flatMap((post) => {
+      const latest = posts.filter((post) => post.createdAt.getTime() >= since);
+      const urls = await viewUrls(deps, latest);
+      const recent = latest.flatMap((post) => {
         const key = keyOf(post);
-        if (key === undefined || post.createdAt.getTime() < since) return [];
-        return visitOf(post, key) ?? [];
+        if (key === undefined) return [];
+        return visitOf(post, { key, scores: scores.get(key) ?? new Map(), urls }) ?? [];
       });
       return c.json({ version: 1 as const, places: summaries.map(wireSummary), recent }, 200);
     })
@@ -291,7 +345,8 @@ export function places(deps: {
       if (posts === undefined) throw new PlaceNotFoundError(key);
       const members = await deps.squads.membersOf(squadId);
       const scores = await deps.placeRatings.of({ place: key, members });
-      return c.json(wireDetail(detailOf({ key, posts, scores, viewer })), 200);
+      const urls = await viewUrls(deps, posts);
+      return c.json(wireDetail(detailOf({ key, posts, scores, viewer }), { scores, urls }), 200);
     })
     .openapi(rate, async (c) => {
       const { key } = c.req.valid('param');

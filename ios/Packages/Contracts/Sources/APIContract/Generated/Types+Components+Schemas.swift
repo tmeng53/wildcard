@@ -8852,6 +8852,49 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/key`.
             public var key: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover`.
+            public struct CoverPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover/value1`.
+                public var value1: Components.Schemas.PhotoView
+                /// The post’s first photo, for its tile; missing when it has none (or its file is gone).
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `CoverPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The post’s first photo, for its tile; missing when it has none (or its file is gone).
+                public init(
+                    value1: Components.Schemas.PhotoView,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover`.
+            public var cover: Components.Schemas.PlaceVisit.CoverPayload?
+            /// A 训练’s minutes, when it has them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
+            public var minutes: Swift.Int?
+            /// A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
+            public var stars: Swift.Int?
+            /// A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/calorieValue`.
+            public var calorieValue: Swift.Double?
             /// Creates a new `PlaceVisit`.
             ///
             /// - Parameters:
@@ -8863,6 +8906,10 @@ extension Components {
             ///   - day:
             ///   - createdAt:
             ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///   - cover:
+            ///   - minutes: A 训练’s minutes, when it has them.
+            ///   - stars: A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            ///   - calorieValue: A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
             public init(
                 checkIn: Swift.String,
                 member: Swift.String,
@@ -8871,7 +8918,11 @@ extension Components {
                 customSport: Swift.String? = nil,
                 day: Swift.String,
                 createdAt: Foundation.Date,
-                key: Swift.String
+                key: Swift.String,
+                cover: Components.Schemas.PlaceVisit.CoverPayload? = nil,
+                minutes: Swift.Int? = nil,
+                stars: Swift.Int? = nil,
+                calorieValue: Swift.Double? = nil
             ) {
                 self.checkIn = checkIn
                 self.member = member
@@ -8881,6 +8932,10 @@ extension Components {
                 self.day = day
                 self.createdAt = createdAt
                 self.key = key
+                self.cover = cover
+                self.minutes = minutes
+                self.stars = stars
+                self.calorieValue = calorieValue
             }
             public enum CodingKeys: String, CodingKey {
                 case checkIn
@@ -8891,6 +8946,10 @@ extension Components {
                 case day
                 case createdAt
                 case key
+                case cover
+                case minutes
+                case stars
+                case calorieValue
             }
         }
         /// - Remark: Generated from `#/components/schemas/PlaceDetail`.

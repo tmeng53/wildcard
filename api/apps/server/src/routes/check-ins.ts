@@ -68,19 +68,18 @@ const checkInFields = {
 /** How long a photo's view URL works. The app lists again for fresh ones. */
 const PHOTO_VIEW_SECONDS = 60 * 60;
 
+/** A photo as the app reads it: its name, a URL to view it and its size. */
+export const PhotoView = z
+  .strictObject({
+    path: z.string().meta({ description: 'The photo’s name, as the check-in was saved with.' }),
+    url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
+    size: PhotoSize.optional(),
+  })
+  .openapi('PhotoView');
+
 const photoViews = {
   photos: z
-    .array(
-      z
-        .strictObject({
-          path: z
-            .string()
-            .meta({ description: 'The photo’s name, as the check-in was saved with.' }),
-          url: z.url().meta({ description: '`GET` the photo here. It works for an hour.' }),
-          size: PhotoSize.optional(),
-        })
-        .openapi('PhotoView'),
-    )
+    .array(PhotoView)
     .optional()
     .meta({ description: '1 to 3 photos, the cover first. Missing when there are none.' }),
 };
@@ -365,7 +364,7 @@ const MemberRecords = z
  * Signs a view URL for every photo of these check-ins, in one call to storage. A check-in whose
  * photo file is gone is logged, and `wire` leaves that photo out rather than failing the list.
  */
-async function viewUrls(
+export async function viewUrls(
   deps: { readonly photos: PhotoStorage; readonly log: Log },
   records: readonly CheckInRecord[],
 ) {

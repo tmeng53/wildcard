@@ -5593,6 +5593,39 @@
             "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
             "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
             "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "cover": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoView"
+              },
+              {
+                "description": "The post’s first photo, for its tile; missing when it has none (or its file is gone)."
+              }
+            ]
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "A 训练’s minutes, when it has them."
+          },
+          "stars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal."
+          },
+          "calorieValue": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0.2,
+            "maximum": 5,
+            "description": "A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练."
           }
         },
         "required": [
@@ -5601,7 +5634,9 @@
           "kind",
           "day",
           "createdAt",
-          "key"
+          "key",
+          "stars",
+          "calorieValue"
         ],
         "additionalProperties": false
       },
@@ -12904,7 +12939,7 @@
             }
           },
           "404": {
-            "description": "No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`)",
+            "description": "No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`): the app shows the place empty. A caller not in the squad gets 403, never 404.",
             "content": {
               "application/problem+json": {
                 "schema": {

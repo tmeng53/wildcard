@@ -1910,7 +1910,7 @@ describe('a squad’s places', () => {
       squad,
       entry: {
         kind: 'trained',
-        training: { sport: 'custom', customSport: '背包', place: park },
+        training: { sport: 'custom', customSport: '背包', minutes: 40, place: park },
       },
     });
     await post({
@@ -1970,7 +1970,16 @@ describe('a squad’s places', () => {
             raters: z.number(),
           }),
         ),
-        recent: z.array(z.object({ key: z.string(), kind: z.string() })),
+        recent: z.array(
+          z.object({
+            key: z.string(),
+            kind: z.string(),
+            stars: z.number().nullable(),
+            calorieValue: z.number().nullable(),
+            cover: z.unknown().optional(),
+            minutes: z.unknown().optional(),
+          }),
+        ),
       })
       .parse(listed.body);
     expect(
@@ -1986,13 +1995,43 @@ describe('a squad’s places', () => {
       { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: 4, raters: 2 },
       { key: 'apple:I0NOODLES', name: '兰州拉面', visits: 2, people: 2, stars: null, raters: 0 },
     ]);
-    expect(recent.map(({ key, kind }) => `${key} ${kind}`)).toStrictEqual([
-      'apple:I0NOODLES cheatMeal',
-      'apple:I0NOODLES healthyMeal',
-      'apple:I0PARK trained',
-      'apple:I0PARK trained',
-      'apple:I0PARK trained',
+    // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover
+    // or minutes when the post had none.
+    expect(recent).toStrictEqual([
+      expect.objectContaining({
+        key: 'apple:I0NOODLES',
+        kind: 'cheatMeal',
+        stars: null,
+        calorieValue: 1.6,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0NOODLES',
+        kind: 'healthyMeal',
+        stars: null,
+        calorieValue: 4,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 3,
+        calorieValue: null,
+        minutes: 40,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 3,
+        calorieValue: null,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 5,
+        calorieValue: null,
+      }),
     ]);
+    expect(recent.filter((visit) => visit.cover !== undefined)).toStrictEqual([]);
+    expect(recent.filter((visit) => visit.minutes !== undefined)).toHaveLength(1);
 
     const page = await call({
       method: 'GET',

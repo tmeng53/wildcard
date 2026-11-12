@@ -21915,7 +21915,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`)
+            /// No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`): the app shows the place empty. A caller not in the squad gets 403, never 404.
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)/responses/404`.
             ///
