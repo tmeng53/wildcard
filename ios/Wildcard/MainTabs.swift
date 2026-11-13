@@ -242,7 +242,11 @@ struct MainTabs: View {
         NavigationStack(path: $feedPages) {
             FeedView(
                 model: feed, header: AnyView(RecapTile(recap: recap)),
-                accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
+                accessory: AnyView(
+                    HStack(spacing: Space.xs) {
+                        SquadMapButton { feedPages.append(.squadMap) }
+                        NoticeBell(inbox: inbox) { showsNotices = true }
+                    })
             ) { selection = .today }
             .navigationRoot()
             .task { await recap.refresh() }
@@ -265,6 +269,8 @@ struct MainTabs: View {
                     }
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+                case .squadMap:
+                    squadMapPage
                 }
             }
         }

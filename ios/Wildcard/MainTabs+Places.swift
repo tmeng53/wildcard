@@ -35,6 +35,16 @@ extension MainTabs {
         )
         .environment(\.sceneTheme, today.scene)
     }
+
+    /// 小队地图 over 动态: a name opens its place, a member's post its own page, both pushed over it.
+    var squadMapPage: some View {
+        SquadMapScreen(
+            squad: today.squadID ?? feed.squad, today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent),
+            source: places, openPlace: { feedPages.append(.place($0)) },
+            openPost: { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+        )
+        .environment(\.sceneTheme, today.scene)
+    }
 }
 
 extension MainTabs {

@@ -6,6 +6,8 @@ import Foundation
 public protocol PlaceSource: Sendable {
     /// What the squad did at the place; nil when no post in the squad's 动态 was tagged there.
     func detail(of place: PlaceKey, in squad: SquadID) async throws(PlacesError) -> PlaceDetail?
+    /// 小队地图: every place the squad's 动态 was tagged with and the posts of the last two days.
+    func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData
     /// The squad's members' characters, for the posts' authors. A member who hasn't made one
     /// yet is missing.
     func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter]

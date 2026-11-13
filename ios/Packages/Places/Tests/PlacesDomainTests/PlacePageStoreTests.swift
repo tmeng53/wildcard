@@ -30,6 +30,8 @@ struct PlacePageStoreTests {
             return detail
         }
 
+        func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData { .empty }
+
         func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] {
             guard let nickname = try? Nickname("小鱼") else { return [:] }
             return [
