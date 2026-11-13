@@ -240,7 +240,7 @@ extension SquadSettingsView {
     private var sceneCard: some View {
         VStack(spacing: Space.s) {
             VStack(spacing: 0) {
-                SceneBackdrop(scene: model.scene)
+                SceneBackdrop(scene: model.scene, focus: SceneBackdrop.venue)
                     .frame(maxWidth: .infinity)
                     .frame(height: SquadSettingsMetrics.sceneBanner)
                     .clipped()
