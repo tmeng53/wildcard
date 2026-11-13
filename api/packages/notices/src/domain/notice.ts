@@ -86,6 +86,15 @@ export const NoticeSubjects = {
     comment: z.uuid().optional(),
   }),
   /**
+   * A teammate's 训练 named the member as someone it was done with (一起练): the push's words as
+   * it was put (sent or not, by the member's switch), and the post to fill their own 训练 from.
+   */
+  trainedWith: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    checkIn: z.uuid(),
+  }),
+  /**
    * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
    * suggested a higher goal, 人均 `daysPerMember` 次, which they may set on 小队.
    */
@@ -123,6 +132,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('coachLetter'), subject: NoticeSubjects.coachLetter }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
+  z.object({ kind: z.literal('trainedWith'), subject: NoticeSubjects.trainedWith }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
   z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
   z.object({ kind: z.literal('thanks'), subject: NoticeSubjects.thanks }),
