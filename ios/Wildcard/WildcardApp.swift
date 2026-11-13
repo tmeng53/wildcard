@@ -337,17 +337,14 @@ struct WildcardApp: App {
                     Self.open(link, today: today, tab: $tab, place: $pushDestination)
                 }
             }
-            // A home screen widget's tap, as `AppRoot` opens it on the real backend.
+            // A home screen widget's tap or a place by its address, as `AppRoot` opens them.
             .onOpenURL { url in
                 if let link = WidgetLink(url: url) {
                     Self.open(link, today: today, tab: $tab, place: $pushDestination)
                 }
-            }
-            .task { await Self.moveSampleSquad(today: today) }
-            // A place in the app by its address, as `AppRoot` opens it on the real backend.
-            .onOpenURL { url in
                 if let place = AppDestination(address: url.absoluteString) { pushDestination = place }
             }
+            .task { await Self.moveSampleSquad(today: today) }
         }
     }
 
