@@ -39,13 +39,6 @@ export function dress(wardrobe, variants, colors = {}) {
       if (!look[slot]) return { svg: '' };
       let svg = wardrobe.art[`${slot}/${look[slot]}/${name}`];
       if (svg === undefined) return { svg: '' };
-      // A sleeve's edge first, under its own shapes, for the shoulder to outline off the body.
-      const edge = wardrobe.edges?.[`${slot}/${look[slot]}/${name}`];
-      if (edge)
-        svg =
-          `<path data-edge="" d="${edge.d}" fill="none" stroke="${edge.stroke}" stroke-width="${edge.width}"` +
-          ` stroke-linecap="round" stroke-linejoin="round"/>` +
-          svg;
       if (slot in colors) {
         const tones = wardrobe.tones[`${slot}/${look[slot]}`];
         if (tones !== undefined) {

@@ -36,103 +36,28 @@ func everySleeveCoversTheShoulder(top: String) throws {
     }
 }
 
-/// The arms are drawn in front of everything worn, so a sleeve's cloth stays inside its own
-/// outline (its ends closed to the shoulder's circle along the radius) or within that circle,
-/// which stays put on the body while the arm turns. Cloth past the outline (a round shoulder
-/// lying on the chest) would turn with the arm with no line around it, as a blob over the
-/// chest or a spike off the body when the arm is raised.
+/// Each arm is drawn over what the body wears only in front of its seam, and under the body
+/// behind it (`Tuck`), so no round of sleeve lies on the chest however the arm turns. Every
+/// sleeve's cloth starts at the seam's two ends, so it leaves the body there with no gap.
 @Test(arguments: PlaceholderCharacter.variants(for: "top"))
-func everySleeveKeepsInsideItsOutline(top: String) throws {
+func everySleeveStartsAtItsSeam(top: String) throws {
     var look = PlaceholderCharacter.lifter
     look.variants["top"] = top
     let figure = try PlaceholderCharacter.figure(wearing: look)
     for id: PartID in ["armL", "armR"] {
         let part = try figure.part(id)
+        let seam = try #require(part.seam)
+        #expect(part.tuck != nil, "\(top) \(id)")
         guard let sleeve = part.slots.firstIndex(of: "top") else { continue }
-        let (pivot, circle) = (part.pivot, 11.4)
-        let outline = try #require(part.art[sleeve].outline, "\(top) \(id)")
-        let line = joined(outline.path)
-        let closing = { (end: Point) -> [Point] in
-            let reach = distance(end, pivot)
-            guard reach > circle else { return [] }
-            let scale = (circle - 0.8) / reach
-            return [Point(x: pivot.x + (end.x - pivot.x) * scale, y: pivot.y + (end.y - pivot.y) * scale)]
-        }
-        let enclosed = closing(line[0]) + line + closing(line[line.count - 1]).reversed()
-        let edges = Array(zip(enclosed, enclosed.dropFirst() + enclosed.prefix(1)))
-        // Near the shoulder a sleeve may also cover the bare arm under it, wherever the arm turns.
-        let body = try #require(part.slots.firstIndex(of: "body"))
-        let limb = try #require(part.art[body].shapes.first.map { sampled($0.path) })
-        let onArm = { (point: Point) in
-            distance(point, pivot) <= 16.05
-                && zip(limb, limb.dropFirst()).contains { segmentDistance(point, $0.0, $0.1) <= 10.95 + 0.05 }
-        }
-        for shape in part.art[sleeve].shapes where shape.fill != nil {
-            for point in corners(shape.path) {
-                let inside =
-                    distance(point, pivot) <= circle + 0.05 || covers(enclosed, point) || onArm(point)
-                    || edges.contains { segmentDistance(point, $0.0, $0.1) <= 0.05 }
-                #expect(inside, "\(top) \(id) reaches \(point)")
-            }
+        let cloth = part.art[sleeve].shapes.filter { $0.fill != nil }.flatMap { corners($0.path) }
+        for end in [seam.top, seam.armpit] {
+            #expect(cloth.contains { distance($0, end) <= 1.5 }, "\(top) \(id) misses \(end)")
         }
     }
-}
-
-/// A line's pieces joined end to end where one starts where another ends, longest first.
-private func joined(_ path: [PathElement]) -> [Point] {
-    var pieces: [[Point]] = []
-    for element in path {
-        switch element {
-        case .move(let point): pieces.append([point])
-        case .line(let end), .quadCurve(let end, _), .curve(let end, _, _): pieces[pieces.count - 1].append(end)
-        case .close: pieces[pieces.count - 1].append(pieces[pieces.count - 1][0])
-        }
-    }
-    pieces.sort { $0.count > $1.count }
-    var line = pieces.removeFirst()
-    while let next = pieces.firstIndex(where: { $0.last == line.first || $0.first == line.last }) {
-        let piece = pieces.remove(at: next)
-        line = piece.last == line.first ? piece.dropLast() + line : line + piece.dropFirst()
-    }
-    return line
-}
-
-/// A line as points along it, each curve in 24 steps.
-private func sampled(_ path: [PathElement]) -> [Point] {
-    var (points, current) = ([Point](), Point(x: 0, y: 0))
-    for element in path {
-        switch element {
-        case .move(let point), .line(let point):
-            points.append(point)
-            current = point
-        case .quadCurve(let end, let control):
-            for step in 1...24 {
-                let (time, rest) = (Double(step) / 24, 1 - Double(step) / 24)
-                points.append(
-                    Point(
-                        x: rest * rest * current.x + 2 * rest * time * control.x + time * time * end.x,
-                        y: rest * rest * current.y + 2 * rest * time * control.y + time * time * end.y))
-            }
-            current = end
-        case .curve(let end, _, _):
-            points.append(end)
-            current = end
-        case .close: break
-        }
-    }
-    return points
 }
 
 private func distance(_ one: Point, _ other: Point) -> Double {
     ((one.x - other.x) * (one.x - other.x) + (one.y - other.y) * (one.y - other.y)).squareRoot()
-}
-
-private func segmentDistance(_ point: Point, _ from: Point, _ end: Point) -> Double {
-    let (across, down) = (end.x - from.x, end.y - from.y)
-    let length = across * across + down * down
-    guard length > 0 else { return distance(point, from) }
-    let time = min(max(((point.x - from.x) * across + (point.y - from.y) * down) / length, 0), 1)
-    return distance(point, Point(x: from.x + time * across, y: from.y + time * down))
 }
 
 /// Between the legs, a pair of shorts or trousers shows its own shade, not the top tucked

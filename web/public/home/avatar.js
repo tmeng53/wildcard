@@ -292,6 +292,9 @@
       return along(p[0], p[1]) - edge;
     };
     const pieces = (points) => {
+      // A curve lies within its points, so one whose points are all on one side never crosses.
+      const behind = points.filter(([x, y]) => along(x, y) - edge < 0).length;
+      if (behind === 0 || behind === points.length) return [points];
       const cuts = [];
       for (let step = 0; step < 16; step++) {
         let [low, high] = [step / 16, (step + 1) / 16];
@@ -347,179 +350,66 @@
       });
   }
 
-  const invert = ([a, b, c, d, e, f]) => {
-    const det = a * d - b * c;
-    return [d / det, -b / det, -c / det, a / det, (c * f - d * e) / det, (b * e - a * f) / det];
-  };
-
-  // A body's art as one black shape: where a shoulder's edge stays off it.
-  const black = (art) =>
-    art
-      .replace(/\s(?:fill-)?opacity="[^"]*"/g, '')
-      .replace(/\sfill="(?!none)[^"]*"/g, ' fill="#000"')
-      .replace(/\sstroke="[^"]*"/g, ' stroke="none"');
-
-  // Each frame's masks get ids of their own, so figures on one page never share one.
-  let masks = 0;
-
-  // A path's subpaths as points, its curves in short straight steps.
-  function subpaths(d) {
-    const out = [];
-    const steps = 16;
-    for (const [command, from, ...rest] of segments(d)) {
-      if (command === 'M') {
-        out.push([rest[0]]);
-        continue;
-      }
-      if (!out.length) out.push([from]);
-      const line = out[out.length - 1];
-      if (command === 'L') line.push(rest[0]);
-      else if (command === 'Z') line.push(line[0]);
-      else
-        for (let k = 1; k <= steps; k++) {
-          const t = k / steps;
-          const u = 1 - t;
-          const [c1, c2, end] = command === 'Q' ? [rest[0], null, rest[1]] : rest;
-          line.push(
-            [0, 1].map((a) =>
-              command === 'Q'
-                ? u * u * from[a] + 2 * u * t * c1[a] + t * t * end[a]
-                : u ** 3 * from[a] +
-                  3 * u * u * t * c1[a] +
-                  3 * u * t * t * c2[a] +
-                  t ** 3 * end[a],
-            ),
-          );
-        }
-    }
-    return out;
-  }
-
-  // A body's filled shapes as tests of whether a point lies in them, in the body's own space.
-  function filled(art) {
-    const number = (tag, name) => +(tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1] ?? 0);
-    const tests = [];
-    for (const tag of art.match(/<(?:path|circle|ellipse|rect)\b[^>]*>/g) ?? []) {
-      const fill = tag.match(/\sfill="([^"]*)"/)?.[1];
-      if (fill === 'none' || tag.includes('data-edge')) continue;
-      if (tag.startsWith('<circle') || tag.startsWith('<ellipse')) {
-        const [cx, cy] = [number(tag, 'cx'), number(tag, 'cy')];
-        const [rx, ry] = tag.startsWith('<circle')
-          ? [number(tag, 'r'), number(tag, 'r')]
-          : [number(tag, 'rx'), number(tag, 'ry')];
-        tests.push(([x, y]) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 < 1);
-      } else if (tag.startsWith('<rect')) {
-        const [rx, ry, w, h] = ['x', 'y', 'width', 'height'].map((name) => number(tag, name));
-        tests.push(([x, y]) => x > rx && x < rx + w && y > ry && y < ry + h);
-      } else {
-        const rings = subpaths(tag.match(/\sd="([^"]*)"/)?.[1] ?? '');
-        // Non-zero winding, a shape's subpaths together, as the app fills them.
-        tests.push(([x, y]) => {
-          let winding = 0;
-          for (const ring of rings)
-            for (let k = 0; k < ring.length; k++) {
-              const [a, b] = [ring[k], ring[(k + 1) % ring.length]];
-              const cross = (b[0] - a[0]) * (y - a[1]) - (x - a[0]) * (b[1] - a[1]);
-              if (a[1] <= y && b[1] > y && cross > 0) winding++;
-              else if (a[1] > y && b[1] <= y && cross < 0) winding--;
-            }
-          return winding !== 0;
-        });
-      }
-    }
-    return (point) => tests.some((test) => test(point));
-  }
-
-  // `d` without what lies where `over` holds, cut along its centreline, so each piece ends
-  // round where it stops (CGPath's lineSubtracting in the app). Unchanged when nothing is cut.
-  function cut(d, over) {
-    const step = 0.25;
-    const pieces = [];
-    let changed = false;
-    for (const line of subpaths(d)) {
-      let piece = over(line[0]) ? null : [line[0]];
-      changed ||= piece === null;
-      for (let k = 1; k < line.length; k++) {
-        const [a, b] = [line[k - 1], line[k]];
-        const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step));
-        const at = (t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-        for (let j = 1; j <= n; j++) {
-          const [t0, t1] = [(j - 1) / n, j / n];
-          const inside = over(at(t1));
-          if (inside === (piece === null)) {
-            if (piece) piece.push(at(t1));
-            continue;
-          }
-          // The point where the line crosses, halved down to well under a pixel.
-          let [low, high] = [t0, t1];
-          for (let h = 0; h < 20; h++) {
-            const mid = (low + high) / 2;
-            if (over(at(mid)) === inside) high = mid;
-            else low = mid;
-          }
-          changed = true;
-          if (piece) {
-            piece.push(at(high));
-            pieces.push(piece);
-            piece = null;
-          } else piece = [at(high), at(t1)];
-        }
-      }
-      if (piece) pieces.push(piece);
-    }
-    if (!changed) return d;
-    return pieces
-      .filter((piece) => piece.length > 1)
-      .map((piece) => 'M ' + piece.map((p) => p.map((v) => v.toFixed(3)).join(' ')).join(' L '))
-      .join(' ');
-  }
-
-  // An arm's art with its sleeves' edges kept off its body and within its shoulder's reach
-  // (rig.json's `shoulder`), as the app's FigureDrawing does: the edge shows only where the
-  // arm leaves the body, and there it joins the body's outline.
-  // Each sleeve's outline stops where it lies on the body at the shoulder's top (the reach's
-  // half above the pivot), so a raised arm leaves no end of it on the chest.
-  function shoulder(art, member, i, matrices) {
-    const part = PARTS[i];
-    if (!part.shoulder || !art.includes('data-edge=""')) return art;
-    const j = INDEX[part.parent];
-    member.black ??= {};
-    member.black[j] ??= black(member.art[j] ?? '');
-    member.filled ??= {};
-    member.filled[j] ??= filled(member.art[j] ?? '');
-    const id = `wc-shoulder-${(masks = (masks + 1) % 1e9)}`;
-    const [px, py] = part.pivot;
-    const [a, b, c, d, e, f] = multiply(invert(matrices[j]), matrices[i]);
-    const over = ([x, y]) =>
-      y < py &&
-      Math.hypot(x - px, y - py) < part.shoulder &&
-      member.filled[j]([a * x + c * y + e, b * x + d * y + f]);
-    art = art.replace(
-      /(<path data-outline=""[^>]*\sd=")([^"]*)"/g,
-      (_, head, line) => `${head}${cut(line, over)}"`,
-    );
-    return (
-      `<mask id="${id}" maskUnits="userSpaceOnUse" x="-500" y="-500" width="1240" height="1320">` +
-      `<circle cx="${px}" cy="${py}" r="${part.shoulder}" fill="#fff"/>` +
-      `<g transform="matrix(${format(multiply(invert(matrices[i]), matrices[j]))})">${member.black[j]}</g>` +
-      `</mask>` +
-      art.replaceAll('data-edge=""', `mask="url(#${id})"`)
-    );
-  }
+  // An arm with a seam (rig.json's `seam`) is drawn in two pieces that meet there, as the
+  // app's Tuck: behind its seam under its body's art, in front of it over all the body wears.
+  // So a sleeve's round never shows on the chest, and a bare shoulder never covers a strap.
+  // Each is the kept side as a clip's polygon, in the arm's own space; the piece under the
+  // body laps a little past the seam so no hairline shows where the two meet.
+  const LAP = 0.6;
+  const FAR = 600;
+  const TUCKS = PARTS.map(({ pivot, seam }) => {
+    if (!seam) return null;
+    const [top, armpit] = [seam.top, seam.armpit];
+    const length = Math.hypot(armpit[0] - top[0], armpit[1] - top[1]);
+    if (!(length > 0)) return null;
+    let back = [-(armpit[1] - top[1]) / length, (armpit[0] - top[0]) / length];
+    if ((pivot[0] - top[0]) * back[0] + (pivot[1] - top[1]) * back[1] < 0)
+      back = [-back[0], -back[1]];
+    const kept = ([x, y], [bx, by]) =>
+      [
+        [x - by * FAR, y + bx * FAR],
+        [x - by * FAR - bx * FAR, y + bx * FAR - by * FAR],
+        [x + by * FAR - bx * FAR, y - bx * FAR - by * FAR],
+        [x + by * FAR, y - bx * FAR],
+      ]
+        .map((point) => point.map((v) => +v.toFixed(2)).join(' '))
+        .join(' L ');
+    return {
+      over: kept(top, back),
+      under: kept([top[0] - back[0] * LAP, top[1] - back[1] * LAP], [-back[0], -back[1]]),
+    };
+  });
+  // For each part, the tucked arms that hang from it, drawn under it first.
+  const TUCKED = PARTS.map((part) =>
+    PARTS.flatMap((arm, j) => (arm.parent === part.id && TUCKS[j] ? [j] : [])),
+  );
+  // Each clip gets an id of its own, so figures on one page never share one.
+  let clips = 0;
 
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
     const posed = leveled(poses, member.level);
     const { matrices, opacities } = layout(posed);
     let svg = '';
-    PARTS.forEach((part, i) => {
-      const drawn =
-        part.elbow && posed[i].bend && member.art[i]
-          ? bent(member.art[i], part, posed[i].bend)
+    const draw = (i, kept) => {
+      const art =
+        PARTS[i].elbow && posed[i].bend && member.art[i]
+          ? bent(member.art[i], PARTS[i], posed[i].bend)
           : member.art[i];
-      if (!drawn || !(opacities[i] > 0)) return;
-      const art = shoulder(drawn, member, i, matrices);
-      svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
+      if (!art || !(opacities[i] > 0)) return;
+      const open = `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">`;
+      if (!kept) {
+        svg += `${open}${art}</g>`;
+        return;
+      }
+      const id = `wc-tuck-${(clips = (clips + 1) % 1e9)}`;
+      svg +=
+        `${open}<clipPath id="${id}" clipPathUnits="userSpaceOnUse"><path d="M ${kept} Z"/></clipPath>` +
+        `<g clip-path="url(#${id})">${art}</g></g>`;
+    };
+    PARTS.forEach((_, i) => {
+      for (const arm of TUCKED[i]) draw(arm, TUCKS[arm].under);
+      draw(i, TUCKS[i]?.over);
     });
     return svg;
   }

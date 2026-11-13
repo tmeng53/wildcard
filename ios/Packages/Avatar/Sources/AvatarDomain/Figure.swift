@@ -50,14 +50,17 @@ public struct Figure: Hashable, Sendable {
         public let restOpacity: Double
         /// Where the part bends, for an arm (`bend`).
         public let elbow: Rig.Elbow?
-        /// How far from the pivot an arm's edge is outlined off its body (`Rig.Part.shoulder`).
-        public let shoulder: Double?
+        /// Where a sleeve on this arm is sewn to the body (`Rig.Part.seam`).
+        public let seam: Rig.Seam?
         /// The part it hangs from, as an index into `parts`.
         public let parent: Int?
         /// Back to front.
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
         public internal(set) var slots: [Slot?]
+
+        /// The seam this arm passes behind its body's cloth at (`Tuck`).
+        public var tuck: Tuck? { seam.flatMap { Tuck(pivot: pivot, seam: $0) } }
     }
 
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
@@ -106,7 +109,7 @@ public struct Figure: Hashable, Sendable {
             built.append(
                 Part(
                     id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow,
-                    shoulder: part.shoulder, parent: parents[built.count], art: artworks, slots: slots))
+                    seam: part.seam, parent: parents[built.count], art: artworks, slots: slots))
         }
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {

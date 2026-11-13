@@ -12,7 +12,6 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dress, leveled } from '../public/character/dress.js';
-import { edge, markOutline } from './edges.mjs';
 
 const web = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ios = join(web, '..', 'ios', 'Packages');
@@ -38,7 +37,6 @@ const wardrobe = {
   art: {},
   tones: {},
   holds: {},
-  edges: {},
 };
 for (const file of list(join(art, 'art', 'base')).filter((f) => f.endsWith('.svg')))
   wardrobe.art[`base/${basename(file, '.svg')}`] = svgInner(join(art, 'art', 'base', file));
@@ -57,24 +55,13 @@ for (const slot of list(join(art, 'art')).filter((s) => s !== 'base')) {
   }
 }
 
-// Each arm's sleeves, outlined where they leave the body near the shoulder.
-for (const part of rig.parts.filter((p) => p.shoulder))
-  for (const { slot, art: name } of (part.layers ?? []).filter((layer) => layer.slot))
-    for (const variant of wardrobe.variants[slot] ?? []) {
-      const key = `${slot}/${variant}/${name}`;
-      const found = wardrobe.art[key] && edge(wardrobe.art[key], part.pivot, part.shoulder);
-      if (!found) continue;
-      wardrobe.edges[key] = found;
-      wardrobe.art[key] = markOutline(wardrobe.art[key]);
-    }
-
-const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, shoulder }) => ({
+const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, seam }) => ({
   id,
   parent: parent ?? null,
   pivot,
   opacity: opacity ?? 1,
   ...(elbow ? { elbow } : {}),
-  ...(shoulder ? { shoulder } : {}),
+  ...(seam ? { seam } : {}),
 }));
 const idles = (personas) =>
   Object.fromEntries(personas.map((p) => [p, json(join(art, 'clips', p, 'idle.json'))]));

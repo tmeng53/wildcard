@@ -110,6 +110,9 @@ public struct Bend: Hashable, Sendable {
         guard length > 0 else { return [points] }
         let along = { (spot: Point) in ((spot.x - shoulder.x) * axisX + (spot.y - shoulder.y) * axisY) / length }
         let edge = along(elbow.point) + Self.span.start
+        // A curve lies within its points, so one whose points are all on one side never crosses.
+        let behind = points.count { along($0) - edge < 0 }
+        guard behind != 0, behind != points.count else { return [points] }
         let side = { (time: Double) in along(Self.point(points, at: time)) - edge }
         // Where it crosses: a change of side between two of 16 steps, narrowed down.
         var cuts: [Double] = []

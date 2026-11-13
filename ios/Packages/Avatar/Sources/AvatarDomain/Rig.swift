@@ -87,17 +87,27 @@ public struct Rig: Hashable, Sendable {
         /// Where an arm bends, for a part drawn as one whole arm from its pivot (the shoulder)
         /// to its hand. Nil for a part that never bends.
         public var elbow: Elbow?
-        /// For an arm in front of the body it hangs from: how far from its pivot the arm's own
-        /// edge is outlined where it leaves the body, so the two read as one outline wherever
-        /// the arm turns. Keep it short of where the elbow's bend starts. Nil for any other part.
-        public var shoulder: Double?
+        /// Where a sleeve on this arm is sewn to the body: its art shows only in front of it
+        /// (`Tuck`). Nil for any other part.
+        public var seam: Seam?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil, shoulder: Double? = nil
+            elbow: Elbow? = nil, seam: Seam? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            (self.elbow, self.shoulder) = (elbow, shoulder)
+            (self.elbow, self.seam) = (elbow, seam)
+        }
+    }
+
+    /// A sleeve's seam, in canvas coordinates at rest: the straight line from the sleeve's top
+    /// corner, on the shoulder, to its armpit corner. Every sleeve's art starts at these two.
+    public struct Seam: Hashable, Sendable {
+        public var top: Point
+        public var armpit: Point
+
+        public init(top: Point, armpit: Point) {
+            (self.top, self.armpit) = (top, armpit)
         }
     }
 
@@ -145,7 +155,7 @@ public struct Rig: Hashable, Sendable {
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
-                    shoulder: part.shoulder)
+                    seam: part.seam.map { Seam(top: $0.top.point, armpit: $0.armpit.point) })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -173,7 +183,8 @@ private struct RigFile: Decodable {
             .object([
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
-                "elbow": .object(["at": .value, "hand": .value]), "shoulder": .value,
+                "elbow": .object(["at": .value, "hand": .value]),
+                "seam": .object(["top": .value, "armpit": .value]),
             ])),
     ])
 
@@ -194,8 +205,14 @@ private struct RigFile: Decodable {
         let opacity: Double?
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
-        let shoulder: Double?
+        let seam: SeamFile?
     }
+}
+
+/// `{"top": [x, y], "armpit": [x, y]}`.
+private struct SeamFile: Decodable {
+    let top: Pair
+    let armpit: Pair
 }
 
 /// `{"at": [x, y], "hand": [x, y]}`.
