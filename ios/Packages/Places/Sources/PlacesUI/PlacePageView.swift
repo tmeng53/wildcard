@@ -332,7 +332,7 @@ private struct PlaceStats: View {
     @ViewBuilder private func unit(_ cell: PlaceNumbers.Cell) -> some View {
         switch cell {
         case .squadScore(let stars), .healthy(let stars), .tasty(let stars):
-            JellyStar(lit: stars != nil, size: 20).padding(.leading, 6)
+            JellyStar(lit: stars != nil, size: 20).padding(.leading, Space.xs - 2)
         case .calorieValue:
             EmptyView()
         case .visits:
