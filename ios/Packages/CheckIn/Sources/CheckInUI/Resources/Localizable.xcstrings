@@ -2544,6 +2544,22 @@
           }
         }
       }
+    },
+    "请假不影响连续天数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days off don't break your streak"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請假不影響連續天數"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -324,6 +324,7 @@ function wakes(
 const quietPorts = {
   photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
   memberFacts: () => Promise.resolve([]),
+  streaks: () => Promise.resolve({}),
   timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
   ended: () => Promise.resolve(new Set()),
   memes: () => Promise.resolve([]),

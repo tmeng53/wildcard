@@ -252,13 +252,17 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .select([sql<string>`day::text`.as('day'), 'kind'])
         .distinct()
         .where('member_id', '=', member)
-        .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal'])
+        .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal', 'disclaimer'])
         .where(sharedTo(squad))
         .orderBy('day')
         .execute();
+      const daysOf = (kinds: readonly string[]) => [
+        ...new Set(rows.filter((row) => kinds.includes(row.kind)).map((row) => row.day)),
+      ];
       return {
-        trained: rows.filter((row) => row.kind === 'trained').map((row) => row.day),
-        meals: [...new Set(rows.filter((row) => row.kind !== 'trained').map((row) => row.day))],
+        trained: daysOf(['trained']),
+        meals: daysOf(['healthyMeal', 'cheatMeal']),
+        leave: daysOf(['disclaimer']),
       };
     },
 
@@ -417,6 +421,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .where('member_id', '=', member)
         .where('kind', '=', 'healthyMeal')
         .execute();
+      const leave = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`check_ins.day::text`.as('day'))
+        .distinct()
+        .where('member_id', '=', member)
+        .where('kind', '=', 'disclaimer')
+        .execute();
       const reactionCounts = async (author: 'member' | 'mates') => {
         if (mates.length === 0) return new Map<MemberId, number>();
         const rows = await db
@@ -458,6 +469,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           inSquad: row.in_squad,
         })),
         healthyMealDays: meals.map((row) => row.day),
+        leaveDays: leave.map((row) => row.day),
         received: await reactionCounts('member'),
         given: await reactionCounts('mates'),
       };
