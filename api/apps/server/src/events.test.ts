@@ -74,6 +74,7 @@ describe('events', () => {
       'comment-push:comment.created',
       'coach-answer:comment.created',
       'coach-look:check-in.created',
+      'teammate-push:check-in.created',
     ]);
     expect(lines.some((line) => line.includes('event subscriber failed'))).toBe(true);
   });

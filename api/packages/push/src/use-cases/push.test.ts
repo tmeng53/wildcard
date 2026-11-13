@@ -355,28 +355,29 @@ describe('teammate pushes', () => {
   it('logs a change of its settings once, with the whole new value', async () => {
     const admin = await newMember();
     // In a transaction rolled back after, so the settings every other test reads stay as seeded.
+    const changed = { version: 1, sending: true, dailyRings: 3 };
+    let seen: unknown;
     await db
       .transaction()
       .execute(async (scope) => {
         const settings = createTeammatePushSettings({
           store: createPostgresTeammatePushSettings(scope),
         });
-        expect(await settings.current()).toStrictEqual({
-          version: 1,
-          sending: true,
-          dailyRings: 5,
-        });
-        const changed = { version: 1, sending: true, dailyRings: 3 };
-        expect(await settings.change({ dailyRings: 3 }, admin)).toStrictEqual(changed);
-        expect(await settings.change({ dailyRings: 3 }, admin)).toStrictEqual(changed);
+        const seeded = await settings.current();
+        const first = await settings.change({ dailyRings: 3 }, admin);
+        const again = await settings.change({ dailyRings: 3 }, admin);
         const { rows } = await sql<{ settings: unknown }>`
           select settings from public.teammate_push_setting_events where changed_by = ${admin}
         `.execute(scope);
-        expect(rows).toStrictEqual([{ settings: changed }]);
+        seen = { seeded, first, again, rows };
         throw new Error('roll back');
       })
-      .catch((error: unknown) => {
-        if (!(error instanceof Error) || error.message !== 'roll back') throw error;
-      });
+      .catch(() => undefined);
+    expect(seen).toStrictEqual({
+      seeded: { version: 1, sending: true, dailyRings: 5 },
+      first: changed,
+      again: changed,
+      rows: [{ settings: changed }],
+    });
   });
 });

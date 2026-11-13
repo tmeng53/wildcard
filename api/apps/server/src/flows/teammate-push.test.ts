@@ -8,7 +8,7 @@ import {
   type CheckInRecord,
   type SquadToday,
 } from '@wildcard/check-ins';
-import { Character, type MemberId as ProfileMember } from '@wildcard/members';
+import { Character } from '@wildcard/members';
 import {
   apnsPayload,
   type PushNotification,
@@ -97,9 +97,8 @@ function world({
       listForSquad: () => Promise.resolve([]),
     },
     members: {
-      squadmates: () =>
-        Promise.resolve(new Map(named ? [[tracy as string as ProfileMember, profile]] : [])),
-      languages: () => Promise.resolve(new Map([[bo as string as ProfileMember, 'en' as const]])),
+      squadmates: () => Promise.resolve(new Map(named ? [[tracy, profile]] : [])),
+      languages: () => Promise.resolve(new Map([[bo, 'en' as const]])),
     },
     sportNames: () =>
       Promise.resolve(new Map([['tennis', { zhHans: '网球', zhHant: '網球', en: 'Tennis' }]])),
@@ -181,12 +180,13 @@ describe('a 训练 just posted', () => {
     expect(sent.map(({ member }) => member)).toStrictEqual([bo]);
   });
 
-  it.each([
-    ['a meal', { ...run, kind: 'healthyMeal', meal: {} } as CheckInRecord],
+  const quiet: readonly (readonly [string, CheckInRecord | 'deleted'])[] = [
+    ['a meal', { ...run, kind: 'healthyMeal', meal: {} }],
     ['a post kept off 动态', { ...run, inFeed: false }],
     ['a 补打卡 for an earlier day', { ...run, day: '2026-11-12' }],
-    ['a post since deleted', 'deleted' as const],
-  ])('says nothing of %s', async (_, record) => {
+    ['a post since deleted', 'deleted'],
+  ];
+  it.each(quiet)('says nothing of %s', async (_, record) => {
     const { deps, sent } = world({ record });
     await notifyTeammates(deps, event);
     expect(sent).toStrictEqual([]);

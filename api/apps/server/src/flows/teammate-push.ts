@@ -64,7 +64,7 @@ export async function notifyTeammates(
   const settings = await deps.push.teammateSettings();
   if (!settings.sending) return;
   const record = await deps.checkIns.current(CheckInId.parse(checkIn));
-  if (record === undefined || record.kind !== 'trained' || !record.inFeed) return;
+  if (record?.kind !== 'trained' || !record.inFeed) return;
   if (record.postedDay !== undefined && record.postedDay !== record.day) return;
   const author = record.member;
   const nickname = (await deps.members.squadmates([ProfileMember.parse(author)])).get(
