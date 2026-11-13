@@ -338,8 +338,7 @@ enum LaunchOptions {
     /// UI tests' flags that make 今天 forget what this phone kept, so each test starts as a member
     /// first sees it and can still change it (passing the key itself would pin it: launch arguments
     /// win over what the app writes): `-uitest-recap-unseen`, which day's 今日赛况 was opened;
-    /// `-uitest-night`, the lights switched on; `-uitest-card-folded`, home's card left open and
-    /// the page it was left on.
+    /// `-uitest-night`, the lights switched on; `-uitest-card-folded`, home's card's page, started folded.
     static func forgetTodayStateIfAsked() {
         let arguments = ProcessInfo.processInfo.arguments
         let kept = [
@@ -349,6 +348,7 @@ enum LaunchOptions {
         for (flag, keys) in kept where arguments.contains(flag) {
             for key in keys { UserDefaults.standard.removeObject(forKey: key) }
         }
+        if arguments.contains("-uitest-card-folded") { UserDefaults.standard.set(true, forKey: "today.cardCollapsed") }
     }
 
     /// `-uitest-thursday`: 出赛表's clock starts at noon on this week's Thursday and runs on, so
