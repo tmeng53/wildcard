@@ -226,14 +226,14 @@ public struct CheckInTotals: Hashable, Sendable {
     public let disclaimers: Int
     /// The sport with the most 练了 (最常练); nil before the first.
     public let topSport: TopSport?
-    /// The streaks still going; none from an older server.
+    /// The streaks still going.
     public let streaks: CardStreaks
 }
 
 extension CardStreaks {
-    /// The API's streaks still going, a left-out one (broken, or an older server) as 0.
-    init(_ streaks: Components.Schemas.CurrentStreaks?) {
-        self.init(training: streaks?.training?.days ?? 0, meals: streaks?.meals?.days ?? 0)
+    /// The API's streaks still going, a left-out (broken) one as 0.
+    init(_ streaks: Components.Schemas.CurrentStreaks) {
+        self.init(training: streaks.training?.days ?? 0, meals: streaks.meals?.days ?? 0)
     }
 }
 
