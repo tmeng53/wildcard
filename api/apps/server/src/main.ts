@@ -73,6 +73,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -161,7 +162,7 @@ import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { coachNamesIn } from './flows/coach-names.js';
-import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachMemberFacts, coachSquadWeek, coachStreaks } from './flows/coach.js';
 import { coachFeedback } from './flows/coach-feedback.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { adoptFeedback } from './flows/feedback-adoption.js';
@@ -508,6 +509,10 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+const placeRatings = createPlaceRatings({
+  store: createPostgresPlaceRatingStore(db),
+  clock: () => new Date(),
+});
 // The places each member saved (收藏).
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
@@ -620,6 +625,7 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        streaks: coachStreaks(checkIns),
         // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
         weatherOf: async ({ members: ids, day }) => {
           const zoned = await Promise.all(
@@ -773,6 +779,7 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  placeRatings,
   savedPlaces,
   weather,
   feedback: feedbackInbox,

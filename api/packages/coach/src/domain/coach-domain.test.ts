@@ -494,6 +494,31 @@ describe('when the coach wakes', () => {
     ).toBeUndefined();
   });
 
+  it('tells a 请假条’s wake the streaks it kept going, as a fact, from two days on', () => {
+    const leaveWeek: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.id === 'c1' ? { ...each, kind: 'disclaimer', sport: undefined } : each,
+      ),
+    };
+    const task = (keptStreaks?: { training?: number; meals?: number }) =>
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c1' },
+        week: leaveWeek,
+        files: new Map(),
+        recentNotes: [],
+        ...(keptStreaks === undefined ? {} : { keptStreaks }),
+      })?.split('\n\n');
+    expect(task({ training: 12, meals: 5 })).toContain(
+      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天、连续吃饭打卡 5 天。',
+    );
+    expect(task({ training: 12, meals: 1 })).toContain(
+      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天。',
+    );
+    expect(task({ training: 1 })?.join('\n\n')).not.toContain('连续天数');
+    expect(task()?.join('\n\n')).not.toContain('连续天数');
+  });
+
   it('puts the wakes setting after the soul, its limits filled in, and never the 口头禅', () => {
     const coach = Coach.parse({
       version: 3,

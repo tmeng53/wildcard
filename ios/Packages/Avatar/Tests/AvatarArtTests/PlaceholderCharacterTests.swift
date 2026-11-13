@@ -16,7 +16,9 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
-            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "heart",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "petTail", "pet", "petHead", "propL",
+            "gripL",
+            "propR", "leash", "gripR", "heart",
             "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
@@ -71,7 +73,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 61)
+    #expect(figure.parts.count == 65)
 }
 
 @Test(arguments: Persona.allCases)
@@ -239,7 +241,8 @@ func expectOnCanvas(
         where placement.opacity > 0 {
             for (number, shape) in shapes[index].enumerated() {
                 let margin = (shape.stroke?.width ?? 0) / 2
-                let points = placement.bend.map { outline($0.apply(to: shape.path)) } ?? outlines[index][number]
+                let reshaped = placement.bend != nil || placement.rope != nil
+                let points = reshaped ? outline(placement.shaped(shape.path)) : outlines[index][number]
                 for local in points {
                     let point = placement.transform.apply(to: local)
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height + below
@@ -299,7 +302,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
 /// clothing and prop it offers is bundled, and WARM-UP's nineteen pieces recolor; any piece's first
-/// color is its art's own; every member holds every prop from the start.
+/// color is its art's own; every member holds every prop from the start but the dogs on a leash,
+/// which wait for a 遛狗 and are in no `editor.json`.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -307,7 +311,11 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
+    #expect(
+        Set(choices.props.map(\.id))
+            == Set(PlaceholderCharacter.variants(for: "prop")).subtracting([
+                "dogshiba", "dogcorgi", "doggolden", "dogbichon", "doghusky",
+            ]))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [
             "top": ["warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe"],

@@ -66,10 +66,13 @@ public struct PostEdit: Hashable, Sendable {
     public let workout: Workout?
     /// The place as it is to be: nil takes a tagged one off. Ignored for a 请假条.
     public let place: Place?
+    /// A meal's 健康 and 好吃 as they are to be; ignored for the other kinds. A rating, once
+    /// given, is only changed, never taken off.
+    public let rating: MealRating?
 
     public init(
         original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
-        workout: Workout? = nil, startTime: StartTime? = nil, place: Place? = nil
+        workout: Workout? = nil, startTime: StartTime? = nil, place: Place? = nil, rating: MealRating? = nil
     ) {
         self.original = original
         self.activity = activity
@@ -79,6 +82,7 @@ public struct PostEdit: Hashable, Sendable {
         self.photos = Array(photos.prefix(Photos.maxCount))
         self.workout = workout
         self.place = place
+        self.rating = rating
     }
 
     /// The photos still to upload, in order.
@@ -108,8 +112,9 @@ public struct PostEdit: Hashable, Sendable {
                         Training(
                             activity: activity, minutes: minutes, startTime: startTime, photos: photos,
                             caption: caption, workout: workout, place: place))
-                case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption, place: place))
-                case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption, place: place))
+                case .healthyMeal:
+                    .healthyMeal(Meal(photos: photos, caption: caption, place: place, rating: rating))
+                case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption, place: place, rating: rating))
                 case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))
                 }
             return CheckIn(

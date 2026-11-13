@@ -53,6 +53,9 @@ public enum AvatarError: Error, Equatable, Sendable {
     case invalidTempo(clip: String)
     /// `kits.json` names a kit it doesn't define, or a sport or category that doesn't exist.
     case unknownKit(String)
+    /// A rope part hangs from a part the rig doesn't have, or is carried by a parent, or its art
+    /// isn't straight lines from one end to the other.
+    case invalidRope(part: PartID, problem: String)
 }
 
 /// What's wrong in an SVG file. Art is exported flat: paths and basic shapes with fills

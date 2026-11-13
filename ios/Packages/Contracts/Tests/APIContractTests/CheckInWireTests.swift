@@ -114,6 +114,22 @@ private func saved(_ kindAndFields: String) -> String {
             )) == checkIn(.healthyMeal(meal)))
 }
 
+@Test func aMealsRatingGoesBothWays() throws {
+    let meal = Meal(rating: try MealRating(healthy: 4, tasty: 5))
+    #expect(
+        try encode(try checkIn(.cheatMeal(meal)).draft)
+            .hasSuffix(#""kind":"cheatMeal","meal":{"rating":{"healthy":4,"tasty":5}},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"cheatMeal","meal":{"rating":{"healthy":4,"tasty":5}}"#))
+            == checkIn(.cheatMeal(meal)))
+}
+
+@Test func aRatingThisBuildCantReadLeavesTheMealStanding() throws {
+    #expect(
+        try decode(saved(#""kind":"healthyMeal","meal":{"rating":{"healthy":6,"tasty":5}}"#))
+            == checkIn(.healthyMeal(Meal())))
+}
+
 @Test func aPlaceThisBuildCantReadLeavesThePostStanding() throws {
     #expect(
         try decode(
