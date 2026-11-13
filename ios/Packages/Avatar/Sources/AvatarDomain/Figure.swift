@@ -38,11 +38,9 @@ public struct Figure: Hashable, Sendable {
     /// body carrying it turn, in every clip but its own (`Clip.holds`). Read from
     /// `<slot>/<variant>/hold.json`.
     let level: Level?
-
-    struct Level: Hashable, Sendable {
-        let variant: String
-        let parts: [Int]
-    }
+    /// The colour the head sits on inside its circle, if the character picks one (a coach's
+    /// `backdrop.json`); nil sits it on the page's own colour.
+    public var backdrop: RGBAColor?
 
     public struct Part: Hashable, Sendable {
         public let id: PartID
@@ -343,4 +341,11 @@ public struct BoundClip: Sendable {
     let leveled: [Int]
     let followThrough: [FollowThrough]
 
+}
+
+extension Figure {
+    struct Level: Hashable, Sendable {
+        let variant: String
+        let parts: [Int]
+    }
 }
