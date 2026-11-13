@@ -266,7 +266,7 @@ struct PostCard: View {
         }
     }
 
-    /// The caption, or the 请假条's text, which is the card's hero.
+    /// The caption, or the 请假条's text, in the same type as every post's words (feedback #65).
     @ViewBuilder private var words: some View {
         switch post.checkIn.entry {
         case .trained(let training):
@@ -274,10 +274,7 @@ struct PostCard: View {
         case .healthyMeal(let meal), .cheatMeal(let meal):
             if let caption = meal.caption { captionText(caption.text) }
         case .disclaimer(let disclaimer):
-            Text(verbatim: disclaimer.text)
-                .typeStyle(TypeRamp.headline)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .fixedSize(horizontal: false, vertical: true)
+            captionText(disclaimer.text)
         }
     }
 
