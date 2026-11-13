@@ -49,6 +49,7 @@ const membership = createSquads({
 
 let now = new Date('2026-10-18T20:00:00.000Z');
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership,
@@ -244,6 +245,7 @@ describe('commenting on a check-in', () => {
     const run = await trained(tracy, squad);
     const hiredIn: SquadId[][] = [];
     const withCoach = createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,

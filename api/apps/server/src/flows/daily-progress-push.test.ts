@@ -81,6 +81,7 @@ const squads = createSquads({
   aiConsent: () => Promise.resolve(true),
 });
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership: squads,

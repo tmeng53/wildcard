@@ -7,7 +7,9 @@ private let maotou = CoachSpeaker(id: "xiaohun", name: "毛头")
 private let other = CoachSpeaker(id: "laowang", name: "老王")
 
 private func note(_ day: String, by coach: CoachSpeaker = maotou) throws -> CoachNote {
-    CoachNote(day: try LocalDay(day), text: "今天随缘，来了就算", coach: coach, writtenAt: Date(timeIntervalSince1970: 0))
+    CoachNote(
+        day: try LocalDay(day), text: "今天随缘，来了就算", coach: coach, writtenAt: Date(timeIntervalSince1970: 0),
+        timeZone: SquadTimeZone.newYorkClock)
 }
 
 /// 2026-11-03 09:00 in New York.

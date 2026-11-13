@@ -1,12 +1,9 @@
-import { mondayOf, momentAt, wallClockAt } from '@wildcard/time-zones';
+import { mondayOf, wallClockAt, weekFreezesAt } from '@wildcard/time-zones';
 import { z } from 'zod';
 
-// When a week's awards are given and its 战报 freezes: Sunday at 8pm (Tracy, 2026-10-20) on the
+// When a week's awards are given and its 战报 freezes: Sunday at 8pm (`weekFreezesAt`) on the
 // squad's own clock, its time zone (小队时区, Tracy, 2026-10-23); New York for a squad without
-// one. A check-in made later on Sunday still counts for the week, only not for its awards.
-
-/** The hour on Sunday the awards are given, on the squad's clock. */
-export const AWARDS_HOUR = 20;
+// one.
 
 /** The zones furthest ahead of and behind UTC: every squad's Sunday 8pm falls between theirs. */
 const EARLIEST_ZONE = 'Etc/GMT-14';
@@ -23,8 +20,7 @@ export type WeekStart = z.infer<typeof WeekStart>;
 
 /** The moment the awards of the week from `weekStart` are given: its Sunday at 8pm in `zone`. */
 export function awardsTimeOf(weekStart: WeekStart, zone: string): Date {
-  const sunday = new Date(Date.parse(weekStart) + 6 * DAY).toISOString().slice(0, 10);
-  return momentAt({ day: sunday, hour: AWARDS_HOUR, zone });
+  return weekFreezesAt(weekStart, zone);
 }
 
 /** The last moment any squad's awards of the week from `weekStart` are given, in the zone furthest behind. */

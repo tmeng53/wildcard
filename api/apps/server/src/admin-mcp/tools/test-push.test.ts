@@ -38,6 +38,7 @@ const squads = createSquads({
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership: squads,

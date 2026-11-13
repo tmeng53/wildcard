@@ -158,3 +158,28 @@ export class SquadTimeZoneUnknownError extends AppError {
     super(`${timeZone} is not a known time zone.`);
   }
 }
+
+/** Thrown for a request to join that this squad has no record of. */
+export class JoinRequestUnknownError extends AppError {
+  override readonly name = 'JoinRequestUnknownError';
+  readonly reason = 'JOIN_REQUEST_UNKNOWN';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly request: string) {
+    super(`No request ${request} waits to join this squad.`);
+  }
+}
+
+/**
+ * Thrown when a request to join was answered already another way: let in or turned away, or
+ * withdrawn by the member. The app reads the waiting list again.
+ */
+export class JoinRequestAnsweredError extends AppError {
+  override readonly name = 'JoinRequestAnsweredError';
+  readonly reason = 'JOIN_REQUEST_ANSWERED';
+  readonly status = 'FAILED_PRECONDITION';
+
+  constructor(readonly request: string) {
+    super(`Request ${request} has been answered already.`);
+  }
+}

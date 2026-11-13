@@ -68,6 +68,8 @@ async function squadOf(count: number) {
     creator: captain,
     name: SquadName.parse('早八跑团'),
   });
+  // Members join straight in, without the captain's OK (入队需要审核 off).
+  await squads.setJoinApproval({ squad: squad.id, member: captain, required: false });
   for (const member of rest) await squads.join({ inviteCode: squad.inviteCode, member });
   return { squad, people };
 }
