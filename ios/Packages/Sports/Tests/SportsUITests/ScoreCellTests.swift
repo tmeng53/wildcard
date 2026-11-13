@@ -66,3 +66,11 @@ import Testing
     #expect(cells.last?.unit == .kilocalories)
     #expect(cells.last?.label == .calories)
 }
+
+@Test func aRatedMealShowsHealthyAndTastyInStarsThenItsCalorieValue() throws {
+    let cells = MealScoreCell.cells(of: try MealRating(healthy: 5, tasty: 4))
+    #expect(cells.map(\.label) == [.healthy, .tasty, .calorieValue])
+    #expect(cells.map(\.value) == ["5", "4", "4.0"])
+    #expect(cells.map(\.isStars) == [true, true, false])
+    #expect(MealScoreCell.cells(of: try MealRating(healthy: 3, tasty: 2)).last?.value == "1.2")
+}

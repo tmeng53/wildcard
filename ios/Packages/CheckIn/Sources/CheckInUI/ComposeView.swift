@@ -53,6 +53,9 @@ public struct ComposeView: View {
                                     })
                             }
                         }
+                        if model.ratesMeal {
+                            MealRatingRows(healthy: $model.healthy, tasty: $model.tasty)
+                        }
                         if model.kind == .trained {
                             SportRow(
                                 selected: model.currentActivity, isPickingSport: $isPickingSport
