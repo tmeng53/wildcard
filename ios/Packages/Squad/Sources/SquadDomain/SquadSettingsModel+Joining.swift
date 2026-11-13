@@ -17,7 +17,7 @@ extension SquadSettingsModel {
     /// member shows; a no takes the row away. A request answered meanwhile (on another phone, or
     /// withdrawn) reads the squad again too.
     public func answer(_ request: WaitingJoinRequest, approve: Bool) async {
-        guard let settings, settings.joining != nil, !approve || canApprove else { return }
+        guard !isSaving, let settings, settings.joining != nil, !approve || canApprove else { return }
         await change { service throws(SquadError) in
             try await service.answer(request.id, in: settings.squad.id, approve: approve)
         }
@@ -32,7 +32,7 @@ extension SquadSettingsModel {
     /// The captain turns 入队需要审核 on or off. The switch moves at once and goes back if the
     /// change doesn't go through.
     public func setJoinApproval(_ required: Bool) async {
-        guard let settings, let before = settings.joining?.required, before != required else { return }
+        guard !isSaving, let settings, let before = settings.joining?.required, before != required else { return }
         update { $0.joining?.required = required }
         await change { service throws(SquadError) in
             let saved = try await service.setJoinApproval(of: settings.squad.id, required: required)
