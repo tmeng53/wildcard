@@ -4702,7 +4702,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.",
+            "description": "Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -12307,7 +12307,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.",
         "security": [
           {
             "bearer": []
