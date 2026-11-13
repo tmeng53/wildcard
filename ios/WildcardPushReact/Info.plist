@@ -22,18 +22,19 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
-			<!-- The 6pm push and the teammate push (the API's categories). -->
+			<!-- The 6pm push, the teammate push and the captain's request to join (the API's categories). -->
 			<key>UNNotificationExtensionCategory</key>
 			<array>
 				<string>dailyProgress</string>
 				<string>teammateCheckIn</string>
+				<string>joinRequest</string>
 			</array>
 			<key>UNNotificationExtensionInitialContentSizeRatio</key>
 			<real>1.2</real>
 			<!-- The view shows the week itself, so the push's own words are hidden under it. -->
 			<key>UNNotificationExtensionDefaultContentHidden</key>
 			<true/>
-			<!-- Taps react in place instead of opening the app. -->
+			<!-- Taps react or answer in place instead of opening the app. -->
 			<key>UNNotificationExtensionUserInteractionEnabled</key>
 			<true/>
 		</dict>
