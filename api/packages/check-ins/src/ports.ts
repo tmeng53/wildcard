@@ -75,6 +75,14 @@ export interface CheckInStore {
     },
   ): Promise<CheckInRecord[]>;
   /**
+   * The posts in `squad`'s 动态 tagged with a place, from anyone, newest made first, at most
+   * `limit`.
+   */
+  placedForSquad(query: {
+    readonly squad: SquadId;
+    readonly limit: number;
+  }): Promise<CheckInRecord[]>;
+  /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
    * each once.
    */

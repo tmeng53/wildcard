@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
   savedPlacesOn,
   weatherOn,
   pushOn,
@@ -94,6 +95,7 @@ const app = createApp({
   squads,
   aiConsent,
   nudges: nudgesOn(db),
+  placeRatings: placeRatingsOn(db),
   savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   disclaimerDrafts: createDisclaimerDrafts({

@@ -73,6 +73,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -508,6 +509,10 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+const placeRatings = createPlaceRatings({
+  store: createPostgresPlaceRatingStore(db),
+  clock: () => new Date(),
+});
 // The places each member saved (收藏).
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
@@ -773,6 +778,7 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  placeRatings,
   savedPlaces,
   weather,
   feedback: feedbackInbox,

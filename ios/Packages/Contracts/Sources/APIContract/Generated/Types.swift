@@ -432,6 +432,25 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// The places the squad’s posts were tagged with (小队地图)
+    ///
+    /// Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/get(listSquadPlaces)`.
+    func listSquadPlaces(_ input: Operations.ListSquadPlaces.Input) async throws -> Operations.ListSquadPlaces.Output
+    /// One place’s page (地点页)
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places/{key}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)`.
+    func getSquadPlace(_ input: Operations.GetSquadPlace.Input) async throws -> Operations.GetSquadPlace.Output
+    /// Give the caller’s score for a place (我的评分)
+    ///
+    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
+    ///
+    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
+    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
+    func ratePlace(_ input: Operations.RatePlace.Input) async throws -> Operations.RatePlace.Output
     /// The places the signed-in member saved (收藏)
     ///
     /// - Remark: HTTP `GET /me/saved-places`.
@@ -1471,6 +1490,51 @@ extension APIProtocol {
         body: Operations.NudgeSquadmate.Input.Body
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The places the squad’s posts were tagged with (小队地图)
+    ///
+    /// Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/get(listSquadPlaces)`.
+    public func listSquadPlaces(
+        path: Operations.ListSquadPlaces.Input.Path,
+        headers: Operations.ListSquadPlaces.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadPlaces.Output {
+        try await listSquadPlaces(Operations.ListSquadPlaces.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// One place’s page (地点页)
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places/{key}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)`.
+    public func getSquadPlace(
+        path: Operations.GetSquadPlace.Input.Path,
+        headers: Operations.GetSquadPlace.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadPlace.Output {
+        try await getSquadPlace(Operations.GetSquadPlace.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Give the caller’s score for a place (我的评分)
+    ///
+    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
+    ///
+    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
+    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
+    public func ratePlace(
+        path: Operations.RatePlace.Input.Path,
+        headers: Operations.RatePlace.Input.Headers = .init(),
+        body: Operations.RatePlace.Input.Body
+    ) async throws -> Operations.RatePlace.Output {
+        try await ratePlace(Operations.RatePlace.Input(
             path: path,
             headers: headers,
             body: body
