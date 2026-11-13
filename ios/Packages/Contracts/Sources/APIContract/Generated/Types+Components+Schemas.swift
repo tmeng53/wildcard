@@ -8207,7 +8207,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
             public var version: Components.Schemas.CoachCards.VersionPayload
-            /// The cards not seen yet from the last 72 hours, oldest first: the stack.
+            /// The cards not seen yet from today on the squad’s clock, oldest first: the stack.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
             public var stack: [Components.Schemas.CoachPageCard]
@@ -8219,7 +8219,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - stack: The cards not seen yet from the last 72 hours, oldest first: the stack.
+            ///   - stack: The cards not seen yet from today on the squad’s clock, oldest first: the stack.
             ///   - earlier: Every other card from the last 30 days, newest first: 以前.
             public init(
                 version: Components.Schemas.CoachCards.VersionPayload,

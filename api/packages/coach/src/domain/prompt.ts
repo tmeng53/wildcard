@@ -16,6 +16,7 @@ import {
   addressedWords,
   checkInBlock,
   checkInTitle,
+  dayWords,
   languageOf,
   rosterOf,
   rosterText,
@@ -161,6 +162,7 @@ export function taskOf({
   backAgain = false,
   challenge,
   gifting,
+  setChallenges,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -191,6 +193,11 @@ export function taskOf({
   };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
+  /**
+   * On a daily wake, the challenge set for each member today, by member id, before the coach
+   * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
+   */
+  readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
   const filesLine = memoryBlock(files);
   const whoIsWho = rosterText(week);
@@ -295,8 +302,26 @@ export function taskOf({
     filesLine,
     notes,
     noteSection,
+    ...(setChallenges === undefined ? [] : [setChallengesBlock(setChallenges, roster)]),
     ...giftBlock(gifting, roster),
   ].join('\n\n');
+}
+
+/** Today's challenges, set already, which go under each member's note. */
+function setChallengesBlock(
+  set: ReadonlyMap<string, Challenge>,
+  roster: ReadonlyMap<string, string>,
+): string {
+  const heading = '## 今天的挑战（已经定好，单独一张卡给他）';
+  if (set.size === 0) return `${heading}\n今天没有挑战。`;
+  return [
+    heading,
+    ...[...set].map(
+      ([member, challenge]) =>
+        `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
+    ),
+    '便条别和他的挑战拧着，也不用把挑战再说一遍。',
+  ].join('\n');
 }
 
 /** The language a line to one member is written in, as its own section. */
@@ -353,8 +378,12 @@ function occasionBlock(occasions: readonly string[], backAgain: boolean): string
 export interface YesterdayFacts {
   readonly day: string;
   readonly checkIns: readonly WeekCheckIn[];
-  /** The challenges the coach set that day and what each member said to them. */
+  /**
+   * The challenges the coach set over the last week up to that day, oldest first, and what each
+   * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
+   */
   readonly challenges?: readonly {
+    readonly day: string;
     readonly member: string;
     readonly challenge: Challenge;
     readonly answer: ChallengeAnswer | undefined;
@@ -392,7 +421,7 @@ function yesterdayBlocks(
           ),
         ].join('\n\n');
   if (challenges.length === 0) return [posts];
-  const lines = challenges.map(({ member, challenge, answer, reason, completion }) => {
+  const lines = challenges.map(({ day: on, member, challenge, answer, reason, completion }) => {
     const how =
       completion !== undefined
         ? '完成了'
@@ -403,9 +432,9 @@ function yesterdayBlocks(
               ? '没接'
               : `没接，理由：「${reason}」（只告诉了你）`
             : '没回应';
-    return `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
+    return `- ${dayWords(on)} ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
   });
-  return [posts, ['## 昨天的挑战', ...lines].join('\n')];
+  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
 /** The last day's talk, for the daily wake to remember from. */

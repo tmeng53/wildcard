@@ -940,6 +940,52 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(odd.status).toBe(400);
   });
 
+  it('stacks only today’s cards, leaving those not seen before today in 以前', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
+    await sql`update public.squad_members set joined_at = now() - interval '3 days'
+      where squad_id = ${squad} and member_id = ${mate.userId}`.execute(db);
+    // Today on the squad's clock (New York, as a squad starts without one).
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(
+      new Date(),
+    );
+    // Yesterday's, on the squad's clock: 30 hours ago is before today's midnight in New York.
+    await sql`insert into public.coach_notes (squad_id, coach_id, day, text, at)
+      values (${squad}, 'xiaohun', ${today}::date - 1, '昨天的战术板', now() - interval '30 hours')`.execute(
+      db,
+    );
+    const written = await sql<{ id: string }>`
+      insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, at)
+      values (${squad}, ${mate.userId}, 'xiaohun', ${today}::date - 1, '昨天的便条',
+        now() - interval '30 hours')
+      returning id`.execute(db);
+    const yesterdays = String(written.rows[0]?.id);
+    await sql`insert into public.coach_member_note_deliveries (note_id, at)
+      values (${yesterdays}, now() - interval '30 hours')`.execute(db);
+    await coachSaid(squad, { day: today, text: '今天谁先动' });
+    // Today's note reached the mate on their own clock before the squad's midnight (a phone in
+    // Shanghai gets 08:00's note at 19:00 New York the day before): it is still today's.
+    const early = await sql<{ id: string }>`
+      insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, at)
+      values (${squad}, ${mate.userId}, 'xiaohun', ${today}::date, '今天的便条',
+        (${today}::date::timestamp at time zone 'America/New_York') - interval '2 hours')
+      returning id`.execute(db);
+    const todays = String(early.rows[0]?.id);
+    await sql`insert into public.coach_member_note_deliveries (note_id, at)
+      values (${todays}, (${today}::date::timestamp at time zone 'America/New_York') - interval '1 hour')`.execute(
+      db,
+    );
+
+    const cards = CardsBody.parse(
+      (await call({ method: 'GET', path: `/squads/${squad}/coach/cards`, token: mate.token })).body,
+    );
+    expect(ids(cards.stack)).toStrictEqual([`note:${todays}`, `board:${today}`]);
+    expect(ids(cards.earlier)).toContain(`note:${yesterdays}`);
+    expect(cards.earlier).toHaveLength(2);
+    await fire(captain, squad);
+  });
+
   it('lists only the challenges when asked, every one since the caller joined, done ones marked', async () => {
     const [captain, mate] = [await signUp(), await signUp()];
     const squad = await squadOf(captain, mate);

@@ -119,8 +119,7 @@
       },
       "category": "comment",
       "thread-id": "comments-3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
-      "interruption-level": "active",
-      "sound": "default",
+      "interruption-level": "passive",
       "mutable-content": 1
     },
     "event": {
@@ -141,8 +140,7 @@
       },
       "category": "comment",
       "thread-id": "comments-3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
-      "interruption-level": "active",
-      "sound": "default",
+      "interruption-level": "passive",
       "mutable-content": 1
     },
     "event": {
@@ -163,8 +161,7 @@
       },
       "category": "comment",
       "thread-id": "comments-3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
-      "interruption-level": "active",
-      "sound": "default",
+      "interruption-level": "passive",
       "mutable-content": 1
     },
     "event": {
@@ -185,7 +182,8 @@
       },
       "category": "coachNote",
       "thread-id": "coach-notes",
-      "interruption-level": "passive",
+      "interruption-level": "active",
+      "sound": "default",
       "mutable-content": 1
     },
     "event": {
