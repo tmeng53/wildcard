@@ -20,7 +20,7 @@ public struct APISignUpService: SignUpService {
         let invite = try await signUp { () throws(APIError) in try await api.invite(code) }
         return SquadPreview(
             code: code, name: invite.name, memberCount: invite.memberCount, isFull: invite.isFull,
-            daysPerMember: invite.daysPerMember, looks: invite.looks)
+            needsApproval: invite.needsApproval, looks: invite.looks)
     }
 
     /// Agrees to the copy this build's 你的小队 step shows. Its version moves with that copy, and
@@ -31,8 +31,19 @@ public struct APISignUpService: SignUpService {
 
     static let aiConsentCopyVersion = 3
 
-    public func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad {
-        try await joined(try await signUp { () throws(APIError) in try await api.join(code) })
+    public func join(_ code: InviteCode, note: JoinNote?) async throws(SignUpError) -> JoinOutcome {
+        switch try await signUp({ () throws(APIError) in try await api.join(code, note: note) }) {
+        case .joined(let squad): .joined(try await joined(squad))
+        case .asked(let request): .asked(request)
+        }
+    }
+
+    public func joinRequest() async throws(SignUpError) -> JoinRequest? {
+        try await signUp { () throws(APIError) in try await api.joinRequest() }
+    }
+
+    public func withdrawJoinRequest() async throws(SignUpError) {
+        try await signUp { () throws(APIError) in try await api.withdrawJoinRequest() }
     }
 
     public func create(

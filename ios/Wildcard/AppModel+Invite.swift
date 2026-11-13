@@ -18,7 +18,8 @@ extension AppModel {
         return model
     }
 
-    /// Sign-up for a member in no squad. One who was in a squad keeps everything else (Tracy,
+    /// Sign-up for a member in no squad. One who asked a captain to let them in waits for the
+    /// answer (Tracy, 2026-11-12). One who was in a squad keeps everything else (Tracy,
     /// 2026-11-11), so only 加入小队, told first if the captain removed them; not knowing, or never
     /// having made a character, signs up from the start.
     func squadless(continuing signUp: SignUpModel?, name: String?) async -> SignUpModel {
@@ -26,6 +27,10 @@ extension AppModel {
         // isn't asked again. Not knowing asks, and agreeing again is safe.
         let agreed = (try? await api.hasAgreedToAI()) ?? false
         let model = (agreed ? nil : signUp) ?? newSignUp(hasAgreedToAI: agreed)
+        // A request to a captain still waiting, or a no not shown yet: 等队长同意 or 申请没有通过.
+        if let request = try? await api.joinRequest(), request.isStillToShow, await model.wait(on: request) {
+            return model
+        }
         let last = try? await api.lastSquad()
         if let last, await model.rejoin() {
             if last.wasRemoved, RemovalNotice.isNew(last.id) { removedFromName = last.name }

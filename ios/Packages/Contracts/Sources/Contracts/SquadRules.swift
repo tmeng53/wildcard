@@ -17,6 +17,26 @@ public struct SquadName: Hashable, Sendable {
     }
 }
 
+/// What a member writes the captain with a request to join (备注): one line of at most
+/// `maxLength` characters. The API's rule, so the field can count and refuse before anything is
+/// sent.
+public struct JoinNote: Hashable, Sendable {
+    /// Characters, counted as people see them. The API's limit; `APIContract`'s tests fail when
+    /// the two differ.
+    public static let maxLength = 30
+
+    public let text: String
+
+    public init(_ text: String) throws(ContractsError) {
+        switch NameText.check(text, maxLength: Self.maxLength) {
+        case .success(let trimmed): self.text = trimmed
+        case .failure(.notOneLine): throw .multilineJoinNote
+        case .failure(.length(let length)): throw .joinNoteLength(length)
+        case .failure(.invisible): throw .invisibleJoinNote
+        }
+    }
+}
+
 /// A squad's invite code, such as `K7M2QX9P`: 8 digits and capitals without the ones people
 /// confuse (0 and O, 1, I and L). Read as forgivingly as the API reads it, since people type
 /// it: lower case is upper case, and spaces and dashes are left out.

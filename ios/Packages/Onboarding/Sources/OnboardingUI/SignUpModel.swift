@@ -45,11 +45,24 @@ public final class SignUpModel {
     var sports = SportPicks()
     /// 关于你's birthday on the flip clock, saved only once the member turned a card.
     var birthday = BirthdayDraft()
-    private(set) var week: WeekDraft?
+    internal(set) var week: WeekDraft?
 
     /// The member was in a squad and is in none now: they only join or make one, as the character
     /// they have, keeping everything else they saved (Tracy, 2026-11-11).
     public internal(set) var isRejoining = false
+
+    /// The member's request to a squad whose captain lets members in (入队申请), from 申请加入 until
+    /// they are in, withdraw it or choose again after a no: 等队长同意 shows it.
+    public internal(set) var request: JoinRequest?
+    /// The asked squad's heads and its captain's, standing still, on 等队长同意.
+    internal(set) var requestHeads: [CastMember] = []
+    internal(set) var captainHead: CastMember?
+    /// The member went past 本周目标: choosing a squad again after a captain's no carries on from
+    /// there rather than through the steps they did.
+    internal(set) var pastWeek = false
+
+    /// Bumped each time a rest day becomes plain 训练.
+    internal(set) var hops = 0
 
     /// Whether the member made the squad they are in, rather than joined one: they pick its scene.
     public private(set) var madeTheSquad = false
@@ -237,7 +250,7 @@ public final class SignUpModel {
         if joined != nil { return true }
         switch squad.choice {
         case .join:
-            if case .found(let found) = preview { return !found.isFull }
+            if case .found(let found) = preview { return !found.isFull && (!found.needsApproval || squad.noteIsValid) }
             return false
         case .create:
             return squad.name != nil
@@ -254,6 +267,8 @@ public final class SignUpModel {
         guard canFinishSquad else { return }
         let choice = squad.choice
         let code = squad.code
+        // A 备注 goes only to a squad whose captain reads it.
+        let note = asksCaptain ? squad.note : nil
         let name = squad.name
         let daysPerMember = squad.daysPerMember
         let timeZone = squad.timeZone
@@ -263,59 +278,23 @@ public final class SignUpModel {
             switch choice {
             case .join:
                 guard let code else { return }
-                squad = try await self.service.join(code)
+                switch try await self.service.join(code, note: note) {
+                case .joined(let joined): squad = joined
+                case .asked(let request):
+                    await self.asked(request)
+                    self.show(self.afterSquad)
+                    return
+                }
             case .create:
                 guard let name else { return }
                 squad = try await self.service.create(
                     named: name, daysPerMember: daysPerMember, timeZone: timeZone)
             }
-            self.joined = squad
+            (self.joined, self.request) = (squad, nil)
             self.madeTheSquad = choice == .create
             self.teammates = squad.teammates.map { CastMember(outfit: $0.outfit, persona: $0.persona) }
             self.show(self.afterSquad)
         }
-    }
-
-    // MARK: 关于你
-
-    /// Picks or takes off a sport. A pick changes the character into its kit; taking off the
-    /// one it wears changes it into the one picked before, or back into its own clothes.
-    func toggle(_ activity: Activity) {
-        switch sports.toggle(activity) {
-        case .picked: myCharacter?.dress(for: activity)
-        case .removed(changed: true): myCharacter?.dress(for: sports.wearing)
-        case .removed(changed: false): break
-        }
-    }
-
-    // MARK: 本周目标
-
-    func selectDay(_ index: Int) {
-        week?.select(index)
-    }
-
-    /// Sets the selected day. A sport puts the character into its kit and plays its move, as
-    /// picking it on 关于你 does; plain 训练 on a rest day makes it hop.
-    func setDay(_ day: PlanDay) {
-        let becameTraining = week?.set(day) == true
-        if case .train(let activity?) = day { myCharacter?.dress(for: activity) } else if becameTraining { hops += 1 }
-    }
-
-    /// Bumped each time a rest day becomes plain 训练.
-    private(set) var hops = 0
-
-    func finishWeek() {
-        guard let days = week?.days else { return }
-        perform { () async throws(SignUpError) in
-            try await self.service.savePlan(days)
-            self.show(.afterWeek(madeTheSquad: self.madeTheSquad))
-        }
-    }
-
-    /// 以后再说 on 本周目标: no plan this week; 本周 counts against nothing until one is set.
-    func skipWeek() {
-        week = nil
-        show(.afterWeek(madeTheSquad: madeTheSquad))
     }
 
     // MARK: 这周在哪练？

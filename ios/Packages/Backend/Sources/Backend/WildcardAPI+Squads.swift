@@ -1,3 +1,4 @@
+import APIContract
 import Contracts
 import Foundation
 
@@ -30,20 +31,51 @@ extension WildcardAPI {
         }
         return SquadInvite(
             name: wire.name, memberCount: wire.memberCount, isFull: wire.full, joined: wire.joined,
-            daysPerMember: wire.daysPerMember, looks: wire.looks.map(CharacterLook.init))
+            needsApproval: wire.needsApproval, looks: wire.looks.map(CharacterLook.init))
     }
 
-    /// Joins the squad an invite code belongs to. Safe to repeat: a member already in it gets
-    /// the squad.
-    public func join(_ code: InviteCode) async throws(APIError) -> Squad {
+    /// Joins the squad an invite code belongs to, or, for one whose captain lets members in
+    /// (入队需要审核), asks them, with `note` (备注), withdrawing any request the member had waiting.
+    /// Safe to repeat: a member already in it gets the squad, one who asked their request.
+    public func join(_ code: InviteCode, note: JoinNote? = nil) async throws(APIError) -> JoinResult {
+        enum Wire {
+            case squad(Components.Schemas.Squad)
+            case request(Components.Schemas.JoinRequest)
+        }
         let wire = try await call {
-            switch try await client.joinSquad(path: .init(inviteCode: code.text)) {
-            case .created(let joined): try joined.body.json
-            case .ok(let already): try already.body.json
+            switch try await client.joinSquad(
+                path: .init(inviteCode: code.text), body: .json(.init(version: ._1, note: note?.text)))
+            {
+            case .created(let joined): Wire.squad(try joined.body.json)
+            case .ok(let already): Wire.squad(try already.body.json)
+            case .accepted(let asked): Wire.request(try asked.body.json)
             default: throw APIError.unreadableResponse
             }
         }
-        return try read { () throws(ContractsError) in try Squad(wire) }
+        return try read { () throws(ContractsError) in
+            switch wire {
+            case .squad(let squad): .joined(try Squad(squad))
+            case .request(let request): .asked(try JoinRequest(request))
+            }
+        }
+    }
+
+    /// The member's newest request to join a squad, waiting or ended; nil if they never asked.
+    public func joinRequest() async throws(APIError) -> JoinRequest? {
+        let wire = try await call { try await client.getMyJoinRequest().ok.body.json }
+        return try read { () throws(ContractsError) in
+            try wire.request.map { payload throws(ContractsError) in try JoinRequest(payload.value1) }
+        }
+    }
+
+    /// 撤回申请: withdraws the member's waiting request. Safe to repeat.
+    public func withdrawJoinRequest() async throws(APIError) {
+        try await call {
+            switch try await client.withdrawMyJoinRequest() {
+            case .noContent: return
+            default: throw APIError.unreadableResponse
+            }
+        }
     }
 
     // MARK: - 拍一拍
@@ -79,8 +111,14 @@ public struct SquadInvite: Hashable, Sendable {
     public let isFull: Bool
     /// The member is in it already.
     public let joined: Bool
-    /// Its goal, 人均 N 次 a week.
-    public let daysPerMember: Int
+    /// Joining asks its captain first (入队需要审核).
+    public let needsApproval: Bool
     /// The members' characters, the earliest to join first; members without one are left out.
     public let looks: [CharacterLook]
+}
+
+/// What opening an invite did: joined the squad, or asked its captain to let the member in.
+public enum JoinResult: Hashable, Sendable {
+    case joined(Squad)
+    case asked(JoinRequest)
 }

@@ -15,7 +15,8 @@ struct InMemorySignUpServiceTests {
         #expect(preview.code == code)
         #expect(preview.memberCount == 4)
         #expect(preview.isFull == false)
-        let joined = try await service.join(code)
+        #expect(preview.needsApproval == false)
+        let joined = try Self.joined(await service.join(code, note: nil))
         #expect(joined.teammates.map(\.nickname) == ["可可", "阿杰", "米娅", "豆豆"])
         #expect(joined.weekGoal == 12)
         #expect(joined.daysPerMember == 3)
@@ -26,8 +27,44 @@ struct InMemorySignUpServiceTests {
     /// them join without it, as the API does for an account that agreed before.
     @Test func aMemberBackInNoSquadJoinsWithoutAgreeingAgain() async throws {
         let service = InMemorySignUpService.sampleSquad(character: InMemorySignUpService.sampleCharacter)
-        let joined = try await service.join(InviteCode("K7Q2M9XD"))
+        let joined = try Self.joined(await service.join(InviteCode("K7Q2M9XD"), note: nil))
         #expect(joined.weekGoal == 12)
+    }
+
+    /// 入队申请: a squad whose captain lets members in takes a request, which waits until they say.
+    @Test func aCaptainWhoLetsMembersInIsAskedFirst() async throws {
+        let service = InMemorySignUpService.sampleSquad(asksCaptain: true)
+        let code = try InviteCode("K7Q2M9XD")
+        try await service.agreeToAI()
+        #expect(try await service.preview(code).needsApproval)
+        guard case .asked(let request) = try await service.join(code, note: JoinNote("阿杰拉我来的")) else {
+            Issue.record("joined without asking")
+            return
+        }
+        #expect(request.status == .waiting)
+        #expect(request.note == "阿杰拉我来的")
+        #expect(request.memberCount == 4)
+        #expect(request.captain?.nickname.text == "可可")
+        #expect(await service.squad == nil)
+
+        await service.answer(approving: true)
+        #expect(try await service.joinRequest()?.status == .approved)
+        #expect(await service.squad?.name == request.squadName)
+    }
+
+    @Test func aWithdrawnRequestIsOver() async throws {
+        let service = InMemorySignUpService.sampleSquad(asksCaptain: true)
+        try await service.agreeToAI()
+        _ = try await service.join(InviteCode("K7Q2M9XD"), note: nil)
+        try await service.withdrawJoinRequest()
+        #expect(try await service.joinRequest()?.status == .over)
+        await service.answer(approving: true)
+        #expect(await service.squad == nil)
+    }
+
+    private static func joined(_ outcome: JoinOutcome) throws -> JoinedSquad {
+        guard case .joined(let squad) = outcome else { throw SignUpError.rejected }
+        return squad
     }
 
     @Test func aNewSquadHasOnlyTheMember() async throws {
@@ -58,7 +95,7 @@ struct InMemorySignUpServiceTests {
         await #expect(throws: SignUpError.rejected) {
             try await service.create(named: SquadName("周末爬山队"), daysPerMember: 3, timeZone: "America/New_York")
         }
-        await #expect(throws: SignUpError.rejected) { try await service.join(InviteCode("K7Q2M9XD")) }
+        await #expect(throws: SignUpError.rejected) { try await service.join(InviteCode("K7Q2M9XD"), note: nil) }
     }
 
     @Test func aPlanMustBeAWholeWeek() async throws {
@@ -74,7 +111,7 @@ struct InMemorySignUpServiceTests {
             outfit: Outfit(["body": "shiba"]), persona: .energetic, nickname: try Nickname("Tracy"))
         try await service.save(character)
         try await service.agreeToAI()
-        let joined = try await service.join(InviteCode("K7Q2M9XD"))
+        let joined = try Self.joined(await service.join(InviteCode("K7Q2M9XD"), note: nil))
         let resumed = try await service.resume(in: joined.id)
         #expect(resumed.squad == joined)
         #expect(resumed.character == character)
