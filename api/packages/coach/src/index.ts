@@ -27,9 +27,6 @@ export {
   DeclineReason,
   type ChallengeCompletion,
   CHALLENGE_AMOUNT_MAX,
-  CHALLENGE_LINE_LIMIT,
-  CHALLENGE_TITLE_LIMIT,
-  CHALLENGE_UNIT_LIMIT,
 } from './domain/challenge.js';
 export {
   Coach,
@@ -47,14 +44,9 @@ export {
   MemberId,
   SquadId,
 } from './domain/settings.js';
-export { LETTER_LIMIT, type CoachLetter } from './domain/letter.js';
-export {
-  CoachEmoji,
-  lineLength,
-  REPLY_LIMIT,
-  type CoachAnswer,
-  type CoachReply,
-} from './domain/reply.js';
+export type { CoachLetter } from './domain/letter.js';
+export { fitsLine, LINE_LIMITS, longestLine, type LineKind } from './domain/line-limits.js';
+export { CoachEmoji, type CoachAnswer, type CoachReply } from './domain/reply.js';
 export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
 export type { MemberFacts, PlanDayFacts } from './domain/member-facts.js';
 export type {
