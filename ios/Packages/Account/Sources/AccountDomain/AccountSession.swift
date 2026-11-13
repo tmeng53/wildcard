@@ -72,9 +72,15 @@ public actor AccountSession {
         return stream
     }
 
-    /// Signs in, replacing any session on the device.
+    /// Signs in, replacing any session on the device, and any session kept for the way back
+    /// from a demo account, which belonged to whoever was signed in before.
     @discardableResult
     public func signIn(with credential: Credential) async throws(AccountError) -> MemberID {
+        await endKept()
+        return try await start(with: credential)
+    }
+
+    private func start(with credential: Credential) async throws(AccountError) -> MemberID {
         do {
             try await ensureRestored()
         } catch .storeFailed {
@@ -101,45 +107,6 @@ public actor AccountSession {
             throw error
         }
         return new.member
-    }
-
-    /// Switches an admin to one of their demo accounts with the credential our API handed off.
-    /// The session switched away from is kept the first time, so `returnFromDemo()` brings the
-    /// admin's own account back without signing in again; switching on from one demo account to
-    /// another ends the one left. A failed switch stays on the account it started from.
-    @discardableResult
-    public func switchToDemo(with credential: Credential) async throws(AccountError) -> MemberID {
-        guard let kept else { throw .storeFailed }
-        try await ensureRestored()
-        guard let current = session else { throw .signedOut }
-        let onDemo = try await kept.load() != nil
-        if !onDemo { try await kept.save(current) }
-        let member: MemberID
-        do {
-            member = try await signIn(with: credential)
-        } catch {
-            if !onDemo, session == current { try? await kept.clear() }
-            throw error
-        }
-        if onDemo { try? await provider.signOut(current) }
-        return member
-    }
-
-    /// Back on the admin's own account from a demo account, with the session kept when they
-    /// switched; the demo account's session ends. Throws `signedOut` when none is kept.
-    @discardableResult
-    public func returnFromDemo() async throws(AccountError) -> MemberID {
-        guard let kept, let own = try await kept.load() else { throw .signedOut }
-        try await ensureRestored()
-        let left = session
-        session = own
-        restored = true
-        renewal = nil
-        publish()
-        try await persist()
-        try? await kept.clear()
-        if let left, left != own { try? await provider.signOut(left) }
-        return own.member
     }
 
     /// A current access token for our API. Pass `rejected` with the token the API just refused
@@ -340,5 +307,56 @@ public actor AccountSession {
 
     private func removeObserver(_ key: Int) {
         observers[key] = nil
+    }
+}
+
+// Switching an admin between their own account and their demo accounts.
+extension AccountSession {
+    /// Switches an admin to one of their demo accounts with the credential our API handed off.
+    /// The session switched away from is kept the first time, so `returnFromDemo()` brings the
+    /// admin's own account back without signing in again; switching on from one demo account to
+    /// another ends the one left. A failed switch stays on the account it started from.
+    @discardableResult
+    public func switchToDemo(with credential: Credential) async throws(AccountError) -> MemberID {
+        guard let kept else { throw .storeFailed }
+        try await ensureRestored()
+        guard let current = session else { throw .signedOut }
+        let onDemo = try await kept.load() != nil
+        if !onDemo { try await kept.save(current) }
+        let member: MemberID
+        do {
+            member = try await start(with: credential)
+        } catch {
+            if !onDemo, session == current { try? await kept.clear() }
+            throw error
+        }
+        if onDemo { try? await provider.signOut(current) }
+        return member
+    }
+
+    /// Back on the admin's own account from a demo account, with the session kept when they
+    /// switched; the demo account's session ends. Throws `signedOut` when none is kept.
+    @discardableResult
+    public func returnFromDemo() async throws(AccountError) -> MemberID {
+        guard let kept, let own = try await kept.load() else { throw .signedOut }
+        try await ensureRestored()
+        let left = session
+        session = own
+        restored = true
+        renewal = nil
+        publish()
+        do {
+            try await persist()
+        } catch {
+            // The device still holds the demo session: stay on it, with the own one still kept.
+            if session == own {
+                session = left
+                publish()
+            }
+            throw error
+        }
+        try? await kept.clear()
+        if let left, left != own { try? await provider.signOut(left) }
+        return own.member
     }
 }

@@ -87,3 +87,32 @@ private func admin(_ provider: FakeProvider, _ store: MemoryStore, kept: MemoryS
     #expect(await kept.saved == nil)
     await #expect(throws: AccountError.signedOut) { try await account.returnFromDemo() }
 }
+
+@Test func signingInAgainDropsASessionKeptByWhoeverWasSignedInBefore() async throws {
+    let provider = FakeProvider()
+    // A demo session that died without signing out left the old own session kept.
+    let (store, kept) = (MemoryStore(), MemoryStore(session("stale")))
+    let account = admin(provider, store, kept: kept)
+    await provider.signInAs(session("fresh"))
+    try await account.signIn(with: handOff)
+    #expect(await kept.saved == nil)
+    #expect(await provider.signedOut == [session("stale")])
+
+    await provider.signInAs(session("demo", member: demo))
+    try await account.switchToDemo(with: handOff)
+    #expect(await kept.saved == session("fresh"))
+}
+
+@Test func aReturnTheDeviceCantSaveStaysOnTheDemoAccount() async throws {
+    let provider = FakeProvider()
+    let (store, kept) = (MemoryStore(session("own")), MemoryStore())
+    let account = admin(provider, store, kept: kept)
+    await provider.signInAs(session("demo", member: demo))
+    try await account.switchToDemo(with: handOff)
+    await store.failSaves()
+
+    await #expect(throws: AccountError.storeFailed) { try await account.returnFromDemo() }
+    #expect(try await account.accessToken() == "access-demo")
+    #expect(await kept.saved == session("own"))
+    #expect(await provider.signedOut == [])
+}
