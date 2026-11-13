@@ -50,6 +50,30 @@ final class TeamLetterUITests: XCTestCase {
         keepScreenshot(named: "146-team-letter-worn")
     }
 
+    /// A letter whose piece the member had unlocked by training already (the team's give_reward
+    /// left it as it was, so it isn't among the team's pieces): 立刻穿上 still opens 衣橱, not the
+    /// badge board, as it did on Tracy's phone (2026-11-13).
+    func testWearOpensTheClosetForAPieceUnlockedBefore() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-today.cardPage", "0", "-uitest-broadcast", "thanks", "-uitest-letter-piece-unlocked",
+        ]
+        app.launch()
+
+        let seal = app.descendants(matching: .any).matching(identifier: "today.letter.seal").firstMatch
+        XCTAssertTrue(seal.waitForExistence(timeout: Self.wait), "the letter never flew in")
+        seal.tap()
+        let wear = app.buttons["today.teamLetter.wear"]
+        XCTAssertTrue(wear.waitForExistence(timeout: Self.wait), "the letter has no 立刻穿上")
+        Thread.sleep(forTimeInterval: 2)
+        wear.tap()
+        let editor = app.descendants(matching: .any).matching(identifier: "editor.stage").firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: Self.wait), "立刻穿上 didn't open 衣橱")
+        keepScreenshot(named: "147-team-letter-worn-unlocked-piece")
+    }
+
     private func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
