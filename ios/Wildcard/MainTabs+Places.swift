@@ -26,10 +26,11 @@ extension MainTabs {
         }
     }
 
-    /// The place's page on the member's squad; `openPost` pushes a tapped tile's post.
+    /// The place's page on the member's squad (动态's, while 今天 hasn't loaded: a launch into 动态
+    /// or a push opens a tag before it); `openPost` pushes a tapped tile's post.
     func placePage(_ place: Place, openPost: @escaping (CheckInID) -> Void) -> some View {
         PlaceScreen(
-            place: place, squad: today.squadID, source: places,
+            place: place, squad: today.squadID ?? feed.squad, source: places,
             today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), openPost: openPost
         )
         .environment(\.sceneTheme, today.scene)
