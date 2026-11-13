@@ -40,7 +40,7 @@ struct PlaceTallyRow: View {
                     GeometryReader { bar in
                         Capsule()
                             .fill(Color(role: .fgDefault, in: theme))
-                            .frame(width: max(Self.barHeight, bar.size.width * Double(count) / Double(max(most, 1))))
+                            .frame(width: barWidth(in: bar.size.width))
                     }
                 }
                 .frame(height: Self.barHeight)
@@ -57,6 +57,12 @@ struct PlaceTallyRow: View {
         }
         .frame(minHeight: Sizing.minimumTapTarget)
         .accessibilityElement(children: .combine)
+    }
+
+    /// Its share of the most, at least a round end; none for a count of 0.
+    private func barWidth(in track: CGFloat) -> CGFloat {
+        guard count > 0 else { return 0 }
+        return max(Self.barHeight, track * Double(count) / Double(max(most, 1)))
     }
 }
 

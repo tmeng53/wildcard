@@ -121,7 +121,7 @@ describe('saved places', () => {
     expect(await saved.list(me)).toHaveLength(1);
   });
 
-  it('saves only a place Apple Maps can find again, keyed by its id', async () => {
+  it('saves only a place that can be found again: Maps’ by its id, a squad’s by its own', async () => {
     const member = await newMember();
     const { saved } = savedPlacesAt('2026-11-10T12:00:00Z');
     const unkeyed = {
@@ -132,6 +132,9 @@ describe('saved places', () => {
     await expect(saved.save({ member, place: unkeyed })).rejects.toThrow(PlaceWithoutKeyError);
     const renamed = await saved.save({ member, place: { ...equinox, name: 'Equinox' } });
     expect(renamed.key).toBe(equinoxKey);
+    const squadPlaceId = 'B3000000-0000-4000-8000-000000000001';
+    const corner = await saved.save({ member, place: { ...unkeyed, squadPlaceId } });
+    expect(corner.key).toBe(`squad:${squadPlaceId.toLowerCase()}`);
   });
 
   it(`refuses more than ${String(MAX_SAVED_PLACES)} places, but still changes a saved one`, async () => {

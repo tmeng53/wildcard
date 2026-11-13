@@ -20,7 +20,7 @@ private func sample() -> InMemoryFeedSource {
     let book = sample()
     let key = try #require(InMemoryFeedSource.sampleGym?.key)
     let page = try #require(try await book.page(of: key, in: squad))
-    #expect(page.place.name == "Equinox Flatiron")
+    #expect(page.place.name == "F45 Training Flatiron")
     #expect(page.visits == 1)
     #expect(page.people == 1)
     #expect(page.stars == 4.5)

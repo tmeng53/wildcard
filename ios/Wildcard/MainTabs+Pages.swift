@@ -103,7 +103,6 @@ extension MainTabs {
         profile.overview.map { NoticeViewer(outfit: $0.character.outfit, persona: $0.character.persona) }
     }
 
-    /// A card's comments open its post's page, pushed straight over 动态 on the same path.
     /// What each page pushed over 动态 is.
     @ViewBuilder func feedDestination(_ page: FeedPage) -> some View {
         switch page {
@@ -128,6 +127,7 @@ extension MainTabs {
         feedPages.append(.post(OpenedPost(id: id, model: feed.page(of: id))))
     }
 
+    /// A card's comments open its post's page, pushed straight over 动态 on the same path.
     func pushCardPost(_ id: CheckInID?) {
         guard let id else { return }
         let page = FeedPage.post(OpenedPost(id: id, model: feed))

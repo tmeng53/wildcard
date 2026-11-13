@@ -73,10 +73,10 @@ extension InMemoryFeedSource {
         sampleGym?.key.map { [$0: [jay: 5, coco: 4]] } ?? [:]
     }
 
-    /// The gym my leg day was at, which 阿杰 and Coco scored: its page shows the squad's score
-    /// and leaves mine to give.
+    /// The gym my leg day was at, its name long enough to fill the compose ticket's row, which 阿杰
+    /// and Coco scored: its page shows the squad's score and leaves mine to give.
     static let sampleGym = try? Place(
-        name: "Equinox Flatiron", appleID: "I6FD7682FD36BB3BE", category: "fitnessCenter", latitude: 40.7411,
+        name: "F45 Training Flatiron", appleID: "I6FD7682FD36BB3BE", category: "fitnessCenter", latitude: 40.7411,
         longitude: -73.9897)
 
     /// The restaurant Mia's salad came from.

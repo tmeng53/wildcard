@@ -214,7 +214,10 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
-                if let place = post.checkIn.entry.place { PlaceTag(place, open: opening(place)) }
+                if let place = post.checkIn.entry.place {
+                    // A post kept out of 动态 counts on no place's page, so its tag opens Maps.
+                    PlaceTag(place, open: post.checkIn.inFeed ? opening(place) : nil)
+                }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {

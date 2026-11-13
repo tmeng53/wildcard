@@ -28,6 +28,8 @@ public struct PlacePageView: View {
     private let openPost: (CheckInID) -> Void
     /// The street Apple Maps gives the place, under its name.
     @State private var address: String?
+    /// The member's taps on the stars, so the pick's haptic answers a tap and not a load.
+    @State private var picks = 0
 
     public init(store: PlacePageStore, model: FeedModel, openPost: @escaping (CheckInID) -> Void) {
         self.store = store
@@ -165,12 +167,13 @@ public struct PlacePageView: View {
         VStack(alignment: .leading, spacing: Space.xs) {
             SectionLabel(Text(copy: "我的评分", bundle: .module))
             StarRating(rating: store.myStars ?? 0, size: Self.star, spacing: Space.s) { stars in
+                picks += 1
                 Task { await store.rate(stars) }
             }
             .accessibilityIdentifier("place.myStars")
             if store.rateFailed { InlineFailure() }
         }
-        .haptic(.pick, trigger: store.myStars)
+        .haptic(.pick, trigger: picks)
     }
 
     // MARK: - 运动, 吃的 and 动态

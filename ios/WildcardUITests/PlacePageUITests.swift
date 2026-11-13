@@ -2,7 +2,7 @@ import XCTest
 
 /// A tagged place's page (地点页): a post's place opens it over 动态 instead of Apple Maps. Mia's
 /// salad came from Sweetgreen, a restaurant: its page shows the meals' 健康, 好吃 and 卡价比. My leg
-/// day was at Equinox Flatiron, a gym 阿杰 and Coco scored 5 and 4: its page shows the squad's
+/// day was at F45 Training Flatiron, a gym 阿杰 and Coco scored 5 and 4: its page shows the squad's
 /// 4.5, and my own score changes it. A post on the page opens that post.
 @MainActor
 final class PlacePageUITests: XCTestCase {
@@ -30,7 +30,7 @@ final class PlacePageUITests: XCTestCase {
 
     func testAGymsPageTakesMyScoreAndOpensItsPosts() {
         let app = launch()
-        let tag = placeTag("Equinox Flatiron", in: app)
+        let tag = placeTag("F45 Training Flatiron", in: app)
         tag.tap()
         let numbers = app.descendants(matching: .any)["place.numbers"]
         XCTAssertTrue(numbers.waitForExistence(timeout: Self.wait), "the gym's page didn't open")
