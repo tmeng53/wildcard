@@ -109,8 +109,10 @@ export async function notifyTeammates(
     sportNames.get(record.training.sport)?.[NAMES_KEY[language]] ??
     record.training.sport;
 
+  const unclaimed: unknown[] = [];
   await Promise.all(
     [...through].map(async ([member, squad]) => {
+      let claimed = false;
       try {
         const to = PushMember.parse(member);
         if (!(await deps.push.settingsOf(to)).dailyProgress) return;
@@ -121,6 +123,7 @@ export async function notifyTeammates(
           dailyRings: settings.dailyRings,
         });
         if (ring === undefined) return;
+        claimed = true;
         const told = {
           checkIn,
           squad,
@@ -140,9 +143,13 @@ export async function notifyTeammates(
       } catch (error) {
         // One teammate's failure never stops the others'; a claimed push isn't tried again.
         deps.log.error('teammate push not sent', { checkIn, member, error });
+        if (!claimed) unclaimed.push(error);
       }
     }),
   );
+  // A failure before the claim lost nothing yet: the event comes again, and the claims
+  // keep everyone already told from being told twice.
+  if (unclaimed.length > 0) throw unclaimed[0];
 }
 
 type Told = Omit<Parameters<typeof teammateNotification>[0], 'squadWeek' | 'today'>;
