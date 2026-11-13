@@ -180,6 +180,8 @@ export interface CoachSettings {
   challenge_model: Generated<string>;
   challenge_rules: Generated<string>;
   coaching: boolean;
+  dream_model: string;
+  dream_reasoning: Generated<string>;
   holidays: Generated<Json>;
   model: string;
   note_hour: Generated<number>;
