@@ -34,20 +34,9 @@ private func story(
         ending: Ending(done: 23, plan: 22))
 }
 
+/// Each page by its case's name.
 private func ids(_ pages: [StoryPage]) -> [String] {
-    pages.map {
-        switch $0 {
-        case .pending: "pending"
-        case .podium: "podium"
-        case .titles: "titles"
-        case .myWeek: "myWeek"
-        case .squadWeek: "squadWeek"
-        case .hottest: "hottest"
-        case .meals: "meals"
-        case .bestDisclaimer: "bestDisclaimer"
-        case .ending: "ending"
-        }
-    }
+    pages.map { String(String(describing: $0).prefix { $0 != "(" }) }
 }
 
 @Test func aReadyStoryPlaysTheAwardsFirstAndTheEndingLast() throws {

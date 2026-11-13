@@ -38,13 +38,18 @@ public struct WeekStory: Hashable, Sendable {
     public let hottest: Hottest?
     public let meals: Meals?
     public let bestDisclaimer: BestDisclaimer?
+    /// 小队菜单: up to 3 of the week's rated meals, the best 卡价比 first.
+    public let menu: [MenuDish]
+    /// Every place the squad trained at that week, the most 训练 first, for 小队最爱去 and 新发现.
+    public let places: [PlaceWeek]
     public let ending: Ending?
 
     public init(
         status: Status, stuck: Bool = false, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
         squadmates: [Squadmate], order: [PageID]? = nil, podium: Podium? = nil, titles: [MemberTitles] = [],
         myWeek: MyWeek? = nil, squadWeek: SquadWeek? = nil, hottest: Hottest? = nil,
-        meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, ending: Ending? = nil
+        meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, menu: [MenuDish] = [], places: [PlaceWeek] = [],
+        ending: Ending? = nil
     ) {
         self.status = status
         self.stuck = stuck
@@ -61,6 +66,8 @@ public struct WeekStory: Hashable, Sendable {
         self.hottest = hottest
         self.meals = meals
         self.bestDisclaimer = bestDisclaimer
+        self.menu = Array(menu.prefix(3))
+        self.places = places
         self.ending = ending
     }
 
@@ -74,12 +81,13 @@ public struct WeekStory: Hashable, Sendable {
 
     /// The pages to play, in order. A page whose data is missing is left out, and the ending,
     /// when there is one, closes the story. While the titles are pending, the pending page takes their place
-    /// and every other page plays as usual. 全队运动总结 follows 你的一周 when an order leaves it out.
+    /// and every other page plays as usual. A page an order leaves out follows the one it belongs
+    /// after: 全队运动总结 after 你的一周, 小队最爱去 and 新发现 after it, 小队菜单 after 吃了.
     public var pages: [StoryPage] {
         var ids = (order ?? PageID.defaultOrder).filter { $0 != .ending }
         ids = ids.reduce(into: []) { kept, id in if !kept.contains(id) { kept.append(id) } }
-        if !ids.contains(.squadWeek) {
-            ids.insert(.squadWeek, at: ids.firstIndex(of: .myWeek).map { $0 + 1 } ?? ids.endIndex)
+        for (id, after) in PageID.follows where !ids.contains(id) {
+            ids.insert(id, at: ids.firstIndex(of: after).map { $0 + 1 } ?? ids.endIndex)
         }
         ids.append(.ending)
         return ids.compactMap { id in
@@ -93,10 +101,21 @@ public struct WeekStory: Hashable, Sendable {
         case .titles: titles.isEmpty ? nil : .titles(titles)
         case .myWeek: myWeek.map(StoryPage.myWeek)
         case .squadWeek: squadWeek.map(StoryPage.squadWeek)
+        case .ending: ending.map(StoryPage.ending)
+        default: weekPage(id)
+        }
+    }
+
+    /// The pages on what the squad posted: its posts, meals and places.
+    private func weekPage(_ id: PageID) -> StoryPage? {
+        switch id {
         case .hottest: hottest.map(StoryPage.hottest)
         case .meals: meals.map(StoryPage.meals)
         case .bestDisclaimer: bestDisclaimer.map(StoryPage.bestDisclaimer)
-        case .ending: ending.map(StoryPage.ending)
+        case .menu: menu.isEmpty ? nil : .menu(menu)
+        case .favoritePlace: favoritePlace.map(StoryPage.favoritePlace)
+        case .discovery: discovery.map(StoryPage.discovery)
+        default: nil
         }
     }
 
@@ -143,11 +162,18 @@ public struct Week: Hashable, Sendable {
 
 /// Which page, as the API names it in `order`.
 public enum PageID: String, CaseIterable, Hashable, Sendable {
-    case podium, titles, myWeek, squadWeek, hottest, meals, bestDisclaimer, ending
+    case podium, titles, myWeek, squadWeek, favoritePlace, discovery, hottest, meals, menu, bestDisclaimer, ending
 
     /// The order when the AI didn't pick one: the awards first, the ending last.
     public static let defaultOrder: [PageID] = [
-        .podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending,
+        .podium, .titles, .myWeek, .squadWeek, .favoritePlace, .discovery, .hottest, .meals, .menu,
+        .bestDisclaimer, .ending,
+    ]
+
+    /// Where a page an order leaves out goes: after this one, in this order, so each finds the
+    /// one before it already placed.
+    static let follows: [(PageID, after: PageID)] = [
+        (.squadWeek, .myWeek), (.favoritePlace, .squadWeek), (.discovery, .favoritePlace), (.menu, .meals),
     ]
 }
 
@@ -163,6 +189,12 @@ public enum StoryPage: Hashable, Sendable {
     case hottest(Hottest)
     case meals(Meals)
     case bestDisclaimer(BestDisclaimer)
+    /// 小队菜单.
+    case menu([MenuDish])
+    /// 小队最爱去.
+    case favoritePlace(PlaceSpotlight)
+    /// 新发现.
+    case discovery(PlaceSpotlight)
     case ending(Ending)
 }
 

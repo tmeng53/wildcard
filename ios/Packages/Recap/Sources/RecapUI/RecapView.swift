@@ -1,5 +1,6 @@
 #if os(iOS)
 import CheckInUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
 import RecapDomain
@@ -27,6 +28,9 @@ public struct RecapView: View {
     @State private var dragDown = 0.0
     @State private var touchedAt: Date?
     @State private var reveal: Reveal?
+    /// 地点页s pushed over the story from its places; the story waits while one is open.
+    @State private var places: [Place] = []
+    @Environment(\.placePage) private var placePage
 
     private let autoAdvances: Bool
 
@@ -42,6 +46,16 @@ public struct RecapView: View {
     }
 
     public var body: some View {
+        NavigationStack(path: $places) {
+            content
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: Place.self) { place in placePage.view(of: place) }
+        }
+        // Back from a place, the page still waits for the reader's tap, as after any play with it.
+        .onChange(of: places.isEmpty) { _, isEmpty in if !isEmpty { model.hold(true) } }
+    }
+
+    private var content: some View {
         ZStack {
             story
                 // Under the reveal the page is a picture: no taps, nothing for VoiceOver.
@@ -152,6 +166,7 @@ public struct RecapView: View {
         case .meals(let meals): MealsPage(meals: meals, page: context).storyPage("meals")
         case .bestDisclaimer(let note):
             BestDisclaimerPage(note: note, page: context).storyPage("bestDisclaimer")
+        case .menu, .favoritePlace, .discovery: placesPage(page, context: context)
         case .ending(let ending):
             self.ending(
                 ending, context: context, actions: EndingActions(picture: picture, planNextWeek: model.planNextWeek)
@@ -159,6 +174,32 @@ public struct RecapView: View {
             .storyPage("ending")
         }
     }
+
+    /// 小队菜单, 小队最爱去 and 新发现, whose places open 地点页 over the story.
+    @ViewBuilder
+    private func placesPage(_ page: StoryPage, context: PageContext) -> some View {
+        switch page {
+        case .menu(let dishes):
+            MenuPage(dishes: dishes, page: context, openPlace: open, stay: stay).storyPage("menu")
+        case .favoritePlace(let spotlight):
+            PlaceMapPage(kind: .favorite, spotlight: spotlight, page: context, openPlace: open, stay: stay)
+                .storyPage("favoritePlace")
+        case .discovery(let spotlight):
+            PlaceMapPage(kind: .discovery, spotlight: spotlight, page: context, openPlace: open, stay: stay)
+                .storyPage("discovery")
+        default: EmptyView()
+        }
+    }
+
+    /// Pushes a place's 地点页 over the story, where the app gave one.
+    private func open(_ place: Place) {
+        guard placePage.isWired else { return }
+        places.append(place)
+    }
+
+    /// The reader played with the page (turned a card, fanned the heads, dragged the map): it
+    /// stays up until their next tap moves on.
+    private func stay() { model.hold(true) }
 
     /// The last page, with 冠军专属's sticker for whoever picks next week's scene.
     @ViewBuilder

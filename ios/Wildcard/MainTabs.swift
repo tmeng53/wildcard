@@ -161,7 +161,11 @@ struct MainTabs: View {
         }
         .placesZones(from: profile, in: today.health)
         .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
-            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
+            if let story = recap.open {
+                // 地点页 from the story's places, pushed over it, with a tile's post over that.
+                RecapView(model: story, autoAdvances: !LaunchOptions.recapManual)
+                    .environment(\.placePage, composePlacePage)
+            }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
         .onChange(of: recap.picks) {
