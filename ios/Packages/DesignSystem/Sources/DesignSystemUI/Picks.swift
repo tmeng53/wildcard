@@ -118,6 +118,7 @@ public struct PickPill: View {
                         .contentShape(Rectangle())
                 }
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityIdentifier("pill.open")
                 Button(action: remove) {
                     cross
                         .padding(.leading, Space.xs)

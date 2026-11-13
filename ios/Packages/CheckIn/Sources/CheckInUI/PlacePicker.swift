@@ -25,14 +25,13 @@ struct PlacePill: View {
                     self.place = nil
                 }
                 .accentTone(.ink)
-                .accessibilityLabel(Text(verbatim: place.name))
             } else {
                 PickPill(Text(copy: "添加位置", bundle: .module), systemImage: "mappin", look: .solid, isSelected: false) {
                     isPicking = true
                 }
+                .accessibilityIdentifier("compose.place")
             }
         }
-        .accessibilityIdentifier("compose.place")
         .sheet(isPresented: $isPicking) {
             PlacePickerSheet(current: place) { picked in
                 place = picked

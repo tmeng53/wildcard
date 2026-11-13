@@ -39,7 +39,8 @@ final class PostManageUITests: XCTestCase {
     /// The post's gym on the ticket, its whole name shown while the row has room: tapping the
     /// name leaves it on; only its cross takes it off (Tracy, 2026-11-13).
     private func checkThePlaceTag(in app: XCUIApplication) {
-        let tag = app.buttons["compose.place"]
+        // The name and its cross are two buttons, each with its own id.
+        let tag = app.buttons["pill.open"]
         let count = app.staticTexts["compose.count"]
         XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "the post's place isn't on the compose page")
         XCTAssertEqual(tag.label, "F45 Training Flatiron", "the tag doesn't name the post's place")
