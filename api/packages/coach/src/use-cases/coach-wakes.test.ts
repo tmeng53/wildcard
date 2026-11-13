@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 import { createPostgresCoachCatalog } from '../adapters/postgres-coach-catalog.js';
 import { createPostgresCoachHiring } from '../adapters/postgres-coach-hiring.js';
+import { createPostgresCoachLetters } from '../adapters/postgres-coach-letters.js';
 import {
   createPostgresCoachSettings,
   type CoachTables,
@@ -301,6 +302,7 @@ function wakes(
         consented === undefined ? members : members.filter((member) => consented.includes(member)),
       ),
     hiring: ownSquadOnly(createPostgresCoachHiring(trx), squad),
+    letters: createPostgresCoachLetters(trx),
     clock: () => at,
     ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
@@ -401,6 +403,7 @@ describe('the coach', () => {
       squadWeek: () => Promise.reject(new Error('no squad to read')),
       aiConsented: () => Promise.reject(new Error('no one to ask')),
       hiring: createPostgresCoachHiring(db),
+      letters: createPostgresCoachLetters(db),
       clock: () => now,
       ...quietPorts,
     }).run();
@@ -902,6 +905,51 @@ describe('the coach', () => {
       // No coach, nothing to be back.
       await hiring.fire({ squad, by });
       expect(await store.hiredBackAt(squad)).toBeUndefined();
+    });
+  });
+
+  it('tells a coach whom it took over from and the letter it was left', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia } = fixture;
+      const by = MemberId.parse(mia);
+      const catalog = createPostgresCoachCatalog(trx);
+      const hiring = createCoachHiring({ hiring: createPostgresCoachHiring(trx), catalog });
+      const letters = createPostgresCoachLetters(trx);
+      const nuannuan = CoachId.parse('nuannuan');
+      const [first] = await catalog.list();
+      if (first === undefined) throw new Error('No coach.');
+      await catalog.save({ ...first, id: nuannuan, name: '暖暖' }, by);
+
+      // The fixture's first coach came with none before it: nothing to tell.
+      const quiet = scriptedAgent(() => []);
+      await wakes(fixture, { agent: quiet.agent }).run();
+      expect(quiet.runs.length).toBeGreaterThan(0);
+      expect(quiet.runs.some(({ task }) => task.includes('你接手这个小队'))).toBe(false);
+
+      // 换教练 to 暖暖, then back to 小混: 小混 took over from 暖暖, who left no letter yet.
+      await hiring.change({ squad, coach: nuannuan, by });
+      await hiring.change({ squad, coach: CoachId.parse('xiaohun'), by });
+      const { rows } = await sql<{ day: string }>`
+        select to_char(now() at time zone 'America/New_York', 'YYYY-MM-DD') as day`.execute(trx);
+      const day = rows[0]?.day ?? '';
+      await sql`delete from public.coach_wakes where squad_id = ${squad}`.execute(trx);
+      const before = scriptedAgent(() => []);
+      await wakes(fixture, { agent: before.agent }).run();
+      expect(before.runs[0]?.task).toContain(
+        `## 你接手这个小队\n${day} 小队换教练，你接替了暖暖。\n暖暖走时没留信。`,
+      );
+
+      // Once 暖暖's letter is in, the next wake reads it as the squad did.
+      const handover = await letters.handover(squad);
+      if (handover === undefined) throw new Error('No handover.');
+      await letters.claim(handover);
+      await letters.save({ handover, day, text: '小混，这队交给你了，大家都爱练腿。' });
+      await sql`delete from public.coach_wakes where squad_id = ${squad}`.execute(trx);
+      const after = scriptedAgent(() => []);
+      await wakes(fixture, { agent: after.agent }).run();
+      expect(after.runs[0]?.task).toContain(
+        '暖暖走时给全队留了一封信，大家都看过：\n「小混，这队交给你了，大家都爱练腿。」',
+      );
     });
   });
 

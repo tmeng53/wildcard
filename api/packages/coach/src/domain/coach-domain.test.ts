@@ -605,6 +605,32 @@ describe('when the coach wakes', () => {
       '# 新的一天\n2026-11-26，周四。',
       '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
     ]);
+    // A coach that took over is told from whom and when, with the letter it was left, if any.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        handover: { from: '毛头', day: '2026-11-12', letter: '交给你了，大家爱练腿。' },
+      })
+        ?.split('\n\n')
+        .slice(0, 2),
+    ).toStrictEqual([
+      '# 新的一天\n2026-11-26，周四。',
+      '## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。\n毛头走时给全队留了一封信，大家都看过：\n「交给你了，大家爱练腿。」',
+    ]);
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        handover: { from: '毛头', day: '2026-11-12' },
+      })
+        ?.split('\n\n')
+        .at(1),
+    ).toBe('## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。\n毛头走时没留信。');
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       section(

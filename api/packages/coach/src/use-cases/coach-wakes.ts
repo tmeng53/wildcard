@@ -15,6 +15,7 @@ import {
   taskOf,
   type CoachThread,
   type DayTalk,
+  type TookOver,
   type YesterdayFacts,
 } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
@@ -38,6 +39,7 @@ import type {
   CoachFeedback,
   CoachGifting,
   CoachHiringStore,
+  CoachLetterStore,
   CoachMemberFacts,
   CoachStreaks,
   CoachMemes,
@@ -180,6 +182,8 @@ export interface CoachWakesDependencies {
   readonly squadWeek: SquadWeekSource;
   readonly aiConsented: AiConsented;
   readonly hiring: CoachHiringStore;
+  /** The change of coach that brought the coach now and the letter left with it, if any. */
+  readonly letters: Pick<CoachLetterStore, 'handover' | 'ofHandover'>;
   readonly clock: () => Date;
   readonly photoUrls: CoachPhotoUrls;
   /** Member stats and plans the coach looks up. */
@@ -515,6 +519,35 @@ async function backAgain(deps: CoachWakesDependencies, squad: SquadId): Promise<
   return since !== undefined && (await deps.usage.total({ squad, since })).wakes === 0;
 }
 
+/**
+ * Whom the coach took over from on the squad's last change of coach (换教练), on which day, and
+ * the letter the outgoing coach left the squad, so the new one can speak of it when asked (Tracy,
+ * 2026-11-13). `undefined` for a coach hired with none before it.
+ */
+async function handoverOf(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    coach,
+    week,
+    zone,
+  }: {
+    readonly squad: SquadId;
+    readonly coach: Coach;
+    readonly week: SquadWeek;
+    readonly zone: string;
+  },
+): Promise<TookOver | undefined> {
+  const handover = await deps.letters.handover(squad);
+  if (handover?.to !== coach.id) return undefined;
+  const letter = await deps.letters.ofHandover(handover.hireEvent);
+  return {
+    from: (await coachNames(deps, week)).get(handover.from) ?? handover.from,
+    day: wallClockAt(handover.at, zone).day,
+    ...(letter === undefined ? {} : { letter: letter.text }),
+  };
+}
+
 /** These members, or only `only` of them when it is given. */
 function onlyFor(members: readonly string[], only: string | undefined): readonly string[] {
   return only === undefined ? members : members.filter((member) => member === only);
@@ -651,6 +684,9 @@ async function think(
       ...new Set([...holidaysOn(settings.holidays, day), ...(await deps.occasions(day))]),
     ],
     backAgain: await backAgain(deps, wake.squad),
+    ...(wake.reason.kind === 'dream'
+      ? {}
+      : { handover: await handoverOf(deps, { squad: wake.squad, coach, week, zone }) }),
     recentNotes: daily
       ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
       : [],
