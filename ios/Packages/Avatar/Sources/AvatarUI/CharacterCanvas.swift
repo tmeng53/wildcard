@@ -11,6 +11,11 @@ public struct FigureDrawing {
     /// Each part's art as read, kept for an arm and a rope, whose paths are rebuilt each frame
     /// the arm bends or the rope hangs.
     let reshaped: [[ArtShape]?]
+    /// For an arm tucked behind its body at its seam (`Figure.Part.tuck`): the clip it is
+    /// drawn in over the body, and the clip it is drawn in under it, in the arm's own coordinates.
+    let tucks: [(over: Path, under: Path)?]
+    /// For each part, the tucked arms that hang from it, drawn under it first.
+    let tucked: [[Int]]
 
     struct DrawableShape {
         let path: Path
@@ -25,6 +30,18 @@ public struct FigureDrawing {
         parts = figure.parts.map { part in Self.shapes(part.art.flatMap(\.shapes)) }
         reshaped = figure.parts.map { part in
             part.elbow == nil && part.rope == nil ? nil : part.art.flatMap(\.shapes)
+        }
+        let far = figure.width + figure.height
+        tucks = figure.parts.map { part in
+            part.tuck.map { tuck in
+                (
+                    over: Path(tuck.seam.kept(reaching: far).map { CGPoint($0) }),
+                    under: Path(tuck.under.kept(reaching: far).map { CGPoint($0) })
+                )
+            }
+        }
+        tucked = figure.parts.indices.map { body in
+            figure.parts.indices.filter { figure.parts[$0].parent == body && figure.parts[$0].tuck != nil }
         }
     }
 
@@ -96,34 +113,36 @@ public struct CharacterCanvas: View {
             let fit = CGAffineTransform(scaleX: scale, y: scale).translatedBy(
                 x: (size.width / scale - area.width) / 2 - area.minX,
                 y: (size.height / scale - area.height) / 2 - area.minY)
-            for (index, placement) in zip(drawing.parts.indices, placements)
-            where placement.opacity > 0 && !drawing.parts[index].isEmpty {
-                let shapes = drawing.shapes(index, placement)
-                var part = context
-                if let area = placement.area, let first = area.first {
-                    // An arm's front copy shows only past the elbow (`Placement.area`).
-                    part.transform = fit
-                    part.clip(
-                        to: Path { path in
-                            path.move(to: CGPoint(x: first.x, y: first.y))
-                            for point in area.dropFirst() { path.addLine(to: CGPoint(x: point.x, y: point.y)) }
-                            path.closeSubpath()
-                        })
+            for index in drawing.parts.indices {
+                for arm in drawing.tucked[index] {
+                    context.draw(drawing, arm, placements[arm], in: drawing.tucks[arm]?.under, fit: fit)
                 }
-                part.transform = CGAffineTransform(placement.transform).concatenating(fit)
-                guard placement.opacity < 1 else {
-                    part.draw(shapes)
-                    continue
-                }
-                // A fading part fades as one piece, so its overlapping shapes don't show through.
-                part.opacity = placement.opacity
-                part.drawLayer { layer in layer.draw(shapes) }
+                context.draw(drawing, index, placements[index], in: drawing.tucks[index]?.over, fit: fit)
             }
         }
     }
 }
 
 extension GraphicsContext {
+    /// Draws one part as `placement` puts it, inside `clip` (in the part's own coordinates)
+    /// when there is one.
+    func draw(
+        _ drawing: FigureDrawing, _ index: Int, _ placement: Placement, in clip: Path?, fit: CGAffineTransform
+    ) {
+        guard placement.opacity > 0, !drawing.parts[index].isEmpty else { return }
+        let shapes = drawing.shapes(index, placement)
+        var part = self
+        part.transform = CGAffineTransform(placement.transform).concatenating(fit)
+        if let clip { part.clip(to: clip) }
+        guard placement.opacity < 1 else {
+            part.draw(shapes)
+            return
+        }
+        // A fading part fades as one piece, so its overlapping shapes don't show through.
+        part.opacity = placement.opacity
+        part.drawLayer { layer in layer.draw(shapes) }
+    }
+
     /// Paints shapes back to front in this context's transform.
     func draw(_ shapes: [FigureDrawing.DrawableShape]) {
         for shape in shapes {
@@ -157,6 +176,15 @@ extension Path {
             case .close: closeSubpath()
             }
         }
+    }
+}
+
+extension Path {
+    /// A closed polygon.
+    init(_ corners: [CGPoint]) {
+        self.init()
+        addLines(corners)
+        closeSubpath()
     }
 }
 

@@ -60,7 +60,7 @@ private func leashRig(parent: PartID? = nil) -> Rig {
 }
 
 @Test func aRopeHasNoParentAndIsDrawnAsStraightLines() {
-    #expect(throws: AvatarError.invalidRope(part: "leash", problem: "a rope has no parent, elbow or twin")) {
+    #expect(throws: AvatarError.invalidRope(part: "leash", problem: "a rope has no parent or elbow")) {
         try Figure(rig: leashRig(parent: "hand"), outfit: Outfit(["prop": "dog"]), art: leashArt)
     }
     let curved = ##"<svg viewBox="0 0 100 100"><path d="M10 10 Q25 20 40 10" stroke="#000"/></svg>"##

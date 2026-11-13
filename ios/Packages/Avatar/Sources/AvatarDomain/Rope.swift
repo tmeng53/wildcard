@@ -62,8 +62,8 @@ extension Figure {
     static func resolveRopes(_ built: inout [Part], _ parts: [Rig.Part]) throws(AvatarError) {
         for (index, part) in parts.enumerated() {
             guard let ends = part.rope else { continue }
-            guard part.parent == nil, part.elbow == nil, part.twin == nil else {
-                throw .invalidRope(part: part.id, problem: "a rope has no parent, elbow or twin")
+            guard part.parent == nil, part.elbow == nil else {
+                throw .invalidRope(part: part.id, problem: "a rope has no parent or elbow")
             }
             guard let start = parts.firstIndex(where: { $0.id == ends.start.part }),
                 let end = parts.firstIndex(where: { $0.id == ends.end.part }), start != index, end != index,
