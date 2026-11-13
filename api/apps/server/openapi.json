@@ -4734,7 +4734,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 8,
+            "maxLength": 16,
             "description": "What to do, in a few words.",
             "example": "喝水"
           },
@@ -4747,13 +4747,13 @@
           },
           "unit": {
             "type": "string",
-            "maxLength": 4,
+            "maxLength": 8,
             "description": "The amount’s unit, the coach’s own word.",
             "example": "杯"
           },
           "line": {
             "type": "string",
-            "maxLength": 24,
+            "maxLength": 48,
             "description": "The coach talking to the member under the title, about why; left out on older notes.",
             "example": "泳池泡久了也会渴，别等口干。"
           },
@@ -5427,6 +5427,104 @@
           "version",
           "to",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedPlace"
+            },
+            "description": "Newest saved first."
+          }
+        },
+        "required": [
+          "version",
+          "places"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlace": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The member’s note on it, left out when they wrote none.",
+            "x-max-characters": 60
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they saved it, in UTC."
+          }
+        },
+        "required": [
+          "key",
+          "place",
+          "savedAt"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceSaved": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "saved": {
+            "$ref": "#/components/schemas/SavedPlace"
+          }
+        },
+        "required": [
+          "version",
+          "saved"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The note to keep with it; left out, it has none (a note saved before is cleared).",
+            "x-max-characters": 60
+          }
+        },
+        "required": [
+          "version",
+          "place"
         ],
         "additionalProperties": false
       },
@@ -12324,6 +12422,182 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/saved-places": {
+      "get": {
+        "operationId": "listMySavedPlaces",
+        "summary": "The places the signed-in member saved (收藏)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Their saved places",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlaceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveMyPlace",
+        "summary": "Save a place (收藏), or change its note",
+        "description": "A place saved already keeps when it was saved and takes the new note. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedPlaceDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlaceSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid place or note, or the member keeps the most saved places already (`TOO_MANY_SAVED_PLACES`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/saved-places/{placeKey}": {
+      "delete": {
+        "operationId": "removeMySavedPlace",
+        "summary": "Remove a saved place",
+        "description": "A place not saved answers 204 too, so a retry is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+              "description": "Which place: `apple:` and Apple Maps' identifier.",
+              "example": "apple:I6FD7682FD36BB3BE"
+            },
+            "required": true,
+            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "name": "placeKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed, or not saved"
+          },
+          "400": {
+            "description": "Not a place key",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -7,16 +7,10 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../../domain/memory.js';
-import {
-  Challenge,
-  CHALLENGE_AMOUNT_MAX,
-  CHALLENGE_LINE_LIMIT,
-  CHALLENGE_TITLE_LIMIT,
-  CHALLENGE_UNIT_LIMIT,
-  challengeText,
-} from '../../domain/challenge.js';
-import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
-import { CoachEmoji, HALF_WIDTH, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
+import { Challenge, CHALLENGE_AMOUNT_MAX, challengeText } from '../../domain/challenge.js';
+import { fitsLine, limitWords } from '../../domain/line-limits.js';
+import type { GiftOptions } from '../../domain/prompt.js';
+import { CoachEmoji, lineProblem } from '../../domain/reply.js';
 import {
   checkInBlock,
   weekText,
@@ -352,11 +346,11 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'post_note',
-        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}。`,
+        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。${limitWords('note')}。`,
         parameters: z.object({ text: z.string().describe('今天的一句') }),
         run: ({ text }) => {
           const line = text.trim();
-          const problem = lineProblem(line, NOTE_LIMIT);
+          const problem = lineProblem(line, 'note');
           if (problem !== undefined) return problem;
           const replaced = draft.note !== undefined;
           draft.note = line;
@@ -403,12 +397,12 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
-        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
+        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。${limitWords('reply')}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
-          const problem = lineProblem(said.line, REPLY_LIMIT);
+          const problem = lineProblem(said.line, 'reply');
           if (problem !== undefined) return problem;
           const replaced = draft.reply !== undefined;
           draft.reply = said.line;
@@ -447,12 +441,12 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'answer',
-        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字${HALF_WIDTH}。`,
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。${limitWords('reply')}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
-          const problem = lineProblem(said.line, REPLY_LIMIT);
+          const problem = lineProblem(said.line, 'reply');
           if (problem !== undefined) return problem;
           const replaced = draft.answer !== undefined;
           draft.answer = said.line;
@@ -653,7 +647,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字${HALF_WIDTH}。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话${limitWords('gift')}。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),
@@ -672,13 +666,22 @@ function giveGift(
       }
       if (owned.includes(chosen)) return `${member} 已经有 ${chosen} 了，换一件。`;
       const said = line.trim();
-      const problem = lineProblem(said, GIFT_LINE_LIMIT);
+      const problem = lineProblem(said, 'gift');
       if (problem !== undefined) return problem;
       const replaced = draft.gifts.has(id);
       draft.gifts.set(id, { piece: chosen, line: said });
       return replaced ? `已换成 ${chosen}，给 ${member}。` : `${chosen} 送给 ${member} 了。`;
     },
   });
+}
+
+/** Whether each of a challenge's words fits its limit in the language it is written in. */
+function challengeFits({ title, unit, line }: Challenge): boolean {
+  return (
+    fitsLine(title, 'challengeTitle') &&
+    (unit === undefined || fitsLine(unit, 'challengeUnit')) &&
+    (line === undefined || fitsLine(line, 'challengeLine'))
+  );
 }
 
 /**
@@ -701,17 +704,17 @@ export function challengeTool(
       title: z
         .string()
         .describe(
-          `只写动作：动词加做的东西，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字。不写数字、不写「一道」「一份」这类量词，也不写单位；数量只放 amount，单位只放 unit。标题、数量、单位连起来读要通顺`,
+          `只写动作：动词加做的东西，${limitWords('challengeTitle')}。不写数字、不写「一道」「一份」这类量词，也不写单位；数量只放 amount，单位只放 unit。标题、数量、单位连起来读要通顺`,
         ),
       amount: z
         .number()
         .int()
         .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}`),
-      unit: z.string().describe(`单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字`),
+      unit: z.string().describe(`单位，${limitWords('challengeUnit')}`),
       line: z
         .string()
         .describe(
-          `标题下面的一句小字，对他说为什么是这件事，用「你」，不超过 ${String(CHALLENGE_LINE_LIMIT)} 字`,
+          `标题下面的一句小字，对他说为什么是这件事，用「你」，${limitWords('challengeLine')}`,
         ),
     }),
     run: ({ member, title, amount, unit, line }) => {
@@ -725,8 +728,8 @@ export function challengeTool(
         unit,
         ...(line.trim() === '' ? {} : { line }),
       });
-      if (!set.success) {
-        return `挑战不对：title 1 到 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数；unit 1 到 ${String(CHALLENGE_UNIT_LIMIT)} 字；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
+      if (!set.success || !challengeFits(set.data)) {
+        return `挑战不对：title ${limitWords('challengeTitle')}；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数；unit ${limitWords('challengeUnit')}；line ${limitWords('challengeLine')}。`;
       }
       const replaced = draft.challenges.has(id);
       draft.challenges.set(id, set.data);
@@ -758,7 +761,7 @@ function noteTool(
       return `不能给 ${member} 写便条；能写的是：${noteTo.map((each) => roster.get(each) ?? '').join('、')}。`;
     }
     const line = text.trim();
-    const problem = lineProblem(line, NOTE_LIMIT);
+    const problem = lineProblem(line, 'note');
     if (problem !== undefined) return problem;
     // The day's challenge set for them before, if any, goes on the note; a welcome sets none.
     const set = welcome ? undefined : draft.challenges.get(id);
@@ -776,7 +779,7 @@ function noteTool(
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
-      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}，对他说话用「你」。`,
+      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
       parameters: z.object({ member, text: z.string().describe('便条上的话') }),
       kept,
       run: write,
@@ -784,7 +787,7 @@ function noteTool(
   }
   return defineTool(draft.steps, {
     name: 'note_to',
-    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字${HALF_WIDTH}，对他说话用「你」。`,
+    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
     parameters: z.object({ member, text: z.string().describe('便条上的这一句') }),
     kept,
     run: write,

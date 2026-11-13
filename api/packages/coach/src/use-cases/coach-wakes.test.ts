@@ -518,7 +518,7 @@ describe('the coach', () => {
         '没有 people/队员3.md 这个文件；能用的文件见任务里的列表。',
         'no tool post_note',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
-        '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+        '太长了：101 字，最多 100 字。',
         '已回复。',
         '已换成这句。',
         expect.stringContaining('参数不对'),
@@ -1794,6 +1794,10 @@ describe('the coach', () => {
           },
           {
             tool: 'set_challenge',
+            input: { member: '队员1', title: '喝'.repeat(9), amount: 8, unit: '杯', line: '天干' },
+          },
+          {
+            tool: 'set_challenge',
             input: {
               member: '队员1',
               title: '喝水',
@@ -1818,7 +1822,8 @@ describe('the coach', () => {
       expect(picks[0]?.tools).toStrictEqual(['set_challenge']);
       expect(picks[0]?.task).toContain('# 新的一天');
       expect(picks[0]?.answers).toStrictEqual([
-        '挑战不对：title 1 到 8 字；amount 是 1 到 9999 的整数；unit 1 到 4 字；line 不超过 24 字。',
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
         '定好了：队员1「喝水 8 杯」。',
         '不能给 队员9 定挑战；能定的是：队员1、队员2。',
       ]);

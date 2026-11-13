@@ -10,7 +10,7 @@ import {
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
 import { fileRole } from './memory.js';
-import { REPLY_LIMIT } from './reply.js';
+import { LINE_LIMITS } from './line-limits.js';
 import type { CoachSettings } from './settings.js';
 import {
   addressedWords,
@@ -31,12 +31,6 @@ import type { WakeReason } from './wake.js';
 // speaks. The instructions are the same for every wake of a coach and come first, and each task
 // holds only what changes, so the model's provider can cache that beginning (OpenAI does for a
 // beginning of 1024 tokens or more) and charge less for it.
-
-/** The longest 战术板 line, in characters; the database checks the same. */
-export const NOTE_LIMIT = 60;
-
-/** The longest line a gift comes with, in characters; the database checks the same. */
-export const GIFT_LINE_LIMIT = 60;
 
 /** On a daily wake, what the coach may give: the pool, and who may get one this week. */
 export interface GiftOptions {
@@ -64,8 +58,8 @@ export function instructionsOf(
  */
 function wakesOf(wakes: string): string {
   return wakes
-    .replaceAll('{replyLimit}', String(REPLY_LIMIT))
-    .replaceAll('{noteLimit}', String(NOTE_LIMIT));
+    .replaceAll('{replyLimit}', String(LINE_LIMITS.reply.chinese))
+    .replaceAll('{noteLimit}', String(LINE_LIMITS.note.chinese));
 }
 
 /**
