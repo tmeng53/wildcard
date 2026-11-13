@@ -10,8 +10,6 @@ public struct PlaceDetail: Hashable, Sendable {
     public var visits: Int
     /// 来过的队友 N 人.
     public var people: Int
-    /// 小队评分: members' standing scores, averaged to one decimal; nil before anyone gave one.
-    public var stars: Double?
     /// The 训练 there, by sport, most first.
     public var sports: [SportCount]
     /// The meals there and what rated ones scored.
@@ -20,10 +18,10 @@ public struct PlaceDetail: Hashable, Sendable {
     public var posts: [PlaceVisit]
 
     public init(
-        place: Place, visits: Int, people: Int, stars: Double?, sports: [SportCount], meals: MealTally,
+        place: Place, visits: Int, people: Int, sports: [SportCount], meals: MealTally,
         posts: [PlaceVisit]
     ) {
-        (self.place, self.visits, self.people, self.stars) = (place, visits, people, stars)
+        (self.place, self.visits, self.people) = (place, visits, people)
         (self.sports, self.meals, self.posts) = (sports, meals, posts)
     }
 }
@@ -38,23 +36,13 @@ public struct SportCount: Hashable, Sendable {
     }
 }
 
-/// 大家在这里吃: meals by kind, and rated ones' averages.
+/// 大家在这里吃: meals by kind. A place shows no average of its meals' scores (Tracy, 2026-11-13).
 public struct MealTally: Hashable, Sendable {
     public var healthyMeals: Int
     public var cheatMeals: Int
-    /// 健康, averaged; nil before a meal there was rated.
-    public var healthy: Double?
-    /// 好吃, averaged.
-    public var tasty: Double?
-    /// 卡价比 (好吃 × 健康 ÷ 5), averaged.
-    public var calorieValue: Double?
 
-    public init(
-        healthyMeals: Int = 0, cheatMeals: Int = 0, healthy: Double? = nil, tasty: Double? = nil,
-        calorieValue: Double? = nil
-    ) {
+    public init(healthyMeals: Int = 0, cheatMeals: Int = 0) {
         (self.healthyMeals, self.cheatMeals) = (healthyMeals, cheatMeals)
-        (self.healthy, self.tasty, self.calorieValue) = (healthy, tasty, calorieValue)
     }
 
     public static let none = MealTally()
@@ -74,23 +62,12 @@ public struct PlaceVisit: Hashable, Sendable, Identifiable {
     public let cover: PhotoRef?
     /// A 训练's minutes.
     public let minutes: Int?
-    /// The small score on its tile: the author's score for the place on a 训练, the meal's
-    /// 卡价比 on a meal; nil before either was given.
-    public let score: VisitScore?
 
     public init(
         id: CheckInID, author: MemberID, kind: CheckInKind, activity: Activity? = nil, day: LocalDay,
-        cover: PhotoRef? = nil, minutes: Int? = nil, score: VisitScore? = nil
+        cover: PhotoRef? = nil, minutes: Int? = nil
     ) {
         (self.id, self.author, self.kind, self.activity, self.day) = (id, author, kind, activity, day)
-        (self.cover, self.minutes, self.score) = (cover, minutes, score)
+        (self.cover, self.minutes) = (cover, minutes)
     }
-}
-
-/// A tile's small score.
-public enum VisitScore: Hashable, Sendable {
-    /// The author's score for the place, 1 to 5 stars.
-    case stars(Int)
-    /// A meal's 卡价比.
-    case calorieValue(Double)
 }

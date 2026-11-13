@@ -10,7 +10,7 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
-import type { PlaceRatings, SquadPlaces } from '@wildcard/places';
+import type { SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -104,8 +104,6 @@ export interface AppDependencies {
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
-  /** Members' scores for the places they train at (地点页). */
-  readonly placeRatings: PlaceRatings;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
   readonly squadPlaces: SquadPlaces;
