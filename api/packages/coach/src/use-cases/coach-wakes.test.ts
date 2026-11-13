@@ -496,7 +496,7 @@ describe('the coach', () => {
         '没有 people/队员3.md 这个文件；能用的文件见任务里的列表。',
         'no tool post_note',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
-        '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+        '太长了：101 字，最多 100 字。',
         '已回复。',
         '已换成这句。',
         expect.stringContaining('参数不对'),
@@ -1700,14 +1700,16 @@ describe('the coach', () => {
       const weatherOf: CoachWeather = (input) => {
         asked.push(input);
         // Only 队员1 shared where they are.
-        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+        return Promise.resolve(
+          new Map([[mia, { words: '今天雨，8–13°C，降水概率 80%', city: '多伦多' }]]),
+        );
       };
       const { agent, runs } = scriptedAgent(() => []);
       await wakes(fixture, { agent, weatherOf }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
+        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
       );
       expect(daily?.task).toContain('### 队员2\n- 这周练了：0 天\n- 这周发过：还没发过\n');
     });
@@ -1757,6 +1759,14 @@ describe('the coach', () => {
                 input: {
                   member: '队员1',
                   text: '今天多喝水',
+                  challenge: { title: '喝'.repeat(9), amount: 8, unit: '杯', line: '天干' },
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员1',
+                  text: '今天多喝水',
                   challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
                 },
               },
@@ -1786,8 +1796,11 @@ describe('the coach', () => {
       expect(daily?.tools).toContain('give_gift');
       expect(daily?.task).toContain('## 礼物清单\n- gift-scarf：红围巾\n- gift-cap');
       expect(daily?.task).toContain('## 这周还能收礼物的\n- 队员1（已有：gift-cap）');
-      expect(daily?.answers.slice(0, 7)).toStrictEqual([
-        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
+      // An amount without its unit, then a Chinese title past its Chinese limit (though within
+      // the English one), are both refused.
+      expect(daily?.answers.slice(0, 8)).toStrictEqual([
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数，unit 不超过 4 字，英文不超过 8 个字符，两个一起填或都不填；line 不超过 24 字，英文不超过 48 个字符。',
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数，unit 不超过 4 字，英文不超过 8 个字符，两个一起填或都不填；line 不超过 24 字，英文不超过 48 个字符。',
         '便条写好了，给 队员1，挑战「喝水 8 杯」。',
         '便条写好了，给 队员2。',
         '队员2 这周不能收礼物；能收的是：队员1。',

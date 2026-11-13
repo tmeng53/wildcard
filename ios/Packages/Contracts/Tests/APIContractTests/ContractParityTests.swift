@@ -54,6 +54,10 @@ func customSportLimitIsTheAPIs(schema: String) throws {
     #expect(try property("customSport", of: schema)?.maxCharacters == CustomSport.maxLength)
 }
 
+@Test func cityNameLimitIsTheAPIs() throws {
+    #expect(try property("city", of: "MemberLocation")?.maxCharacters == CityName.maxLength)
+}
+
 @Test(arguments: ["Training", "TrainingView"])
 func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     let minutes = try property("minutes", of: schema)

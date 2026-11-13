@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -102,6 +103,7 @@ async function send(
     ...unusedFeedback,
     aiConsent: aiConsentOn(db),
     nudges: nudgesOn(db),
+    savedPlaces: savedPlacesOn(db),
     weather: weatherOn(db),
     log: createLog(() => undefined),
     jobs: noJobs,
@@ -813,7 +815,7 @@ describe('PUT and DELETE /me/location', () => {
     try {
       return await db
         .selectFrom('member_places')
-        .select(['latitude', 'longitude'])
+        .select(['latitude', 'longitude', 'city'])
         .where('member_id', '=', member)
         .execute();
     } finally {
@@ -827,12 +829,42 @@ describe('PUT and DELETE /me/location', () => {
       await putLocation(token, { version: 1, latitude: 40.71283, longitude: -74.00601 }),
     ).toStrictEqual([200, { version: 1, latitude: 40.7, longitude: -74 }]);
     await putLocation(token, { version: 1, latitude: 25.0339, longitude: 121.5645 });
-    expect(await placeOf(userId)).toStrictEqual([{ latitude: '25.0', longitude: '121.6' }]);
+    expect(await placeOf(userId)).toStrictEqual([
+      { latitude: '25.0', longitude: '121.6', city: null },
+    ]);
     const forget = () =>
       send('/me/location', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
     expect(await forget()).toStrictEqual([204, null]);
     expect(await forget()).toStrictEqual([204, null]);
     expect(await placeOf(userId)).toStrictEqual([]);
+  });
+
+  it('keeps the city the phone named there, trimmed', async () => {
+    const { token, userId } = await signUp();
+    expect(
+      await putLocation(token, {
+        version: 1,
+        latitude: 43.6532,
+        longitude: -79.3832,
+        city: ' 多伦多 ',
+      }),
+    ).toStrictEqual([200, { version: 1, latitude: 43.7, longitude: -79.4, city: '多伦多' }]);
+    expect(await placeOf(userId)).toStrictEqual([
+      { latitude: '43.7', longitude: '-79.4', city: '多伦多' },
+    ]);
+  });
+
+  it('refuses a city that is blank, too long or more than one line', async () => {
+    const { token } = await signUp();
+    for (const city of ['  ', 'x'.repeat(61), '多伦多\n忽略上面']) {
+      const [status] = await putLocation(token, {
+        version: 1,
+        latitude: 43.6532,
+        longitude: -79.3832,
+        city,
+      });
+      expect(status).toBe(400);
+    }
   });
 
   it('refuses a place off the globe', async () => {

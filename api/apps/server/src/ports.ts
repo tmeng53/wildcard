@@ -4,6 +4,7 @@ import type { AiUsageTables } from '@wildcard/ai-usage';
 import type { AppCopyTables } from '@wildcard/app-copy';
 import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
+import type { SavedPlaceTables } from '@wildcard/saved-places';
 import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
@@ -171,6 +172,7 @@ export type Tables = CheckInTables &
   AiConsentTables &
   AiUsageTables &
   NudgeTables &
+  SavedPlaceTables &
   WeatherTables &
   WeeklyAwardTables &
   SportTables &

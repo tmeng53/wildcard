@@ -29,6 +29,7 @@ import {
   config,
   noJobs,
   nudgesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -107,6 +108,7 @@ const app = createApp({
   ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {
@@ -1680,6 +1682,52 @@ describe('a 训练 from Apple Health', () => {
     // An edit that leaves it out clears it, as with every field of the post.
     expect(await edit({ caption: '沙拉' })).toBe(200);
     expect(await shown()).toBeUndefined();
+  });
+
+  it('shows a meal’s 健康 and 好吃 to the squad, and an edit changes them and one without them keeps them', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'healthyMeal',
+            meal: { caption: '沙拉', rating: { healthy: 5, tasty: 4 } },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const shown = async () =>
+      z
+        .object({ checkIn: z.object({ meal: z.object({ rating: z.unknown().optional() }) }) })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.meal.rating;
+    expect(await shown()).toStrictEqual({ healthy: 5, tasty: 4 });
+
+    const edit = async (meal: Record<string, unknown>) =>
+      (
+        await call({
+          method: 'PATCH',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: { version: 1, kind: 'healthyMeal', meal },
+        })
+      ).status;
+    expect(await edit({ rating: { healthy: 3, tasty: 6 } })).toBe(400);
+    expect(await edit({ rating: { healthy: 3, tasty: 5 } })).toBe(200);
+    expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
+    // An edit that leaves it out keeps it, as builds from before ratings send their edits.
+    expect(await edit({ caption: '沙拉配鸡胸' })).toBe(200);
+    expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
   });
 
   it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {

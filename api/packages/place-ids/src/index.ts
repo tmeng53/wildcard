@@ -2,6 +2,9 @@ import { z } from 'zod';
 
 import { nameText } from '@wildcard/typed-text';
 
+// @wildcard/place-ids: a place as the app sends it, shared by the modules that keep places (the
+// check-ins tagged with one, the places a member saved).
+//
 // The place a member tags a 训练 or a meal with (Tracy, 2026-11-12): one they picked from Apple
 // Maps on the phone, never where the phone was. The squad sees its name and opens it in Maps;
 // the coach reads only its name.
@@ -36,3 +39,27 @@ export const Place = z
       "place's own coordinates, never the phone's.",
   });
 export type Place = z.infer<typeof Place>;
+
+/**
+ * Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's
+ * member added. The one way the app and every module address a place (its page, its ratings,
+ * a member's 收藏).
+ */
+export const PlaceKey = z
+  .string()
+  .regex(
+    /^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/,
+  )
+  .brand<'PlaceKey'>()
+  .meta({
+    description: "Which place: `apple:` and Apple Maps' identifier.",
+    example: 'apple:I6FD7682FD36BB3BE',
+  });
+export type PlaceKey = z.infer<typeof PlaceKey>;
+
+/** The key of `place`, or none when Maps gave it no identifier it can be found by again. */
+export function placeKey(place: Place): PlaceKey | undefined {
+  if (place.appleId === undefined) return undefined;
+  const key = PlaceKey.safeParse(`apple:${place.appleId}`);
+  return key.success ? key.data : undefined;
+}
