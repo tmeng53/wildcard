@@ -71,6 +71,7 @@ const rewards = createRewards({
   clock: () => new Date(),
 });
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports,
   store: createPostgresCheckInStore(db),
   membership: createSquads({

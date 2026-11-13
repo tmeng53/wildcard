@@ -808,7 +808,7 @@ describe('GET /me/records', () => {
       training: { sport: 'run', minutes: 30 },
     });
     await put(me, { day: today, kind: 'healthyMeal', meal: {} });
-    // A 坦白放纵餐 keeps the card's meal 外卡 going, but 健康餐连续 counts 健康餐 only.
+    // A 坦白放纵餐 bridges the meal streak without adding a day, on the card and here alike.
     const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
     await put(me, { day: yesterday, kind: 'cheatMeal', meal: {} });
     const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
@@ -891,14 +891,17 @@ describe('GET /me/records', () => {
     // Three days in a row, then three without: the default plan never rests two days running,
     // so one of them breaks the run whatever the weekday.
     for (const day of [daysAgo(6), daysAgo(5), daysAgo(4), today]) await put(day, run);
-    // A 健康餐 two days ago: yesterday had none, so that run is over.
+    // 健康餐 four and two days ago, a 坦白放纵餐 between bridging them: yesterday had none, so
+    // that run is over.
+    await put(daysAgo(4), { kind: 'healthyMeal', meal: {} });
+    await put(daysAgo(3), { kind: 'cheatMeal', meal: {} });
     await put(daysAgo(2), { kind: 'healthyMeal', meal: {} });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
     expect(body).toMatchObject({
       longestStreak: { days: 3, from: daysAgo(6), to: daysAgo(4) },
       currentStreak: { days: 1, from: today, to: today },
-      mealStreak: { days: 1, from: daysAgo(2), to: daysAgo(2) },
+      mealStreak: { days: 2, from: daysAgo(4), to: daysAgo(2) },
     });
     expect(body).not.toHaveProperty('currentMealStreak');
   });
@@ -1016,7 +1019,7 @@ describe('GET /me/check-in-totals', () => {
         cheatMeals: 1,
         disclaimers: 1,
         topSport: { sport: 'run', checkIns: 2 },
-        // Yesterday's 健康餐 and today's two meals: any meal keeps the meal streak going.
+        // Yesterday's 健康餐 and today's: two days; today's 坦白放纵餐 adds none.
         streaks: {
           training: { days: 2, from: yesterday, to: today },
           meals: { days: 2, from: yesterday, to: today },

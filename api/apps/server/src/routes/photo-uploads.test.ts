@@ -67,6 +67,7 @@ async function createPhotoUpload(headers: Record<string, string>, storageUrl = c
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({

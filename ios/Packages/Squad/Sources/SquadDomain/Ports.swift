@@ -59,8 +59,8 @@ public protocol SquadSettingsService: Sendable {
     /// Sets the squad's weekly goal (人均 N 次) from next week; only the captain may. Safe to
     /// repeat.
     func setWeeklyGoal(of squad: SquadID, to daysPerMember: Int) async throws(SquadError) -> SquadWeeklyGoal
-    /// Sets the squad's time zone (比赛时区, an IANA name), counting at once; only the captain may.
-    /// Safe to repeat.
+    /// Sets the squad's time zone (比赛时区, an IANA name), counting at once, or from next week once
+    /// this week's Sunday 8pm has passed on either clock; only the captain may. Safe to repeat.
     func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone
     /// Sets the squad's language (小队语言) from now on; only the captain may. Safe to repeat.
     func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)

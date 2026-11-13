@@ -75,6 +75,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({

@@ -134,6 +134,7 @@ describe('memberRecords', () => {
       training({ day: '2026-11-05', hourUtc: 15, sport: 'strength' }, { postedDay: '2026-11-07' }),
     ],
     healthyMealDays: ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-05'],
+    cheatMealDays: [],
     restDays: new Set(['2026-11-04']),
     leaveDays: new Set(),
     timeZone: NEW_YORK,
@@ -157,12 +158,38 @@ describe('memberRecords', () => {
         training({ day: '2026-11-04', hourUtc: 0, sport: 'run' }),
       ],
       healthyMealDays: ['2026-11-02', '2026-11-04'],
+      cheatMealDays: [],
       restDays: new Set(),
       leaveDays: new Set(['2026-11-03']),
       timeZone: NEW_YORK,
     });
     expect(withLeave.longestStreak).toEqual({ days: 2, from: '2026-11-02', to: '2026-11-04' });
     expect(withLeave.mealStreak).toEqual({ days: 2, from: '2026-11-02', to: '2026-11-04' });
+  });
+
+  it('runs the meal streak through a 坦白放纵餐 day without counting it', () => {
+    const withCheat = memberRecords({
+      trainings: [],
+      healthyMealDays: ['2026-11-02', '2026-11-04', '2026-11-05'],
+      cheatMealDays: ['2026-11-03', '2026-11-06'],
+      restDays: new Set(),
+      leaveDays: new Set(),
+      timeZone: NEW_YORK,
+    });
+    // The 6th's 坦白放纵餐 comes after the last 健康餐: the run doesn't grow past the 5th.
+    expect(withCheat.mealStreak).toEqual({ days: 3, from: '2026-11-02', to: '2026-11-05' });
+  });
+
+  it('counts only 坦白放纵餐 days as no meal streak at all', () => {
+    const cheatOnly = memberRecords({
+      trainings: [],
+      healthyMealDays: [],
+      cheatMealDays: ['2026-11-03', '2026-11-04'],
+      restDays: new Set(),
+      leaveDays: new Set(),
+      timeZone: NEW_YORK,
+    });
+    expect(cheatOnly).not.toHaveProperty('mealStreak');
   });
 
   it('puts a training without a start on the hour it was posted, leaving out 补打卡', () => {
@@ -197,6 +224,7 @@ describe('memberRecords', () => {
         ),
       ],
       healthyMealDays: [],
+      cheatMealDays: [],
       restDays: new Set(),
       leaveDays: new Set(),
       timeZone: NEW_YORK,
@@ -223,6 +251,7 @@ describe('squadRecords', () => {
       training({ day: '2026-11-04', hourUtc: 0 }),
     ],
     healthyMealDays: [],
+    cheatMealDays: [],
     restDays: new Set(),
     leaveDays: new Set(),
     timeZone: NEW_YORK,
@@ -234,6 +263,7 @@ describe('squadRecords', () => {
   const coco = memberRecords({
     trainings: cocoTrainings,
     healthyMealDays: [],
+    cheatMealDays: [],
     restDays: new Set(),
     leaveDays: new Set(),
     timeZone: NEW_YORK,
@@ -272,6 +302,7 @@ describe('squadRecords', () => {
     const busy = memberRecords({
       trainings,
       healthyMealDays: [],
+      cheatMealDays: [],
       restDays: new Set(),
       leaveDays: new Set(),
       timeZone: NEW_YORK,

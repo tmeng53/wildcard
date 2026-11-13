@@ -64,6 +64,7 @@ const photos = {
 // Nobody here has a time zone: these tests don't read members' days.
 const calendarOf = () => Promise.resolve(undefined);
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership,
@@ -223,6 +224,7 @@ describe('saving a check-in', () => {
     const body = draft({ audience: [squad] });
     await checkIns.save({ id, member, draft: body });
     const late = createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
@@ -286,6 +288,7 @@ describe('saving a check-in', () => {
     const overlapping = () => {
       let missed = false;
       return createCheckIns({
+        squadPlaceOf: () => Promise.resolve(false),
         sports: createSports({ store: createPostgresSportStore(db) }),
         store: {
           ...real,
@@ -504,6 +507,7 @@ describe('saving a check-in', () => {
     const member = await newMember();
     const squad = await newSquad(member);
     const inPagoPago = createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership,
@@ -807,6 +811,7 @@ describe('editing a check-in', () => {
     const real = createPostgresCheckInStore(db);
     let overlapped = false;
     const racing = createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: {
         ...real,

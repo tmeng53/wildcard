@@ -119,6 +119,7 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports,
       store: createPostgresCheckInStore(db),
       membership: squads,

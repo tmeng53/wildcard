@@ -236,7 +236,7 @@ export function createApp(deps: AppDependencies) {
   );
   app.route('/', squadCoach(deps));
   app.route('/', squadWeeklyGoal(deps));
-  app.route('/', squadTimeZone(deps));
+  app.route('/', squadTimeZone({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));

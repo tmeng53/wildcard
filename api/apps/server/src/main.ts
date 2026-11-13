@@ -80,7 +80,7 @@ import {
   createSquadPlaces,
 } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
-import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
+import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -661,7 +661,8 @@ const coachWakes =
             ids.map(async (member) => ({
               member: WeatherMember.parse(member),
               timeZone:
-                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ??
+                UNSAVED_MEMBER_ZONE,
             })),
           );
           const days = await weather.dayFor({ members: zoned, day });
@@ -672,7 +673,7 @@ const coachWakes =
               {
                 words: weatherWords(today, {
                   ...(yesterday === undefined ? {} : { yesterday }),
-                  timeZone: zones.get(member) ?? NEW_YORK,
+                  timeZone: zones.get(member) ?? UNSAVED_MEMBER_ZONE,
                 }),
                 ...(city === undefined ? {} : { city }),
               },

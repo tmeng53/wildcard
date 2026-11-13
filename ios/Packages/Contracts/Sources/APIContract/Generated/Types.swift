@@ -413,7 +413,7 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1495,7 +1495,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.

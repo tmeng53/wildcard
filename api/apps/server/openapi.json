@@ -2972,7 +2972,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken."
+        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken."
       },
       "RecordStreak": {
         "type": "object",
@@ -3108,7 +3108,7 @@
           "sportCount"
         ],
         "additionalProperties": false,
-        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
+        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
       },
       "RecordSport": {
         "type": "object",
@@ -4941,7 +4941,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.",
+            "description": "Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -13012,7 +13012,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.",
         "security": [
           {
             "bearer": []

@@ -8,10 +8,11 @@ import SwiftUI
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
 /// from the gear on 小队's header: 比赛时区 as a plain row, then 退出小队. The captain's row opens
 /// the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
-/// 2026-11-08); in the hours it waits for Monday on the new clock, one short line under the row says
-/// so. Everyone else only reads it. Then 小队语言, the language the coach and 战报 are written in,
-/// with the one line that says so (Tracy, 2026-11-08: without it the setting is confusing); the
-/// captain's opens the same menu 我's 语言 does. No other help text.
+/// 2026-11-08), or from next week once this week's Sunday 8pm has passed on either clock (Tracy,
+/// 2026-11-13); the row shows the pick either way. Everyone else only reads it. Then 小队语言, the
+/// language the coach and 战报 are written in, with the one line that says so (Tracy, 2026-11-08:
+/// without it the setting is confusing); the captain's opens the same menu 我's 语言 does. No other
+/// help text.
 struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     /// The page's squad as the model has it now, so a saved change shows here at once.
@@ -87,15 +88,15 @@ struct SquadPreferencesView: View {
         }
         .accessibilityIdentifier("squad.timeZone")
         .sheet(isPresented: $isChoosingZone) {
-            TimeZonePicker(selected: zone.timeZone) { picked in
+            TimeZonePicker(selected: zone.nextTimeZone) { picked in
                 isChoosingZone = false
                 Task { await model.setTimeZone(picked) }
             }
         }
     }
 
-    /// The zone's region (北美东部时间); the zone list shows the cities.
-    private var zoneValue: Text { Text(verbatim: name(zone.timeZone).region) }
+    /// The picked zone's region (北美东部时间); the zone list shows the cities.
+    private var zoneValue: Text { Text(verbatim: name(zone.nextTimeZone).region) }
 
     private func name(_ identifier: String) -> ZoneName {
         ZoneName(identifier, locale: AppLanguage.current.locale)

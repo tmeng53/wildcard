@@ -117,3 +117,16 @@ export function mondayOf(day: string): string {
   date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
   return date.toISOString().slice(0, 10);
 }
+
+/**
+ * The hour on Sunday a squad's week ends on its clock: its 战报 freezes and its awards are given
+ * (Tracy, 2026-10-20). A check-in made later on Sunday still counts for the week, only not for
+ * them.
+ */
+export const WEEK_FREEZE_HOUR = 20;
+
+/** The moment the week from Monday `weekStart` (`YYYY-MM-DD`) freezes in `zone`: its Sunday at 8pm. */
+export function weekFreezesAt(weekStart: string, zone: string): Date {
+  const sunday = new Date(Date.parse(weekStart) + 6 * 86_400_000).toISOString().slice(0, 10);
+  return momentAt({ day: sunday, hour: WEEK_FREEZE_HOUR, zone });
+}

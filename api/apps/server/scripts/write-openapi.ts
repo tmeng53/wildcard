@@ -110,6 +110,7 @@ const app = createApp({
     comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
+    squadPlaceOf: unused,
     calendarOf: unused,
     clock: unused,
   }),
