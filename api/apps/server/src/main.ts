@@ -363,6 +363,11 @@ const squadZonesAt = async (ids: readonly string[], moment: Date) => {
   );
   return (squad: string) => zones(SquadsSquad.parse(squad));
 };
+/** Which of these squads ended (everyone left): nothing runs for them any more. */
+const endedSquads = async <Id extends string>(ids: readonly Id[]): Promise<ReadonlySet<Id>> => {
+  const ended = await squads.endedAmong(ids.map((squad) => SquadsSquad.parse(squad)));
+  return new Set(ids.filter((squad) => ended.has(SquadsSquad.parse(squad))));
+};
 const giftWeekStart = squadWeekStart(squadZonesAt);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
@@ -611,6 +616,7 @@ const coachWakes =
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
         timeZonesAt: squadZonesAt,
+        ended: endedSquads,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
