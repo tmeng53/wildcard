@@ -144,7 +144,7 @@ export function memoryBlock(files: ReadonlyMap<string, string | undefined>): str
 }
 
 /**
- * What a 请假条 kept going, as a fact: a streak runs through a day with one, neither breaking nor
+ * The streaks a 请假条's author has going, as a fact: a streak runs through a day with one, neither breaking nor
  * counting it. Nothing when no streak of two days or more is going.
  */
 function keptStreakSection(
@@ -160,7 +160,7 @@ function keptStreakSection(
   ];
   return parts.length === 0
     ? []
-    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。有了这条，${parts.join('、')}都没断。`];
+    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。现在${parts.join('、')}。`];
 }
 
 /**
