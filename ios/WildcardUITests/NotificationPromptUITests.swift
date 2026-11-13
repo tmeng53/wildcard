@@ -14,7 +14,9 @@ final class NotificationPromptUITests: XCTestCase {
     func testAskingAfterTheFirstCheckIn() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments += ["-uitest-photos", "1", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans"]
+        app.launchArguments += [
+            "-uitest-photos", "1", "-uitest-card-folded", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans",
+        ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "今天 never appeared")

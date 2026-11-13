@@ -13,7 +13,7 @@ final class OpeningUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-takeover", "trot", "-opening.played.trot", "never",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-takeover", "trot", "-opening.played.trot", "never",
         ]
         app.launch()
         // The overlay itself isn't an accessibility element; its words are.
@@ -43,7 +43,8 @@ final class OpeningUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(en)", "-AppleLocale", "en", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-takeover", "jingle", "-opening.played.jingle", "never",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-takeover", "jingle", "-opening.played.jingle",
+            "never",
         ]
         app.launch()
         XCTAssertTrue(app.staticTexts["Merry Christmas!"].waitForExistence(timeout: Self.wait), "no title")
