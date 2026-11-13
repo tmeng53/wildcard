@@ -181,6 +181,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           captain_id: null,
         })
         .execute();
+      // Nobody can be let in any more.
+      await closeWaiting(trx, { squad, kind: 'cancelled', actor: null });
       return true;
     }
     const captain = captainOf(before.captain === member ? null : before.captain, left);

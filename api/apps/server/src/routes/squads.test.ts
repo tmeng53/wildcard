@@ -619,6 +619,21 @@ describe('asking the captain to join (入队申请)', () => {
     expect((await waiting(bo.token, second.id)).body).toMatchObject({ requests: [] });
   });
 
+  it('cancels a waiting request once its squad ends', async () => {
+    const [captain, asker] = [await signUp(), await signUp()];
+    const squad = await newSquad(captain.token, { name: '散伙', needsOk: true });
+    const asked = RequestBody.parse(
+      (await ask(asker.token, { inviteCode: squad.inviteCode })).body,
+    );
+    const left = await call({
+      method: 'DELETE',
+      path: `/squads/${squad.id}/members/${captain.userId}`,
+      token: captain.token,
+    });
+    expect(left.status).toBe(204);
+    expect(await mine(asker.token)).toMatchObject({ id: asked.id, status: 'cancelled' });
+  });
+
   it('lets a squad turn the OK off, so friends join straight in', async () => {
     const [captain, friend] = [await signUp(), await signUp()];
     const squad = await newSquad(captain.token, { name: '早八跑团', needsOk: true });
