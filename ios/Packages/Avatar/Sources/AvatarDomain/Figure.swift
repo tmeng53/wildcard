@@ -56,6 +56,9 @@ public struct Figure: Hashable, Sendable {
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
         public internal(set) var slots: [Slot?]
+        /// The hand each of `art` is held in, such as `armR` for the fist around a racket's
+        /// handle (`Rig.Layer.hand`); nil for art that isn't a hand.
+        public internal(set) var hands: [PartID?]
 
         /// The seam this arm passes behind its body's cloth at (`Tuck`).
         public var tuck: Tuck? { seam.flatMap { Tuck(pivot: pivot, seam: $0) } }
@@ -82,6 +85,7 @@ public struct Figure: Hashable, Sendable {
         for part in rig.parts {
             var artworks: [Artwork] = []
             var slots: [Slot?] = []
+            var hands: [PartID?] = []
             for layer in part.layers {
                 let path: String
                 if let slot = layer.slot {
@@ -98,18 +102,20 @@ public struct Figure: Hashable, Sendable {
                     if let hand = layer.hand { held.append((built.count, artworks.count, hand)) }
                     artworks.append(artwork)
                     slots.append(slot)
+                    hands.append(layer.hand)
                     used.insert(slot)
                 } else {
                     path = "base/\(layer.art).svg"
                     guard let svg = source.text(at: path) else { throw .missingArt(path) }
                     artworks.append(try Self.artwork(svg, path, rig))
                     slots.append(nil)
+                    hands.append(nil)
                 }
             }
             built.append(
                 Part(
                     id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow,
-                    seam: part.seam, parent: parents[built.count], art: artworks, slots: slots))
+                    seam: part.seam, parent: parents[built.count], art: artworks, slots: slots, hands: hands))
         }
         try Self.resolveRopes(&built, rig.parts)
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
@@ -201,9 +207,11 @@ public struct Figure: Hashable, Sendable {
         var figure = self
         for index in figure.parts.indices {
             let part = figure.parts[index]
-            let kept = part.slots.indices.filter { part.slots[$0] == slot }
+            // A held thing shows without the hand around it, which belongs to whoever holds it.
+            let kept = part.slots.indices.filter { part.slots[$0] == slot && part.hands[$0] == nil }
             figure.parts[index].art = kept.map { part.art[$0] }
             figure.parts[index].slots = kept.map { part.slots[$0] }
+            figure.parts[index].hands = kept.map { part.hands[$0] }
         }
         return figure
     }
