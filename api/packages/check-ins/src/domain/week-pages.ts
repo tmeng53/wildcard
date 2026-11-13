@@ -1,3 +1,5 @@
+import type { PlaceKey } from '@wildcard/place-ids';
+
 import {
   isLeave,
   type CheckInId,
@@ -15,6 +17,7 @@ import {
   type WeekFacts,
 } from './week-summary.js';
 import type { PlanDay } from './weekly-plan.js';
+import { menuOf, placeVisitsOf, type MenuDish, type PlaceVisits } from './week-places.js';
 
 // The Sunday 战报's pages without AI: each member's days (the podium is read from them), the
 // squad's meals, the best 请假条 and the squad's 训练 against its plans. The same rules as the
@@ -66,6 +69,13 @@ export interface WeekPages {
   };
   /** 这一周: the squad's 训练 (several on one day each counting) against its plans; only when someone trained. */
   readonly ending?: { readonly done: number; readonly plan: number };
+  /** 小队菜单: the rated meals posted, best 卡价比 first; only when someone rated one. */
+  readonly menu?: readonly MenuDish[];
+  /**
+   * The places the squad's 训练 posts were tagged with, the most 训练 first, each saying whether
+   * it was the squad's first time there (新发现); only when someone tagged one.
+   */
+  readonly places?: readonly (PlaceVisits & { readonly firstTime: boolean })[];
 }
 
 /** The most members the podium has room for: the champion and two sides. */
@@ -120,10 +130,19 @@ export function podiumOf<Member>(
   };
 }
 
-/** The story's pages for a squad's week, from its facts and each member's plan (Monday first). */
+/**
+ * The story's pages for a squad's week, from its facts, each member's plan (Monday first) and
+ * the places these members had posted 训练 from to the squad before the week.
+ */
 export function weekPagesOf(
   facts: WeekFacts,
-  plans: ReadonlyMap<MemberId, readonly PlanDay[]>,
+  {
+    plans,
+    placesBefore = new Set(),
+  }: {
+    readonly plans: ReadonlyMap<MemberId, readonly PlanDay[]>;
+    readonly placesBefore?: ReadonlySet<PlaceKey>;
+  },
 ): WeekPages {
   const awards = weekAwards(facts);
   const winners = (kind: AwardKind) => awards.find((award) => award.kind === kind)?.winners ?? [];
@@ -170,8 +189,16 @@ export function weekPagesOf(
     (sum, { checkIns }) => sum + trainings(checkIns, facts.week.days),
     0,
   );
+  const all = facts.members.flatMap(({ checkIns }) => checkIns);
+  const menu = menuOf(all);
+  const places = placeVisitsOf(all).map((each) => ({
+    ...each,
+    firstTime: !placesBefore.has(each.key),
+  }));
   return {
     members,
+    ...(menu.length === 0 ? {} : { menu }),
+    ...(places.length === 0 ? {} : { places }),
     ...(eaters.length === 0
       ? {}
       : {
