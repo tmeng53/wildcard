@@ -10,9 +10,11 @@ import {
   type CheckInRecord,
   type CheckIns,
   type SquadWeekCheckIns,
+  type WeekPages as CheckInWeekPages,
 } from '@wildcard/check-ins';
 import type { Admins } from '@wildcard/admins';
 import type { Members } from '@wildcard/members';
+import type { Place } from '@wildcard/place-ids';
 import { MemberId as NoticeMember, SquadId as NoticeSquad, type Notices } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
 import {
@@ -29,6 +31,7 @@ import {
   topCheckInOf,
   type AwardsState,
   type Failures,
+  type MenuDish,
   type ShownMemberAwards,
   type MemberWeek,
   SquadId,
@@ -295,6 +298,22 @@ export interface SquadStory {
   };
   /** The reader's part, when they were in the squad at the awards; its hottest only while posted. */
   readonly mine?: StoryMember;
+  /**
+   * 小队菜单: the squad's rated meals still posted, best 卡价比 first, each with who posted it and
+   * its photo while the meal still has it. Missing when none.
+   */
+  readonly menu?: readonly (MenuDish & { readonly author: string })[];
+  /**
+   * The places the squad trained at, as frozen: the most 训练 first (小队最爱去), each with who
+   * trained there on which days, less accounts deleted since, and whether it was 新发现. Missing
+   * when none.
+   */
+  readonly places?: readonly {
+    readonly key: string;
+    readonly place: Place;
+    readonly firstTime: boolean;
+    readonly visits: readonly { readonly member: string; readonly day: string }[];
+  }[];
 }
 
 /**
@@ -359,6 +378,15 @@ export async function squadStory(
     state?.status === 'given' ? state.awards.members.filter(({ member }) => ids.has(member)) : [],
   );
   const anyone = members.some(({ checkedIn }) => checkedIn);
+  const menu = await menuStillPosted(deps, members);
+  const places = (story.places ?? []).flatMap(({ key, place, firstTime }) => {
+    const visits = members
+      .flatMap(({ member, trainedAt }) =>
+        (trainedAt?.find((each) => each.key === key)?.days ?? []).map((day) => ({ member, day })),
+      )
+      .toSorted((a, b) => a.day.localeCompare(b.day));
+    return visits.length === 0 ? [] : [{ key, place, firstTime, visits }];
+  });
   return {
     squad: { id: squad, name: story.name },
     scene: story.scene,
@@ -373,7 +401,37 @@ export async function squadStory(
     )),
     ...(best === undefined ? {} : { bestDisclaimer: best }),
     ...(mine === undefined ? {} : { mine }),
+    ...(menu.length === 0 ? {} : { menu }),
+    ...(places.length === 0 ? {} : { places }),
   };
+}
+
+/** 小队菜单 from the members' frozen posts, best first, each photo only while its meal has it. */
+async function menuStillPosted(
+  deps: Pick<WeeklyAwardsDependencies, 'checkIns'>,
+  members: readonly StoryMember[],
+): Promise<(MenuDish & { readonly author: string })[]> {
+  const dishes = members
+    .flatMap(({ member, menu }) => (menu ?? []).map((dish) => ({ ...dish, author: member })))
+    .toSorted((a, b) => a.rank - b.rank);
+  return Promise.all(
+    dishes.map(async (dish) => {
+      if (dish.photo === undefined) return dish;
+      const post = await deps.checkIns.current(CheckInId.parse(dish.checkIn));
+      if (post === undefined || photosOf(post).some(({ path }) => path === dish.photo)) return dish;
+      // An edit took the photo off, and out of Storage: the dish stays, without it.
+      const { checkIn, author, day, rank, rating, caption, place } = dish;
+      return {
+        checkIn,
+        author,
+        day,
+        rank,
+        rating,
+        ...(caption === undefined ? {} : { caption }),
+        ...(place === undefined ? {} : { place }),
+      };
+    }),
+  );
 }
 
 /**
@@ -483,6 +541,11 @@ async function frozenStory(
         ? {}
         : { meals: { healthy: pages.meals.healthy, cheat: pages.meals.cheat } }),
       ...(pages.ending === undefined ? {} : { ending: pages.ending }),
+      ...(pages.places === undefined
+        ? {}
+        : {
+            places: pages.places.map(({ key, place, firstTime }) => ({ key, place, firstTime })),
+          }),
     },
     members: week.members.map(({ member, checkIns }, index): StoryMember => {
       const page = pages.members[index];
@@ -509,6 +572,8 @@ async function frozenStory(
         cheatMeals: page.cheatMeals,
         reactionsReceived: page.reactionsReceived,
         ...(page.reachedAt === undefined ? {} : { reachedAt: page.reachedAt }),
+        ...placesTrainedAt(pages.places ?? [], member),
+        ...menuOf(pages.menu ?? [], member),
         ...(hottest === undefined ? {} : { hottest }),
         ...(best?.author === member
           ? {
@@ -521,6 +586,41 @@ async function frozenStory(
   // A week nobody in the squad checked in has no 战报 to keep (one before the squad began, say),
   // so nothing is stored: any member can ask for any past week.
   return story.members.some(({ checkedIn }) => checkedIn) ? deps.awards.freezeStory(story) : story;
+}
+
+/** The days `member` posted a 训练 at each of the week's places, for their frozen part. */
+function placesTrainedAt(
+  places: NonNullable<CheckInWeekPages['places']>,
+  member: string,
+): Pick<StoryMember, 'trainedAt'> {
+  const trainedAt = places.flatMap(({ key, visits }) => {
+    const days = visits.filter((visit) => visit.member === member).map(({ day }) => day);
+    return days.length === 0 ? [] : [{ key, days }];
+  });
+  return trainedAt.length === 0 ? {} : { trainedAt };
+}
+
+/** `member`'s meals on 小队菜单, each with its place on it, for their frozen posts. */
+function menuOf(
+  menu: NonNullable<CheckInWeekPages['menu']>,
+  member: string,
+): Pick<StoryMember, 'menu'> {
+  const theirs = menu.flatMap(({ checkIn, author, day, rating, caption, photo, place }, rank) =>
+    author === member
+      ? [
+          {
+            checkIn,
+            day,
+            rank,
+            rating: { healthy: rating.healthy, tasty: rating.tasty },
+            ...(caption === undefined ? {} : { caption }),
+            ...(photo === undefined ? {} : { photo }),
+            ...(place === undefined ? {} : { place }),
+          },
+        ]
+      : [],
+  );
+  return theirs.length === 0 ? {} : { menu: theirs };
 }
 
 /** The squad, for one of its members, once its week's awards are due. */

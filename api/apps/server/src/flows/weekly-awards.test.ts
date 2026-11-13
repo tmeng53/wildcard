@@ -13,6 +13,7 @@ import {
   createWeeklyPlans,
   Emoji,
   type CheckInRecord,
+  type Place,
 } from '@wildcard/check-ins';
 import {
   MemberId as MembersMember,
@@ -351,6 +352,7 @@ async function trained(
     caption?: string;
     photos?: string[];
     minutes?: number;
+    place?: Place;
   },
 ) {
   const record: CheckInRecord = {
@@ -368,11 +370,46 @@ async function trained(
       ...(options.photos === undefined
         ? {}
         : { photos: options.photos.map((path) => ({ path: PhotoPath.parse(path) })) }),
+      ...(options.place === undefined ? {} : { place: options.place }),
     },
   };
   expect(await checkInStore.insert(record)).toStrictEqual({ saved: true });
   return record.id;
 }
+
+async function ate(
+  author: { readonly userId: string },
+  options: {
+    squad: string;
+    rating?: { healthy: number; tasty: number };
+    caption?: string;
+    place?: Place;
+    inFeed?: boolean;
+    createdAt?: Date;
+  },
+) {
+  const id = CheckInId.parse(randomUUID());
+  expect(
+    await checkInStore.insert({
+      id,
+      member: CheckInMember.parse(author.userId),
+      day: '2026-10-22',
+      createdAt: options.createdAt ?? new Date('2026-10-22T12:00:00.000Z'),
+      inFeed: options.inFeed ?? true,
+      audience: [CheckInSquad.parse(options.squad)],
+      kind: 'healthyMeal',
+      meal: {
+        ...(options.rating === undefined ? {} : { rating: options.rating }),
+        ...(options.caption === undefined ? {} : { caption: options.caption }),
+        ...(options.place === undefined ? {} : { place: options.place }),
+      },
+    }),
+  ).toStrictEqual({ saved: true });
+  return id;
+}
+
+const GYM = { name: '星光健身', appleId: 'I1A2B3C4D5E6F', latitude: 40.74, longitude: -73.99 };
+const PARK = { name: '河边公园', appleId: 'I9F8E7D6C5B4A', latitude: 40.7, longitude: -74.01 };
 
 async function uploadedPhoto(owner: { readonly userId: string }) {
   const path = PhotoPath.parse(`${owner.userId}/${randomUUID()}`);
@@ -450,6 +487,27 @@ const Story = z.object({
               .optional(),
           }),
         ),
+      }),
+    )
+    .optional(),
+  menu: z
+    .array(
+      z.object({
+        checkIn: z.string(),
+        author: z.string(),
+        rating: z.object({ healthy: z.int(), tasty: z.int() }),
+        caption: z.string().optional(),
+        place: z.object({ name: z.string() }).optional(),
+      }),
+    )
+    .optional(),
+  places: z
+    .array(
+      z.object({
+        key: z.string(),
+        place: z.looseObject({ name: z.string() }),
+        firstTime: z.boolean(),
+        visits: z.array(z.object({ member: z.string(), day: z.string() })),
       }),
     )
     .optional(),
@@ -898,6 +956,80 @@ describe('weekly awards', () => {
     await expect(
       sql`update public.week_stories set story = story where squad_id = ${squad}`.execute(db),
     ).rejects.toThrow(/frozen/u);
+  });
+
+  it('puts the rated meals on 小队菜单 and the places trained at on the map pages', async () => {
+    const { read } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    // Before the week: Ana trained in the park, so it isn't new this week; the gym is.
+    await trained(ana, {
+      squad,
+      day: '2026-10-12',
+      createdAt: new Date('2026-10-12T14:00:00.000Z'),
+      place: PARK,
+    });
+    await trained(ana, {
+      squad,
+      day: '2026-10-20',
+      createdAt: new Date('2026-10-20T14:00:00.000Z'),
+      place: GYM,
+    });
+    await trained(bo, { squad, day: '2026-10-21', place: GYM });
+    await trained(bo, {
+      squad,
+      day: '2026-10-22',
+      createdAt: new Date('2026-10-22T14:00:00.000Z'),
+      place: PARK,
+    });
+    const salad = await ate(ana, {
+      squad,
+      rating: { healthy: 5, tasty: 4 },
+      caption: '牛油果沙拉',
+    });
+    const ramen = await ate(bo, {
+      squad,
+      rating: { healthy: 5, tasty: 5 },
+      place: GYM,
+      createdAt: new Date('2026-10-22T13:00:00.000Z'),
+    });
+    await ate(ana, { squad, rating: { healthy: 1, tasty: 1 } });
+    await ate(bo, { squad });
+    // Only recorded, not posted: never on a page.
+    await ate(bo, { squad, rating: { healthy: 5, tasty: 5 }, inFeed: false });
+
+    const story = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(
+      story.menu?.map(({ checkIn, author, rating }) => [checkIn, author, rating]),
+    ).toStrictEqual([
+      [ramen, bo.userId, { healthy: 5, tasty: 5 }],
+      [salad, ana.userId, { healthy: 5, tasty: 4 }],
+      [expect.any(String), ana.userId, { healthy: 1, tasty: 1 }],
+    ]);
+    expect(story.menu?.[0]?.place?.name).toBe('星光健身');
+    expect(story.menu?.[1]?.caption).toBe('牛油果沙拉');
+    expect(story.places).toStrictEqual([
+      {
+        key: 'apple:I1A2B3C4D5E6F',
+        place: GYM,
+        firstTime: true,
+        visits: [
+          { member: ana.userId, day: '2026-10-20' },
+          { member: bo.userId, day: '2026-10-21' },
+        ],
+      },
+      {
+        key: 'apple:I9F8E7D6C5B4A',
+        place: PARK,
+        firstTime: false,
+        visits: [{ member: bo.userId, day: '2026-10-22' }],
+      },
+    ]);
+
+    // Deleting a meal takes it off the menu; the rest keep their order.
+    await sql`delete from public.check_ins where id = ${salad}`.execute(db);
+    const after = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(after.menu?.map(({ author }) => author)).toStrictEqual([bo.userId, ana.userId]);
   });
 
   it('freezes on the first read when no run has, and drops a post deleted since', async () => {

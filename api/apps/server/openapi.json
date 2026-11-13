@@ -6761,6 +6761,23 @@
               "ending": {
                 "$ref": "#/components/schemas/StoryEnding"
               },
+              "menu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMenuDish"
+                },
+                "minItems": 1,
+                "maxItems": 3,
+                "description": "小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it."
+              },
+              "places": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryPlace"
+                },
+                "minItems": 1,
+                "description": "The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it."
+              },
               "status": {
                 "type": "string",
                 "enum": [
@@ -6867,6 +6884,23 @@
               },
               "ending": {
                 "$ref": "#/components/schemas/StoryEnding"
+              },
+              "menu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMenuDish"
+                },
+                "minItems": 1,
+                "maxItems": 3,
+                "description": "小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it."
+              },
+              "places": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryPlace"
+                },
+                "minItems": 1,
+                "description": "The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it."
               },
               "status": {
                 "type": "string",
@@ -7311,6 +7345,188 @@
         ],
         "additionalProperties": false,
         "description": "这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a quiet week isn’t told how short it fell."
+      },
+      "StoryMenuDish": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
+          },
+          "caption": {
+            "type": "string",
+            "description": "The meal’s line, naming the dish."
+          },
+          "photo": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "path",
+              "url"
+            ],
+            "additionalProperties": false,
+            "description": "Its first photo, while the meal still has it."
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "Where it was eaten, when tagged."
+          }
+        },
+        "required": [
+          "checkIn",
+          "author",
+          "day",
+          "rating"
+        ],
+        "additionalProperties": false
+      },
+      "StoryPlace": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "The place as its latest 训练 there tagged it."
+          },
+          "firstTime": {
+            "type": "boolean",
+            "description": "新发现: no member of the squad had posted a 训练 there to it before that week."
+          },
+          "visits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "day": {
+                  "type": "string",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "member",
+                "day"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Each 训练 posted there, the earliest first."
+          }
+        },
+        "required": [
+          "key",
+          "place",
+          "firstTime",
+          "visits"
+        ],
+        "additionalProperties": false
       },
       "StoryTitle": {
         "type": "object",

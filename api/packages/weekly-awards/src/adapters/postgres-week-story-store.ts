@@ -53,11 +53,15 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             .map(({ post }) => StoredStoryPost.parse(post));
           const hottest = theirs.find((post) => post.hottest !== undefined)?.hottest;
           const best = theirs.find((post) => post.bestDisclaimer !== undefined)?.bestDisclaimer;
+          const menu = theirs
+            .flatMap(({ menuDish }) => (menuDish === undefined ? [] : [menuDish]))
+            .toSorted((a, b) => a.rank - b.rank);
           return {
             member: MemberId.parse(member_id),
             ...StoredStoryMember.parse(page),
             ...(hottest === undefined ? {} : { hottest }),
             ...(best === undefined ? {} : { bestDisclaimer: best }),
+            ...(menu.length === 0 ? {} : { menu }),
           };
         }),
       };
@@ -118,7 +122,7 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             })),
           )
           .execute();
-        const posts = members.flatMap(({ member, hottest, bestDisclaimer }) => [
+        const posts = members.flatMap(({ member, hottest, bestDisclaimer, menu }) => [
           ...(hottest === undefined
             ? []
             : [
@@ -139,6 +143,12 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
                   post: { version: 1, bestDisclaimer },
                 },
               ]),
+          ...(menu ?? []).map((menuDish) => ({
+            member,
+            role: 'menu',
+            checkIn: menuDish.checkIn,
+            post: { version: 1, menuDish },
+          })),
         ]);
         if (posts.length === 0) return;
         await trx
@@ -171,5 +181,6 @@ function pageOf(part: StoryMember): StoredStoryMember {
     cheatMeals: part.cheatMeals,
     reactionsReceived: part.reactionsReceived,
     ...(part.reachedAt === undefined ? {} : { reachedAt: part.reachedAt }),
+    ...(part.trainedAt === undefined ? {} : { trainedAt: part.trainedAt }),
   };
 }

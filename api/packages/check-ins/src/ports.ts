@@ -1,3 +1,5 @@
+import type { PlaceKey } from '@wildcard/place-ids';
+
 import type { CheckInId, CheckInRecord, LocalDay, MemberId, SquadId } from './domain/check-in.js';
 import type { RecordTraining } from './domain/records.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
@@ -84,6 +86,16 @@ export interface CheckInStore {
     readonly squad: SquadId;
     readonly limit: number;
   }): Promise<CheckInRecord[]>;
+  /**
+   * Which of `keys` these members had posted a 训练 from to `squad` (in its 动态) for a day before
+   * `before`: the places the squad had already found.
+   */
+  placesTrainedBefore(query: {
+    readonly squad: SquadId;
+    readonly members: readonly MemberId[];
+    readonly keys: readonly PlaceKey[];
+    readonly before: LocalDay;
+  }): Promise<ReadonlySet<PlaceKey>>;
   /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
    * each once.

@@ -1,3 +1,5 @@
+import { placeKey, type PlaceKey } from '@wildcard/place-ids';
+
 import type { CheckInId, CheckInRecord, MemberId, SquadId } from '../../domain/check-in.js';
 import type { Comment } from '../../domain/comment.js';
 import { weekOf } from '../../domain/days.js';
@@ -113,9 +115,31 @@ export async function squadWeekCheckIns(
     }),
     checkIns: checkIns.filter((each) => each.member === member),
   }));
+  const keys = [
+    ...new Set(
+      checkIns.flatMap((each) => {
+        if (!each.inFeed || each.kind !== 'trained' || each.training.place === undefined) return [];
+        const key = placeKey(each.training.place);
+        return key === undefined ? [] : [key];
+      }),
+    ),
+  ];
+  // A place is 新发现 when none of these members posted a 训练 there to this squad before the week.
+  const placesBefore =
+    keys.length === 0
+      ? new Set<PlaceKey>()
+      : await deps.store.placesTrainedBefore({
+          squad,
+          members: memberIds,
+          keys,
+          before: week.from,
+        });
   const pages = weekPagesOf(
     { week, members, reactions },
-    new Map(memberIds.map((member, index) => [member, plans[index]?.days ?? []])),
+    {
+      plans: new Map(memberIds.map((member, index) => [member, plans[index]?.days ?? []])),
+      placesBefore,
+    },
   );
   return {
     members: members.map(({ member, checkIns: theirs }) => ({ member, checkIns: theirs })),

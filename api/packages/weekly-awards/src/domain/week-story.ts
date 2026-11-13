@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { Place, PlaceKey } from '@wildcard/place-ids';
+
 import { TopCheckIn, type MemberId, type SquadId } from './awards.js';
 import type { WeekStart } from './schedule.js';
 
@@ -45,6 +47,14 @@ export const StoredStory = z.discriminatedUnion('version', [
      * the 训练 against the squad's weekly goal instead of the plans.
      */
     ending: z.strictObject({ done: Count, plan: Count }).optional(),
+    /**
+     * The places the squad's 训练 posts were tagged with that week, as each was last tagged, and
+     * whether it was the first time any of them posted a 训练 there to the squad (新发现). Who
+     * trained there when is each member's own (`trainedAt`). Missing in stories frozen before it.
+     */
+    places: z
+      .array(z.strictObject({ key: PlaceKey, place: Place, firstTime: z.boolean() }))
+      .optional(),
   }),
 ]);
 export type StoredStory = z.infer<typeof StoredStory>;
@@ -75,6 +85,10 @@ export const StoredStoryMember = z.discriminatedUnion('version', [
     reachedAt: z.iso.datetime().optional(),
     /** Stories frozen before `reachedAt` kept when the member finished their plan; never read. */
     planFinishedAt: z.iso.datetime().optional(),
+    /** The days they posted a 训练 at each of the story's places, earliest first; none left out. */
+    trainedAt: z
+      .array(z.strictObject({ key: PlaceKey, days: z.array(z.iso.date()).min(1) }))
+      .optional(),
   }),
 ]);
 export type StoredStoryMember = z.infer<typeof StoredStoryMember>;
@@ -84,6 +98,19 @@ const BestDisclaimer = z.strictObject({
   text: z.string(),
   reactions: z.int().min(1),
 });
+
+/** A rated meal of theirs on 小队菜单, and its place on it (0 first). */
+const MenuDish = z.strictObject({
+  checkIn: z.uuid(),
+  day: z.iso.date(),
+  rank: z.int().min(0),
+  rating: z.strictObject({ healthy: z.int().min(1).max(5), tasty: z.int().min(1).max(5) }),
+  caption: z.string().optional(),
+  /** Its first photo's path. */
+  photo: z.string().optional(),
+  place: Place.optional(),
+});
+export type MenuDish = z.infer<typeof MenuDish>;
 
 /**
  * Stored JSON (`week_story_posts.post`): one of the member's posts on the 战报's pages, kept
@@ -96,6 +123,8 @@ export const StoredStoryPost = z.discriminatedUnion('version', [
     hottest: TopCheckIn.optional(),
     /** The squad's best 请假条, theirs. */
     bestDisclaimer: BestDisclaimer.optional(),
+    /** A meal of theirs on 小队菜单. */
+    menuDish: MenuDish.optional(),
   }),
 ]);
 export type StoredStoryPost = z.infer<typeof StoredStoryPost>;
@@ -106,6 +135,8 @@ export type StoryMember = { readonly member: MemberId } & StoredStoryMember & {
     readonly hottest?: TopCheckIn;
     /** The squad's best 请假条, when it was theirs. */
     readonly bestDisclaimer?: z.infer<typeof BestDisclaimer>;
+    /** Their meals on 小队菜单, still posted. */
+    readonly menu?: readonly MenuDish[];
   };
 
 /** A squad's frozen 战报 for a week. */

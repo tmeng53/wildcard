@@ -826,6 +826,9 @@ importers:
       '@wildcard/language-model':
         specifier: workspace:*
         version: link:../language-model
+      '@wildcard/place-ids':
+        specifier: workspace:*
+        version: link:../place-ids
       '@wildcard/time-zones':
         specifier: workspace:*
         version: link:../time-zones
