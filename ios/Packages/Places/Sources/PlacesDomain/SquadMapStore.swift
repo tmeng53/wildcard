@@ -45,6 +45,19 @@ public final class SquadMapStore {
         return mode == .today ? layout.todaySpots : layout.oftenSpots
     }
 
+    /// Everyone else's 今天 stacks, faded behind a member's day while it is up: the member's own
+    /// visits are left out, since their stops stand there instead.
+    public var fadedSpots: [MapSpot] {
+        guard let member else { return [] }
+        return layout.todaySpots.compactMap { spot in
+            let others = spot.visits.filter { $0.author != member }
+            guard !others.isEmpty else { return nil }
+            return MapSpot(
+                place: spot.place, visits: others, heads: spot.heads.filter { $0 != member },
+                emphasis: spot.emphasis)
+        }
+    }
+
     /// One member's posts today, each where it was, while their day is up.
     public var stops: [MapStop] { member.map(layout.stops(of:)) ?? [] }
 

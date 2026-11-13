@@ -109,7 +109,7 @@ struct SquadMapPage: View {
                 }
             } else {
                 // Everyone else's stacks, faded behind the member's day.
-                ForEach(store.layout.todaySpots) { spot in
+                ForEach(store.fadedSpots) { spot in
                     Annotation(spot.place.place.name, coordinate: spot.place.place.coordinate, anchor: .top) {
                         HeadPile(players: spot.heads.map(player(for:)), size: SpotMarker.headSize)
                             .opacity(0.3)
@@ -172,7 +172,7 @@ private struct SpotMarker: View {
                 VStack(spacing: Space.xxs) {
                     HStack(alignment: .top, spacing: Space.xs) {
                         ForEach(entries, id: \.member) { entry in
-                            VStack(spacing: 2) {
+                            VStack(spacing: Space.xxs) {
                                 MemberHead(
                                     player: heads.player(for: store.characters[entry.member]?.look), size: Self.headSize
                                 )
@@ -268,7 +268,7 @@ private struct VisitBadge: View {
             .typeStyle(TypeRamp.label)
             .monospacedDigit()
             .foregroundStyle(Color(role: .fgOnBrand, in: theme))
-            .padding(.horizontal, 5)
+            .padding(.horizontal, Space.xxs)
             .frame(minWidth: 20, minHeight: 20)
             .background(Color(role: .bgBrand, in: theme), in: Capsule())
             .overlay(Capsule().strokeBorder(Color(role: .bgCanvas, in: theme), lineWidth: Sizing.selectionStroke))

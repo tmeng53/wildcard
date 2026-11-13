@@ -97,6 +97,22 @@
         }
       }
     },
+    "网络开小差了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't connect right now"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路怪怪的"
+          }
+        }
+      }
+    },
     "小队来过": {
       "localizations": {
         "en": {

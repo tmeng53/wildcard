@@ -51,7 +51,7 @@ struct SquadMapList: View {
                 }
             case (.today, nil):
                 if store.rows.isEmpty {
-                    empty(Text(copy: "今天还没有带地点的动态", bundle: .module))
+                    nothing(Text(copy: "今天还没有带地点的动态", bundle: .module))
                 }
                 ForEach(store.rows) { visit in
                     Button {
@@ -65,7 +65,7 @@ struct SquadMapList: View {
             case (.often, _):
                 Section {
                     if store.layout.oftenPlaces.isEmpty {
-                        empty(Text(copy: "还没有带地点的动态", bundle: .module))
+                        nothing(Text(copy: "还没有带地点的动态", bundle: .module))
                     }
                     ForEach(store.layout.oftenPlaces) { place in
                         Button {
@@ -82,6 +82,21 @@ struct SquadMapList: View {
         }
         .listStyle(.plain)
         .foregroundStyle(Color(role: .fgDefault, in: theme))
+    }
+
+    /// What an empty list says: a spinner while the first read runs, that the network failed when
+    /// it did, else `text`.
+    @ViewBuilder private func nothing(_ text: Text) -> some View {
+        switch store.phase {
+        case .loading:
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .listRowSeparator(.hidden)
+        case .offline, .signedOut, .notInSquad:
+            empty(Text(copy: "网络开小差了", bundle: .module))
+        case .loaded:
+            empty(text)
+        }
     }
 
     private func empty(_ text: Text) -> some View {
@@ -107,7 +122,7 @@ private struct TodayRow: View {
         HStack(spacing: Space.s) {
             MemberHead(player: head, size: 32)
                 .greyed(!store.isInSquad(visit.author))
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: store.characters[visit.author]?.nickname.text ?? String(copy: "队友", bundle: .module))
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .lineLimit(1)
@@ -139,7 +154,7 @@ private struct MemberPostRow: View {
                 .frame(width: 32, height: 32)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: visit.doing)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .lineLimit(1)
@@ -170,7 +185,7 @@ private struct OftenRow: View {
                 .frame(width: 32, height: 32)
                 .background(Color(role: .bgSubtle, in: theme), in: Circle())
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: place.place.name)
                     .typeStyle(TypeRamp.calloutEmphasis)
                     .lineLimit(1)
@@ -182,7 +197,7 @@ private struct OftenRow: View {
                 }
             }
             Spacer(minLength: Space.xs)
-            HStack(alignment: .firstTextBaseline, spacing: 2) {
+            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
                 Text(verbatim: "\(place.visits)")
                     .typeStyle(TypeRamp.headline)
                     .monospacedDigit()

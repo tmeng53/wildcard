@@ -126,9 +126,25 @@ struct SquadMapStoreTests {
         #expect(store.spots.isEmpty)
         #expect(store.stops.map(\.visit.author) == [mia])
         #expect(store.rows.map(\.author) == [mia])
+        #expect(store.fadedSpots.map(\.heads) == [[leo]])
         store.showSquad()
+        #expect(store.fadedSpots.isEmpty)
         #expect(store.rows.map(\.author) == [leo, mia])
         store.mode = .often
         #expect(store.spots.first?.emphasis == .top)
+    }
+
+    @Test func listsWaitForTheFirstReadAndSayWhenItFailed() async throws {
+        let store = SquadMapStore(squad: SquadID(UUID()), today: try LocalDay("2026-11-13"), source: Offline())
+        #expect(store.phase == .loading)
+        await store.load()
+        #expect(store.phase == .offline)
+    }
+
+    private actor Offline: PlaceSource {
+        func detail(of place: PlaceKey, in squad: SquadID) async throws(PlacesError) -> PlaceDetail? { nil }
+        func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData { throw .unavailable }
+        func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] { [:] }
+        func photo(_ ref: PhotoRef) async -> Data? { nil }
     }
 }
