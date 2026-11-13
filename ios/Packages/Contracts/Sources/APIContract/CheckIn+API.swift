@@ -23,7 +23,7 @@ extension CheckIn {
                 entry: .healthyMeal(
                     Meal(
                         caption: checkIn.meal.caption, photos: checkIn.meal.photos, place: checkIn.meal.place,
-                        postedAt: checkIn.createdAt)))
+                        rating: checkIn.meal.rating, postedAt: checkIn.createdAt)))
         case .cheatMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
@@ -32,7 +32,7 @@ extension CheckIn {
                 entry: .cheatMeal(
                     Meal(
                         caption: checkIn.meal.caption, photos: checkIn.meal.photos, place: checkIn.meal.place,
-                        postedAt: checkIn.createdAt)))
+                        rating: checkIn.meal.rating, postedAt: checkIn.createdAt)))
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
@@ -111,7 +111,9 @@ extension Training {
 }
 
 extension Meal {
-    var wire: Components.Schemas.Meal { .init(caption: caption?.text, place: place?.wire, photos: photos?.wire) }
+    var wire: Components.Schemas.Meal {
+        .init(caption: caption?.text, place: place?.wire, rating: rating?.wire, photos: photos?.wire)
+    }
 }
 
 extension Disclaimer {
@@ -189,11 +191,23 @@ extension WorkoutSeries {
 
 extension Meal {
     init(
-        caption: String?, photos: [Components.Schemas.PhotoView]?, place: Components.Schemas.Place?, postedAt: Date
+        caption: String?, photos: [Components.Schemas.PhotoView]?, place: Components.Schemas.Place?,
+        rating: Components.Schemas.MealRating?, postedAt: Date
     ) throws(ContractsError) {
         self.init(
             photos: try Photos(wire: photos, postedAt: postedAt), caption: try caption.map(Caption.init),
-            place: Place(wire: place))
+            place: Place(wire: place), rating: MealRating(wire: rating))
+    }
+}
+
+extension MealRating {
+    var wire: Components.Schemas.MealRating { .init(healthy: healthy, tasty: tasty) }
+
+    /// A rating as the API sends it; one this build can't read is left off the meal, never the
+    /// post itself.
+    init?(wire: Components.Schemas.MealRating?) {
+        guard let wire else { return nil }
+        try? self.init(healthy: wire.healthy, tasty: wire.tasty)
     }
 }
 
