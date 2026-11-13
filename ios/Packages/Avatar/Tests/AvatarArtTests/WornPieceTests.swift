@@ -22,9 +22,9 @@ func aHeldPropOnItsOwnDrawsNoHand(prop: String) throws {
     var look = PlaceholderCharacter.lifter
     look.variants["prop"] = prop
     let figure = try PlaceholderCharacter.figure(wearing: look)
-    #expect(figure.parts.flatMap(\.hands).contains { $0 != nil })
+    #expect(figure.parts.contains { !$0.hands.isEmpty })
     let piece = figure.wearing(only: "prop")
-    #expect(piece.parts.flatMap(\.hands).allSatisfy { $0 == nil })
+    #expect(piece.parts.allSatisfy { $0.hands.isEmpty })
     #expect(!piece.parts.flatMap(\.art).isEmpty)
     for id: PartID in ["gripL", "gripR"] { #expect(try piece.part(id).art.isEmpty) }
 }
