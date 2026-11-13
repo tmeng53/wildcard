@@ -46,7 +46,7 @@ extension InMemoryFeedSource {
                 viewer, 1, 19, 20,
                 write.fromHealth(
                     "strength", ["gym"], "练腿日，明天下楼梯靠扶手", tile: 2,
-                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420)),
+                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420), at: sampleGym),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
@@ -65,8 +65,24 @@ extension InMemoryFeedSource {
         let byPath = Dictionary(uniqueKeysWithValues: photos.map { ("\(photoFolder)/\($0.key)", $0.value) })
         return InMemoryFeedSource(
             viewer: viewer, posts: posts + [write.runOnMyOwn(viewer)], characters: characters, photos: byPath,
-            coach: coach ? sampleCoach(on: posts, now: now, mia: mia) : nil)
+            coach: coach ? sampleCoach(on: posts, now: now, mia: mia) : nil, placeScores: gymScores(jay, coco))
     }
+
+    /// 阿杰's 5 and Coco's 4 for the gym.
+    private static func gymScores(_ jay: MemberID, _ coco: MemberID) -> [PlaceKey: [MemberID: Int]] {
+        sampleGym?.key.map { [$0: [jay: 5, coco: 4]] } ?? [:]
+    }
+
+    /// The gym my leg day was at, which 阿杰 and Coco scored: its page shows the squad's score
+    /// and leaves mine to give.
+    static let sampleGym = try? Place(
+        name: "Equinox Flatiron", appleID: "I6FD7682FD36BB3BE", category: "fitnessCenter", latitude: 40.7411,
+        longitude: -73.9897)
+
+    /// The restaurant Mia's salad came from.
+    static let sampleRestaurant = try? Place(
+        name: "Sweetgreen", appleID: "I5C8B0D3F1A2E9B47", category: "restaurant", latitude: 40.7448,
+        longitude: -73.9881)
 
     /// 毛头's line for today and its replies to the run (posts[0]),
     /// the swim (posts[3]), which @s Mia, and the 请假条 (the last).
@@ -151,23 +167,25 @@ private struct SamplePosts {
     let audience: Audience
 
     func training(
-        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil
+        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil,
+        place: Place? = nil
     ) -> Training {
         Training(
             activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: self.photos(photos),
-            caption: line(caption), workout: workout)
+            caption: line(caption), workout: workout, place: place)
     }
 
     /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
     /// the 17th the fastest, an hour of sets' heart rate indoors, or a loop through a park.
-    func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
-        -> CheckIn.Entry
-    {
+    func fromHealth(
+        _ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary,
+        at place: Place? = nil
+    ) -> CheckIn.Entry {
         let minutes = (summary.durationSec ?? 0) / 60
         return .trained(
             training(
                 sport, minutes: minutes, photos, caption,
-                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary)))
+                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary), place: place))
     }
 
     private func workout(_ sport: String, minutes: Int, tile: Int, _ summary: WorkoutSummary) -> Workout {
@@ -228,8 +246,8 @@ private struct SamplePosts {
     /// Mia's salad, tagged with the restaurant it came from and rated, as 动态 shows a place and
     /// a meal's 成绩条.
     var taggedSalad: CheckIn.Entry {
-        let place = try? Place(name: "Sweetgreen", category: "restaurant", latitude: 40.7448, longitude: -73.9881)
-        return .healthyMeal(meal("salad", "今天的草，吃得很体面", at: place, healthy: 5, tasty: 4))
+        .healthyMeal(
+            meal("salad", "今天的草，吃得很体面", at: InMemoryFeedSource.sampleRestaurant, healthy: 5, tasty: 4))
     }
 
     func post(

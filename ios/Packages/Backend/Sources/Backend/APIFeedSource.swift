@@ -7,7 +7,7 @@ import Foundation
 /// one post's own page, the characters from the squad's today, and each photo kept on the phone or else from the URL the
 /// list signed for it.
 public struct APIFeedSource: FeedSource {
-    private let api: WildcardAPI
+    let api: WildcardAPI
 
     public init(api: WildcardAPI) {
         self.api = api

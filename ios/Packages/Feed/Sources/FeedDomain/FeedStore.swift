@@ -69,7 +69,7 @@ public final class FeedStore {
     let source: any FeedSource
     private let scope: Scope
     private let viewer: MemberID
-    private let today: @Sendable () -> LocalDay
+    public let today: @Sendable () -> LocalDay
     private let now: @Sendable () -> Timestamp
     private let newCommentID: @Sendable () -> CommentID
 
@@ -118,6 +118,14 @@ public final class FeedStore {
     }
 
     public func post(_ id: CheckInID) -> FeedPost? { loaded[id].map(showing) }
+
+    /// The member's squad: the feed's, or the one a post's page was opened from.
+    public var squad: SquadID? {
+        switch scope {
+        case .squad(let squad): squad
+        case .post(_, let ownSquad): ownSquad
+        }
+    }
 
     /// A post's photo, as JPEG; nil when it can't be had now.
     public func photo(_ ref: PhotoRef) async -> Data? { await source.photo(ref) }

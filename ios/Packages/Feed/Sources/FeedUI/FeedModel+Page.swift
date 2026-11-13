@@ -31,7 +31,8 @@ extension FeedModel {
     /// 动态 does, with the same recent emoji.
     public func page(of post: CheckInID) -> FeedModel {
         let page = FeedModel(
-            store: store.store(of: post), viewer: viewer, editor: editor, coach: coach, now: now, defaults: defaults)
+            store: store.store(of: post), viewer: viewer, editor: editor, coach: coach, places: places, now: now,
+            defaults: defaults)
         page.changed = { [weak self] change in
             self?.store.apply(change)
             self?.changed?(change)
@@ -40,6 +41,13 @@ extension FeedModel {
         page.openTeammate = { [weak self] member in self?.openTeammate(member) }
         page.squadName = { [weak self] in self?.squadName() }
         return page
+    }
+
+    /// A tagged place's page in the member's squad; nil where the app has no pages of places, or
+    /// for a place without a key.
+    public func placePage(_ place: Place) -> PlacePageStore? {
+        guard let places, let key = place.key, let squad = store.squad else { return nil }
+        return PlacePageStore(book: places, squad: squad, place: place, key: key)
     }
 
     /// Sends the member's comment on a post, replying to whomever they picked and @-ing

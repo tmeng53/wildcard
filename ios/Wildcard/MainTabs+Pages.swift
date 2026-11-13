@@ -1,6 +1,7 @@
 import CharacterEditorUI
 import Contracts
 import DesignSystemUI
+import FeedDomain
 import FeedUI
 import MeDomain
 import NotificationsUI
@@ -71,6 +72,14 @@ struct OpenedPost: Hashable {
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
+/// A tagged place's page (地点页), opened from a post's place; one place is one page.
+struct OpenedPlace: Hashable {
+    let store: PlacePageStore
+
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.store.key == rhs.store.key }
+    func hash(into hasher: inout Hasher) { hasher.combine(store.key) }
+}
+
 /// A page pushed over 动态.
 enum FeedPage: Hashable {
     /// 通知, behind the bell.
@@ -78,6 +87,8 @@ enum FeedPage: Hashable {
     /// A post's page: a card's, straight over 动态, or one a notice opened, over 通知 or straight
     /// over 动态.
     case post(OpenedPost)
+    /// A place's page, from a post's place: over 动态, a post's page or another place's post.
+    case place(OpenedPlace)
 }
 
 extension MainTabs {
@@ -93,6 +104,30 @@ extension MainTabs {
     }
 
     /// A card's comments open its post's page, pushed straight over 动态 on the same path.
+    /// What each page pushed over 动态 is.
+    @ViewBuilder func feedDestination(_ page: FeedPage) -> some View {
+        switch page {
+        case .notices:
+            NoticesView(inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open)
+        case .post(let opened):
+            PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
+        case .place(let opened):
+            PlacePageView(store: opened.store, model: feed, openPost: pushPlacePost)
+        }
+    }
+
+    /// Pushes a tagged place's page over whatever 动态 shows now.
+    func pushPlace(_ place: Place) {
+        guard let store = feed.placePage(place) else { return }
+        feedPages.append(.place(OpenedPlace(store: store)))
+    }
+
+    /// Pushes a post opened from a place's page, on a model of its own, so the feed's open post
+    /// stays as it is underneath.
+    func pushPlacePost(_ id: CheckInID) {
+        feedPages.append(.post(OpenedPost(id: id, model: feed.page(of: id))))
+    }
+
     func pushCardPost(_ id: CheckInID?) {
         guard let id else { return }
         let page = FeedPage.post(OpenedPost(id: id, model: feed))

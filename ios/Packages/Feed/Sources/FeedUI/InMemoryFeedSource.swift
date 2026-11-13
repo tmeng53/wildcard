@@ -6,9 +6,11 @@ import Foundation
 /// yet. Reactions and comments are kept as the API keeps them: one emoji per member, comments
 /// deleted only by their writer.
 public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
-    private let viewer: MemberID
+    let viewer: MemberID
     private var posts: [FeedPost]
-    private let characters: [MemberID: MemberCharacter]
+    let characters: [MemberID: MemberCharacter]
+    /// Each place's scores, by member (我的评分).
+    var placeScores: [PlaceKey: [MemberID: Int]]
     private var photos: [String: Data]
     /// What the squad's coach said; nil for a squad without one.
     private var coach: CoachActivity?
@@ -17,9 +19,10 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
 
     public init(
         viewer: MemberID, posts: [FeedPost], characters: [MemberID: MemberCharacter], photos: [String: Data] = [:],
-        coach: CoachActivity? = nil, offline: Bool = false
+        coach: CoachActivity? = nil, offline: Bool = false, placeScores: [PlaceKey: [MemberID: Int]] = [:]
     ) {
         self.viewer = viewer
+        self.placeScores = placeScores
         self.offline = offline
         self.posts = posts
         self.characters = characters
@@ -37,6 +40,9 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
     public func hiredCoach(in squad: SquadID) async throws(FeedError) -> CoachSpeaker? {
         coach?.note?.coach ?? coach?.replies.first?.coach
     }
+
+    /// Every post, for the places' pages.
+    var allPosts: [FeedPost] { posts }
 
     public func posts(in squad: SquadID, from first: LocalDay, through last: LocalDay) async throws(FeedError)
         -> [FeedPost]

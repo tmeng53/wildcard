@@ -24,6 +24,7 @@ import UIKit
 struct PostCard: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openPlace) private var openPlace
     let model: FeedModel
     let post: FeedPost
 
@@ -197,6 +198,13 @@ struct PostCard: View {
             }
     }
 
+    /// Opens the place's page where the app shows one and the place has a key; else its tag opens
+    /// Apple Maps.
+    private func opening(_ place: Place) -> (() -> Void)? {
+        guard let openPlace, place.key != nil else { return nil }
+        return { openPlace(place) }
+    }
+
     /// The whole character, then who, when and what, the words under a cover, and at the foot who
     /// reacted with the buttons.
     private var details: some View {
@@ -206,7 +214,7 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
-                if let place = post.checkIn.entry.place { PlaceTag(place) }
+                if let place = post.checkIn.entry.place { PlaceTag(place, open: opening(place)) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {

@@ -240,18 +240,10 @@ struct MainTabs: View {
                 await inbox.load()
                 if profile.overview == nil { await profile.reload() }
             }
-            .navigationDestination(for: FeedPage.self) { page in
-                switch page {
-                case .notices:
-                    NoticesView(
-                        inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
-                    )
-                case .post(let opened):
-                    PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
-                }
-            }
+            .navigationDestination(for: FeedPage.self, destination: feedDestination)
         }
         .environment(\.sceneTheme, today.scene)
+        .environment(\.openPlace, pushPlace)  // A post's place opens its page, whichever post it is on.
         .onChange(of: feed.opened) { _, id in pushCardPost(id) }
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }

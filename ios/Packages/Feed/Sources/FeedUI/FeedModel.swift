@@ -91,6 +91,8 @@ public final class FeedModel {
     private(set) var lifts = 0
     /// Edits and deletes the member's own posts; without one, posts show no 「…」.
     let editor: (any PostEditing)?
+    /// Places' pages (地点页); without one, a post's place opens Apple Maps.
+    let places: (any PlaceBook)?
     /// Told each change the member makes to one of their posts here, for the other screens that
     /// show it (我的动态 under a post opened from it).
     public var changed: ((PostChange) -> Void)?
@@ -116,12 +118,11 @@ public final class FeedModel {
 
     public init(
         store: FeedStore, viewer: MemberID, editor: (any PostEditing)? = nil, coach: FeedCoach? = nil,
-        now: @escaping () -> Date = { Date() },
+        places: (any PlaceBook)? = nil, now: @escaping () -> Date = { Date() },
         defaults: UserDefaults = .standard
     ) {
-        self.store = store
-        self.viewer = viewer
-        self.editor = editor
+        (self.store, self.viewer) = (store, viewer)
+        (self.editor, self.places) = (editor, places)
         self.coach = coach
         self.now = now
         self.defaults = defaults

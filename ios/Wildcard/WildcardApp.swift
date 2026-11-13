@@ -221,7 +221,7 @@ struct WildcardApp: App {
             now: { Timestamp(LaunchOptions.now()) }, newCommentID: { CommentID(UUID()) })
         let coach = FeedCoach(source: source, squad: squad, now: { LaunchOptions.now() })
         let feed = FeedModel(
-            store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach,
+            store: store, viewer: viewer, editor: InMemoryPostEditor(source: source), coach: coach, places: source,
             now: LaunchOptions.now)
         // 成绩卡's 小队名: the squad's name as 今天 has it, or the sample's own before 今天 first
         // loads (a launch straight into 动态 never opens 今天).

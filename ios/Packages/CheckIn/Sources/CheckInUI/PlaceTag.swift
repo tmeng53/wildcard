@@ -6,19 +6,26 @@ import DesignSystemUI
 import SwiftUI
 
 /// Where a 训练 or a meal was, under its author on 动态 (Tracy, 2026-11-12): the place's kind's
-/// icon and its name. A tap opens it in Apple Maps.
+/// icon and its name. A tap opens its page (地点页, Tracy, 2026-11-13) when the caller gives one,
+/// else Apple Maps.
 public struct PlaceTag: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.openURL) private var openURL
     private let place: Place
+    private let open: (() -> Void)?
 
-    public init(_ place: Place) {
+    public init(_ place: Place, open: (() -> Void)? = nil) {
         self.place = place
+        self.open = open
     }
 
     public var body: some View {
         Button {
-            if let mapsLink { openURL(mapsLink) }
+            if let open {
+                open()
+            } else if let mapsLink = place.mapsLink {
+                openURL(mapsLink)
+            }
         } label: {
             HStack(spacing: Space.xxs) {
                 Image(systemName: place.kind.symbol)
@@ -33,21 +40,24 @@ public struct PlaceTag: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityHint(Text(copy: "在地图中打开", bundle: .module))
+        // Its page says what it is; only a tap that leaves the app says where it goes.
+        .accessibilityHint(open == nil ? Text(copy: "在地图中打开", bundle: .module) : Text(verbatim: ""))
         .accessibilityIdentifier("post.place")
     }
+}
 
-    /// Apple Maps' link to the place: by Maps' own id when it has one, so Maps shows its card;
-    /// else its name at its spot.
-    var mapsLink: URL? {
+extension Place {
+    /// Apple Maps' link to the place: by Maps' own id when it has one, so Maps shows its card
+    /// (its stars and photos are there); else its name at its spot.
+    public var mapsLink: URL? {
         var parts = URLComponents(string: "https://maps.apple.com/place")
         parts?.queryItems =
-            if let id = place.appleID {
+            if let id = appleID {
                 [URLQueryItem(name: "place-id", value: id)]
             } else {
                 [
-                    URLQueryItem(name: "name", value: place.name),
-                    URLQueryItem(name: "coordinate", value: "\(place.latitude),\(place.longitude)"),
+                    URLQueryItem(name: "name", value: name),
+                    URLQueryItem(name: "coordinate", value: "\(latitude),\(longitude)"),
                 ]
             }
         return parts?.url
