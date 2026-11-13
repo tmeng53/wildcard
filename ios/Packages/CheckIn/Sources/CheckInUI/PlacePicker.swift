@@ -80,7 +80,7 @@ final class PlaceSearch {
     private static let radius: CLLocationDistance = 1000
 
     func lookAround() async {
-        guard let near = await CoreLocationReader().nearHere() else { return }
+        guard let near = await CoreLocationReader(locale: { AppLanguage.current.locale }).nearHere() else { return }
         let location = CLLocation(latitude: near.latitude, longitude: near.longitude)
         here = location
         let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: Self.radius)
@@ -175,8 +175,6 @@ struct PlacePickerSheet: View {
                     PlaceRow(found: found, isCurrent: isCurrent(found))
                 }
                 .listRowBackground(Color(role: .bgCanvas, in: theme))
-                .listRowInsets(
-                    EdgeInsets(top: Space.xs, leading: Space.pageMargin, bottom: Space.xs, trailing: Space.pageMargin))
             }
             .listStyle(.plain)
             .scrollDismissesKeyboard(.immediately)
@@ -239,7 +237,7 @@ private struct PlaceRow: View {
                 .frame(width: Self.disc, height: Self.disc)
                 .background(Color(role: isCurrent ? .fgDefault : .bgSubtle, in: theme), in: Circle())
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: found.place.name)
                     .typeStyle(TypeRamp.pick)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))

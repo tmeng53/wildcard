@@ -123,3 +123,10 @@ func customSportNameHasNoDirectionControls(control: String) {
         try Place(name: "x", latitude: 91, longitude: 0)
     }
 }
+
+@Test func aMealsCalorieValueIsTastyTimesHealthyOverFive() throws {
+    #expect(try MealRating(healthy: 4, tasty: 5).calorieValue == 4)
+    #expect(try MealRating(healthy: 1, tasty: 1).calorieValue == 0.2)
+    #expect(throws: ContractsError.mealScore(0)) { try MealRating(healthy: 0, tasty: 3) }
+    #expect(throws: ContractsError.mealScore(6)) { try MealRating(healthy: 3, tasty: 6) }
+}

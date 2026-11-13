@@ -23,7 +23,7 @@ final class NightlyRecapUITests: XCTestCase {
         XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "no 今日赛况 tag at 21:30")
         XCTAssertEqual(tag.label, "今日赛况，还没看")
         XCTAssertEqual(tag.value as? String, "4/8")
-        // Unseen, it hangs under the folded capsule (home's default), clear of it.
+        // Unseen, it hangs under the folded capsule, clear of it.
         let capsule = app.buttons["squadcard.capsule"]
         XCTAssertTrue(capsule.exists, "home didn't open on the folded capsule")
         XCTAssertGreaterThanOrEqual(tag.frame.minY, capsule.frame.maxY, "the tag overlaps the capsule")

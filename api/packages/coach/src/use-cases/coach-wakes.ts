@@ -53,7 +53,7 @@ import type {
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
-import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
+import { challengeTool, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
 import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 /**
@@ -570,6 +570,7 @@ async function think(
     changed: new Set(),
     note: undefined,
     memberNotes: new Map(),
+    challenges: new Map(),
     gifts: new Map(),
     reply: undefined,
     replyMentions: [],
@@ -641,7 +642,7 @@ async function think(
     leave?.kind === 'disclaimer'
       ? await deps.streaks({ squad: wake.squad, member: leave.member })
       : undefined;
-  const task = taskOf({
+  const facts = {
     reason: wake.reason,
     week,
     files,
@@ -689,7 +690,26 @@ async function think(
         }
       : {}),
     ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
-  });
+  };
+  // On a daily wake, the day's challenges are set first, by a run of their own on the settings'
+  // challenge model, from the same task; the coach then writes its notes around them (Tracy,
+  // 2026-11-12).
+  const setting = daily && noteTo.length > 0;
+  let settingCost = 0;
+  if (setting) {
+    const pickTask = taskOf(facts);
+    if (pickTask === undefined) return undefined;
+    settingCost = await setChallenges(deps, {
+      wake,
+      settings,
+      roster,
+      noteTo,
+      draft,
+      task: pickTask,
+      author,
+    });
+  }
+  const task = taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) });
   if (task === undefined) return undefined;
   const run = await deps.agent.run({
     model: settings.model,
@@ -761,7 +781,7 @@ async function think(
     challenge,
     day,
     heard,
-    costMicros: cost,
+    costMicros: settingCost + cost,
   };
 }
 
@@ -962,6 +982,56 @@ async function briefsOf(
   });
 }
 
+/**
+ * Sets each member's challenge for the day into the draft, by a run of its own: the shared rules
+ * and the settings' `challengeRules`, on the challenge model, or on the coach's own while that
+ * one has no price to count it at. Its tokens are counted to the squad like the wake's.
+ */
+async function setChallenges(
+  deps: CoachWakesDependencies,
+  {
+    wake,
+    settings,
+    roster,
+    noteTo,
+    draft,
+    task,
+    author,
+  }: {
+    readonly wake: Thought;
+    readonly settings: CoachSettings;
+    readonly roster: ReadonlyMap<string, string>;
+    readonly noteTo: readonly string[];
+    readonly draft: WakeDraft;
+    readonly task: string;
+    readonly author: string | undefined;
+  },
+): Promise<number> {
+  const model =
+    (await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.challengeModel })) ===
+    undefined
+      ? settings.challengeModel
+      : settings.model;
+  const run = await deps.agent.run({
+    model,
+    reasoning: settings.reasoning,
+    instructions: `${settings.rules}\n\n${settings.challengeRules}`,
+    task,
+    tools: [challengeTool(draft, { roster, noteTo })],
+    cacheKey: 'coach:challenges',
+  });
+  return deps.usage.record({
+    squad: wake.squad,
+    ...(author === undefined ? {} : { member: author }),
+    kind: wake.id === undefined ? 'preview' : 'wake',
+    model,
+    usage: run.usage,
+  });
+}
+
+/** How many days of challenges the daily and dream wakes see, up to the day before. */
+const CHALLENGE_DAYS = 7;
+
 /** The squad's posts of the day before `day`: made for it, or posted on it. */
 async function yesterdayOf(
   deps: CoachWakesDependencies,
@@ -971,10 +1041,18 @@ async function yesterdayOf(
   // On a Monday, yesterday was last week.
   const weekStart = mondayOf(yesterday);
   const its = weekStart === week.weekStart ? week : await weekOf(deps, { squad, weekStart });
-  // The day's challenges and what each member said to them, why they let one go included, only
-  // for members who still agree to AI use.
-  const set = await deps.stores.memberNotes.challengesOn({ squad, day: yesterday });
-  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
+  // The last week's challenges, oldest first, and what each member said to them, why they let one
+  // go included, only for members who still agree to AI use: seeing what it gave before, the coach
+  // sets something else (Tracy, 2026-11-12).
+  const days = Array.from({ length: CHALLENGE_DAYS }, (_, back) =>
+    dayBefore(day, CHALLENGE_DAYS - back),
+  );
+  const set = (
+    await Promise.all(
+      days.map((each) => deps.stores.memberNotes.challengesOn({ squad, day: each })),
+    )
+  ).flat();
+  const consented = new Set(await deps.aiConsented([...new Set(set.map(({ member }) => member))]));
   return {
     day: yesterday,
     checkIns: its.checkIns.filter((each) => each.day === yesterday || each.postedDay === yesterday),

@@ -8813,7 +8813,7 @@ internal struct Client: APIProtocol {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -8965,7 +8965,7 @@ internal struct Client: APIProtocol {
     }
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.

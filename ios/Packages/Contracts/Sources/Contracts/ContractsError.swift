@@ -74,4 +74,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case notAnEmoji(String)
     /// A coach id that isn't one: lowercase letters, digits and dashes, starting with a letter.
     case invalidCoachID(String)
+    /// A 健康 or 好吃 score outside 1 to 5.
+    case mealScore(Int)
 }
