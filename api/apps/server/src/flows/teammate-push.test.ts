@@ -4,6 +4,7 @@ import {
   CheckInId,
   MemberId,
   SquadId,
+  SquadNotJoinedError,
   Training,
   type CheckInRecord,
   type SquadToday,
@@ -184,6 +185,10 @@ describe('a 训练 just posted', () => {
     ['a meal', { ...run, kind: 'healthyMeal', meal: {} }],
     ['a post kept off 动态', { ...run, inFeed: false }],
     ['a 补打卡 for an earlier day', { ...run, day: '2026-11-12' }],
+    [
+      'a 训练 a phone sent up over an hour after it was made',
+      { ...run, createdAt: new Date('2026-11-13T10:59:00Z') },
+    ],
     ['a post since deleted', 'deleted'],
   ];
   it.each(quiet)('says nothing of %s', async (_, record) => {
@@ -198,6 +203,19 @@ describe('a 训练 just posted', () => {
     const nameless = world({ named: false });
     await notifyTeammates(nameless.deps, event);
     expect([off.sent, nameless.sent]).toStrictEqual([[], []]);
+  });
+
+  it('says nothing, without failing, once the author has left the squad', async () => {
+    const { deps, sent } = world({});
+    const left = {
+      ...deps,
+      checkIns: {
+        ...deps.checkIns,
+        squadToday: () => Promise.reject(new SquadNotJoinedError(squad)),
+      },
+    };
+    await expect(notifyTeammates(left, event)).resolves.toBeUndefined();
+    expect(sent).toStrictEqual([]);
   });
 
   it('fits APNs with the longest names', () => {

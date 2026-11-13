@@ -2,6 +2,7 @@ import {
   CheckInId,
   MemberId as CheckInMember,
   SquadId,
+  SquadNotJoinedError,
   type CheckIns,
   type Training,
 } from '@wildcard/check-ins';
@@ -37,6 +38,9 @@ export interface TeammatePushDependencies {
  */
 export const TEAMMATE_PUSH_SINCE = 2;
 
+/** How long after it was made a 训练 is still 「刚练完」: one a phone sent up later is no news. */
+export const JUST_FINISHED_MS = 60 * 60 * 1000;
+
 const NAMES_KEY = {
   'zh-Hans': 'zhHans',
   'zh-Hant': 'zhHant',
@@ -47,7 +51,8 @@ const NAMES_KEY = {
  * Tells a member's squadmates of the 训练 they just posted (「小美刚练完网球 62 分钟」), each on
  * their phone at once: the trigger the squad runs on, since a teammate training is what gets the
  * next one out. Only a 训练 posted to the squad's 动态 for the day it was posted on (a 补打卡 for an
- * earlier day is no news), never to its author, and only to those who left 通知 on (the
+ * earlier day is no news) and made within the hour (one a phone kept offline and sent up later
+ * isn't 「刚练完」), never to its author, and only to those who left 通知 on (the
  * `dailyProgress` switch). The first few a member gets in 24 hours ring (the settings'
  * `dailyRings`); the rest arrive silently, so a busy squad never becomes noise. Its long-press
  * view is the 6pm push's: the squad's week and today's posts, to cheer in place. It isn't kept
@@ -66,6 +71,7 @@ export async function notifyTeammates(
   const record = await deps.checkIns.current(CheckInId.parse(checkIn));
   if (record?.kind !== 'trained' || !record.inFeed) return;
   if (record.postedDay !== undefined && record.postedDay !== record.day) return;
+  if (deps.clock().getTime() - record.createdAt.getTime() > JUST_FINISHED_MS) return;
   const author = record.member;
   const nickname = (await deps.members.squadmates([ProfileMember.parse(author)])).get(
     ProfileMember.parse(author),
@@ -78,8 +84,14 @@ export async function notifyTeammates(
   for (const each of squads) {
     const squad = SquadId.parse(each);
     if (!record.audience.includes(squad)) continue;
-    const { members } = await deps.checkIns.squadToday({ viewer: author, squad });
-    for (const { member } of members) {
+    // An author who left the squad since has no teammates there to tell.
+    const today = await deps.checkIns
+      .squadToday({ viewer: author, squad })
+      .catch((error: unknown) => {
+        if (error instanceof SquadNotJoinedError) return undefined;
+        throw error;
+      });
+    for (const { member } of today?.members ?? []) {
       if (member !== author && !through.has(member)) through.set(member, squad);
     }
   }

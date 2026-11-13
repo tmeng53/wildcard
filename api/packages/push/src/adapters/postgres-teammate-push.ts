@@ -56,18 +56,24 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function createPostgresTeammatePushStore(db: Kysely<DB>): TeammatePushStore {
   return {
     async claim({ checkIn, member, at, dailyRings }) {
-      // One statement, so the count and the claim agree: it rings while fewer than `dailyRings`
-      // rang for the member in the 24 hours before.
-      const { rows } = await sql<{ rang: boolean }>`
-        insert into public.teammate_pushes (check_in_id, member_id, at, rang)
-        select ${checkIn}::uuid, ${member}::uuid, ${at}::timestamptz, (
-          select count(*) from public.teammate_pushes
-          where member_id = ${member}::uuid and rang
-            and at > ${new Date(at.getTime() - DAY_MS)}::timestamptz
-        ) < ${dailyRings}::integer
-        on conflict (check_in_id, member_id) do nothing
-        returning rang
-      `.execute(db);
+      // One member's claims run one at a time (a lock on the member, held to the end of the
+      // transaction), so posts landing together can't each count the rings before the other's:
+      // it rings while fewer than `dailyRings` rang for the member in the 24 hours before.
+      const { rows } = await db.transaction().execute(async (scope) => {
+        await sql`select pg_advisory_xact_lock(hashtextextended(${`teammate-push:${member}`}, 0))`.execute(
+          scope,
+        );
+        return sql<{ rang: boolean }>`
+          insert into public.teammate_pushes (check_in_id, member_id, at, rang)
+          select ${checkIn}::uuid, ${member}::uuid, ${at}::timestamptz, (
+            select count(*) from public.teammate_pushes
+            where member_id = ${member}::uuid and rang
+              and at > ${new Date(at.getTime() - DAY_MS)}::timestamptz
+          ) < ${dailyRings}::integer
+          on conflict (check_in_id, member_id) do nothing
+          returning rang
+        `.execute(scope);
+      });
       const [claimed] = rows;
       if (claimed === undefined) return undefined;
       return claimed.rang ? 'ring' : 'silent';

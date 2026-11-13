@@ -220,7 +220,8 @@ async function checkIn(token: string, ...audience: string[]) {
     token,
     body: {
       version: 1,
-      day: now.toISOString().slice(0, 10),
+      // The member's own day: `withPhone` puts them in Shanghai.
+      day: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(now),
       createdAt: now.toISOString(),
       audience,
       kind: 'trained',

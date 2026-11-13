@@ -345,6 +345,17 @@ describe('teammate pushes', () => {
     expect(await push.claimTeammate({ ...told, member: friend })).toBe('ring');
   });
 
+  it('rings no more than allowed when posts land together', async () => {
+    const tracy = await newMember();
+    const rings = await Promise.all(
+      Array.from({ length: 7 }, () =>
+        push.claimTeammate({ checkIn: randomUUID(), member: tracy, at: at(0), dailyRings: 5 }),
+      ),
+    );
+    expect(rings.filter((ring) => ring === 'ring')).toHaveLength(5);
+    expect(rings.filter((ring) => ring === 'silent')).toHaveLength(2);
+  });
+
   it('never rings when no rings are allowed', async () => {
     const tracy = await newMember();
     expect(
