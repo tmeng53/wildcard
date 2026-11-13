@@ -20,6 +20,7 @@ final class PostManageUITests: XCTestCase {
             app.descendants(matching: .any).matching(identifier: "compose.cover").firstMatch.exists,
             "the post's photo isn't on the compose page")
         XCTAssertTrue(app.buttons["compose.sport.strength"].isSelected, "the post's sport isn't picked")
+        checkThePlaceTag(in: app)
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         // Below the one line, so the cursor goes to its end.
         caption.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()
@@ -33,6 +34,31 @@ final class PostManageUITests: XCTestCase {
         XCTAssertTrue(manage.exists, "the edited post lost its 「…」")
         settle()
         keepScreenshot(named: "55-feed-after-edit")
+    }
+
+    /// The post's gym on the ticket, its whole name shown while the row has room: tapping the
+    /// name opens the map and leaves it on; only its cross takes it off (Tracy, 2026-11-13).
+    private func checkThePlaceTag(in app: XCUIApplication) {
+        let tag = app.buttons["compose.place"]
+        let count = app.staticTexts["compose.count"]
+        XCTAssertTrue(tag.waitForExistence(timeout: Self.wait), "the post's place isn't on the compose page")
+        XCTAssertEqual(tag.label, "F45 Training Flatiron", "the tag doesn't name the post's place")
+        let cross = app.buttons["pill.remove"]
+        XCTAssertTrue(cross.exists, "the tag has no cross")
+        XCTAssertLessThan(cross.frame.maxX, count.frame.minX, "the tag runs into the count")
+        settle()
+        keepScreenshot(named: "54a-compose-place-tagged")
+
+        tag.tap()
+        let search = app.descendants(matching: .any).matching(identifier: "place.search").firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: Self.wait), "tapping the name didn't open the map")
+        app.buttons["place.cancel"].tap()
+        XCTAssertTrue(search.waitForNonExistence(timeout: Self.wait), "取消 didn't close the map")
+        XCTAssertEqual(tag.label, "F45 Training Flatiron", "tapping the name took the place off")
+
+        cross.tap()
+        XCTAssertTrue(cross.waitForNonExistence(timeout: Self.wait), "the cross didn't take the place off")
+        XCTAssertTrue(app.buttons["compose.place"].label.contains("添加位置"), "no 添加位置 after taking it off")
     }
 
     /// 删除 asks first, then the post is gone from 动态.

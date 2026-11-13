@@ -46,7 +46,7 @@ extension InMemoryFeedSource {
                 viewer, 1, 19, 20,
                 write.fromHealth(
                     "strength", ["gym"], "练腿日，明天下楼梯靠扶手", tile: 2,
-                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420)),
+                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420), at: write.myGym),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
@@ -151,23 +151,30 @@ private struct SamplePosts {
     let audience: Audience
 
     func training(
-        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil
+        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil,
+        place: Place? = nil
     ) -> Training {
         Training(
             activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: self.photos(photos),
-            caption: line(caption), workout: workout)
+            caption: line(caption), workout: workout, place: place)
     }
 
     /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
     /// the 17th the fastest, an hour of sets' heart rate indoors, or a loop through a park.
-    func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
-        -> CheckIn.Entry
-    {
+    func fromHealth(
+        _ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary,
+        at place: Place? = nil
+    ) -> CheckIn.Entry {
         let minutes = (summary.durationSec ?? 0) / 60
         return .trained(
             training(
                 sport, minutes: minutes, photos, caption,
-                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary)))
+                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary), place: place))
+    }
+
+    /// My gym, its name long enough to fill the compose ticket's row.
+    var myGym: Place? {
+        try? Place(name: "F45 Training Flatiron", category: "fitnessCenter", latitude: 40.7411, longitude: -73.9897)
     }
 
     private func workout(_ sport: String, minutes: Int, tile: Int, _ summary: WorkoutSummary) -> Workout {
