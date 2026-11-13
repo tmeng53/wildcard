@@ -18,6 +18,7 @@
     { "id": "ski", "prop": "skis" },
     { "id": "snowboard", "prop": "snowboard" },
     { "id": "clean", "prop": "broom" },
+    { "id": "dogwalk", "prop": "dogshiba" },
     { "id": "warmup" }
   ],
   "categories": {
@@ -29,7 +30,7 @@
     "tableTennis": "pingpong", "spin": "cycling", "roadCycling": "cycling",
     "mountainBiking": "cycling", "bikeCommute": "cycling", "basketball": "basketball",
     "soccer": "soccer", "ski": "ski", "crossCountrySki": "ski", "snowboard": "snowboard",
-    "deepClean": "clean"
+    "deepClean": "clean", "dogWalk": "dogwalk"
   },
   "otherwise": "warmup"
 }

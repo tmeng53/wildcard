@@ -7,8 +7,8 @@ import type { Log } from './log.js';
 
 /**
  * What happened, for the work that follows it after the request has answered: a request saves,
- * publishes an event and answers; each subscriber (a coach looking at a post, the pushes a
- * comment sends) runs on its own. Hosted, each kind is a Pub/Sub topic and each subscriber a push
+ * publishes an event and answers; each subscriber (a coach looking at a post, the push a 训练
+ * sends the squad, the pushes a comment sends) runs on its own. Hosted, each kind is a Pub/Sub topic and each subscriber a push
  * subscription to `/jobs/events/<subscriber>` (`scripts/gcp-setup.sh`); elsewhere they run in
  * the request (`inProcessEvents`). Delivery is at least once, so every subscriber is safe to run
  * twice.
@@ -68,12 +68,19 @@ export type ServerEvent = z.infer<typeof ServerEvent>;
 export type PublishEvent = (event: ServerEvent) => Promise<void>;
 
 /** Who reacts to events: each a Pub/Sub subscription on the topic of its kind. */
-export const Subscriber = z.enum(['coach-look', 'comment-push', 'coach-answer', 'coach-welcome']);
+export const Subscriber = z.enum([
+  'coach-look',
+  'teammate-push',
+  'comment-push',
+  'coach-answer',
+  'coach-welcome',
+]);
 export type Subscriber = z.infer<typeof Subscriber>;
 
 /** The kind of event each subscriber takes. */
 export const SUBSCRIBERS = {
   'coach-look': 'check-in.created',
+  'teammate-push': 'check-in.created',
   'comment-push': 'comment.created',
   'coach-answer': 'comment.created',
   'coach-welcome': 'squad.joined',
@@ -97,7 +104,9 @@ export async function deliver(
   if (SUBSCRIBERS[subscriber] !== event.kind) return false;
   switch (event.kind) {
     case 'check-in.created':
-      await handlers['coach-look'](event);
+      await (subscriber === 'teammate-push'
+        ? handlers['teammate-push'](event)
+        : handlers['coach-look'](event));
       return true;
     case 'comment.created':
       await (subscriber === 'coach-answer'

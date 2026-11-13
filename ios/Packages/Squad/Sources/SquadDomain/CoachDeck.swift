@@ -186,7 +186,7 @@ public final class CoachDeck {
     /// 接受挑战, or 不接挑战 with what the member typed to tell the coach why (Tracy, 2026-11-08),
     /// sent only when there is something.
     public func answer(_ card: CoachPageCard, _ answer: CoachChallengeAnswer, reason typed: String = "") async {
-        guard let challenge = card.challenge, challenge.answer == nil, !sending.contains(card.key) else { return }
+        guard let challenge = card.challenge, challenge.isOpen, !sending.contains(card.key) else { return }
         sending.insert(card.key)
         defer { sending.remove(card.key) }
         do {
@@ -195,6 +195,10 @@ public final class CoachDeck {
                 reason: answer == .declined ? CoachChallengeAnswer.reason(typed) : nil)
             failed = nil
             replace(card.with(challenge: challenge.answered(standing)))
+        } catch .challengeExpired {
+            // Its day ended while the page was open: it shows 已过期 from now on.
+            failed = nil
+            replace(card.with(challenge: challenge.expired()))
         } catch {
             failed = card.key
         }

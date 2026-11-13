@@ -14,8 +14,8 @@ export interface NotifyOutcome {
 }
 
 /**
- * Sends one notification to every phone of these members, all at once. A dead token is
- * forgotten; one device failing never stops the others.
+ * Sends one notification to every phone of these members that knows it (`since`), all at once.
+ * A dead token is forgotten; one device failing never stops the others.
  */
 export async function notifyMembers(
   { store, sender }: { readonly store: DeviceStore; readonly sender: PushSender },
@@ -28,7 +28,8 @@ export async function notifyMembers(
   },
 ): Promise<NotifyOutcome> {
   if (members.length === 0) return { sent: 0, gone: 0, off: 0, failures: [] };
-  const devices = await store.devicesOf(members);
+  const since = notification.since ?? 1;
+  const devices = (await store.devicesOf(members)).filter(({ generation }) => generation >= since);
   const results = await Promise.allSettled(
     devices.map((device) => sender.send(device, notification)),
   );

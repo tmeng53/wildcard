@@ -24,12 +24,13 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface Feedback {
-  app: Json;
+  app: Json | null;
   at: Timestamp;
   body: string;
   id: string;
   kind: string;
   member_id: string;
+  relayed: Json | null;
   screenshots: Generated<string[]>;
 }
 

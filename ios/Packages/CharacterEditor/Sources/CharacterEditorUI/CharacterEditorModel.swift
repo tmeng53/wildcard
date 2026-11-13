@@ -92,7 +92,8 @@ public final class CharacterEditorModel {
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
         marks: any WardrobeMarks = MemoryWardrobeMarks()
     ) throws(AvatarError) -> CharacterEditorModel {
-        let catalog = try Catalog.placeholder(stock: stock, gifts: gifts)
+        let catalog = try Catalog.placeholder(
+            stock: stock, gifts: gifts, unlockedProps: unlocks.filter { $0.kind == .prop }.map(\.id))
         var generator = SystemRandomNumberGenerator()
         let arrived = Catalog.arrived(unlocks: unlocks, stock: stock)
         let start =
@@ -107,7 +108,8 @@ public final class CharacterEditorModel {
     /// screen is, for a member who has unlocked nothing yet: a piece the look wears that the street
     /// doesn't offer goes back to what the rig draws there. Undo starts over.
     public func stock(_ stock: StreetStock) throws(AvatarError) {
-        let catalog = try Catalog.placeholder(stock: stock, gifts: draft.catalog.gifts)
+        let catalog = try Catalog.placeholder(
+            stock: stock, gifts: draft.catalog.gifts, unlockedProps: draft.catalog.props)
         var look = draft.picks
         for slot in Catalog.clothingSlots {
             guard let worn = look.variants[slot], worn != catalog.defaults[slot],

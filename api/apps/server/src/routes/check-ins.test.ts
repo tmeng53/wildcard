@@ -29,6 +29,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -54,6 +56,7 @@ const photos = createSupabasePhotoStorage({
 });
 /** The check-ins the coaches were asked to look at, as the route asks. */
 const looked: { readonly checkIn: string; readonly squads: readonly string[] }[] = [];
+const places = placesOn(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -67,6 +70,7 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({
     sports: createSports({ store: createPostgresSportStore(db) }),
+    squadPlaceOf: (input) => places.squadPlaces.isPlaceOf(input),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -107,6 +111,8 @@ const app = createApp({
   ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  ...places,
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {
@@ -1618,6 +1624,109 @@ describe('a 训练 from Apple Health', () => {
     expect(await shown()).toBeUndefined();
   });
 
+  it('shows a meal’s place to the squad, and an edit changes or clears it', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const place = {
+      name: 'Sweetgreen',
+      appleId: 'I6FD7682FD36BB3BE',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    };
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'healthyMeal',
+            meal: { place },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const shown = async () =>
+      z
+        .object({ checkIn: z.object({ meal: z.object({ place: z.unknown().optional() }) }) })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.meal.place;
+    expect(await shown()).toStrictEqual(place);
+
+    const edit = async (meal: Record<string, unknown>) =>
+      (
+        await call({
+          method: 'PATCH',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: { version: 1, kind: 'healthyMeal', meal },
+        })
+      ).status;
+    expect(await edit({ place: { ...place, name: 'Whole Foods', appleId: undefined } })).toBe(200);
+    expect(await shown()).toStrictEqual({
+      name: 'Whole Foods',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    });
+    // An edit that leaves it out clears it, as with every field of the post.
+    expect(await edit({ caption: '沙拉' })).toBe(200);
+    expect(await shown()).toBeUndefined();
+  });
+
+  it('shows a meal’s 健康 and 好吃 to the squad, and an edit changes them and one without them keeps them', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'healthyMeal',
+            meal: { caption: '沙拉', rating: { healthy: 5, tasty: 4 } },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const shown = async () =>
+      z
+        .object({ checkIn: z.object({ meal: z.object({ rating: z.unknown().optional() }) }) })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: friend.token })).body)
+        .checkIn.meal.rating;
+    expect(await shown()).toStrictEqual({ healthy: 5, tasty: 4 });
+
+    const edit = async (meal: Record<string, unknown>) =>
+      (
+        await call({
+          method: 'PATCH',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: { version: 1, kind: 'healthyMeal', meal },
+        })
+      ).status;
+    expect(await edit({ rating: { healthy: 3, tasty: 6 } })).toBe(400);
+    expect(await edit({ rating: { healthy: 3, tasty: 5 } })).toBe(200);
+    expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
+    // An edit that leaves it out keeps it, as builds from before ratings send their edits.
+    expect(await edit({ caption: '沙拉配鸡胸' })).toBe(200);
+    expect(await shown()).toStrictEqual({ healthy: 3, tasty: 5 });
+  });
+
   it('keeps the heart-rate zones with the curve, and refuses zones that don’t rise or come without it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
@@ -1724,5 +1833,452 @@ describe('a 训练 from Apple Health', () => {
     });
     expect(older.status).toBe(200);
     expect(await shown()).toStrictEqual({ tilePosition: 1, chartPosition: 2, series: hr });
+  });
+});
+
+describe('a squad’s places', () => {
+  const park = {
+    name: 'Central Park',
+    appleId: 'I0PARK',
+    category: 'park',
+    latitude: 40.78,
+    longitude: -73.96,
+  };
+  const noodles = {
+    name: '兰州拉面',
+    appleId: 'I0NOODLES',
+    category: 'restaurant',
+    latitude: 40.75,
+    longitude: -73.99,
+  };
+
+  async function post({
+    member,
+    squad,
+    entry,
+    inFeed = true,
+  }: {
+    readonly member: { readonly token: string };
+    readonly squad: string;
+    readonly entry: Record<string, unknown>;
+    readonly inFeed?: boolean;
+  }) {
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const saved = await call({
+      method: 'PUT',
+      path: `/check-ins/${id}`,
+      token: member.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        ...entry,
+        ...(inFeed ? {} : { inFeed }),
+      },
+    });
+    expect(saved.status).toBe(201);
+    return id;
+  }
+
+  const rate = (member: { readonly token: string }, [key, stars]: readonly [string, number]) =>
+    call({
+      method: 'PUT',
+      path: `/me/place-ratings/${key}`,
+      token: member.token,
+      body: { version: 1, stars },
+    });
+
+  it('lists the places the squad’s posts were tagged with, scored by its members', async () => {
+    const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    await post({
+      member: me,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: { sport: 'custom', customSport: '飞盘', place: park },
+      },
+    });
+    await post({
+      member: friend,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: { sport: 'custom', customSport: '飞盘', place: park },
+      },
+    });
+    await post({
+      member: friend,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: { sport: 'custom', customSport: '背包', minutes: 40, place: park },
+      },
+    });
+    await post({
+      member: me,
+      squad,
+      entry: {
+        kind: 'healthyMeal',
+        meal: { place: noodles, rating: { healthy: 4, tasty: 5 } },
+      },
+    });
+    await post({
+      member: friend,
+      squad,
+      entry: {
+        kind: 'cheatMeal',
+        meal: { place: noodles, rating: { healthy: 2, tasty: 4 } },
+      },
+    });
+    // A post kept out of 动态 and one without Maps' id add nothing.
+    await post({
+      member: me,
+      squad,
+      entry: { kind: 'cheatMeal', meal: { place: noodles } },
+      inFeed: false,
+    });
+    await post({
+      member: me,
+      squad,
+      entry: { kind: 'healthyMeal', meal: { place: { ...park, name: '家', appleId: undefined } } },
+    });
+
+    expect(await rate(me, ['apple:I0PARK', 5])).toStrictEqual({
+      status: 200,
+      type: 'application/json',
+      body: { version: 1, key: 'apple:I0PARK', stars: 5 },
+    });
+    expect((await rate(friend, ['apple:I0PARK', 4])).status).toBe(200);
+    // A later score stands over the earlier one; the same again is a no-op.
+    expect((await rate(friend, ['apple:I0PARK', 3])).status).toBe(200);
+    expect((await rate(friend, ['apple:I0PARK', 3])).status).toBe(200);
+    // Someone outside the squad scores too, and isn't counted.
+    expect((await rate(outsider, ['apple:I0PARK', 1])).status).toBe(200);
+    expect((await rate(me, ['apple:I0PARK', 6])).status).toBe(400);
+    expect((await rate(me, ['I0PARK', 5])).status).toBe(400);
+
+    const listed = await call({ method: 'GET', path: `/squads/${squad}/places`, token: me.token });
+    expect(listed.status).toBe(200);
+    const { places, recent } = z
+      .object({
+        places: z.array(
+          z.object({
+            key: z.string(),
+            place: z.object({ name: z.string() }),
+            visits: z.number(),
+            people: z.number(),
+            stars: z.number().nullable(),
+            raters: z.number(),
+          }),
+        ),
+        recent: z.array(
+          z.object({
+            key: z.string(),
+            kind: z.string(),
+            stars: z.number().nullable(),
+            calorieValue: z.number().nullable(),
+            cover: z.unknown().optional(),
+            minutes: z.unknown().optional(),
+          }),
+        ),
+      })
+      .parse(listed.body);
+    expect(
+      places.map(({ key, place, visits, people, stars, raters }) => ({
+        key,
+        name: place.name,
+        visits,
+        people,
+        stars,
+        raters,
+      })),
+    ).toStrictEqual([
+      { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: 4, raters: 2 },
+      { key: 'apple:I0NOODLES', name: '兰州拉面', visits: 2, people: 2, stars: null, raters: 0 },
+    ]);
+    // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover
+    // or minutes when the post had none.
+    expect(recent).toStrictEqual([
+      expect.objectContaining({
+        key: 'apple:I0NOODLES',
+        kind: 'cheatMeal',
+        stars: null,
+        calorieValue: 1.6,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0NOODLES',
+        kind: 'healthyMeal',
+        stars: null,
+        calorieValue: 4,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 3,
+        calorieValue: null,
+        minutes: 40,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 3,
+        calorieValue: null,
+      }),
+      expect.objectContaining({
+        key: 'apple:I0PARK',
+        kind: 'trained',
+        stars: 5,
+        calorieValue: null,
+      }),
+    ]);
+    expect(recent.filter((visit) => visit.cover !== undefined)).toStrictEqual([]);
+    expect(recent.filter((visit) => visit.minutes !== undefined)).toHaveLength(1);
+
+    const page = await call({
+      method: 'GET',
+      path: `/squads/${squad}/places/apple:I0NOODLES`,
+      token: friend.token,
+    });
+    expect(page.status).toBe(200);
+    expect(
+      z
+        .object({ meals: z.unknown(), sports: z.array(z.unknown()), myStars: z.unknown() })
+        .parse(page.body),
+    ).toStrictEqual({
+      myStars: null,
+      sports: [],
+      // 卡价比: (5 × 4 ÷ 5 + 4 × 2 ÷ 5) ÷ 2 = 2.8
+      meals: { healthyMeal: 1, cheatMeal: 1, healthy: 3, tasty: 4.5, calorieValue: 2.8 },
+    });
+    const parkPage = await call({
+      method: 'GET',
+      path: `/squads/${squad}/places/apple:I0PARK`,
+      token: friend.token,
+    });
+    expect(
+      z
+        .object({ sports: z.unknown(), myStars: z.unknown(), stars: z.unknown() })
+        .parse(parkPage.body),
+    ).toStrictEqual({
+      myStars: 3,
+      stars: 4,
+      sports: [
+        { sport: 'custom', customSport: '飞盘', count: 2 },
+        { sport: 'custom', customSport: '背包', count: 1 },
+      ],
+    });
+
+    expect(
+      (await call({ method: 'GET', path: `/squads/${squad}/places/apple:I0NONE`, token: me.token }))
+        .status,
+    ).toBe(404);
+    expect(
+      (await call({ method: 'GET', path: `/squads/${squad}/places`, token: outsider.token }))
+        .status,
+    ).toBe(403);
+  });
+
+  it('stops counting a member’s score once they leave the squad', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    await post({
+      member: me,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: { sport: 'custom', customSport: '跑步', place: park },
+      },
+    });
+    expect((await rate(me, ['apple:I0PARK', 2])).status).toBe(200);
+    expect((await rate(friend, ['apple:I0PARK', 4])).status).toBe(200);
+    const stars = async () =>
+      z.object({ stars: z.number().nullable(), raters: z.number() }).parse(
+        (
+          await call({
+            method: 'GET',
+            path: `/squads/${squad}/places/apple:I0PARK`,
+            token: me.token,
+          })
+        ).body,
+      );
+    expect(await stars()).toStrictEqual({ stars: 3, raters: 2 });
+    expect(
+      (
+        await call({
+          method: 'DELETE',
+          path: `/squads/${squad}/members/${friend.userId}`,
+          token: friend.token,
+        })
+      ).status,
+    ).toBe(204);
+    expect(await stars()).toStrictEqual({ stars: 2, raters: 1 });
+  });
+});
+
+describe('a squad’s own places', () => {
+  it('lets every member tag a place one of them added, and score it', async () => {
+    const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const id = randomUUID();
+    const body = {
+      version: 1,
+      name: ' 小区健身角 ',
+      kind: 'gym',
+      latitude: 40.7,
+      longitude: -73.9,
+    };
+    const path = `/squads/${squad}/custom-places/${id}`;
+    const added = await call({ method: 'PUT', path, token: me.token, body });
+    expect(added.status).toBe(201);
+    const view = {
+      id,
+      name: '小区健身角',
+      kind: 'gym',
+      latitude: 40.7,
+      longitude: -73.9,
+      addedBy: me.userId,
+    };
+    expect(
+      z.object({ place: z.object({ addedAt: z.string() }).loose() }).parse(added.body).place,
+    ).toMatchObject(view);
+    expect((await call({ method: 'PUT', path, token: me.token, body })).status).toBe(200);
+    expect(
+      (await call({ method: 'PUT', path, token: friend.token, body: { ...body, name: '别处' } }))
+        .status,
+    ).toBe(409);
+    expect((await call({ method: 'PUT', path, token: outsider.token, body })).status).toBe(403);
+    expect(
+      (await call({ method: 'PUT', path, token: me.token, body: { ...body, kind: 'bar' } })).status,
+    ).toBe(400);
+
+    const listed = await call({
+      method: 'GET',
+      path: `/squads/${squad}/custom-places`,
+      token: friend.token,
+    });
+    expect(listed.status).toBe(200);
+    expect(z.object({ places: z.array(z.unknown()) }).parse(listed.body).places).toMatchObject([
+      view,
+    ]);
+    expect(
+      (await call({ method: 'GET', path: `/squads/${squad}/custom-places`, token: outsider.token }))
+        .status,
+    ).toBe(403);
+
+    // A teammate tags their own 训练 with it, and scores it under its `squad:` key.
+    const { day, createdAt } = todayAndNow();
+    const posted = await call({
+      method: 'PUT',
+      path: `/check-ins/${randomUUID()}`,
+      token: friend.token,
+      body: {
+        version: 1,
+        day,
+        createdAt,
+        audience: [squad],
+        kind: 'trained',
+        training: {
+          sport: 'custom',
+          customSport: '壶铃',
+          place: { name: '小区健身角', squadPlaceId: id, latitude: 40.7, longitude: -73.9 },
+        },
+      },
+    });
+    expect(posted.status).toBe(201);
+    const key = `squad:${id}`;
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/me/place-ratings/${key}`,
+          token: friend.token,
+          body: { version: 1, stars: 4 },
+        })
+      ).status,
+    ).toBe(200);
+    const page = await call({
+      method: 'GET',
+      path: `/squads/${squad}/places/${key}`,
+      token: me.token,
+    });
+    expect(page.status).toBe(200);
+    expect(
+      z
+        .object({ key: z.string(), visits: z.number(), stars: z.number().nullable() })
+        .parse(page.body),
+    ).toStrictEqual({ key, visits: 1, stars: 4 });
+  });
+
+  it('refuses a post tagged with a place its squads don’t have', async () => {
+    const [me, outsider] = [await signUp(), await signUp()];
+    const squad = await squadOf(me);
+    const theirs = await squadOf(outsider);
+    const elsewhere = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${theirs}/custom-places/${elsewhere}`,
+          token: outsider.token,
+          body: { version: 1, name: '别人家', kind: 'gym', latitude: 1, longitude: 2 },
+        })
+      ).status,
+    ).toBe(201);
+    const { day, createdAt } = todayAndNow();
+    const tagged = (squadPlaceId: string) => ({
+      sport: 'run',
+      place: { name: '别人家', squadPlaceId, latitude: 1, longitude: 2 },
+    });
+    const post = (id: string, squadPlaceId: string) =>
+      call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: tagged(squadPlaceId),
+        },
+      });
+    for (const squadPlaceId of [elsewhere, randomUUID()]) {
+      const refused = await post(randomUUID(), squadPlaceId);
+      expect([refused.status, refused.body]).toMatchObject([
+        400,
+        { reason: 'SQUAD_PLACE_NOT_FOUND' },
+      ]);
+    }
+
+    // Nor can an edit move a post there.
+    const id = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'trained',
+            training: { sport: 'run' },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: tagged(elsewhere) },
+    });
+    expect([edited.status, edited.body]).toMatchObject([400, { reason: 'SQUAD_PLACE_NOT_FOUND' }]);
   });
 });

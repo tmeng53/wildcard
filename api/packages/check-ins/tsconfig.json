@@ -12,6 +12,9 @@
       "path": "../errors"
     },
     {
+      "path": "../place-ids"
+    },
+    {
       "path": "../sport-ids"
     },
     {

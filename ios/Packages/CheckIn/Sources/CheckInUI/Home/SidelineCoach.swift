@@ -9,8 +9,8 @@ import SwiftUI
 
 /// The squad's coach standing on the sideline, as big as me, idling; it has no ring, since it
 /// doesn't check in. It drops in after the squad onto a newly picked scene. While its page has a
-/// card not seen yet, the phone in its hand shows the unread dot, and the home has it whistle
-/// again and again (Tracy, 2026-11-09; under Reduce Motion, the dot only).
+/// card not seen yet, the phone in its hand shows the unread dot, pulsing (`NewsDotPulse`), and the
+/// home has it whistle again and again (Tracy, 2026-11-09; under Reduce Motion, the still dot only).
 struct SidelineCoachFigure: View {
     let coach: SquadCast.Coach
     let unit: Double
@@ -49,7 +49,7 @@ struct SidelineCoachFigure: View {
             }
             .overlay(alignment: .topLeading) {
                 if hasNews, let corner = phoneCorner(frame.placements) {
-                    unreadDot
+                    unreadDot(reduceMotion ? .still : .at(date.timeIntervalSinceReferenceDate))
                         .position(x: corner.x * scale, y: corner.y * scale)
                         .transition(.scale.combined(with: .opacity))
                 }
@@ -73,13 +73,20 @@ struct SidelineCoachFigure: View {
         return placements[hand].transform.apply(to: Self.phoneCorner)
     }
 
-    /// The unread dot on the phone.
-    private var unreadDot: some View {
+    /// The unread dot on the phone, swelling as its halo rings out.
+    private func unreadDot(_ pulse: NewsDotPulse) -> some View {
         Circle()
             .fill(Color(role: .bgBrand, in: .gym))
             .frame(width: Self.dot, height: Self.dot)
             .padding(Self.dotRing)
             .background(Circle().fill(Color(role: .bgCanvas, in: .gym)))
+            .scaleEffect(pulse.dotScale)
+            .background {
+                Circle()
+                    .fill(Color(role: .bgBrand, in: .gym))
+                    .scaleEffect(pulse.haloScale)
+                    .opacity(pulse.haloOpacity)
+            }
             .accessibilityHidden(true)
     }
 }

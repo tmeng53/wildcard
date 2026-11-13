@@ -45,7 +45,7 @@ import Testing
         "kettlebell": "kettlebell", "tennis": "tennis", "squash": "tennis",
         "badminton": "badminton", "pickleball": "pickleball", "tableTennis": "pingpong", "climb": "climb",
         "ski": "ski",
-        "yoga": "yoga", "matPilates": "yoga", "basketball": "basketball", "dance": "warmup", "dogWalk": "warmup",
+        "yoga": "yoga", "matPilates": "yoga", "basketball": "basketball", "dance": "warmup", "dogWalk": "dogwalk",
         "deepClean": "clean",
     ]
     for (sport, kit) in picks {
@@ -55,7 +55,7 @@ import Testing
     #expect(
         kits.kits.map(\.id) == [
             "swim", "run", "strength", "tennis", "climb", "yoga", "kettlebell", "badminton", "pickleball", "pingpong",
-            "cycling", "boxing", "basketball", "soccer", "ski", "snowboard", "clean", "warmup",
+            "cycling", "boxing", "basketball", "soccer", "ski", "snowboard", "clean", "dogwalk", "warmup",
         ])
 }
 
@@ -148,7 +148,8 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
     #expect(
         moves == [
             "goggles", "run", "dumbbell", "racket", "chalkbag", "yogamat", "kettlebell", "badminton", "pickleball",
-            "pingpong", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom", "warmup",
+            "pingpong", "helmet", "gloves", "basketball", "soccerball", "skis", "snowboard", "broom", "dogshiba",
+            "warmup",
         ])
 }
 
@@ -260,6 +261,6 @@ func everyKitPlaysOnEveryLook(persona: Persona) throws {
         #expect(!clip.loops, "\(id)")
         let bound = try figure.bind(clip)
         expectOnCanvas(figure, bound, for: clip.duration, id)
-        #expect(nearlyEqual(armsBehind(figure.pose(bound, at: clip.duration)), figure.restPose), "\(id)")
+        #expect(nearlyEqual(figure.pose(bound, at: clip.duration), figure.restPose), "\(id)")
     }
 }

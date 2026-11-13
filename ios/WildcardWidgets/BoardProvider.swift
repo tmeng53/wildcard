@@ -11,15 +11,12 @@ import HomeWidgetUI
 import SportsUI
 import WidgetKit
 
-/// One moment of a widget: the board then, or why there is none.
+/// One moment of a widget: the board then, or why there is none, and whether it was set to show
+/// 本周出赛表.
 struct BoardEntry: TimelineEntry {
     let date: Date
     let state: WidgetState
-}
-
-/// The widgets have nothing to set; WidgetKit's async provider needs an intent all the same.
-struct BoardIntent: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Wildcard"
+    var showsSchedule = false
 }
 
 /// Reads the squad for the widgets: the home over our API, signed in with the app's shared
@@ -32,15 +29,19 @@ struct BoardProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: BoardIntent, in context: Context) async -> BoardEntry {
-        context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        var entry = context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        entry.showsSchedule = configuration.showsSchedule
+        return entry
     }
 
     func timeline(for configuration: BoardIntent, in context: Context) async -> Timeline<BoardEntry> {
-        let (entry, zone) = await Self.read(at: Date())
+        let read = await Self.read(at: Date())
+        var entry = read.entry
+        entry.showsSchedule = configuration.showsSchedule
         let next =
             entry.state == .unavailable
             ? entry.date.addingTimeInterval(WidgetState.retryInterval)
-            : WidgetBoard.nextLook(after: entry.date, in: zone)
+            : WidgetBoard.nextLook(after: entry.date, in: read.zone)
         return Timeline(entries: [entry], policy: .after(next))
     }
 
@@ -87,7 +88,8 @@ struct BoardProvider: AppIntentTimelineProvider {
             home = saved
         }
         let coach = try? await backend.coach(in: home.squad.id)
-        let hasNews = coach == nil ? false : ((try? await backend.hasUnseenCoachCards(in: home.squad.id)) ?? false)
+        let hasNews =
+            coach == nil ? false : (try? await backend.newestUnseenCoachCard(in: home.squad.id)) != nil
         let board = WidgetBoard(
             home: home, day: LocalDay(at: now, in: home.timeZone), coach: coach?.coach.id, coachHasNews: hasNews,
             health: health.workouts, putAway: health.putAway)

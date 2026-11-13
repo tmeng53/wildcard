@@ -1,18 +1,21 @@
 import { z } from 'zod';
 
-import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domain/memory.js';
 import {
-  Challenge,
-  CHALLENGE_AMOUNT_MAX,
-  CHALLENGE_LINE_LIMIT,
-  CHALLENGE_TITLE_LIMIT,
-  CHALLENGE_UNIT_LIMIT,
-  challengeText,
-} from '../../domain/challenge.js';
-import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
-import { CoachEmoji, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
+  editBody,
+  FILE_LIMIT,
+  fileRole,
+  recallLines,
+  shownPathOf,
+  shownPaths,
+  storedPathOf,
+  type StoredPath,
+} from '../../domain/memory.js';
+import { Challenge, CHALLENGE_AMOUNT_MAX, challengeText } from '../../domain/challenge.js';
+import { fitsLine, limitWords } from '../../domain/line-limits.js';
+import type { GiftOptions } from '../../domain/prompt.js';
+import { CoachEmoji, lineProblem } from '../../domain/reply.js';
 import {
-  checkInLine,
+  checkInBlock,
   weekText,
   type SquadWeek,
   type WeekCheckIn,
@@ -33,6 +36,11 @@ export interface WakeDraft {
    * day's challenge it sets, if any.
    */
   readonly memberNotes: Map<string, { readonly text: string; readonly challenge?: Challenge }>;
+  /**
+   * The day's challenge set for each member, by member id, on a daily wake, before the coach
+   * writes its notes: each goes on that member's note.
+   */
+  readonly challenges: Map<string, Challenge>;
   /** The gift the run gives each member, by member id, on a daily wake. */
   readonly gifts: Map<string, { readonly piece: string; readonly line: string }>;
   /** What the run said to the check-in, on its wake. */
@@ -47,6 +55,11 @@ export interface WakeDraft {
   answerMentions: readonly string[];
   /** Whether the run marked the check-in's author's challenge today done, on its wake. */
   challengeDone: boolean;
+  /**
+   * What the member the wake answers asked of the app, which the run passes on to the team, on a
+   * check-in's or a reply's wake.
+   */
+  feedback: { readonly kind: 'problem' | 'idea'; readonly text: string } | undefined;
   /** Every tool call of the run, in order. */
   readonly steps: WakeStep[];
 }
@@ -180,6 +193,7 @@ export function toolbox({
   gifting,
   to,
   openChallenge = false,
+  relaying = 'nothing',
 }: {
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
@@ -205,6 +219,12 @@ export function toolbox({
   readonly to?: string | undefined;
   /** On a check-in's wake, whether its author has a challenge today that can still be done. */
   readonly openChallenge?: boolean;
+  /**
+   * On a check-in's or a reply's wake, whether the member it answers said something there in
+   * their own words, which the coach may pass on to the team (`heard`), said nothing
+   * (`nothing`), or passing feedback on is off (`off`), when the tool isn't offered.
+   */
+  readonly relaying?: 'heard' | 'nothing' | 'off';
 }): CoachTool[] {
   const unknownPath = (path: string) => `没有 ${path} 这个文件；能用的文件见任务里的列表。`;
   // Each week is read at most once a run, however many tools ask for it.
@@ -228,14 +248,43 @@ export function toolbox({
     }),
     ...postTools(draft.steps, { roster, weekAgo, commentsOf }),
     defineTool(draft.steps, {
+      name: 'recall',
+      reads: true,
+      description:
+        '查你的记性：任务里每个文件只列了开头几行，聊到具体的人或事、要说「记得」之前，先用它查。不填就按文件里的顺序列出全部。查不到的就是不记得。',
+      parameters: z.object({
+        path: z
+          .string()
+          .optional()
+          .describe('只查一个文件，如 people/队员1.md、memory.md、squad.md、me.md；不填查全部'),
+        query: z
+          .string()
+          .optional()
+          .describe('要找的词，几个词用空格隔开，有一个对上就算；不填列出整个文件'),
+      }),
+      run: ({ path, query }) => {
+        const view = { roster, coach };
+        // Every file the task lists, an empty one too, so recall never says a listed file is missing.
+        const shown = new Map(shownPaths(view).map((name) => [name, '']));
+        for (const [stored, body] of draft.files) {
+          const name = shownPathOf(stored, view);
+          if (name !== undefined) shown.set(name, body);
+        }
+        return recallLines(shown, {
+          ...(path === undefined ? {} : { path }),
+          ...(query === undefined ? {} : { query }),
+        });
+      },
+    }),
+    defineTool(draft.steps, {
       name: 'remember',
       description:
-        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的，不记。',
+        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的（拿不准先 recall），不记。',
       parameters: z.object({
         path: z
           .string()
           .describe(
-            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事，me.md 记你自己（只有你读得到）',
+            `记到哪：${['squad.md', 'memory.md', 'me.md', 'people/队员N.md'].map((path) => `${path}（${fileRole(path)}）`).join('，')}`,
           ),
         fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
@@ -255,7 +304,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
+        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄原文（先用 recall 查出来），必须正好出现一次。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),
@@ -321,15 +370,19 @@ export function toolbox({
       }),
     );
   }
+  // Before each kind's own tools, and on every such wake, so the list stays the same and cached.
+  if ((kind === 'checkIn' || kind === 'comment') && relaying !== 'off') {
+    tools.push(relayFeedback(draft, relaying === 'heard'));
+  }
   if (kind === 'daily') {
     tools.push(
       defineTool(draft.steps, {
         name: 'post_note',
-        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。不超过 ${String(NOTE_LIMIT)} 字。`,
+        description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。${limitWords('note')}。`,
         parameters: z.object({ text: z.string().describe('今天的一句') }),
         run: ({ text }) => {
           const line = text.trim();
-          const problem = lineProblem(line, NOTE_LIMIT);
+          const problem = lineProblem(line, 'note');
           if (problem !== undefined) return problem;
           const replaced = draft.note !== undefined;
           draft.note = line;
@@ -376,12 +429,12 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
-        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。${limitWords('reply')}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
-          const problem = lineProblem(said.line, REPLY_LIMIT);
+          const problem = lineProblem(said.line, 'reply');
           if (problem !== undefined) return problem;
           const replaced = draft.reply !== undefined;
           draft.reply = said.line;
@@ -420,12 +473,12 @@ export function toolbox({
     tools.push(
       defineTool(draft.steps, {
         name: 'answer',
-        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。不超过 ${String(REPLY_LIMIT)} 字。`,
+        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。${limitWords('reply')}。`,
         parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
-          const problem = lineProblem(said.line, REPLY_LIMIT);
+          const problem = lineProblem(said.line, 'reply');
           if (problem !== undefined) return problem;
           const replaced = draft.answer !== undefined;
           draft.answer = said.line;
@@ -439,6 +492,37 @@ export function toolbox({
     tools.push(lookAtPhotos(draft.steps, photos));
   }
   return tools;
+}
+
+/** The longest line a coach writes of what a member asked of the app. */
+export const RELAY_LIMIT = 200;
+
+/**
+ * Passing on to the team what the member the wake answers asked of the app itself, in their own
+ * words there (Tracy, 2026-11-12): saved with the run, then filed like 意见反馈, from them.
+ */
+function relayFeedback(draft: WakeDraft, heard: boolean): CoachTool {
+  return defineTool(draft.steps, {
+    name: 'relay_feedback',
+    description: `他在这里明确说了想让 app 加什么、改什么，或者 app 哪里坏了，就用这个转给做 app 的团队，会带上他在这条动态下说的原话。只转他对 app 说的，一次一条，再转会换掉。转了就在回他的那句里像朋友一样随口提一句，用你自己的话，别像客服。`,
+    parameters: z.object({
+      kind: z.enum(['problem', 'idea']).describe('app 出了问题是 problem，想要新东西或改进是 idea'),
+      text: z
+        .string()
+        .describe(`他想要什么、哪里不对，说清楚，不写人名，不超过 ${String(RELAY_LIMIT)} 字`),
+    }),
+    run: ({ kind, text }) => {
+      if (!heard) return '他在这里没写字，没有能转的。';
+      const line = text.trim();
+      if (line === '') return 'text 是空的，写上他想要什么。';
+      if (line.length > RELAY_LIMIT) {
+        return `太长了：${String(line.length)} 字，最多 ${String(RELAY_LIMIT)} 字。`;
+      }
+      const replaced = draft.feedback !== undefined;
+      draft.feedback = { kind, text: line };
+      return replaced ? '已换成这条，会转给团队。' : '会转给团队。';
+    },
+  });
 }
 
 /** The furthest back the coach reads, in weeks before this one, as `squad_week` does. */
@@ -500,13 +584,18 @@ function postTools(
         .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       if (posts.length === 0) return `${member} 这段时间没有能看的动态。`;
       return [
-        `${member} 的动态（新的在前）：`,
+        `# ${member} 的动态（新的在前）`,
         ...posts.map((post) => {
-          const comments =
-            post.comments.length === 0 ? '' : ` · ${String(post.comments.length)} 条评论`;
-          return `- ${numberOf(post)}：${checkInLine({ ...post, comments: [] }, roster)}${comments}`;
+          const block = checkInBlock(post, {
+            roster,
+            heading: `## ${numberOf(post)} · `,
+            comments: false,
+          });
+          return post.comments.length === 0
+            ? block
+            : `${block}\n- 评论：${String(post.comments.length)} 条（用 post_comments 看）`;
         }),
-      ].join('\n');
+      ].join('\n\n');
     },
   });
   if (commentsOf === undefined) return [memberPosts];
@@ -590,7 +679,7 @@ function giveGift(
   const open = [...gifting.open.keys()];
   return defineTool(draft.steps, {
     name: 'give_gift',
-    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话不超过 ${String(GIFT_LINE_LIMIT)} 字。`,
+    description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话${limitWords('gift')}。`,
     parameters: z.object({
       member: z.string().describe('送给谁：队员N'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),
@@ -609,7 +698,7 @@ function giveGift(
       }
       if (owned.includes(chosen)) return `${member} 已经有 ${chosen} 了，换一件。`;
       const said = line.trim();
-      const problem = lineProblem(said, GIFT_LINE_LIMIT);
+      const problem = lineProblem(said, 'gift');
       if (problem !== undefined) return problem;
       const replaced = draft.gifts.has(id);
       draft.gifts.set(id, { piece: chosen, line: said });
@@ -618,31 +707,68 @@ function giveGift(
   });
 }
 
-/** The challenge a morning note may set, as the model sends it. */
-const challengeParameter = z
-  .object({
-    title: z
-      .string()
-      .describe(`做什么，只写动作，数量和单位不写进来，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字`),
-    amount: z
-      .number()
-      .int()
-      .optional()
-      .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}；没有数量就不填`),
-    unit: z
-      .string()
-      .optional()
-      .describe(`数量的单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；和 amount 一起填`),
-    line: z
-      .string()
-      .describe(
-        `标题下面的一句小字，对他说为什么是这件事，不超过 ${String(CHALLENGE_LINE_LIMIT)} 字`,
-      ),
-  })
-  .optional()
-  .describe(
-    '今日挑战，可以不给，别硬凑。先看这个人现在最需要什么：你对他的了解、他这一周的安排、最近的打卡。给一件今天做得到、对他真有用的事，没有合适的就不给。要说得具体，做没做到一看就知道；比他平时多走一小步，别把他的目标原样再说一遍。比如早睡 1 小时、拉伸 10 分钟、喝水 8 杯、午饭加 1 份蔬菜、早餐加 1 个鸡蛋，这些只是举例，不用从里面挑。不提热量；请假或身体不舒服的人不给。他可以接受或说算了，之后他发打卡时你会知道。',
+/** Whether each of a challenge's words fits its limit in the language it is written in. */
+function challengeFits({ title, unit, line }: Challenge): boolean {
+  return (
+    fitsLine(title, 'challengeTitle') &&
+    (unit === undefined || fitsLine(unit, 'challengeUnit')) &&
+    (line === undefined || fitsLine(line, 'challengeLine'))
   );
+}
+
+/**
+ * `set_challenge`: the day's challenge for one member, set on a daily wake by a run of its own
+ * before the coach writes its notes (Tracy, 2026-11-12: a stronger model sets them, the coach
+ * keeps its own voice in the note). What makes a good one is the settings' `challengeRules`.
+ */
+export function challengeTool(
+  draft: WakeDraft,
+  {
+    roster,
+    noteTo,
+  }: { readonly roster: ReadonlyMap<string, string>; readonly noteTo: readonly string[] },
+): CoachTool {
+  return defineTool(draft.steps, {
+    name: 'set_challenge',
+    description: '给一个队员定今天的挑战，一人一个，再定会换掉。',
+    parameters: z.object({
+      member: z.string().describe('给谁：队员N'),
+      title: z
+        .string()
+        .describe(
+          `只写动作：动词加做的东西，${limitWords('challengeTitle')}。不写数字、不写「一道」「一份」这类量词，也不写单位；数量只放 amount，单位只放 unit。标题、数量、单位连起来读要通顺`,
+        ),
+      amount: z
+        .number()
+        .int()
+        .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}`),
+      unit: z.string().describe(`单位，${limitWords('challengeUnit')}`),
+      line: z
+        .string()
+        .describe(
+          `标题下面的一句小字，对他说为什么是这件事，用「你」，${limitWords('challengeLine')}`,
+        ),
+    }),
+    run: ({ member, title, amount, unit, line }) => {
+      const id = [...roster].find(([, name]) => name === member.trim())?.[0];
+      if (id === undefined || !noteTo.includes(id)) {
+        return `不能给 ${member} 定挑战；能定的是：${noteTo.map((each) => roster.get(each) ?? '').join('、')}。`;
+      }
+      const set = Challenge.safeParse({
+        title,
+        amount,
+        unit,
+        ...(line.trim() === '' ? {} : { line }),
+      });
+      if (!set.success || !challengeFits(set.data)) {
+        return `挑战不对：title ${limitWords('challengeTitle')}；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数；unit ${limitWords('challengeUnit')}；line ${limitWords('challengeLine')}。`;
+      }
+      const replaced = draft.challenges.has(id);
+      draft.challenges.set(id, set.data);
+      return `${replaced ? '已换成' : '定好了'}：${member}「${challengeText(set.data)}」。`;
+    },
+  });
+}
 
 /**
  * `note_to`: a note to one member only they read. On a daily wake it is their morning note,
@@ -661,41 +787,20 @@ function noteTool(
     readonly welcome: boolean;
   },
 ): CoachTool {
-  const write = ({
-    member,
-    text,
-    challenge,
-  }: {
-    readonly member: string;
-    readonly text: string;
-    readonly challenge?: z.infer<typeof challengeParameter>;
-  }): string => {
+  const write = ({ member, text }: { readonly member: string; readonly text: string }): string => {
     const id = [...roster].find(([, name]) => name === member.trim())?.[0];
     if (id === undefined || !noteTo.includes(id)) {
       return `不能给 ${member} 写便条；能写的是：${noteTo.map((each) => roster.get(each) ?? '').join('、')}。`;
     }
     const line = text.trim();
-    const problem = lineProblem(line, NOTE_LIMIT);
+    const problem = lineProblem(line, 'note');
     if (problem !== undefined) return problem;
-    // A blank title is no challenge: the model sends one, with a zero amount, for a rest day.
-    // A blank line under it is none too.
-    const set =
-      challenge === undefined || challenge.title.trim() === ''
-        ? undefined
-        : Challenge.safeParse({
-            ...challenge,
-            line: challenge.line.trim() === '' ? undefined : challenge.line,
-          });
-    if (set !== undefined && !set.success) {
-      return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
-    }
+    // The day's challenge set for them before, if any, goes on the note; a welcome sets none.
+    const set = welcome ? undefined : draft.challenges.get(id);
     const replaced = draft.memberNotes.has(id);
-    draft.memberNotes.set(id, {
-      text: line,
-      ...(set === undefined ? {} : { challenge: set.data }),
-    });
+    draft.memberNotes.set(id, { text: line, ...(set === undefined ? {} : { challenge: set }) });
     const done = replaced ? `已换成这张，给 ${member}` : `便条写好了，给 ${member}`;
-    return set === undefined ? `${done}。` : `${done}，挑战「${challengeText(set.data)}」。`;
+    return set === undefined ? `${done}。` : `${done}，下面附着挑战「${challengeText(set)}」。`;
   };
   const member = z.string().describe('写给谁：队员N');
   // Kept by length: it is about the member, and stays in its own table.
@@ -706,7 +811,7 @@ function noteTool(
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
-      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
+      description: `给刚加入的队员写一张便条：只有他自己看得到，现在就送到。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
       parameters: z.object({ member, text: z.string().describe('便条上的话') }),
       kept,
       run: write,
@@ -714,12 +819,8 @@ function noteTool(
   }
   return defineTool(draft.steps, {
     name: 'note_to',
-    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。不超过 ${String(NOTE_LIMIT)} 字，对他说话用「你」。`,
-    parameters: z.object({
-      member,
-      text: z.string().describe('便条上的这一句'),
-      challenge: challengeParameter,
-    }),
+    description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
+    parameters: z.object({ member, text: z.string().describe('便条上的这一句') }),
     kept,
     run: write,
   });

@@ -27,6 +27,8 @@ private final class CardsInMemory: CoachCardSource {
         var reasons: [String?] = []
         var filters: [CoachDeck.EarlierFilter] = []
         var down = false
+        /// The challenges' day is over on the server.
+        var dayOver = false
     }
 
     let state: Mutex<State>
@@ -76,7 +78,8 @@ private final class CardsInMemory: CoachCardSource {
     func answerChallenge(
         _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer {
-        state.withLock { state in
+        try state.withLock { state throws(SquadError) in
+            if state.dayOver && state.answers[note] == nil { throw .challengeExpired }
             state.reasons.append(reason)
             let standing = state.answers[note] ?? answer
             state.answers[note] = standing
@@ -175,6 +178,28 @@ private let oldNote = card(.note, "40", minutes: -1440, text: "昨天跑完 5 �
     #expect(deck.top?.challenge?.answer == .accepted)
     await deck.answer(deck.current(stretch), .declined)
     #expect(deck.top?.challenge?.answer == .accepted)
+}
+
+@MainActor @Test func anExpiredChallengeIsNeverTakenUp() async {
+    let expired = stretch.with(challenge: stretch.challenge?.expired())
+    let source = CardsInMemory(CoachPageCards(stack: [], earlier: [expired]))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    #expect(expired.challenge?.isOpen == false)
+    await deck.answer(expired, .accepted)
+    #expect(source.state.withLock { $0.reasons }.isEmpty)
+    #expect(deck.current(expired).challenge?.answer == nil)
+}
+
+@MainActor @Test func aChallengeWhoseDayEndedWhileThePageWasOpenShowsExpired() async {
+    let source = CardsInMemory(CoachPageCards(stack: [stretch], earlier: []))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    source.state.withLock { $0.dayOver = true }
+    await deck.answer(stretch, .accepted)
+    #expect(deck.top?.challenge?.answer == nil)
+    #expect(deck.top?.challenge?.isExpired == true)
+    #expect(deck.failed == nil)
 }
 
 @MainActor

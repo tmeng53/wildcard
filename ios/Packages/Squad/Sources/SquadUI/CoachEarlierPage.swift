@@ -199,10 +199,11 @@ public struct CoachEarlierPage: View {
         return Text(verbatim: parts.compactMap(\.self).joined(separator: " · "))
     }
 
-    /// How it went, as a String Catalog key: 已完成, 已接受, 没接, 已穿上 or 在衣橱.
+    /// How it went, as a String Catalog key: 已完成, 已过期, 已接受, 没接, 已穿上 or 在衣橱.
     private static func outcome(_ card: CoachPageCard) -> String? {
         if let challenge = card.challenge {
             if challenge.completedBy != nil { return "已完成" }
+            if challenge.isExpired && challenge.answer != .declined { return "已过期" }
             switch challenge.answer {
             case .accepted: return "已接受"
             case .declined: return "没接"

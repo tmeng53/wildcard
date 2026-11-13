@@ -5,7 +5,8 @@ import HomeWidgetUI
 import SwiftUI
 import WidgetKit
 
-/// The home screen widgets: 我的一周 (small) and 小队今天 (medium).
+/// The home screen widgets: 我的一周 (small) and 小队今天 (medium), either set to show 本周出赛表
+/// instead from 编辑小组件.
 @main
 struct WildcardWidgets: WidgetBundle {
     var body: some Widget {
@@ -15,13 +16,18 @@ struct WildcardWidgets: WidgetBundle {
 }
 
 /// 我的一周: a tap opens the 训练 page started from the workout Health synced while its capsule
-/// offers one, else 打卡 until I check in today, then 今天.
+/// offers one, else 打卡 until I check in today, then 今天. Set to 本周出赛表, a tap opens 出赛表.
 struct WeekHomeWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: "week", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
-                WeekWidget(board: board)
-                    .widgetURL(board.weekLink.url)
+                if entry.showsSchedule {
+                    ScheduleWidget(board: board, size: .small)
+                        .widgetURL(WidgetLink.schedule.url)
+                } else {
+                    WeekWidget(board: board)
+                        .widgetURL(board.weekLink.url)
+                }
             }
         }
         .configurationDisplayName(WidgetCopy.weekName)
@@ -31,13 +37,18 @@ struct WeekHomeWidget: Widget {
 }
 
 /// 小队今天: a tap opens 今天, and its 打卡 opens 打卡, or, while Health has a workout to post,
-/// its capsule's 打卡 opens the 训练 page started from it.
+/// its capsule's 打卡 opens the 训练 page started from it. Set to 本周出赛表, a tap opens 出赛表.
 struct SquadHomeWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: "squad", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
-                SquadWidget(board: board)
-                    .widgetURL(WidgetLink.today.url)
+                if entry.showsSchedule {
+                    ScheduleWidget(board: board, size: .medium)
+                        .widgetURL(WidgetLink.schedule.url)
+                } else {
+                    SquadWidget(board: board)
+                        .widgetURL(WidgetLink.today.url)
+                }
             }
         }
         .configurationDisplayName(WidgetCopy.squadName)

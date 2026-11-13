@@ -1,5 +1,5 @@
 // @wildcard/feedback: 意见反馈, members' messages to us (words, screenshots and the app they
-// came from), the day's limit, and which issue each was filed as.
+// came from, or what their coach passed on), the day's limit, and which issue each was filed as.
 
 export {
   createPostgresFeedbackStore,
@@ -16,7 +16,10 @@ export {
   MemberId,
   type Adoption,
   type Feedback,
+  type FeedbackSource,
   type FiledIssue,
+  type FromApp,
+  type FromCoach,
 } from './domain/feedback.js';
 export {
   FeedbackIdTakenError,

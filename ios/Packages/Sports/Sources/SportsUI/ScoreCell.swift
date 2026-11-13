@@ -129,3 +129,26 @@ private func grouped(_ number: Int) -> String {
     }
     return (number < 0 ? "-" : "") + groups.joined(separator: ",")
 }
+
+/// One cell of a rated meal's 成绩条 (Tracy, 2026-11-12): 健康 and 好吃 in stars, then the
+/// 卡价比 worked out from them, to one decimal.
+public struct MealScoreCell: Hashable, Identifiable, Sendable {
+    public enum Label: String, Hashable, Sendable {
+        case healthy, tasty, calorieValue
+    }
+
+    public let label: Label
+    public let value: String
+    /// Stars stand beside the number (健康, 好吃), never beside the 卡价比.
+    public let isStars: Bool
+
+    public var id: Label { label }
+
+    public static func cells(of rating: MealRating) -> [MealScoreCell] {
+        [
+            MealScoreCell(label: .healthy, value: "\(rating.healthy)", isStars: true),
+            MealScoreCell(label: .tasty, value: "\(rating.tasty)", isStars: true),
+            MealScoreCell(label: .calorieValue, value: String(format: "%.1f", rating.calorieValue), isStars: false),
+        ]
+    }
+}

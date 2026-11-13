@@ -29,7 +29,9 @@ extension MainTabs {
             closeProfilePages()
             wardrobe.openShop()
         case .wardrobe(let piece):
-            showCloset(trying: piece)
+            showCloset(trying: piece.map { [$0] } ?? [])
+        case .place(let place):
+            openPlace(place)
         case .badges:
             // 我's player card turned to its badge board.
             showsNotices = false
@@ -100,7 +102,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store, .wardrobe, .badges:
+        case .post, .place, .unlock, .stores, .store, .wardrobe, .badges:
             break
         }
     }
@@ -123,13 +125,13 @@ extension MainTabs {
         }
     }
 
-    /// 衣橱 in the editor, trying `piece` on, on the profile read again first unless it was just
-    /// saved wearing it (`readAgain: false`).
-    func showCloset(trying piece: String?, readAgain: Bool = true) {
+    /// 衣橱 in the editor, trying `pieces` on, on the profile read again first unless it is
+    /// known to hold them (`readAgain: false`).
+    func showCloset(trying pieces: [String], readAgain: Bool = true) {
         showsNotices = false
         selection = .profile
         closeProfilePages()
-        if readAgain { Task { await wardrobe.showGift(piece) } } else { wardrobe.showWorn(piece) }
+        if readAgain { Task { await wardrobe.showGift(pieces.first) } } else { wardrobe.tryOn(pieces) }
     }
 
     /// 我 back on its own page: 设置, 出赛表, 商店街, 我的动态 and a post over it all closed. 设置
@@ -141,7 +143,7 @@ extension MainTabs {
         showsSchedule = false
         wardrobe.showsShop = false
         wardrobe.editor = nil
-        (wall, post) = (nil, nil)
+        (wall, post, profilePlace, profilePlacePost) = (nil, nil, nil, nil)
     }
 
     /// 换装 is pushed over 商店街 while the street is open, else over 我; the system's back closes it

@@ -36,6 +36,11 @@ public struct WidgetGuide: View {
                 stepRow(number: 1, Text(copy: "回到桌面，长按空白处，直到图标开始晃", bundle: .module))
                 stepRow(number: 2, Text(copy: "点左上角「编辑」，再点「添加小组件」", bundle: .module))
                 stepRow(number: 3, Text(copy: "搜「外卡」，选大小，点「添加小组件」", bundle: .module), isLast: true)
+                Text(copy: "想看本周出赛表：长按小组件，点「编辑小组件」换", bundle: .module)
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, Space.xs)
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.xs)

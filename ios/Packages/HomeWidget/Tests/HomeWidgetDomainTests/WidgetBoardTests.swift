@@ -68,6 +68,19 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
     #expect(WidgetBoard(home: done, day: tuesday).weekLink == .today)
 }
 
+@Test func thePlanShowsEachDayAndTheDaysAheadFromToday() {
+    let board = WidgetBoard(home: home(), day: tuesday)
+    #expect(board.plan.map(\.weekday) == [0, 1, 2, 3, 4, 5, 6])
+    #expect(board.plan.map(\.status) == board.week.days)
+    #expect(board.plan.map(\.activity) == board.week.activities)
+    #expect(board.plan.map(\.isToday) == [false, true, false, false, false, false, false])
+    // Tuesday and the three days after it.
+    #expect(board.planAhead(4).map(\.weekday) == [1, 2, 3, 4])
+    // Sunday: only today is left.
+    let sunday = tuesday.adding(days: 5)
+    #expect(WidgetBoard(home: home(), day: sunday).planAhead(4).map(\.weekday) == [6])
+}
+
 @Test func theCapsulesTapOpensTheTrainingPageForItsWorkout() {
     let late = run("late", endedHoursBefore: 1)
     let offered = WidgetBoard(home: home(), day: tuesday, health: [late])
@@ -106,7 +119,7 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
 
 @Test func linksGoThereAndBack() {
     let ride = WidgetLink.postWorkout(WorkoutSource(provider: WorkoutSource.appleHealth, id: "A1B2-C3&D=4"))
-    for link in [WidgetLink.today, .checkIn, ride] {
+    for link in [WidgetLink.today, .checkIn, .schedule, ride] {
         #expect(WidgetLink(url: link.url) == link)
     }
     #expect(WidgetLink.checkIn.url.absoluteString == "wildcard://widget/check-in")

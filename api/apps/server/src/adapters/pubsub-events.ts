@@ -25,7 +25,7 @@ const Published = z.object({ messageIds: z.array(z.string()).min(1) });
  * `/jobs/events/<subscriber>`. The request never runs an event's work itself: when Pub/Sub can't
  * take it after a second try (with a fresh token), the event is logged as an error, and so
  * reported. The coach job still catches the check-ins and replies to the coach it missed; a lost
- * comment push or welcome is not sent again.
+ * push or welcome is not sent again.
  * https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics/publish
  * https://cloud.google.com/run/docs/securing/service-identity#fetching_identity_and_access_tokens
  */

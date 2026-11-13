@@ -63,23 +63,29 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     #expect(!today.isHiringCoach)
 }
 
-@MainActor @Test func anUnseenCardOnTheCoachsPageShowsOnItsPhoneUntilSeen() async {
+@MainActor @Test func theNewestUnseenCardOnTheCoachsPageShowsUntilSeen() async {
     let backend = ScriptedBackend(server: sampleHome())
     let today = store(backend)
     await today.load()
     #expect(!today.hasUnseenCoachCards)
-    await backend.set(unseenCoachCards: true)
+    #expect(today.newestUnseenCoachCard == nil)
+    let note = CoachPageCard(
+        kind: .note, id: "41", coach: maotou, look: "xiaohun", time: Date(timeIntervalSince1970: 1_000),
+        text: "今天腿还酸吗")
+    await backend.set(unseenCoachCard: note)
     await today.load()
     #expect(today.hasUnseenCoachCards)
+    #expect(today.newestUnseenCoachCard?.text == "今天腿还酸吗")
     // What was shown stays while the server can't be reached.
     await backend.set(failure: .notSent)
     await today.loadCoach()
-    #expect(today.hasUnseenCoachCards)
-    // Swiped away on the coach's page, the server marks them seen; the next load takes the dot away.
+    #expect(today.newestUnseenCoachCard?.id == "41")
+    // Swiped away on the coach's page, the server marks them seen; the next load takes it away.
     await backend.set(failure: nil)
-    await backend.set(unseenCoachCards: false)
+    await backend.set(unseenCoachCard: nil)
     await today.load()
     #expect(!today.hasUnseenCoachCards)
+    #expect(today.newestUnseenCoachCard == nil)
 }
 
 @MainActor @Test func theCoachKeptOnThePhoneStandsOnTheSidelineWhileTheServerCantBeReached() async throws {
@@ -118,4 +124,21 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     let today = store(backend)
     await today.load()
     #expect(today.isHiringCoach)
+}
+
+@Test func theCoachsRowSaysTheStartOfWhatTheCoachSaid() {
+    func card(
+        _ kind: CoachPageCard.Kind, text: String? = nil, challenge: CoachPageCard.Challenge? = nil,
+        gift: CoachPageCard.Gift? = nil
+    ) -> CoachPageCard {
+        CoachPageCard(
+            kind: kind, id: "1", coach: maotou, look: "xiaohun", time: Date(timeIntervalSince1970: 0), text: text,
+            challenge: challenge, gift: gift)
+    }
+    #expect(card(.note, text: "今天腿还酸吗").newsLine == "今天腿还酸吗")
+    #expect(card(.board, text: "周三不练腿").newsLine == "周三不练腿")
+    #expect(card(.challenge, challenge: .init(title: "拉伸", amount: 5, unit: "分钟", line: "睡前做")).newsLine == "睡前做")
+    #expect(card(.challenge, challenge: .init(title: "拉伸", amount: 5, unit: "分钟")).newsLine == "拉伸 5 分钟")
+    #expect(card(.gift, gift: .init(piece: "gift-sheeptowel", line: "擦擦汗")).newsLine == "擦擦汗")
+    #expect(card(.gift, gift: .init(piece: "gift-sheeptowel")).newsLine == nil)
 }
