@@ -216,9 +216,9 @@ async function checkIn(token: string, ...audience: string[]) {
   return checkInFor(undefined, { token, audience });
 }
 
-/** The same, for a day of the member's own (else the UTC date, as the feed's tests ask for). */
+/** The same, for that moment's day in the member's zone (else UTC's, as the feed's tests ask for). */
 async function checkInFor(
-  day: string | undefined,
+  timeZone: string | undefined,
   { token, audience }: { readonly token: string; readonly audience: readonly string[] },
 ) {
   const now = new Date(Date.now() - 60_000);
@@ -228,7 +228,7 @@ async function checkInFor(
     token,
     body: {
       version: 1,
-      day: day ?? now.toISOString().slice(0, 10),
+      day: new Intl.DateTimeFormat('en-CA', { timeZone: timeZone ?? 'UTC' }).format(now),
       createdAt: now.toISOString(),
       audience,
       kind: 'trained',
@@ -669,12 +669,9 @@ describe('a 训练 posted to the squad', () => {
       await withPhone('阿波'),
     ];
     const squad = await squadOf(tracy, ann, bo);
-    // For the day it is where the member is (`withPhone` puts them in Shanghai): a post for
+    // For the day it was where the member is (`withPhone` puts them in Shanghai): a post for
     // another day is a 补打卡, which is never pushed.
-    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(
-      new Date(Date.now() - 60_000),
-    );
-    const run = await checkInFor(day, { token: tracy.token, audience: [squad] });
+    const run = await checkInFor('Asia/Shanghai', { token: tracy.token, audience: [squad] });
 
     expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
       [],
@@ -691,10 +688,8 @@ describe('a 训练 posted to the squad', () => {
             kind: 'teammateCheckIn',
             checkIn: run,
             squad,
-            today: {
-              members: [{ id: ann.userId }, { id: tracy.userId, name: '翠西' }],
-              posts: [{ id: run }],
-            },
+            // Its `today` is the day's at the server's clock, which the flow's own tests and
+            // `daily-push-today.test.ts` cover with a clock they set.
           },
         },
       ],
