@@ -52,6 +52,7 @@ describe('recall', () => {
       changed: new Set(),
       note: undefined,
       memberNotes: new Map(),
+      challenges: new Map(),
       gifts: new Map(),
       reply: undefined,
       replyMentions: [],
@@ -59,6 +60,7 @@ describe('recall', () => {
       answer: undefined,
       answerMentions: [],
       challengeDone: false,
+      feedback: undefined,
       steps: [],
     };
     const recall = toolbox({
