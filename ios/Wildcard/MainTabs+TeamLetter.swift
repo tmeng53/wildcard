@@ -33,15 +33,18 @@ extension MainTabs {
     /// only a badge, where the member wears it or not. A piece the member already had another way
     /// (unlocked by training, so the team's give_reward left it as it was) is theirs all the same:
     /// one still waiting on 商店街 is claimed (领取) first, so 衣橱 can put it on. The profile is
-    /// read again only when the one on hand misses a present.
+    /// read again only when the one on hand misses a present; a piece still not theirs after
+    /// that is left out.
     private func wear(_ presents: [TeamPresent]) async {
         let pieces = presents.compactMap { present -> String? in
             if case .piece(let id) = present { id } else { nil }
         }
-        guard !pieces.isEmpty else { return open(.badges) }
         if !presents.allSatisfy({ profile.holds($0) }) { await profile.reload() }
-        for piece in pieces where profile.unclaimed.contains(piece) { await profile.claim(piece) }
-        showCloset(trying: pieces, readAgain: false)
+        let held = pieces.filter { profile.holds(.piece($0)) }
+        guard !held.isEmpty else { return open(.badges) }
+        for piece in held where profile.unclaimed.contains(piece) { await profile.claim(piece) }
+        // 衣橱 puts on only what the member owns: a claim that didn't save leaves that piece off.
+        showCloset(trying: held, readAgain: false)
     }
 }
 
