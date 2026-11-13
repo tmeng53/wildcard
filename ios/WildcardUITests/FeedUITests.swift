@@ -371,9 +371,9 @@ extension FeedUITests {
         assertClearOfTheTabBar(strip, in: app)
         for (cell, words) in [("strip.healthy", "5健康"), ("strip.tasty", "4好吃"), ("strip.calorieValue", "4.0卡价比")] {
             let label = strip.descendants(matching: .any).matching(identifier: cell).firstMatch.label
-            XCTAssertEqual(
-                label.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ",", with: ""),
-                words, "\(cell) reads \(label)")
+            // VoiceOver joins a cell's parts with the language's list separator (「、」 in Chinese).
+            let joined = label.filter { !" ,、".contains($0) }
+            XCTAssertEqual(joined, words, "\(cell) reads \(label)")
         }
     }
 }
