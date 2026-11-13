@@ -149,6 +149,25 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .values({ squad_id: squad, member_id: member, kind, actor_id: actor })
       .execute();
     const left = before.members.filter((each) => each.member !== member);
+    if (left.length === 0) {
+      // The last one out ends the squad, for good: its invite stops and nothing runs for it.
+      await trx
+        .updateTable('squads')
+        .set({ ended_at: sql<Date>`now()`, captain_id: null })
+        .where('id', '=', squad)
+        .execute();
+      await trx
+        .insertInto('squad_events')
+        .values({
+          squad_id: squad,
+          actor_id: actor,
+          kind: 'ended',
+          name: before.name,
+          captain_id: null,
+        })
+        .execute();
+      return true;
+    }
     const captain = captainOf(before.captain === member ? null : before.captain, left);
     if (captain !== before.stored) {
       await saveSettings(trx, { squad, actor, kind: 'captainChanged', name: before.name, captain });
@@ -203,9 +222,10 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
         .selectFrom('squads')
         .selectAll()
         .where('invite_code', '=', code)
+        .where('ended_at', 'is', null)
         .execute();
       const [squad] = await withMembers(rows);
-      return squad?.members.length === 0 ? undefined : squad;
+      return squad;
     },
 
     async squadsOf(member) {
@@ -284,6 +304,21 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return new Set(rows.map((row) => MemberId.parse(row.member_id)));
     },
 
+    async endedAmong(squads) {
+      if (squads.length === 0) return new Map();
+      const rows = await db
+        .selectFrom('squads')
+        .select(['id', 'ended_at'])
+        .where('id', 'in', squads)
+        .where('ended_at', 'is not', null)
+        .execute();
+      return new Map(
+        rows.flatMap(({ id, ended_at }) =>
+          ended_at === null ? [] : [[SquadId.parse(id), new Date(ended_at)] as const],
+        ),
+      );
+    },
+
     async create({ id, name, inviteCode, creator, goal, timeZone }): Promise<CreateOutcome> {
       try {
         return await db.transaction().execute(async (trx): Promise<CreateOutcome> => {
@@ -348,18 +383,18 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       return db.transaction().execute(async (trx): Promise<JoinOutcome> => {
         // Always the member first, then the squad, so two joins never wait on each other in a circle.
         await lockMember(trx, member);
-        await trx
+        const { ended_at } = await trx
           .selectFrom('squads')
-          .select('id')
+          .select('ended_at')
           .where('id', '=', squad)
           .forUpdate()
           .executeTakeFirstOrThrow();
+        if (ended_at !== null) return 'ended';
         const members = await trx
           .selectFrom('squad_members')
           .select('member_id')
           .where('squad_id', '=', squad)
           .execute();
-        if (members.length === 0) return 'ended';
         if (members.some((row) => row.member_id === member)) return 'alreadyMember';
         if ((await squadCount(trx, member)) >= SQUADS_PER_MEMBER) return 'squadLimit';
         if (members.length >= SQUAD_MEMBER_LIMIT) return 'squadFull';

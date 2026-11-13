@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "backdrops": [
+    { "id": "track", "color": "#F8DDD9" },
+    { "id": "pool", "color": "#CDEBF1" },
+    { "id": "gym", "color": "#DBE2E8" },
+    { "id": "tennis", "color": "#DDE6CC" },
+    { "id": "climbing", "color": "#EBDDD5" },
+    { "id": "ski", "color": "#D7ECF6" }
+  ]
+}

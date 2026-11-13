@@ -21,6 +21,7 @@ import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
+  CoachChallengeDayOverError,
   CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachNotOfferedError,
@@ -192,14 +193,36 @@ interface Step {
  * An agent that calls tools as a model would, by name and with JSON arguments, from a script
  * per task, and records every task and every answer.
  */
-function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
+/** The day's challenge for 队员1, as the run setting challenges sets it. */
+const water = (): readonly Step[] => [
+  {
+    tool: 'set_challenge',
+    input: { member: '队员1', title: '喝水', amount: 8, unit: '杯', line: '天干' },
+  },
+];
+
+/**
+ * A model that runs the script's tool calls for each wake; the run setting the day's challenges
+ * before a daily wake's notes runs `pick`'s instead and is kept in `picks`.
+ */
+function scriptedAgent(
+  script: (task: string) => readonly Step[] | 'fail',
+  pick: (task: string) => readonly Step[] = () => [],
+) {
   const runs: { task: string; instructions: string; tools: string[]; answers: string[] }[] = [];
+  const picks: typeof runs = [];
   const agent: CoachAgent = {
     async run({ instructions, task, tools }): Promise<AgentRun> {
-      const steps = script(task);
+      const picking = tools.some(({ name }) => name === 'set_challenge');
+      const steps = picking ? pick(task) : script(task);
       const usage = { requests: 2, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 };
       const answers: string[] = [];
-      runs.push({ task, instructions, tools: tools.map(({ name }) => name), answers });
+      (picking ? picks : runs).push({
+        task,
+        instructions,
+        tools: tools.map(({ name }) => name),
+        answers,
+      });
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
       for (const step of steps) {
         const tool: CoachTool | undefined = tools.find(({ name }) => name === step.tool);
@@ -211,7 +234,7 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
       return { ok: true, usage };
     },
   };
-  return { agent, runs };
+  return { agent, runs, picks };
 }
 
 /**
@@ -237,6 +260,7 @@ function wakes(
     weatherOf,
     relayFeedback,
     relayingOn,
+    ended,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -254,6 +278,7 @@ function wakes(
     readonly weatherOf?: CoachWeather;
     readonly relayFeedback?: CoachFeedback;
     readonly relayingOn?: (day: string) => Promise<boolean>;
+    readonly ended?: boolean;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -288,6 +313,7 @@ function wakes(
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
     ...(relayFeedback === undefined ? {} : { relayFeedback }),
+    ...(ended === true ? { ended: (squads) => Promise.resolve(new Set(squads)) } : {}),
     ...(relayingOn === undefined ? {} : { relayingOn }),
   });
 }
@@ -299,7 +325,9 @@ function wakes(
 const quietPorts = {
   photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
   memberFacts: () => Promise.resolve([]),
+  streaks: () => Promise.resolve({}),
   timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  ended: () => Promise.resolve(new Set()),
   memes: () => Promise.resolve([]),
   weatherOf: () => Promise.resolve(new Map()),
   occasions: () => Promise.resolve([]),
@@ -469,6 +497,7 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
@@ -481,6 +510,7 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
@@ -496,7 +526,7 @@ describe('the coach', () => {
         '没有 people/队员3.md 这个文件；能用的文件见任务里的列表。',
         'no tool post_note',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
-        '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+        '太长了：101 字，最多 100 字。',
         '已回复。',
         '已换成这句。',
         expect.stringContaining('参数不对'),
@@ -690,6 +720,8 @@ describe('the coach', () => {
         })),
       ).toStrictEqual([
         { of: squad, member: fixture.mia, kind: 'wake', model: 'openai/gpt-6-luna' },
+        // The day's: its challenges set on the challenge model first, then the notes.
+        { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
         { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
       ]);
 
@@ -766,13 +798,14 @@ describe('the coach', () => {
           { path: 'squad.md' },
         ],
         usage: {
+          // Each day's wake counts twice: its challenges set, then its notes.
           total: {
-            wakes: 4,
-            requests: 8,
-            inputTokens: 48_000,
+            wakes: 6,
+            requests: 12,
+            inputTokens: 72_000,
             cachedInputTokens: 0,
-            outputTokens: 3_200,
-            costMicros: 18_400,
+            outputTokens: 4_800,
+            costMicros: 27_600,
           },
         },
       });
@@ -1312,8 +1345,9 @@ describe('the coach', () => {
         trx,
       );
       expect(counts.rows).toStrictEqual([{ files: '0', notes: '0' }]);
-      // A failed run's tokens were spent all the same: every try counted.
-      expect(fixture.counted.runs).toHaveLength(6);
+      // A failed run's tokens were spent all the same: every try counted, with each daily try's
+      // challenges set before it.
+      expect(fixture.counted.runs).toHaveLength(9);
     });
   });
 
@@ -1354,6 +1388,23 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done', last_error: null },
         { reason: 'daily', state: 'done', last_error: null },
       ]);
+    });
+  });
+
+  it('never wakes for a squad that ended, though its coach is still on record', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const run = await wakes(fixture, { agent, ended: true }).run();
+      expect(run).toMatchObject({ coaching: true, squads: 0, queued: 0 });
+      expect(runs).toHaveLength(0);
+      await wakes(fixture, { agent, ended: true, at: new Date(now.getTime() + 86_400_000) }).run();
+      expect(runs).toHaveLength(0);
+      // Nor for a check-in whose event comes in after everyone left.
+      await wakes(fixture, { agent, ended: true }).checkedIn({
+        checkIn: fixture.checkIn,
+        squads: [fixture.squad],
+      });
+      expect(runs).toHaveLength(0);
     });
   });
 
@@ -1700,14 +1751,16 @@ describe('the coach', () => {
       const weatherOf: CoachWeather = (input) => {
         asked.push(input);
         // Only 队员1 shared where they are.
-        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+        return Promise.resolve(
+          new Map([[mia, { words: '今天雨，8–13°C，降水概率 80%', city: '多伦多' }]]),
+        );
       };
       const { agent, runs } = scriptedAgent(() => []);
       await wakes(fixture, { agent, weatherOf }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
+        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
       );
       expect(daily?.task).toContain('### 队员2\n- 这周练了：0 天\n- 这周发过：还没发过\n');
     });
@@ -1741,54 +1794,69 @@ describe('the coach', () => {
           return Promise.resolve(undefined);
         },
       };
-      const { agent, runs } = scriptedAgent((task) =>
-        task.includes('新的一天')
-          ? [
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员1',
-                  text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8, line: '天干，别等口渴' },
+      const { agent, runs, picks } = scriptedAgent(
+        (task) =>
+          task.includes('新的一天')
+            ? [
+                { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+                { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+                { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
+                { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
+                { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
+                {
+                  tool: 'give_gift',
+                  input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
                 },
-              },
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员1',
-                  text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
-                },
-              },
-              // A rest day's blank challenge, as the model sends it, is none.
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员2',
-                  text: '今天走走',
-                  challenge: { title: ' ', amount: 0, unit: '', line: '' },
-                },
-              },
-              { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
-              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
-              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
-              {
-                tool: 'give_gift',
-                input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
-              },
-            ]
-          : task.includes('你今天给他的挑战')
-            ? [{ tool: 'complete_challenge', input: {} }]
-            : [],
+              ]
+            : task.includes('你今天给他的挑战')
+              ? [{ tool: 'complete_challenge', input: {} }]
+              : [],
+        // The day's challenges, set before the notes: only 队员1 gets one.
+        () => [
+          {
+            tool: 'set_challenge',
+            input: { member: '队员1', title: '喝水', amount: 0, unit: '杯', line: '天干' },
+          },
+          {
+            tool: 'set_challenge',
+            input: { member: '队员1', title: '喝'.repeat(9), amount: 8, unit: '杯', line: '天干' },
+          },
+          {
+            tool: 'set_challenge',
+            input: {
+              member: '队员1',
+              title: '喝水',
+              amount: 8,
+              unit: '杯',
+              line: '天干，别等口渴',
+            },
+          },
+          {
+            tool: 'set_challenge',
+            input: { member: '队员9', title: '跑步', amount: 5, unit: '公里', line: '' },
+          },
+        ],
       );
       await wakes(fixture, { agent, gifting }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(daily?.tools).toContain('give_gift');
       expect(daily?.task).toContain('## 礼物清单\n- gift-scarf：红围巾\n- gift-cap');
       expect(daily?.task).toContain('## 这周还能收礼物的\n- 队员1（已有：gift-cap）');
-      expect(daily?.answers.slice(0, 7)).toStrictEqual([
-        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
-        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+      // Set on the challenge model, with the shared rules and what makes a good challenge.
+      expect(picks).toHaveLength(1);
+      expect(picks[0]?.tools).toStrictEqual(['set_challenge']);
+      expect(picks[0]?.task).toContain('# 新的一天');
+      expect(picks[0]?.answers).toStrictEqual([
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
+        '定好了：队员1「喝水 8 杯」。',
+        '不能给 队员9 定挑战；能定的是：队员1、队员2。',
+      ]);
+      expect(daily?.task).toContain(
+        '## 今天的挑战（已经定好，单独一张卡给他）\n- 队员1「喝水 8 杯」，小字：天干，别等口渴',
+      );
+      expect(daily?.answers.slice(0, 6)).toStrictEqual([
+        '便条写好了，给 队员1，下面附着挑战「喝水 8 杯」。',
         '便条写好了，给 队员2。',
         '队员2 这周不能收礼物；能收的是：队员1。',
         '队员1 已经有 gift-cap 了，换一件。',
@@ -1828,14 +1896,37 @@ describe('the coach', () => {
         .then(({ rows }) => rows.map(({ id }) => Number(id)));
       // Answered only once the note reached them.
       const early = (note: number | undefined) =>
-        activity.answerChallenge({ squad, member: mia, note: note ?? 0, answer: 'accepted' });
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: note ?? 0,
+          answer: 'accepted',
+          today: '2026-11-01',
+        });
       await expect(early(mine)).rejects.toThrow(CoachNoteNotFoundError);
       await sql`insert into public.coach_member_note_deliveries (note_id)
         select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
       const answer = (
         member: string,
         { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
-      ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
+      ) =>
+        activity.answerChallenge({
+          squad,
+          member,
+          note: note ?? 0,
+          answer: said,
+          today: '2026-11-01',
+        });
+      // Not once its day is over (已过期).
+      await expect(
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: mine ?? 0,
+          answer: 'accepted',
+          today: '2026-11-02',
+        }),
+      ).rejects.toThrow(CoachChallengeDayOverError);
       expect(await answer(mia, { note: mine, said: 'accepted' })).toStrictEqual({
         answer: 'accepted',
       });
@@ -2266,6 +2357,7 @@ describe('the coach', () => {
         note: Number(noteOf(leo)),
         answer: 'declined',
         reason: '我鸡蛋过敏',
+        today: '2026-11-01',
       });
       // A check-in's wake that day is told why it was let go, and not to repeat it.
       const meal = randomUUID();
@@ -2309,7 +2401,7 @@ describe('the coach', () => {
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const dream = runs.find(({ task }) => task.startsWith('# 夜里'));
       expect(dream?.task).toContain(
-        '## 昨天的挑战\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
+        '## 最近 7 天的挑战\n- 11-01 周日 队员1「喝水 8 杯」：完成了\n- 11-01 周日 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
       );
     });
   });
@@ -2472,7 +2564,8 @@ describe('the coach', () => {
       };
       expect(await wakes(fixture, { agent, replied }).run()).toMatchObject({ queued: 3, done: 3 });
       expect(told).toStrictEqual([]);
-      expect(fixture.counted.runs.map(({ kind }) => kind)).toStrictEqual(['wake', 'wake']);
+      // The check-in's, and the day's in two runs: its challenges, then its notes.
+      expect(fixture.counted.runs.map(({ kind }) => kind)).toStrictEqual(['wake', 'wake', 'wake']);
       // The reply to a check-in that went is dropped, and the wake still ends.
       const replies =
         await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
@@ -2548,26 +2641,22 @@ describe('the coach', () => {
           return Promise.resolve(undefined);
         },
       };
-      const { agent, runs } = scriptedAgent(() => [
-        { tool: 'post_note', input: { text: '周日歇好' } },
-        {
-          tool: 'note_to',
-          input: {
-            member: '队员1',
-            text: '今天多喝水',
-            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
-          },
-        },
-        // Only the member previewed gets a note or a gift.
-        { tool: 'note_to', input: { member: '队员2', text: '走走' } },
-        { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
-        { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
-      ]);
+      const { agent, runs } = scriptedAgent(
+        () => [
+          { tool: 'post_note', input: { text: '周日歇好' } },
+          { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+          // Only the member previewed gets a note or a gift.
+          { tool: 'note_to', input: { member: '队员2', text: '走走' } },
+          { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
+          { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
+        ],
+        water,
+      );
       const preview = await wakes(fixture, { agent, gifting }).preview({ squad, member: mia });
       expect(runs).toHaveLength(1);
       expect(runs[0]?.answers).toStrictEqual([
         '已写上战术板。',
-        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+        '便条写好了，给 队员1，下面附着挑战「喝水 8 杯」。',
         '不能给 队员2 写便条；能写的是：队员1。',
         'gift-scarf 送给 队员1 了。',
         '记下了，在 people/队员1.md。',
@@ -2582,7 +2671,8 @@ describe('the coach', () => {
           challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
         },
         gift: { piece: 'gift-scarf', line: '天冷了' },
-        costMicros: 4600,
+        // Setting the challenge and writing the notes.
+        costMicros: 9200,
       });
       expect(preview.ran && preview.files.map(({ path }) => path)).toContain(`people/${mia}.md`);
       expect(given).toStrictEqual([]);
@@ -2596,7 +2686,10 @@ describe('the coach', () => {
       // Its tokens are counted all the same, as a preview, to the squad: an admin asked for it.
       expect(
         fixture.counted.runs.map(({ kind, member, costMicros }) => ({ kind, member, costMicros })),
-      ).toStrictEqual([{ kind: 'preview', member: undefined, costMicros: 4600 }]);
+      ).toStrictEqual([
+        { kind: 'preview', member: undefined, costMicros: 4600 },
+        { kind: 'preview', member: undefined, costMicros: 4600 },
+      ]);
       expect(
         await wakes(fixture, { agent, gifting }).preview({ squad, member: randomUUID() }),
       ).toStrictEqual({
@@ -2608,17 +2701,13 @@ describe('the coach', () => {
   it('delivers a previewed note to the member alone each time asked, the newest the day’s', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia } = fixture;
-      const { agent } = scriptedAgent(() => [
-        { tool: 'post_note', input: { text: '周日歇好' } },
-        {
-          tool: 'note_to',
-          input: {
-            member: '队员1',
-            text: '今天多喝水',
-            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
-          },
-        },
-      ]);
+      const { agent } = scriptedAgent(
+        () => [
+          { tool: 'post_note', input: { text: '周日歇好' } },
+          { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+        ],
+        water,
+      );
       const first = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
       expect(first).toMatchObject({ ran: true, delivered: true, note: { text: '今天多喝水' } });
       const saved = await sql<{ member: string; text: string; title: string; board: string }>`

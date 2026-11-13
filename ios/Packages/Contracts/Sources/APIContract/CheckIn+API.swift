@@ -21,14 +21,18 @@ extension CheckIn {
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience, inFeed: checkIn.inFeed,
                 entry: .healthyMeal(
-                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
+                    Meal(
+                        caption: checkIn.meal.caption, photos: checkIn.meal.photos, place: checkIn.meal.place,
+                        rating: checkIn.meal.rating, postedAt: checkIn.createdAt)))
         case .cheatMeal(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
                 createdAt: checkIn.createdAt,
                 audience: checkIn.audience, inFeed: checkIn.inFeed,
                 entry: .cheatMeal(
-                    Meal(caption: checkIn.meal.caption, photos: checkIn.meal.photos, postedAt: checkIn.createdAt)))
+                    Meal(
+                        caption: checkIn.meal.caption, photos: checkIn.meal.photos, place: checkIn.meal.place,
+                        rating: checkIn.meal.rating, postedAt: checkIn.createdAt)))
         case .disclaimer(let checkIn):
             try self.init(
                 id: checkIn.id, member: checkIn.member, day: checkIn.day, postedDay: checkIn.postedDay,
@@ -101,12 +105,15 @@ extension Training {
     var wire: Components.Schemas.Training {
         .init(
             sport: activity.wireSport, customSport: activity.wireCustomSport, minutes: minutes?.value,
-            startTime: startTime?.wire, caption: caption?.text, photos: photos?.wire, workout: workout?.wire)
+            startTime: startTime?.wire, caption: caption?.text, place: place?.wire, photos: photos?.wire,
+            workout: workout?.wire)
     }
 }
 
 extension Meal {
-    var wire: Components.Schemas.Meal { .init(caption: caption?.text, photos: photos?.wire) }
+    var wire: Components.Schemas.Meal {
+        .init(caption: caption?.text, place: place?.wire, rating: rating?.wire, photos: photos?.wire)
+    }
 }
 
 extension Disclaimer {
@@ -120,7 +127,8 @@ extension Training {
             minutes: try wire.minutes.map(WorkoutMinutes.init),
             startTime: try wire.startTime.map { (text) throws(ContractsError) in try StartTime(wire: text) },
             photos: try Photos(wire: wire.photos, postedAt: postedAt),
-            caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init))
+            caption: try wire.caption.map(Caption.init), workout: wire.workout.map(Workout.init),
+            place: Place(wire: wire.place))
     }
 }
 
@@ -182,8 +190,24 @@ extension WorkoutSeries {
 }
 
 extension Meal {
-    init(caption: String?, photos: [Components.Schemas.PhotoView]?, postedAt: Date) throws(ContractsError) {
-        self.init(photos: try Photos(wire: photos, postedAt: postedAt), caption: try caption.map(Caption.init))
+    init(
+        caption: String?, photos: [Components.Schemas.PhotoView]?, place: Components.Schemas.Place?,
+        rating: Components.Schemas.MealRating?, postedAt: Date
+    ) throws(ContractsError) {
+        self.init(
+            photos: try Photos(wire: photos, postedAt: postedAt), caption: try caption.map(Caption.init),
+            place: Place(wire: place), rating: MealRating(wire: rating))
+    }
+}
+
+extension MealRating {
+    var wire: Components.Schemas.MealRating { .init(healthy: healthy, tasty: tasty) }
+
+    /// A rating as the API sends it; one this build can't read is left off the meal, never the
+    /// post itself.
+    init?(wire: Components.Schemas.MealRating?) {
+        guard let wire else { return nil }
+        try? self.init(healthy: wire.healthy, tasty: wire.tasty)
     }
 }
 
@@ -266,5 +290,20 @@ extension Timestamp {
     /// and a `Date` can be a hair either side of them.
     init(wire date: Date) {
         self.init(millisecondsSince1970: Int64((date.timeIntervalSince1970 * 1000).rounded()))
+    }
+}
+
+extension Place {
+    var wire: Components.Schemas.Place {
+        .init(name: name, appleId: appleID, category: category, latitude: latitude, longitude: longitude)
+    }
+
+    /// A place as the API sends it; one this build can't read is left off the post, never the
+    /// post itself.
+    init?(wire: Components.Schemas.Place?) {
+        guard let wire else { return nil }
+        try? self.init(
+            name: wire.name, appleID: wire.appleId, category: wire.category, latitude: wire.latitude,
+            longitude: wire.longitude)
     }
 }

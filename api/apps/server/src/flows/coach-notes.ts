@@ -39,7 +39,7 @@ export interface CoachNotesRun {
 
 /**
  * Delivers the coach's morning notes (便条) once each member's clock passes the settings' hour:
- * a notice in their bell and a silent push, only while their `coach` switch is on.
+ * a notice in their bell and a push that rings, only while their `coach` switch is on.
  * A note written after that hour (a member east of their squad's clock) goes at once. Each note is claimed
  * before it is told, so runs that overlap tell it once. Never throws.
  */
@@ -88,8 +88,8 @@ export async function deliverCoachNotes(deps: CoachNotesDependencies): Promise<C
 }
 
 /**
- * The push of a morning note: 「毛头：…」, silent, as every coach push is. A tap opens
- * 今天, where the note waits.
+ * The push of a morning note: 「毛头：…」. Unlike the coach's other pushes it rings: it comes once
+ * a day and is what brings a member to the coach's page (Tracy, 2026-11-12). A tap opens the page.
  */
 export function coachNoteNotification(note: {
   readonly id: number;
@@ -101,7 +101,7 @@ export function coachNoteNotification(note: {
     category: 'coachNote',
     thread: 'coach-notes',
     collapseId: `coach-note-${String(note.id)}`,
-    interruption: 'passive',
+    interruption: 'active',
     event: { kind: 'coachNote', note: note.id },
   };
 }

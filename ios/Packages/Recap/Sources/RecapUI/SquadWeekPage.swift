@@ -155,8 +155,8 @@ private struct SportsCard: View {
     private static let named = 4
 }
 
-/// One sport on 项目: its symbol in a circle, its name, who trained it (two heads and
-/// 「+N」), a bar and its days.
+/// One sport on 项目: the shared `SportBarRow` with who trained it (two heads and 「+N」) and its
+/// days.
 private struct SportRow: View {
     let symbol: String
     let name: Text
@@ -168,50 +168,18 @@ private struct SportRow: View {
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
-        let fill = Color(role: isRest ? .fgMuted : .bgAccent, in: theme)
-        HStack(spacing: Space.s) {
-            Image(systemName: symbol)
-                .font(.system(size: Self.glyph, weight: .semibold))
-                .foregroundStyle(Color(role: .fgOnAccent, in: theme))
-                .frame(width: Self.icon, height: Self.icon)
-                .background(fill, in: Circle())
-                .accessibilityHidden(true)
-            name
-                .typeStyle(TypeRamp.calloutEmphasis)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .frame(width: Self.nameWidth, alignment: .leading)
+        SportBarRow(
+            symbol: symbol, name: name, count: days, unit: Text(copy: "天", bundle: .module), fraction: fraction,
+            fill: Color(role: isRest ? .fgMuted : .bgAccent, in: theme),
+            track: Color(role: .bgCanvas, in: theme).opacity(0.8)
+        ) {
             HeadStack(heads, size: Self.head, on: .bgCanvas, limit: Self.headLimit)
                 .frame(
                     width: Self.head * Double(Self.headLimit + 1) - Space.xxs * Double(Self.headLimit),
                     alignment: .leading)
-            Capsule()
-                .fill(Color(role: .bgCanvas, in: theme).opacity(0.8))
-                .overlay(alignment: .leading) {
-                    GeometryReader { proxy in
-                        Capsule()
-                            .fill(fill)
-                            .frame(width: max(proxy.size.width * min(fraction, 1), Self.bar))
-                    }
-                }
-                .frame(height: Self.bar)
-            HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Text(verbatim: "\(days)").typeStyle(TypeRamp.scoreInline).monospacedDigit()
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Text(copy: "天", bundle: .module).typeStyle(TypeRamp.caption)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-            }
-            .frame(width: Self.daysWidth, alignment: .trailing)
         }
-        .accessibilityElement(children: .combine)
     }
 
-    private static let icon: Double = 28
-    private static let glyph: Double = 14
-    private static let nameWidth: Double = 72
-    private static let bar: Double = 12
-    private static let daysWidth: Double = 44
     private static let head: Double = 22
     /// Heads before 「+N」.
     private static let headLimit = 2

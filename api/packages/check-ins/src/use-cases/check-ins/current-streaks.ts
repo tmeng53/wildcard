@@ -8,9 +8,9 @@ import { restDays } from './rest-days.js';
 
 /** The streaks still going that the player card's 外卡 show; each left out once broken. */
 export interface CurrentStreaks {
-  /** Days trained in a row, a planned rest day between them neither breaking nor adding. */
+  /** Days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding. */
   readonly training?: Streak;
-  /** Days in a row with a meal checked in, a 健康餐 or a 坦白放纵餐. */
+  /** Days in a row with a meal checked in, a 健康餐 or a 坦白放纵餐; a 请假条 neither breaks nor adds. */
   readonly meals?: Streak;
 }
 
@@ -35,11 +35,13 @@ export async function currentStreaks(
     deps.calendarOf(member),
   ]);
   const today = localDayAt(deps.clock(), calendar?.timeZone ?? UNSAVED_MEMBER_ZONE);
-  const meals = currentRun(new Set(days.meals), { today }).streak;
+  const leave = new Set(days.leave);
+  const meals = currentRun(new Set(days.meals), { today, bridges: leave }).streak;
   const trained = new Set(days.trained);
   // Rest days only as far back as the run reaches: read more weeks while it breaks before them.
   let from = addDays(weekStartOf(today), -7 * (FIRST_WEEKS - 1));
   const bridges = await restDays(deps, { member, days: [from, today] });
+  for (const day of leave) bridges.add(day);
   let run = currentRun(trained, { today, bridges });
   while (run.brokeOn !== undefined && run.brokeOn < from) {
     const earlier = addDays(

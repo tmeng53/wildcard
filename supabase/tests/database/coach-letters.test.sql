@@ -23,7 +23,7 @@ select throws_ok($$insert into public.coach_letters (squad_id, hire_event_id, fr
   '23503', null, 'a letter only for a change it tried');
 select throws_ok($$insert into public.coach_letters (squad_id, hire_event_id, from_coach, to_coach, day, text)
   values ('33333333-3333-4333-8333-333333333333', 902, 'xiaohun', 'letter-test', '2026-11-08', repeat('字', 401))$$,
-  '23514', null, 'at most 400 characters (200 counted, English as half)');
+  '23514', null, 'at most 400 characters, its longest in any language');
 select throws_ok($$insert into public.coach_letters (squad_id, hire_event_id, from_coach, to_coach, day, text)
   values ('33333333-3333-4333-8333-333333333333', 902, 'xiaohun', 'xiaohun', '2026-11-08', '交给你了')$$,
   '23514', null, 'never to itself');

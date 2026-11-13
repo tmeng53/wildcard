@@ -35,6 +35,9 @@
       "path": "../../packages/nudges"
     },
     {
+      "path": "../../packages/places"
+    },
+    {
       "path": "../../packages/weather"
     },
     {
@@ -90,6 +93,12 @@
     },
     {
       "path": "../../packages/art"
+    },
+    {
+      "path": "../../packages/place-ids"
+    },
+    {
+      "path": "../../packages/saved-places"
     }
   ]
 }

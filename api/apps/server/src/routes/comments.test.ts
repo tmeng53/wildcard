@@ -21,6 +21,8 @@ import {
 } from '@wildcard/notices';
 import {
   DeviceToken,
+  FIRST_PUSH_GENERATION,
+  PushGeneration,
   MemberId as PushMember,
   apnsPayload,
   type PushNotification,
@@ -45,6 +47,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -136,6 +140,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  ...placesOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
   scenes: scenesOn(db),
@@ -207,6 +213,14 @@ async function call(
 
 /** A 练了 the member posts to these squads now; its id. */
 async function checkIn(token: string, ...audience: string[]) {
+  return checkInFor(undefined, { token, audience });
+}
+
+/** The same, for that moment's day in the member's zone (else UTC's, as the feed's tests ask for). */
+async function checkInFor(
+  timeZone: string | undefined,
+  { token, audience }: { readonly token: string; readonly audience: readonly string[] },
+) {
   const now = new Date(Date.now() - 60_000);
   const id = randomUUID();
   const { status } = await call('PUT', {
@@ -214,7 +228,7 @@ async function checkIn(token: string, ...audience: string[]) {
     token,
     body: {
       version: 1,
-      day: now.toISOString().slice(0, 10),
+      day: new Intl.DateTimeFormat('en-CA', { timeZone: timeZone ?? 'UTC' }).format(now),
       createdAt: now.toISOString(),
       audience,
       kind: 'trained',
@@ -225,8 +239,8 @@ async function checkIn(token: string, ...audience: string[]) {
   return id;
 }
 
-/** A signed-up member with a nickname and a phone; the phone's token. */
-async function withPhone(nickname: string) {
+/** A signed-up member with a nickname and a phone (on a build from before generations, unless told); the phone's token. */
+async function withPhone(nickname: string, generation = FIRST_PUSH_GENERATION) {
   const signedUp = await signUp();
   const { status } = await call('PUT', {
     path: '/me/profile',
@@ -244,7 +258,7 @@ async function withPhone(nickname: string) {
   const phone = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await push.registerDevice({
     member: PushMember.parse(signedUp.userId),
-    device: { token: phone, environment: 'sandbox' },
+    device: { token: phone, environment: 'sandbox', generation },
   });
   return { ...signedUp, phone };
 }
@@ -541,8 +555,7 @@ describe('/check-ins/{checkInId}/comments', () => {
         alert: { 'loc-key': key, 'loc-args': args },
         category: 'comment',
         'thread-id': `comments-${run}`,
-        'interruption-level': 'active',
-        sound: 'default',
+        'interruption-level': 'passive',
         'mutable-content': 1,
       },
       event: { kind: 'comment', checkIn: run, comment: id },
@@ -643,5 +656,47 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(await noticesOf(tracy.token)).toMatchObject([
       { kind: 'comment', alert: { key: 'push.comment', args: ['安安', '加油'] } },
     ]);
+  });
+});
+
+// Here for the phones and the sender this file already sets up.
+describe('a 训练 posted to the squad', () => {
+  it('is pushed at once to squadmates whose build knows the push, never to its author', async () => {
+    const current = PushGeneration.parse(2);
+    const [tracy, ann, bo] = [
+      await withPhone('翠西', current),
+      await withPhone('安安', current),
+      await withPhone('阿波'),
+    ];
+    const squad = await squadOf(tracy, ann, bo);
+    // For the day it was where the member is (`withPhone` puts them in Shanghai): a post for
+    // another day is a 补打卡, which is never pushed.
+    const run = await checkInFor('Asia/Shanghai', { token: tracy.token, audience: [squad] });
+
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
+      [],
+      [
+        {
+          aps: {
+            // The sport by its id: these jobs list no sports (`noJobs`).
+            alert: { 'loc-key': 'push.teammate.trained', 'loc-args': ['翠西', 'run'] },
+            category: 'teammateCheckIn',
+            'interruption-level': 'active',
+            sound: 'default',
+          },
+          event: {
+            kind: 'teammateCheckIn',
+            checkIn: run,
+            squad,
+            // Its `today` is the day's at the server's clock, which the flow's own tests and
+            // `daily-push-today.test.ts` cover with a clock they set.
+          },
+        },
+      ],
+      // A build from before the teammate push has no words for it.
+      [],
+    ]);
+    // Not kept in 通知: the post is in 动态.
+    expect(await noticesOf(ann.token)).toStrictEqual([]);
   });
 });

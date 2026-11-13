@@ -10,6 +10,7 @@ import {
 } from '@wildcard/check-ins';
 import type {
   CoachMemberFacts,
+  CoachStreaks,
   MemberFacts,
   PlanDayFacts,
   SquadWeekSource,
@@ -174,6 +175,20 @@ function entryOf(
  * check-ins, their weekly titles from the awards, and this week's plan from the weekly plans,
  * the same numbers 我 and 出赛表 show.
  */
+/** A member's streaks still going as their squad sees them, in days, for a 请假条's wake. */
+export function coachStreaks(checkIns: Pick<CheckIns, 'currentStreaks'>): CoachStreaks {
+  return async ({ squad, member }) => {
+    const { training, meals } = await checkIns.currentStreaks({
+      member: CheckInMember.parse(member),
+      squad: CheckInSquad.parse(squad),
+    });
+    return {
+      ...(training === undefined ? {} : { training: training.days }),
+      ...(meals === undefined ? {} : { meals: meals.days }),
+    };
+  };
+}
+
 export function coachMemberFacts(deps: {
   readonly checkIns: CheckIns;
   readonly plans: WeeklyPlans;

@@ -56,6 +56,16 @@ public struct CheckIn: Hashable, Sendable {
     }
 }
 
+extension CheckIn.Entry {
+    /// A meal's 健康 and 好吃, if the member rated it.
+    public var mealRating: MealRating? {
+        switch self {
+        case .healthyMeal(let meal), .cheatMeal(let meal): meal.rating
+        case .trained, .disclaimer: nil
+        }
+    }
+}
+
 /// 训练: what was trained, with optional minutes, photos, a line and the workout it was posted
 /// from (Apple Health).
 public struct Training: Hashable, Sendable {
@@ -68,10 +78,12 @@ public struct Training: Hashable, Sendable {
     public let caption: Caption?
     /// The imported workout, with only the numbers the member kept; nil on one posted by hand.
     public let workout: Workout?
+    /// Where it was, if the member tagged a place.
+    public let place: Place?
 
     public init(
         activity: Activity, minutes: WorkoutMinutes? = nil, startTime: StartTime? = nil, photos: Photos? = nil,
-        caption: Caption? = nil, workout: Workout? = nil
+        caption: Caption? = nil, workout: Workout? = nil, place: Place? = nil
     ) {
         self.activity = activity
         self.minutes = minutes
@@ -79,6 +91,7 @@ public struct Training: Hashable, Sendable {
         self.photos = photos
         self.caption = caption
         self.workout = workout
+        self.place = place
     }
 }
 
@@ -132,11 +145,36 @@ public struct StartTime: Hashable, Sendable, Comparable {
 public struct Meal: Hashable, Sendable {
     public let photos: Photos?
     public let caption: Caption?
+    /// Where it was eaten, if the member tagged a place.
+    public let place: Place?
+    /// The member's own 健康 and 好吃 for it, if they rated it.
+    public let rating: MealRating?
 
-    public init(photos: Photos? = nil, caption: Caption? = nil) {
+    public init(photos: Photos? = nil, caption: Caption? = nil, place: Place? = nil, rating: MealRating? = nil) {
         self.photos = photos
         self.caption = caption
+        self.place = place
+        self.rating = rating
     }
+}
+
+/// A member's own rating of a meal: 健康 and 好吃, each 1 to 5 (Tracy, 2026-11-12).
+public struct MealRating: Hashable, Sendable {
+    /// The scores either may take. The API's; `APIContract`'s tests fail when the two differ.
+    public static let scores = 1...5
+
+    public let healthy: Int
+    public let tasty: Int
+
+    public init(healthy: Int, tasty: Int) throws(ContractsError) {
+        guard Self.scores.contains(healthy) else { throw .mealScore(healthy) }
+        guard Self.scores.contains(tasty) else { throw .mealScore(tasty) }
+        self.healthy = healthy
+        self.tasty = tasty
+    }
+
+    /// 卡价比, 卡路里性价比: 好吃 × 健康 ÷ 5, from 0.2 to 5.
+    public var calorieValue: Double { Double(tasty * healthy) / 5 }
 }
 
 /// 今日请假条: the member's excuse for resting today, at most `maxLength` characters, with

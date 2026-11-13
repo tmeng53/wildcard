@@ -3,76 +3,26 @@ import AvatarDomain
 import Foundation
 import Testing
 
-/// Each arm is drawn in two places: whole behind the torso (`armLBack`), and from the elbow out in
-/// front of the torso and what is worn over it but behind the head (`armL`, `Figure.forearm`). The front copy shows only while
-/// the move keys the arm in front (its `front` keys, held like Spine's draw-order keys), never
-/// worked out from the angle. The head always covers both, so no arm or sleeve ever crosses the
-/// face, and an arm at rest is behind, its sleeve root under the top.
-@Test func anArmIsBehindTheBodyUnlessTheMoveBringsItInFront() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "top": "warmup-tee"]))
-    func shown(_ part: PartID, front: Double, rotation: Double) throws -> Double {
-        var pose = figure.restPose
-        for arm: PartID in ["armL", "armR"] {
-            pose.parts[try figure.index(arm)].rotation = rotation
-            pose.parts[try figure.index(arm)].front = front
-        }
-        return figure.layout(pose)[try figure.index(part)].opacity
-    }
-    for side in ["L", "R"] {
-        let (arm, back) = (PartID("arm\(side)"), PartID("arm\(side)Back"))
-        #expect(try figure.index(back) < figure.index("torso"))
+/// Each arm is drawn once, whole, always in front of the body and everything worn on it (the top,
+/// the bottom, an accessory, even a bag's strap) and under the head, so no arm or sleeve ever crosses
+/// the face. An arm never changes depth, so it never jumps from behind the body to in front of it.
+@Test func armsAreDrawnOnceInFrontOfTheBodyAndUnderTheHead() throws {
+    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "acc": "halfmoon-tote"]))
+    let ids = figure.parts.map(\.id)
+    for arm: PartID in ["armL", "armR"] {
+        #expect(ids.filter { $0 == arm }.count == 1)
+        #expect(try figure.index(arm) > figure.index("torso"))
         #expect(try figure.index(arm) > figure.index("acc"))
         #expect(try figure.index(arm) < figure.index("head"))
-        #expect(try figure.part(back).art == figure.part(arm).art)
-        // Whatever the angle, only the key decides.
-        for rotation in [0.0, -45, 45, 160] {
-            for front in [0.0, 1] {
-                #expect(try shown(back, front: front, rotation: rotation) == 1)
-                #expect(try shown(arm, front: front, rotation: rotation) == front)
-            }
-        }
     }
-}
-
-/// The copy behind the body moves exactly as the arm clips move, bent elbow included.
-@Test func theArmsCopyMovesAsTheArm() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach"]))
-    var pose = figure.restPose
-    pose.parts[try figure.index("armL")].rotation = 70
-    pose.parts[try figure.index("armL")].bend = 30
-    let placed = figure.layout(pose)
-    #expect(try placed[figure.index("armLBack")].transform == placed[figure.index("armL")].transform)
-    #expect(try placed[figure.index("armLBack")].bend == placed[figure.index("armL")].bend)
-}
-
-/// What an arm holds stays in its hand whether the arm is drawn in front or behind.
-@Test func aHiddenFrontArmStillCarriesItsProp() throws {
-    let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "peach", "prop": "dumbbell"]))
-    let placed = figure.layout(figure.restPose)
-    #expect(try placed[figure.index("armR")].opacity == 0)
-    #expect(try placed[figure.index("propR")].opacity == 1)
-}
-
-/// Every move that keys an arm's depth holds it, never easing between front and behind. A one-shot
-/// may end in front: the crossfade back to idle keeps the arm there until it is back at rest
-/// (`Pose.blended`).
-@Test func movesHoldTheirArmDepth() throws {
-    let root = URL(filePath: #filePath).deletingLastPathComponent()
-        .appending(path: "../../Sources/AvatarArt/Placeholder")
-    let files = try #require(FileManager.default.enumerator(at: root, includingPropertiesForKeys: nil))
-    var keyed = 0
-    for case let url as URL in files where url.pathExtension == "json" {
-        guard let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any],
-            let tracks = json["tracks"] as? [[String: Any]]
-        else { continue }
-        let name = url.path().replacing(root.path(), with: "")
-        for track in tracks where track["channel"] as? String == "front" {
-            keyed += 1
-            let keys = try #require(track["keys"] as? [[String: Any]])
-            #expect(keys.dropFirst().allSatisfy { $0["ease"] as? String == "hold" }, "\(name) eases its depth")
-        }
+    #expect(ids.count { $0.description.hasPrefix("arm") } == 2)
+    // Whatever the angle, both arms show.
+    for rotation in [0.0, -45, 45, 160] {
+        var pose = figure.restPose
+        for arm: PartID in ["armL", "armR"] { pose.parts[try figure.index(arm)].rotation = rotation }
+        let placed = figure.layout(pose)
+        #expect(try placed[figure.index("armL")].opacity == 1 && placed[figure.index("armR")].opacity == 1)
     }
-    #expect(keyed > 80)
 }
 
 /// The head covers the arms, so a hand on the face would vanish behind it: no clip rests a hand

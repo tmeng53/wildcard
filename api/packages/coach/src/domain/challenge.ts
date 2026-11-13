@@ -1,6 +1,8 @@
 import { typedText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
+import { longestLine } from './line-limits.js';
+
 // The day's challenge (今日挑战) a coach may set a member on their morning note (Tracy,
 // 2026-11-08): one doable thing that makes today better, taken from their plan, 饮食小目标 and
 // recent training. A title, and a number with its unit when it has one (「喝水 8 杯」, 「拉伸 10
@@ -8,22 +10,20 @@ import { z } from 'zod';
 // done once the member says so (我完成了) or the coach sees it in that day's check-ins, only on
 // its own day; the first one stands.
 
-/** The longest title, in characters; the database checks the same. */
-export const CHALLENGE_TITLE_LIMIT = 8;
-/** The longest unit, in characters; the database checks the same. */
-export const CHALLENGE_UNIT_LIMIT = 4;
 /** The biggest amount; the database checks the same. */
 export const CHALLENGE_AMOUNT_MAX = 9999;
-/** The longest line under the title, in characters; the database checks the same. */
-export const CHALLENGE_LINE_LIMIT = 24;
 
+/**
+ * A challenge as it is kept, each of its words up to its longest in any language, as the
+ * database holds them; the coach's tool holds each to its own language's limit (`LINE_LIMITS`).
+ */
 export const Challenge = z
   .strictObject({
-    title: z.string().trim().min(1).max(CHALLENGE_TITLE_LIMIT),
+    title: z.string().trim().min(1).max(longestLine('challengeTitle')),
     amount: z.int().min(1).max(CHALLENGE_AMOUNT_MAX).optional(),
-    unit: z.string().trim().min(1).max(CHALLENGE_UNIT_LIMIT).optional(),
+    unit: z.string().trim().min(1).max(longestLine('challengeUnit')).optional(),
     /** The coach talking to the member under the title, about why (「昨天跑完腿还紧，睡前拉一拉。」). */
-    line: z.string().trim().min(1).max(CHALLENGE_LINE_LIMIT).optional(),
+    line: z.string().trim().min(1).max(longestLine('challengeLine')).optional(),
   })
   .refine(({ amount, unit }) => (amount === undefined) === (unit === undefined), {
     message: 'amount and unit come together, or neither',

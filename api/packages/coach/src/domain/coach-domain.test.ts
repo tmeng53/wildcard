@@ -10,11 +10,15 @@ import {
   squadSeed,
   storedBody,
   storedPathOf,
+  recallLines,
+  sliceWhole,
+  RECALL_LIMIT,
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, NOTE_LIMIT, saidLines, taskOf } from './prompt.js';
-import { lineLength, lineProblem, REPLY_LIMIT } from './reply.js';
+import { lineLanguageOf, longestLine } from './line-limits.js';
+import { HEAD_LIMIT, instructionsOf, memoryIndex, saidLines, taskOf } from './prompt.js';
+import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInBlock, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { wakesDue, weeksAround } from './wake.js';
@@ -446,7 +450,7 @@ describe('when the coach wakes', () => {
         '## 现在\n10-28 周三 09:30',
         // Who is who, with the nicknames it calls people by, so it never guesses a name.
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
-        '## 你的记性（你只记得这些）',
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n还是空的。',
       ].join('\n\n'),
     );
@@ -493,6 +497,31 @@ describe('when the coach wakes', () => {
     ).toBeUndefined();
   });
 
+  it('tells a 请假条’s wake the streaks it kept going, as a fact, from two days on', () => {
+    const leaveWeek: SquadWeek = {
+      ...week,
+      checkIns: week.checkIns.map((each) =>
+        each.id === 'c1' ? { ...each, kind: 'disclaimer', sport: undefined } : each,
+      ),
+    };
+    const task = (keptStreaks?: { training?: number; meals?: number }) =>
+      taskOf({
+        reason: { kind: 'checkIn', checkIn: 'c1' },
+        week: leaveWeek,
+        files: new Map(),
+        recentNotes: [],
+        ...(keptStreaks === undefined ? {} : { keptStreaks }),
+      })?.split('\n\n');
+    expect(task({ training: 12, meals: 5 })).toContain(
+      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天、连续吃饭打卡 5 天。',
+    );
+    expect(task({ training: 12, meals: 1 })).toContain(
+      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天。',
+    );
+    expect(task({ training: 1 })?.join('\n\n')).not.toContain('连续天数');
+    expect(task()?.join('\n\n')).not.toContain('连续天数');
+  });
+
   it('puts the wakes setting after the soul, its limits filled in, and never the 口头禅', () => {
     const coach = Coach.parse({
       version: 3,
@@ -517,9 +546,7 @@ describe('when the coach wakes', () => {
       coach,
     );
     // The wakes setting comes after the soul, with the API's limits put in.
-    expect(instructions).toContain(
-      `回复最多 ${String(REPLY_LIMIT)} 个字，便条最多 ${String(NOTE_LIMIT)} 个字。`,
-    );
+    expect(instructions).toContain('回复最多 100 个字，便条最多 60 个字。');
     // The 口头禅 is for its card only: told it, the model kept saying it.
     expect(instructions).not.toContain('今天也辛苦啦');
     expect(instructions).not.toContain('口头禅');
@@ -540,8 +567,8 @@ describe('when the coach wakes', () => {
         '# 新的一天\n2026-11-01，周日。',
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
         '## 和你的对话（过去一天，打卡下面，先后顺序）\n没人在打卡下面和你说话。',
-        // What it remembers, in full: it forgets everything else between wakes.
-        '## 你的记性（你只记得这些）',
+        // What it remembers: each file's beginning, the rest looked up with recall.
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n```\n米亚爱跑步\n```',
         '### squad.md（这个小队）\n还是空的。',
         // The 战术板 in the squad's language (Simplified Chinese until the week says another),
@@ -607,7 +634,7 @@ describe('when the coach wakes', () => {
                 ],
                 fuelGoals: ['喝够水', '少吃外卖'],
               },
-              weather: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
+              weather: { words: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C', city: '多伦多' },
             },
             {
               name: '队员2',
@@ -619,7 +646,7 @@ describe('when the coach wakes', () => {
               },
             },
             // Plans that couldn't be read: only the days trained.
-            { name: '队员3', trainedDays: 1, weather: '今天晴，-2–5°C' },
+            { name: '队员3', trainedDays: 1, weather: { words: '今天晴，-2–5°C' } },
           ],
         }),
         '## 今天的便条',
@@ -627,7 +654,7 @@ describe('when the coach wakes', () => {
     ).toBe(
       [
         '## 今天的便条（下面每人各写一张）',
-        '### 队员1\n- 本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息\n- 饮食小目标：喝够水、少吃外卖\n- 这周练了：2 天\n- 这周发过：周一游泳 45 分钟、健康餐，周三力量\n- 当地天气：今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
+        '### 队员1\n- 本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息\n- 饮食小目标：喝够水、少吃外卖\n- 这周练了：2 天\n- 这周发过：周一游泳 45 分钟、健康餐，周三力量\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
         '### 队员2\n- 本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息\n- 饮食小目标：这周没定\n- 这周练了：0 天\n- 这周发过：还没发过',
         '### 队员3\n- 这周练了：1 天\n- 当地天气：今天晴，-2–5°C',
       ].join('\n\n'),
@@ -721,7 +748,7 @@ describe('when the coach wakes', () => {
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
         '## 你最近点过的表情\n还没点过。',
         '## 语言\n用简体中文写。',
-        '## 你的记性（你只记得这些）',
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n还是空的。',
       ].join('\n\n'),
     );
@@ -892,25 +919,134 @@ describe('a line members read', () => {
   it('never names anyone as 队员N, however the number is written', () => {
     const named = '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
     expect(
-      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 100)),
+      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 'reply')),
     ).toStrictEqual([named, named, named]);
-    expect(lineProblem('全体队员加油', 100)).toBeUndefined();
-    expect(lineProblem('跑跑跑', 2)).toBe(
-      '太长了：3 字（英文字母、数字、空格和标点算半个字），最多 2 字。',
-    );
-    expect(lineProblem('', 2)).toBe('这句是空的。');
+    expect(lineProblem('全体队员加油', 'reply')).toBeUndefined();
+    expect(lineProblem('', 'reply')).toBe('这句是空的。');
   });
 
-  it('counts English as half, so it gets as much room as Chinese', () => {
-    expect(lineLength('跑步')).toBe(2);
-    expect(lineLength('Run 5k!')).toBe(3.5);
-    expect(lineLength('Nice 💪')).toBe(3.5);
-    expect(lineProblem('a'.repeat(200), 100)).toBeUndefined();
-    expect(lineProblem('a'.repeat(201), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+  it('holds a Chinese line to the Chinese limit and an English one to the English limit', () => {
+    expect(lineProblem('跑'.repeat(100), 'reply')).toBeUndefined();
+    expect(lineProblem('跑'.repeat(101), 'reply')).toBe('太长了：101 字，最多 100 字。');
+    expect(lineProblem('Run '.repeat(50), 'reply')).toBeUndefined();
+    expect(lineProblem('Run '.repeat(50) + '!', 'reply')).toBe(
+      '太长了：201 个字符，英文最多 200 个。',
     );
-    expect(lineProblem('跑'.repeat(101), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+    expect(lineProblem('喝水'.repeat(5), 'challengeTitle')).toBe('太长了：10 字，最多 8 字。');
+    expect(lineProblem('Drink water', 'challengeTitle')).toBeUndefined();
+  });
+
+  it('reads a line by the letters it is mostly written in, a name in the other aside', () => {
+    expect(lineLanguageOf('Hannah 今天跑了五公里，腿还好吗')).toBe('chinese');
+    expect(lineLanguageOf('毛头 says hi, nice run today')).toBe('english');
+    expect(lineLanguageOf('💪💪')).toBe('chinese');
+    expect(longestLine('reply')).toBe(200);
+    expect(longestLine('challengeLine')).toBe(48);
+  });
+});
+
+describe('memory on a waking day', () => {
+  it('shows each file’s first lines and how long it is, never the whole file', () => {
+    const long = [
+      '- 队员1 对花生过敏',
+      ...Array.from({ length: 30 }, (_, at) => `- 第 ${String(at)} 件小事，写得长一点占地方`),
+    ].join('\n');
+    const index = memoryIndex(
+      new Map([
+        ['people/队员1.md', long],
+        ['memory.md', '队员2 想跑半马'],
+        ['squad.md', undefined],
+      ]),
+    );
+    const block = index.split('\n\n### memory.md')[0] ?? '';
+    // The first fact stays in sight; the rest is only counted.
+    expect(block).toContain('- 队员1 对花生过敏');
+    expect(block).not.toContain('第 29 件小事');
+    expect(block).toContain(`……（共 ${String(long.length)} 字）`);
+    const head = block.split('```\n')[1]?.split('\n```')[0] ?? '';
+    expect(head.length).toBeLessThanOrEqual(HEAD_LIMIT);
+    // A short file shows whole, with no count; an empty one says so.
+    expect(index).toContain(
+      '### memory.md（你和大家之间的事）\n```\n队员2 想跑半马\n```\n\n### squad.md（这个小队）\n还是空的。',
+    );
+  });
+
+  it('cuts a first line longer than the head', () => {
+    const index = memoryIndex(new Map([['memory.md', '跑'.repeat(HEAD_LIMIT + 50)]]));
+    expect(index).toContain(
+      `### memory.md（你和大家之间的事）\n\`\`\`\n${'跑'.repeat(HEAD_LIMIT)}\n\`\`\`\n……（共 ${String(HEAD_LIMIT + 50)} 字）`,
+    );
+  });
+
+  it('the night still reads every file in full', () => {
+    const body = Array.from({ length: 40 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n');
+    const task = taskOf({
+      reason: { kind: 'dream', day: '2026-11-01' },
+      week,
+      files: new Map([['memory.md', body]]),
+      recentNotes: [],
+      talks: [],
+      yesterday: { day: '2026-10-31', checkIns: week.checkIns },
+    });
+    expect(task).toContain('- 第 39 件事');
+  });
+});
+
+describe('sliceWhole', () => {
+  it('cuts before a character it would split in half', () => {
+    expect(sliceWhole('跑🏃步', 2)).toBe('跑');
+    expect(sliceWhole('跑🏃步', 3)).toBe('跑🏃');
+    expect(sliceWhole('跑步', 5)).toBe('跑步');
+  });
+});
+
+describe('recall', () => {
+  const files = new Map([
+    ['people/队员1.md', '# 队员1\n- 对花生过敏\n- 想跑半马\n- 周三固定游泳'],
+    ['memory.md', '- 队员2 说过讨厌早起\n- 大家约好周日爬山'],
+  ]);
+
+  it('finds the lines holding any of the words, in file order, naming each file', () => {
+    expect(recallLines(files, { query: '半马 爬山' })).toBe(
+      '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
+    );
+  });
+
+  it('lists a whole file top first, leaving out headings', () => {
+    expect(recallLines(files, { path: 'people/队员1.md' })).toBe(
+      '【people/队员1.md】- 对花生过敏\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 周三固定游泳',
+    );
+  });
+
+  it('says plainly when nothing matches, so the coach doesn’t claim to remember', () => {
+    expect(recallLines(files, { query: '夸奖' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
+    );
+    expect(recallLines(new Map([['memory.md', '']]), {})).toBe(
+      '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
+    );
+  });
+
+  it('names the files there are when asked for one that isn’t', () => {
+    expect(recallLines(files, { path: 'people/队员9.md' })).toBe(
+      '没有 people/队员9.md 这个文件；能查的是：people/队员1.md，memory.md。',
+    );
+  });
+
+  it('stops at its limit and says how many lines are left', () => {
+    const many = new Map([
+      ['memory.md', Array.from({ length: 300 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n')],
+    ]);
+    const answer = recallLines(many, {});
+    expect(answer.length).toBeLessThanOrEqual(RECALL_LIMIT + 40);
+    expect(answer.startsWith('【memory.md】- 第 0 件事')).toBe(true);
+    expect(answer).toMatch(/（还有 \d+ 行没列出，换个更具体的词再查）$/);
+  });
+
+  it('cuts a line longer than the whole answer instead of leaving it out', () => {
+    const answer = recallLines(new Map([['memory.md', '长'.repeat(RECALL_LIMIT * 2)]]), {});
+    expect(answer).toBe(
+      `${`【memory.md】${'长'.repeat(RECALL_LIMIT * 2)}`.slice(0, RECALL_LIMIT - 1)}…`,
     );
   });
 });

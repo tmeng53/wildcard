@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320">
+  <path d="M 194 291 Q 206 296.5 218 291" fill="none" stroke="#22252E" stroke-width="5.6" stroke-linecap="round"/>
+  <path d="M 194 291 Q 206 296.5 218 291" fill="none" stroke="#E65345" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="195" cy="271" r="6" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="206" cy="266.5" r="7" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="217" cy="271" r="6" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="192" cy="281" r="5.6" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="220" cy="281" r="5.6" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="198" cy="288" r="5.4" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <circle cx="214" cy="288" r="5.4" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2"/>
+  <ellipse cx="206" cy="280" rx="14.6" ry="12.2" fill="#FBF8F2"/>
+  <ellipse cx="200.4" cy="278.2" rx="2.1" ry="2.5" fill="#22252E"/>
+  <ellipse cx="211.6" cy="278.2" rx="2.1" ry="2.5" fill="#22252E"/>
+  <ellipse cx="199.8" cy="277.3" rx="0.8" ry="0.8" fill="#FFFFFF"/>
+  <ellipse cx="211" cy="277.3" rx="0.8" ry="0.8" fill="#FFFFFF"/>
+  <ellipse cx="206" cy="283.4" rx="2.7" ry="1.9" fill="#22252E"/>
+  <path d="M 203.2 286.4 Q 204.6 288 206 286.6 Q 207.4 288 208.8 286.4" fill="none" stroke="#B9B1A6" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="195.4" cy="284" rx="2.6" ry="1.6" fill="#F28C8C" fill-opacity="0.5"/>
+  <ellipse cx="216.6" cy="284" rx="2.6" ry="1.6" fill="#F28C8C" fill-opacity="0.5"/>
+  <path d="M 195.5 267 C 189 267.5 187 275 188.4 282 C 189.6 287 194 287.5 195.6 284 C 196 279 197 273 199 269.5 Z" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M 216.5 267 C 223 267.5 225 275 223.6 282 C 222.4 287 218 287.5 216.4 284 C 216 279 215 273 213 269.5 Z" fill="#FBF8F2" stroke="#B9B1A6" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M 194.6 291.8 Q 195.8 296.2 199.4 295.2 Q 200.6 292.4 198 291.4" fill="none" stroke="#F2C94C" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

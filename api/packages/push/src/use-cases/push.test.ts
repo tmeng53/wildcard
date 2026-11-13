@@ -9,11 +9,22 @@ import { createPostgresDailyPushStore } from '../adapters/postgres-daily-push-st
 import { createPostgresDailyPushSettings } from '../adapters/postgres-daily-push-settings.js';
 import { createPostgresDeviceStore, type PushTables } from '../adapters/postgres-device-store.js';
 import { createPostgresSettingsStore } from '../adapters/postgres-settings-store.js';
-import { DeviceToken, MemberId, type Device } from '../domain/device.js';
+import {
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
+} from '../adapters/postgres-teammate-push.js';
+import {
+  DeviceToken,
+  FIRST_PUSH_GENERATION as first,
+  MemberId,
+  PushGeneration,
+  type Device,
+} from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
 import { PushRejectedError } from '../errors.js';
 import type { PushSender, SendOutcome } from '../ports.js';
 import { createPush } from './push.js';
+import { createTeammatePushSettings } from './teammate-push-settings.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
 const db = new Kysely<PushTables>({
@@ -59,6 +70,8 @@ const stores = {
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
   dailySettings: createPostgresDailyPushSettings(db),
+  teammate: createPostgresTeammatePushStore(db),
+  teammateSettings: createPostgresTeammatePushSettings(db),
 };
 
 describe('push devices', () => {
@@ -69,12 +82,15 @@ describe('push devices', () => {
     const push = createPush({ ...stores, sender });
     await push.registerDevice({
       member: tracy,
-      device: { token: phone, environment: 'production' },
+      device: { token: phone, environment: 'production', generation: first },
     });
-    await push.registerDevice({ member: tracy, device: { token: ipad, environment: 'sandbox' } });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: ipad, environment: 'sandbox', generation: first },
+    });
     await push.registerDevice({
       member: friend,
-      device: { token: friendsPhone, environment: 'production' },
+      device: { token: friendsPhone, environment: 'production', generation: first },
     });
 
     expect(await push.notifyMembers({ members: [tracy], notification })).toStrictEqual({
@@ -85,8 +101,8 @@ describe('push devices', () => {
     });
     expect(new Set(got)).toStrictEqual(
       new Set([
-        { token: phone, environment: 'production' },
-        { token: ipad, environment: 'sandbox' },
+        { token: phone, environment: 'production', generation: first },
+        { token: ipad, environment: 'sandbox', generation: first },
       ]),
     );
   });
@@ -95,16 +111,22 @@ describe('push devices', () => {
     const [tracy, friend] = [await newMember(), await newMember()];
     const phone = newToken();
     const push = createPush({ ...stores, sender: scriptedSender().sender });
-    await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
-    await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: phone, environment: 'sandbox', generation: first },
+    });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: phone, environment: 'sandbox', generation: first },
+    });
     await push.registerDevice({
       member: friend,
-      device: { token: phone, environment: 'production' },
+      device: { token: phone, environment: 'production', generation: first },
     });
 
     expect(await store.devicesOf([tracy])).toStrictEqual([]);
     expect(await store.devicesOf([friend])).toStrictEqual([
-      { token: phone, environment: 'production' },
+      { token: phone, environment: 'production', generation: first },
     ]);
   });
 
@@ -114,27 +136,39 @@ describe('push devices', () => {
     const push = createPush({ ...stores, sender: scriptedSender().sender });
     await push.registerDevice({
       member: tracy,
-      device: { token: DeviceToken.parse(hex.toUpperCase()), environment: 'sandbox' },
+      device: {
+        token: DeviceToken.parse(hex.toUpperCase()),
+        environment: 'sandbox',
+        generation: first,
+      },
     });
     await push.registerDevice({
       member: tracy,
-      device: { token: DeviceToken.parse(hex), environment: 'sandbox' },
+      device: { token: DeviceToken.parse(hex), environment: 'sandbox', generation: first },
     });
-    expect(await store.devicesOf([tracy])).toStrictEqual([{ token: hex, environment: 'sandbox' }]);
+    expect(await store.devicesOf([tracy])).toStrictEqual([
+      { token: hex, environment: 'sandbox', generation: first },
+    ]);
   });
 
   it('stops sending to a phone its member signed out on, and ignores anyone else asking', async () => {
     const [tracy, friend] = [await newMember(), await newMember()];
     const [phone, other] = [newToken(), newToken()];
     const push = createPush({ ...stores, sender: scriptedSender().sender });
-    await push.registerDevice({ member: tracy, device: { token: phone, environment: 'sandbox' } });
-    await push.registerDevice({ member: tracy, device: { token: other, environment: 'sandbox' } });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: phone, environment: 'sandbox', generation: first },
+    });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: other, environment: 'sandbox', generation: first },
+    });
 
     await push.unregisterDevice({ member: friend, token: phone });
     await push.unregisterDevice({ member: tracy, token: other });
     await push.unregisterDevice({ member: tracy, token: other });
     expect(await store.devicesOf([tracy])).toStrictEqual([
-      { token: phone, environment: 'sandbox' },
+      { token: phone, environment: 'sandbox', generation: first },
     ]);
   });
 
@@ -150,7 +184,10 @@ describe('push devices', () => {
     );
     const push = createPush({ ...stores, sender });
     for (const token of [dead, failing, fine]) {
-      await push.registerDevice({ member: tracy, device: { token, environment: 'production' } });
+      await push.registerDevice({
+        member: tracy,
+        device: { token, environment: 'production', generation: first },
+      });
     }
 
     expect(await push.notifyMembers({ members: [tracy], notification })).toStrictEqual({
@@ -162,8 +199,8 @@ describe('push devices', () => {
     expect(got).toHaveLength(3);
     expect(new Set(await store.devicesOf([tracy]))).toStrictEqual(
       new Set([
-        { token: failing, environment: 'production' },
-        { token: fine, environment: 'production' },
+        { token: failing, environment: 'production', generation: first },
+        { token: fine, environment: 'production', generation: first },
       ]),
     );
   });
@@ -176,7 +213,7 @@ describe('push devices', () => {
     });
     await push.registerDevice({
       member: tracy,
-      device: { token: newToken(), environment: 'sandbox' },
+      device: { token: newToken(), environment: 'sandbox', generation: first },
     });
     expect(await push.notifyMembers({ members: [tracy], notification })).toStrictEqual({
       sent: 0,
@@ -184,6 +221,39 @@ describe('push devices', () => {
       off: 1,
       failures: [],
     });
+  });
+
+  it('skips a phone whose build is from before the push’s words', async () => {
+    const tracy = await newMember();
+    const [older, newer] = [newToken(), newToken()];
+    const { sender, got } = scriptedSender();
+    const push = createPush({ ...stores, sender });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: older, environment: 'production', generation: first },
+    });
+    await push.registerDevice({
+      member: tracy,
+      device: { token: newer, environment: 'production', generation: PushGeneration.parse(2) },
+    });
+
+    expect(
+      await push.notifyMembers({ members: [tracy], notification: { ...notification, since: 2 } }),
+    ).toStrictEqual({ sent: 1, gone: 0, off: 0, failures: [] });
+    expect(got.map(({ token }) => token)).toStrictEqual([newer]);
+  });
+
+  it('keeps the generation a phone last registered with', async () => {
+    const tracy = await newMember();
+    const phone = newToken();
+    const push = createPush({ ...stores, sender: scriptedSender().sender });
+    const device = { token: phone, environment: 'production' as const };
+    await push.registerDevice({ member: tracy, device: { ...device, generation: first } });
+    await push.registerDevice({
+      member: tracy,
+      device: { ...device, generation: PushGeneration.parse(2) },
+    });
+    expect(await store.devicesOf([tracy])).toStrictEqual([{ ...device, generation: 2 }]);
   });
 
   it('sends nothing to no one', async () => {
@@ -243,5 +313,82 @@ describe('DeviceToken', () => {
     ['empty', ''],
   ])('refuses a token that is %s', (_case, token) => {
     expect(DeviceToken.safeParse(token).success).toBe(false);
+  });
+});
+
+describe('teammate pushes', () => {
+  const push = createPush({ ...stores, sender: scriptedSender().sender });
+  const at = (minute: number) => new Date(Date.UTC(2026, 10, 13, 12, minute));
+
+  it('rings for the first few in 24 hours, then goes silently, and rings again a day later', async () => {
+    const tracy = await newMember();
+    const claim = (moment: Date) =>
+      push.claimTeammate({ checkIn: randomUUID(), member: tracy, at: moment, dailyRings: 2 });
+
+    expect([await claim(at(0)), await claim(at(1)), await claim(at(2))]).toStrictEqual([
+      'ring',
+      'ring',
+      'silent',
+    ]);
+    // 24 hours after the first ring, one ring is free again; the silent one never counted.
+    expect(await claim(new Date(at(0).getTime() + 24 * 60 * 60 * 1000))).toBe('ring');
+    expect(await claim(new Date(at(0).getTime() + 24 * 60 * 60 * 1000 + 1))).toBe('silent');
+  });
+
+  it('handles a check-in once a member, and each member on their own count', async () => {
+    const [tracy, friend] = [await newMember(), await newMember()];
+    const checkIn = randomUUID();
+    const told = { checkIn, at: at(0), dailyRings: 1 };
+
+    expect(await push.claimTeammate({ ...told, member: tracy })).toBe('ring');
+    expect(await push.claimTeammate({ ...told, member: tracy })).toBeUndefined();
+    expect(await push.claimTeammate({ ...told, member: friend })).toBe('ring');
+  });
+
+  it('rings no more than allowed when posts land together', async () => {
+    const tracy = await newMember();
+    const rings = await Promise.all(
+      Array.from({ length: 7 }, () =>
+        push.claimTeammate({ checkIn: randomUUID(), member: tracy, at: at(0), dailyRings: 5 }),
+      ),
+    );
+    expect(rings.filter((ring) => ring === 'ring')).toHaveLength(5);
+    expect(rings.filter((ring) => ring === 'silent')).toHaveLength(2);
+  });
+
+  it('never rings when no rings are allowed', async () => {
+    const tracy = await newMember();
+    expect(
+      await push.claimTeammate({ checkIn: randomUUID(), member: tracy, at: at(0), dailyRings: 0 }),
+    ).toBe('silent');
+  });
+
+  it('logs a change of its settings once, with the whole new value', async () => {
+    const admin = await newMember();
+    // In a transaction rolled back after, so the settings every other test reads stay as seeded.
+    const changed = { version: 1, sending: true, dailyRings: 3 };
+    let seen: unknown;
+    await db
+      .transaction()
+      .execute(async (scope) => {
+        const settings = createTeammatePushSettings({
+          store: createPostgresTeammatePushSettings(scope),
+        });
+        const seeded = await settings.current();
+        const first = await settings.change({ dailyRings: 3 }, admin);
+        const again = await settings.change({ dailyRings: 3 }, admin);
+        const { rows } = await sql<{ settings: unknown }>`
+          select settings from public.teammate_push_setting_events where changed_by = ${admin}
+        `.execute(scope);
+        seen = { seeded, first, again, rows };
+        throw new Error('roll back');
+      })
+      .catch(() => undefined);
+    expect(seen).toStrictEqual({
+      seeded: { version: 1, sending: true, dailyRings: 5 },
+      first: changed,
+      again: changed,
+      rows: [{ settings: changed }],
+    });
   });
 });

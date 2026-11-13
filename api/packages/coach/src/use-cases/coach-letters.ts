@@ -2,10 +2,11 @@ import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 import { z } from 'zod';
 
 import type { Coach } from '../domain/coach.js';
-import { letterTask, LETTER_LIMIT, tenuresOf, type CoachLetter } from '../domain/letter.js';
+import { letterTask, tenuresOf, type CoachLetter } from '../domain/letter.js';
 import { memberOfPath, shownBody, shownPathOf } from '../domain/memory.js';
 import { instructionsOf, memoryBlock } from '../domain/prompt.js';
-import { HALF_WIDTH, lineProblem } from '../domain/reply.js';
+import { limitWords } from '../domain/line-limits.js';
+import { lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
 import { consentedOnly, rosterOf } from '../domain/squad-week.js';
 import type {
@@ -180,13 +181,13 @@ function writeLetter(written: (text: string) => void): CoachTool {
   const parameters = z.object({ text: z.string().describe('信的正文') });
   return {
     name: 'write_letter',
-    description: `交上你的告别信，最多 ${String(LETTER_LIMIT)} 字${HALF_WIDTH}。`,
+    description: `交上你的告别信，${limitWords('letter')}。`,
     parameters,
     run: (input) => {
       const parsed = parameters.safeParse(input);
       if (!parsed.success) return Promise.resolve(`参数不对：${z.prettifyError(parsed.error)}`);
       const text = parsed.data.text.trim();
-      const problem = lineProblem(text, LETTER_LIMIT);
+      const problem = lineProblem(text, 'letter');
       if (problem !== undefined) return Promise.resolve(`${problem}重写一封。`);
       written(text);
       return Promise.resolve('交上了。');

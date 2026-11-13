@@ -1,6 +1,5 @@
-import { lineLength } from '@wildcard/coach';
+import { fitsLine, LINE_LIMITS } from '@wildcard/coach';
 import {
-  GIFT_LINE_LIMIT,
   GiftPieceEdit,
   MemberId,
   PieceEdit,
@@ -59,8 +58,8 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
       'put_gift_piece), team (only the Wildcard team gives it, with give_reward) or event (the ' +
       'named events give it, such as bug-adopted and idea-adopted from adopt_feedback; change ' +
       'team and event triggers with put_reward_trigger). give_unlocks gives what has a training ' +
-      'trigger. A training trigger with offered false is retired and opens nothing more (every ' +
-      'prop’s, since props are everyone’s). Starter pieces need none. Badges and vouchers ' +
+      'trigger. A training trigger with offered false is retired and opens nothing more (the old ' +
+      'props’, since most props are everyone’s). Starter pieces need none. Badges and vouchers ' +
       'themselves: get_badges.',
     changes: false,
     input: z.strictObject({}),
@@ -84,7 +83,9 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
     name: 'put_unlock_rule',
     title: 'Add or change an unlock rule',
     description:
-      'Adds a rule for a store or piece, or changes the sports or count of one. A piece ' +
+      'Adds a rule for a store, piece or prop, or changes the sports or count of one. Most ' +
+      'props need none (every member holds them); one with a rule, such as a dog on a leash, ' +
+      'shows in the app only once unlocked. A piece ' +
       'with a rule stays locked in its store until earned; when it is out follows its store and ' +
       'piece (put_store, put_piece). A new rule counts check-ins made ' +
       'from now; a changed one keeps its start, and a retired one comes back. Members who ' +
@@ -97,13 +98,13 @@ export function putUnlockRule({ unlocks }: UnlockToolDependencies) {
   });
 }
 
-/** `give_unlocks`: opens stores and pieces for one member, whatever they trained. */
+/** `give_unlocks`: opens stores, props and pieces for one member, whatever they trained. */
 export function giveUnlocks({ unlocks }: UnlockToolDependencies) {
   return adminTool({
     name: 'give_unlocks',
-    title: 'Give a member stores and pieces',
+    title: 'Give a member stores, props and pieces',
     description:
-      'Opens the named stores and pieces (each one with an unlock rule) for one member now, as ' +
+      'Opens the named stores, props and pieces (each one with an unlock rule) for one member now, as ' +
       'if they had earned them, or every one when items is left out; for testing, or to make ' +
       'up for check-ins that could not count. What they already hold stays. An unlock is never ' +
       'taken back. Returns everything the member holds.',
@@ -237,11 +238,11 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
         .string()
         .trim()
         .min(1)
-        .refine((line) => Math.ceil(lineLength(line)) <= GIFT_LINE_LIMIT, {
-          message: `At most ${String(GIFT_LINE_LIMIT)} characters, English letters, digits, spaces and marks counting as half.`,
+        .refine((line) => fitsLine(line, 'gift'), {
+          message: `At most ${String(LINE_LIMITS.gift.chinese)} characters in Chinese, ${String(LINE_LIMITS.gift.english)} in English.`,
         })
         .describe(
-          `What the coach says with it, in the member’s language, up to ${String(GIFT_LINE_LIMIT)} characters (English letters, digits, spaces and marks count as half).`,
+          `What the coach says with it, in the member’s language, up to ${String(LINE_LIMITS.gift.chinese)} characters in Chinese or ${String(LINE_LIMITS.gift.english)} in English.`,
         ),
     }),
     run: async (input, { admin }) => {
