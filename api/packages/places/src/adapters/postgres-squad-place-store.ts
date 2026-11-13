@@ -1,6 +1,6 @@
 import type { Kysely, Selectable } from 'kysely';
 
-import { MemberId } from '../domain/place-rating.js';
+import { MemberId } from '../domain/ids.js';
 import { SquadId, SquadPlaceId, SquadPlaceKind, type SquadPlace } from '../domain/squad-place.js';
 import type { SquadPlaceStore } from '../ports.js';
 import type { DB } from './tables.js';

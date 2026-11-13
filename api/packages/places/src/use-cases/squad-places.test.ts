@@ -9,7 +9,7 @@ import {
   createPostgresSquadPlaceStore,
   type SquadPlaceTables,
 } from '../adapters/postgres-squad-place-store.js';
-import { MemberId } from '../domain/place-rating.js';
+import { MemberId } from '../domain/ids.js';
 import { SquadId, SquadPlaceId } from '../domain/squad-place.js';
 import { SquadNotJoinedError, SquadPlaceIdConflictError } from '../errors.js';
 import { createSquadPlaces } from './squad-places.js';

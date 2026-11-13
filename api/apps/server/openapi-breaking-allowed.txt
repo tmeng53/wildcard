@@ -49,3 +49,6 @@ GET /squads/{squadId}/coach/activity the `memberNote/challenge/unit` response pr
 GET /squads/{squadId}/coach/challenge the `today/challenge/line` response property's maxLength was increased from `24` to `48` for the response status `200`
 GET /squads/{squadId}/coach/challenge the `today/challenge/title` response property's maxLength was increased from `8` to `16` for the response status `200`
 GET /squads/{squadId}/coach/challenge the `today/challenge/unit` response property's maxLength was increased from `4` to `8` for the response status `200`
+# Places have no score (Tracy, 2026-11-13). No build ever shipped a way to give one: the place page
+# that shipped only read the squad's average, which now stays null.
+PUT /me/place-ratings/{key} api path removed without deprecation

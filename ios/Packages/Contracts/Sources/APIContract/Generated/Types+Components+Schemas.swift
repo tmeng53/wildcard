@@ -9506,11 +9506,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/people`.
             public var people: Swift.Int
-            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            /// No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/stars`.
             public var stars: Swift.Double?
-            /// How many of the squad’s members gave a score.
+            /// No longer given: always 0.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/raters`.
             public var raters: Swift.Int
@@ -9624,8 +9624,8 @@ extension Components {
             ///   - place: The place as the newest post there tagged it.
             ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
             ///   - people: 来过的队友 N 人: how many people posted them.
-            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
-            ///   - raters: How many of the squad’s members gave a score.
+            ///   - stars: No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
+            ///   - raters: No longer given: always 0.
             ///   - lastAt: When the newest post there was made, in UTC.
             ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///   - sports: 大家在这里练: each sport its 训练 named, most first.
@@ -9733,11 +9733,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
             public var minutes: Swift.Int?
-            /// A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            /// No longer given: always null (places have no score, Tracy 2026-11-13).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
             public var stars: Swift.Int?
-            /// A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            /// No longer given: always null (a place’s tiles show no score).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/calorieValue`.
             public var calorieValue: Swift.Double?
@@ -9754,8 +9754,8 @@ extension Components {
             ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
             ///   - cover:
             ///   - minutes: A 训练’s minutes, when it has them.
-            ///   - stars: A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
-            ///   - calorieValue: A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            ///   - stars: No longer given: always null (places have no score, Tracy 2026-11-13).
+            ///   - calorieValue: No longer given: always null (a place’s tiles show no score).
             public init(
                 checkIn: Swift.String,
                 member: Swift.String,
@@ -9879,11 +9879,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/people`.
             public var people: Swift.Int
-            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            /// No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/stars`.
             public var stars: Swift.Double?
-            /// How many of the squad’s members gave a score.
+            /// No longer given: always 0.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/raters`.
             public var raters: Swift.Int
@@ -9961,7 +9961,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/sports`.
             public var sports: Components.Schemas.PlaceDetail.SportsPayload
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
             public struct MealsPayload: Codable, Hashable, Sendable {
@@ -9969,15 +9969,15 @@ extension Components {
                 public var healthyMeal: Swift.Int
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/cheatMeal`.
                 public var cheatMeal: Swift.Int
-                /// Rated meals’ 健康, averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/healthy`.
                 public var healthy: Swift.Double?
-                /// Rated meals’ 好吃, averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/tasty`.
                 public var tasty: Swift.Double?
-                /// Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/calorieValue`.
                 public var calorieValue: Swift.Double?
@@ -9986,9 +9986,9 @@ extension Components {
                 /// - Parameters:
                 ///   - healthyMeal:
                 ///   - cheatMeal:
-                ///   - healthy: Rated meals’ 健康, averaged.
-                ///   - tasty: Rated meals’ 好吃, averaged.
-                ///   - calorieValue: Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                ///   - healthy: No longer given: always null.
+                ///   - tasty: No longer given: always null.
+                ///   - calorieValue: No longer given: always null.
                 public init(
                     healthyMeal: Swift.Int,
                     cheatMeal: Swift.Int,
@@ -10010,11 +10010,11 @@ extension Components {
                     case calorieValue
                 }
             }
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
             public var meals: Components.Schemas.PlaceDetail.MealsPayload
-            /// The viewer’s own score; null before one.
+            /// No longer given: always null.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
             public var myStars: Swift.Int?
@@ -10030,13 +10030,13 @@ extension Components {
             ///   - place: The place as the newest post there tagged it.
             ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
             ///   - people: 来过的队友 N 人: how many people posted them.
-            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
-            ///   - raters: How many of the squad’s members gave a score.
+            ///   - stars: No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
+            ///   - raters: No longer given: always 0.
             ///   - lastAt: When the newest post there was made, in UTC.
             ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///   - sports: 大家在这里练: each sport its 训练 named, most first.
-            ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
-            ///   - myStars: The viewer’s own score; null before one.
+            ///   - meals: 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
+            ///   - myStars: No longer given: always null.
             ///   - posts: 动态: the posts tagged with it, newest first.
             public init(
                 version: Components.Schemas.PlaceDetail.VersionPayload,
@@ -10081,72 +10081,6 @@ extension Components {
                 case meals
                 case myStars
                 case posts
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/PlaceRatingView`.
-        public struct PlaceRatingView: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
-            public var version: Components.Schemas.PlaceRatingView.VersionPayload
-            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/key`.
-            public var key: Swift.String
-            /// The score, 1 to 5.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/stars`.
-            public var stars: Swift.Int
-            /// Creates a new `PlaceRatingView`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
-            ///   - stars: The score, 1 to 5.
-            public init(
-                version: Components.Schemas.PlaceRatingView.VersionPayload,
-                key: Swift.String,
-                stars: Swift.Int
-            ) {
-                self.version = version
-                self.key = key
-                self.stars = stars
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case key
-                case stars
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/PlaceRatingChange`.
-        public struct PlaceRatingChange: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
-            public var version: Components.Schemas.PlaceRatingChange.VersionPayload
-            /// The score, 1 to 5.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/stars`.
-            public var stars: Swift.Int
-            /// Creates a new `PlaceRatingChange`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - stars: The score, 1 to 5.
-            public init(
-                version: Components.Schemas.PlaceRatingChange.VersionPayload,
-                stars: Swift.Int
-            ) {
-                self.version = version
-                self.stars = stars
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case stars
             }
         }
         /// - Remark: Generated from `#/components/schemas/SavedPlaceList`.

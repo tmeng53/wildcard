@@ -53,13 +53,11 @@ extension PlaceDetail {
     init(_ wire: Components.Schemas.PlaceDetail) throws(ContractsError) {
         let meals = wire.meals
         self.init(
-            place: try Place(wire.place), visits: wire.visits, people: wire.people, stars: wire.stars,
+            place: try Place(wire.place), visits: wire.visits, people: wire.people,
             sports: wire.sports.compactMap { sport in
                 (try? Activity(sport)).map { SportCount($0, count: sport.count) }
             },
-            meals: MealTally(
-                healthyMeals: meals.healthyMeal, cheatMeals: meals.cheatMeal, healthy: meals.healthy,
-                tasty: meals.tasty, calorieValue: meals.calorieValue),
+            meals: MealTally(healthyMeals: meals.healthyMeal, cheatMeals: meals.cheatMeal),
             posts: wire.posts.compactMap { try? PlaceVisit($0) })
     }
 }
@@ -75,13 +73,11 @@ extension PlaceVisit {
             case .healthyMeal: .healthyMeal
             case .cheatMeal: .cheatMeal
             }
-        let score: VisitScore? =
-            if let stars = wire.stars { .stars(stars) } else { wire.calorieValue.map(VisitScore.calorieValue) }
         var cover: PhotoRef?
         if let photo = wire.cover { cover = try PhotoRef(photo.value1) }
         self.init(
             id: CheckInID(id), author: MemberID(author), kind: kind, activity: try Activity(wire),
-            day: try LocalDay(wire.day), cover: cover, minutes: wire.minutes, score: score)
+            day: try LocalDay(wire.day), cover: cover, minutes: wire.minutes)
     }
 }
 
