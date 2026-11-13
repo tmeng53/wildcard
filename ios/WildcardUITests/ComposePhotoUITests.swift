@@ -98,9 +98,11 @@ final class ComposePhotoUITests: XCTestCase {
         keepScreenshot(named: "18-disclaimer-photos")
 
         app.buttons["disclaimer.post"].tap()
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
-        bubble.tap()
+        waitFor(field, "exists == false", "the 请假条 page didn't close")
+        // 已发出's 查看 opens the post in 动态.
+        let outgoing = app.buttons["today.outgoing"]
+        waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
+        outgoing.tap()
         let words = app.staticTexts.matching(NSPredicate(format: "label == %@", "下大雨，在家给猫当沙发")).firstMatch
         XCTAssertTrue(words.waitForExistence(timeout: Self.wait), "the 请假条 isn't in 动态")
         settle()
@@ -113,7 +115,11 @@ final class ComposePhotoUITests: XCTestCase {
         app.launchArguments += [
             "-uitest-photos", "3", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
             "-uitest-noon", "-today.cardPage", "0",
+            // 已发出 holds a minute, so a slow simulator still finds its 查看.
+            "-uitest-bubble-hold",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app

@@ -85,6 +85,8 @@ export interface SquadStore {
   joinedAt(member: MemberId, squad: SquadId): Promise<Date | undefined>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
+  /** Which of these squads ended (everyone left), and when; a squad still going is left out. */
+  endedAmong(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, Date>>;
   /**
    * The members in `squad` at a moment, in the order they (last) joined, from its log of joins
    * and leaves: someone who joined later isn't, someone who left later is.

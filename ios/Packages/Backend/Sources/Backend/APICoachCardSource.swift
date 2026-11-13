@@ -47,6 +47,8 @@ public struct APICoachCardSource: CoachCardSource {
             throw .signedOut
         } catch .refused(.squadNotJoined) {
             throw .noSquad
+        } catch .refused(.coachChallengeDayOver) {
+            throw .challengeExpired
         } catch .refused, .unreadableResponse {
             throw .outdated
         } catch {

@@ -54,6 +54,13 @@
 	<!-- Approximate location only, for the coach's weather: iOS never offers precise location. -->
 	<key>NSLocationDefaultAccuracyReduced</key>
 	<true/>
+	<!-- 添加位置 asks once a session for precise location to list nearby places; said no, the
+	     approximate one. The words are in InfoPlist.xcstrings under the purpose key. -->
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>NearbyPlaces</key>
+		<string>To list the places near you when you add a location to a post. Only the place you pick is shared.</string>
+	</dict>
 	<!-- The app uses only the encryption built into iOS (HTTPS), which is exempt, so App Store
 	     Connect doesn't ask about export compliance on every upload. -->
 	<key>ITSAppUsesNonExemptEncryption</key>

@@ -4,7 +4,7 @@ import { createServer, type IncomingHttpHeaders } from 'node:http2';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { DeviceToken, type Device } from '../domain/device.js';
+import { DeviceToken, FIRST_PUSH_GENERATION, type Device } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
 import { PushRejectedError, PushUnavailableError } from '../errors.js';
 import { createApnsSender } from './apns-sender.js';
@@ -67,6 +67,7 @@ function senderFor() {
 const device: Device = {
   token: DeviceToken.parse('a1'.repeat(32)),
   environment: 'production',
+  generation: FIRST_PUSH_GENERATION,
 };
 const reaction: PushNotification = {
   alert: { key: 'push.dailyProgress.received', args: ['3'] },

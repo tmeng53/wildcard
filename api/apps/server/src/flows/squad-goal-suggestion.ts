@@ -39,7 +39,7 @@ export interface GoalSuggestionDependencies {
   readonly checkIns: Pick<CheckIns, 'squadsCheckedInto' | 'squadTrainings' | 'weekStartNow'>;
   readonly squads: Pick<
     Squads,
-    'captainOf' | 'goalSuggestions' | 'membersAt' | 'timeZonesFor' | 'weeklyGoals'
+    'captainOf' | 'endedAmong' | 'goalSuggestions' | 'membersAt' | 'timeZonesFor' | 'weeklyGoals'
   >;
   /** Keeps the suggestion and tells the captain, both or neither (`suggestGoalIn`). */
   readonly suggestGoal: SuggestGoal;

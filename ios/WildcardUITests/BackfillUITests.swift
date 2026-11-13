@@ -44,21 +44,51 @@ final class BackfillUITests: XCTestCase {
         XCTAssertFalse(today.isSelected, "today stayed picked")
         settle()
         keepScreenshot(named: "62-compose-backfill-yesterday")
+        rateTheMeal(in: app)
 
         caption.tap()
         caption.typeText("补一顿沙拉")
         app.buttons["compose.post"].tap()
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "the post didn't land")
-        bubble.tap()
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
+        XCTAssertTrue(caption.waitForNonExistence(timeout: Self.wait), "the post didn't land")
+        // 已发出's 查看 opens the post in 动态.
+        let outgoing = app.buttons["today.outgoing"]
+        waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
+        outgoing.tap()
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "查看 didn't open 动态")
         let label = app.staticTexts.matching(identifier: "post.backfill").firstMatch
         XCTAssertTrue(label.waitForExistence(timeout: Self.wait), "the post isn't marked as a 补打卡")
         XCTAssertEqual(label.label, "补昨天的")
+        assertRatedFiveAndFour(in: app)
         settle()
         keepScreenshot(named: "63-feed-backfill")
 
         disclaimerForAPastDay(in: app)
+    }
+
+    /// A meal's page asks 这顿怎么样 under 日期: five stars for 健康 and five for 好吃, picked by a
+    /// tap on the fifth and the fourth.
+    private func rateTheMeal(in app: XCUIApplication) {
+        let healthy = app.descendants(matching: .any).matching(identifier: "compose.healthy").firstMatch
+        let tasty = app.descendants(matching: .any).matching(identifier: "compose.tasty").firstMatch
+        XCTAssertTrue(healthy.waitForExistence(timeout: Self.wait), "a meal has no 这顿怎么样")
+        XCTAssertTrue(tasty.exists, "a meal has no 好吃 stars")
+        if !tasty.isHittable { app.swipeUp() }
+        XCTAssertTrue(healthy.isHittable && tasty.isHittable, "这顿怎么样 is covered")
+        healthy.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        tasty.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5)).tap()
+        settle()
+        keepScreenshot(named: "62-compose-meal-rating")
+    }
+
+    /// Rated 5 and 4 on its page, the meal carries them on its 成绩条 in 动态.
+    private func assertRatedFiveAndFour(in app: XCUIApplication) {
+        let rated = app.descendants(matching: .any).matching(identifier: "feed.post")
+            .containing(.any, identifier: "post.backfill").firstMatch
+        let healthy = rated.descendants(matching: .any).matching(identifier: "strip.healthy").firstMatch
+        XCTAssertTrue(healthy.waitForExistence(timeout: Self.wait), "the rated meal has no 成绩条")
+        XCTAssertTrue(healthy.label.hasPrefix("5"), "健康 reads \(healthy.label)")
+        let tasty = rated.descendants(matching: .any).matching(identifier: "strip.tasty").firstMatch
+        XCTAssertTrue(tasty.label.hasPrefix("4"), "好吃 reads \(tasty.label)")
     }
 
     /// Back on 今天, the 请假条 page has the same strip, its title following the day picked.
@@ -94,7 +124,11 @@ final class BackfillUITests: XCTestCase {
         app.launchArguments += [
             "-uitest-photos", "1", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
             "-uitest-noon", "-today.cardPage", "0",
+            // 已发出 holds a minute, so a slow simulator still finds its 查看.
+            "-uitest-bubble-hold",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         let checkIn = app.buttons["today.checkin"]

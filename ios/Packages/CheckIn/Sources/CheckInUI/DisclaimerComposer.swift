@@ -89,6 +89,11 @@ struct DisclaimerComposer: View {
                         }
                         .padding(.top, Space.xs)
                     }
+                    // A 请假条 or a 休息 keeps the 外卡 streaks going (Tracy, 2026-11-13).
+                    Text(copy: "请假不影响连续天数", bundle: .module)
+                        .typeStyle(TypeRamp.footnote)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .accessibilityIdentifier("disclaimer.streakNote")
                     if model.sendFailed {
                         Text(copy: "没发出去，再点一次发布", bundle: .module)
                             .typeStyle(TypeRamp.footnote)

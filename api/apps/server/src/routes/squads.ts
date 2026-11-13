@@ -18,6 +18,7 @@ import type { Members } from '@wildcard/members';
 import { isKnownTimeZone, mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 import { bodyVersion } from '../body-version.js';
+import type { PublishEvent } from '../events.js';
 import type { RateLimit, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { rateLimited } from '../rate-limited.js';
@@ -215,6 +216,8 @@ export function squads(deps: {
   /** Each member's week now, which a new squad's goal counts from. */
   readonly checkIns: Pick<CheckIns, 'weekStartNow'>;
   readonly publicRoutes: PublicRoutes;
+  /** Tells what follows a join (the squad's coach welcomes the member) once it is saved. */
+  readonly publish: PublishEvent;
 }) {
   const squadParams = z.strictObject({ squadId: SquadId });
   // Any text: one that can't be a code answers 404 like an unknown one, so the app has one case.
@@ -518,10 +521,14 @@ export function squads(deps: {
       );
     })
     .openapi(join, async (c) => {
+      const member = caller(c.var.caller.userId);
       const { squad, joined } = await deps.squads.join({
         inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
-        member: caller(c.var.caller.userId),
+        member,
       });
+      if (joined) {
+        await deps.publish({ version: 1, kind: 'squad.joined', squad: squad.id, member });
+      }
       return joined ? c.json(wire(squad), 201) : c.json(wire(squad), 200);
     });
 

@@ -76,6 +76,10 @@ public actor DeviceOutbox: Outbox {
         let photos: [StoredPhoto]
         /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
         let workout: Workout?
+        /// The place tagged on a 训练 or a meal; missing on the rest and on posts kept before it.
+        let place: StoredPlace?
+        /// A meal's 健康 and 好吃; missing on the rest and on posts kept before it.
+        let rating: StoredRating?
 
         init(_ post: PendingCheckIn) {
             id = post.id
@@ -85,10 +89,7 @@ public actor DeviceOutbox: Outbox {
             createdAt = post.createdAt
             audience = post.audience.squads
             inFeed = post.inFeed
-            photos = post.draft.photos.map {
-                StoredPhoto(
-                    id: $0.id, path: post.uploaded[$0.id]?.path, width: $0.size?.width, height: $0.size?.height)
-            }
+            photos = Self.photos(of: post)
             var sport: String?
             var customSport: String?
             var minutes: Int?
@@ -97,12 +98,15 @@ public actor DeviceOutbox: Outbox {
             var restDay: Bool?
             workout = post.draft.workout
             var startTime: String?
+            var place: Place?
+            var rating: MealRating?
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
                 minutes = workoutMinutes?.value
                 startTime = body.startTime?.wire
                 caption = body.caption
+                place = body.place
                 switch activity {
                 case .sport(let listed): sport = listed.rawValue
                 case .custom(let custom): customSport = custom.name
@@ -110,19 +114,30 @@ public actor DeviceOutbox: Outbox {
             case .healthyMeal(let body):
                 kind = "healthyMeal"
                 caption = body.caption
+                place = body.place
+                rating = body.rating
             case .cheatMeal(let body):
                 kind = "cheatMeal"
                 caption = body.caption
+                place = body.place
+                rating = body.rating
             case .disclaimer(let disclaimer, _):
                 kind = "disclaimer"
                 text = disclaimer.text
                 restDay = disclaimer.restDay ? true : nil
             }
-            self.restDay = restDay
-            self.startTime = startTime
-            (self.sport, self.customSport, self.minutes, self.caption, self.text) = (
-                sport, customSport, minutes, caption, text
+            self.place = place.map(StoredPlace.init)
+            self.rating = rating.map(StoredRating.init)
+            (self.sport, self.customSport, self.minutes, self.startTime, self.caption, self.text, self.restDay) = (
+                sport, customSport, minutes, startTime, caption, text, restDay
             )
+        }
+
+        private static func photos(of post: PendingCheckIn) -> [StoredPhoto] {
+            post.draft.photos.map {
+                StoredPhoto(
+                    id: $0.id, path: post.uploaded[$0.id]?.path, width: $0.size?.width, height: $0.size?.height)
+            }
         }
 
         func pending(photos directory: URL) throws -> PendingCheckIn? {
@@ -142,7 +157,8 @@ public actor DeviceOutbox: Outbox {
             let start = startTime.flatMap { try? StartTime(wire: $0) }
             let body = PostBody(
                 photos: prepared, caption: caption ?? "", workout: trained ? workout : nil,
-                startTime: trained ? start : nil)
+                startTime: trained ? start : nil, place: place.flatMap(\.place),
+                rating: trained ? nil : rating.flatMap(\.rating))
             let draft: CheckInDraft
             switch kind {
             case "trained":
@@ -165,6 +181,37 @@ public actor DeviceOutbox: Outbox {
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
                 audience: try Audience(audience), inFeed: inFeed ?? !audience.isEmpty, draft: draft,
                 uploaded: uploaded)
+        }
+    }
+
+    /// A meal's rating as the outbox keeps it.
+    private struct StoredRating: Codable {
+        let healthy: Int
+        let tasty: Int
+
+        init(_ rating: MealRating) { (healthy, tasty) = (rating.healthy, rating.tasty) }
+
+        /// Nil for one this build can no longer read: the meal goes out without it.
+        var rating: MealRating? { try? MealRating(healthy: healthy, tasty: tasty) }
+    }
+
+    /// A tagged place as the outbox keeps it.
+    private struct StoredPlace: Codable {
+        let name: String
+        let appleID: String?
+        let category: String?
+        let latitude: Double
+        let longitude: Double
+
+        init(_ place: Place) {
+            (name, appleID, category) = (place.name, place.appleID, place.category)
+            (latitude, longitude) = (place.latitude, place.longitude)
+        }
+
+        /// Nil for one this build can no longer read: the post goes out without it.
+        var place: Place? {
+            try? Place(
+                name: name, appleID: appleID, category: category, latitude: latitude, longitude: longitude)
         }
     }
 }

@@ -70,6 +70,11 @@ export interface Squads {
   joinedAt(member: MemberId, squad: SquadId): Promise<Date | undefined>;
   /** Everyone in any of these squads now, each once. */
   membersOfAny(squads: readonly SquadId[]): Promise<ReadonlySet<MemberId>>;
+  /**
+   * Which of these squads ended, when their last member left or was removed, and when: nothing
+   * runs for an ended squad any more (its awards, its coach).
+   */
+  endedAmong(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, Date>>;
   /** The members in a squad at a moment, in the order they (last) joined, from its log. */
   membersAt(squad: SquadId, moment: Date): Promise<MemberId[]>;
   /**
@@ -199,6 +204,7 @@ export function createSquads(deps: {
     membersOf: (squad) => deps.store.membersOf(squad),
     joinedAt: (member, squad) => deps.store.joinedAt(member, squad),
     membersOfAny: (squads) => deps.store.membersOfAny(squads),
+    endedAmong: (squads) => deps.store.endedAmong(squads),
     membersAt: (squad, moment) => deps.store.membersAt(squad, moment),
     squadAt: async ({ squad, week, moment, open }) => {
       const [found, picks, members] = await Promise.all([

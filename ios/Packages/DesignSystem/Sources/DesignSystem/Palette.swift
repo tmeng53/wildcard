@@ -137,6 +137,16 @@ public enum Palette {
     public static let paveJoint = SRGBColor(red: 0xDC, green: 0xD7, blue: 0xCE)
     public static let kerb = SRGBColor(red: 0xCF, green: 0xCA, blue: 0xC0)
 
+    // MARK: Star: the one star every rating and decoration draws (Tracy, 2026-11-12: 软糖星)
+
+    /// A lit star's face, its thickness under it and its shine at the top left.
+    public static let starGold = SRGBColor(red: 0xFF, green: 0xC2, blue: 0x1A)
+    public static let starGoldSide = SRGBColor(red: 0xE0, green: 0x94, blue: 0x00)
+    public static let starGoldShine = SRGBColor(red: 0xFF, green: 0xF4, blue: 0xC7)
+    /// A star not lit: a soft grey one, its thickness under it.
+    public static let starEmpty = SRGBColor(red: 0xEE, green: 0xF0, blue: 0xF3)
+    public static let starEmptySide = SRGBColor(red: 0xD9, green: 0xDD, blue: 0xE3)
+
     // MARK: Clothes: outfit swatches for the character only, never UI color
 
     public static let cobalt = SRGBColor(red: 0x2D, green: 0x5B, blue: 0xA0)

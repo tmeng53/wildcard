@@ -15,37 +15,48 @@ struct WidgetPreview: View {
     var body: some View {
         let day = LocalDay(at: now, in: .current)
         let board = SampleBoard.board(on: day)
-        // With a run Health synced: the 打卡 capsule. Its 打卡 is an App Intent in the widget;
-        // here it is only its label.
+        // With a run Health synced: the 打卡 capsule.
         let synced = SampleBoard.board(on: day, workout: true)
         let posted = SampleBoard.board(on: day, posted: true)
+        let long = SampleBoard.board(on: day, workout: true, sport: "baseballSoftball")
+        let longPosted = SampleBoard.board(on: day, posted: true, sport: "baseballSoftball")
         ScrollView {
             VStack(spacing: Space.l) {
                 HStack(spacing: Space.l) {
                     face(
-                        WeekWidget(board: board) { _ in PostWorkoutLabel() }, size: .small,
+                        WeekWidget(board: board), size: .small,
                         identifier: "widget.week")
                     face(WidgetNotice(.signedOut), size: .small, identifier: "widget.notice")
                 }
                 face(
-                    SquadWidget(board: board) { _ in PostWorkoutLabel() }, size: .medium,
+                    SquadWidget(board: board), size: .medium,
                     identifier: "widget.squad")
                 HStack(spacing: Space.l) {
                     face(
-                        WeekWidget(board: synced) { _ in PostWorkoutLabel() }, size: .small,
+                        WeekWidget(board: synced), size: .small,
                         identifier: "widget.weekWorkout")
                     // Once posted: the capsule stays, with 已打卡.
                     face(
-                        WeekWidget(board: posted) { _ in PostWorkoutLabel() }, size: .small,
+                        WeekWidget(board: posted), size: .small,
                         identifier: "widget.weekPosted")
                 }
                 face(
-                    SquadWidget(board: synced) { _ in PostWorkoutLabel() }, size: .medium,
+                    SquadWidget(board: synced), size: .medium,
                     identifier: "widget.squadWorkout")
                 // A squad of eight: one row of heads over the capsule.
                 face(
-                    SquadWidget(board: SampleBoard.board(on: day, workout: true, size: 8)) { _ in PostWorkoutLabel() },
+                    SquadWidget(board: SampleBoard.board(on: day, workout: true, size: 8)),
                     size: .medium, identifier: "widget.squadWorkoutEight")
+                // Either set to 本周出赛表 in 编辑小组件.
+                face(ScheduleWidget(board: board, size: .small), size: .small, identifier: "widget.schedule")
+                face(ScheduleWidget(board: board, size: .medium), size: .medium, identifier: "widget.scheduleMedium")
+                // The longest sport name in the list (Baseball and softball): it gives way to its
+                // short one and its minutes, never the button.
+                HStack(spacing: Space.l) {
+                    face(WeekWidget(board: long), size: .small, identifier: "widget.weekWorkoutLong")
+                    face(WeekWidget(board: longPosted), size: .small, identifier: "widget.weekPostedLong")
+                }
+                face(SquadWidget(board: long), size: .medium, identifier: "widget.squadWorkoutLong")
             }
             .padding(.vertical, Space.xl)
             .frame(maxWidth: .infinity)

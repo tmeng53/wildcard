@@ -36,6 +36,31 @@ func everySleeveCoversTheShoulder(top: String) throws {
     }
 }
 
+/// Each arm is drawn over what the body wears only in front of its seam, and under the body
+/// behind it (`Tuck`), so no round of sleeve lies on the chest however the arm turns. Every
+/// sleeve's cloth starts at the seam's two ends (within its outline's width), so it leaves the body
+/// there with no gap.
+@Test(arguments: PlaceholderCharacter.variants(for: "top"))
+func everySleeveStartsAtItsSeam(top: String) throws {
+    var look = PlaceholderCharacter.lifter
+    look.variants["top"] = top
+    let figure = try PlaceholderCharacter.figure(wearing: look)
+    for id: PartID in ["armL", "armR"] {
+        let part = try figure.part(id)
+        let seam = try #require(part.seam)
+        #expect(part.tuck != nil, "\(top) \(id)")
+        guard let sleeve = part.slots.firstIndex(of: "top") else { continue }
+        let cloth = part.art[sleeve].shapes.filter { $0.fill != nil }.flatMap { corners($0.path) }
+        for end in [seam.top, seam.armpit] {
+            #expect(cloth.contains { distance($0, end) <= 2 }, "\(top) \(id) misses \(end)")
+        }
+    }
+}
+
+private func distance(_ one: Point, _ other: Point) -> Double {
+    ((one.x - other.x) * (one.x - other.x) + (one.y - other.y) * (one.y - other.y)).squareRoot()
+}
+
 /// Between the legs, a pair of shorts or trousers shows its own shade, not the top tucked
 /// under it, which reads as the trousers coming apart.
 @Test(arguments: PlaceholderCharacter.variants(for: "bottom"))
@@ -52,14 +77,23 @@ private struct Box {
     var minX = Double.infinity, minY = Double.infinity, maxX = -Double.infinity, maxY = -Double.infinity
 }
 
-/// Whether a closed path's outline, through its points, goes around `point` (even-odd).
-private func covers(_ path: [PathElement], _ point: Point) -> Bool {
-    let corners = path.compactMap { element -> Point? in
+/// A path's points, where each of its pieces ends.
+private func corners(_ path: [PathElement]) -> [Point] {
+    path.compactMap { element -> Point? in
         switch element {
         case .move(let end), .line(let end), .quadCurve(let end, _), .curve(let end, _, _): end
         case .close: nil
         }
     }
+}
+
+/// Whether a closed path's outline, through its points, goes around `point` (even-odd).
+private func covers(_ path: [PathElement], _ point: Point) -> Bool {
+    covers(corners(path), point)
+}
+
+/// Whether a polygon through `corners` goes around `point` (even-odd).
+private func covers(_ corners: [Point], _ point: Point) -> Bool {
     var inside = false
     for (from, next) in zip(corners, corners.dropFirst() + corners.prefix(1))
     where (from.y > point.y) != (next.y > point.y)

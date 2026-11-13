@@ -67,19 +67,30 @@ extension SceneArt {
     private static let pictures = Mutex<[String: UIImage]>([:])
 }
 
-/// A scene's venue as home draws it, filling the screen with nobody on it: what the scene pick's
-/// reveal shows as its card rises, before home takes over.
+/// A scene's venue as home draws it, filling the width with nobody on it: what the scene pick's
+/// reveal shows as its card rises, before home takes over, and 小队's 本周场地 banner.
 public struct SceneBackdrop: View {
     private let scene: SceneTheme
+    private let focus: Double
 
-    public init(scene: SceneTheme) {
+    /// `focus` is how far down the art (0 its top, 1 its foot) sits at the middle of a frame
+    /// shorter than the art; the art never leaves a gap above or below.
+    public init(scene: SceneTheme, focus: Double = 0) {
         self.scene = scene
+        self.focus = focus
     }
+
+    /// Where every scene's venue stands (the wall, the pool, the court, the lanes): a band's
+    /// middle, for a frame that shows only a slice of the art.
+    public static let venue = 0.4
 
     public var body: some View {
         GeometryReader { proxy in
+            let height = Stage.height * proxy.size.width / StageLayout.width
+            let top = min(max(height * focus - proxy.size.height / 2, 0), max(height - proxy.size.height, 0))
             SceneArt(scene: scene, layer: .day)
-                .frame(width: proxy.size.width, height: Stage.height * proxy.size.width / StageLayout.width)
+                .frame(width: proxy.size.width, height: height)
+                .offset(y: -top)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
         .background(Color(role: .bgCanvas, in: scene))

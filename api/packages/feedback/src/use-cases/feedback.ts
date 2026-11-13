@@ -4,10 +4,10 @@ import {
   FEEDBACK_MAX_LENGTH,
   FeedbackBody,
   FEEDBACK_MAX_SCREENSHOTS,
-  type AppInfo,
   type Feedback,
   type FeedbackId,
   type FeedbackKind,
+  type FeedbackSource,
   type FiledIssue,
   type MemberId,
 } from '../domain/feedback.js';
@@ -24,15 +24,18 @@ export interface SendFeedbackInput {
   readonly member: MemberId;
   readonly kind: FeedbackKind;
   readonly body: string;
-  readonly screenshots: readonly string[];
-  readonly app: AppInfo;
+  readonly source: FeedbackSource;
 }
 
-/** 意见反馈: members' messages to us, each filed as an issue where agents pick it up. */
+/**
+ * 意见反馈: members' messages to us, from the app or passed on by their coach, each filed as an
+ * issue where agents pick it up.
+ */
 export interface FeedbackInbox {
   /**
    * Saves a message. The same id again is `unchanged`, so a retry is safe. Throws
-   * `FeedbackInvalidError` for an empty or too long message or too many screenshots,
+   * `FeedbackInvalidError` for an empty or too long message, too many screenshots, or a coach's
+   * without the member's words,
    * `FeedbackLimitError` past the day's limit and `FeedbackIdTakenError` for another member's id.
    */
   send(
@@ -80,20 +83,23 @@ export function createFeedbackInbox(deps: {
   readonly clock: Clock;
 }): FeedbackInbox {
   return {
-    async send({ id, member, kind, body, screenshots, app }) {
+    async send({ id, member, kind, body, source }) {
       const words = FeedbackBody.safeParse(body);
       if (!words.success) {
         throw new FeedbackInvalidError(
           `A message has 1 to ${String(FEEDBACK_MAX_LENGTH)} characters.`,
         );
       }
-      if (screenshots.length > FEEDBACK_MAX_SCREENSHOTS) {
+      if (source.from === 'app' && source.screenshots.length > FEEDBACK_MAX_SCREENSHOTS) {
         throw new FeedbackInvalidError(
           `A message has at most ${String(FEEDBACK_MAX_SCREENSHOTS)} screenshots.`,
         );
       }
+      if (source.from === 'coach' && source.quote.trim() === '') {
+        throw new FeedbackInvalidError("A coach's message quotes the member's own words.");
+      }
       const at = deps.clock();
-      const feedback: Feedback = { id, member, kind, body: words.data, screenshots, app, at };
+      const feedback: Feedback = { id, member, kind, body: words.data, source, at };
       // A retry of a message already saved passes, whatever the limit.
       const saved = await deps.store.add(feedback, {
         limit: FEEDBACK_DAILY_LIMIT,

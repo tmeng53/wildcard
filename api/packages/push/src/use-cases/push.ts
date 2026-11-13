@@ -2,6 +2,7 @@ import type { DailyCandidate, DuePush, LocalDay } from '../domain/daily.js';
 import type { DailyPushSettings } from '../domain/daily-push-settings.js';
 import type { Device, DeviceToken, MemberId } from '../domain/device.js';
 import type { PushNotification } from '../domain/notification.js';
+import type { TeammatePushSettings } from '../domain/teammate-push-settings.js';
 import type { PushSettings, PushSettingsChange } from '../domain/topic.js';
 import type {
   DailyPushSettingsStore,
@@ -9,6 +10,9 @@ import type {
   DeviceStore,
   PushSender,
   SettingsStore,
+  TeammatePushRing,
+  TeammatePushSettingsStore,
+  TeammatePushStore,
 } from '../ports.js';
 import { notifyMembers, type NotifyOutcome } from './push/notify-members.js';
 import { pushSettings } from './push/push-settings.js';
@@ -54,6 +58,19 @@ export interface Push {
     readonly quiet: boolean;
     readonly at: Date;
   }): Promise<boolean>;
+  /** Whether teammate pushes go out at all, and how many may ring for a member in 24 hours. */
+  teammateSettings(): Promise<TeammatePushSettings>;
+  /**
+   * Marks the teammate push about `checkIn` to `member` handled, and says whether it rings or
+   * goes silently (their rings for the last 24 hours are used up). Undefined when it already was
+   * handled, and then it must not be sent again.
+   */
+  claimTeammate(input: {
+    readonly checkIn: string;
+    readonly member: MemberId;
+    readonly at: Date;
+    readonly dailyRings: number;
+  }): Promise<TeammatePushRing | undefined>;
 }
 
 export function createPush(deps: {
@@ -61,6 +78,8 @@ export function createPush(deps: {
   readonly settings: SettingsStore;
   readonly daily: DailyPushStore;
   readonly dailySettings: DailyPushSettingsStore;
+  readonly teammate: TeammatePushStore;
+  readonly teammateSettings: TeammatePushSettingsStore;
   readonly sender: PushSender;
 }): Push {
   return {
@@ -76,5 +95,7 @@ export function createPush(deps: {
     dailyDue: (candidates) => deps.daily.due(candidates),
     dailySettings: () => deps.dailySettings.current(),
     claimDaily: (handled) => deps.daily.claim(handled),
+    teammateSettings: () => deps.teammateSettings.current(),
+    claimTeammate: (handled) => deps.teammate.claim(handled),
   };
 }

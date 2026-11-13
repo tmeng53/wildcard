@@ -4,9 +4,9 @@ import SwiftUI
 
 extension View {
     /// Pops `card` up in the middle of this view over the ink dimmed to `Scrim.dimOpacity`, for
-    /// a card to look at on its own (a teammate's player card): it grows in from a little smaller,
-    /// a tap anywhere off it closes it, and it fades with Reduce Motion on. The card brings its
-    /// own solid fill; the dim is no glass.
+    /// a card to look at on its own (a teammate's player card), grown to the page's width: it
+    /// grows in from a little smaller, a tap anywhere off it closes it, and it fades with Reduce
+    /// Motion on. The card brings its own solid fill; the dim is no glass.
     public func cardPopup<Card: View>(
         isPresented: Binding<Bool>, @ViewBuilder card: @escaping () -> Card
     ) -> some View {
@@ -17,8 +17,25 @@ extension View {
 private struct CardPopup<Card: View>: ViewModifier {
     @Binding var isPresented: Bool
     let card: () -> Card
+    /// The card's own size, before it is grown to the screen.
+    @State private var cardSize: CGSize = .zero
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// The card grows, text and all, to the width inside the page's gutters (Tracy, 2026-11-12:
+    /// the card bigger), and shrinks only where the screen is too short for it above the tab bar.
+    private func scale(in space: CGSize) -> Double {
+        guard cardSize.width > 0, cardSize.height > 0 else { return 1 }
+        let width = (space.width - Space.m * 2) / cardSize.width
+        let height = (space.height - Self.tabBar - Space.m * 2) / cardSize.height
+        return min(width, height, Self.largest)
+    }
+
+    /// A card on an iPad or a wide window stops growing here.
+    private static var largest: Double { 1.4 }
+    /// The system tab bar floats over the foot of the safe area; the card and its 轻点翻面 stay
+    /// above it.
+    private static var tabBar: Double { Space.xxl }
 
     func body(content: Content) -> some View {
         content.overlay {
@@ -36,7 +53,10 @@ private struct CardPopup<Card: View>: ViewModifier {
                             .accessibilityIdentifier("cardPopup.close")
                             .transition(.opacity)
                         card()
+                            .onGeometryChange(for: CGSize.self, of: \.size) { cardSize = $0 }
+                            .scaleEffect(scale(in: proxy.size))
                             .padding(proxy.safeAreaInsets)
+                            .padding(.bottom, Self.tabBar)
                             .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
                             .accessibilityAddTraits(.isModal)
                             .accessibilityAction(.escape) { isPresented = false }

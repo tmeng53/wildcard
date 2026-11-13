@@ -56,7 +56,7 @@ final class BroadcastCelebrationUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-broadcast", store,
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-broadcast", store,
         ]
         app.launch()
         return app

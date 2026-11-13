@@ -172,12 +172,12 @@ actor ScriptedBackend: CheckInBackend {
         return serverCoach
     }
 
-    private var serverUnseenCards = false
-    func set(unseenCoachCards: Bool) { serverUnseenCards = unseenCoachCards }
+    private var serverUnseenCard: CoachPageCard?
+    func set(unseenCoachCard: CoachPageCard?) { serverUnseenCard = unseenCoachCard }
 
-    func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool {
+    func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
         if let failure { throw failure }
-        return serverUnseenCards
+        return serverUnseenCard
     }
 
     var serverChallenge: DayChallenge?

@@ -43,7 +43,7 @@ const ArtItem = z.strictObject({
   id: z.string().min(1).max(48),
 });
 
-/** A store or piece given with it. Props need no gift: every member holds every one. */
+/** A store or piece given with it. Props aren't given this way: they are open or unlocked by training. */
 export const BroadcastGift = ArtItem.extend({ kind: z.enum(['store', 'piece']) });
 export type BroadcastGift = z.infer<typeof BroadcastGift>;
 

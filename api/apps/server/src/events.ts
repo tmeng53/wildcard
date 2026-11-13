@@ -7,8 +7,8 @@ import type { Log } from './log.js';
 
 /**
  * What happened, for the work that follows it after the request has answered: a request saves,
- * publishes an event and answers; each subscriber (a coach looking at a post, the pushes a
- * comment sends) runs on its own. Hosted, each kind is a Pub/Sub topic and each subscriber a push
+ * publishes an event and answers; each subscriber (a coach looking at a post, the push a 训练
+ * sends the squad, the pushes a comment sends) runs on its own. Hosted, each kind is a Pub/Sub topic and each subscriber a push
  * subscription to `/jobs/events/<subscriber>` (`scripts/gcp-setup.sh`); elsewhere they run in
  * the request (`inProcessEvents`). Delivery is at least once, so every subscriber is safe to run
  * twice.
@@ -45,7 +45,20 @@ export const CommentCreated = z.strictObject({
 });
 export type CommentCreated = z.infer<typeof CommentCreated>;
 
-export const ServerEvent = z.discriminatedUnion('kind', [CheckInCreated, CommentCreated]);
+/** A member who just joined a squad. */
+export const SquadJoined = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('squad.joined'),
+  squad: Id,
+  member: Id,
+});
+export type SquadJoined = z.infer<typeof SquadJoined>;
+
+export const ServerEvent = z.discriminatedUnion('kind', [
+  CheckInCreated,
+  CommentCreated,
+  SquadJoined,
+]);
 export type ServerEvent = z.infer<typeof ServerEvent>;
 
 /**
@@ -55,14 +68,22 @@ export type ServerEvent = z.infer<typeof ServerEvent>;
 export type PublishEvent = (event: ServerEvent) => Promise<void>;
 
 /** Who reacts to events: each a Pub/Sub subscription on the topic of its kind. */
-export const Subscriber = z.enum(['coach-look', 'comment-push', 'coach-answer']);
+export const Subscriber = z.enum([
+  'coach-look',
+  'teammate-push',
+  'comment-push',
+  'coach-answer',
+  'coach-welcome',
+]);
 export type Subscriber = z.infer<typeof Subscriber>;
 
 /** The kind of event each subscriber takes. */
 export const SUBSCRIBERS = {
   'coach-look': 'check-in.created',
+  'teammate-push': 'check-in.created',
   'comment-push': 'comment.created',
   'coach-answer': 'comment.created',
+  'coach-welcome': 'squad.joined',
 } as const satisfies Record<Subscriber, ServerEvent['kind']>;
 
 /** What each subscriber does with its kind of event. Throwing has Pub/Sub deliver it again. */
@@ -72,7 +93,7 @@ export type EventHandlers = {
   ) => Promise<void>;
 };
 
-/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`. */
+/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`, `squad.joined` `squad-joined`. */
 export const topicOf = (kind: ServerEvent['kind']): string => kind.replace('.', '-');
 
 /** Runs one subscriber on an event; false when the event isn't of its kind. */
@@ -83,12 +104,17 @@ export async function deliver(
   if (SUBSCRIBERS[subscriber] !== event.kind) return false;
   switch (event.kind) {
     case 'check-in.created':
-      await handlers['coach-look'](event);
+      await (subscriber === 'teammate-push'
+        ? handlers['teammate-push'](event)
+        : handlers['coach-look'](event));
       return true;
     case 'comment.created':
       await (subscriber === 'coach-answer'
         ? handlers['coach-answer'](event)
         : handlers['comment-push'](event));
+      return true;
+    case 'squad.joined':
+      await handlers['coach-welcome'](event);
       return true;
   }
 }

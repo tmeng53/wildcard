@@ -67,7 +67,8 @@ public struct PickRow: View {
 /// `.solid` one fills with the accent tone (发动态's sport and minutes). On a graphite card,
 /// `.onInk` pills are white hairlines with white words, and the picked one turns white with
 /// graphite words (小队's 每周目标). Removable pills end in a cross; the caller removes the pill
-/// in `action`.
+/// in `action`, or, given `remove`, only the cross removes it and the rest of the pill runs
+/// `action` (a tagged place: tapping its name opens it), its word cut short to fit the row.
 public struct PickPill: View {
     public enum Look: Sendable {
         case outlined
@@ -85,48 +86,104 @@ public struct PickPill: View {
     private let isSelected: Bool
     private let isRemovable: Bool
     private let action: () -> Void
+    private let remove: (() -> Void)?
 
     /// The cross on a removable pill, smaller than the icon.
     private let removeGlyph: Double = 11
 
     public init(
         _ title: Text, systemImage: String? = nil, look: Look = .outlined, isSelected: Bool,
-        isRemovable: Bool = false, action: @escaping () -> Void
+        isRemovable: Bool = false, action: @escaping () -> Void, remove: (() -> Void)? = nil
     ) {
         self.title = title
         self.systemImage = systemImage
         self.look = look
         self.isSelected = isSelected
-        self.isRemovable = isRemovable
+        self.isRemovable = isRemovable || remove != nil
         self.action = action
+        self.remove = remove
     }
 
     public var body: some View {
-        Button {
-            taps += 1
-            action()
-        } label: {
-            HStack(spacing: Space.xs - 2) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: Sizing.smallIcon, weight: .medium))
-                        .accessibilityHidden(true)
+        if let remove {
+            HStack(spacing: 0) {
+                Button {
+                    taps += 1
+                    action()
+                } label: {
+                    word
+                        .padding(.leading, Space.s + 2)
+                        .padding(.trailing, Space.xxs)
+                        .frame(minHeight: Sizing.minimumTapTarget)
+                        .contentShape(Rectangle())
                 }
-                title
-                    .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
-                    .lineLimit(1)
-                    .fixedSize()
-                if isRemovable {
-                    Image(systemName: "xmark")
-                        .font(.system(size: removeGlyph, weight: .semibold))
-                        .accessibilityHidden(true)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+                .accessibilityIdentifier("pill.open")
+                Button(action: remove) {
+                    cross
+                        .padding(.leading, Space.xs)
+                        .padding(.trailing, Space.s + 2)
+                        .frame(minHeight: Sizing.minimumTapTarget)
+                        .contentShape(Rectangle())
                 }
+                .accessibilityLabel(Text(copy: "移除这一项", bundle: .module))
+                .accessibilityIdentifier("pill.remove")
             }
             .foregroundStyle(Color(role: wordRole, in: theme))
-            .padding(.horizontal, Space.s + 2)
-            // Grows with Dynamic Type instead of clipping the label.
-            .frame(minHeight: Sizing.compactControl)
-            .background(fill, in: Capsule())
+            .background { capsule.padding(.vertical, (Sizing.minimumTapTarget - Sizing.compactControl) / 2) }
+            .buttonStyle(PressableButtonStyle())
+            .haptic(.pick, trigger: taps)
+        } else {
+            Button {
+                taps += 1
+                action()
+            } label: {
+                HStack(spacing: Space.xs - 2) {
+                    word
+                    if isRemovable { cross }
+                }
+                .foregroundStyle(Color(role: wordRole, in: theme))
+                .padding(.horizontal, Space.s + 2)
+                // Grows with Dynamic Type instead of clipping the label.
+                .frame(minHeight: Sizing.compactControl)
+                .background { capsule }
+                // Draws 36 points tall but answers taps across the full 44.
+                .padding(.vertical, (Sizing.minimumTapTarget - Sizing.compactControl) / 2)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PressableButtonStyle())
+            .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
+            .haptic(.pick, trigger: taps)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+            .accessibilityHint(isRemovable ? Text(copy: "移除这一项", bundle: .module) : Text(verbatim: ""))
+        }
+    }
+
+    /// The icon and the word. With its own cross, the word gives way to the row and ends in 「…」.
+    private var word: some View {
+        HStack(spacing: Space.xs - 2) {
+            if let systemImage {
+                Image(systemName: systemImage)
+                    .font(.system(size: Sizing.smallIcon, weight: .medium))
+                    .accessibilityHidden(true)
+            }
+            title
+                .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
+                .lineLimit(1)
+                .fixedSize(horizontal: remove == nil, vertical: false)
+        }
+    }
+
+    private var cross: some View {
+        Image(systemName: "xmark")
+            .font(.system(size: removeGlyph, weight: .semibold))
+            .accessibilityHidden(true)
+    }
+
+    /// The pill's shape: its fill and its border.
+    private var capsule: some View {
+        Capsule()
+            .fill(fill)
             .overlay {
                 if look == .onInk {
                     Capsule().strokeBorder(
@@ -135,15 +192,7 @@ public struct PickPill: View {
                     PickBorder(shape: Capsule(), isSelected: isSelected)
                 }
             }
-            // Draws 36 points tall but answers taps across the full 44.
-            .padding(.vertical, (Sizing.minimumTapTarget - Sizing.compactControl) / 2)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PressableButtonStyle())
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: isSelected)
-        .haptic(.pick, trigger: taps)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isRemovable ? Text(copy: "移除这一项", bundle: .module) : Text(verbatim: ""))
+            .frame(minHeight: Sizing.compactControl)
     }
 
     private var isFilled: Bool { look == .solid && isSelected }

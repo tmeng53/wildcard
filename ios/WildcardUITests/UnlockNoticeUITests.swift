@@ -16,6 +16,8 @@ final class UnlockNoticeUITests: XCTestCase {
             "-uitest-bubble-hold",
             "-today.cardPage", "0", "-uitest-unlocked",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
 
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
@@ -128,6 +130,8 @@ final class UnlockNoticeUITests: XCTestCase {
             "-uitest-bubble-hold",
             "-today.cardPage", "0", "-uitest-unlocked-piece",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         return app
     }

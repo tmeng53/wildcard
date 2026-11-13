@@ -50,15 +50,59 @@ export const StoredAppInfo = AppInfo.extend({ version: z.literal(1) }).transform
   }),
 );
 
-/** One message from a member: words, up to 3 screenshots and the app it came from. */
+/** Sent from 意见反馈 in the app: up to 3 screenshots and the app it came from. */
+export interface FromApp {
+  readonly from: 'app';
+  /** Photo paths in the member's own folder, in the order they were added. */
+  readonly screenshots: readonly string[];
+  readonly app: AppInfo;
+}
+
+/**
+ * Passed on by the squad's coach from what the member said under a post: the coach's words of
+ * what they asked for are the message's `body`, and `quote` is the member's own.
+ */
+export interface FromCoach {
+  readonly from: 'coach';
+  /** The coach, by id. */
+  readonly coach: string;
+  readonly squad: string;
+  readonly checkIn: string;
+  /** The comment it was said in, when it wasn't the post itself. */
+  readonly comment?: string;
+  /** The member's own words the coach heard it in: the post's line or the comment. */
+  readonly quote: string;
+}
+
+/** Where a message came from. */
+export type FeedbackSource = FromApp | FromCoach;
+
+/** A coach's message as stored, with its own `version`. */
+export const StoredFromCoach = z
+  .strictObject({
+    version: z.literal(1),
+    coach: z.string().min(1),
+    squad: z.uuid(),
+    checkIn: z.uuid(),
+    comment: z.uuid().optional(),
+    quote: z.string().min(1),
+  })
+  .transform(({ coach, squad, checkIn, comment, quote }): FromCoach => ({
+    from: 'coach',
+    coach,
+    squad,
+    checkIn,
+    ...(comment === undefined ? {} : { comment }),
+    quote,
+  }));
+
+/** One message from a member: their words (or their coach's of what they asked for). */
 export interface Feedback {
   readonly id: FeedbackId;
   readonly member: MemberId;
   readonly kind: FeedbackKind;
   readonly body: string;
-  /** Photo paths in the member's own folder, in the order they were added. */
-  readonly screenshots: readonly string[];
-  readonly app: AppInfo;
+  readonly source: FeedbackSource;
   readonly at: Date;
 }
 

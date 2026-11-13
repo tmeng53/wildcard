@@ -16,6 +16,9 @@ public final class MeModel {
     public private(set) var deletion: DeletionPhase = .reading
     /// The 注销账号 page is open; it takes the whole screen, tab bar included.
     public private(set) var isDeletionOpen = false
+    /// 意见反馈 while it is open, a fresh page each time; like 注销账号 it takes the whole screen,
+    /// so its 发送 stays clear of the tab bar.
+    public var feedbackPage: FeedbackModel?
     /// The last change didn't save (the switch flipped back, or the edited character stayed as
     /// it was); the screen says so until the next change.
     public private(set) var saveFailed = false

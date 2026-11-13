@@ -29,6 +29,8 @@ export interface RecordRows {
     readonly inSquad: boolean;
   })[];
   readonly healthyMealDays: readonly LocalDay[];
+  /** The days the member posted a 请假条: a streak runs through them, as through a planned rest day. */
+  readonly leaveDays: readonly LocalDay[];
   /** Reactions on the member's check-ins, by squadmate. */
   readonly received: ReadonlyMap<MemberId, number>;
   /** The member's reactions on squadmates' check-ins, by squadmate. */
@@ -75,6 +77,14 @@ export interface CheckInStore {
     },
   ): Promise<CheckInRecord[]>;
   /**
+   * The posts in `squad`'s 动态 tagged with a place, from anyone, newest made first, at most
+   * `limit`.
+   */
+  placedForSquad(query: {
+    readonly squad: SquadId;
+    readonly limit: number;
+  }): Promise<CheckInRecord[]>;
+  /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
    * each once.
    */
@@ -92,10 +102,12 @@ export interface CheckInStore {
   streakDays(query: { readonly member: MemberId; readonly squad?: SquadId }): Promise<{
     readonly trained: readonly LocalDay[];
     readonly meals: readonly LocalDay[];
+    /** Days with a 请假条, which neither break a streak nor add to it. */
+    readonly leave: readonly LocalDay[];
   }>;
   /**
    * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
-   * to `squad`; the days the member logged a 健康餐; and the reactions between the member and
+   * to `squad`; the days the member logged a 健康餐 and a 请假条; and the reactions between the member and
    * each squadmate, counted by squadmate.
    */
   recordRows(query: {
@@ -153,6 +165,15 @@ export type CoachSpoke = (input: {
 export type CoachHired = (input: {
   readonly squads: readonly SquadId[];
   readonly coach: string;
+}) => Promise<boolean>;
+
+/**
+ * Whether `place` is a place a member of one of these squads added (自建地点). The places module
+ * keeps them; check-ins only ask, so a post is tagged only with one its squads see.
+ */
+export type SquadPlaceOf = (input: {
+  readonly place: string;
+  readonly squads: readonly SquadId[];
 }) => Promise<boolean>;
 
 /** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */

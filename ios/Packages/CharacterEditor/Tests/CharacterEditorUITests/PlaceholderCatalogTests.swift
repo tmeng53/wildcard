@@ -247,3 +247,14 @@ private func winterStart() throws -> StreetStock { try stock(earned: ["warmup", 
     #expect(catalog.gifts(in: "prop") == [])
     #expect(try Catalog.placeholder().gifts == [])
 }
+
+/// The dogs on a leash are in no `editor.json`: one shows once the member unlocked it (one 遛狗),
+/// after the props everyone holds, and an unlocked prop this build has no art for stays out.
+@Test func anUnlockedDogJoinsTheProps() throws {
+    let catalog = try Catalog.placeholder(
+        stock: try winterStart(), unlockedProps: ["doghusky", "racket", "dogshiba", "dogunicorn"])
+    #expect(Array(catalog.props.suffix(3)) == ["broom", "doghusky", "dogshiba"])
+    #expect(catalog.props.filter { $0 == "racket" }.count == 1)
+    #expect(!catalog.props.contains("dogunicorn"))
+    #expect(!(try Catalog.placeholder(stock: try winterStart())).props.contains("dogshiba"))
+}
