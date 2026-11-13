@@ -249,7 +249,6 @@ final class SignUpUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-onboarding", "-uitest-monday",
-            "-uitest-card-folded",
         ]
         app.launch()
         // Close the app when the test ends, so the next launch never has to stop it.
