@@ -4,9 +4,13 @@ import SwiftUI
 
 /// Sizes that belong to the squad card alone.
 enum SquadCardMetrics {
-    /// Inside each page's padding: 186 tall with the card's padding, on both pages; the dots'
-    /// row adds its own height under them.
-    static let pageContent: Double = 186 - 2 * Space.cardPadding
+    /// Inside each page's padding: 170 tall with the card's padding, on both pages; the dots'
+    /// row adds its own height under them. 16 under what it was before the week's score took
+    /// `scoreGoal`, so the card leaves more of the scene showing (Tracy, 2026-11-13).
+    static let pageContent: Double = 170 - 2 * Space.cardPadding
+    /// A head in the 今天 row that hasn't checked in yet, nor rests today, fades to this, so the
+    /// ones who did stand out (Tracy, 2026-11-13).
+    static let notYetOpacity = 0.45
     /// Between rings: eight 38-point rings fit a 358-point card.
     static let ringSpacing: Double = 3
     /// On a narrower phone (375 points), eight rings shrink to fit: 32-point rings, 1 apart.

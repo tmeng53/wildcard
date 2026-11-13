@@ -217,13 +217,7 @@ public struct TodayView: View {
         } else {
             let squad = SquadWeek(
                 name: home.squad.name, done: week.squad.trainedDays, goal: week.squad.plannedDays,
-                members: home.today.members.map { mate in
-                    SquadMember(
-                        id: mate.member.description,
-                        status: StageStatus(training: mate.training, activity: nil, plannedRest: mate.plannedRest).ring,
-                        isMe: mate.member == home.member,
-                        accessibilityIdentifier: mate.member == home.member ? "today.myRing" : "today.mateRing")
-                })
+                members: squadMembers(home))
             let mine = myWeek(
                 home: home, day: day, week: week.mine,
                 challenge: weekChallenge(model.myChallenge))

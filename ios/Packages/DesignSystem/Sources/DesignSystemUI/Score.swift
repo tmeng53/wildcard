@@ -11,6 +11,8 @@ public struct Score: View {
         /// The 战报's last page when the scene pick shares it.
         case ending
         case hero
+        /// The squad card's week.
+        case goal
         case card
         case inline
         /// A count beside its label, with no goal.
@@ -21,6 +23,7 @@ public struct Score: View {
             case .story: TypeRamp.scoreStory
             case .ending: TypeRamp.scoreEnding
             case .hero: TypeRamp.scoreHero
+            case .goal: TypeRamp.scoreGoal
             case .card: TypeRamp.scoreCard
             case .inline: TypeRamp.scoreInline
             case .small: TypeRamp.scoreSmall

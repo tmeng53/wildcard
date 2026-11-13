@@ -137,9 +137,9 @@ struct PageHeader: View {
             }
             Spacer(minLength: 0)
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Score(count: count, goal: goal, size: .hero)
+                Score(count: count, goal: goal, size: .goal)
                 unit
-                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreGoal))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)

@@ -10,12 +10,19 @@ public struct SquadMember: Identifiable, Sendable, Hashable {
     public let isMe: Bool
     /// Names the member's ring for UI tests.
     public let accessibilityIdentifier: String?
+    /// What they did today, as an SF Symbol on a small ink badge at the ring's foot (the sport
+    /// they trained, or the 请假条's); shown only while `status` is `done`.
+    public let badge: String?
 
-    public init(id: String, status: RingStatus, isMe: Bool = false, accessibilityIdentifier: String? = nil) {
+    public init(
+        id: String, status: RingStatus, isMe: Bool = false, accessibilityIdentifier: String? = nil,
+        badge: String? = nil
+    ) {
         self.id = id
         self.status = status
         self.isMe = isMe
         self.accessibilityIdentifier = accessibilityIdentifier
+        self.badge = badge
     }
 }
 
@@ -269,7 +276,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let openCoachNews: (() -> Void)?
 
     var body: some View {
-        // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
+        // With a footer the rows sit 8 apart instead of 12, so the page stays 170 tall.
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(
@@ -309,9 +316,14 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     private func rings(avatarSize: Double, spacing: Double) -> some View {
         HStack(spacing: spacing) {
             ForEach(squad.members) { member in
-                let ring = StatusRing(status: member.status, avatarSize: avatarSize, playsHaptics: member.isMe) {
+                // Who checked in wears what they did on a badge; who hasn't yet fades (Tracy,
+                // 2026-11-13).
+                let ring = StatusRing(
+                    status: member.status, avatarSize: avatarSize, playsHaptics: member.isMe, badge: member.badge
+                ) {
                     avatar(member)
                 }
+                .opacity(member.status == .open ? SquadCardMetrics.notYetOpacity : 1)
                 if let openMember {
                     Button {
                         openMember(member)
