@@ -153,3 +153,29 @@ import Testing
     #expect(kept.draft.photos.map(\.id) == [sent.id, waiting.id])
     #expect(kept == post)
 }
+
+@Test func aPostKeptBeforeItsFeedChoiceIsLeftOutAlone() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let squad = SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))
+    let old = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-11-01"), createdAt: Timestamp(millisecondsSince1970: 1_793_500_000_000),
+        audience: try Audience([squad]), draft: .healthyMeal(PostBody(photos: [], caption: "早饭")))
+    let recent = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "44444444-4444-4444-4444-444444444444"))),
+        member: old.member, day: try LocalDay("2026-11-13"),
+        createdAt: Timestamp(millisecondsSince1970: 1_794_600_000_000), audience: old.audience,
+        draft: .healthyMeal(PostBody(photos: [], caption: "沙拉")))
+    await DeviceOutbox(directory: directory).save([old, recent])
+
+    // Take the feed choice off the first post, as a build from before 发布到动态 kept it.
+    let list = directory.appending(path: "outbox.json")
+    var kept = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: list)) as? [String: Any])
+    var pending = try #require(kept["pending"] as? [[String: Any]])
+    #expect(pending[0].removeValue(forKey: "inFeed") != nil)
+    kept["pending"] = pending
+    try JSONSerialization.data(withJSONObject: kept).write(to: list)
+
+    #expect(await DeviceOutbox(directory: directory).load() == [recent])
+}
