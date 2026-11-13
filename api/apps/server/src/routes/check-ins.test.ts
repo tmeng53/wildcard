@@ -30,6 +30,7 @@ import {
   noJobs,
   nudgesOn,
   placeRatingsOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -109,6 +110,7 @@ const app = createApp({
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
   placeRatings: placeRatingsOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {

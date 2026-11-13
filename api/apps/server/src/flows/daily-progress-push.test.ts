@@ -42,6 +42,7 @@ import {
   noJobs,
   nudgesOn,
   placeRatingsOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -150,6 +151,7 @@ const deps = {
   aiConsent: aiConsentOn(db),
   nudges,
   placeRatings: placeRatingsOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
 };

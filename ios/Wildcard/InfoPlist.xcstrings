@@ -1,6 +1,28 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
+    "NearbyPlaces" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To list the places near you when you add a location to a post. Only the place you pick is shared."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "给动态添加位置时，列出你附近的地点。只会分享你选的地点。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "為動態新增位置時，列出你附近的地點。只會分享你選的地點。"
+          }
+        }
+      }
+    },
     "NSLocationWhenInUseUsageDescription" : {
       "localizations" : {
         "en" : {

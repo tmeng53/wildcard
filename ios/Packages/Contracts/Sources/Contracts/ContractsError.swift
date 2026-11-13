@@ -12,6 +12,10 @@ public enum ContractsError: Error, Equatable, Sendable {
     case workoutMinutes(Int)
     /// A start time that isn't a time of day (`HH:mm`, 00:00 to 23:59).
     case startTime(String)
+    /// A tagged place whose name is empty, longer than `Place.maxNameLength` or not one line.
+    case placeName(Int)
+    /// A tagged place outside the world's latitudes and longitudes.
+    case placeCoordinate(latitude: Double, longitude: Double)
     /// A caption with a line break; it is one line.
     case multilineCaption
     /// A check-in that lists the same squad twice.

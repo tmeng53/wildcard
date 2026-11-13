@@ -107,6 +107,7 @@ const app = createApp({
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
   placeRatings: { rate: unused, of: unused, ofAll: unused },
+  savedPlaces: { list: unused, save: unused, remove: unused },
   weather: { savePlace: unused, forgetPlace: unused, dayFor: unused },
   feedback: { send: unused, toFile: unused, filed: unused },
   issues: undefined,

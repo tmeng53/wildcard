@@ -152,11 +152,17 @@ public struct ComposeView: View {
                     if fitted != typed { model.line = fitted }
                 }
                 .accessibilityIdentifier("compose.caption")
-            Text(verbatim: "\(model.line.count)/\(model.lineLimit)")
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .monospacedDigit()
-                .accessibilityIdentifier("compose.count")
+            HStack(spacing: Space.xs) {
+                if model.kind != .disclaimer {
+                    PlacePill(place: $model.place)
+                }
+                Spacer(minLength: 0)
+                Text(verbatim: "\(model.line.count)/\(model.lineLimit)")
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .monospacedDigit()
+                    .accessibilityIdentifier("compose.count")
+            }
         }
     }
 

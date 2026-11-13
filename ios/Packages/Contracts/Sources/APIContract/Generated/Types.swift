@@ -451,6 +451,25 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
     /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
     func ratePlace(_ input: Operations.RatePlace.Input) async throws -> Operations.RatePlace.Output
+    /// The places the signed-in member saved (收藏)
+    ///
+    /// - Remark: HTTP `GET /me/saved-places`.
+    /// - Remark: Generated from `#/paths//me/saved-places/get(listMySavedPlaces)`.
+    func listMySavedPlaces(_ input: Operations.ListMySavedPlaces.Input) async throws -> Operations.ListMySavedPlaces.Output
+    /// Save a place (收藏), or change its note
+    ///
+    /// A place saved already keeps when it was saved and takes the new note. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/saved-places`.
+    /// - Remark: Generated from `#/paths//me/saved-places/put(saveMyPlace)`.
+    func saveMyPlace(_ input: Operations.SaveMyPlace.Input) async throws -> Operations.SaveMyPlace.Output
+    /// Remove a saved place
+    ///
+    /// A place not saved answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /me/saved-places/{placeKey}`.
+    /// - Remark: Generated from `#/paths//me/saved-places/{placeKey}/delete(removeMySavedPlace)`.
+    func removeMySavedPlace(_ input: Operations.RemoveMySavedPlace.Input) async throws -> Operations.RemoveMySavedPlace.Output
     /// Send us feedback (意见反馈)
     ///
     /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
@@ -1519,6 +1538,43 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// The places the signed-in member saved (收藏)
+    ///
+    /// - Remark: HTTP `GET /me/saved-places`.
+    /// - Remark: Generated from `#/paths//me/saved-places/get(listMySavedPlaces)`.
+    public func listMySavedPlaces(headers: Operations.ListMySavedPlaces.Input.Headers = .init()) async throws -> Operations.ListMySavedPlaces.Output {
+        try await listMySavedPlaces(Operations.ListMySavedPlaces.Input(headers: headers))
+    }
+    /// Save a place (收藏), or change its note
+    ///
+    /// A place saved already keeps when it was saved and takes the new note. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/saved-places`.
+    /// - Remark: Generated from `#/paths//me/saved-places/put(saveMyPlace)`.
+    public func saveMyPlace(
+        headers: Operations.SaveMyPlace.Input.Headers = .init(),
+        body: Operations.SaveMyPlace.Input.Body
+    ) async throws -> Operations.SaveMyPlace.Output {
+        try await saveMyPlace(Operations.SaveMyPlace.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Remove a saved place
+    ///
+    /// A place not saved answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /me/saved-places/{placeKey}`.
+    /// - Remark: Generated from `#/paths//me/saved-places/{placeKey}/delete(removeMySavedPlace)`.
+    public func removeMySavedPlace(
+        path: Operations.RemoveMySavedPlace.Input.Path,
+        headers: Operations.RemoveMySavedPlace.Input.Headers = .init()
+    ) async throws -> Operations.RemoveMySavedPlace.Output {
+        try await removeMySavedPlace(Operations.RemoveMySavedPlace.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// Send us feedback (意见反馈)

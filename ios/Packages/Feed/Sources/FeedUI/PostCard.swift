@@ -1,5 +1,7 @@
 #if os(iOS)
 import AvatarUI
+import CheckInDomain
+import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -193,6 +195,7 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
+                if let place = post.checkIn.entry.place { PlaceTag(place) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {
