@@ -3752,19 +3752,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Meal streak: %lld"
+            "value": "Healthy meal streak: %lld"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连续吃饭打卡 %lld 天"
+            "value": "连续健康餐 %lld 天"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "連續吃飯打卡 %lld 天"
+            "value": "連續健康餐 %lld 天"
           }
         }
       }
