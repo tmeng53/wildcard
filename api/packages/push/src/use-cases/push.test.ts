@@ -273,11 +273,11 @@ describe('push settings', () => {
   it('logs each switch flipped, in order, and never a save that changed nothing', async () => {
     const member = await newMember();
     // Saving the default before any switch was flipped changes nothing, so stores nothing.
-    await stores.settings.save(member, { dailyProgress: true, coach: true });
+    await stores.settings.save(member, { dailyProgress: true, coach: true, teammate: true });
     expect(await stores.settings.changedBy(member)).toStrictEqual(new Map());
-    await stores.settings.save(member, { dailyProgress: false, coach: true });
-    await stores.settings.save(member, { dailyProgress: false, coach: true });
-    await stores.settings.save(member, { dailyProgress: true, coach: true });
+    await stores.settings.save(member, { dailyProgress: false, coach: true, teammate: true });
+    await stores.settings.save(member, { dailyProgress: false, coach: true, teammate: true });
+    await stores.settings.save(member, { dailyProgress: true, coach: true, teammate: true });
     const { rows } = await sql<{ topic: string; enabled: boolean }>`
       select topic, enabled from push_setting_events where member_id = ${member} order by id
     `.execute(db);
@@ -296,12 +296,23 @@ describe('push settings', () => {
     expect(await push.saveSettings({ member, settings: { coach: false } })).toStrictEqual({
       dailyProgress: true,
       coach: false,
+      teammate: true,
     });
     expect(await push.saveSettings({ member, settings: { dailyProgress: false } })).toStrictEqual({
       dailyProgress: false,
       coach: false,
+      teammate: true,
     });
-    expect(await push.settingsOf(member)).toStrictEqual({ dailyProgress: false, coach: false });
+    expect(await push.saveSettings({ member, settings: { teammate: false } })).toStrictEqual({
+      dailyProgress: false,
+      coach: false,
+      teammate: false,
+    });
+    expect(await push.settingsOf(member)).toStrictEqual({
+      dailyProgress: false,
+      coach: false,
+      teammate: false,
+    });
   });
 });
 

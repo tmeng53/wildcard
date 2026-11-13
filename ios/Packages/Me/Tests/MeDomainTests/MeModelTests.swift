@@ -65,6 +65,13 @@ actor FakeService: MeService {
         current.coachPushOn = isOn
     }
 
+    private(set) var teammatePushSaves: [Bool] = []
+    func setTeammatePush(_ isOn: Bool) async throws(MeError) {
+        teammatePushSaves.append(isOn)
+        if let failing { throw failing }
+        current.teammatePushOn = isOn
+    }
+
     func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
         if let failing { throw failing }
         current.board.wear(wearable)
@@ -188,6 +195,20 @@ struct MeModelTests {
         await service.fail(with: .unavailable)
         await page.setCoachPush(true)
         #expect(!page.coachPushOn && page.saveFailed)
+    }
+
+    @Test func savesTheTeammateSwitchApartFromTheOthers() async {
+        let service = FakeService(sample)
+        let page = model(service)
+        await page.reload()
+        await page.setTeammatePush(false)
+        #expect(!page.teammatePushOn && page.dailyPushOn && page.coachPushOn)
+        #expect(await service.teammatePushSaves == [false])
+        #expect(await service.pushSaves.isEmpty)
+        #expect(await service.coachPushSaves.isEmpty)
+        await service.fail(with: .unavailable)
+        await page.setTeammatePush(true)
+        #expect(!page.teammatePushOn && page.saveFailed)
     }
 
     @Test func showsTheEditedCharacterOnceSaved() async {

@@ -5896,7 +5896,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
             public var version: Components.Schemas.PushSettings.VersionPayload
-            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public struct SettingsPayload: Codable, Hashable, Sendable {
@@ -5904,24 +5904,30 @@ extension Components {
                 public var dailyProgress: Swift.Bool?
                 /// - Remark: Generated from `#/components/schemas/PushSettings/settings/coach`.
                 public var coach: Swift.Bool?
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/teammate`.
+                public var teammate: Swift.Bool?
                 /// Creates a new `SettingsPayload`.
                 ///
                 /// - Parameters:
                 ///   - dailyProgress:
                 ///   - coach:
+                ///   - teammate:
                 public init(
                     dailyProgress: Swift.Bool? = nil,
-                    coach: Swift.Bool? = nil
+                    coach: Swift.Bool? = nil,
+                    teammate: Swift.Bool? = nil
                 ) {
                     self.dailyProgress = dailyProgress
                     self.coach = coach
+                    self.teammate = teammate
                 }
                 public enum CodingKeys: String, CodingKey {
                     case dailyProgress
                     case coach
+                    case teammate
                 }
             }
-            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public var settings: Components.Schemas.PushSettings.SettingsPayload
@@ -5929,7 +5935,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             public init(
                 version: Components.Schemas.PushSettings.VersionPayload,
                 settings: Components.Schemas.PushSettings.SettingsPayload

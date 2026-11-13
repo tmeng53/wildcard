@@ -63,7 +63,7 @@ function setUp(waiting: readonly NoteToDeliver[]) {
     // `quiet` turned the coach's push off.
     push: {
       settingsOf: (member: string) =>
-        Promise.resolve({ dailyProgress: true, coach: member !== quiet }),
+        Promise.resolve({ dailyProgress: true, coach: member !== quiet, teammate: true }),
       notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
         sent.push(input);
         return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });

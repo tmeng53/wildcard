@@ -3524,12 +3524,16 @@
               },
               "coach": {
                 "type": "boolean"
+              },
+              "teammate": {
+                "type": "boolean"
               }
             },
-            "description": "Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.",
+            "description": "Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.",
             "example": {
               "dailyProgress": true,
-              "coach": true
+              "coach": true,
+              "teammate": true
             }
           }
         },
