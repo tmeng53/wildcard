@@ -39,10 +39,10 @@ async function settingsOf(deps: Deps, squad: SquadId) {
 
 /**
  * Sets the squad's time zone, for its captain. It counts at once (Tracy, 2026-11-08), so this
- * week's 战报 freezes Sunday 8pm on the new clock, unless that moment has already passed when the
- * captain changes it (Sunday evening on a clock ahead): then it counts from the next week (Tracy,
- * 2026-11-13), so the change never freezes this week's 战报 early. Which week, `weekOfChange`.
- * Saving the zone the squad already keeps changes nothing.
+ * week's 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old
+ * clock or the new one when the captain changes it: then it counts from the next week (Tracy,
+ * 2026-11-13), so a change never freezes this week's 战报 early or reopens one that froze. Which
+ * week, `weekOfChange`. Saving the zone the squad already keeps changes nothing.
  */
 export async function setSquadTimeZone(
   deps: Deps,

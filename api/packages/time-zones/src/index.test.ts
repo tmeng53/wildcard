@@ -61,5 +61,9 @@ describe('time zones', () => {
     expect(weekFreezesAt('2026-11-02', 'America/Los_Angeles').toISOString()).toBe(
       '2026-11-09T04:00:00.000Z',
     );
+    // New York's clocks go back at 2am that Sunday, so its 8pm is 01:00 UTC, not 00:00.
+    expect(weekFreezesAt('2026-10-26', 'America/New_York').toISOString()).toBe(
+      '2026-11-02T01:00:00.000Z',
+    );
   });
 });

@@ -21,9 +21,9 @@ const SquadTimeZoneBody = z
     timeZone: squadTimeZoneField.meta({ description: 'This week’s zone.' }),
     nextTimeZone: squadTimeZoneField.meta({
       description:
-        'Next week’s zone: the same as `timeZone` unless the captain changed it after this ' +
-        'week’s 战报 had already frozen on the new clock (Sunday 8pm there), when the change ' +
-        'counts from next week.',
+        'Next week’s zone: the same as `timeZone` unless the captain changed it once this ' +
+        'week’s Sunday 8pm had passed on the old clock or the new one, when the change counts ' +
+        'from next week.',
     }),
     canChange: z.boolean().meta({ description: 'True for the captain, the only one who sets it.' }),
   })
@@ -45,6 +45,8 @@ const signedInFailures = {
 export function squadTimeZone(deps: {
   readonly verifyToken: VerifyToken;
   readonly squads: Squads;
+  /** The clock a week freezes by, which says whether a change counts at once. */
+  readonly clock: () => Date;
 }) {
   const params = z.strictObject({ squadId: SquadId });
   const zoneResponse = (description: string) => ({
@@ -76,8 +78,9 @@ export function squadTimeZone(deps: {
     summary: 'Set the squad’s time zone',
     description:
       'For the captain. It counts at once, from the squad’s week on its own clock, so this ' +
-      'week’s 战报 freezes Sunday 8pm on the new clock, unless that moment has already passed ' +
-      'on the new clock: then it counts from next week (`nextTimeZone`). Safe to repeat.',
+      'week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on ' +
+      'the old clock or the new one: then it counts from next week (`nextTimeZone`), so a ' +
+      'change never freezes a week early or reopens a frozen one. Safe to repeat.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -114,7 +117,7 @@ export function squadTimeZone(deps: {
     .openapi(read, async (c) => {
       const { squadId } = c.req.valid('param');
       const viewer = MemberId.parse(c.var.caller.userId);
-      const zone = await deps.squads.timeZone({ squad: squadId, viewer, moment: new Date() });
+      const zone = await deps.squads.timeZone({ squad: squadId, viewer, moment: deps.clock() });
       return c.json(await body({ squad: squadId, viewer, zone }), 200);
     })
     .openapi(change, async (c) => {
@@ -124,7 +127,7 @@ export function squadTimeZone(deps: {
         squad: squadId,
         member,
         timeZone: c.req.valid('json').timeZone,
-        moment: new Date(),
+        moment: deps.clock(),
       });
       return c.json(await body({ squad: squadId, viewer: member, zone }), 200);
     });

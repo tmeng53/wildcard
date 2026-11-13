@@ -7413,7 +7413,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Next week’s zone: the same as `timeZone` unless the captain changed it after this week’s 战报 had already frozen on the new clock (Sunday 8pm there), when the change counts from next week.
+            /// Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -7426,7 +7426,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Next week’s zone: the same as `timeZone` unless the captain changed it after this week’s 战报 had already frozen on the new clock (Sunday 8pm there), when the change counts from next week.
+            ///   - nextTimeZone: Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,

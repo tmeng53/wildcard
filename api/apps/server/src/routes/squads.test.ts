@@ -14,11 +14,17 @@ import {
   createPostgresNoticeStore,
   createPostgresBroadcastStore,
 } from '@wildcard/notices';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  MemberId,
+  SquadId,
+  SquadName,
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+} from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
-import { wallClockAt } from '@wildcard/time-zones';
 import { sql } from 'kysely';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createMemoryRateLimit } from '../adapters/memory-rate-limit.js';
@@ -71,6 +77,8 @@ const photos = createSupabasePhotoStorage({
 const members = createMembers({ store: createPostgresProfileStore(db) });
 /** Whom the coach was asked to welcome, as each join's event reaches it. */
 const welcomes: { readonly squad: string; readonly member: string }[] = [];
+/** The moment a test fixes the app's week clock at; the real time otherwise. */
+let fixedNow: Date | undefined;
 
 const app = createApp({
   db,
@@ -124,7 +132,7 @@ const app = createApp({
   ...unusedFeedback,
   scenes: scenesOn(db),
   switches: switchesOn(db),
-  weeklyAwards: unusedWeeklyAwards,
+  weeklyAwards: { ...unusedWeeklyAwards, clock: () => fixedNow ?? new Date() },
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
@@ -919,7 +927,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, timeZone: change.timeZone },
     });
 
-  it('takes the creator’s pick, and lets only the captain change it, at once', async () => {
+  it('takes the creator’s pick, and lets only the captain change it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const id = randomUUID();
     const created = await call({
@@ -957,19 +965,63 @@ describe('the squad’s time zone', () => {
       400,
       'TIME_ZONE_UNKNOWN',
     ]);
-    const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
-    // At once, unless Los Angeles is past this week's Sunday 8pm (Tracy, 2026-11-13): then from
-    // next week, which the squads module's tests pin to the minute on a fixed clock.
-    const there = wallClockAt(new Date(), 'America/Los_Angeles');
-    const waits = new Date(`${there.day}T00:00:00Z`).getUTCDay() === 0 && there.hour >= 20;
-    expect(changed.body).toMatchObject({
-      version: 1,
-      nextTimeZone: 'America/Los_Angeles',
-      canChange: true,
+  });
+
+  describe('on a fixed clock', () => {
+    afterEach(() => {
+      fixedNow = undefined;
     });
-    const { timeZone } = z.object({ timeZone: z.string() }).parse(changed.body);
-    expect(waits || timeZone === 'America/Los_Angeles').toBe(true);
-    expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
+    const squadModule = createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    });
+    async function taipeiSquad() {
+      const me = await signUp();
+      const { squad } = await squadModule.create({
+        week: '2026-11-02',
+        id: SquadId.parse(randomUUID()),
+        creator: MemberId.parse(me.userId),
+        name: SquadName.parse('台北队'),
+        timeZone: 'Asia/Taipei',
+      });
+      return { me, id: squad.id };
+    }
+
+    it('counts a change at once before this week’s Sunday 8pm on either clock', async () => {
+      const { me, id } = await taipeiSquad();
+      // Sunday 2026-11-08 19:59:59.999 in Taipei, 03:59 in Los Angeles.
+      fixedNow = new Date('2026-11-08T11:59:59.999Z');
+      const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+      expect(changed.body).toStrictEqual({
+        version: 1,
+        timeZone: 'America/Los_Angeles',
+        nextTimeZone: 'America/Los_Angeles',
+        canChange: true,
+      });
+      expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
+    });
+
+    it('counts a change from next week once the week froze on the old clock', async () => {
+      const { me, id } = await taipeiSquad();
+      // Sunday 2026-11-08 20:00 in Taipei: the week froze there; 04:00 in Los Angeles.
+      fixedNow = new Date('2026-11-08T12:00:00Z');
+      const waiting = {
+        version: 1,
+        timeZone: 'Asia/Taipei',
+        nextTimeZone: 'America/Los_Angeles',
+        canChange: true,
+      };
+      const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+      expect(changed.body).toStrictEqual(waiting);
+      expect((await zoneOf(me.token, id)).body).toStrictEqual(waiting);
+      // Once Los Angeles's Monday begins, the new zone is this week's.
+      fixedNow = new Date('2026-11-09T08:00:00Z');
+      expect((await zoneOf(me.token, id)).body).toStrictEqual({
+        ...waiting,
+        timeZone: 'America/Los_Angeles',
+      });
+    });
   });
 
   it('refuses a squad made without a time zone', async () => {

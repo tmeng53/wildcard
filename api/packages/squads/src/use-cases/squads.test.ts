@@ -706,7 +706,7 @@ describe('a squad’s time zone', () => {
     ]);
   });
 
-  it('counts a change at once on the new clock, even when that clock is a day behind', async () => {
+  it('counts a change from next week once this week’s 战报 froze on the old clock', async () => {
     const ann = await newMember();
     const { squad } = await squads.create({
       week: thisWeek,
@@ -715,8 +715,45 @@ describe('a squad’s time zone', () => {
       name: name('台北队'),
       timeZone: 'Asia/Taipei',
     });
-    // Monday 2026-11-09 02:00 in Taipei, still Sunday 11-08 in New York: the squad is back in
-    // its week 11-02, now on New York's clock, and the new zone shows at once.
+    // Sunday 2026-11-08 21:00 in Taipei, an hour after the week of 11-02 froze there, is 05:00 in
+    // Los Angeles. Counting at once would reopen that 战报 until Los Angeles's 8pm, so the week
+    // keeps Taipei and Los Angeles waits for the next: this week's zone and next week's differ.
+    const moment = new Date('2026-11-08T13:00:00Z');
+    const waiting = { timeZone: 'Asia/Taipei', nextTimeZone: 'America/Los_Angeles' };
+    expect(
+      await squads.setTimeZone({
+        squad: squad.id,
+        member: ann,
+        timeZone: 'America/Los_Angeles',
+        moment,
+      }),
+    ).toStrictEqual(waiting);
+    expect(await squads.timeZone({ squad: squad.id, viewer: ann, moment })).toStrictEqual(waiting);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], thisWeek))).toStrictEqual([
+      'Asia/Taipei',
+    ]);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
+      'America/Los_Angeles',
+    ]);
+    // Monday 02:00 in Taipei, still Sunday in Los Angeles: the squad's next week hasn't begun on
+    // its new clock, so it is still in the frozen week, on Taipei.
+    const monday = new Date('2026-11-08T18:00:00Z');
+    expect([squad.id].map(await squads.timeZonesAt([squad.id], monday))).toStrictEqual([
+      'Asia/Taipei',
+    ]);
+  });
+
+  it('counts a change from next week on the squad’s Monday, a day ahead of the new clock', async () => {
+    const ann = await newMember();
+    const { squad } = await squads.create({
+      week: thisWeek,
+      id: SquadId.parse(randomUUID()),
+      creator: ann,
+      name: name('台北队'),
+      timeZone: 'Asia/Taipei',
+    });
+    // Monday 2026-11-09 02:00 in Taipei, still Sunday 11-08 in New York. The week of 11-02 froze
+    // on Taipei's clock, so New York counts from 11-09, which hasn't begun on its clock yet.
     const moment = new Date('2026-11-08T18:00:00Z');
     expect(
       await squads.setTimeZone({
@@ -725,12 +762,9 @@ describe('a squad’s time zone', () => {
         timeZone: 'America/New_York',
         moment,
       }),
-    ).toStrictEqual({ timeZone: 'America/New_York', nextTimeZone: 'America/New_York' });
-    expect([squad.id].map(await squads.timeZonesAt([squad.id], moment))).toStrictEqual([
-      'America/New_York',
-    ]);
+    ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'America/New_York' });
     expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-02'))).toStrictEqual([
-      'America/New_York',
+      'Asia/Taipei',
     ]);
     expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
       'America/New_York',

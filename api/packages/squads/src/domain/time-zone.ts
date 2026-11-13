@@ -12,8 +12,9 @@ import { weekAfter } from './weekly-goal.js';
 
 // A squad's time zone (小队时区): the clock of what its whole squad shares, the 战报 and awards
 // freezing Sunday 8pm and the coach's daily wake. A member's own day keeps their own zone. A
-// captain's change counts from the squad's week at once (Tracy, 2026-11-08), unless that week
-// would already have frozen on the new clock, when it counts from the next (Tracy, 2026-11-13).
+// captain's change counts from the squad's week at once (Tracy, 2026-11-08), unless that week's
+// Sunday 8pm has already passed on the old clock or the new one: then it counts from next week
+// (Tracy, 2026-11-13), so a change never freezes a week early or reopens a frozen one.
 
 /** One setting of a squad's time zone, and the week (a Monday) it counts from. */
 export interface TimeZoneSetting {
@@ -61,10 +62,10 @@ export function zoneAt(settings: readonly TimeZoneSetting[], moment: Date): Time
 /**
  * The week a captain's change to `zone` at `moment` counts from. At once (Tracy, 2026-11-08): from
  * the squad's week at `moment`, or from the week before when it is still that week on the new
- * clock (a change made on the squad's Monday that is Sunday in the new zone), so the new zone is
- * the squad's zone straight away on every clock. But never from a week whose 战报 would already
- * have frozen on the new clock, Sunday 8pm there (Tracy, 2026-11-13): then from the next week, so
- * a change never freezes a week the squad is still playing.
+ * clock, so the new zone is the squad's zone straight away on every clock. But never from a week
+ * whose Sunday 8pm has already passed on either clock, the zone it keeps now or the new one (Tracy,
+ * 2026-11-13): then from the next week, so a change never freezes a week the squad is still playing
+ * (8pm passed on the new clock) or reopens a 战报 that already froze (8pm passed on the old one).
  */
 export function weekOfChange(
   settings: readonly TimeZoneSetting[],
@@ -73,6 +74,8 @@ export function weekOfChange(
   const now = weekAt(settings, moment);
   const there = SceneWeek.parse(mondayOf(wallClockAt(moment, zone).day));
   let week = there < now ? there : now;
-  while (weekFreezesAt(week, zone) <= moment) week = weekAfter(week);
+  const frozen = (each: SceneWeek) =>
+    weekFreezesAt(each, zone) <= moment || weekFreezesAt(each, zoneFor(settings, each)) <= moment;
+  while (frozen(week)) week = weekAfter(week);
   return week;
 }

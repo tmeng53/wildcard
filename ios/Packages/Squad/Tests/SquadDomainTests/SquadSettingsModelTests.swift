@@ -41,6 +41,7 @@ private let toronto = TimeZone(identifier: "America/Toronto") ?? .gmt
 actor Squad3: SquadSettingsService {
     var current: SquadSettings
     var failing: SquadError?
+    private var timeZoneWaits = false
     private(set) var picks: [SceneID] = []
     private(set) var hires: [CoachID] = []
     private(set) var languagePicks: [SquadLanguage.Language] = []
@@ -129,9 +130,15 @@ actor Squad3: SquadSettingsService {
     func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         if let failing { throw failing }
         guard current.matchTimeZone.canChange else { throw .outdated }
-        current.matchTimeZone.timeZone = timeZone
+        // Past this week's Sunday 8pm, the server keeps this week's zone and counts the pick from
+        // the next.
+        if !timeZoneWaits { current.matchTimeZone.timeZone = timeZone }
+        current.matchTimeZone.nextTimeZone = timeZone
         return current.matchTimeZone
     }
+
+    /// From now on a time zone change counts from next week, as past this week's Sunday 8pm.
+    func passSundayEvening() { timeZoneWaits = true }
 
     func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
         -> SquadLanguage

@@ -8,13 +8,19 @@ public struct SquadTimeZone: Hashable, Sendable {
     /// `newYork` as a clock.
     public static let newYorkClock = TimeZone(identifier: newYork) ?? .gmt
 
-    /// The zone (an IANA name such as `Asia/Taipei`); a captain's change counts at once.
+    /// This week's zone (an IANA name such as `Asia/Taipei`).
     public var timeZone: String
+    /// Next week's, the captain's latest pick, which 比赛时区 shows: the same as `timeZone` unless
+    /// the change came once this week's Sunday 8pm had passed on the old clock or the new one, when
+    /// it counts from next week.
+    public var nextTimeZone: String
     /// The viewer is the captain, the only one who sets it.
     public let canChange: Bool
 
-    public init(timeZone: String, canChange: Bool) {
+    /// `nextTimeZone` left out is `timeZone`: no change waits.
+    public init(timeZone: String, nextTimeZone: String? = nil, canChange: Bool) {
         self.timeZone = timeZone
+        self.nextTimeZone = nextTimeZone ?? timeZone
         self.canChange = canChange
     }
 }
