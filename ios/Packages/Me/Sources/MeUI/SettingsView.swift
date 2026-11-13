@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var isHealthOpen = false
     @State private var isBirthdayOpen = false
     @State private var isWidgetGuideOpen = false
+    @State private var isDemoAccountsOpen = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -35,6 +36,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $isBirthdayOpen) {
                 BirthdayView(model: model)
+            }
+            .navigationDestination(isPresented: $isDemoAccountsOpen) {
+                if let demoAccounts = destinations.admin.demoAccounts { DemoAccountsView(model: demoAccounts) }
             }
             .navigationDestination(isPresented: $isWidgetGuideOpen) {
                 if let guide = destinations.widgetGuide { guide }
@@ -78,8 +82,8 @@ struct SettingsView: View {
                 }
                 preferencesGroup
                 aboutGroup
-                if let previewSignUp = destinations.previewSignUp {
-                    adminGroup(previewSignUp)
+                if !destinations.admin.isEmpty {
+                    adminGroup
                 }
                 accountGroup
                 if model.saveFailed {
@@ -189,11 +193,21 @@ struct SettingsView: View {
         }
     }
 
-    /// Only for admins: tools to try the app as a newcomer would.
-    private func adminGroup(_ previewSignUp: @escaping () -> Void) -> some View {
+    /// Only for admins (and, for 演示账号, their demo accounts): tools to try the app as a
+    /// newcomer would, and the demo accounts for promo pictures.
+    private var adminGroup: some View {
         MenuGroup(Text(copy: "管理员", bundle: .module)) {
-            ListRow(Text(copy: "预览注册", bundle: .module), showsDivider: false, action: previewSignUp)
+            if let previewSignUp = destinations.admin.previewSignUp {
+                ListRow(
+                    Text(copy: "预览注册", bundle: .module), showsDivider: destinations.admin.demoAccounts != nil,
+                    action: previewSignUp
+                )
                 .accessibilityIdentifier("me.previewSignUp")
+            }
+            if destinations.admin.demoAccounts != nil {
+                ListRow(Text(copy: "演示账号", bundle: .module), showsDivider: false) { isDemoAccountsOpen = true }
+                    .accessibilityIdentifier("me.demoAccounts")
+            }
         }
     }
 
