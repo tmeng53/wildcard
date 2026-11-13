@@ -96,6 +96,9 @@ public enum AppDestination: Hashable, Sendable {
     /// A place's own page (地点页), pushed over the tab it opened from: every place in the app
     /// opens it.
     case place(Place)
+    /// A new 训练, filled from a teammate's that named the member as one it was done with
+    /// (一起练): its sport, start, minutes and the teammate.
+    case trainAlong(CheckInID)
     /// 今天.
     case today
     /// 今天, where today's pats on the member play again, even ones this phone already showed.
@@ -129,6 +132,7 @@ extension Notice {
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
         case .unlocked(let kind, let item): .unlock(kind, item: item)
         case .comment(_, let checkIn): .post(checkIn)
+        case .trainedWith(_, let checkIn): .trainAlong(checkIn)
         case .coachNote(let note): .coachNote(note)
         case .coachLetter(let letter): .coachLetter(letter)
         case .broadcast(let broadcast): broadcast.letter == nil ? broadcast.action?.destination : .teamLetter(broadcast)

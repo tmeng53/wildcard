@@ -203,6 +203,7 @@ export function createApp(deps: AppDependencies) {
   const handlers = eventHandlers({
     coach: deps.jobs.coach,
     commentPush: deps,
+    trainedWithPush: deps,
     teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
   });
   const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);

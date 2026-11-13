@@ -512,6 +512,70 @@
           }
         }
       }
+    },
+    "我也发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Post mine"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我也發"
+          }
+        }
+      }
+    },
+    "%@ @了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ mentioned you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ @了你"
+          }
+        }
+      }
+    },
+    "队友 @了你": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A squadmate mentioned you"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊友 @了你"
+          }
+        }
+      }
+    },
+    "一起练了 · 也发一条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You trained together · Post yours too"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一起練了 · 也發一則"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
