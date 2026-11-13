@@ -10,8 +10,8 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
-import { fileRole } from './memory.js';
-import { REPLY_LIMIT } from './reply.js';
+import { fileRole, sliceWhole } from './memory.js';
+import { LINE_LIMITS } from './line-limits.js';
 import type { CoachSettings } from './settings.js';
 import {
   addressedWords,
@@ -32,12 +32,6 @@ import type { WakeReason } from './wake.js';
 // speaks. The instructions are the same for every wake of a coach and come first, and each task
 // holds only what changes, so the model's provider can cache that beginning (OpenAI does for a
 // beginning of 1024 tokens or more) and charge less for it.
-
-/** The longest 战术板 line, in characters; the database checks the same. */
-export const NOTE_LIMIT = 60;
-
-/** The longest line a gift comes with, in characters; the database checks the same. */
-export const GIFT_LINE_LIMIT = 60;
 
 /** On a daily wake, what the coach may give: the pool, and who may get one this week. */
 export interface GiftOptions {
@@ -65,8 +59,8 @@ export function instructionsOf(
  */
 function wakesOf(wakes: string): string {
   return wakes
-    .replaceAll('{replyLimit}', String(REPLY_LIMIT))
-    .replaceAll('{noteLimit}', String(NOTE_LIMIT));
+    .replaceAll('{replyLimit}', String(LINE_LIMITS.reply.chinese))
+    .replaceAll('{noteLimit}', String(LINE_LIMITS.note.chinese));
 }
 
 /**
@@ -152,6 +146,60 @@ export function memoryBlock(files: ReadonlyMap<string, string | undefined>): str
 }
 
 /**
+ * The streaks a 请假条's author has going, as a fact: a streak runs through a day with one, neither breaking nor
+ * counting it. Nothing when no streak of two days or more is going.
+ */
+function keptStreakSection(
+  kept: { readonly training?: number; readonly meals?: number } | undefined,
+): string[] {
+  const parts = [
+    ...(kept?.training !== undefined && kept.training >= 2
+      ? [`连续训练 ${String(kept.training)} 天`]
+      : []),
+    ...(kept?.meals !== undefined && kept.meals >= 2
+      ? [`连续吃饭打卡 ${String(kept.meals)} 天`]
+      : []),
+  ];
+  return parts.length === 0
+    ? []
+    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。现在${parts.join('、')}。`];
+}
+
+/** How much of each file's beginning every waking task shows, in characters. */
+export const HEAD_LIMIT = 200;
+
+/**
+ * What the coach remembers on a waking day: only each file's first lines, where the night keeps
+ * what matters most and longest, and how long the rest is. The rest is looked up with `recall`
+ * when the talk needs it (Tracy, 2026-11-10), so the coach doesn't drag every old line into what
+ * it says, or claim to remember what it doesn't.
+ */
+export function memoryIndex(files: ReadonlyMap<string, string | undefined>): string {
+  return [
+    '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
+    ...[...files].map(([path, body]) => {
+      const text = body?.trim() ?? '';
+      if (text === '') return `### ${path}（${fileRole(path)}）\n还是空的。`;
+      const head = headOf(text);
+      const rest = head.length < text.length ? `\n……（共 ${String(text.length)} 字）` : '';
+      return `### ${path}（${fileRole(path)}）\n\`\`\`\n${head}\n\`\`\`${rest}`;
+    }),
+  ].join('\n\n');
+}
+
+/** A file's first whole lines up to `HEAD_LIMIT` characters, or the first line cut there. */
+function headOf(text: string): string {
+  const lines = text.split('\n');
+  let head = '';
+  for (const line of lines) {
+    const next = head === '' ? line : `${head}\n${line}`;
+    if (next.length > HEAD_LIMIT) break;
+    head = next;
+  }
+  return head === '' ? sliceWhole(text, HEAD_LIMIT) : head;
+}
+
+/**
  * The task for one wake: what happened, the files there are, and what the coach may do this
  * time. `undefined` when there is nothing to wake for (the check-in left the squad's week).
  */
@@ -170,6 +218,8 @@ export function taskOf({
   backAgain = false,
   challenge,
   gifting,
+  keptStreaks,
+  setChallenges,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -202,8 +252,17 @@ export function taskOf({
   };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
+  /** On a 请假条's wake, its author's streaks it kept going. */
+  readonly keptStreaks?: { readonly training?: number; readonly meals?: number };
+  /**
+   * On a daily wake, the challenge set for each member today, by member id, before the coach
+   * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
+   */
+  readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
-  const filesLine = memoryBlock(files);
+  // The night tidies the whole memory, so it reads every file in full; a waking task shows each
+  // file's beginning and looks the rest up.
+  const filesLine = reason.kind === 'dream' ? memoryBlock(files) : memoryIndex(files);
   const whoIsWho = rosterText(week);
   const roster = rosterOf(week);
   const occasion = occasionBlock(occasions, backAgain);
@@ -217,6 +276,7 @@ export function taskOf({
     return [
       '# 有人打卡',
       checkInBlock(checkIn, { roster, heading: '## 这条打卡：' }),
+      ...keptStreakSection(keptStreaks),
       ...(challenge === undefined ? [] : [challengeSection(challenge)]),
       ...occasion,
       whoIsWho,
@@ -300,8 +360,26 @@ export function taskOf({
     filesLine,
     notes,
     noteSection,
+    ...(setChallenges === undefined ? [] : [setChallengesBlock(setChallenges, roster)]),
     ...giftBlock(gifting, roster),
   ].join('\n\n');
+}
+
+/** Today's challenges, set already, which go under each member's note. */
+function setChallengesBlock(
+  set: ReadonlyMap<string, Challenge>,
+  roster: ReadonlyMap<string, string>,
+): string {
+  const heading = '## 今天的挑战（已经定好，单独一张卡给他）';
+  if (set.size === 0) return `${heading}\n今天没有挑战。`;
+  return [
+    heading,
+    ...[...set].map(
+      ([member, challenge]) =>
+        `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
+    ),
+    '便条别和他的挑战拧着，也不用把挑战再说一遍。',
+  ].join('\n');
 }
 
 /** The language a line to one member is written in, as its own section. */
@@ -324,7 +402,7 @@ const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请
  */
 const DREAM = [
   '这次醒来是为了整理你的记性。上面是过去七天的动态。',
-  '你的记性就是上面这几个文件，明天醒来你只记得它们。rewrite_file 会把一个文件整个换成你写的样子。',
+  '你的记性就是上面这几个文件，明天醒来你只记得它们。白天你只看得到每个文件的开头几行，其余要用 recall 查。rewrite_file 会把一个文件整个换成你写的样子。',
 ].join('\n');
 
 /** The gift pool and who may get one, when anyone may: the give_gift tool's choices. */
@@ -353,8 +431,12 @@ function occasionBlock(occasions: readonly string[], backAgain: boolean): string
 export interface YesterdayFacts {
   readonly day: string;
   readonly checkIns: readonly WeekCheckIn[];
-  /** The challenges the coach set that day and what each member said to them. */
+  /**
+   * The challenges the coach set over the last week up to that day, oldest first, and what each
+   * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
+   */
   readonly challenges?: readonly {
+    readonly day: string;
     readonly member: string;
     readonly challenge: Challenge;
     readonly answer: ChallengeAnswer | undefined;
@@ -385,9 +467,9 @@ function yesterdayBlocks(
   if (challenges.length === 0) return [posts];
   const lines = challenges.map(
     (each) =>
-      `- ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
+      `- ${dayWords(each.day)} ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
   );
-  return [posts, ['## 昨天的挑战', ...lines].join('\n')];
+  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
 /** How a challenge went, in the coach's words. */

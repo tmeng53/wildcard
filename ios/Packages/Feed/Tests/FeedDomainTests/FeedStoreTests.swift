@@ -240,3 +240,12 @@ let miasSlip = FeedPost(checkIn: checkIn(2, by: mia, on: "2026-10-21", at: 50, d
         ])
     #expect(feed.arrivals(since: at(400)) == [])
 }
+
+/// A place's page opened from 动态 before 今天 loads reads the feed's squad; a post's own page has none.
+@MainActor @Test func aFeedKnowsItsSquadAndAPostsPageDoesNot() {
+    #expect(store(FakeSource([])).squad == squad)
+    let page = FeedStore(
+        source: FakeSource([]), post: jaysRun.id, ownSquad: squad, viewer: coco, today: { thursday },
+        now: { at(500) }, newCommentID: { commentID(1) })
+    #expect(page.squad == nil)
+}

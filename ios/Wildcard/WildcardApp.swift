@@ -21,6 +21,7 @@ import MeDomain
 import MeUI
 import NotificationsUI
 import OnboardingUI
+import PlacesDomain
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
@@ -55,6 +56,8 @@ struct WildcardApp: App {
     @State private var feed: FeedModel
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
+    /// Places' squad numbers, counted from the sample squad's 动态.
+    @State private var places: any PlaceSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     /// Where a tapped push goes, kept until the tabs open it.
     @State private var pushDestination: AppDestination?
@@ -124,6 +127,8 @@ struct WildcardApp: App {
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
+        _places = State(
+            initialValue: FeedPlaceSource(feed: feedSource, today: LocalDay(at: LaunchOptions.now(), in: .current)))
     }
 
     /// What every launch does first, before any model or screen is made.
@@ -171,7 +176,7 @@ struct WildcardApp: App {
     /// nothing to sign out of.
     private static func sampleProfile() -> MeModel {
         let service = InMemoryMeService.sample(
-            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked, stock: LaunchOptions.stock,
+            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.profileUnlocks, stock: LaunchOptions.stock,
             gifts: LaunchOptions.teamGifts)
         // What the server would work out while the app was away, for the test that 商店街 reads it again.
         if let later = LaunchOptions.stockOnReturn {
@@ -309,7 +314,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards, selection: $tab,
+                myPosts: myPosts, places: places, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards,
+                selection: $tab,
                 destination: $pushDestination, location: Self.sampleLocation
             )
             .onAppear {
@@ -326,6 +332,15 @@ struct WildcardApp: App {
                 }
                 if let destination = delegate.takeDestination() {
                     Self.open(destination, today: today, tab: $tab)
+                }
+                if let link = LaunchOptions.widgetLink {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
+                }
+            }
+            // A home screen widget's tap, as `AppRoot` opens it on the real backend.
+            .onOpenURL { url in
+                if let link = WidgetLink(url: url) {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
                 }
             }
             .task { await Self.moveSampleSquad(today: today) }

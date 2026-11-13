@@ -78,4 +78,6 @@ public enum SquadError: Error, Hashable, Sendable {
     case outdated
     /// The member isn't in a squad any more.
     case noSquad
+    /// A day's challenge whose day is over on the squad's clock (已过期): never taken up.
+    case challengeExpired
 }

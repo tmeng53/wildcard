@@ -1,6 +1,7 @@
 import {
   isSameCheckIn,
   photosOf,
+  placeOf,
   recordFromDraft,
   type CheckInEdit,
   type CheckInId,
@@ -20,9 +21,11 @@ import type {
   PhotoFiles,
   SportList,
   SquadMembership,
+  SquadPlaceOf,
   WeeklyPlanStore,
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
+import { checkSquadPlace } from '../check-place.js';
 import { checkSport } from '../check-sport.js';
 import { planTrainedDay } from '../weekly-plans.js';
 import { findVisibleCheckIn } from './find-visible-check-in.js';
@@ -33,6 +36,7 @@ interface Deps {
   readonly membership: SquadMembership;
   readonly photos: PhotoFiles;
   readonly sports: SportList;
+  readonly squadPlaceOf?: SquadPlaceOf;
   readonly plans: WeeklyPlanStore;
 }
 
@@ -74,7 +78,7 @@ export async function editCheckIn(
     {
       ...recordFromDraft(
         {
-          ...keepingWorkout(edit, saved),
+          ...keepingRating(keepingWorkout(edit, saved), saved),
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
@@ -101,6 +105,9 @@ export async function editCheckIn(
     (edited.training.sport !== saved.training.sport ||
       edited.training.customSport !== saved.training.customSport);
   if (sportChanged) await checkSport(deps.sports, edited.training.sport);
+  if (placeOf(edited)?.squadPlaceId !== placeOf(saved)?.squadPlaceId) {
+    await checkSquadPlace(deps.squadPlaceOf, edited);
+  }
   const outcome = await deps.store.update(edited);
   if (!outcome.saved) {
     throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();
@@ -132,6 +139,17 @@ export async function deleteCheckIn(
   // Every photo it ever had, in case an edit's Storage delete failed before.
   await deps.photos.delete(await deps.store.photoHistory(saved.id));
   await deps.store.remove(id);
+}
+
+/**
+ * The edit, keeping the saved meal's rating when it leaves `rating` out, as builds from before
+ * ratings do, so editing there never drops it. A rating can be changed, never taken off.
+ */
+function keepingRating(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
+  if (edit.kind === 'trained' || edit.kind === 'disclaimer') return edit;
+  if (saved.kind !== edit.kind || edit.meal.rating !== undefined) return edit;
+  const { rating } = saved.meal;
+  return rating === undefined ? edit : { ...edit, meal: { ...edit.meal, rating } };
 }
 
 /**

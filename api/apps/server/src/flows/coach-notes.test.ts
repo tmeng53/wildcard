@@ -116,7 +116,7 @@ describe('the coach’s morning notes delivered', () => {
           category: 'coachNote',
           thread: 'coach-notes',
           collapseId: 'coach-note-1',
-          interruption: 'passive',
+          interruption: 'active',
           event: { kind: 'coachNote', note: 1 },
         },
       },

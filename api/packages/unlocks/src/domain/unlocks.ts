@@ -9,12 +9,12 @@ export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
 export const UNLOCK_KINDS = ['store', 'prop', 'piece'] as const;
-/** What a member unlocked: a `prop` only from before every prop was open (Tracy, 2026-11-09). */
+/**
+ * What a member unlocks. Props are everyone's but for the few a rule opens, such as the dogs on a
+ * leash after a 遛狗 (Tracy, 2026-11-12), and those unlocked before every prop was (2026-11-09).
+ */
 export const UnlockKind = z.enum(UNLOCK_KINDS);
 export type UnlockKind = z.infer<typeof UnlockKind>;
-
-/** What a rule opens or an admin gives now: props never need unlocking. */
-export const UnlockableKind = UnlockKind.exclude(['prop']);
 
 /** A store's or prop's id in the app's art, such as `deuce` or `racket`. */
 export const ItemId = z.string().regex(/^[a-z][A-Za-z0-9]{0,39}$/);
@@ -316,26 +316,29 @@ export function toGo({
   });
 }
 
-/** Stores and pieces an admin gives a member, whatever they trained. */
+/** Stores, props and pieces an admin gives a member, whatever they trained. */
 export const UnlockGift = z.strictObject({
   member: MemberId.describe('The member’s id.'),
   items: z
     .array(
       z
-        .strictObject({ kind: UnlockableKind, id: z.string().max(48) })
+        .strictObject({ kind: UnlockKind, id: z.string().max(48) })
         .refine(({ kind, id }) => idFits(kind, id), { message: 'the id doesn’t fit its kind' }),
     )
     .max(100)
     .optional()
-    .describe('The stores and pieces to give, each by kind and id; leave out for every one.'),
+    .describe(
+      'The stores, props and pieces to give, each by kind and id; leave out for every one.',
+    ),
 });
 export type UnlockGift = z.infer<typeof UnlockGift>;
 
 /** A rule as an admin adds or changes it. Its start is kept from when it was added. */
 export const UnlockRuleEdit = z
   .strictObject({
-    kind: UnlockableKind.describe(
-      '`store` for a 商店街 store, `piece` for a clothing piece in a store. Props need no rule.',
+    kind: UnlockKind.describe(
+      '`store` for a 商店街 store, `piece` for a clothing piece in a store, `prop` for a prop ' +
+        'that needs unlocking (most props need no rule: every member holds them).',
     ),
     id: z
       .string()

@@ -67,7 +67,7 @@ private struct PostThumbnail: View {
                     cover = nil
                     return
                 }
-                cover = await PostTile.thumbnail(jpeg)
+                cover = await CoverThumbnail.make(jpeg)
             }
     }
 }

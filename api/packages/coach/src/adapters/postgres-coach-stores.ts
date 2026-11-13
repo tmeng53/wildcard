@@ -593,7 +593,7 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
       };
     },
 
-    async answerChallenge({ squad, member, note, answer, reason }) {
+    async answerChallenge({ squad, member, note, answer, reason, today }) {
       // Only a note that reached the member: one still waiting isn't theirs to answer yet.
       const mine = await db
         .selectFrom('coach_member_notes')
@@ -602,13 +602,26 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
           'coach_member_note_deliveries.note_id',
           'coach_member_notes.id',
         )
-        .select(['coach_member_notes.challenge_title'])
+        .leftJoin(
+          'coach_challenge_answers',
+          'coach_challenge_answers.note_id',
+          'coach_member_notes.id',
+        )
+        .select([
+          'coach_member_notes.challenge_title',
+          sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
+          'coach_challenge_answers.answer',
+        ])
         .where('coach_member_notes.id', '=', String(note))
         .where('coach_member_notes.squad_id', '=', squad)
         .where('coach_member_notes.member_id', '=', member)
         .executeTakeFirst();
       if (mine === undefined) return 'noNote';
       if (mine.challenge_title === null) return 'noChallenge';
+      // An expired challenge (its squad day is over) is never taken up; one answered in time
+      // still gets its answer back. A note that reached the member before the squad's day began
+      // is theirs to answer already.
+      if (mine.answer === null && mine.day < today) return 'dayOver';
       // The first answer stands; a second is the first's.
       await sql`
         insert into public.coach_challenge_answers (note_id, answer, reason)

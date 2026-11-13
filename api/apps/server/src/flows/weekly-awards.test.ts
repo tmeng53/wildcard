@@ -24,8 +24,19 @@ import {
   createPostgresNoticeStore,
   createPostgresBroadcastStore,
 } from '@wildcard/notices';
-import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  DeviceToken,
+  FIRST_PUSH_GENERATION,
+  MemberId as PushMember,
+  type PushNotification,
+} from '@wildcard/push';
+import {
+  createPostgresSquadStore,
+  createSquads,
+  MemberId as SquadsMember,
+  randomInviteCodes,
+  SquadId as SquadsSquad,
+} from '@wildcard/squads';
 import {
   createPostgresAwardSettings,
   createPostgresAwardsStore,
@@ -54,6 +65,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -212,6 +225,8 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
+    ...placesOn(db),
+    savedPlaces: savedPlacesOn(db),
     weather: weatherOn(db),
     ...unusedFeedback,
     log: createLog(() => undefined),
@@ -289,7 +304,7 @@ async function member(timeZone = 'America/Los_Angeles', agreedToAi = true) {
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await pushOn(db).registerDevice({
     member: PushMember.parse(signedUp.userId),
-    device: { token, environment: 'sandbox' },
+    device: { token, environment: 'sandbox', generation: FIRST_PUSH_GENERATION },
   });
   return { ...signedUp, device: token };
 }
@@ -616,6 +631,23 @@ describe('weekly awards', () => {
     await run();
     expect(sent.filter(({ token }) => token === ana.device)).toHaveLength(1);
     expect(sent.filter(({ token }) => token === bo.device)).toHaveLength(1);
+  });
+
+  it('gives no awards, and asks no model, for a squad everyone left', async () => {
+    const { run, prompts } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    const caption = `走光了 ${randomUUID().slice(0, 8)}`;
+    await trained(ana, { squad, caption });
+    await squads.leave({ squad: SquadsSquad.parse(squad), member: SquadsMember.parse(ana.userId) });
+    await squads.leave({ squad: SquadsSquad.parse(squad), member: SquadsMember.parse(bo.userId) });
+
+    await run();
+    expect(prompts.some((prompt) => prompt.includes(caption))).toBe(false);
+    const { rows } = await sql`select 1 from public.week_stories where squad_id = ${squad}`.execute(
+      db,
+    );
+    expect(rows).toHaveLength(0);
   });
 
   it('leaves out of the prompt and the awards a member who hasn’t agreed to AI use', async () => {

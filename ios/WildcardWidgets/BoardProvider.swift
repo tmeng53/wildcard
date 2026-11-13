@@ -23,18 +23,18 @@ struct BoardEntry: TimelineEntry {
 /// session, or the copy the widget kept when the network fails, and today's workouts in Apple
 /// Health for the 打卡 capsule. The app also asks the widgets to read again whenever it leaves
 /// the screen, so a post shows at once.
-struct BoardProvider<Intent: BoardIntent>: AppIntentTimelineProvider {
+struct BoardProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> BoardEntry {
         Self.sample(at: Date())
     }
 
-    func snapshot(for configuration: Intent, in context: Context) async -> BoardEntry {
+    func snapshot(for configuration: BoardIntent, in context: Context) async -> BoardEntry {
         var entry = context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
         entry.showsSchedule = configuration.showsSchedule
         return entry
     }
 
-    func timeline(for configuration: Intent, in context: Context) async -> Timeline<BoardEntry> {
+    func timeline(for configuration: BoardIntent, in context: Context) async -> Timeline<BoardEntry> {
         let read = await Self.read(at: Date())
         var entry = read.entry
         entry.showsSchedule = configuration.showsSchedule
@@ -88,7 +88,8 @@ struct BoardProvider<Intent: BoardIntent>: AppIntentTimelineProvider {
             home = saved
         }
         let coach = try? await backend.coach(in: home.squad.id)
-        let hasNews = coach == nil ? false : ((try? await backend.hasUnseenCoachCards(in: home.squad.id)) ?? false)
+        let hasNews =
+            coach == nil ? false : (try? await backend.newestUnseenCoachCard(in: home.squad.id)) != nil
         let board = WidgetBoard(
             home: home, day: LocalDay(at: now, in: home.timeZone), coach: coach?.coach.id, coachHasNews: hasNews,
             health: health.workouts, putAway: health.putAway)

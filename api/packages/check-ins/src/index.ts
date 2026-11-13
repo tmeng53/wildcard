@@ -30,7 +30,8 @@ export {
   type Entry,
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
-export { Place } from './domain/place.js';
+export { MealRating, calorieValue } from './domain/meal-rating.js';
+export { Place } from '@wildcard/place-ids';
 export { Workout, WorkoutView, workoutView } from './domain/workout.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';
 export { DayRange, MyDayRange, RecordRange, Unshared } from './domain/day-range.js';
@@ -78,6 +79,7 @@ export {
   ReplyToCoachNotFoundError,
   ReplyToNotInSquadError,
   SportNotListedError,
+  SquadPlaceNotFoundError,
   SquadNotJoinedError,
   TimeZoneNotSetError,
   WeekNotStartedError,
@@ -97,6 +99,7 @@ export type {
   CoachHired,
   CoachSpoke,
   SportList,
+  SquadPlaceOf,
   SquadMembership,
   WeeklyPlanStore,
   QuickReactionsStore,

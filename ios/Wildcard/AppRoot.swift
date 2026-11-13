@@ -18,7 +18,7 @@ struct AppRoot: View {
     /// Where a tapped push goes (its notice's place), kept until the tabs open it.
     @State private var pushDestination: AppDestination?
     /// Where a tapped home screen widget asked to go, kept until the tabs open it.
-    @State private var widgetLink = LaunchOptions.widgetLink
+    @State private var widgetLink: WidgetLink?
     /// 预览注册, which an admin opened from 设置: sign-up on the sample squad, saving nothing.
     @State private var signUpPreview: SignUpModel?
     /// Pushes that arrived while the tabs were in front, which they tell in their own banner.
@@ -58,7 +58,7 @@ struct AppRoot: View {
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    myPosts: app.myPosts, notices: app.notices, coachCards: app.coachCards,
+                    myPosts: app.myPosts, places: app.places, notices: app.notices, coachCards: app.coachCards,
                     squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
                     previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,

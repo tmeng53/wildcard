@@ -93,7 +93,7 @@ public enum SquadCardPage: Int, CaseIterable, Sendable, Hashable {
 }
 
 /// The card on the home scene, swiped between two pages of the same height: the squad's week
-/// (score, bar, everyone's rings in one row, then today's accepted challenge) and my week (Monday to Sunday under its label, and the
+/// (score, bar, everyone's rings in one row, then today's accepted challenge or what the coach said that I haven't seen) and my week (Monday to Sunday under its label, and the
 /// picked day's line: what I trained and my meals; tapping a day picks it, today until then).
 /// One card of scene glass straight on the scene, no shadow: a swipe moves only what is inside it,
 /// and two dots at its foot say which page shows; tapping one goes there. Given `collapses`, a
@@ -118,6 +118,10 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     var challengeCoach: AnyView?
     /// Opens the coach's card for today's challenge, from a tap on the coach's head.
     var openChallenge: (() -> Void)?
+    /// The coach's row while it said something not seen yet (`coachNews(_:open:head:)`).
+    var coachNews: CoachNewsLine?
+    var coachNewsHead: AnyView?
+    var openCoachNews: (() -> Void)?
     /// Opens a member's player card, from a tap on their ring in the 今天 row.
     private var openMember: ((SquadMember) -> Void)?
     /// How far a swipe up has lifted the card, while the finger is down.
@@ -143,7 +147,8 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                     SquadPage(
                         squad: squad, challenge: mine.challenge, challengeCoach: challengeCoach, avatar: avatar,
                         footer: footer, openSquad: openSquad, openMember: openMember,
-                        completeChallenge: completeChallenge, openChallenge: openChallenge
+                        completeChallenge: completeChallenge, openChallenge: openChallenge,
+                        coachNews: coachNews, coachNewsHead: coachNewsHead, openCoachNews: openCoachNews
                     )
                     .squadCardPage()
                     .id(SquadCardPage.squad)
@@ -257,6 +262,11 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let openMember: ((SquadMember) -> Void)?
     let completeChallenge: (() -> Void)?
     let openChallenge: (() -> Void)?
+    /// What the coach said that the member hasn't seen; its row shows only without an accepted
+    /// challenge, whose row has the coach's head too (Tracy, 2026-11-13).
+    let coachNews: CoachNewsLine?
+    let coachNewsHead: AnyView?
+    let openCoachNews: (() -> Void)?
 
     var body: some View {
         // With a footer the rows sit 8 apart instead of 12, so the page stays 186 tall.
@@ -280,6 +290,8 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
             if let challenge {
                 ChallengeRow(
                     challenge: challenge, coach: challengeCoach, complete: completeChallenge, open: openChallenge)
+            } else if let coachNews, let openCoachNews {
+                CoachNewsRow(news: coachNews, head: coachNewsHead, open: openCoachNews)
             }
         }
         .accessibilityElement(children: .contain)

@@ -41,9 +41,6 @@ export function isCardId(kind: CoachCardKind, id: string): boolean {
 /** How far back the page reaches, stack and 以前 together. */
 export const CARDS_DAYS = 30;
 
-/** How old an unseen card may be and still be in the stack; older ones are only in 以前. */
-export const STACK_HOURS = 72;
-
 interface CardBase {
   readonly id: string;
   readonly coach: CoachReply['coach'];

@@ -18,12 +18,6 @@ export interface GiftPiece {
   readonly description?: string;
 }
 
-/**
- * The longest line a gift comes with, counted as the coach's lines are (English as half); the
- * database holds up to twice as many characters.
- */
-export const GIFT_LINE_LIMIT = 60;
-
 /** Who gave a gift: the coach on its own, or an admin in the coach's name. */
 export const GivenBy = z.enum(['coach', 'admin']);
 export type GivenBy = z.infer<typeof GivenBy>;
