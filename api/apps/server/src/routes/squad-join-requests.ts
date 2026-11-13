@@ -33,6 +33,16 @@ export const JoinRequest = z
         'squad another way, or the squad ended). More may come: treat another as over.',
     }),
     answeredAt: z.iso.datetime().optional().meta({ description: 'When it ended, in UTC.' }),
+    memberCount: z.int().meta({ description: 'How many members the squad has now.' }),
+    looks: z.array(LookBody).meta({
+      description:
+        'The members’ characters, the earliest to join first, as the invite showed them. ' +
+        'Members who haven’t made theirs yet are left out. No names or ids.',
+    }),
+    captain: z
+      .strictObject({ nickname: z.string(), look: LookBody })
+      .optional()
+      .meta({ description: 'The captain who answers it; left out until they made a character.' }),
   })
   .openapi('JoinRequest');
 
@@ -89,8 +99,29 @@ const signedInFailures = {
   503: problem('Sign-in can’t be checked right now'),
 };
 
-/** A request as the member who asked reads it. */
-export function wireJoinRequest(request: JoinRequestRecord): z.infer<typeof JoinRequest> {
+/** What a request shows of its squad: as the invite did, and its captain. */
+export interface JoinRequestCardDependencies {
+  readonly squads: Pick<Squads, 'captainOf' | 'membersOf'>;
+  readonly members: Pick<Members, 'squadmates'>;
+}
+
+/** A request as the member who asked reads it, with the squad it asks to join. */
+export async function wireJoinRequest(
+  deps: JoinRequestCardDependencies,
+  request: JoinRequestRecord,
+): Promise<z.infer<typeof JoinRequest>> {
+  const [members, captain] = await Promise.all([
+    deps.squads.membersOf(request.squad),
+    deps.squads.captainOf(request.squad),
+  ]);
+  const ids = members.map((member) => ProfileMember.parse(member));
+  const profiles = await deps.members.squadmates(
+    captain === undefined || members.includes(captain)
+      ? ids
+      : [...ids, ProfileMember.parse(captain)],
+  );
+  const characterOf = (member: string) => profiles.get(ProfileMember.parse(member))?.character;
+  const captainCharacter = captain === undefined ? undefined : characterOf(captain);
   return {
     version: 1,
     id: request.id,
@@ -100,6 +131,14 @@ export function wireJoinRequest(request: JoinRequestRecord): z.infer<typeof Join
     askedAt: request.askedAt.toISOString(),
     status: request.answer?.kind ?? 'waiting',
     ...(request.answer === undefined ? {} : { answeredAt: request.answer.at.toISOString() }),
+    memberCount: members.length,
+    looks: members.flatMap((member) => {
+      const look = characterOf(member)?.look;
+      return look === undefined ? [] : [look];
+    }),
+    ...(captainCharacter == null
+      ? {}
+      : { captain: { nickname: captainCharacter.nickname, look: captainCharacter.look } }),
   };
 }
 
@@ -291,14 +330,14 @@ export function squadJoinRequests(
         });
         await tellApproved(deps, request);
       }
-      return c.json(wireJoinRequest(request), 200);
+      return c.json(await wireJoinRequest(deps, request), 200);
     })
     .openapi(readMine, async (c) => {
       const request = await deps.squads.myJoinRequest(caller(c.var.caller.userId));
       return c.json(
         {
           version: 1 as const,
-          ...(request === undefined ? {} : { request: wireJoinRequest(request) }),
+          ...(request === undefined ? {} : { request: await wireJoinRequest(deps, request) }),
         },
         200,
       );

@@ -380,6 +380,9 @@ describe('asking the captain to join (入队申请)', () => {
     askedAt: z.iso.datetime(),
     status: z.string(),
     answeredAt: z.iso.datetime().optional(),
+    memberCount: z.int(),
+    looks: z.array(z.object({ persona: z.string() }).loose()),
+    captain: z.object({ nickname: z.string(), look: z.unknown() }).optional(),
   });
   const ask = (token: string, { inviteCode, note }: { inviteCode: string; note?: string }) =>
     call({
@@ -455,8 +458,11 @@ describe('asking the captain to join (入队申请)', () => {
       squadName: '周三不练腿',
       note: '我是小橘',
       status: 'waiting',
+      memberCount: 1,
+      looks: [],
     });
-    expect(request.answeredAt).toBeUndefined();
+    // The captain made no character yet: none to show.
+    expect([request.answeredAt, request.captain]).toStrictEqual([undefined, undefined]);
     // Asking again with the same note is the same request; the captain is told once.
     const again = await ask(asker.token, { inviteCode: squad.inviteCode, note: '我是小橘' });
     expect([again.status, RequestBody.parse(again.body).id]).toStrictEqual([202, request.id]);
@@ -514,6 +520,7 @@ describe('asking the captain to join (入队申请)', () => {
 
   it('lets only the captain read and answer, and turns a member away', async () => {
     const [captain, mate, asker] = [await signUp(), await signUp(), await signUp()];
+    await withCharacter(captain.token, '毛毛');
     const squad = await newSquad(captain.token);
     expect((await ask(mate.token, { inviteCode: squad.inviteCode })).status).toBe(201);
     const switched = await call({
@@ -534,6 +541,11 @@ describe('asking the captain to join (入队申请)', () => {
     const asked = await ask(asker.token, { inviteCode: squad.inviteCode });
     expect(asked.status).toBe(202);
     const request = RequestBody.parse(asked.body);
+    expect(request).toMatchObject({
+      memberCount: 2,
+      looks: [{ persona: 'shy' }],
+      captain: { nickname: '毛毛', look: { persona: 'shy' } },
+    });
     expect(request.note).toBeUndefined();
     const byMate = await waiting(mate.token, squad.id);
     expect([byMate.status, reason(byMate)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);

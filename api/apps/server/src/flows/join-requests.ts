@@ -31,7 +31,7 @@ export interface JoinRequestNewsDependencies {
 
 /**
  * The captain's push about a request: 「小橘 申请加入小队」. Long-pressed, the app's own view
- * (the `joinRequest` category) shows the member's character, from `look`, with 拒绝 and 同意,
+ * (the `joinRequest` category) shows the member's character, from `look`, and note, with 拒绝 and 同意,
  * which answer it without opening the app.
  */
 export function joinRequestNotification({
@@ -39,7 +39,12 @@ export function joinRequestNotification({
   nickname,
   look,
 }: {
-  readonly request: { readonly id: string; readonly squad: string; readonly member: string };
+  readonly request: {
+    readonly id: string;
+    readonly squad: string;
+    readonly member: string;
+    readonly note?: string | undefined;
+  };
   readonly nickname: string;
   /** The member's character as `GET /me` sends it; not a squadmate yet, so the app has none. */
   readonly look?: EventValue | undefined;
@@ -56,6 +61,7 @@ export function joinRequestNotification({
       request: request.id,
       member: request.member,
       nickname,
+      ...(request.note === undefined ? {} : { note: request.note }),
       ...(look === undefined ? {} : { look }),
     },
   };

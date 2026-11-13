@@ -68,8 +68,9 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     ),
     'push.joinRequest': apnsPayload(
       joinRequestNotification({
-        request: { id: joinRequest, squad, member: mates[0] ?? '' },
+        request: { id: joinRequest, squad, member: mates[0] ?? '', note: '备'.repeat(30) },
         nickname: longestNickname,
+        look: { persona: 'shy', variants: { body: 'lop' }, colors: {} },
       }),
     ),
     'push.joinApproved': apnsPayload(

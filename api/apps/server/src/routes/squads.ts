@@ -580,7 +580,7 @@ export function squads(
       });
       if ('request' in outcome) {
         if (outcome.asked) await tellCaptain(deps, outcome.request);
-        return c.json(wireJoinRequest(outcome.request), 202);
+        return c.json(await wireJoinRequest(deps, outcome.request), 202);
       }
       const { squad, joined } = outcome;
       if (joined) {

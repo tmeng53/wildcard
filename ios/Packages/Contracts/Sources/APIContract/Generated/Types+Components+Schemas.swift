@@ -6157,6 +6157,43 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/JoinRequest/answeredAt`.
             public var answeredAt: Foundation.Date?
+            /// How many members the squad has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/memberCount`.
+            public var memberCount: Swift.Int
+            /// The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/looks`.
+            public var looks: [Components.Schemas.Look]
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public struct CaptainPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/nickname`.
+                public var nickname: Swift.String
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/look`.
+                public var look: Components.Schemas.Look
+                /// Creates a new `CaptainPayload`.
+                ///
+                /// - Parameters:
+                ///   - nickname:
+                ///   - look:
+                public init(
+                    nickname: Swift.String,
+                    look: Components.Schemas.Look
+                ) {
+                    self.nickname = nickname
+                    self.look = look
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case nickname
+                    case look
+                }
+            }
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public var captain: Components.Schemas.JoinRequest.CaptainPayload?
             /// Creates a new `JoinRequest`.
             ///
             /// - Parameters:
@@ -6168,6 +6205,9 @@ extension Components {
             ///   - askedAt: When they asked, in UTC.
             ///   - status: `waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over.
             ///   - answeredAt: When it ended, in UTC.
+            ///   - memberCount: How many members the squad has now.
+            ///   - looks: The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///   - captain: The captain who answers it; left out until they made a character.
             public init(
                 version: Components.Schemas.JoinRequest.VersionPayload,
                 id: Swift.String,
@@ -6176,7 +6216,10 @@ extension Components {
                 note: Swift.String? = nil,
                 askedAt: Foundation.Date,
                 status: Swift.String,
-                answeredAt: Foundation.Date? = nil
+                answeredAt: Foundation.Date? = nil,
+                memberCount: Swift.Int,
+                looks: [Components.Schemas.Look],
+                captain: Components.Schemas.JoinRequest.CaptainPayload? = nil
             ) {
                 self.version = version
                 self.id = id
@@ -6186,6 +6229,9 @@ extension Components {
                 self.askedAt = askedAt
                 self.status = status
                 self.answeredAt = answeredAt
+                self.memberCount = memberCount
+                self.looks = looks
+                self.captain = captain
             }
             public enum CodingKeys: String, CodingKey {
                 case version
@@ -6196,6 +6242,9 @@ extension Components {
                 case askedAt
                 case status
                 case answeredAt
+                case memberCount
+                case looks
+                case captain
             }
         }
         /// - Remark: Generated from `#/components/schemas/JoinSquadRequest`.
