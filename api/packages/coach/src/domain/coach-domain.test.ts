@@ -10,11 +10,14 @@ import {
   squadSeed,
   storedBody,
   storedPathOf,
+  recallLines,
+  sliceWhole,
+  RECALL_LIMIT,
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
 import { lineLanguageOf, longestLine } from './line-limits.js';
-import { instructionsOf, saidLines, taskOf } from './prompt.js';
+import { HEAD_LIMIT, instructionsOf, memoryIndex, saidLines, taskOf } from './prompt.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInBlock, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -447,7 +450,7 @@ describe('when the coach wakes', () => {
         '## 现在\n10-28 周三 09:30',
         // Who is who, with the nicknames it calls people by, so it never guesses a name.
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
-        '## 你的记性（你只记得这些）',
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n还是空的。',
       ].join('\n\n'),
     );
@@ -564,8 +567,8 @@ describe('when the coach wakes', () => {
         '# 新的一天\n2026-11-01，周日。',
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
         '## 和你的对话（过去一天，打卡下面，先后顺序）\n没人在打卡下面和你说话。',
-        // What it remembers, in full: it forgets everything else between wakes.
-        '## 你的记性（你只记得这些）',
+        // What it remembers: each file's beginning, the rest looked up with recall.
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n```\n米亚爱跑步\n```',
         '### squad.md（这个小队）\n还是空的。',
         // The 战术板 in the squad's language (Simplified Chinese until the week says another),
@@ -745,7 +748,7 @@ describe('when the coach wakes', () => {
         '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2',
         '## 你最近点过的表情\n还没点过。',
         '## 语言\n用简体中文写。',
-        '## 你的记性（你只记得这些）',
+        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
         '### memory.md（你和大家之间的事）\n还是空的。',
       ].join('\n\n'),
     );
@@ -939,5 +942,111 @@ describe('a line members read', () => {
     expect(lineLanguageOf('💪💪')).toBe('chinese');
     expect(longestLine('reply')).toBe(200);
     expect(longestLine('challengeLine')).toBe(48);
+  });
+});
+
+describe('memory on a waking day', () => {
+  it('shows each file’s first lines and how long it is, never the whole file', () => {
+    const long = [
+      '- 队员1 对花生过敏',
+      ...Array.from({ length: 30 }, (_, at) => `- 第 ${String(at)} 件小事，写得长一点占地方`),
+    ].join('\n');
+    const index = memoryIndex(
+      new Map([
+        ['people/队员1.md', long],
+        ['memory.md', '队员2 想跑半马'],
+        ['squad.md', undefined],
+      ]),
+    );
+    const block = index.split('\n\n### memory.md')[0] ?? '';
+    // The first fact stays in sight; the rest is only counted.
+    expect(block).toContain('- 队员1 对花生过敏');
+    expect(block).not.toContain('第 29 件小事');
+    expect(block).toContain(`……（共 ${String(long.length)} 字）`);
+    const head = block.split('```\n')[1]?.split('\n```')[0] ?? '';
+    expect(head.length).toBeLessThanOrEqual(HEAD_LIMIT);
+    // A short file shows whole, with no count; an empty one says so.
+    expect(index).toContain(
+      '### memory.md（你和大家之间的事）\n```\n队员2 想跑半马\n```\n\n### squad.md（这个小队）\n还是空的。',
+    );
+  });
+
+  it('cuts a first line longer than the head', () => {
+    const index = memoryIndex(new Map([['memory.md', '跑'.repeat(HEAD_LIMIT + 50)]]));
+    expect(index).toContain(
+      `### memory.md（你和大家之间的事）\n\`\`\`\n${'跑'.repeat(HEAD_LIMIT)}\n\`\`\`\n……（共 ${String(HEAD_LIMIT + 50)} 字）`,
+    );
+  });
+
+  it('the night still reads every file in full', () => {
+    const body = Array.from({ length: 40 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n');
+    const task = taskOf({
+      reason: { kind: 'dream', day: '2026-11-01' },
+      week,
+      files: new Map([['memory.md', body]]),
+      recentNotes: [],
+      talks: [],
+      yesterday: { day: '2026-10-31', checkIns: week.checkIns },
+    });
+    expect(task).toContain('- 第 39 件事');
+  });
+});
+
+describe('sliceWhole', () => {
+  it('cuts before a character it would split in half', () => {
+    expect(sliceWhole('跑🏃步', 2)).toBe('跑');
+    expect(sliceWhole('跑🏃步', 3)).toBe('跑🏃');
+    expect(sliceWhole('跑步', 5)).toBe('跑步');
+  });
+});
+
+describe('recall', () => {
+  const files = new Map([
+    ['people/队员1.md', '# 队员1\n- 对花生过敏\n- 想跑半马\n- 周三固定游泳'],
+    ['memory.md', '- 队员2 说过讨厌早起\n- 大家约好周日爬山'],
+  ]);
+
+  it('finds the lines holding any of the words, in file order, naming each file', () => {
+    expect(recallLines(files, { query: '半马 爬山' })).toBe(
+      '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
+    );
+  });
+
+  it('lists a whole file top first, leaving out headings', () => {
+    expect(recallLines(files, { path: 'people/队员1.md' })).toBe(
+      '【people/队员1.md】- 对花生过敏\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 周三固定游泳',
+    );
+  });
+
+  it('says plainly when nothing matches, so the coach doesn’t claim to remember', () => {
+    expect(recallLines(files, { query: '夸奖' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
+    );
+    expect(recallLines(new Map([['memory.md', '']]), {})).toBe(
+      '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
+    );
+  });
+
+  it('names the files there are when asked for one that isn’t', () => {
+    expect(recallLines(files, { path: 'people/队员9.md' })).toBe(
+      '没有 people/队员9.md 这个文件；能查的是：people/队员1.md，memory.md。',
+    );
+  });
+
+  it('stops at its limit and says how many lines are left', () => {
+    const many = new Map([
+      ['memory.md', Array.from({ length: 300 }, (_, at) => `- 第 ${String(at)} 件事`).join('\n')],
+    ]);
+    const answer = recallLines(many, {});
+    expect(answer.length).toBeLessThanOrEqual(RECALL_LIMIT + 40);
+    expect(answer.startsWith('【memory.md】- 第 0 件事')).toBe(true);
+    expect(answer).toMatch(/（还有 \d+ 行没列出，换个更具体的词再查）$/);
+  });
+
+  it('cuts a line longer than the whole answer instead of leaving it out', () => {
+    const answer = recallLines(new Map([['memory.md', '长'.repeat(RECALL_LIMIT * 2)]]), {});
+    expect(answer).toBe(
+      `${`【memory.md】${'长'.repeat(RECALL_LIMIT * 2)}`.slice(0, RECALL_LIMIT - 1)}…`,
+    );
   });
 });
