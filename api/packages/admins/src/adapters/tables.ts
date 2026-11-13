@@ -32,6 +32,12 @@ export interface AdminActions {
   id: Generated<Int8>;
 }
 
+export interface AdminDemoAccounts {
+  admin_id: string;
+  made_at: Generated<Timestamp>;
+  member_id: string;
+}
+
 export interface Admins {
   added_at: Generated<Timestamp>;
   member_id: string;
@@ -39,5 +45,6 @@ export interface Admins {
 
 export interface DB {
   admin_actions: AdminActions;
+  admin_demo_accounts: AdminDemoAccounts;
   admins: Admins;
 }

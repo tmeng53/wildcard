@@ -34,7 +34,7 @@ extension MainTabs {
                         (profilePlace, profilePlacePost) = (nil, nil)
                     },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
+                    writeReview: PolicyPages.writeReview, admin: admin, health: today.health,
                     location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now())),
                     squadSettings: AnyView(SquadPreferencesView(model: squad)), badgeMarks: wardrobe.badgeMarks),
                 isSettingsOpen: $showsSettings

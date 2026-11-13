@@ -4,6 +4,9 @@ import Foundation
 public enum Credential: Sendable, Equatable {
     /// Sign in with Apple's identity token, and the raw nonce whose SHA-256 the request carried.
     case apple(identityToken: String, nonce: String)
+    /// A refresh token our API handed off for one of an admin's demo accounts
+    /// (`/me/demo-accounts/{memberId}/hand-off`): exchanged as a renewal, it signs in as that account.
+    case handOff(refreshToken: String)
     #if DEBUG
     /// A test member on local Supabase, for the simulator and UI tests, which can't do a real
     /// Sign in with Apple. Never compiled into a release build.

@@ -53,6 +53,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /me/birthday`.
     /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
     func deleteMyBirthday(_ input: Operations.DeleteMyBirthday.Input) async throws -> Operations.DeleteMyBirthday.Output
+    /// The admin’s demo accounts
+    ///
+    /// The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.
+    ///
+    /// - Remark: HTTP `GET /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/get(listDemoAccounts)`.
+    func listDemoAccounts(_ input: Operations.ListDemoAccounts.Input) async throws -> Operations.ListDemoAccounts.Output
+    /// Make a demo account
+    ///
+    /// A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/post(createDemoAccount)`.
+    func createDemoAccount(_ input: Operations.CreateDemoAccount.Input) async throws -> Operations.CreateDemoAccount.Output
+    /// Switch to a demo account
+    ///
+    /// Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts/{memberId}/hand-off`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/{memberId}/hand-off/post(handOffDemoAccount)`.
+    func handOffDemoAccount(_ input: Operations.HandOffDemoAccount.Input) async throws -> Operations.HandOffDemoAccount.Output
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -76,7 +97,7 @@ public protocol APIProtocol: Sendable {
     func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
@@ -700,6 +721,39 @@ extension APIProtocol {
     public func deleteMyBirthday(headers: Operations.DeleteMyBirthday.Input.Headers = .init()) async throws -> Operations.DeleteMyBirthday.Output {
         try await deleteMyBirthday(Operations.DeleteMyBirthday.Input(headers: headers))
     }
+    /// The admin’s demo accounts
+    ///
+    /// The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.
+    ///
+    /// - Remark: HTTP `GET /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/get(listDemoAccounts)`.
+    public func listDemoAccounts(headers: Operations.ListDemoAccounts.Input.Headers = .init()) async throws -> Operations.ListDemoAccounts.Output {
+        try await listDemoAccounts(Operations.ListDemoAccounts.Input(headers: headers))
+    }
+    /// Make a demo account
+    ///
+    /// A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/post(createDemoAccount)`.
+    public func createDemoAccount(headers: Operations.CreateDemoAccount.Input.Headers = .init()) async throws -> Operations.CreateDemoAccount.Output {
+        try await createDemoAccount(Operations.CreateDemoAccount.Input(headers: headers))
+    }
+    /// Switch to a demo account
+    ///
+    /// Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts/{memberId}/hand-off`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/{memberId}/hand-off/post(handOffDemoAccount)`.
+    public func handOffDemoAccount(
+        path: Operations.HandOffDemoAccount.Input.Path,
+        headers: Operations.HandOffDemoAccount.Input.Headers = .init()
+    ) async throws -> Operations.HandOffDemoAccount.Output {
+        try await handOffDemoAccount(Operations.HandOffDemoAccount.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -741,7 +795,7 @@ extension APIProtocol {
     }
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.

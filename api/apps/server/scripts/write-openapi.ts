@@ -68,7 +68,13 @@ const photos = {
 const app = createApp({
   db,
   verifyToken: unused,
-  accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
+  accounts: {
+    verifySession: unused,
+    deleteUser: unused,
+    signsInWithApple: unused,
+    createUser: unused,
+    handOff: unused,
+  },
   revokeAppleSignIn: undefined,
   catalog: {
     sections: [
@@ -201,6 +207,11 @@ const app = createApp({
       list: unused,
       logChange: unused,
       listLog: unused,
+      demoOwner: unused,
+      isDemoAccount: unused,
+      demoAccounts: unused,
+      addDemoAccount: unused,
+      requireDemoAccount: unused,
     }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),

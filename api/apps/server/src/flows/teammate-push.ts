@@ -3,6 +3,7 @@ import {
   MemberId as CheckInMember,
   SquadId,
   SquadNotJoinedError,
+  trainedWithOf,
   type CheckIns,
   type Training,
 } from '@wildcard/check-ins';
@@ -56,7 +57,7 @@ const NAMES_KEY = {
  * their phone at once: the trigger the squad runs on, since a teammate training is what gets the
  * next one out. Only a 训练 posted to the squad's 动态 for the day it was posted on (a 补打卡 for an
  * earlier day is no news) and made within the hour (one a phone kept offline and sent up later
- * isn't 「刚练完」), never to its author, and only to those who left 通知 on (the
+ * isn't 「刚练完」), never to its author or a squadmate it names (told by the 一起练 push), and only to those who left 通知 on (the
  * `dailyProgress` switch). The first few a member gets in 24 hours ring (the settings'
  * `dailyRings`); the rest arrive silently, so a busy squad never becomes noise. Its long-press
  * view is the 6pm push's: the squad's week and today's posts, to cheer in place. It isn't kept
@@ -83,7 +84,9 @@ export async function notifyTeammates(
   // A member without a name yet is still mid-sign-up, and can't have posted; say nothing.
   if (nickname === undefined) return;
 
-  // Each teammate once, through the first squad they share with the author.
+  // Each teammate once, through the first squad they share with the author; those it names as
+  // trained with get the 一起练 push instead.
+  const named = new Set<string>(trainedWithOf(record));
   const through = new Map<string, SquadId>();
   for (const each of squads) {
     const squad = SquadId.parse(each);
@@ -96,7 +99,9 @@ export async function notifyTeammates(
         throw error;
       });
     for (const { member } of today?.members ?? []) {
-      if (member !== author && !through.has(member)) through.set(member, squad);
+      if (member !== author && !named.has(member) && !through.has(member)) {
+        through.set(member, squad);
+      }
     }
   }
   if (through.size === 0) return;

@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -1032,13 +1032,18 @@
           "isAdmin": {
             "type": "boolean",
             "description": "Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves."
+          },
+          "isDemo": {
+            "type": "boolean",
+            "description": "Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts."
           }
         },
         "required": [
           "version",
           "userId",
           "profile",
-          "isAdmin"
+          "isAdmin",
+          "isDemo"
         ],
         "additionalProperties": false
       },
@@ -1184,6 +1189,90 @@
         },
         "required": [
           "version"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccounts": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "memberId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The account’s member id."
+                },
+                "owner": {
+                  "type": "boolean",
+                  "description": "Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off."
+                },
+                "character": {
+                  "$ref": "#/components/schemas/Character"
+                }
+              },
+              "required": [
+                "memberId",
+                "owner"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The admin’s own account, then their demo accounts, oldest first."
+          }
+        },
+        "required": [
+          "version",
+          "accounts"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccount": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "memberId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The account’s member id."
+          }
+        },
+        "required": [
+          "version",
+          "memberId"
+        ],
+        "additionalProperties": false
+      },
+      "DemoHandOff": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account."
+          }
+        },
+        "required": [
+          "version",
+          "refreshToken"
         ],
         "additionalProperties": false
       },
@@ -1380,6 +1469,15 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
           },
           "place": {
             "$ref": "#/components/schemas/Place"
@@ -2127,6 +2225,15 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
           },
           "place": {
             "$ref": "#/components/schemas/Place"
@@ -5700,6 +5807,72 @@
             "type": "string",
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "sport",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "大家在这里练: each sport its 训练 named, most first."
+          },
+          "meals": {
+            "type": "object",
+            "properties": {
+              "healthyMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cheatMeal": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "healthyMeal",
+              "cheatMeal"
+            ],
+            "additionalProperties": false,
+            "description": "大家在这里吃: how many of its posts were each kind of meal."
           }
         },
         "required": [
@@ -5709,7 +5882,10 @@
           "people",
           "stars",
           "raters",
-          "lastAt"
+          "lastAt",
+          "members",
+          "sports",
+          "meals"
         ],
         "additionalProperties": false
       },
@@ -5891,14 +6067,28 @@
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
           },
-          "myStars": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 5,
-            "description": "The viewer’s own score; null before one."
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
           },
           "sports": {
             "type": "array",
@@ -5967,6 +6157,15 @@
             "additionalProperties": false,
             "description": "大家在这里吃: meals by kind, and what rated ones scored."
           },
+          "myStars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The viewer’s own score; null before one."
+          },
           "posts": {
             "type": "array",
             "items": {
@@ -5984,9 +6183,10 @@
           "stars",
           "raters",
           "lastAt",
-          "myStars",
+          "members",
           "sports",
           "meals",
+          "myStars",
           "posts"
         ],
         "additionalProperties": false
@@ -8592,6 +8792,197 @@
         }
       }
     },
+    "/me/demo-accounts": {
+      "get": {
+        "operationId": "listDemoAccounts",
+        "summary": "The admin’s demo accounts",
+        "description": "The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccounts"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDemoAccount",
+        "summary": "Make a demo account",
+        "description": "A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Made",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/demo-accounts/{memberId}/hand-off": {
+      "post": {
+        "operationId": "handOffDemoAccount",
+        "summary": "Switch to a demo account",
+        "description": "Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Handed off",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoHandOff"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the admin’s demo accounts (`DEMO_ACCOUNT_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/ai-consent": {
       "get": {
         "operationId": "getMyAiConsent",
@@ -8761,7 +9152,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to, or on one off the 动态 (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8825,7 +9216,7 @@
       "patch": {
         "operationId": "editCheckIn",
         "summary": "Edit one of the member’s own check-ins",
-        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.",
+        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.",
         "security": [
           {
             "bearer": []
@@ -8864,7 +9255,7 @@
             }
           },
           "400": {
-            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), newly naming someone it was done with who isn’t a squadmate it is shared to (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {

@@ -69,12 +69,16 @@ public struct PostEdit: Hashable, Sendable {
     /// A meal's 健康 and 好吃 as they are to be; ignored for the other kinds. A rating, once
     /// given, is only changed, never taken off.
     public let rating: MealRating?
+    /// The squadmates a 练了 was done with (一起练), as they are to be.
+    public let trainedWith: TrainedWith
 
     public init(
         original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
-        workout: Workout? = nil, startTime: StartTime? = nil, place: Place? = nil, rating: MealRating? = nil
+        workout: Workout? = nil, startTime: StartTime? = nil, place: Place? = nil, rating: MealRating? = nil,
+        trainedWith: TrainedWith = .none
     ) {
         self.original = original
+        self.trainedWith = trainedWith
         self.activity = activity
         self.minutes = minutes
         self.startTime = startTime
@@ -111,7 +115,8 @@ public struct PostEdit: Hashable, Sendable {
                     .trained(
                         Training(
                             activity: activity, minutes: minutes, startTime: startTime, photos: photos,
-                            caption: caption, workout: workout, place: place))
+                            caption: caption, workout: workout, place: place,
+                            trainedWith: original.inFeed && !original.audience.squads.isEmpty ? trainedWith : .none))
                 case .healthyMeal:
                     .healthyMeal(Meal(photos: photos, caption: caption, place: place, rating: rating))
                 case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption, place: place, rating: rating))
