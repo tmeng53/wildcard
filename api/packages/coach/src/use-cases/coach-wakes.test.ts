@@ -713,7 +713,7 @@ describe('the coach', () => {
       ).toStrictEqual([
         { of: squad, member: fixture.mia, kind: 'wake', model: 'openai/gpt-6-luna' },
         // The day's: its challenges set on the challenge model first, then the notes.
-        { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6.1-sol' },
+        { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
         { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
       ]);
 

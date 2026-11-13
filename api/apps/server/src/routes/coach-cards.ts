@@ -12,7 +12,7 @@ import {
 } from '@wildcard/coach';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
-import { momentAt, wallClockAt } from '@wildcard/time-zones';
+import { wallClockAt } from '@wildcard/time-zones';
 import { MemberId as UnlockMember, type CoachGift, type CoachGifts } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
@@ -337,18 +337,22 @@ export function coachCards(deps: {
     const speaker = speakerIn((coach) => named(coach, squadId));
     const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
     // Only today's stack (Tracy, 2026-11-12): a card left unseen yesterday waits in 以前, so the
-    // stack never piles up. Today is the squad's, as the morning note's day is.
+    // stack never piles up. A card is today's by the squad day it is for, as the coach wrote it:
+    // a morning note reaches a member on their own clock, which may still be the squad's
+    // yesterday or already its tomorrow.
     const zone = (await deps.squads.timeZonesAt([squad.id], now))(squad.id);
-    const fresh = momentAt({ day: wallClockAt(now, zone).day, hour: 0, zone }).getTime();
+    const today = wallClockAt(now, zone).day;
     return (
       [
         ...cards.map((card) => ({
           at: card.at,
+          day: card.day,
           coach: card.coach.id,
           wire: wireCard(card, speaker),
         })),
         ...gifts.map((gift) => ({
           at: gift.givenAt,
+          day: wallClockAt(gift.givenAt, zone).day,
           coach: gift.coach,
           wire: wireGift(gift, { coach: byId.get(gift.coach), speaker }),
         })),
@@ -358,7 +362,7 @@ export function coachCards(deps: {
           const seen = seenKeys.has(key);
           // A coach that left goes to 以前 whole, its boxed gifts still opening there (Tracy,
           // 2026-11-09): the stack is the coach the squad has now.
-          const stacked = card.coach === hired?.coach.id && card.at.getTime() >= fresh && !seen;
+          const stacked = card.coach === hired?.coach.id && card.day >= today && !seen;
           return { ...card, key, seen, stacked };
         })
         // Stable, so cards of one moment keep the store's order (a note before its challenge).
