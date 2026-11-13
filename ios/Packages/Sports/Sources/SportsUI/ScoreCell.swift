@@ -5,6 +5,19 @@ import Foundation
 public struct ScoreCell: Hashable, Identifiable, Sendable {
     public enum Unit: Hashable, Sendable {
         case minutes, laps, runs, meters, kilometres, kilometresPerHour, per100Meters, outOfTen, kilocalories
+        case feet, miles, milesPerHour, perMile
+    }
+
+    /// Which units a distance, pace, speed or height reads in: the phone's region's, so a runner in
+    /// the US reads miles and one in Canada kilometres, whatever language the app speaks. A pool
+    /// swim's lengths stay in metres, as the pool is.
+    public enum Units: Hashable, Sendable {
+        case metric, imperial
+
+        /// The units this phone's region uses.
+        public static var phone: Units {
+            Locale.autoupdatingCurrent.measurementSystem == .us ? .imperial : .metric
+        }
     }
 
     public enum Label: Hashable, Sendable {
@@ -30,17 +43,18 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
 
     /// A 训练's cells: its workout's numbers, 时长 first, or a hand-made post's minutes alone;
     /// none when it has neither.
-    public static func cells(of training: Training) -> [ScoreCell] {
-        if let workout = training.workout { return cells(of: workout.summary) }
+    public static func cells(of training: Training, in units: Units = .phone) -> [ScoreCell] {
+        if let workout = training.workout { return cells(of: workout.summary, in: units) }
         guard let minutes = training.minutes else { return [] }
         return [ScoreCell(cell: .duration, value: "\(minutes.value)", unit: .minutes, label: .duration)]
     }
 
     // One case a cell.
     // swiftlint:disable cyclomatic_complexity function_body_length
-    /// Each number a workout has, in the strip's order, never converted.
-    public static func cells(of summary: WorkoutSummary) -> [ScoreCell] {
-        summary.cells.compactMap { cell in
+    /// Each number a workout has, in the strip's order, in `units` (Health's own when metric).
+    public static func cells(of summary: WorkoutSummary, in units: Units = .phone) -> [ScoreCell] {
+        let imperial = units == .imperial
+        return summary.cells.compactMap { cell in
             switch cell {
             case .duration:
                 summary.durationSec.map {
@@ -56,26 +70,35 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
                 }
             case .distance:
                 summary.distanceM.map { meters in
-                    // A pool swim reads in metres; anything else in kilometres.
+                    // A pool swim reads in metres; anything else in kilometres or miles.
                     summary.laps != nil || summary.poolLengthM != nil
                         ? ScoreCell(cell: cell, value: "\(Int(meters.rounded()))", unit: .meters, label: .distance)
                         : ScoreCell(
-                            cell: cell, value: String(format: "%.1f", meters / 1000), unit: .kilometres,
-                            label: .distance)
+                            cell: cell,
+                            value: String(format: "%.1f", imperial ? meters / metresPerMile : meters / 1000),
+                            unit: imperial ? .miles : .kilometres, label: .distance)
                 }
             case .runs:
                 summary.runs.map { ScoreCell(cell: cell, value: "\($0)", unit: .runs, label: .runs) }
             case .descent:
                 summary.descentM.map {
-                    ScoreCell(cell: cell, value: grouped(Int($0.rounded())), unit: .meters, label: .descent)
+                    ScoreCell(
+                        cell: cell, value: grouped(Int((imperial ? $0 / metresPerFoot : $0).rounded())),
+                        unit: imperial ? .feet : .meters, label: .descent)
                 }
             case .elevationGain:
                 summary.elevationGainM.map {
-                    ScoreCell(cell: cell, value: grouped(Int($0.rounded())), unit: .meters, label: .elevationGain)
+                    ScoreCell(
+                        cell: cell, value: grouped(Int((imperial ? $0 / metresPerFoot : $0).rounded())),
+                        unit: imperial ? .feet : .meters, label: .elevationGain)
                 }
             case .pace:
                 summary.paceSecPerKm.map {
-                    ScoreCell(cell: cell, value: minutesAndSeconds($0), unit: nil, label: .pace)
+                    imperial
+                        ? ScoreCell(
+                            cell: cell, value: minutesAndSeconds($0 * metresPerMile / 1000), unit: .perMile,
+                            label: .pace)
+                        : ScoreCell(cell: cell, value: minutesAndSeconds($0), unit: nil, label: .pace)
                 }
             case .swimPace:
                 summary.paceSecPer100m.map {
@@ -84,12 +107,14 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
             case .speed:
                 summary.speedKmh.map {
                     ScoreCell(
-                        cell: cell, value: String(format: "%.1f", $0), unit: .kilometresPerHour, label: .speed)
+                        cell: cell, value: String(format: "%.1f", imperial ? $0 * 1000 / metresPerMile : $0),
+                        unit: imperial ? .milesPerHour : .kilometresPerHour, label: .speed)
                 }
             case .topSpeed:
                 summary.topSpeedKmh.map {
                     ScoreCell(
-                        cell: cell, value: String(format: "%.1f", $0), unit: .kilometresPerHour, label: .topSpeed)
+                        cell: cell, value: String(format: "%.1f", imperial ? $0 * 1000 / metresPerMile : $0),
+                        unit: imperial ? .milesPerHour : .kilometresPerHour, label: .topSpeed)
                 }
             case .averageHeartRate:
                 summary.avgHr.map { ScoreCell(cell: cell, value: "\($0)", unit: nil, label: .averageHeartRate) }
@@ -110,6 +135,10 @@ public struct ScoreCell: Hashable, Identifiable, Sendable {
     }
     // swiftlint:enable cyclomatic_complexity function_body_length
 }
+
+/// A mile and a foot in metres, exactly.
+private let metresPerMile = 1609.344
+private let metresPerFoot = 0.3048
 
 /// A pace as minutes and seconds, 6′09″.
 private func minutesAndSeconds(_ pace: Double) -> String {

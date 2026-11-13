@@ -249,6 +249,74 @@
         }
       }
     },
+    "英尺": {
+      "comment": "A height in feet, for a phone set to a US region.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ft"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英尺"
+          }
+        }
+      }
+    },
+    "英里": {
+      "comment": "A distance in miles, for a phone set to a US region.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mi"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英里"
+          }
+        }
+      }
+    },
+    "mph": {
+      "comment": "A speed in miles per hour, for a phone set to a US region.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mph"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mph"
+          }
+        }
+      }
+    },
+    "/英里": {
+      "comment": "After a run's pace: per mile, for a phone set to a US region.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/mi"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/英里"
+          }
+        }
+      }
+    },
     "公里": {
       "localizations": {
         "en": {

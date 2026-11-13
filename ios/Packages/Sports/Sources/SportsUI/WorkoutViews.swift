@@ -41,6 +41,10 @@ extension ScoreCell.Unit {
         case .per100Meters: Text(copy: "/100 米", bundle: .module)
         case .outOfTen: Text(verbatim: "/10")
         case .kilocalories: Text(copy: "千卡", bundle: .module)
+        case .feet: Text(copy: "英尺", bundle: .module)
+        case .miles: Text(copy: "英里", bundle: .module)
+        case .milesPerHour: Text(copy: "mph", bundle: .module)
+        case .perMile: Text(copy: "/英里", bundle: .module)
         }
     }
 }

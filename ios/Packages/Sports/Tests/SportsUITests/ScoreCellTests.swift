@@ -4,30 +4,30 @@ import Testing
 
 @Test func aRunReadsAsHealthGaveIt() {
     let cells = ScoreCell.cells(
-        of: WorkoutSummary(durationSec: 1920, distanceM: 5210, paceSecPerKm: 369, avgHr: 148))
+        of: WorkoutSummary(durationSec: 1920, distanceM: 5210, paceSecPerKm: 369, avgHr: 148), in: .metric)
     #expect(cells.map(\.value) == ["32", "5.2", "6′09″", "148"])
     #expect(cells.map(\.unit) == [.minutes, .kilometres, nil, nil])
 }
 
 @Test func aPoolSwimCountsLapsAndMetres() {
     let cells = ScoreCell.cells(
-        of: WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50))
+        of: WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50), in: .metric)
     #expect(cells.map(\.value) == ["40", "24", "1200", "139"])
     #expect(cells[1].label == .laps(poolMeters: 50))
     #expect(cells[2].unit == .meters)
 }
 
 @Test func aRideShowsItsSpeedAndEffortDropsAWholeNumbersPoint() {
-    let ride = ScoreCell.cells(of: WorkoutSummary(durationSec: 3060, speedKmh: 21.44))
+    let ride = ScoreCell.cells(of: WorkoutSummary(durationSec: 3060, speedKmh: 21.44), in: .metric)
     #expect(ride.last?.value == "21.4")
-    #expect(ScoreCell.cells(of: WorkoutSummary(effort: 7)).map(\.value) == ["7"])
-    #expect(ScoreCell.cells(of: WorkoutSummary(effort: 7.5)).map(\.value) == ["7.5"])
+    #expect(ScoreCell.cells(of: WorkoutSummary(effort: 7), in: .metric).map(\.value) == ["7"])
+    #expect(ScoreCell.cells(of: WorkoutSummary(effort: 7.5), in: .metric).map(\.value) == ["7.5"])
 }
 
 @Test func aHandMadePostShowsItsMinutesAloneOrNoStrip() throws {
     let timed = Training(activity: .sport("tennis"), minutes: try WorkoutMinutes(45))
-    #expect(ScoreCell.cells(of: timed).map(\.value) == ["45"])
-    #expect(ScoreCell.cells(of: Training(activity: .sport("tennis"))).isEmpty)
+    #expect(ScoreCell.cells(of: timed, in: .metric).map(\.value) == ["45"])
+    #expect(ScoreCell.cells(of: Training(activity: .sport("tennis")), in: .metric).isEmpty)
 }
 
 @Test func everyLapBarFitsTheChartHoweverManyLapsThereAre() {
@@ -43,7 +43,7 @@ import Testing
 
 @Test func aSkiDayShowsItsRunsDropAndTopSpeed() {
     let cells = ScoreCell.cells(
-        of: WorkoutSummary(durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.44))
+        of: WorkoutSummary(durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.44), in: .metric)
     #expect(cells.map(\.value) == ["184", "12", "1,860", "62.4"])
     #expect(cells.map(\.unit) == [.minutes, .runs, .meters, .kilometresPerHour])
     #expect(cells.map(\.label) == [.duration, .runs, .descent, .topSpeed])
@@ -51,17 +51,18 @@ import Testing
 
 @Test func aHikeShowsItsClimbAndAnOpenWaterSwimItsPacePer100Metres() {
     let hike = ScoreCell.cells(
-        of: WorkoutSummary(durationSec: 12_600, distanceM: 12_600, avgHr: 118, elevationGainM: 840))
+        of: WorkoutSummary(durationSec: 12_600, distanceM: 12_600, avgHr: 118, elevationGainM: 840), in: .metric)
     #expect(hike.map(\.value) == ["210", "12.6", "840", "118"])
     #expect(hike[2].label == .elevationGain)
-    let swim = ScoreCell.cells(of: WorkoutSummary(durationSec: 2520, distanceM: 1800, avgHr: 136, paceSecPer100m: 140))
+    let swim = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 2520, distanceM: 1800, avgHr: 136, paceSecPer100m: 140), in: .metric)
     #expect(swim.map(\.value) == ["42", "1.8", "2′20″", "136"])
     #expect(swim[2].unit == .per100Meters)
 }
 
 @Test func caloriesComeLastInWholeKilocalories() {
     let cells = ScoreCell.cells(
-        of: WorkoutSummary(durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 1312.6))
+        of: WorkoutSummary(durationSec: 3540, avgHr: 124, maxHr: 156, activeEnergyKcal: 1312.6), in: .metric)
     #expect(cells.map(\.value) == ["59", "124", "156", "1,313"])
     #expect(cells.last?.unit == .kilocalories)
     #expect(cells.last?.label == .calories)
@@ -73,4 +74,22 @@ import Testing
     #expect(cells.map(\.value) == ["5", "4", "4.0"])
     #expect(cells.map(\.isStars) == [true, true, false])
     #expect(MealScoreCell.cells(of: try MealRating(healthy: 3, tasty: 2)).last?.value == "1.2")
+}
+
+@Test func aRunOnAUSPhoneReadsInMilesAndPacePerMile() {
+    let cells = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 1920, distanceM: 5210, paceSecPerKm: 369, avgHr: 148), in: .imperial)
+    #expect(cells.map(\.value) == ["32", "3.2", "9′54″", "148"])
+    #expect(cells.map(\.unit) == [.minutes, .miles, .perMile, nil])
+}
+
+@Test func aUSPhoneReadsSpeedsInMphAndHeightsInFeetButAPoolInMetres() {
+    let ski = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 11_040, runs: 12, descentM: 1860.4, topSpeedKmh: 62.44), in: .imperial)
+    #expect(ski.map(\.value) == ["184", "12", "6,104", "38.8"])
+    #expect(ski.map(\.unit) == [.minutes, .runs, .feet, .milesPerHour])
+    let pool = ScoreCell.cells(
+        of: WorkoutSummary(durationSec: 2400, distanceM: 1200, avgHr: 139, laps: 24, poolLengthM: 50), in: .imperial)
+    #expect(pool[2].value == "1200")
+    #expect(pool[2].unit == .meters)
 }
