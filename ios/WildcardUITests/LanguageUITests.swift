@@ -58,10 +58,9 @@ final class LanguageUITests: XCTestCase {
     }
 
     /// A new install on a phone set to English opens in English, the sign-in button (a system
-    /// control) and the terms line included. The simulator is English, as CI's is, and no language
-    /// is passed.
+    /// control) and the terms line included.
     func testFirstLaunchOnAnEnglishPhoneIsEnglish() {
-        let app = launchFirstTime(["-onboarding", "-uitest-monday"])
+        let app = launchFirstTime(["-onboarding", "-uitest-monday", "-uitest-phone-language", "en-GB"])
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         XCTAssertEqual(signIn.label, "Continue with Apple")
