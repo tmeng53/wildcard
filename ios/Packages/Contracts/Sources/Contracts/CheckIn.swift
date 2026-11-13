@@ -80,10 +80,12 @@ public struct Training: Hashable, Sendable {
     public let workout: Workout?
     /// Where it was, if the member tagged a place.
     public let place: Place?
+    /// Squadmates it was done with (一起练), in the order picked; empty when it names no one.
+    public let trainedWith: TrainedWith
 
     public init(
         activity: Activity, minutes: WorkoutMinutes? = nil, startTime: StartTime? = nil, photos: Photos? = nil,
-        caption: Caption? = nil, workout: Workout? = nil, place: Place? = nil
+        caption: Caption? = nil, workout: Workout? = nil, place: Place? = nil, trainedWith: TrainedWith = .none
     ) {
         self.activity = activity
         self.minutes = minutes
@@ -92,7 +94,29 @@ public struct Training: Hashable, Sendable {
         self.caption = caption
         self.workout = workout
         self.place = place
+        self.trainedWith = trainedWith
     }
+}
+
+/// The squadmates a 训练 was done with (一起练): up to `limit`, no repeats, in the order picked.
+/// Each is told once and may post their own; a tag never counts for them.
+public struct TrainedWith: Hashable, Sendable {
+    /// The API's limit; `APIContract`'s tests fail when the two differ.
+    public static let limit = 7
+    public static let none = TrainedWith()
+
+    public let members: [MemberID]
+
+    private init() { members = [] }
+
+    public init(_ members: [MemberID]) throws(ContractsError) {
+        guard members.count <= Self.limit, Set(members).count == members.count else {
+            throw .trainedWith(members.count)
+        }
+        self.members = members
+    }
+
+    public var isEmpty: Bool { members.isEmpty }
 }
 
 /// How long a 练了 took, in whole minutes. Never asked for: a 练了 without it is just as much a 练了.
