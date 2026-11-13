@@ -415,8 +415,11 @@ function placesOf(members: readonly StoryMember[]): NonNullable<SquadStory['plac
   }
   return [...byKey.values()]
     .flatMap((visits) => {
-      const sorted = visits.toSorted((a, b) => a.day.localeCompare(b.day));
-      const latest = sorted.at(-1);
+      // By day, then by when posted: the latest posted gives the place as it was last tagged.
+      const sorted = visits.toSorted(
+        (a, b) => a.day.localeCompare(b.day) || a.postedAt.localeCompare(b.postedAt),
+      );
+      const latest = visits.toSorted((a, b) => a.postedAt.localeCompare(b.postedAt)).at(-1);
       return latest === undefined ? [] : [{ latest, sorted }];
     })
     .toSorted((a, b) => a.latest.rank - b.latest.rank)
@@ -613,7 +616,15 @@ function placeVisitsOf(
   const theirs = places.flatMap(({ key, firstTime, visits }, rank) =>
     visits
       .filter((visit) => visit.member === member)
-      .map(({ checkIn, day, place }) => ({ checkIn, day, key, place, rank, firstTime })),
+      .map(({ checkIn, day, postedAt, place }) => ({
+        checkIn,
+        day,
+        postedAt,
+        key,
+        place,
+        rank,
+        firstTime,
+      })),
   );
   return theirs.length === 0 ? {} : { placeVisits: theirs };
 }

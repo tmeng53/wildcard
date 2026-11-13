@@ -108,6 +108,8 @@ export type MenuDish = z.infer<typeof MenuDish>;
 const PlaceVisit = z.strictObject({
   checkIn: z.uuid(),
   day: z.iso.date(),
+  /** When it was posted: of the visits left, the latest posted gives the place's tag. */
+  postedAt: z.iso.datetime(),
   key: PlaceKey,
   place: Place,
   rank: z.int().min(0),

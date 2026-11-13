@@ -39,6 +39,8 @@ export interface PlaceVisit {
   readonly checkIn: CheckInId;
   readonly member: MemberId;
   readonly day: LocalDay;
+  /** When it was posted (an ISO time), which orders the visits of one day. */
+  readonly postedAt: string;
   readonly place: Place;
 }
 
@@ -91,6 +93,7 @@ export function placeVisitsOf(checkIns: readonly CheckInRecord[]): PlaceVisits[]
       checkIn: each.id,
       member: each.member,
       day: each.day,
+      postedAt: each.createdAt.toISOString(),
       place: each.training.place,
     });
     byKey.set(key, found);

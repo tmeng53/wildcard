@@ -1044,6 +1044,35 @@ describe('weekly awards', () => {
     ).toBe(0);
   });
 
+  it('names a place as its latest post tagged it, whoever joined first', async () => {
+    const { read } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    // Same day: Bo tags it first, Ana (who joined first) later with its new name.
+    await trained(bo, {
+      squad,
+      day: '2026-10-21',
+      createdAt: new Date('2026-10-21T09:00:00.000Z'),
+      place: GYM,
+    });
+    await trained(ana, {
+      squad,
+      day: '2026-10-21',
+      createdAt: new Date('2026-10-21T18:00:00.000Z'),
+      place: { ...GYM, name: '星光健身（新店）' },
+    });
+    const story = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(story.places?.map(({ place, visits }) => [place.name, visits])).toStrictEqual([
+      [
+        '星光健身（新店）',
+        [
+          { member: bo.userId, day: '2026-10-21' },
+          { member: ana.userId, day: '2026-10-21' },
+        ],
+      ],
+    ]);
+  });
+
   it('freezes on the first read when no run has, and drops a post deleted since', async () => {
     const { read, run } = setup();
     const [ana, bo] = [await member(), await member()];
