@@ -71,7 +71,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 61)
+    #expect(figure.parts.count == 65)
 }
 
 @Test(arguments: Persona.allCases)
@@ -239,7 +239,8 @@ func expectOnCanvas(
         where placement.opacity > 0 {
             for (number, shape) in shapes[index].enumerated() {
                 let margin = (shape.stroke?.width ?? 0) / 2
-                let points = placement.bend.map { outline($0.apply(to: shape.path)) } ?? outlines[index][number]
+                let reshaped = placement.bend != nil || placement.rope != nil
+                let points = reshaped ? outline(placement.shaped(shape.path)) : outlines[index][number]
                 for local in points {
                     let point = placement.transform.apply(to: local)
                     let bottom = part.id == "shadow" || point.y + margin <= figure.height + below

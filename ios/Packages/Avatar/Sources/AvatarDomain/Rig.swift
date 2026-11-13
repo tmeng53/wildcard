@@ -93,13 +93,17 @@ public struct Rig: Hashable, Sendable {
         /// `front` channel is 1. So the head always covers the arms, and a move picks whether an
         /// arm is behind or in front of the body.
         public var twin: PartID?
+        /// For a rope, such as a leash: the two points it hangs between. Its art is straight lines
+        /// from one to the other at rest, redrawn hanging between them as they move (`Rope`). A
+        /// rope has no parent; it shows as much as the less opaque of its ends.
+        public var rope: RopeEnds?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil, twin: PartID? = nil
+            elbow: Elbow? = nil, twin: PartID? = nil, rope: RopeEnds? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            (self.elbow, self.twin) = (elbow, twin)
+            (self.elbow, self.twin, self.rope) = (elbow, twin, rope)
         }
     }
 
@@ -147,7 +151,12 @@ public struct Rig: Hashable, Sendable {
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
-                    twin: part.twin)
+                    twin: part.twin,
+                    rope: part.rope.map { rope in
+                        RopeEnds(
+                            from: Anchor(part: rope.from.part, point: rope.from.point.point),
+                            to: Anchor(part: rope.to.part, point: rope.to.point.point), slack: rope.slack)
+                    })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -176,6 +185,10 @@ private struct RigFile: Decodable {
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value, "twin": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
+                "rope": .object([
+                    "from": .object(["part": .value, "at": .value]), "to": .object(["part": .value, "at": .value]),
+                    "slack": .value,
+                ]),
             ])),
     ])
 
@@ -197,6 +210,23 @@ private struct RigFile: Decodable {
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
         let twin: PartID?
+        let rope: RopeFile?
+    }
+}
+
+/// `{"from": {"part": "propR", "at": [x, y]}, "to": {"part": "petHead", "at": [x, y]}, "slack": 6}`.
+private struct RopeFile: Decodable {
+    let from: AnchorFile
+    let to: AnchorFile
+    let slack: Double
+
+    struct AnchorFile: Decodable {
+        let part: PartID
+        let point: Pair
+
+        enum CodingKeys: String, CodingKey {
+            case part, point = "at"
+        }
     }
 }
 

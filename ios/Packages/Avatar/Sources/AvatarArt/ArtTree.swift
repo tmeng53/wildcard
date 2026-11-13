@@ -11,7 +11,8 @@ public enum ArtTree {
     /// The rig this build draws. Downloaded art that needs a newer one is left out
     /// (`rigVersion` in the catalog), so new rig parts never break an older build. 2: the coaches'
     /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
-    public static let rigVersion = 2
+    /// 3: a pet on a leash (`pet`, `petHead`, `petTail` and the `leash` rope between fist and collar).
+    public static let rigVersion = 3
 
     /// Where the downloaded files stand, mirroring the tree's paths: the app group's `Art/current`,
     /// so the widgets and push views draw the art the app downloaded (a coach that came after
