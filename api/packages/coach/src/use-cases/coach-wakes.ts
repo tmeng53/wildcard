@@ -936,6 +936,9 @@ async function briefsOf(
   });
 }
 
+/** How many days of challenges the daily and dream wakes see, up to the day before. */
+const CHALLENGE_DAYS = 7;
+
 /** The squad's posts of the day before `day`: made for it, or posted on it. */
 async function yesterdayOf(
   deps: CoachWakesDependencies,
@@ -945,10 +948,18 @@ async function yesterdayOf(
   // On a Monday, yesterday was last week.
   const weekStart = mondayOf(yesterday);
   const its = weekStart === week.weekStart ? week : await weekOf(deps, { squad, weekStart });
-  // The day's challenges and what each member said to them, why they let one go included, only
-  // for members who still agree to AI use.
-  const set = await deps.stores.memberNotes.challengesOn({ squad, day: yesterday });
-  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
+  // The last week's challenges, oldest first, and what each member said to them, why they let one
+  // go included, only for members who still agree to AI use: seeing what it gave before, the coach
+  // sets something else (Tracy, 2026-11-12).
+  const days = Array.from({ length: CHALLENGE_DAYS }, (_, back) =>
+    dayBefore(day, CHALLENGE_DAYS - back),
+  );
+  const set = (
+    await Promise.all(
+      days.map((each) => deps.stores.memberNotes.challengesOn({ squad, day: each })),
+    )
+  ).flat();
+  const consented = new Set(await deps.aiConsented([...new Set(set.map(({ member }) => member))]));
   return {
     day: yesterday,
     checkIns: its.checkIns.filter((each) => each.day === yesterday || each.postedDay === yesterday),

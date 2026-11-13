@@ -1787,7 +1787,7 @@ describe('the coach', () => {
       expect(daily?.task).toContain('## 礼物清单\n- gift-scarf：红围巾\n- gift-cap');
       expect(daily?.task).toContain('## 这周还能收礼物的\n- 队员1（已有：gift-cap）');
       expect(daily?.answers.slice(0, 7)).toStrictEqual([
-        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
+        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字；line 不超过 24 字。',
         '便条写好了，给 队员1，挑战「喝水 8 杯」。',
         '便条写好了，给 队员2。',
         '队员2 这周不能收礼物；能收的是：队员1。',
@@ -2309,7 +2309,7 @@ describe('the coach', () => {
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
       const dream = runs.find(({ task }) => task.startsWith('# 夜里'));
       expect(dream?.task).toContain(
-        '## 昨天的挑战\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
+        '## 最近 7 天的挑战\n- 11-01 周日 队员1「喝水 8 杯」：完成了\n- 11-01 周日 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
       );
     });
   });

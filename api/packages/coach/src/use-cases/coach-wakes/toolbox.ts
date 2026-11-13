@@ -681,16 +681,14 @@ const challengeParameter = z
   .object({
     title: z
       .string()
-      .describe(`做什么，只写动作，数量和单位不写进来，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字`),
+      .describe(
+        `只写动作：动词加做的东西，不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字。不写数字、不写「一道」「一份」这类量词，也不写单位；数量只放 amount，单位只放 unit。标题、数量、单位连起来读要通顺`,
+      ),
     amount: z
       .number()
       .int()
-      .optional()
-      .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}；没有数量就不填`),
-    unit: z
-      .string()
-      .optional()
-      .describe(`数量的单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；和 amount 一起填`),
+      .describe(`多少，正整数，不超过 ${String(CHALLENGE_AMOUNT_MAX)}`),
+    unit: z.string().describe(`单位，不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字`),
     line: z
       .string()
       .describe(
@@ -698,8 +696,9 @@ const challengeParameter = z
       ),
   })
   .optional()
+  // Every member every day (Tracy, 2026-11-12): only leave or feeling unwell gets none.
   .describe(
-    '今日挑战，可以不给，别硬凑。先看这个人现在最需要什么：你对他的了解、他这一周的安排、最近的打卡。给一件今天做得到、对他真有用的事，没有合适的就不给。要说得具体，做没做到一看就知道；比他平时多走一小步，别把他的目标原样再说一遍。比如早睡 1 小时、拉伸 10 分钟、喝水 8 杯、午饭加 1 份蔬菜、早餐加 1 个鸡蛋，这些只是举例，不用从里面挑。不提热量；请假或身体不舒服的人不给。他可以接受或说算了，之后他发打卡时你会知道。',
+    '每个人每天都给一个今日挑战。按这个人自己的情况想：他的安排、最近的打卡、你对他的了解。要真有挑战：比他平时明显多出一截，做完会觉得自己拼了一把，但按他的水平今天咬咬牙做得到。随手就能完成的（记一下、多一组、喝口水）不算挑战。挑战不用总在同一块：练的、吃的、睡的、日常走动都可以，看任务里最近 7 天的挑战，换一块来。休息日给不累身体的。只有请假或说身体不舒服才不给。不提热量。他可以接受或不接，之后他发打卡时你会知道。',
   );
 
 /**
@@ -745,7 +744,7 @@ function noteTool(
             line: challenge.line.trim() === '' ? undefined : challenge.line,
           });
     if (set !== undefined && !set.success) {
-      return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字，两个一起填或都不填；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
+      return `挑战不对：title 不超过 ${String(CHALLENGE_TITLE_LIMIT)} 字；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数，unit 不超过 ${String(CHALLENGE_UNIT_LIMIT)} 字；line 不超过 ${String(CHALLENGE_LINE_LIMIT)} 字。`;
     }
     const replaced = draft.memberNotes.has(id);
     draft.memberNotes.set(id, {

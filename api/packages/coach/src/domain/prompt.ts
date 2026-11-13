@@ -16,6 +16,7 @@ import {
   addressedWords,
   checkInBlock,
   checkInTitle,
+  dayWords,
   languageOf,
   rosterOf,
   rosterText,
@@ -359,8 +360,12 @@ function occasionBlock(occasions: readonly string[], backAgain: boolean): string
 export interface YesterdayFacts {
   readonly day: string;
   readonly checkIns: readonly WeekCheckIn[];
-  /** The challenges the coach set that day and what each member said to them. */
+  /**
+   * The challenges the coach set over the last week up to that day, oldest first, and what each
+   * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
+   */
   readonly challenges?: readonly {
+    readonly day: string;
     readonly member: string;
     readonly challenge: Challenge;
     readonly answer: ChallengeAnswer | undefined;
@@ -398,7 +403,7 @@ function yesterdayBlocks(
           ),
         ].join('\n\n');
   if (challenges.length === 0) return [posts];
-  const lines = challenges.map(({ member, challenge, answer, reason, completion }) => {
+  const lines = challenges.map(({ day: on, member, challenge, answer, reason, completion }) => {
     const how =
       completion !== undefined
         ? '完成了'
@@ -409,9 +414,9 @@ function yesterdayBlocks(
               ? '没接'
               : `没接，理由：「${reason}」（只告诉了你）`
             : '没回应';
-    return `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
+    return `- ${dayWords(on)} ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
   });
-  return [posts, ['## 昨天的挑战', ...lines].join('\n')];
+  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
 /** The last day's talk, for the daily wake to remember from. */
