@@ -49,7 +49,9 @@ public struct RecapView: View {
         NavigationStack(path: $places) {
             content
                 .toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(for: Place.self) { place in placePage.view(of: place) }
+                .navigationDestination(for: Place.self) { place in
+                    if let page = placePage.view(of: place) { page }
+                }
         }
         // Back from a place, the page still waits for the reader's tap, as after any play with it.
         .onChange(of: places.isEmpty) { _, isEmpty in if !isEmpty { model.hold(true) } }

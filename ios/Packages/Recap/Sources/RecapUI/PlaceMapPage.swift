@@ -43,10 +43,11 @@ struct PlaceMapPage: View {
                 map(height: focus.y * 2)
                     .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
                     .clipped()
-                    // The map itself takes no touch; the page drags it.
+                    // The map itself takes no touch; the page drags it, alongside the story's own
+                    // touch, so a tap still moves on and a pull down still closes.
                     .contentShape(Rectangle())
                     .offset(pan)
-                    .gesture(drag)
+                    .simultaneousGesture(drag)
                 marker(width: proxy.size.width)
                     .position(focus)
                     .offset(pan)
