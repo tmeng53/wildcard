@@ -186,6 +186,17 @@ describe('a 训练 just posted', () => {
     });
   });
 
+  it('skips a squadmate it names as trained with, who gets the 一起练 push instead', async () => {
+    const { deps, sent } = world({
+      record: {
+        ...run,
+        training: Training.parse({ sport: 'tennis', minutes: 62, trainedWith: [ann] }),
+      },
+    });
+    await notifyTeammates(deps, event);
+    expect(Object.keys(alerts(sent))).toStrictEqual([bo]);
+  });
+
   it('skips a member who turned 通知 off', async () => {
     const { deps, sent } = world({ off: [ann] });
     await notifyTeammates(deps, event);

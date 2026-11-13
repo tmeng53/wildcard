@@ -496,6 +496,30 @@
           }
         }
       }
+    },
+    "push.trainedWith": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ mentioned you: you trained together. Post yours too?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ @了你：你们一起练了，点开也发一条"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ @了你：你們一起練了，點開也發一則"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

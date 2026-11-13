@@ -34,6 +34,9 @@ public struct Notice: Hashable, Sendable, Identifiable {
         /// A teammate commented on the member's check-in or replied to them there, in the words
         /// the push put it in (who, and what they wrote).
         case comment(PushAlert, checkIn: CheckInID)
+        /// A teammate's 训练 named the member as someone it was done with (一起练): in the words
+        /// its push was put in, and the post to fill their own 训练 from.
+        case trainedWith(PushAlert, checkIn: CheckInID)
         /// A notice we sent every member.
         case broadcast(Broadcast)
         /// The member's squad trained over its weekly goal some weeks in a row, so they, its

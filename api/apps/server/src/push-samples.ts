@@ -8,6 +8,7 @@ import { commentNotification, type CommentNews } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
 import { joinApprovedNotification, joinRequestNotification } from './flows/join-requests.js';
 import { teammateNotification } from './flows/teammate-push.js';
+import { trainedWithNotification } from './flows/trained-with-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
 import type { PushCopyKey } from './push-copy.js';
 
@@ -76,6 +77,12 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.comment': apnsPayload(comment('comment')),
     'push.comment.reply': apnsPayload(comment('reply')),
     'push.comment.mention': apnsPayload(comment('mention')),
+    'push.trainedWith': apnsPayload(
+      trainedWithNotification({
+        checkIn: '3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59',
+        nickname: longestNickname,
+      }),
+    ),
     'push.coach.note': apnsPayload(
       coachNoteNotification({ id: 1234, coachName: '毛头', text: '便'.repeat(60) }),
     ),

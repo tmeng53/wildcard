@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -1390,6 +1390,15 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
+          },
           "place": {
             "$ref": "#/components/schemas/Place"
           },
@@ -2136,6 +2145,15 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
           },
           "place": {
             "$ref": "#/components/schemas/Place"
@@ -9000,7 +9018,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to, or on one off the 动态 (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9064,7 +9082,7 @@
       "patch": {
         "operationId": "editCheckIn",
         "summary": "Edit one of the member’s own check-ins",
-        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.",
+        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.",
         "security": [
           {
             "bearer": []
@@ -9103,7 +9121,7 @@
             }
           },
           "400": {
-            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), newly naming someone it was done with who isn’t a squadmate it is shared to (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {

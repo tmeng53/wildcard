@@ -300,3 +300,22 @@ func datesKeepEveryMillisecond(millis: Int64) throws {
         try decode(saved(#""kind":"trained","training":{"sport":"run","minutes":32,\#(fields)}"#))
             == checkIn(.trained(training)))
 }
+
+@Test func squadmatesTrainedWithGoWithTheTrainingBothWays() throws {
+    let mate = "44444444-4444-4444-4444-444444444444"
+    let training = Training(activity: .sport("run"), trainedWith: try TrainedWith([MemberID(UUID(uuidString: mate)!)]))
+    #expect(
+        try encode(try checkIn(.trained(training)).draft)
+            .hasSuffix(#""training":{"sport":"run","trainedWith":["\#(mate)"]},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"trained","training":{"sport":"run","trainedWith":["\#(mate)"]}"#))
+            == checkIn(.trained(training)))
+}
+
+@Test func anEditAlwaysSaysWhoItWasDoneWithSoClearingThemSticks() throws {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = .sortedKeys
+    let edit = try checkIn(.trained(Training(activity: .sport("run")))).edit
+    let json = String(decoding: try encoder.encode(edit), as: UTF8.self)
+    #expect(json.contains(#""trainedWith":[]"#))
+}

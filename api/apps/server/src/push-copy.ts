@@ -17,6 +17,7 @@ export const PUSH_COPY = {
   'push.comment.mention': ['commenter', 'text'],
   'push.joinRequest': ['member'],
   'push.joinApproved': ['squad'],
+  'push.trainedWith': ['teammate'],
   'push.weeklyAwards.ready': [],
   'push.weeklyAwards.stuck': ['squad', 'failures', 'lastError'],
 } as const satisfies Record<string, readonly string[]>;
