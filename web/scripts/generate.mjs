@@ -12,7 +12,7 @@ import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync } from 
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dress, leveled } from '../public/character/dress.js';
-import { edge } from './edges.mjs';
+import { edge, markOutline } from './edges.mjs';
 
 const web = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ios = join(web, '..', 'ios', 'Packages');
@@ -63,7 +63,9 @@ for (const part of rig.parts.filter((p) => p.shoulder))
     for (const variant of wardrobe.variants[slot] ?? []) {
       const key = `${slot}/${variant}/${name}`;
       const found = wardrobe.art[key] && edge(wardrobe.art[key], part.pivot, part.shoulder);
-      if (found) wardrobe.edges[key] = found;
+      if (!found) continue;
+      wardrobe.edges[key] = found;
+      wardrobe.art[key] = markOutline(wardrobe.art[key]);
     }
 
 const rigParts = rig.parts.map(({ id, parent, pivot, opacity, elbow, shoulder }) => ({

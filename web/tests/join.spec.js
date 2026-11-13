@@ -242,6 +242,46 @@ test('an arm bends at the elbow whatever path commands its art is drawn with', a
   }
 });
 
+test('a raised sleeve leaves no end of its outline on the chest, and an arm at rest is as drawn', async ({
+  page,
+}) => {
+  await stub(page, 200, squad(1));
+  await page.goto('/join/K7M2QX9P');
+  const drawn = await page.evaluate(async () => {
+    const { dress } = await import('/character/dress.js');
+    const C = window.WILDCARD_CHARACTERS;
+    const [armL, armR] = ['armL', 'armR'].map((id) => C.parts.findIndex((part) => part.id === id));
+    const outlines = (degrees) => {
+      const poses = window.WildcardAvatar.pose({ loops: true, duration: 1, tracks: [] }, 0);
+      poses[armL].rotation = degrees;
+      poses[armR].rotation = -degrees;
+      const art = dress(C, { body: 'cat', top: 'warmup-tee' });
+      const svg = window.WildcardAvatar.figure({ art, level: [] }, poses);
+      return [...svg.matchAll(/<path data-outline=""[^>]*\sd="([^"]*)"/g)].map((m) => m[1]);
+    };
+    const original = dress(C, { body: 'cat', top: 'warmup-tee' })
+      .flatMap((part) => [...part.matchAll(/<path data-outline=""[^>]*\sd="([^"]*)"/g)])
+      .map((m) => m[1]);
+    const length = (d) => {
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      return path.getTotalLength();
+    };
+    return {
+      original: original.map(length),
+      rest: outlines(0).map(length),
+      raised: outlines(130).map(length),
+    };
+  });
+  // Both sleeves mark their outline. At rest each loses only a hair under the head; raised, each
+  // loses the end that would lie on the chest.
+  expect(drawn.original).toHaveLength(2);
+  for (const [k, length] of drawn.original.entries()) {
+    expect(drawn.rest[k]).toBeGreaterThan(length - 0.5);
+    expect(drawn.raised[k]).toBeLessThan(length - 2);
+  }
+});
+
 test('an arm bends as the app bends it, case for case', async ({ page }) => {
   // The app writes these (AvatarDomainTests' ArmBendCasesTests), so the two players can't drift.
   const { arm, cases } = JSON.parse(

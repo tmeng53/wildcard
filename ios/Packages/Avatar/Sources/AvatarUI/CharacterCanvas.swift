@@ -17,10 +17,13 @@ public struct FigureDrawing {
 
     /// The body the arm hangs from, its cloth as one shape in its own coordinates, the circle
     /// around the arm's pivot where the arm's edge is outlined off the body, and that edge.
+    /// `top` is the reach's half above the pivot, where a sleeve's outline starts: there the
+    /// outline stops at the body, so a raised arm leaves no end of it on the chest.
     struct Shoulder {
         let parent: Int
         let cloth: Path
         let reach: Path
+        let top: Path
         let edges: [Edge]
     }
 
@@ -29,6 +32,8 @@ public struct FigureDrawing {
     /// shapes cover the line's inner half where they cover it at all.
     struct Edge {
         let before: Int
+        /// The layer's outline, an index into the part's shapes.
+        let outline: Int?
         /// As elements, so it bends with the arm's art.
         let cloth: [PathElement]
         let color: Color
@@ -41,6 +46,16 @@ public struct FigureDrawing {
         let path: Path
         let color: Color
         let style: StrokeStyle
+    }
+
+    /// A shoulder in one frame, in the arm's own coordinates: where its edges are outlined (off
+    /// the body, within reach), where its sleeves' outlines stop (on the body, in the reach's
+    /// top) and which of the arm's shapes are those outlines.
+    struct ShoulderFrame {
+        let offBody: Path
+        let overBody: Path
+        let edges: [DrawnEdge]
+        let outlines: Set<Int>
     }
 
     struct DrawableShape {
@@ -65,15 +80,19 @@ public struct FigureDrawing {
                 defer { first += art.shapes.count }
                 // Only cloth that reaches the shoulder: a sleeve, not a bare arm's hand.
                 let cloth = Self.cloth(art.shapes)
-                guard cloth.cgPath.intersects(reach.cgPath), let outline = art.outline?.stroke else { continue }
+                guard cloth.cgPath.intersects(reach.cgPath), let outline = art.outline, let line = outline.stroke
+                else { continue }
                 edges.append(
                     Edge(
-                        before: first, cloth: cloth.elements, color: Color(outline.color),
-                        style: StrokeStyle(lineWidth: outline.width, lineCap: .round, lineJoin: .round)))
+                        before: first, outline: art.shapes.firstIndex(of: outline).map { first + $0 },
+                        cloth: cloth.elements, color: Color(line.color),
+                        style: StrokeStyle(lineWidth: line.width, lineCap: .round, lineJoin: .round)))
             }
+            let top = reach.intersection(
+                Path(CGRect(x: part.pivot.x - radius, y: part.pivot.y - radius, width: radius * 2, height: radius)))
             return Shoulder(
                 parent: parent, cloth: Self.cloth(figure.parts[parent].art.flatMap(\.shapes)), reach: reach,
-                edges: edges)
+                top: top, edges: edges)
         }
     }
 
@@ -82,23 +101,22 @@ public struct FigureDrawing {
         shapes.filter { $0.fill != nil }.reduce(Path()) { cloth, shape in cloth.union(Path(shape.path)) }
     }
 
-    /// Where the part's edge is outlined in `placements`, in the part's own coordinates: off its
-    /// body's cloth, within its shoulder's reach. Nil when the part has no shoulder.
-    func offBody(_ part: Int, _ placements: [Placement]) -> Path? {
+    /// The part's shoulder as `placements` draw it, its edges bent with the arm. Nil when the
+    /// part has no shoulder.
+    func shoulder(_ part: Int, _ placements: [Placement]) -> ShoulderFrame? {
         guard let shoulder = shoulders[part] else { return nil }
         let own = CGAffineTransform(placements[part].transform)
         let parent = CGAffineTransform(placements[shoulder.parent].transform)
         let cloth = shoulder.cloth.applying(parent.concatenating(own.inverted()))
-        return shoulder.reach.subtracting(cloth)
-    }
-
-    /// A shoulder's edges as `placement` draws them: bent with the arm.
-    func edges(_ part: Int, _ placement: Placement) -> [DrawnEdge] {
-        (shoulders[part]?.edges ?? []).map { edge in
-            DrawnEdge(
-                before: edge.before, path: Path(placement.bend.map { $0.apply(to: edge.cloth) } ?? edge.cloth),
-                color: edge.color, style: edge.style)
-        }
+        let bend = placements[part].bend
+        return ShoulderFrame(
+            offBody: shoulder.reach.subtracting(cloth), overBody: shoulder.top.intersection(cloth),
+            edges: shoulder.edges.map { edge in
+                DrawnEdge(
+                    before: edge.before, path: Path(bend.map { $0.apply(to: edge.cloth) } ?? edge.cloth),
+                    color: edge.color, style: edge.style)
+            },
+            outlines: Set(shoulder.edges.compactMap(\.outline)))
     }
 
     /// A part's shapes as `placement` draws them: bent first when it is a bent arm.
@@ -170,34 +188,38 @@ public struct CharacterCanvas: View {
             for (index, placement) in zip(drawing.parts.indices, placements)
             where placement.opacity > 0 && !drawing.parts[index].isEmpty {
                 let shapes = drawing.shapes(index, placement)
-                let edges = drawing.offBody(index, placements).map { area in
-                    (area: area, edges: drawing.edges(index, placement))
-                }
+                let shoulder = drawing.shoulder(index, placements)
                 var part = context
                 part.transform = CGAffineTransform(placement.transform).concatenating(fit)
                 guard placement.opacity < 1 else {
-                    part.draw(shapes, edges: edges)
+                    part.draw(shapes, shoulder: shoulder)
                     continue
                 }
                 // A fading part fades as one piece, so its overlapping shapes don't show through.
                 part.opacity = placement.opacity
-                part.drawLayer { layer in layer.draw(shapes, edges: edges) }
+                part.drawLayer { layer in layer.draw(shapes, shoulder: shoulder) }
             }
         }
     }
 }
 
 extension GraphicsContext {
-    /// Paints shapes back to front in this context's transform, each of `edges` outlined within
-    /// `area` (in the same coordinates) before the shape it comes before.
-    func draw(
-        _ shapes: [FigureDrawing.DrawableShape], edges: (area: Path, edges: [FigureDrawing.DrawnEdge])? = nil
-    ) {
+    /// Paints shapes back to front in this context's transform. With a shoulder (in the same
+    /// coordinates), each of its edges is outlined off the body before the shape it comes
+    /// before, and each sleeve's outline stops where it lies on the body at the shoulder's top.
+    func draw(_ shapes: [FigureDrawing.DrawableShape], shoulder: FigureDrawing.ShoulderFrame? = nil) {
         var offBody = self
-        if let edges { offBody.clip(to: edges.area) }
-        for (index, shape) in shapes.enumerated() {
-            for edge in edges?.edges ?? [] where edge.before == index {
+        if let shoulder { offBody.clip(to: shoulder.offBody) }
+        for (index, drawn) in shapes.enumerated() {
+            for edge in shoulder?.edges ?? [] where edge.before == index {
                 offBody.stroke(edge.path, with: .color(edge.color), style: edge.style)
+            }
+            var shape = drawn
+            if let shoulder, shoulder.outlines.contains(index), drawn.fill == nil, !shoulder.overBody.isEmpty {
+                // Its centreline is cut, not its paint, so the line ends round where it stops.
+                shape = FigureDrawing.DrawableShape(
+                    path: Path(drawn.path.cgPath.lineSubtracting(shoulder.overBody.cgPath)), fill: nil,
+                    stroke: drawn.stroke, opacity: drawn.opacity)
             }
             var each = self
             each.opacity *= shape.opacity

@@ -117,7 +117,7 @@ function outline(svg) {
     if (!stroke || stroke === 'none' || attribute(tag, 'stroke-dasharray')) continue;
     const total = length(attribute(tag, 'd'));
     if (!best || total > best.total)
-      best = { total, stroke, width: attribute(tag, 'stroke-width') ?? '1' };
+      best = { total, tag, stroke, width: attribute(tag, 'stroke-width') ?? '1' };
   }
   return best;
 }
@@ -151,4 +151,13 @@ export function edge(svg, pivot, radius) {
     )
     .join(' ');
   return { d, stroke: line.stroke, width: line.width };
+}
+
+/**
+ * `svg` with its outline marked `data-outline`, for the page to stop it where it lies on the
+ * body at the shoulder's top, as the app does.
+ */
+export function markOutline(svg) {
+  const line = outline(svg);
+  return line ? svg.replace(line.tag, line.tag.replace('<path', '<path data-outline=""')) : svg;
 }
