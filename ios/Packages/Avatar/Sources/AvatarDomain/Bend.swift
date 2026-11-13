@@ -110,18 +110,27 @@ public struct Bend: Hashable, Sendable {
         guard length > 0 else { return [points] }
         let along = { (spot: Point) in ((spot.x - shoulder.x) * axisX + (spot.y - shoulder.y) * axisY) / length }
         let edge = along(elbow.point) + Self.span.start
-        // A curve lies within its points, so one whose points are all on one side never crosses.
-        let behind = points.count { along($0) - edge < 0 }
-        guard behind != 0, behind != points.count else { return [points] }
-        let side = { (time: Double) in along(Self.point(points, at: time)) - edge }
+        // How far each point is past the edge. The curve's own distance at a time is the same
+        // curve through these, and one whose points are all on one side never crosses.
+        let past = points.map { along($0) - edge }
+        let behind = past.count { $0 < 0 }
+        guard behind != 0, behind != past.count else { return [points] }
+        let side = { (time: Double) -> Double in
+            let rest = 1 - time
+            return past.count == 3
+                ? rest * rest * past[0] + 2 * rest * time * past[1] + time * time * past[2]
+                : rest * rest * rest * past[0] + 3 * rest * rest * time * past[1]
+                    + 3 * rest * time * time * past[2] + time * time * time * past[3]
+        }
         // Where it crosses: a change of side between two of 16 steps, narrowed down.
         var cuts: [Double] = []
         for step in 0..<16 {
             var (low, high) = (Double(step) / 16, Double(step + 1) / 16)
-            guard (side(low) < 0) != (side(high) < 0) else { continue }
+            let before = side(low) < 0
+            guard before != (side(high) < 0) else { continue }
             for _ in 0..<40 {
                 let middle = (low + high) / 2
-                if (side(low) < 0) == (side(middle) < 0) { low = middle } else { high = middle }
+                if before == (side(middle) < 0) { low = middle } else { high = middle }
             }
             cuts.append((low + high) / 2)
         }
@@ -132,11 +141,6 @@ public struct Bend: Hashable, Sendable {
             (rest, done) = (tail, cut)
         }
         return out + [rest]
-    }
-
-    /// A Bézier curve's point at `time`, by de Casteljau.
-    private static func point(_ points: [Point], at time: Double) -> Point {
-        split(points, at: time).0.last ?? points[0]
     }
 
     /// A Bézier curve cut at `time` into two of the same degree, by de Casteljau.

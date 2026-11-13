@@ -287,21 +287,29 @@
       }
       return [head, tail];
     };
-    const side = (points, t) => {
-      const p = split(points, t)[0].at(-1);
-      return along(p[0], p[1]) - edge;
-    };
     const pieces = (points) => {
-      // A curve lies within its points, so one whose points are all on one side never crosses.
-      const behind = points.filter(([x, y]) => along(x, y) - edge < 0).length;
-      if (behind === 0 || behind === points.length) return [points];
+      // How far each point is past the edge. The curve's own distance at a time is the same
+      // curve through these, and one whose points are all on one side never crosses.
+      const past = points.map(([x, y]) => along(x, y) - edge);
+      const behind = past.filter((v) => v < 0).length;
+      if (behind === 0 || behind === past.length) return [points];
+      const side = (t) => {
+        const u = 1 - t;
+        return past.length === 3
+          ? u * u * past[0] + 2 * u * t * past[1] + t * t * past[2]
+          : u * u * u * past[0] +
+              3 * u * u * t * past[1] +
+              3 * u * t * t * past[2] +
+              t * t * t * past[3];
+      };
       const cuts = [];
       for (let step = 0; step < 16; step++) {
         let [low, high] = [step / 16, (step + 1) / 16];
-        if (side(points, low) < 0 === side(points, high) < 0) continue;
+        const before = side(low) < 0;
+        if (before === side(high) < 0) continue;
         for (let k = 0; k < 40; k++) {
           const half = (low + high) / 2;
-          if (side(points, low) < 0 === side(points, half) < 0) low = half;
+          if (before === side(half) < 0) low = half;
           else high = half;
         }
         cuts.push((low + high) / 2);

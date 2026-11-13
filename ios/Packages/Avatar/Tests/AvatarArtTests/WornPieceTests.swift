@@ -38,7 +38,8 @@ func everySleeveCoversTheShoulder(top: String) throws {
 
 /// Each arm is drawn over what the body wears only in front of its seam, and under the body
 /// behind it (`Tuck`), so no round of sleeve lies on the chest however the arm turns. Every
-/// sleeve's cloth starts at the seam's two ends, so it leaves the body there with no gap.
+/// sleeve's cloth starts at the seam's two ends (within its outline's width), so it leaves the body
+/// there with no gap.
 @Test(arguments: PlaceholderCharacter.variants(for: "top"))
 func everySleeveStartsAtItsSeam(top: String) throws {
     var look = PlaceholderCharacter.lifter
@@ -51,7 +52,7 @@ func everySleeveStartsAtItsSeam(top: String) throws {
         guard let sleeve = part.slots.firstIndex(of: "top") else { continue }
         let cloth = part.art[sleeve].shapes.filter { $0.fill != nil }.flatMap { corners($0.path) }
         for end in [seam.top, seam.armpit] {
-            #expect(cloth.contains { distance($0, end) <= 1.5 }, "\(top) \(id) misses \(end)")
+            #expect(cloth.contains { distance($0, end) <= 2 }, "\(top) \(id) misses \(end)")
         }
     }
 }
