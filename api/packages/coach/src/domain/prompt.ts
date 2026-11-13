@@ -6,6 +6,7 @@ import {
   type Challenge,
   type ChallengeAnswer,
   type ChallengeCompletion,
+  type DeliveredNote,
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
@@ -212,6 +213,7 @@ export function taskOf({
   talks = [],
   noteTo = [],
   yesterday,
+  pastDays,
   occasions = [],
   backAgain = false,
   challenge,
@@ -235,6 +237,8 @@ export function taskOf({
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
   readonly yesterday?: YesterdayFacts;
+  /** On the night's dream, the days it looks back over. */
+  readonly pastDays?: PastDays;
   /** What is special about the day, such as a holiday, one line each. */
   readonly occasions?: readonly string[];
   /** Whether the coach coached this squad before, was fired and is back, and speaks for the first time since. */
@@ -325,21 +329,15 @@ export function taskOf({
     ].join('\n\n');
   }
   if (reason.kind === 'dream') {
-    // Nothing new to learn from: the memory stays as it is, and the night costs nothing.
-    if (
-      talks.length === 0 &&
-      (yesterday === undefined ||
-        (yesterday.checkIns.length === 0 && (yesterday.challenges ?? []).length === 0))
-    ) {
-      return undefined;
-    }
+    // Nothing new since the last night: the memory stays as it is, and the night costs nothing.
+    if (pastDays === undefined || pastDays.quiet) return undefined;
     return [
-      '# 夜里，整理你的记性',
+      `# 夜里\n今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
       whoIsWho,
-      ...(yesterday === undefined ? [] : yesterdayBlocks(yesterday, { roster, talks })),
-      talksBlock(talks, roster),
+      ...pastDaysBlocks(pastDays, { roster, talks }),
+      talksBlock(talks, { roster, span: '过去七天' }),
       filesLine,
-      `## 要做的\n${DREAM}`,
+      `## 整理记性\n${DREAM}`,
     ].join('\n\n');
   }
   const notes = [
@@ -358,7 +356,7 @@ export function taskOf({
     ...occasion,
     whoIsWho,
     ...(yesterday === undefined ? [] : yesterdayBlocks(yesterday, { roster, talks })),
-    talksBlock(talks, roster),
+    talksBlock(talks, { roster }),
     filesLine,
     notes,
     noteSection,
@@ -399,18 +397,12 @@ const WELCOME = '给他写一张便条（note_to）：先介绍你自己，再�
 const BACK_AGAIN = '你以前带过这个小队，被换掉后，现在又被请回来了。';
 
 /**
- * How a night goes: the whole memory brought to its truest current state, not only added to
- * (Tracy, 2026-11-08), as Claude's dreams do: merge, replace what changed, drop what stopped
- * mattering.
+ * What a night is, told as what and how, never steps (Tracy, 2026-11-12: not prescriptive): the
+ * week it looks back on and the memory it leaves for the morning.
  */
 const DREAM = [
-  '把记性整理成现在最准的样子：',
-  '- 从上面学到的、过很久还成立的事，记进去。',
-  '- 重复的合成一条。',
-  '- 前后矛盾的，留最新的。',
-  '- 过时的、一时的、琐碎的，删掉。',
-  '- 每个文件最要紧、最长久的事写在最前面：白天你只看得到每个文件的开头几行。',
-  '改了哪个文件，就用 rewrite_file 把那个文件整个重写一遍；没变的不用动。',
+  '这次醒来是为了整理你的记性。上面是过去七天的动态。',
+  '你的记性就是上面这几个文件，明天醒来你只记得它们。白天你只看得到每个文件的开头几行，其余要用 recall 查。rewrite_file 会把一个文件整个换成你写的样子。',
 ].join('\n');
 
 /** The gift pool and who may get one, when anyone may: the give_gift tool's choices. */
@@ -461,16 +453,7 @@ function yesterdayBlocks(
     talks,
   }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
 ): string[] {
-  // A post points to the talk below only when the talk holds every comment under it: the talk
-  // keeps only the last day's, and an older comment would otherwise be shown nowhere.
-  const talkedUnder = new Set(
-    talks
-      .filter(
-        ({ checkIn, said }) =>
-          said.filter(({ member }) => member !== undefined).length >= checkIn.comments.length,
-      )
-      .map(({ checkIn }) => checkIn.id),
-  );
+  const talkedUnder = talkedUnderOf(talks);
   const heading = `## 昨天（${weekdayOf(day)}）小队的动态`;
   const posts =
     checkIns.length === 0
@@ -482,25 +465,147 @@ function yesterdayBlocks(
           ),
         ].join('\n\n');
   if (challenges.length === 0) return [posts];
-  const lines = challenges.map(({ day: on, member, challenge, answer, reason, completion }) => {
-    const how =
-      completion !== undefined
-        ? '完成了'
-        : answer === 'accepted'
-          ? '接了，没记完成'
-          : answer === 'declined'
-            ? reason === undefined
-              ? '没接'
-              : `没接，理由：「${reason}」（只告诉了你）`
-            : '没回应';
-    return `- ${dayWords(on)} ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
-  });
+  const lines = challenges.map(
+    (each) =>
+      `- ${dayWords(each.day)} ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
+  );
   return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
+/** How a challenge went, in the coach's words. */
+function challengeHow({
+  answer,
+  reason,
+  completion,
+}: {
+  readonly answer: ChallengeAnswer | undefined;
+  readonly reason: string | undefined;
+  readonly completion: ChallengeCompletion | undefined;
+}): string {
+  if (completion !== undefined) return '完成了';
+  if (answer === 'accepted') return '接了，没记完成';
+  if (answer === 'declined') {
+    return reason === undefined ? '没接' : `没接，理由：「${reason}」（只告诉了你）`;
+  }
+  return '没回应';
+}
+
+/** What the night's dream looks back over: the squad's days, and what the coach did in them. */
+export interface PastDays {
+  /** The first and last day it covers, `YYYY-MM-DD`. */
+  readonly from: string;
+  readonly to: string;
+  /** Whether nothing happened since the night before: no post, no talk, no challenge answered. */
+  readonly quiet: boolean;
+  /** The squad's posts made for those days or posted on them, oldest first. */
+  readonly checkIns: readonly WeekCheckIn[];
+  /** The coach's 战术板 lines, oldest first. */
+  readonly boards: readonly { readonly day: string; readonly text: string }[];
+  /** Its notes that reached members, with how each challenge went, oldest first. */
+  readonly notes: readonly DeliveredNote[];
+  /** Its gifts, oldest first. */
+  readonly gifts: readonly CoachGiven[];
+}
+
+export type { DeliveredNote } from './challenge.js';
+
+/** A gift the coach gave, as it reads it back. */
+export interface CoachGiven {
+  readonly member: string;
+  readonly piece: string;
+  /** What it said with it. */
+  readonly line?: string;
+  readonly at: Date;
+  /** Whether the member opened it (拆开), and put it on then. */
+  readonly opened?: { readonly worn: boolean };
+}
+
+/** The night's look back: the posts, then what the coach wrote and gave. */
+function pastDaysBlocks(
+  { from, to, checkIns, boards, notes, gifts }: PastDays,
+  {
+    roster,
+    talks,
+  }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
+): string[] {
+  const talkedUnder = talkedUnderOf(talks);
+  const heading = `## 过去七天（${dayWords(from)} 到 ${dayWords(to)}）小队的动态`;
+  const posts =
+    checkIns.length === 0
+      ? `${heading}\n没人发动态。`
+      : [
+          heading,
+          ...checkIns.map((each) =>
+            checkInBlock(each, { roster, comments: talkedUnder.has(each.id) ? 'below' : true }),
+          ),
+        ].join('\n\n');
+  const board = [
+    '## 你写的战术板（全队看得到）',
+    ...(boards.length === 0
+      ? ['没写过。']
+      : boards.map(({ day, text }) => `- ${dayWords(day)}：「${text}」`)),
+  ].join('\n');
+  const byMember = new Map<string, DeliveredNote[]>();
+  for (const note of notes) byMember.set(note.member, [...(byMember.get(note.member) ?? []), note]);
+  const noteBlocks =
+    byMember.size === 0
+      ? ['## 你写的便条\n没有送到谁手上的。']
+      : [
+          '## 你写的便条（只有收到的人看得到）',
+          ...[...byMember].map(([member, theirs]) =>
+            [
+              `### ${roster.get(member) ?? '队员'}`,
+              ...theirs.flatMap(({ day, text, challenge }) => [
+                `- ${dayWords(day)}：「${text}」`,
+                ...(challenge === undefined
+                  ? []
+                  : [
+                      `  - 挑战「${challengeText(challenge.challenge)}」：${challengeHow(challenge)}`,
+                    ]),
+              ]),
+            ].join('\n'),
+          ),
+        ];
+  const giftBlock =
+    gifts.length === 0
+      ? []
+      : [
+          [
+            '## 你送的礼物（只有收到的人知道）',
+            ...gifts.map(
+              ({ member, piece, line, opened }) =>
+                `- ${roster.get(member) ?? '队员'}：${piece}${line === undefined ? '' : `，你说「${line}」`}；${opened === undefined ? '还没拆' : opened.worn ? '拆开了，当场穿上了' : '拆开了，没穿'}`,
+            ),
+          ].join('\n'),
+        ];
+  return [posts, board, ...noteBlocks, ...giftBlock];
+}
+
+/**
+ * The posts whose comments the talk below holds in full: those point to it instead of repeating
+ * them. The talk keeps only its window's comments, and an older one would otherwise be shown
+ * nowhere.
+ */
+function talkedUnderOf(talks: readonly DayTalk[]): Set<string> {
+  return new Set(
+    talks
+      .filter(
+        ({ checkIn, said }) =>
+          said.filter(({ member }) => member !== undefined).length >= checkIn.comments.length,
+      )
+      .map(({ checkIn }) => checkIn.id),
+  );
+}
+
 /** The last day's talk, for the daily wake to remember from. */
-function talksBlock(talks: readonly DayTalk[], roster: ReadonlyMap<string, string>): string {
-  const heading = '## 和你的对话（过去一天，打卡下面，先后顺序）';
+function talksBlock(
+  talks: readonly DayTalk[],
+  {
+    roster,
+    span = '过去一天',
+  }: { readonly roster: ReadonlyMap<string, string>; readonly span?: string },
+): string {
+  const heading = `## 和你的对话（${span}，打卡下面，先后顺序）`;
   if (talks.length === 0) return `${heading}\n没人在打卡下面和你说话。`;
   const blocks = talks.map(({ checkIn, reply, said }) =>
     [
