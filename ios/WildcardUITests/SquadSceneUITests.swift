@@ -10,7 +10,7 @@ final class SquadSceneUITests: XCTestCase {
             let app = XCUIApplication()
             app.launchArguments += [
                 "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-                "-today.cardPage", "0", "-uitest-squad", "\(size)", "-uitest-scene", "track",
+                "-today.cardPage", "0", "-uitest-card-folded", "-uitest-squad", "\(size)", "-uitest-scene", "track",
             ]
             app.launch()
             let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
