@@ -449,6 +449,54 @@
         }
       }
     },
+    "push.joinRequest": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ asked to join your squad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 申请加入小队"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ 申請加入小隊"
+          }
+        }
+      }
+    },
+    "push.joinApproved": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're in %1$@. Tap to see."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已加入%1$@，点击查看"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你已加入%1$@，點擊查看"
+          }
+        }
+      }
+    },
     "push.trainedWith": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",

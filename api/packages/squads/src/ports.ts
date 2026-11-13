@@ -3,6 +3,7 @@ import type { ReaderLanguage } from '@wildcard/language-model';
 import type { InviteCode } from './domain/invite-code.js';
 import type { Scene, ScenePick, SceneWeek } from './domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from './domain/squad.js';
+import type { JoinNote, JoinRequest, JoinRequestId } from './domain/join-request.js';
 import type { GoalSuggestion } from './domain/goal-suggestion.js';
 import type { TimeZoneSetting } from './domain/time-zone.js';
 import type { DaysPerMember, WeeklyGoalSetting } from './domain/weekly-goal.js';
@@ -57,6 +58,19 @@ export type PickOutcome = 'picked' | 'taken';
 
 /** What joining a squad did. `ended`: everyone left it, so its invite no longer works. */
 export type JoinOutcome = 'joined' | 'alreadyMember' | 'squadFull' | 'squadLimit' | 'ended';
+
+/**
+ * What asking to join a squad did: `asked` saves a new request (withdrawing one the member had
+ * waiting for another squad, or for this one with another note), `alreadyAsked` finds the same
+ * one waiting.
+ */
+export type AskOutcome =
+  | { readonly asked: 'asked' | 'alreadyAsked'; readonly request: JoinRequest }
+  | { readonly asked: false; readonly refused: Exclude<JoinOutcome, 'joined'> };
+
+/** What a captain's answer to a request did. `answered`: it had its answer already. */
+export type AnswerOutcome =
+  'approved' | 'declined' | 'answered' | 'notCaptain' | 'unknown' | 'squadFull' | 'squadLimit';
 
 /** How a member came out of the squad they were last in. */
 export interface SquadExit {
@@ -168,6 +182,44 @@ export interface SquadStore {
     readonly actor: MemberId;
     readonly language: ReaderLanguage;
   }): Promise<CaptainOutcome>;
+  /**
+   * Whether joining each squad needs its captain's OK (入队要队长同意), its newest setting, else
+   * `JOIN_APPROVAL_DEFAULT`.
+   */
+  joinApprovals(squads: readonly SquadId[]): Promise<ReadonlyMap<SquadId, boolean>>;
+  /** Turns the captain's OK on or off, if `actor` is the captain; `unchanged` when it is so. */
+  setJoinApproval(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+    readonly required: boolean;
+  }): Promise<CaptainOutcome>;
+  /**
+   * Asks to join the squad, refused for the same reasons a join is, so a request never waits on
+   * a squad the member couldn't join.
+   */
+  askToJoin(ask: {
+    readonly squad: SquadId;
+    readonly member: MemberId;
+    readonly note?: JoinNote | undefined;
+  }): Promise<AskOutcome>;
+  /** The member's newest request to join, waiting or answered. */
+  latestJoinRequest(member: MemberId): Promise<JoinRequest | undefined>;
+  /** One request to join, waiting or answered. */
+  joinRequest(id: JoinRequestId): Promise<JoinRequest | undefined>;
+  /** The requests waiting for the squad's captain, the earliest first. */
+  waitingJoinRequests(squad: SquadId): Promise<JoinRequest[]>;
+  /**
+   * Answers a waiting request to the squad, if `actor` captains it: approving it joins the
+   * member, as a join by its captain in the squad's log.
+   */
+  answerJoinRequest(answer: {
+    readonly squad: SquadId;
+    readonly request: JoinRequestId;
+    readonly actor: MemberId;
+    readonly approve: boolean;
+  }): Promise<AnswerOutcome>;
+  /** Withdraws the member's waiting request, if they have one. */
+  withdrawJoinRequest(member: MemberId): Promise<void>;
   /** The higher goals suggested to the squad's captains, the earliest week first. */
   goalSuggestions(squad: SquadId): Promise<GoalSuggestion[]>;
   /**

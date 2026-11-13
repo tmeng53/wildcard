@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -192,6 +192,15 @@
           "adopted": {
             "type": "string",
             "description": "What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another."
+          },
+          "joinRequest": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置."
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Whether the captain let the caller in (`joinAnswered`)."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -3796,6 +3805,10 @@
             "type": "boolean",
             "description": "True when the caller is in it already."
           },
+          "needsApproval": {
+            "type": "boolean",
+            "description": "True when joining asks the captain first (入队需要审核): accepting answers 202 with the request."
+          },
           "daysPerMember": {
             "type": "integer",
             "minimum": 1,
@@ -3817,8 +3830,110 @@
           "memberCount",
           "full",
           "joined",
+          "needsApproval",
           "daysPerMember",
           "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad’s name now."
+          },
+          "note": {
+            "type": "string",
+            "description": "What the member wrote the captain (备注)."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, in UTC."
+          },
+          "status": {
+            "type": "string",
+            "description": "`waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over."
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it ended, in UTC."
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "How many members the squad has now."
+          },
+          "looks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Look"
+            },
+            "description": "The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids."
+          },
+          "captain": {
+            "type": "object",
+            "properties": {
+              "nickname": {
+                "type": "string"
+              },
+              "look": {
+                "$ref": "#/components/schemas/Look"
+              }
+            },
+            "required": [
+              "nickname",
+              "look"
+            ],
+            "additionalProperties": false,
+            "description": "The captain who answers it; left out until they made a character."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "squadId",
+          "squadName",
+          "askedAt",
+          "status",
+          "memberCount",
+          "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinSquadRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.",
+            "x-max-characters": 30
+          }
+        },
+        "required": [
+          "version"
         ],
         "additionalProperties": false
       },
@@ -3865,6 +3980,130 @@
           "full",
           "daysPerMember",
           "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinApproval": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it."
+          }
+        },
+        "required": [
+          "version",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "WaitingJoinRequests": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WaitingJoinRequest"
+            },
+            "description": "The requests waiting for the captain, the earliest first."
+          }
+        },
+        "required": [
+          "version",
+          "requests"
+        ],
+        "additionalProperties": false
+      },
+      "WaitingJoinRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who asked: their Supabase Auth user id."
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Their nickname, once they made one."
+          },
+          "look": {
+            "$ref": "#/components/schemas/Look"
+          },
+          "note": {
+            "type": "string",
+            "description": "What they wrote the captain (备注)."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, in UTC."
+          }
+        },
+        "required": [
+          "id",
+          "member",
+          "askedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JoinAnswer": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "approve": {
+            "type": "boolean",
+            "description": "`true` lets the member in, `false` turns them away."
+          }
+        },
+        "required": [
+          "version",
+          "approve"
+        ],
+        "additionalProperties": false
+      },
+      "MyJoinRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JoinRequest"
+              },
+              {
+                "description": "The member’s newest request to join, waiting or ended; left out if none."
+              }
+            ]
+          }
+        },
+        "required": [
+          "version"
         ],
         "additionalProperties": false
       },
@@ -11268,7 +11507,7 @@
       "post": {
         "operationId": "joinSquad",
         "summary": "Join a squad by invite code",
-        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.",
+        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.",
         "security": [
           {
             "bearer": []
@@ -11285,6 +11524,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinSquadRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Already in it",
@@ -11302,6 +11551,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Asked: waiting for the captain’s OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinRequest"
                 }
               }
             }
@@ -11328,6 +11587,16 @@
           },
           "404": {
             "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11404,6 +11673,442 @@
                 }
               }
             },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-approval": {
+      "get": {
+        "operationId": "getSquadJoinApproval",
+        "summary": "Whether joining the squad needs the captain’s OK",
+        "description": "For its members.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinApproval"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setSquadJoinApproval",
+        "summary": "Turn the captain’s OK to join on or off",
+        "description": "For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinApproval"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The setting, changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinApproval"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-requests": {
+      "get": {
+        "operationId": "listSquadJoinRequests",
+        "summary": "The requests waiting for the captain",
+        "description": "For the captain: who asked, their character and note, the earliest first.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The waiting requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitingJoinRequests"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-requests/{requestId}": {
+      "put": {
+        "operationId": "answerSquadJoinRequest",
+        "summary": "Let a member in, or turn them away",
+        "description": "For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "requestId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request, answered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid id, or the squad is full (`SQUAD_FULL`), or the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the request was answered another way (`JOIN_REQUEST_ANSWERED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such request to this squad (`JOIN_REQUEST_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/join-request": {
+      "get": {
+        "operationId": "getMyJoinRequest",
+        "summary": "The member’s newest request to join a squad",
+        "description": "Waiting or ended, for the 等队长同意 page while they are in no squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request, if any",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyJoinRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "withdrawMyJoinRequest",
+        "summary": "Withdraw the member’s waiting request",
+        "description": "Safe to repeat: with none waiting, nothing changes.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Withdrawn, or none was waiting"
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
             "content": {
               "application/problem+json": {
                 "schema": {

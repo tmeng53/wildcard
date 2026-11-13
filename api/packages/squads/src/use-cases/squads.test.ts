@@ -54,7 +54,19 @@ async function newSquad(creator: MemberId, text = '早八跑团') {
     creator,
     name: name(text),
   });
+  await openToJoin(squad.id, creator);
   return squad;
+}
+
+/** A join that let the member in, as every squad here lets members straight in. */
+function inSquad(outcome: Awaited<ReturnType<typeof squads.join>>) {
+  if (!('squad' in outcome)) throw new Error('Asked the captain instead of joining.');
+  return outcome;
+}
+
+/** Turns the captain's OK to join off (入队需要审核), so members join straight in. */
+async function openToJoin(squad: SquadId, captain: MemberId) {
+  await squads.setJoinApproval({ squad, member: captain, required: false });
 }
 
 describe('creating a squad', () => {
@@ -177,12 +189,11 @@ describe('joining by invite code', () => {
     const [ann, bo] = [await newMember(), await newMember()];
     const squad = await newSquad(ann);
     const typed = `${squad.inviteCode.slice(0, 4).toLowerCase()}-${squad.inviteCode.slice(4)}`;
-    const { squad: joined, joined: isNew } = await squads.join({
-      inviteCode: InviteCode.parse(typed),
-      member: bo,
-    });
+    const { squad: joined, joined: isNew } = inSquad(
+      await squads.join({ inviteCode: InviteCode.parse(typed), member: bo }),
+    );
     expect([isNew, joined.members.map(({ member }) => member)]).toStrictEqual([true, [ann, bo]]);
-    const again = await squads.join({ inviteCode: squad.inviteCode, member: bo });
+    const again = inSquad(await squads.join({ inviteCode: squad.inviteCode, member: bo }));
     expect([again.joined, again.squad]).toStrictEqual([false, joined]);
   });
 
@@ -200,8 +211,29 @@ describe('joining by invite code', () => {
     const member = await newMember();
     await squads.join({ inviteCode: squad.inviteCode, member });
     consented.delete(member);
-    const again = await squads.join({ inviteCode: squad.inviteCode, member });
+    const again = inSquad(await squads.join({ inviteCode: squad.inviteCode, member }));
     expect(again.joined).toBe(false);
+  });
+
+  it('asks the captain by default, unless the switch is off for everyone', async () => {
+    const [ann, bo, cy] = [await newMember(), await newMember(), await newMember()];
+    const { squad } = await squads.create({
+      timeZone: NEW_YORK,
+      week: '2026-11-02',
+      id: SquadId.parse(randomUUID()),
+      creator: ann,
+      name: name('周三不练腿'),
+    });
+    const asked = await squads.join({ inviteCode: squad.inviteCode, member: bo });
+    expect(asked).toMatchObject({ asked: true, request: { squad: squad.id, member: bo } });
+    const switchedOff = createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent,
+      joinApprovalOn: () => Promise.resolve(false),
+    });
+    const joined = inSquad(await switchedOff.join({ inviteCode: squad.inviteCode, member: cy }));
+    expect(joined.squad.members.map(({ member }) => member)).toStrictEqual([ann, cy]);
   });
 
   it('refuses a code no squad has', async () => {
@@ -250,6 +282,7 @@ describe('joining by invite code', () => {
       daysPerMember: 3,
       members: [ann],
       joined: false,
+      needsApproval: false,
     });
     expect(await squads.previewInvite({ inviteCode: squad.inviteCode, viewer: ann })).toMatchObject(
       {
