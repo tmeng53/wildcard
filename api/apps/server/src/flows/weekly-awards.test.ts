@@ -103,6 +103,7 @@ const checkInStore = createPostgresCheckInStore(db);
 const reactions = createPostgresReactionStore(db);
 const comments = createPostgresCommentStore(db);
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: checkInStore,
   membership: squads,

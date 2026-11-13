@@ -513,10 +513,10 @@ describe('when the coach wakes', () => {
         ...(keptStreaks === undefined ? {} : { keptStreaks }),
       })?.split('\n\n');
     expect(task({ training: 12, meals: 5 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天、连续吃饭打卡 5 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天、连续健康餐 5 天。',
     );
     expect(task({ training: 12, meals: 1 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天。',
     );
     expect(task({ training: 1 })?.join('\n\n')).not.toContain('连续天数');
     expect(task()?.join('\n\n')).not.toContain('连续天数');

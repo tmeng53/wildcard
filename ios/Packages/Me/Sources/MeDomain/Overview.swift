@@ -21,8 +21,9 @@ public struct LifetimeCounts: Hashable, Sendable {
 }
 
 /// The streaks still going that the player card's 外卡 show (Tracy, 2026-11-10): days trained in
-/// a row, a planned rest day neither breaking nor adding, and days in a row with a meal checked
-/// in (健康餐 or 坦白放纵餐). A broken one is 0, and its 外卡 isn't shown.
+/// a row, a planned rest day neither breaking nor adding, and days in a row with a 健康餐, a
+/// 坦白放纵餐 neither breaking nor adding (Tracy, 2026-11-13). A broken one is 0, and its 外卡
+/// isn't shown.
 public struct CardStreaks: Hashable, Sendable {
     public var training: Int
     public var meals: Int

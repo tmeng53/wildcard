@@ -6,7 +6,9 @@ import Foundation
 
 /// A place's numbers counted on the phone from the squad's 动态, for the in-memory sample squad
 /// and UI tests, which have no server to count them: the posts of the last `weeks` weeks tagged
-/// there, by the server's rules.
+/// there, by the server's rules (places have no scores). Those rules live in
+/// `api/apps/server/src/flows/squad-places.ts` (`byPlace`, `summaryOf`, `detailOf`): a change
+/// there changes this too.
 public struct FeedPlaceSource: PlaceSource {
     private let feed: any FeedSource
     private let today: LocalDay

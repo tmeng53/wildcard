@@ -17,7 +17,7 @@ import SwiftUI
 struct StreakTile: View {
     let label: Text
     let streak: WildcardRecords.Streak?
-    /// The run still going, for the 现在连续 row; nil once broken.
+    /// The run still going, for the 现在连续 row; nil once broken, which leaves the row out.
     let current: WildcardRecords.Streak?
     let today: LocalDay
     /// Which streak tile it is, for when its tickets punch in.
@@ -60,18 +60,21 @@ struct StreakTile: View {
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgOnBrandMuted, in: theme))
                     .lineLimit(1)
-                Rectangle()
-                    .fill(Color(role: .fgOnBrand, in: theme).opacity(0.14))
-                    .frame(height: Self.hairline)
-                    .accessibilityHidden(true)
-                currentRow(ongoing: ongoing)
+                // Once the run broke there is nothing going to show (Tracy, 2026-11-13): no 0 天.
+                if let current {
+                    Rectangle()
+                        .fill(Color(role: .fgOnBrand, in: theme).opacity(0.14))
+                        .frame(height: Self.hairline)
+                        .accessibilityHidden(true)
+                    currentRow(current: current, ongoing: ongoing)
+                }
             }
         }
         .accessibilityElement(children: .combine)
     }
 
-    /// 现在连续 N 天, or 正在刷新纪录 N 天 while the run still going is the record; 0 once broken.
-    private func currentRow(ongoing: Bool) -> some View {
+    /// 现在连续 N 天, or 正在刷新纪录 N 天 while the run still going is the record.
+    private func currentRow(current: WildcardRecords.Streak, ongoing: Bool) -> some View {
         HStack(alignment: .firstTextBaseline) {
             Group {
                 if ongoing {
@@ -87,7 +90,7 @@ struct StreakTile: View {
             .minimumScaleFactor(Self.labelScale)
             Spacer(minLength: Space.xs)
             HStack(alignment: .firstTextBaseline, spacing: Self.unitGap) {
-                Text(verbatim: "\(current?.days ?? 0)")
+                Text(verbatim: "\(current.days)")
                     .typeStyle(TypeRamp.scoreSmall)
                     .monospacedDigit()
                 Text(copy: "天", bundle: .module)

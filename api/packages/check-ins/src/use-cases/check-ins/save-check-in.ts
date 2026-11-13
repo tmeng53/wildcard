@@ -67,7 +67,7 @@ export async function saveCheckIn(
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
     readonly sports: SportList;
-    readonly squadPlaceOf?: SquadPlaceOf;
+    readonly squadPlaceOf: SquadPlaceOf;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
@@ -126,7 +126,7 @@ async function insertCheckIn(
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
     readonly sports: SportList;
-    readonly squadPlaceOf?: SquadPlaceOf | undefined;
+    readonly squadPlaceOf: SquadPlaceOf;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },

@@ -206,9 +206,9 @@ export function toolbox({
   /** The members' stats and this week's plans, as the model reads them. */
   readonly facts?: () => Promise<string>;
   /** A week before this one, as the model may read it. */
-  readonly pastWeek?: (weeksAgo: number) => Promise<SquadWeek>;
+  readonly pastWeek: (weeksAgo: number) => Promise<SquadWeek>;
   /** What was said under a post, one line each, the coach's own lines too. */
-  readonly commentsOf?: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
+  readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   /** The memes in use now, for humour. */
   readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
@@ -230,8 +230,7 @@ export function toolbox({
   // Each week is read at most once a run, however many tools ask for it.
   const weeks = new Map<number, Promise<SquadWeek>>([[0, Promise.resolve(week)]]);
   const weekAgo = (weeksAgo: number): Promise<SquadWeek> => {
-    const read =
-      weeks.get(weeksAgo) ?? (pastWeek === undefined ? Promise.resolve(week) : pastWeek(weeksAgo));
+    const read = weeks.get(weeksAgo) ?? pastWeek(weeksAgo);
     weeks.set(weeksAgo, read);
     return read;
   };
@@ -544,7 +543,7 @@ function postTools(
   }: {
     readonly roster: ReadonlyMap<string, string>;
     readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
-    readonly commentsOf: ((checkIn: WeekCheckIn) => Promise<readonly string[]>) | undefined;
+    readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   },
 ): CoachTool[] {
   const listed = new Map<string, WeekCheckIn>();
@@ -598,7 +597,6 @@ function postTools(
       ].join('\n\n');
     },
   });
-  if (commentsOf === undefined) return [memberPosts];
   const postComments = defineTool(steps, {
     name: 'post_comments',
     reads: true,

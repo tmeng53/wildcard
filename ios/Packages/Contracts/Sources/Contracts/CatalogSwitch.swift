@@ -50,7 +50,7 @@ public struct CatalogSwitch: Hashable, Sendable {
     }
 
     /// The zone every switch's days are counted in.
-    public static let zone = TimeZone(identifier: "America/New_York") ?? .gmt
+    public static let zone = SquadTimeZone.newYorkClock
 }
 
 /// What only the public beta has, each on its own switch (Tracy, 2026-11-09). A switch the catalog
