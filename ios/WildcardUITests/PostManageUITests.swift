@@ -37,7 +37,7 @@ final class PostManageUITests: XCTestCase {
     }
 
     /// The post's gym on the ticket, its whole name shown while the row has room: tapping the
-    /// name opens the map and leaves it on; only its cross takes it off (Tracy, 2026-11-13).
+    /// name leaves it on; only its cross takes it off (Tracy, 2026-11-13).
     private func checkThePlaceTag(in app: XCUIApplication) {
         let tag = app.buttons["compose.place"]
         let count = app.staticTexts["compose.count"]
@@ -50,10 +50,8 @@ final class PostManageUITests: XCTestCase {
         keepScreenshot(named: "54a-compose-place-tagged")
 
         tag.tap()
-        let search = app.descendants(matching: .any).matching(identifier: "place.search").firstMatch
-        XCTAssertTrue(search.waitForExistence(timeout: Self.wait), "tapping the name didn't open the map")
-        app.buttons["place.cancel"].tap()
-        XCTAssertTrue(search.waitForNonExistence(timeout: Self.wait), "取消 didn't close the map")
+        settle()
+        XCTAssertTrue(cross.exists, "tapping the name took the place off")
         XCTAssertEqual(tag.label, "F45 Training Flatiron", "tapping the name took the place off")
 
         cross.tap()

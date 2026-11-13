@@ -16,11 +16,11 @@ struct PlacePill: View {
     var body: some View {
         Group {
             if let place {
-                // Only the cross takes the place off; the name opens it (the map again, to change it).
+                // Only the cross takes the place off. The name will open the place's page (地点页),
+                // which its own PR wires here; until then it does nothing.
                 PickPill(
                     Text(verbatim: place.name), systemImage: place.kind.symbol, look: .solid, isSelected: true
                 ) {
-                    isPicking = true
                 } remove: {
                     self.place = nil
                 }
