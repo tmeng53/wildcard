@@ -157,13 +157,23 @@ describe('coach messages', () => {
       by: me,
     });
     const answer = (path: string, part: Parameters<typeof messages.answer>[0]['part']) =>
-      messages.answer({ member: me, message: id, path: CardPath.parse(path), part });
+      messages.answer({ member: me, squad, message: id, path: CardPath.parse(path), part });
 
     // Not got yet.
     await expect(answer('', { part: 'stars', stars: 4 })).rejects.toThrow(
       CoachMessageNotFoundError,
     );
     await messages.cardsFor({ member: me, squad, coach: 'maotou' });
+    // Only in the squad it came in.
+    await expect(
+      messages.answer({
+        member: me,
+        squad: SquadId.parse(randomUUID()),
+        message: id,
+        path: CardPath.parse(''),
+        part: { part: 'stars', stars: 4 },
+      }),
+    ).rejects.toThrow(CoachMessageNotFoundError);
 
     await answer('', { part: 'stars', stars: 4 });
     await answer('', { part: 'stars', stars: 1 });

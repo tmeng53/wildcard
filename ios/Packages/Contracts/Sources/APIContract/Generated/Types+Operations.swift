@@ -23719,7 +23719,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a message the caller got (`COACH_MESSAGE_NOT_FOUND`)
+            /// Not a message the caller got in this squad (`COACH_MESSAGE_NOT_FOUND`)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/coach/messages/{messageId}/answer/put(answerCoachMessage)/responses/404`.
             ///

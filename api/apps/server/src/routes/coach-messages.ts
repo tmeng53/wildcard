@@ -4,6 +4,7 @@ import {
   CardPath,
   MemberId as MessageMember,
   MessageId,
+  SquadId as MessageSquad,
   TEXT_LIMIT,
   cardsOf,
   type AnswerPart,
@@ -252,7 +253,7 @@ export function coachMessageAnswers(deps: {
       ),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
-      404: problem('Not a message the caller got (`COACH_MESSAGE_NOT_FOUND`)'),
+      404: problem('Not a message the caller got in this squad (`COACH_MESSAGE_NOT_FOUND`)'),
       ...jsonBodyFailures,
       503: problem('Sign-in can’t be checked right now'),
     },
@@ -266,6 +267,7 @@ export function coachMessageAnswers(deps: {
     await deps.squads.find({ squad: squadId, viewer: MemberId.parse(member) });
     const answered = await deps.coachMessages.answer({
       member: MessageMember.parse(member),
+      squad: MessageSquad.parse(squadId),
       message: messageId,
       path: body.path,
       part: partOf(body),

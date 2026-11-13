@@ -42,9 +42,13 @@ export interface CoachMessages {
     readonly squad: SquadId;
     readonly coach: string | undefined;
   }): Promise<MessageCard[]>;
-  /** Keeps one part of the member's answer on one card; the first answer to a part stands. */
+  /**
+   * Keeps one part of the member's answer on one card of a message they got in `squad`; the
+   * first answer to a part stands.
+   */
   answer(input: {
     readonly member: MemberId;
+    readonly squad: SquadId;
     readonly message: MessageId;
     readonly path: CardPath;
     readonly part: AnswerPart;
@@ -109,8 +113,10 @@ export function createCoachMessages(deps: {
       });
     },
 
-    async answer({ member, message: id, path, part }) {
-      const got = (await store.deliveries(member)).some((each) => each.message === id);
+    async answer({ member, squad, message: id, path, part }) {
+      const got = (await store.deliveries(member)).some(
+        (each) => each.message === id && each.squad === squad,
+      );
       const [message] = got ? await store.byId([id]) : [];
       if (message === undefined) throw new CoachMessageNotFoundError(id);
       const trimmed: AnswerPart =

@@ -14491,7 +14491,7 @@
             }
           },
           "404": {
-            "description": "Not a message the caller got (`COACH_MESSAGE_NOT_FOUND`)",
+            "description": "Not a message the caller got in this squad (`COACH_MESSAGE_NOT_FOUND`)",
             "content": {
               "application/problem+json": {
                 "schema": {

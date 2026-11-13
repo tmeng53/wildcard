@@ -1529,19 +1529,22 @@ describe('the admin MCP server', () => {
       clock: () => new Date('2091-11-21T00:00:00Z'),
     });
     const reader = MessageMember.parse(admin.userId);
+    const squad = MessageSquad.parse(randomUUID());
     await messages.cardsFor({
       member: reader,
-      squad: MessageSquad.parse(randomUUID()),
+      squad,
       coach: 'maotou',
     });
     await messages.answer({
       member: reader,
+      squad,
       message: MessageId.parse(id),
       path: CardPath.parse(''),
       part: { part: 'stars', stars: 4 },
     });
     await messages.answer({
       member: reader,
+      squad,
       message: MessageId.parse(id),
       path: CardPath.parse(''),
       part: { part: 'tap', button: 'yes' },
