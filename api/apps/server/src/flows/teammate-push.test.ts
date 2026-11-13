@@ -238,6 +238,31 @@ describe('a 训练 just posted', () => {
     await expect(notifyTeammates(down, event)).rejects.toThrow('database down');
   });
 
+  it('tells the others, then throws, when one member can’t be claimed, so the event comes again', async () => {
+    const { deps, sent } = world({});
+    const down = {
+      ...deps,
+      push: {
+        ...deps.push,
+        claimTeammate: ({ member }: { readonly member: string }) =>
+          member === ann
+            ? Promise.reject(new Error('database down'))
+            : Promise.resolve('ring' as const),
+      },
+    };
+    await expect(notifyTeammates(down, event)).rejects.toThrow('database down');
+    expect(sent.map(({ member }) => member)).toStrictEqual([bo]);
+  });
+
+  it('doesn’t throw once a push is claimed, since it is never sent twice', async () => {
+    const { deps } = world({});
+    const down = {
+      ...deps,
+      push: { ...deps.push, notifyMembers: () => Promise.reject(new Error('APNs down')) },
+    };
+    await expect(notifyTeammates(down, event)).resolves.toBeUndefined();
+  });
+
   it('fits APNs with the longest names', () => {
     const payload = apnsPayload(
       teammateNotification({
