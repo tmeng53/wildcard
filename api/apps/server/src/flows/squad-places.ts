@@ -26,12 +26,8 @@ export interface PlaceSummary {
   /** How many of the squad's members gave one. */
   readonly raters: number;
   readonly lastAt: Date;
-}
-
-/** A place's own page: its summary and what the squad did there. */
-export interface PlaceDetail extends PlaceSummary {
-  /** The viewer's own score, standing; undefined before they give one. */
-  readonly myStars: Stars | undefined;
+  /** Who posted there and how many times, most first (小队地图's heads). */
+  readonly members: readonly { readonly member: MemberId; readonly visits: number }[];
   /** 大家在这里练: each sport its 训练 named, most first. */
   readonly sports: readonly {
     readonly sport: SportKey;
@@ -46,6 +42,12 @@ export interface PlaceDetail extends PlaceSummary {
     readonly tasty: number | undefined;
     readonly calorieValue: number | undefined;
   };
+}
+
+/** A place's own page: its summary and what the squad did there. */
+export interface PlaceDetail extends PlaceSummary {
+  /** The viewer's own score, standing; undefined before they give one. */
+  readonly myStars: Stars | undefined;
   /** The posts tagged with it, newest first. */
   readonly posts: readonly CheckInRecord[];
 }
@@ -89,29 +91,7 @@ export function summaryOf({
   const [newest] = posts;
   const place = newest === undefined ? undefined : placeOf(newest);
   if (newest === undefined || place === undefined) throw new Error('A place has a post');
-  return {
-    key,
-    place,
-    visits: posts.length,
-    people: new Set(posts.map((post) => post.member)).size,
-    stars: mean([...scores.values()]),
-    raters: scores.size,
-    lastAt: newest.createdAt,
-  };
-}
-
-/** A place's page from its posts (newest first, at least one), members' scores and the viewer. */
-export function detailOf({
-  key,
-  posts,
-  scores,
-  viewer,
-}: {
-  readonly key: PlaceKey;
-  readonly posts: readonly CheckInRecord[];
-  readonly scores: ReadonlyMap<MemberId, Stars>;
-  readonly viewer: MemberId;
-}): PlaceDetail {
+  const members = new Map<MemberId, number>();
   const sports = new Map<
     string,
     { sport: SportKey; customSport: string | undefined; count: number }
@@ -120,6 +100,7 @@ export function detailOf({
   let healthyMeal = 0;
   let cheatMeal = 0;
   for (const post of posts) {
+    members.set(post.member, (members.get(post.member) ?? 0) + 1);
     switch (post.kind) {
       case 'trained': {
         const { sport, customSport } = post.training;
@@ -139,8 +120,16 @@ export function detailOf({
     }
   }
   return {
-    ...summaryOf({ key, posts, scores }),
-    myStars: scores.get(viewer),
+    key,
+    place,
+    visits: posts.length,
+    people: members.size,
+    stars: mean([...scores.values()]),
+    raters: scores.size,
+    lastAt: newest.createdAt,
+    members: [...members]
+      .map(([member, visits]) => ({ member, visits }))
+      .sort((a, b) => b.visits - a.visits),
     sports: [...sports.values()].sort((a, b) => b.count - a.count),
     meals: {
       healthyMeal,
@@ -149,6 +138,20 @@ export function detailOf({
       tasty: mean(rated.map((each) => each.tasty)),
       calorieValue: mean(rated.map(calorieValue)),
     },
-    posts,
   };
+}
+
+/** A place's page from its posts (newest first, at least one), members' scores and the viewer. */
+export function detailOf({
+  key,
+  posts,
+  scores,
+  viewer,
+}: {
+  readonly key: PlaceKey;
+  readonly posts: readonly CheckInRecord[];
+  readonly scores: ReadonlyMap<MemberId, Stars>;
+  readonly viewer: MemberId;
+}): PlaceDetail {
+  return { ...summaryOf({ key, posts, scores }), myStars: scores.get(viewer), posts };
 }
