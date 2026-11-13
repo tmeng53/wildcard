@@ -62,6 +62,8 @@ describe('the coach settings', () => {
       coaching: false,
       model: 'openai/gpt-6-luna',
       reasoning: 'low',
+      dreamModel: 'openai/gpt-6-luna',
+      dreamReasoning: 'high',
     });
     expect(settings.rules).toContain('不提谁没打卡');
   });
@@ -110,6 +112,8 @@ describe('the coach settings', () => {
     expect(CoachSettingsChange.safeParse({ model: 'openai/gpt-6-luna' }).success).toBe(true);
     expect(CoachSettingsChange.safeParse({ reasoning: 'medium' }).success).toBe(true);
     expect(CoachSettingsChange.safeParse({ reasoning: 'max' }).success).toBe(false);
+    expect(CoachSettingsChange.safeParse({ dreamReasoning: 'medium' }).success).toBe(true);
+    expect(CoachSettingsChange.safeParse({ dreamModel: 'anthropic/claude' }).success).toBe(false);
   });
 });
 

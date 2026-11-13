@@ -160,6 +160,21 @@ export function sliceWhole(text: string, end: number): string {
 }
 
 /**
+ * Whether a line holds a term: the term itself, or, for Chinese written without spaces, at least
+ * half of its two-character pieces (「跑步计划」 finds 「计划下周去跑步」), since the model's
+ * query rarely matches the file's wording character for character.
+ */
+function holds(line: string, term: string): boolean {
+  if (line.includes(term)) return true;
+  if (!/^\p{Script=Han}{3,}$/u.test(term)) return false;
+  // Han characters only, so code points are whole characters here.
+  const chars = Array.from(term);
+  const pairs = chars.slice(1).map((char, index) => `${chars[index] ?? ''}${char}`);
+  const found = pairs.filter((pair) => line.includes(pair)).length;
+  return found * 2 >= pairs.length;
+}
+
+/**
  * The lines of the coach's files that match what it looks for, in each file's order (the night
  * keeps what matters most at the top): every line of the files asked for, or only those holding
  * any of the query's words. Each file is named by the path the model sees.
@@ -183,7 +198,7 @@ export function recallLines(
       .map((line) => line.trim())
       .filter((line) => line !== '' && !line.startsWith('#'))
       .filter(
-        (line) => terms.length === 0 || terms.some((term) => line.toLowerCase().includes(term)),
+        (line) => terms.length === 0 || terms.some((term) => holds(line.toLowerCase(), term)),
       );
     found.push(...lines.map((line) => `【${shown}】${line}`));
   }

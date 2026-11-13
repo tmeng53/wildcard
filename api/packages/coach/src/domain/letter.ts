@@ -4,8 +4,9 @@ import { limitWords } from './line-limits.js';
 
 // The letter a coach leaves when its squad changes coach (换教练): the outgoing coach writes it
 // once, in its own voice, to the squad and the next coach, saying goodbye and handing the squad
-// over (Tracy, 2026-11-09), and the squad's members read it. It is never a briefing between
-// coaches: the new coach keeps reading the squad's memory files, never the letter.
+// over (Tracy, 2026-11-09), and the squad's members read it. The new coach is told it too, with
+// whom it took over from, so it can answer when asked where the last coach went (Tracy,
+// 2026-11-13); what it knows of the squad still comes from the memory files.
 
 /** A change of coach the outgoing coach writes for: the hire that made it and both coaches. */
 export interface Handover {
