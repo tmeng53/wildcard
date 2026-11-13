@@ -9,8 +9,9 @@ import SwiftUI
 /// The workout Health just synced, at a widget's foot, as 今天's Health card says it: the heart,
 /// 「跑步 32 分钟 · 5.2 公里」 and 打卡, which opens the 训练 page started from it. Widgets can't draw Liquid
 /// Glass, so it is the card's shape on the subtle fill with a hairline; the home screen's tinted
-/// and clear styles turn it to glass themselves. The distance goes first, then the minutes, when
-/// the line is too long for the widget. Once posted it stays, its button 已打卡.
+/// and clear styles turn it to glass themselves. The distance goes first, then a long name gives
+/// way to its short one (Baseball and softball, Baseball), then the minutes, when the line is too
+/// long for the widget; the button never does. Once posted it stays, its button 已打卡.
 public struct WorkoutCapsule<Post: View>: View {
     /// The small widget's line, or the medium one's larger, across its whole width.
     public enum Size: Sendable {
@@ -37,7 +38,10 @@ public struct WorkoutCapsule<Post: View>: View {
             ViewThatFits(in: .horizontal) {
                 line(minutes: workout.minutes, summary: workout.workout.summary)
                 line(minutes: workout.minutes, summary: WorkoutSummary())
-                line(minutes: nil, summary: WorkoutSummary(), fixed: false)
+                // A long name (Baseball and softball) gives way to its short one, then its minutes,
+                // and a name with no short one that still doesn't fit ends in "…".
+                line(minutes: workout.minutes, summary: WorkoutSummary(), compact: true)
+                line(minutes: nil, summary: WorkoutSummary(), compact: true, fixed: false)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
@@ -54,11 +58,14 @@ public struct WorkoutCapsule<Post: View>: View {
 
     /// A line `ViewThatFits` measures at its full width; the last, the sport alone, may still
     /// shorten, so it never pushes the button out of the capsule.
-    private func line(minutes: WorkoutMinutes?, summary: WorkoutSummary, fixed: Bool = true) -> some View {
-        WorkoutSummaryLine(activity: workout.activity, minutes: minutes, summary: summary)
+    private func line(
+        minutes: WorkoutMinutes?, summary: WorkoutSummary, compact: Bool = false, fixed: Bool = true
+    ) -> some View {
+        WorkoutSummaryLine(activity: workout.activity, minutes: minutes, summary: summary, compact: compact)
             .typeStyle(size == .medium ? TypeRamp.calloutEmphasis : TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
+            .truncationMode(.tail)
             .fixedSize(horizontal: fixed, vertical: false)
     }
 }
