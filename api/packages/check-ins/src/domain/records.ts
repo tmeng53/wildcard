@@ -1,3 +1,5 @@
+import { wallClockAt } from '@wildcard/time-zones';
+
 import type { LocalDay } from './check-in.js';
 import type { SportKey } from './sports.js';
 import { addDays } from './weekly-plan.js';
@@ -84,17 +86,10 @@ function weekdayOf(day: LocalDay): number {
  */
 function startHour(training: RecordTraining, timeZone: string): number | undefined {
   if (training.startTime !== undefined) return Number(training.startTime.slice(0, 2));
-  if (training.workoutStartedAt !== undefined) return hourAt(training.workoutStartedAt, timeZone);
+  if (training.workoutStartedAt !== undefined)
+    return wallClockAt(training.workoutStartedAt, timeZone).hour;
   if (training.day !== training.postedDay) return undefined;
-  return hourAt(training.madeAt, timeZone);
-}
-
-/** The hour, 0 to 23, on the wall clock of `timeZone` at `moment`. */
-export function hourAt(moment: Date, timeZone: string): number {
-  const hour = new Intl.DateTimeFormat('en-US', { timeZone, hour: '2-digit', hourCycle: 'h23' })
-    .formatToParts(moment)
-    .find((part) => part.type === 'hour')?.value;
-  return Number(hour ?? 0) % 24;
+  return wallClockAt(training.madeAt, timeZone).hour;
 }
 
 /** Rest days in a row a run outlasts: a whole week without one breaks it, whatever the plan says. */

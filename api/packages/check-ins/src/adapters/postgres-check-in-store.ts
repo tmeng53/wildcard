@@ -508,7 +508,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
   };
 }
 
-/** Only what reached `squad`, when asked for a squad's view: a 仅自己可见 post never counts. */
+/** Only what was sent to `squad`, when asked for a squad's view, posted to 动态 or not. */
 const sharedTo = (squad: SquadId | undefined) =>
   squad === undefined
     ? sql<boolean>`true`

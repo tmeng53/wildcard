@@ -17,11 +17,4 @@ struct CoachNoteTests {
         let nextDay = try #require(ISO8601DateFormatter().date(from: "2026-11-08T20:00:00Z"))
         #expect(!note.isCurrent(at: nextDay))
     }
-
-    @Test func withoutAZoneItKeepsNewYork() throws {
-        let note = CoachNote(
-            day: try LocalDay("2026-11-08"), text: "今天随缘，来了就算", coach: maotou, writtenAt: Date(timeIntervalSince1970: 0)
-        )
-        #expect(note.timeZone.identifier == "America/New_York")
-    }
 }

@@ -210,8 +210,8 @@ export function createCheckIns(deps: {
   readonly photos: PhotoFiles;
   /** Which sports a 训练 may name. */
   readonly sports: SportList;
-  /** Whether a squad's place belongs to a post's squads; without it, none does. */
-  readonly squadPlaceOf?: SquadPlaceOf;
+  /** Whether a squad's place belongs to a post's squads. */
+  readonly squadPlaceOf: SquadPlaceOf;
   readonly plans: WeeklyPlanStore;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;

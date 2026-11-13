@@ -18,8 +18,8 @@ export interface CurrentStreaks {
 const FIRST_WEEKS = 2;
 
 /**
- * A member's streaks still going on their own clock. With `squad`, only what they shared to it
- * counts, as a squadmate sees it: a 仅自己可见 post never shows on another's screen.
+ * A member's streaks still going on their own clock. With `squad`, only what they sent to it
+ * counts, as a squadmate sees it, whether or not it was posted to 动态.
  */
 export async function currentStreaks(
   deps: {
