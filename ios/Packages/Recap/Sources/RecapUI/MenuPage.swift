@@ -40,6 +40,7 @@ struct MenuPage: View {
                         )
                         .opacity(page.ramp(0.15 + Double(index) * 0.09, 0.4 + Double(index) * 0.09))
                         .offset(y: 18 * (1 - page.pop(0.15 + Double(index) * 0.09, 0.71 + Double(index) * 0.09)))
+                        .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("recap.menu.\(index)")
                     }
                 }

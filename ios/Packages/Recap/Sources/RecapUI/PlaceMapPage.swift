@@ -88,10 +88,10 @@ struct PlaceMapPage: View {
                 Annotation(pin.name, coordinate: pin.coordinate, anchor: .bottom) {
                     FaintPin(head: heads[pin.member])
                 }
+                .annotationTitles(.hidden)
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
-        .annotationTitles(.hidden)
         .allowsHitTesting(false)
         .frame(height: height)
         .scaleEffect(1 + (MapPageLayout.zoom - 1) * clear)

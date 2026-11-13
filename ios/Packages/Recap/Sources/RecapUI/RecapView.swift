@@ -27,6 +27,10 @@ public struct RecapView: View {
     @State private var picture: UIImage?
     @State private var dragDown = 0.0
     @State private var touchedAt: Date?
+    /// Where the touch under way began, to tell a new touch from one a page's own gesture took.
+    @State private var touchStart: CGPoint?
+    /// When the reader last played with the page (turned a card, dragged the map).
+    @State private var stayedAt: Date?
     @State private var reveal: Reveal?
     /// 地点页s pushed over the story from its places; the story waits while one is open.
     @State private var places: [Place] = []
@@ -111,17 +115,22 @@ public struct RecapView: View {
     private var touch: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { drag in
-                if touchedAt == nil {
+                if touchedAt == nil || touchStart != drag.startLocation {
                     touchedAt = drag.time
+                    touchStart = drag.startLocation
                     model.hold(true)
                 }
-                dragDown = drag.translation.height
+                dragDown = touchStayed ? 0 : drag.translation.height
             }
             .onEnded { drag in
                 let held = drag.time.timeIntervalSince(touchedAt ?? drag.time)
+                let stayed = touchStayed
                 touchedAt = nil
-                model.hold(false)
+                touchStart = nil
                 withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { dragDown = 0 }
+                // The page took this touch (a card turned, the map dragged): it stays up.
+                guard !stayed else { return }
+                model.hold(false)
                 if drag.translation.height > Self.closeDistance {
                     model.dismiss()
                 } else if held < Self.tapLength, abs(drag.translation.width) < Space.s,
@@ -130,6 +139,12 @@ public struct RecapView: View {
                     if drag.location.x < Self.backZone { model.previous() } else { model.next() }
                 }
             }
+    }
+
+    /// Whether the reader played with the page during the touch under way.
+    private var touchStayed: Bool {
+        guard let stayedAt, let touchedAt else { return false }
+        return stayedAt >= touchedAt
     }
 
     private func chrome(segments: [Double]) -> some View {
@@ -201,7 +216,10 @@ public struct RecapView: View {
 
     /// The reader played with the page (turned a card, fanned the heads, dragged the map): it
     /// stays up until their next tap moves on.
-    private func stay() { model.hold(true) }
+    private func stay() {
+        stayedAt = .now
+        model.hold(true)
+    }
 
     /// The last page, with 冠军专属's sticker for whoever picks next week's scene.
     @ViewBuilder
