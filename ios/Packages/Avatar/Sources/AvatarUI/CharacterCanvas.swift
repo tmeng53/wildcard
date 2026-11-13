@@ -188,12 +188,6 @@ extension Path {
     }
 }
 
-extension Point {
-    init(_ point: CGPoint) {
-        self.init(x: point.x, y: point.y)
-    }
-}
-
 extension CGPoint {
     init(_ point: Point) {
         self.init(x: point.x, y: point.y)
