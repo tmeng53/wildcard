@@ -6,6 +6,7 @@ import DesignSystemUI
 import FeedUI
 import HomeWidgetDomain
 import LocationDomain
+import MeUI
 import OnboardingUI
 import SwiftUI
 import WidgetKit
@@ -61,7 +62,9 @@ struct AppRoot: View {
                     myPosts: app.myPosts, notices: app.notices, coachCards: app.coachCards,
                     squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
-                    previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
+                    admin: AdminTools(
+                        previewSignUp: app.isAdmin ? { signUpPreview = SignUpPreview.model() } : nil,
+                        demoAccounts: app.demoAccounts),
                     location: AppModel.location, pushesInFront: pushesInFront,
                     sceneMoved: { Task { await app.refreshScene() } },
                     leftSquad: { Task { await app.leftSquad() } }

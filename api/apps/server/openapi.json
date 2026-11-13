@@ -1216,24 +1216,7 @@
                   "description": "Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off."
                 },
                 "character": {
-                  "type": "object",
-                  "properties": {
-                    "nickname": {
-                      "type": "string",
-                      "maxLength": 1000,
-                      "description": "What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.",
-                      "x-max-characters": 12
-                    },
-                    "look": {
-                      "$ref": "#/components/schemas/Look"
-                    }
-                  },
-                  "required": [
-                    "nickname",
-                    "look"
-                  ],
-                  "additionalProperties": false,
-                  "description": "The account’s character, once it has saved a profile."
+                  "$ref": "#/components/schemas/Character"
                 }
               },
               "required": [

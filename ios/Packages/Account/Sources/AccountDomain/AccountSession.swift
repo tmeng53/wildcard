@@ -17,6 +17,8 @@ public enum AccountState: Hashable, Sendable {
 public actor AccountSession {
     private let provider: any AuthProvider
     private let store: any SessionStore
+    /// Where the session an admin switched away from waits while they are on a demo account.
+    private let kept: (any SessionStore)?
     private let now: @Sendable () -> Date
     private let renewalMargin: TimeInterval
 
@@ -28,14 +30,18 @@ public actor AccountSession {
     private var observers: [Int: AsyncStream<AccountState>.Continuation] = [:]
     private var nextObserver = 0
 
-    /// - Parameter renewalMargin: how long before it expires an access token is renewed, so a
-    ///   request sent with it doesn't arrive just after.
+    /// - Parameters:
+    ///   - kept: where the session an admin switches away from waits while they are on one of
+    ///     their demo accounts. Without it, switching to one throws `storeFailed`.
+    ///   - renewalMargin: how long before it expires an access token is renewed, so a request
+    ///     sent with it doesn't arrive just after.
     public init(
-        provider: any AuthProvider, store: any SessionStore, now: @escaping @Sendable () -> Date,
-        renewalMargin: TimeInterval = 60
+        provider: any AuthProvider, store: any SessionStore, kept: (any SessionStore)? = nil,
+        now: @escaping @Sendable () -> Date, renewalMargin: TimeInterval = 60
     ) {
         self.provider = provider
         self.store = store
+        self.kept = kept
         self.now = now
         self.renewalMargin = renewalMargin
     }
@@ -97,6 +103,51 @@ public actor AccountSession {
         return new.member
     }
 
+    /// Switches an admin to one of their demo accounts with the credential our API handed off.
+    /// The session switched away from is kept the first time, so `returnFromDemo()` brings the
+    /// admin's own account back without signing in again; switching on from one demo account to
+    /// another ends the one left. A failed switch stays on the account it started from.
+    @discardableResult
+    public func switchToDemo(with credential: Credential) async throws(AccountError) -> MemberID {
+        guard let kept else { throw .storeFailed }
+        try await ensureRestored()
+        guard let current = session else { throw .signedOut }
+        let onDemo = try await kept.load() != nil
+        if !onDemo { try await kept.save(current) }
+        let member: MemberID
+        do {
+            member = try await signIn(with: credential)
+        } catch {
+            if !onDemo, session == current { try? await kept.clear() }
+            throw error
+        }
+        if onDemo { try? await provider.signOut(current) }
+        return member
+    }
+
+    /// Whether the admin's own session is kept, so they are on a demo account and can return.
+    public func isOnDemo() async -> Bool {
+        guard let kept, let stored = try? await kept.load() else { return false }
+        return stored != nil
+    }
+
+    /// Back on the admin's own account from a demo account, with the session kept when they
+    /// switched; the demo account's session ends. Throws `signedOut` when none is kept.
+    @discardableResult
+    public func returnFromDemo() async throws(AccountError) -> MemberID {
+        guard let kept, let own = try await kept.load() else { throw .signedOut }
+        try await ensureRestored()
+        let left = session
+        session = own
+        restored = true
+        renewal = nil
+        publish()
+        try await persist()
+        try? await kept.clear()
+        if let left, left != own { try? await provider.signOut(left) }
+        return own.member
+    }
+
     /// A current access token for our API. Pass `rejected` with the token the API just refused
     /// (it can refuse one before its expiry), and it is renewed unless it was already replaced.
     /// Pass `member` for work kept for one member, such as their outbox: it then throws
@@ -121,6 +172,12 @@ public actor AccountSession {
     /// removed (which then throws `storeFailed`), so its refresh token stops working either way.
     public func signOut() async throws(AccountError) {
         try await ensureRestored()
+        // Signing out of a demo account signs the admin's kept session out too: nothing of theirs
+        // stays on a phone that shows signed out.
+        if let kept, let own = try? await kept.load() {
+            try? await kept.clear()
+            try? await provider.signOut(own)
+        }
         guard let current = session else { return }
         try await end(current)
     }

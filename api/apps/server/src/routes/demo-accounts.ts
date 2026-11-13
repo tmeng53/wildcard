@@ -24,10 +24,9 @@ export const DemoAccounts = z
               'Whether this is the admin’s own account, first in the list. The app switches back ' +
               'to it from the session it kept, never through a hand-off.',
           }),
-          // Left out rather than null: the Swift generator can't read a nullable reference.
-          character: CharacterBody.optional().meta({
-            description: 'The account’s character, once it has saved a profile.',
-          }),
+          // The account's character, once it has saved a profile. Left out rather than null: the
+          // Swift generator can't read a nullable reference.
+          character: CharacterBody.optional(),
         }),
       )
       .meta({ description: 'The admin’s own account, then their demo accounts, oldest first.' }),

@@ -68,6 +68,7 @@ public struct WildcardAPI: Sendable {
         return Member(
             id: MemberID(id), profile: try answer.profile.map(Profile.init),
             joinedAt: answer.profile.map { Timestamp($0.joinedAt) }, isAdmin: answer.isAdmin,
+            isDemo: answer.isDemo,
             birthday: try answer.profile?.birthday.map { text throws(APIError) in
                 try read { () throws(ContractsError) in Birthday(sent: try LocalDay(text)) }
             })

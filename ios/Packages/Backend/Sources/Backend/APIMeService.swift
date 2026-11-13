@@ -211,7 +211,7 @@ public struct APISquadmateCards: SquadmateCards {
 }
 
 /// Our API's failures as 我's.
-private func meCall<T>(_ call: () async throws(APIError) -> T) async throws(MeError) -> T {
+func meCall<T>(_ call: () async throws(APIError) -> T) async throws(MeError) -> T {
     do {
         return try await call()
     } catch .account(.signedOut), .account(.credentialRejected) {

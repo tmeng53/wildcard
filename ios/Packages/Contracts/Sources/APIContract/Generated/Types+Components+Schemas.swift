@@ -2775,47 +2775,18 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/owner`.
                 public var owner: Swift.Bool
-                /// The account’s character, once it has saved a profile.
-                ///
                 /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character`.
-                public struct CharacterPayload: Codable, Hashable, Sendable {
-                    /// What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
-                    ///
-                    /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character/nickname`.
-                    public var nickname: Swift.String
-                    /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character/look`.
-                    public var look: Components.Schemas.Look
-                    /// Creates a new `CharacterPayload`.
-                    ///
-                    /// - Parameters:
-                    ///   - nickname: What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
-                    ///   - look:
-                    public init(
-                        nickname: Swift.String,
-                        look: Components.Schemas.Look
-                    ) {
-                        self.nickname = nickname
-                        self.look = look
-                    }
-                    public enum CodingKeys: String, CodingKey {
-                        case nickname
-                        case look
-                    }
-                }
-                /// The account’s character, once it has saved a profile.
-                ///
-                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character`.
-                public var character: Components.Schemas.DemoAccounts.AccountsPayloadPayload.CharacterPayload?
+                public var character: Components.Schemas.Character?
                 /// Creates a new `AccountsPayloadPayload`.
                 ///
                 /// - Parameters:
                 ///   - memberId: The account’s member id.
                 ///   - owner: Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off.
-                ///   - character: The account’s character, once it has saved a profile.
+                ///   - character:
                 public init(
                     memberId: Swift.String,
                     owner: Swift.Bool,
-                    character: Components.Schemas.DemoAccounts.AccountsPayloadPayload.CharacterPayload? = nil
+                    character: Components.Schemas.Character? = nil
                 ) {
                     self.memberId = memberId
                     self.owner = owner
