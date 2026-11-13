@@ -57,8 +57,7 @@ const NAMES_KEY = {
  * their phone at once: the trigger the squad runs on, since a teammate training is what gets the
  * next one out. Only a 训练 posted to the squad's 动态 for the day it was posted on (a 补打卡 for an
  * earlier day is no news) and made within the hour (one a phone kept offline and sent up later
- * isn't 「刚练完」), never to its author or a squadmate it names (told by the 一起练 push), and only to those who left 通知 on (the
- * `dailyProgress` switch). The first few a member gets in 24 hours ring (the settings'
+ * isn't 「刚练完」), never to its author or a squadmate it names (told by the 一起练 push), and only to those who left its own switch on (`teammate`, apart from 通知's `dailyProgress`). The first few a member gets in 24 hours ring (the settings'
  * `dailyRings`); the rest arrive silently, so a busy squad never becomes noise. Its long-press
  * view is the 6pm push's: the squad's week and today's posts, to cheer in place. It isn't kept
  * in 通知: the post is in 动态.
@@ -120,7 +119,7 @@ export async function notifyTeammates(
       let claimed = false;
       try {
         const to = PushMember.parse(member);
-        if (!(await deps.push.settingsOf(to)).dailyProgress) return;
+        if (!(await deps.push.settingsOf(to)).teammate) return;
         const ring = await deps.push.claimTeammate({
           checkIn,
           member: to,
