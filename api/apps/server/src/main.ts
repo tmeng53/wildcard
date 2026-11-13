@@ -626,12 +626,15 @@ const coachWakes =
           const days = await weather.dayFor({ members: zoned, day });
           const zones = new Map(zoned.map(({ member, timeZone }) => [member, timeZone]));
           return new Map(
-            [...days].map(([member, { today, yesterday }]) => [
+            [...days].map(([member, { today, yesterday, city }]) => [
               member,
-              weatherWords(today, {
-                ...(yesterday === undefined ? {} : { yesterday }),
-                timeZone: zones.get(member) ?? NEW_YORK,
-              }),
+              {
+                words: weatherWords(today, {
+                  ...(yesterday === undefined ? {} : { yesterday }),
+                  timeZone: zones.get(member) ?? NEW_YORK,
+                }),
+                ...(city === undefined ? {} : { city }),
+              },
             ]),
           );
         },

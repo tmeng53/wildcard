@@ -88,14 +88,23 @@ export interface CoachMeme {
 export type CoachMemes = () => Promise<readonly CoachMeme[]>;
 
 /**
- * Today's weather where each of these members is, in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`), for
- * those whose place is known. The model reads only the weather, never where they are.
+ * A member's weather as the coach reads it: in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`),
+ * and the city their phone named, when it could.
+ */
+export interface WeatherWords {
+  readonly words: string;
+  readonly city?: string;
+}
+
+/**
+ * Today's weather where each of these members is, for those whose place is known. The model
+ * reads the weather and the city, never the place itself.
  */
 export type CoachWeather = (input: {
   readonly members: readonly string[];
   /** The day of the wake, `YYYY-MM-DD`. */
   readonly day: string;
-}) => Promise<ReadonlyMap<string, string>>;
+}) => Promise<ReadonlyMap<string, WeatherWords>>;
 
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =

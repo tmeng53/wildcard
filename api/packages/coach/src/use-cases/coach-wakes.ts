@@ -41,6 +41,7 @@ import type {
   CoachMemberFacts,
   CoachMemes,
   CoachWeather,
+  WeatherWords,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -894,8 +895,8 @@ async function briefsOf(
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
     members.length === 0
-      ? new Map<string, string>()
-      : await deps.weatherOf({ members, day }).catch(() => new Map<string, string>());
+      ? new Map<string, WeatherWords>()
+      : await deps.weatherOf({ members, day }).catch(() => new Map<string, WeatherWords>());
   return members.flatMap((member): NoteBrief[] => {
     const name = roster.get(member);
     if (name === undefined) return [];

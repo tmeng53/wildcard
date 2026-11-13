@@ -30,6 +30,7 @@ export {
   type Entry,
 } from './domain/check-in.js';
 export { PhotoPath, PhotoRef, PhotoSize, Photos, isOwnPhoto } from './domain/photos.js';
+export { MealRating, calorieValue } from './domain/meal-rating.js';
 export { Place } from '@wildcard/place-ids';
 export { Workout, WorkoutView, workoutView } from './domain/workout.js';
 export { createPostgresWeeklyPlanStore } from './adapters/postgres-weekly-plan-store.js';

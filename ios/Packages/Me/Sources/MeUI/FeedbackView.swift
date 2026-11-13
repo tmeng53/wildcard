@@ -128,12 +128,8 @@ struct FeedbackView: View {
     private var ratingCard: some View {
         HStack(spacing: Space.s) {
             VStack(alignment: .leading, spacing: Space.xs - 2) {
-                HStack(spacing: Self.starGap) {
-                    ForEach(0..<5, id: \.self) { _ in
-                        Image(systemName: "star.fill").font(.system(size: Sizing.smallIcon))
-                    }
-                }
-                .accessibilityHidden(true)
+                StarRating(rating: StarRating.count, size: Sizing.smallIcon, spacing: Self.starGap)
+                    .accessibilityHidden(true)
                 Text(copy: "喜欢外卡吗？", bundle: .module)
                     .typeStyle(TypeRamp.headline)
             }
