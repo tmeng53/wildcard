@@ -380,7 +380,8 @@ export interface CoachActivityStore {
   /**
    * The member's answer to their note's challenge (接受挑战 or 算了); `noNote` when the note
    * isn't theirs in the squad or hasn't reached them yet, `noChallenge` when it set none. The
-   * first answer stands.
+   * first answer stands, `dayOver` when none was given and its day is before `today` (the
+   * squad's day).
    */
   answerChallenge(input: {
     readonly squad: SquadId;
@@ -389,7 +390,8 @@ export interface CoachActivityStore {
     readonly answer: ChallengeAnswer;
     /** Why they let it go, with `declined` only. */
     readonly reason?: string;
-  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge'>;
+    readonly today: string;
+  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge' | 'dayOver'>;
   /**
    * The member's challenge on their note of `day` (the squad's day), once delivered; the same
    * as the coach's `challengeOf`.

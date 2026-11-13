@@ -8299,6 +8299,10 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
             public var challenge: Components.Schemas.CoachPageCard.ChallengePayload?
+            /// `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/expired`.
+            public var expired: Swift.Bool?
             /// A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
@@ -8358,6 +8362,7 @@ extension Components {
             ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
             ///   - text: What the coach said, on a `board` or `note`.
             ///   - challenge:
+            ///   - expired: `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
             ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
             public init(
                 kind: Swift.String,
@@ -8367,6 +8372,7 @@ extension Components {
                 day: Swift.String? = nil,
                 text: Swift.String? = nil,
                 challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
+                expired: Swift.Bool? = nil,
                 gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
             ) {
                 self.kind = kind
@@ -8376,6 +8382,7 @@ extension Components {
                 self.day = day
                 self.text = text
                 self.challenge = challenge
+                self.expired = expired
                 self.gift = gift
             }
             public enum CodingKeys: String, CodingKey {
@@ -8386,6 +8393,7 @@ extension Components {
                 case day
                 case text
                 case challenge
+                case expired
                 case gift
             }
         }
