@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { Place, PlaceKey } from '@wildcard/place-ids';
+
 import { TopCheckIn, type MemberId, type SquadId } from './awards.js';
 import type { WeekStart } from './schedule.js';
 
@@ -85,6 +87,36 @@ const BestDisclaimer = z.strictObject({
   reactions: z.int().min(1),
 });
 
+/** A rated meal of theirs on 小队菜单, and its place on it (0 first). */
+const MenuDish = z.strictObject({
+  checkIn: z.uuid(),
+  day: z.iso.date(),
+  rank: z.int().min(0),
+  rating: z.strictObject({ healthy: z.int().min(1).max(5), tasty: z.int().min(1).max(5) }),
+  caption: z.string().optional(),
+  /** Its first photo's path. */
+  photo: z.string().optional(),
+  place: Place.optional(),
+});
+export type MenuDish = z.infer<typeof MenuDish>;
+
+/**
+ * A 训练 of theirs tagged with a place, for 小队最爱去 and 新发现: the place as that post tagged
+ * it, the place's position among the week's places (0 the most trained at), and whether nobody
+ * had posted a 训练 there to the squad before the week.
+ */
+const PlaceVisit = z.strictObject({
+  checkIn: z.uuid(),
+  day: z.iso.date(),
+  /** When it was posted: of the visits left, the latest posted gives the place's tag. */
+  postedAt: z.iso.datetime(),
+  key: PlaceKey,
+  place: Place,
+  rank: z.int().min(0),
+  firstTime: z.boolean(),
+});
+export type PlaceVisit = z.infer<typeof PlaceVisit>;
+
 /**
  * Stored JSON (`week_story_posts.post`): one of the member's posts on the 战报's pages, kept
  * apart from their part so that deleting the post takes its words and photos with it.
@@ -96,6 +128,10 @@ export const StoredStoryPost = z.discriminatedUnion('version', [
     hottest: TopCheckIn.optional(),
     /** The squad's best 请假条, theirs. */
     bestDisclaimer: BestDisclaimer.optional(),
+    /** A meal of theirs on 小队菜单. */
+    menuDish: MenuDish.optional(),
+    /** A 训练 of theirs at one of the week's places. */
+    placeVisit: PlaceVisit.optional(),
   }),
 ]);
 export type StoredStoryPost = z.infer<typeof StoredStoryPost>;
@@ -106,6 +142,10 @@ export type StoryMember = { readonly member: MemberId } & StoredStoryMember & {
     readonly hottest?: TopCheckIn;
     /** The squad's best 请假条, when it was theirs. */
     readonly bestDisclaimer?: z.infer<typeof BestDisclaimer>;
+    /** Their meals on 小队菜单, still posted. */
+    readonly menu?: readonly MenuDish[];
+    /** Their 训练 at the week's places, still posted. */
+    readonly placeVisits?: readonly PlaceVisit[];
   };
 
 /** A squad's frozen 战报 for a week. */

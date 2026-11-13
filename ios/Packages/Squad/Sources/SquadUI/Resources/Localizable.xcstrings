@@ -1909,22 +1909,6 @@
         }
       }
     },
-    "告诉%@为什么（可选）": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tell %@ why (optional)"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "告訴%@為什麼（可選）"
-          }
-        }
-      }
-    },
     "已完成": {
       "localizations": {
         "en": {
@@ -2113,6 +2097,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "最後一張 · 右滑收起"
+          }
+        }
+      }
+    },
+    "原因（可选）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reason (optional)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原因（選填）"
           }
         }
       }

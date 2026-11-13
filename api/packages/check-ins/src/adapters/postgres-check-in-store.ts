@@ -1,3 +1,4 @@
+import { PlaceKey } from '@wildcard/place-ids';
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely, type Selectable } from 'kysely';
 import { z } from 'zod';
@@ -329,6 +330,31 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .limit(limit)
         .execute();
       return withAudiences(rows);
+    },
+
+    async placesTrainedBefore({ squad, keys, before }) {
+      if (keys.length === 0) return new Set();
+      // The key as `@wildcard/place-ids` makes it: the squad's own place first, else Maps' id.
+      const key = sql<string>`case
+        when check_ins.payload->'place' ? 'squadPlaceId'
+          then 'squad:' || lower(check_ins.payload->'place'->>'squadPlaceId')
+        else 'apple:' || (check_ins.payload->'place'->>'appleId')
+      end`;
+      const rows = await db
+        .selectFrom('check_ins')
+        .innerJoin('check_in_squads', (join) =>
+          join
+            .onRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+            .on('check_in_squads.squad_id', '=', squad),
+        )
+        .select(key.as('key'))
+        .distinct()
+        .where('check_ins.kind', '=', 'trained')
+        .where('check_ins.in_feed', '=', true)
+        .where('check_ins.day', '<', before)
+        .where(key, 'in', keys)
+        .execute();
+      return new Set(rows.map((row) => PlaceKey.parse(row.key)));
     },
 
     async squadsCheckedInto({ from, to, before }) {

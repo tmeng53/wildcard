@@ -1,5 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { Emoji, LocalDay, SquadId, WeekStart } from '@wildcard/check-ins';
+import { Emoji, LocalDay, MealRating, Place, SquadId, WeekStart } from '@wildcard/check-ins';
+import { PlaceKey } from '@wildcard/place-ids';
 import {
   CheckInKind,
   SPEECH_MAX,
@@ -303,6 +304,58 @@ const storyFields = {
         '这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a ' +
         'quiet week isn’t told how short it fell.',
     }),
+  menu: z
+    .array(
+      z
+        .strictObject({
+          checkIn: z.uuid(),
+          author: z.uuid(),
+          day: LocalDay,
+          rating: MealRating,
+          caption: z.string().optional().meta({ description: 'The meal’s line, naming the dish.' }),
+          photo: z
+            .strictObject({ path: z.string(), url: z.url() })
+            .optional()
+            .meta({ description: 'Its first photo, while the meal still has it.' }),
+          place: Place.optional().meta({ description: 'Where it was eaten, when tagged.' }),
+        })
+        .openapi('StoryMenuDish'),
+    )
+    .min(1)
+    .max(3)
+    .optional()
+    .meta({
+      description:
+        '小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) ' +
+        'first, then the better 健康, then the latest. A menu to try, not a ranking. Missing ' +
+        'when none was rated, and for weeks frozen before it.',
+    }),
+  places: z
+    .array(
+      z
+        .strictObject({
+          key: PlaceKey,
+          place: Place.meta({ description: 'The place as its latest 训练 there tagged it.' }),
+          firstTime: z.boolean().meta({
+            description:
+              '新发现: no member of the squad had posted a 训练 there to it before that week.',
+          }),
+          visits: z
+            .array(z.strictObject({ member: z.uuid(), day: LocalDay }))
+            .min(1)
+            .meta({ description: 'Each 训练 posted there, the earliest first.' }),
+        })
+        .openapi('StoryPlace'),
+    )
+    .min(1)
+    .optional()
+    .meta({
+      description:
+        'The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then ' +
+        'the most people, then the one first trained at: the first is 小队最爱去, those with ' +
+        '`firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and ' +
+        'for weeks frozen before it.',
+    }),
 };
 
 export const WeekStoryBody = z
@@ -486,7 +539,10 @@ export function weekStory(
       });
       const hottest = story.mine?.hottest;
       const urls = await deps.photos.createViewUrls(
-        (hottest?.photos ?? []).map((path) => PhotoPath.parse(path)),
+        [
+          ...(hottest?.photos ?? []),
+          ...(story.menu ?? []).flatMap(({ photo }) => (photo === undefined ? [] : [photo])),
+        ].map((path) => PhotoPath.parse(path)),
         PHOTO_VIEW_SECONDS,
       );
       const hottestView = (top: TopCheckIn) => ({
@@ -558,6 +614,34 @@ export function weekStory(
           : { meals: { ...story.meals, eaters } }),
         ...(story.bestDisclaimer === undefined ? {} : { bestDisclaimer: story.bestDisclaimer }),
         ...(story.ending === undefined ? {} : { ending: story.ending }),
+        ...(story.menu === undefined
+          ? {}
+          : {
+              menu: story.menu.map(({ checkIn, author, day, rating, caption, photo, place }) => {
+                const url = photo === undefined ? undefined : urls.get(PhotoPath.parse(photo));
+                return {
+                  checkIn,
+                  author,
+                  day: LocalDay.parse(day),
+                  rating,
+                  ...(caption === undefined ? {} : { caption }),
+                  ...(photo === undefined || url === undefined
+                    ? {}
+                    : { photo: { path: photo, url: url.href } }),
+                  ...(place === undefined ? {} : { place }),
+                };
+              }),
+            }),
+        ...(story.places === undefined
+          ? {}
+          : {
+              places: story.places.map(({ key, place, firstTime, visits }) => ({
+                key: PlaceKey.parse(key),
+                place,
+                firstTime,
+                visits: visits.map(({ member, day }) => ({ member, day: LocalDay.parse(day) })),
+              })),
+            }),
       };
       return c.json(
         story.status === 'ready'
