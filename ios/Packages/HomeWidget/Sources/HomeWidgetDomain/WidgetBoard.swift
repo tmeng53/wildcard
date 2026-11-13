@@ -92,7 +92,8 @@ public struct WidgetBoard: Hashable, Sendable {
         self.coach = coach
         self.coachHasNews = coachHasNews
         self.scene = scene
-        // A challenge only stands for the coach that set it, on its own day.
+        // Today's challenge shows while the squad has a coach (even one hired since it was set,
+        // as the member may still be doing it), only on its own day.
         self.challenge = coach == nil || challenge?.challenge.isExpired == true ? nil : challenge
         weekNumber = home.squadFirstWeek.map { day.weekStart.weekNumber(since: $0) }
         // One Health has no sport of the list for is picked by hand in the app, so the widgets

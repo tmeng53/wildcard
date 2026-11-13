@@ -46,11 +46,6 @@ public struct ScheduleWidget: View {
         .dynamicTypeSize(.large)
     }
 
-    /// The scene the widget wears: the squad's this week, the gym when it couldn't be read.
-    public static func scene(of board: WidgetBoard) -> SceneTheme {
-        board.scene.flatMap { SceneTheme(rawValue: $0.rawValue) } ?? .gym
-    }
-
     private var onScene: Color { Color(role: .fgOnAccent, in: theme) }
 
     // MARK: Small
@@ -81,7 +76,7 @@ public struct ScheduleWidget: View {
         .padding(.top, Metrics.edge)
         .padding(.bottom, Metrics.cardInset)
         .background(alignment: .bottomTrailing) {
-            ScheduleCoach(coach: board.coach, height: Metrics.smallCoach)
+            ScheduleCoach(coach: board.coach, height: stacked ? Metrics.smallCoach : Metrics.shortCoach)
                 .padding(.trailing, Space.xs)
                 .padding(.bottom, Metrics.smallCoachLift)
         }
@@ -309,9 +304,17 @@ public struct ScheduleWidget: View {
         /// The small widget's today, clear of the coach on its right.
         static let smallToday: Double = 96
         static let smallCoach: Double = 104
+        /// The small coach on a shorter widget, clear of 本周 over it.
+        static let shortCoach: Double = 86
         /// The small coach's feet stand behind the card.
         static let smallCoachLift: Double = 18
     }
 }
 
+extension ScheduleWidget {
+    /// The scene the widget wears: the squad's this week, the gym when it couldn't be read.
+    public static func scene(of board: WidgetBoard) -> SceneTheme {
+        board.scene.flatMap { SceneTheme(rawValue: $0.rawValue) } ?? .gym
+    }
+}
 #endif

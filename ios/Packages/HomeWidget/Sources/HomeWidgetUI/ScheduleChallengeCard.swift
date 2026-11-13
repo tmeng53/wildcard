@@ -30,6 +30,7 @@ struct ScheduleChallengeCard: View {
                     .typeStyle(compact ? TypeRamp.tab : TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 cardTitle
                     .typeStyle(compact ? TypeRamp.footnoteEmphasis : TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
@@ -42,7 +43,7 @@ struct ScheduleChallengeCard: View {
         .padding(.leading, compact ? Space.s : Space.s - 2)
         .padding(.trailing, compact ? Space.s : Space.xs + 2)
         .padding(.vertical, compact ? Space.xs : 0)
-        .frame(minHeight: compact ? CardMetrics.smallCard : CardMetrics.mediumCard)
+        .frame(minHeight: compact ? CardMetrics.smallCard : nil)
         .frame(height: compact ? nil : CardMetrics.mediumCard)
         .background(
             Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous)
