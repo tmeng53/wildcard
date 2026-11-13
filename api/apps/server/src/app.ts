@@ -30,6 +30,7 @@ import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } fr
 import { inProcessEvents, type EventHandlers, type PublishEvent } from './events.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import { eventHandlers } from './flows/event-handlers.js';
+import type { TeammatePushDependencies } from './flows/teammate-push.js';
 import type { InteractionSource } from './flows/daily-progress-push.js';
 import type { SuggestGoal } from './flows/squad-goal-suggestion.js';
 import type { Log } from './log.js';
@@ -144,6 +145,8 @@ export interface AppDependencies {
     /** Where the daily push finds what teammates did for a member. */
     readonly interactions: readonly InteractionSource[];
     readonly clock: () => Date;
+    /** Every listed sport's names by its id, which name a 训练's sport in the teammate push. */
+    readonly sportNames: TeammatePushDependencies['sportNames'];
     /** The AI coach's wakes; left out without an OpenAI key, and then the coach never wakes. */
     readonly coach?: CoachWakes;
     /** Keeps a higher squad goal suggested to a captain and its notice together. */
@@ -197,7 +200,11 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
-  const handlers = eventHandlers({ coach: deps.jobs.coach, commentPush: deps });
+  const handlers = eventHandlers({
+    coach: deps.jobs.coach,
+    commentPush: deps,
+    teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
+  });
   const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
   app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));

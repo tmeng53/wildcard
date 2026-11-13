@@ -21,6 +21,7 @@ import MeDomain
 import MeUI
 import NotificationsUI
 import OnboardingUI
+import PlacesDomain
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
@@ -55,6 +56,8 @@ struct WildcardApp: App {
     @State private var feed: FeedModel
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
+    /// Places' squad numbers, counted from the sample squad's 动态.
+    @State private var places: any PlaceSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     /// Where a tapped push goes, kept until the tabs open it.
     @State private var pushDestination: AppDestination?
@@ -124,6 +127,8 @@ struct WildcardApp: App {
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
+        _places = State(
+            initialValue: FeedPlaceSource(feed: feedSource, today: LocalDay(at: LaunchOptions.now(), in: .current)))
     }
 
     /// What every launch does first, before any model or screen is made.
@@ -309,7 +314,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards, selection: $tab,
+                myPosts: myPosts, places: places, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards,
+                selection: $tab,
                 destination: $pushDestination, location: Self.sampleLocation
             )
             .onAppear {

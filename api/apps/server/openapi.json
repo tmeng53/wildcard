@@ -3354,6 +3354,11 @@
               "production"
             ],
             "description": "Which APNs servers the token is for: `sandbox` in a build run from Xcode, `production` in TestFlight and the App Store."
+          },
+          "pushGeneration": {
+            "type": "integer",
+            "description": "Which pushes this build has words for: 1 is every push from before generations, and what a build that leaves it out knows; 2 adds the teammate push. A push goes only to phones whose build knows it.",
+            "example": 2
           }
         },
         "required": [

@@ -2465,22 +2465,6 @@
         }
       }
     },
-    "在地图中打开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open in Maps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在地圖中開啟"
-          }
-        }
-      }
-    },
     "这顿怎么样": {
       "localizations": {
         "en": {

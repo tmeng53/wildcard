@@ -21,6 +21,16 @@ import Testing
     #expect(opened == .open(.post(CheckInID(try #require(UUID(uuidString: checkIn))))))
 }
 
+@Test func theTeammatePushOpensThePostItTellsOf() throws {
+    let checkIn = "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59"
+
+    let opened = OpenedNotification(
+        category: "teammateCheckIn", event: ["kind": "teammateCheckIn", "checkIn": checkIn, "squad": "s"])
+
+    #expect(opened == .open(.post(CheckInID(try #require(UUID(uuidString: checkIn))))))
+    #expect(OpenedNotification(category: "teammateCheckIn", event: [:]) == .other)
+}
+
 @Test func theDailyPushOpensTodayWhereItsPatsPlayAgain() {
     #expect(OpenedNotification(category: "dailyProgress", event: [:]) == .open(.pats))
     // A morning note's push opens 今天 on the newest waiting note.

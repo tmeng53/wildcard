@@ -100,6 +100,9 @@ import {
   createDailyPushSettings,
   createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
+  createTeammatePushSettings,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
   createPush,
@@ -165,6 +168,7 @@ import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
+import { teammatePushTools } from './admin-mcp/tools/teammate-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { coachNamesIn } from './flows/coach-names.js';
 import { coachMemberFacts, coachSquadWeek, coachStreaks } from './flows/coach.js';
@@ -300,6 +304,8 @@ const push = createPush({
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
   dailySettings: createPostgresDailyPushSettings(db),
+  teammate: createPostgresTeammatePushStore(db),
+  teammateSettings: createPostgresTeammatePushSettings(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
@@ -896,6 +902,12 @@ const app = createApp({
     // Each kind of interaction the daily push counts comes from one of these.
     interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
+    sportNames: async () =>
+      new Map(
+        (await sports.catalog()).categories.flatMap(({ sports: listed }) =>
+          listed.map(({ id, names }) => [id, names] as const),
+        ),
+      ),
     ...(coachWakes === undefined ? {} : { coach: coachWakes }),
     // The suggestion's log row and the captain's notice commit together, or neither does.
     suggestGoal: suggestGoalIn(db, {
@@ -946,6 +958,11 @@ const app = createApp({
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
+      }),
+      ...teammatePushTools({
+        settings: createTeammatePushSettings({
+          store: createPostgresTeammatePushSettings(scope),
+        }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
