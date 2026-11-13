@@ -2476,7 +2476,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "%lld members"
+            "value": "%lld in the squad"
           }
         },
         "zh-Hans": {

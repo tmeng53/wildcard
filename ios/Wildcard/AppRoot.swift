@@ -56,7 +56,7 @@ struct AppRoot: View {
                         SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad, rejoining: signUp.isRejoining)
                     }
                 }
-                .onChange(of: signUp.request) { _, request in
+                .onChange(of: signUp.request, initial: true) { _, request in
                     guard let request else { return }
                     switch request.status {
                     case .waiting:
