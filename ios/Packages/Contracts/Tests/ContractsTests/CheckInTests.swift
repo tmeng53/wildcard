@@ -108,3 +108,18 @@ func customSportNameHasNoDirectionControls(control: String) {
     #expect(throws: ContractsError.startTime("07:60")) { try StartTime(wire: "07:60") }
     #expect(try StartTime(hour: 6, minute: 59) < StartTime(hour: 7, minute: 0))
 }
+
+@Test func aPlaceKeepsToTheAPIsRules() throws {
+    let place = try Place(name: "  Equinox Flatiron ", category: "fitnessCenter", latitude: 40.74, longitude: -73.99)
+    #expect(place.name == "Equinox Flatiron")
+    #expect(place.category == "fitnessCenter")
+    #expect(try Place(name: "x", category: "fitness_center", latitude: 0, longitude: 0).category == nil)
+    #expect(try Place(name: "x", appleID: "", latitude: 0, longitude: 0).appleID == nil)
+    #expect(throws: ContractsError.placeName(0)) { try Place(name: "   ", latitude: 0, longitude: 0) }
+    #expect(throws: ContractsError.placeName(101)) {
+        try Place(name: String(repeating: "店", count: 101), latitude: 0, longitude: 0)
+    }
+    #expect(throws: ContractsError.placeCoordinate(latitude: 91, longitude: 0)) {
+        try Place(name: "x", latitude: 91, longitude: 0)
+    }
+}

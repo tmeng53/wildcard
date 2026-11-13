@@ -259,6 +259,7 @@ function wakes(
     weatherOf,
     relayFeedback,
     relayingOn,
+    ended,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -276,6 +277,7 @@ function wakes(
     readonly weatherOf?: CoachWeather;
     readonly relayFeedback?: CoachFeedback;
     readonly relayingOn?: (day: string) => Promise<boolean>;
+    readonly ended?: boolean;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -310,6 +312,7 @@ function wakes(
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
     ...(relayFeedback === undefined ? {} : { relayFeedback }),
+    ...(ended === true ? { ended: (squads) => Promise.resolve(new Set(squads)) } : {}),
     ...(relayingOn === undefined ? {} : { relayingOn }),
   });
 }
@@ -322,6 +325,7 @@ const quietPorts = {
   photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
   memberFacts: () => Promise.resolve([]),
   timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  ended: () => Promise.resolve(new Set()),
   memes: () => Promise.resolve([]),
   weatherOf: () => Promise.resolve(new Map()),
   occasions: () => Promise.resolve([]),
@@ -1380,6 +1384,23 @@ describe('the coach', () => {
         { reason: 'dream', state: 'done', last_error: null },
         { reason: 'daily', state: 'done', last_error: null },
       ]);
+    });
+  });
+
+  it('never wakes for a squad that ended, though its coach is still on record', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const run = await wakes(fixture, { agent, ended: true }).run();
+      expect(run).toMatchObject({ coaching: true, squads: 0, queued: 0 });
+      expect(runs).toHaveLength(0);
+      await wakes(fixture, { agent, ended: true, at: new Date(now.getTime() + 86_400_000) }).run();
+      expect(runs).toHaveLength(0);
+      // Nor for a check-in whose event comes in after everyone left.
+      await wakes(fixture, { agent, ended: true }).checkedIn({
+        checkIn: fixture.checkIn,
+        squads: [fixture.squad],
+      });
+      expect(runs).toHaveLength(0);
     });
   });
 

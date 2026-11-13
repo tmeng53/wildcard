@@ -47,6 +47,7 @@ import type {
   CoachSettingsStore,
   CoachStores,
   CoachTimeZones,
+  CoachEndedSquads,
   CoachTransaction,
   CoachUsage,
   SquadWeekSource,
@@ -184,6 +185,8 @@ export interface CoachWakesDependencies {
   readonly memberFacts: CoachMemberFacts;
   /** The clock of each squad's daily wake and of the day it tells the coach. */
   readonly timeZonesAt: CoachTimeZones;
+  /** Squads everyone left, which the coach never wakes for, whoever is hired there. */
+  readonly ended: CoachEndedSquads;
   /** The meme library the coach draws humour from. */
   readonly memes: CoachMemes;
   readonly weatherOf: CoachWeather;
@@ -257,7 +260,9 @@ export function createCoachWakes(deps: CoachWakesDependencies): CoachWakes {
       // the squads that have it until they fire it.
       const hired = await deps.hiring.hired();
       const coaches = new Map((await deps.catalog.list()).map((coach) => [coach.id, coach]));
-      const squads = [...hired.keys()];
+      // A squad that ended keeps its coach on record, but nothing runs for it.
+      const ended = await deps.ended([...hired.keys()]);
+      const squads = [...hired.keys()].filter((squad) => !ended.has(squad));
       let queued = 0;
       const zones = await deps.timeZonesAt(squads, now);
       for (const squad of squads) {
@@ -414,10 +419,18 @@ async function drain(
     readonly now: Date;
   },
 ): Promise<{ readonly done: number; readonly failed: number }> {
+  // However a wake was queued (a check-in, a reply, a late retry), none runs once its squad ended.
+  const ended = await deps.ended(squads);
+  const live = squads.filter((squad) => !ended.has(squad));
+  if (live.length === 0) return { done: 0, failed: 0 };
   let done = 0;
   let failed = 0;
   while (deps.clock().getTime() - now.getTime() < RUN_BUDGET_MS) {
-    const wakes = await deps.stores.wakes.claim({ squads, limit: AT_ONCE, now: deps.clock() });
+    const wakes = await deps.stores.wakes.claim({
+      squads: live,
+      limit: AT_ONCE,
+      now: deps.clock(),
+    });
     if (wakes.length === 0) break;
     const worked = await Promise.all(
       wakes.map(async (wake) => {
