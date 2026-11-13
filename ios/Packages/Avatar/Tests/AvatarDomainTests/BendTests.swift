@@ -22,20 +22,23 @@ private func bend(_ degrees: Double) -> Bend {
     #expect(turned > 0 && turned < 90)
 }
 
-/// The arm's line is one curve through the elbow; bent, it still passes through the elbow
-/// and ends at the turned hand, as one soft arm.
+/// The arm's line is one curve through the elbow; bent, it is cut where it leaves the upper
+/// arm, so its start stays as drawn where the arm meets the body, and the rest curves on to
+/// the turned hand, as one soft arm.
 @Test func aCurveStaysSmoothThroughTheElbow() {
     let arm: [PathElement] = [
         .move(Point(x: 60, y: 40)), .quadCurve(end: Point(x: 60, y: 80), control: Point(x: 60, y: 60)),
     ]
     let bent = bend(90).apply(to: arm)
-    guard case .quadCurve(let end, let control) = bent[1] else {
-        Issue.record("expected a curve")
+    guard bent.count == 3, case .quadCurve(let cut, let start) = bent[1], case .quadCurve(let end, _) = bent[2]
+    else {
+        Issue.record("expected the curve in two pieces, got \(bent)")
         return
     }
+    // The bend starts 0.15 of the arm before the elbow: there the upper arm's piece ends, as drawn.
+    #expect(rounded(cut) == Point(x: 60, y: 54))
+    #expect(rounded(start) == Point(x: 60, y: 47))
     #expect(rounded(end) == Point(x: 40, y: 60))
-    // Through the elbow halfway: 2·elbow − (shoulder + hand) / 2.
-    #expect(rounded(control) == Point(x: 70, y: 70))
     #expect(bend(0).apply(to: arm) == arm)
 }
 

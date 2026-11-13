@@ -274,8 +274,51 @@
     const pt = ([x, y]) => `${n(x)} ${n(y)}`;
     const mix = (points, weights) =>
       [0, 1].map((k) => points.reduce((sum, point, j) => sum + weights[j] * point[k], 0));
+    // A curve's points cut where it leaves the upper arm, so a piece there stays as drawn
+    // (Bend's pieces): refitted whole, a curve from the shoulder would turn at the shoulder too.
+    const edge = middle - 0.15;
+    const split = (points, t) => {
+      let row = points;
+      const [head, tail] = [[], []];
+      while (row.length) {
+        head.push(row[0]);
+        tail.unshift(row[row.length - 1]);
+        row = row.slice(1).map((to, j) => [0, 1].map((k) => row[j][k] + (to[k] - row[j][k]) * t));
+      }
+      return [head, tail];
+    };
+    const side = (points, t) => {
+      const p = split(points, t)[0].at(-1);
+      return along(p[0], p[1]) - edge;
+    };
+    const pieces = (points) => {
+      const cuts = [];
+      for (let step = 0; step < 16; step++) {
+        let [low, high] = [step / 16, (step + 1) / 16];
+        if (side(points, low) < 0 === side(points, high) < 0) continue;
+        for (let k = 0; k < 40; k++) {
+          const half = (low + high) / 2;
+          if (side(points, low) < 0 === side(points, half) < 0) low = half;
+          else high = half;
+        }
+        cuts.push((low + high) / 2);
+      }
+      const out = [];
+      let [rest, done] = [points, 0];
+      for (const cut of cuts) {
+        const [head, tail] = split(rest, (cut - done) / (1 - done));
+        out.push(head);
+        [rest, done] = [tail, cut];
+      }
+      return [...out, rest];
+    };
     const path = (d) =>
       segments(d)
+        .flatMap(([command, from, ...rest]) =>
+          command === 'Q' || command === 'C'
+            ? pieces([from, ...rest]).map(([start, ...points]) => [command, start, ...points])
+            : [[command, from, ...rest]],
+        )
         .map(([command, from, ...rest]) => {
           if (command === 'Z') return 'Z';
           if (command === 'M' || command === 'L') return `${command} ${pt(at(rest[0]))}`;
@@ -304,17 +347,53 @@
       });
   }
 
+  const invert = ([a, b, c, d, e, f]) => {
+    const det = a * d - b * c;
+    return [d / det, -b / det, -c / det, a / det, (c * f - d * e) / det, (b * e - a * f) / det];
+  };
+
+  // A body's art as one black shape: where a shoulder's edge stays off it.
+  const black = (art) =>
+    art
+      .replace(/\s(?:fill-)?opacity="[^"]*"/g, '')
+      .replace(/\sfill="(?!none)[^"]*"/g, ' fill="#000"')
+      .replace(/\sstroke="[^"]*"/g, ' stroke="none"');
+
+  // Each frame's masks get ids of their own, so figures on one page never share one.
+  let masks = 0;
+
+  // An arm's art with its sleeves' edges kept off its body and within its shoulder's reach
+  // (rig.json's `shoulder`), as the app's FigureDrawing does: the edge shows only where the
+  // arm leaves the body, and there it joins the body's outline.
+  function shoulder(art, member, i, matrices) {
+    const part = PARTS[i];
+    if (!part.shoulder || !art.includes('data-edge=""')) return art;
+    const j = INDEX[part.parent];
+    member.black ??= {};
+    member.black[j] ??= black(member.art[j] ?? '');
+    const id = `wc-shoulder-${(masks = (masks + 1) % 1e9)}`;
+    const [px, py] = part.pivot;
+    return (
+      `<mask id="${id}" maskUnits="userSpaceOnUse" x="-500" y="-500" width="1240" height="1320">` +
+      `<circle cx="${px}" cy="${py}" r="${part.shoulder}" fill="#fff"/>` +
+      `<g transform="matrix(${format(multiply(invert(matrices[i]), matrices[j]))})">${member.black[j]}</g>` +
+      `</mask>` +
+      art.replaceAll('data-edge=""', `mask="url(#${id})"`)
+    );
+  }
+
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
     const posed = leveled(poses, member.level);
     const { matrices, opacities } = layout(posed);
     let svg = '';
     PARTS.forEach((part, i) => {
-      const art =
+      const drawn =
         part.elbow && posed[i].bend && member.art[i]
           ? bent(member.art[i], part, posed[i].bend)
           : member.art[i];
-      if (!art || !(opacities[i] > 0)) return;
+      if (!drawn || !(opacities[i] > 0)) return;
+      const art = shoulder(drawn, member, i, matrices);
       svg += `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
     });
     return svg;

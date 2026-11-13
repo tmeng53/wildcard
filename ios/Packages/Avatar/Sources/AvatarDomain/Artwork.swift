@@ -59,3 +59,52 @@ public struct Artwork: Hashable, Sendable {
         (self.width, self.height, self.shapes) = (width, height, shapes)
     }
 }
+
+extension Artwork {
+    /// The art's outline: its longest solid line. A stripe, a cuff's edge or a crease is
+    /// shorter, and a stitched seam is dashed.
+    public var outline: ArtShape? {
+        shapes.filter { $0.stroke?.dash.isEmpty == true }.max { $0.length < $1.length }
+    }
+}
+
+extension ArtShape {
+    /// How long the path is, its curves measured as eight straight steps each.
+    var length: Double {
+        var (total, start, pen) = (0.0, Point(x: 0, y: 0), Point(x: 0, y: 0))
+        func step(to point: Point) {
+            total += ((point.x - pen.x) * (point.x - pen.x) + (point.y - pen.y) * (point.y - pen.y)).squareRoot()
+            pen = point
+        }
+        for element in path {
+            switch element {
+            case .move(let point): (start, pen) = (point, point)
+            case .line(let point): step(to: point)
+            case .close: step(to: start)
+            case .quadCurve(let end, let control):
+                let from = pen
+                for index in 1...8 {
+                    let time = Double(index) / 8, rest = 1 - time
+                    step(
+                        to: Point(
+                            x: rest * rest * from.x + 2 * rest * time * control.x + time * time * end.x,
+                            y: rest * rest * from.y + 2 * rest * time * control.y + time * time * end.y))
+                }
+            case .curve(let end, let control1, let control2):
+                let from = pen
+                for index in 1...8 {
+                    let time = Double(index) / 8, rest = 1 - time
+                    step(
+                        to: Point(
+                            x: rest * rest * rest * from.x + 3 * rest * rest * time * control1.x + 3 * rest * time
+                                * time * control2.x + time * time * time
+                                * end.x,
+                            y: rest * rest * rest * from.y + 3 * rest * rest * time * control1.y + 3 * rest * time
+                                * time * control2.y + time * time * time
+                                * end.y))
+                }
+            }
+        }
+        return total
+    }
+}

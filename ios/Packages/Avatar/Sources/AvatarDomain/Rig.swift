@@ -87,13 +87,17 @@ public struct Rig: Hashable, Sendable {
         /// Where an arm bends, for a part drawn as one whole arm from its pivot (the shoulder)
         /// to its hand. Nil for a part that never bends.
         public var elbow: Elbow?
+        /// For an arm in front of the body it hangs from: how far from its pivot the arm's own
+        /// edge is outlined where it leaves the body, so the two read as one outline wherever
+        /// the arm turns. Keep it short of where the elbow's bend starts. Nil for any other part.
+        public var shoulder: Double?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil
+            elbow: Elbow? = nil, shoulder: Double? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            self.elbow = elbow
+            (self.elbow, self.shoulder) = (elbow, shoulder)
         }
     }
 
@@ -140,7 +144,8 @@ public struct Rig: Hashable, Sendable {
                 Part(
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
-                    elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) })
+                    elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
+                    shoulder: part.shoulder)
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -168,7 +173,7 @@ private struct RigFile: Decodable {
             .object([
                 "id": .value, "parent": .value, "pivot": .value, "opacity": .value,
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
-                "elbow": .object(["at": .value, "hand": .value]),
+                "elbow": .object(["at": .value, "hand": .value]), "shoulder": .value,
             ])),
     ])
 
@@ -189,6 +194,7 @@ private struct RigFile: Decodable {
         let opacity: Double?
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
+        let shoulder: Double?
     }
 }
 
