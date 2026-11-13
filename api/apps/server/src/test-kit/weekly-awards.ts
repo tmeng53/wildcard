@@ -49,6 +49,9 @@ export const unusedCoachActivity = {
   spoke: unused,
 };
 
+/** Coach messages, for an app whose test never reads the coach page. */
+export const unusedCoachMessages = { cardsFor: unused, answer: unused };
+
 /** What members unlocked, for an app whose test never reads it. */
 export const unusedUnlocks = {
   of: unused,

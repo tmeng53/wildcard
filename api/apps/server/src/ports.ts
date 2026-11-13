@@ -9,6 +9,7 @@ import type { SavedPlaceTables } from '@wildcard/saved-places';
 import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
+import type { CoachMessageTables } from '@wildcard/coach-messages';
 import type { DisclaimerDraftTables } from '@wildcard/disclaimer-drafts';
 import type { FeedbackTables } from '@wildcard/feedback';
 import type { MemberTables } from '@wildcard/members';
@@ -195,6 +196,7 @@ export type Tables = CheckInTables &
   SwitchTables &
   UnlockTables &
   CoachTables &
+  CoachMessageTables &
   NoticeTables &
   ArtTables &
   AppCopyTables &

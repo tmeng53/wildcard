@@ -9,9 +9,17 @@ import type { CoachReply } from './reply.js';
 
 /**
  * The kinds of card; the gift is the unlocks module's, the rest the coach's own. `challengeDone`
- * is the coach marking the member's challenge done, from their check-ins.
+ * is the coach marking the member's challenge done, from their check-ins; a `message` is a coach
+ * message card admins wrote (the coach-messages module's).
  */
-export const CoachCardKind = z.enum(['board', 'note', 'challenge', 'challengeDone', 'gift']);
+export const CoachCardKind = z.enum([
+  'board',
+  'note',
+  'challenge',
+  'challengeDone',
+  'gift',
+  'message',
+]);
 export type CoachCardKind = z.infer<typeof CoachCardKind>;
 
 /** A card's id within its kind: a 战术板 line's day, a note's (its challenge's) id, a gift's piece. */
@@ -31,6 +39,8 @@ export function isCardId(kind: CoachCardKind, id: string): boolean {
       return /^\d{4}-\d{2}-\d{2}$/u.test(id);
     case 'gift':
       return /^[a-z][a-z0-9]*(-[a-z0-9]+){1,3}$/u.test(id) && id.length <= 48;
+    case 'message':
+      return /^[a-z0-9][a-z0-9-]{0,47}$/u.test(id);
     case 'note':
     case 'challenge':
     case 'challengeDone':

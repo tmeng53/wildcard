@@ -25,6 +25,7 @@
     "@wildcard/campaigns": "workspace:*",
     "@wildcard/check-ins": "workspace:*",
     "@wildcard/coach": "workspace:*",
+    "@wildcard/coach-messages": "workspace:*",
     "@wildcard/disclaimer-drafts": "workspace:*",
     "@wildcard/disclaimer-styles": "workspace:*",
     "@wildcard/errors": "workspace:*",

@@ -1,3 +1,10 @@
+import {
+  MemberId as CoachMessageMember,
+  MessageId,
+  MessageValue,
+  createCoachMessages,
+  createPostgresMessageStore,
+} from '@wildcard/coach-messages';
 import { randomUUID } from 'node:crypto';
 
 import {
@@ -128,6 +135,10 @@ const app = createApp({
     catalog: createPostgresCoachCatalog(db),
   }),
   coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
+  coachMessages: createCoachMessages({
+    store: createPostgresMessageStore(db),
+    clock: () => new Date(),
+  }),
   // No model here: the coach module's own tests write letters.
   coachLetters: createCoachLetters({
     settings: createPostgresCoachSettings(db),
@@ -1093,6 +1104,164 @@ describe('/squads/{squadId}/coach/cards', () => {
     const all = [...first.cards, ...second.cards].map((card) => card.text);
     expect(new Set(all).size).toBe(21);
     expect(second.next).toBeUndefined();
+  });
+
+  it('gives a coach message running for the caller once the squad has a coach, and keeps their answers', async () => {
+    const [captain, mate, stranger] = [await signUp(), await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    const path = `/squads/${squad}/coach/cards`;
+    const words = (zhHans: string) => ({ zhHans, en: zhHans, zhHant: zhHans });
+    const id = MessageId.parse(`enjoying-${randomUUID().slice(0, 8)}`);
+    const hour = 60 * 60_000;
+    await createCoachMessages({
+      store: createPostgresMessageStore(db),
+      clock: () => new Date(),
+    }).put({
+      id,
+      value: MessageValue.parse({
+        version: 1,
+        card: {
+          line: words('喜欢外卡吗？'),
+          stage: { cast: { members: [captain.userId] }, move: 'whistle' },
+          buttons: [
+            {
+              id: 'yes',
+              label: words('喜欢'),
+              style: 'primary',
+              tap: [{ open: 'store/powder' }, { close: true }],
+            },
+            {
+              id: 'no',
+              label: words('不太喜欢'),
+              tap: [
+                {
+                  next: {
+                    line: words('哪里不好用？'),
+                    input: { placeholder: words('说说看') },
+                    buttons: [
+                      {
+                        id: 'send',
+                        label: words('发送'),
+                        tap: [{ feedback: 'problem' }, { close: true }],
+                      },
+                    ],
+                    thanks: words('收到，谢谢你。'),
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        // Only these members, so no other test's caller gets it.
+        members: [mate.userId, stranger.userId],
+        startsAt: new Date(Date.now() - hour).toISOString(),
+        endsAt: new Date(Date.now() + hour).toISOString(),
+      }),
+      by: CoachMessageMember.parse(captain.userId),
+    });
+    const answerTo = (message: string) => (token: string, body: object) =>
+      call({
+        method: 'PUT',
+        path: `/squads/${squad}/coach/messages/${message}/answer`,
+        token,
+        body: { version: 1, ...body },
+      });
+    const answer = answerTo(id);
+
+    // A message is said by a coach: none without one, and never answered before it came.
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
+      body: { stack: [], earlier: [] },
+    });
+    const early = await answer(mate.token, { path: '', tap: 'no' });
+    expect([early.status, reason(early)]).toStrictEqual([404, 'COACH_MESSAGE_NOT_FOUND']);
+
+    await hire(captain, squad);
+    const read = await call({ method: 'GET', path, token: mate.token });
+    expect(read.body).toMatchObject({
+      stack: [
+        {
+          kind: 'message',
+          id,
+          coach: speaker,
+          message: {
+            cards: [
+              {
+                path: '',
+                line: words('喜欢外卡吗？'),
+                stage: { cast: 'members', members: [captain.userId], move: 'whistle' },
+                stars: false,
+                buttons: [
+                  { id: 'yes', style: 'primary', tap: [{ open: 'store/powder' }, { close: true }] },
+                  { id: 'no', style: 'outline', tap: [{ next: 'no' }] },
+                ],
+              },
+              {
+                path: 'no',
+                stage: { cast: 'coachAndMe' },
+                input: { placeholder: words('说说看') },
+                buttons: [{ id: 'send', tap: [{ feedback: 'problem' }, { close: true }] }],
+                thanks: words('收到，谢谢你。'),
+              },
+            ],
+            answered: [],
+          },
+        },
+      ],
+    });
+    // Not for the captain, whom it doesn't name.
+    expect(await call({ method: 'GET', path, token: captain.token })).toMatchObject({
+      body: { stack: [] },
+    });
+
+    const typedFirst = await answer(mate.token, { path: 'no', text: '太慢' });
+    expect([typedFirst.status, reason(typedFirst)]).toStrictEqual([
+      400,
+      'COACH_MESSAGE_ANSWER_INVALID',
+    ]);
+    expect((await answer(mate.token, { path: '', tap: 'no', text: '太慢' })).status).toBe(400);
+    expect((await answer(mate.token, { path: '', tap: 'no' })).status).toBe(200);
+    expect(await answer(mate.token, { path: 'no', text: '  打卡有点慢 ' })).toMatchObject({
+      status: 200,
+      body: {
+        version: 1,
+        id,
+        answered: [
+          { path: '', tap: 'no' },
+          { path: 'no', text: '打卡有点慢' },
+        ],
+      },
+    });
+    // The first tap stands.
+    expect(await answer(mate.token, { path: '', tap: 'yes' })).toMatchObject({
+      body: { answered: [{ path: '', tap: 'no' }, { path: 'no' }] },
+    });
+    const outside = await answer(stranger.token, { path: '', tap: 'yes' });
+    expect([outside.status, reason(outside)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+    expect((await answerTo('not-sent')(mate.token, { path: '', tap: 'yes' })).status).toBe(404);
+
+    const seen = await call({
+      method: 'PUT',
+      path: `${path}/message/${id}/seen`,
+      token: mate.token,
+    });
+    expect(seen.status).toBe(200);
+    expect(await call({ method: 'GET', path, token: mate.token })).toMatchObject({
+      body: {
+        stack: [],
+        earlier: [
+          {
+            kind: 'message',
+            id,
+            message: {
+              answered: [
+                { path: '', tap: 'no' },
+                { path: 'no', text: '打卡有点慢' },
+              ],
+            },
+          },
+        ],
+      },
+    });
   });
 
   it('refuses anyone outside the squad and a kind it doesn’t know', async () => {
