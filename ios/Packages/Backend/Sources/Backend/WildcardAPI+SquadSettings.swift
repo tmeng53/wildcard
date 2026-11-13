@@ -119,4 +119,40 @@ extension WildcardAPI {
         }
         return SquadLanguage(wire)
     }
+    // MARK: 入队申请
+
+    /// The requests waiting for the captain, the earliest first; only the captain may read them.
+    public func joinRequests(of squad: SquadID) async throws(APIError) -> [WaitingJoinRequest] {
+        let wire = try await call {
+            try await client.listSquadJoinRequests(path: .init(squadId: squad.description)).ok.body.json
+        }
+        return try read { () throws(ContractsError) in try wire.requests.map(WaitingJoinRequest.init) }
+    }
+
+    /// Lets a member in (`approve`) or turns them away; only the captain may. Answering again the
+    /// same way is a success.
+    public func answer(_ request: JoinRequestID, in squad: SquadID, approve: Bool) async throws(APIError) {
+        try await call {
+            _ = try await client.answerSquadJoinRequest(
+                path: .init(squadId: squad.description, requestId: request.description),
+                body: .json(.init(version: ._1, approve: approve))
+            ).ok.body.json
+        }
+    }
+
+    /// Whether joining the squad needs its captain's OK (入队需要审核).
+    public func joinApproval(of squad: SquadID) async throws(APIError) -> Bool {
+        try await call {
+            try await client.getSquadJoinApproval(path: .init(squadId: squad.description)).ok.body.json.required
+        }
+    }
+
+    /// Turns 入队需要审核 on or off; only the captain may. Safe to repeat.
+    public func setJoinApproval(of squad: SquadID, required: Bool) async throws(APIError) -> Bool {
+        try await call {
+            try await client.setSquadJoinApproval(
+                path: .init(squadId: squad.description), body: .json(.init(version: ._1, required: required))
+            ).ok.body.json.required
+        }
+    }
 }

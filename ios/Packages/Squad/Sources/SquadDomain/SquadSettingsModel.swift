@@ -344,14 +344,14 @@ public final class SquadSettingsModel {
         }
     }
 
-    private func update(_ edit: (inout SquadSettings) -> Void) {
+    func update(_ edit: (inout SquadSettings) -> Void) {
         guard case .loaded(var settings) = load else { return }
         edit(&settings)
         load = .loaded(settings)
         changed()
     }
 
-    private func change(_ body: (any SquadSettingsService) async throws(SquadError) -> Void) async {
+    func change(_ body: (any SquadSettingsService) async throws(SquadError) -> Void) async {
         guard !isSaving else { return }
         isSaving = true
         changeFailed = false

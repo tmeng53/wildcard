@@ -7,13 +7,14 @@ import SwiftUI
 
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
 /// from the gear on 小队's header and from 我's 设置 (Tracy, 2026-11-12), which reads the squad first
-/// when 小队 hasn't yet: 邀请队友 first while the squad has room, 比赛时区 as a plain row, then
-/// 退出小队. The captain's zone row opens the system's zone list, the one sign-up's 建小队 shows, and
-/// a change counts at once (Tracy, 2026-11-08), or from next week once this week's Sunday 8pm has
-/// passed on either clock (Tracy, 2026-11-13); the row shows the pick either way. Everyone else only
-/// reads it. Then 小队语言, the language the coach and 战报 are written in, with the one line that
-/// says so (Tracy, 2026-11-08: without it the setting is confusing); the captain's opens the same
-/// menu 我's 语言 does. No other help text.
+/// when 小队 hasn't yet: for the captain, 入队申请 while anyone waits; 邀请队友 while the squad has
+/// room; the captain's 入队需要审核; 比赛时区 as a plain row, then 退出小队. The captain's zone row
+/// opens the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
+/// 2026-11-08), or from next week once this week's Sunday 8pm has passed on either clock (Tracy,
+/// 2026-11-13); the row shows the pick either way. Everyone else only reads it. Then 小队语言, the
+/// language the coach and 战报 are written in, with the one line that says so (Tracy, 2026-11-08:
+/// without it the setting is confusing); the captain's opens the same menu 我's 语言 does. No other
+/// help text.
 public struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     /// The page's squad as the model has it now, so a saved change shows here at once.
@@ -49,7 +50,9 @@ public struct SquadPreferencesView: View {
                 if model.changeFailed {
                     InlineFailure()
                 }
+                SquadJoinRequests(model: model)
                 invite
+                JoinApprovalRow(model: model)
                 if Switchboard.shared.isOn(.freePlan, at: .now) {
                     subscription
                 }
