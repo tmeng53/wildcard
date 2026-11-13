@@ -18,7 +18,7 @@ extension InMemoryCheckInBackend {
         let line = String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words)
         let note = CoachNote(
             day: LocalDay(at: now, in: SquadTimeZone.newYorkClock), text: line, coach: coach,
-            writtenAt: now.addingTimeInterval(-3600))
+            writtenAt: now.addingTimeInterval(-3600), timeZone: SquadTimeZone.newYorkClock)
         return SidelineCoach(coach: coach, note: note)
     }
 

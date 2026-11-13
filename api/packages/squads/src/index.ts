@@ -11,6 +11,14 @@ export {
   type GoalSuggestion,
   type GoalWeek,
 } from './domain/goal-suggestion.js';
+export {
+  JOIN_APPROVAL_DEFAULT,
+  JOIN_NOTE_MAX_CHARACTERS,
+  JoinNote,
+  JoinRequestId,
+  type JoinRequest,
+  type JoinRequestAnswerKind,
+} from './domain/join-request.js';
 export { FIRST_SCENE, Scene, SceneWeek, type OpenScenes, type ScenePick } from './domain/scene.js';
 export {
   MemberId,
@@ -32,6 +40,8 @@ export {
 export {
   AiConsentRequiredError,
   InviteCodeUnknownError,
+  JoinRequestAnsweredError,
+  JoinRequestUnknownError,
   NotScenePickerError,
   NotSquadCaptainError,
   SceneNotOpenError,
@@ -46,6 +56,8 @@ export {
 } from './errors.js';
 export type {
   AiConsentCheck,
+  AnswerOutcome,
+  AskOutcome,
   CreateOutcome,
   CrownHolders,
   JoinOutcome,

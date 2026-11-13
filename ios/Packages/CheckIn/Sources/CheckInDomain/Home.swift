@@ -48,8 +48,9 @@ public struct Home: Hashable, Sendable {
     }
 
     /// The member's `day` as `squad` sees it, with `pending` posts still to go out. Their row
-    /// is it unless one of that day's posts wasn't shared here; then it is what their posts
-    /// shared here add up to. The squad's counts follow this, never a row a private post moved.
+    /// is it unless one of that day's posts went to another squad (only on a day they changed
+    /// squads, since every post goes to theirs); then it is what their posts here add up to. The
+    /// squad's counts follow this, never a row a post to another squad moved.
     public func squadSees(on day: LocalDay, plus pending: some Sequence<PendingCheckIn> = []) -> TrainingStatus {
         let posts =
             checkIns.filter { $0.member == member && $0.day == day }.map {

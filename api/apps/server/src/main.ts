@@ -80,7 +80,7 @@ import {
   createSquadPlaces,
 } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
-import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
+import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -364,6 +364,7 @@ const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
+  joinApprovalOn: joinApprovalOn(),
 });
 // A coach's gift week runs on its squad's clock, as the coach's day does.
 // Each squad's zone (小队时区) for the modules that name squads by plain ids.
@@ -383,6 +384,14 @@ const giftWeekStart = squadWeekStart(squadZonesAt);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
+/**
+ * Whether squads may ask for the captain's OK to join (入队需要审核, the switch `joinApproval`):
+ * off until the builds that show a request are the minimum, since older ones can't read one.
+ */
+function joinApprovalOn() {
+  return async () =>
+    (await switches.states())('joinApproval', wallClockAt(new Date(), NEW_YORK).day);
+}
 const minimumBuildsOn = (scope: Database) =>
   createMinimumBuilds({ store: createPostgresMinimumBuild(scope) });
 const quickReactionsOn = (scope: Database) =>
@@ -636,6 +645,7 @@ const coachWakes =
         squadWeek: coachWeek,
         aiConsented: coachConsented,
         hiring: createPostgresCoachHiring(db),
+        letters: createPostgresCoachLetters(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
         timeZonesAt: squadZonesAt,
@@ -650,7 +660,8 @@ const coachWakes =
             ids.map(async (member) => ({
               member: WeatherMember.parse(member),
               timeZone:
-                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ??
+                UNSAVED_MEMBER_ZONE,
             })),
           );
           const days = await weather.dayFor({ members: zoned, day });
@@ -661,7 +672,7 @@ const coachWakes =
               {
                 words: weatherWords(today, {
                   ...(yesterday === undefined ? {} : { yesterday }),
-                  timeZone: zones.get(member) ?? NEW_YORK,
+                  timeZone: zones.get(member) ?? UNSAVED_MEMBER_ZONE,
                 }),
                 ...(city === undefined ? {} : { city }),
               },
@@ -915,6 +926,7 @@ const app = createApp({
           store: createPostgresSquadStore(scope),
           inviteCodes: randomInviteCodes,
           aiConsent: hasAiConsent,
+          joinApprovalOn: joinApprovalOn(),
         }),
       notices: noticesOn,
     }),

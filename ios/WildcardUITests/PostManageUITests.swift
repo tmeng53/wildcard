@@ -100,8 +100,6 @@ final class PostManageUITests: XCTestCase {
         // The sheet's preview: SwiftUI folds the card's own container into it.
         let preview = app.descendants(matching: .any).matching(identifier: "savePicture.preview").firstMatch
         XCTAssertTrue(preview.waitForExistence(timeout: Self.wait), "存图's page doesn't show the card")
-        // Only until the phone's first tap on a card, so a rerun on the same simulator has none.
-        let hint = app.staticTexts["scoreCard.hint"]
         XCTAssertTrue(app.staticTexts["scoreCard.weekCount"].waitForExistence(timeout: Self.wait), "no 本周第 N 次")
         XCTAssertTrue(app.buttons["scoreCard.backdrop.photo.0"].isSelected, "the post's photo isn't the backdrop")
         XCTAssertTrue(app.buttons["scoreCard.backdrop.chart"].exists, "the post's chart isn't a backdrop")
@@ -112,7 +110,6 @@ final class PostManageUITests: XCTestCase {
         keepScreenshot(named: "57-score-card")
 
         app.buttons["scoreCard.hero"].tap()
-        waitFor(hint, "exists == false", "点数字和人物可以换 is still there after a tap")
         // Only the card's strip has buttons; the post's under the sheet is read-only.
         app.buttons["strip.maxHeartRate"].firstMatch.tap()
         app.buttons["scoreCard.character"].tap()

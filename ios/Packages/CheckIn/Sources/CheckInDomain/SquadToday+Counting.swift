@@ -60,7 +60,7 @@ extension SquadToday {
         /// Shared to this squad: the squad's today and week, and the member's week. The squad
         /// counts from what it saw of the member's day, never from their row.
         case squadAndMine(saw: TrainingStatus)
-        /// Not shared here: only the member's week.
+        /// Sent to another squad (only on a day the member changed squads): only their week.
         case mine
         /// Already counted where it counts.
         case none

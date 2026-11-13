@@ -9,7 +9,6 @@ import SwiftUI
 struct ChallengeAnswers: View {
     let deck: CoachDeck
     let card: CoachPageCard
-    let coachName: String
     @Binding var stamped: Bool
     @Binding var reason: String
     var typing: FocusState<Bool>.Binding
@@ -50,9 +49,9 @@ struct ChallengeAnswers: View {
         }
     }
 
-    /// 「告诉毛头为什么（可选）」: one line, as long as the API takes.
+    /// 「原因（可选）」: one line, as long as the API takes.
     private var reasonField: some View {
-        let prompt = Text(copy: "告诉\(coachName)为什么（可选）", bundle: .module)
+        let prompt = Text(copy: "原因（可选）", bundle: .module)
         return TextField(text: $reason, prompt: prompt.foregroundStyle(Color(role: .fgSubtle, in: theme))) {
             prompt
         }

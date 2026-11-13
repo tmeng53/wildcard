@@ -169,6 +169,13 @@ async function squadOf(
     body: { version: 1, name: 'squad', timeZone: 'America/New_York' },
   });
   const { id, inviteCode } = z.object({ id: z.uuid(), inviteCode: z.string() }).parse(created.body);
+  // Friends join straight in, without the captain's OK (入队需要审核 off).
+  await call({
+    method: 'PUT',
+    path: `/squads/${id}/join-approval`,
+    token: creator.token,
+    body: { version: 1, required: false },
+  });
   for (const member of others) {
     const joined = await call({
       method: 'POST',
@@ -801,7 +808,7 @@ describe('GET /me/records', () => {
       training: { sport: 'run', minutes: 30 },
     });
     await put(me, { day: today, kind: 'healthyMeal', meal: {} });
-    // A 坦白放纵餐 keeps the card's meal 外卡 going, but 健康餐连续 counts 健康餐 only.
+    // A 坦白放纵餐 bridges the meal streak without adding a day, on the card and here alike.
     const yesterday = new Date(Date.parse(today) - 24 * 60 * 60_000).toISOString().slice(0, 10);
     await put(me, { day: yesterday, kind: 'cheatMeal', meal: {} });
     const swim = await put(coco, { day: today, kind: 'trained', training: { sport: 'swim' } });
@@ -884,14 +891,17 @@ describe('GET /me/records', () => {
     // Three days in a row, then three without: the default plan never rests two days running,
     // so one of them breaks the run whatever the weekday.
     for (const day of [daysAgo(6), daysAgo(5), daysAgo(4), today]) await put(day, run);
-    // A 健康餐 two days ago: yesterday had none, so that run is over.
+    // 健康餐 four and two days ago, a 坦白放纵餐 between bridging them: yesterday had none, so
+    // that run is over.
+    await put(daysAgo(4), { kind: 'healthyMeal', meal: {} });
+    await put(daysAgo(3), { kind: 'cheatMeal', meal: {} });
     await put(daysAgo(2), { kind: 'healthyMeal', meal: {} });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
     expect(body).toMatchObject({
       longestStreak: { days: 3, from: daysAgo(6), to: daysAgo(4) },
       currentStreak: { days: 1, from: today, to: today },
-      mealStreak: { days: 1, from: daysAgo(2), to: daysAgo(2) },
+      mealStreak: { days: 2, from: daysAgo(4), to: daysAgo(2) },
     });
     expect(body).not.toHaveProperty('currentMealStreak');
   });
@@ -1009,7 +1019,7 @@ describe('GET /me/check-in-totals', () => {
         cheatMeals: 1,
         disclaimers: 1,
         topSport: { sport: 'run', checkIns: 2 },
-        // Yesterday's 健康餐 and today's two meals: any meal keeps the meal streak going.
+        // Yesterday's 健康餐 and today's: two days; today's 坦白放纵餐 adds none.
         streaks: {
           training: { days: 2, from: yesterday, to: today },
           meals: { days: 2, from: yesterday, to: today },
@@ -1624,6 +1634,81 @@ describe('a 训练 from Apple Health', () => {
     expect(await shown()).toBeUndefined();
   });
 
+  it('names the squadmates a 训练 was done with, and an edit keeps, changes or clears them', async () => {
+    const [me, mia, coco, stranger] = [
+      await signUp(),
+      await signUp(),
+      await signUp(),
+      await signUp(),
+    ];
+    const squad = await squadOf(me, mia, coco);
+    await squadOf(stranger);
+    const { day, createdAt } = todayAndNow();
+    const id = randomUUID();
+    const put = async (
+      trainedWith: readonly string[],
+      { at = id, inFeed = true }: { at?: string; inFeed?: boolean } = {},
+    ) => {
+      const { status, body } = await call({
+        method: 'PUT',
+        path: `/check-ins/${at}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          inFeed,
+          kind: 'trained',
+          training: { sport: 'run', trainedWith },
+        },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    const refused = [400, 'TRAINED_WITH_NOT_SQUADMATE'];
+    expect(await put([stranger.userId], { at: randomUUID() })).toStrictEqual(refused);
+    expect(await put([me.userId], { at: randomUUID() })).toStrictEqual(refused);
+    // A check-in only recorded, off the squad's 动态, names no one.
+    expect(await put([mia.userId], { at: randomUUID(), inFeed: false })).toStrictEqual(refused);
+    expect(await put([mia.userId, mia.userId], { at: randomUUID() })).toStrictEqual([
+      400,
+      'REQUEST_INVALID',
+    ]);
+    // None named is a 训练 like any other.
+    expect(await put([], { at: randomUUID() })).toStrictEqual([201, 'saved']);
+    expect(await put([mia.userId, coco.userId])).toStrictEqual([201, 'saved']);
+    expect(await put([mia.userId, coco.userId])).toStrictEqual([200, 'saved']);
+
+    const shown = async () =>
+      z
+        .object({
+          checkIn: z.object({
+            training: z.object({ trainedWith: z.array(z.string()).optional() }),
+          }),
+        })
+        .parse((await call({ method: 'GET', path: `/check-ins/${id}`, token: mia.token })).body)
+        .checkIn.training.trainedWith;
+    expect(await shown()).toStrictEqual([mia.userId, coco.userId]);
+
+    const edit = async (training: Record<string, unknown>) => {
+      const { status, body } = await call({
+        method: 'PATCH',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: { version: 1, kind: 'trained', training },
+      });
+      return [status, reason(body) ?? 'saved'];
+    };
+    // Builds from before tags leave it out: the post keeps them.
+    expect(await edit({ sport: 'run', caption: '一起跑' })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toStrictEqual([mia.userId, coco.userId]);
+    expect(await edit({ sport: 'run', trainedWith: [coco.userId] })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toStrictEqual([coco.userId]);
+    expect(await edit({ sport: 'run', trainedWith: [stranger.userId] })).toStrictEqual(refused);
+    expect(await edit({ sport: 'run', trainedWith: [] })).toStrictEqual([200, 'saved']);
+    expect(await shown()).toBeUndefined();
+  });
+
   it('shows a meal’s place to the squad, and an edit changes or clears it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
@@ -1998,6 +2083,33 @@ describe('a squad’s places', () => {
     ).toStrictEqual([
       { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: 4, raters: 2 },
       { key: 'apple:I0NOODLES', name: '兰州拉面', visits: 2, people: 2, stars: null, raters: 0 },
+    ]);
+    // 小队地图's 常去 rows: who went (most posts first, the newest poster first on a tie), what
+    // was trained or eaten there.
+    expect(
+      z
+        .array(z.object({ members: z.unknown(), sports: z.unknown(), meals: z.unknown() }))
+        .parse(z.object({ places: z.unknown() }).parse(listed.body).places),
+    ).toStrictEqual([
+      {
+        members: [
+          { member: friend.userId, visits: 2 },
+          { member: me.userId, visits: 1 },
+        ],
+        sports: [
+          { sport: 'custom', customSport: '飞盘', count: 2 },
+          { sport: 'custom', customSport: '背包', count: 1 },
+        ],
+        meals: { healthyMeal: 0, cheatMeal: 0 },
+      },
+      {
+        members: [
+          { member: friend.userId, visits: 1 },
+          { member: me.userId, visits: 1 },
+        ],
+        sports: [],
+        meals: { healthyMeal: 1, cheatMeal: 1 },
+      },
     ]);
     // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover
     // or minutes when the post had none.

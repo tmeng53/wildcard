@@ -1,3 +1,4 @@
+import { PlaceKey } from '@wildcard/place-ids';
 import { hasErrorCode } from '@wildcard/errors';
 import { sql, type Kysely, type Selectable } from 'kysely';
 import { z } from 'zod';
@@ -145,6 +146,27 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
     }));
   }
 
+  const streakDays: CheckInStore['streakDays'] = async ({ member, squad }) => {
+    const rows = await db
+      .selectFrom('check_ins')
+      .select([sql<string>`day::text`.as('day'), 'kind'])
+      .distinct()
+      .where('member_id', '=', member)
+      .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal', 'disclaimer'])
+      .where(sharedTo(squad))
+      .orderBy('day')
+      .execute();
+    const daysOf = (kinds: readonly string[]) => [
+      ...new Set(rows.filter((row) => kinds.includes(row.kind)).map((row) => row.day)),
+    ];
+    return {
+      trained: daysOf(['trained']),
+      healthyMeals: daysOf(['healthyMeal']),
+      cheatMeals: daysOf(['cheatMeal']),
+      leave: daysOf(['disclaimer']),
+    };
+  };
+
   return {
     async find(id) {
       const rows = await db
@@ -246,25 +268,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
 
     totalsSharedTo: ({ member, squad }) => totalsOf(db, { member, squad }),
 
-    async streakDays({ member, squad }) {
-      const rows = await db
-        .selectFrom('check_ins')
-        .select([sql<string>`day::text`.as('day'), 'kind'])
-        .distinct()
-        .where('member_id', '=', member)
-        .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal', 'disclaimer'])
-        .where(sharedTo(squad))
-        .orderBy('day')
-        .execute();
-      const daysOf = (kinds: readonly string[]) => [
-        ...new Set(rows.filter((row) => kinds.includes(row.kind)).map((row) => row.day)),
-      ];
-      return {
-        trained: daysOf(['trained']),
-        meals: daysOf(['healthyMeal', 'cheatMeal']),
-        leave: daysOf(['disclaimer']),
-      };
-    },
+    streakDays,
 
     async trainedSince({ member, since }) {
       const rows = await db
@@ -326,6 +330,31 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .limit(limit)
         .execute();
       return withAudiences(rows);
+    },
+
+    async placesTrainedBefore({ squad, keys, before }) {
+      if (keys.length === 0) return new Set();
+      // The key as `@wildcard/place-ids` makes it: the squad's own place first, else Maps' id.
+      const key = sql<string>`case
+        when check_ins.payload->'place' ? 'squadPlaceId'
+          then 'squad:' || lower(check_ins.payload->'place'->>'squadPlaceId')
+        else 'apple:' || (check_ins.payload->'place'->>'appleId')
+      end`;
+      const rows = await db
+        .selectFrom('check_ins')
+        .innerJoin('check_in_squads', (join) =>
+          join
+            .onRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+            .on('check_in_squads.squad_id', '=', squad),
+        )
+        .select(key.as('key'))
+        .distinct()
+        .where('check_ins.kind', '=', 'trained')
+        .where('check_ins.in_feed', '=', true)
+        .where('check_ins.day', '<', before)
+        .where(key, 'in', keys)
+        .execute();
+      return new Set(rows.map((row) => PlaceKey.parse(row.key)));
     },
 
     async squadsCheckedInto({ from, to, before }) {
@@ -414,20 +443,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy('created_at')
         .orderBy('id')
         .execute();
-      const meals = await db
-        .selectFrom('check_ins')
-        .select(sql<string>`check_ins.day::text`.as('day'))
-        .distinct()
-        .where('member_id', '=', member)
-        .where('kind', '=', 'healthyMeal')
-        .execute();
-      const leave = await db
-        .selectFrom('check_ins')
-        .select(sql<string>`check_ins.day::text`.as('day'))
-        .distinct()
-        .where('member_id', '=', member)
-        .where('kind', '=', 'disclaimer')
-        .execute();
+      const days = await streakDays({ member });
       const reactionCounts = async (author: 'member' | 'mates') => {
         if (mates.length === 0) return new Map<MemberId, number>();
         const rows = await db
@@ -468,8 +484,9 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
             : { workoutStartedAt: new Date(row.workoutStartedAt) }),
           inSquad: row.in_squad,
         })),
-        healthyMealDays: meals.map((row) => row.day),
-        leaveDays: leave.map((row) => row.day),
+        healthyMealDays: days.healthyMeals,
+        cheatMealDays: days.cheatMeals,
+        leaveDays: days.leave,
         received: await reactionCounts('member'),
         given: await reactionCounts('mates'),
       };
@@ -517,7 +534,7 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
   };
 }
 
-/** Only what reached `squad`, when asked for a squad's view: a 仅自己可见 post never counts. */
+/** Only what was sent to `squad`, when asked for a squad's view, posted to 动态 or not. */
 const sharedTo = (squad: SquadId | undefined) =>
   squad === undefined
     ? sql<boolean>`true`

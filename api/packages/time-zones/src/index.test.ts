@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { TimeZone, isKnownTimeZone, mondayOf, momentAt, wallClockAt } from './index.js';
+import {
+  TimeZone,
+  isKnownTimeZone,
+  mondayOf,
+  momentAt,
+  wallClockAt,
+  weekFreezesAt,
+} from './index.js';
 
 describe('time zones', () => {
   it('reads a moment on a zone’s wall clock', () => {
@@ -45,5 +52,18 @@ describe('time zones', () => {
   it('starts weeks on Monday', () => {
     expect(mondayOf('2026-11-08')).toBe('2026-11-02');
     expect(mondayOf('2026-11-09')).toBe('2026-11-09');
+  });
+
+  it('freezes a week on its Sunday at 8pm on the zone’s clock', () => {
+    expect(weekFreezesAt('2026-11-02', 'Asia/Taipei').toISOString()).toBe(
+      '2026-11-08T12:00:00.000Z',
+    );
+    expect(weekFreezesAt('2026-11-02', 'America/Los_Angeles').toISOString()).toBe(
+      '2026-11-09T04:00:00.000Z',
+    );
+    // New York's clocks go back at 2am that Sunday, so its 8pm is 01:00 UTC, not 00:00.
+    expect(weekFreezesAt('2026-10-26', 'America/New_York').toISOString()).toBe(
+      '2026-11-02T01:00:00.000Z',
+    );
   });
 });

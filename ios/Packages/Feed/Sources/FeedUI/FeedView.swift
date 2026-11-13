@@ -131,7 +131,7 @@ public struct FeedView: View {
             }
         } else {
             // 战术板 tops today, even before anyone posted today (a squad that never posted
-            // shows its empty scene instead). Its day is New York's, as on the home's sideline.
+            // shows its empty scene instead). Its day is the squad's, as on the home's sideline.
             if let note = model.coachNote, sections.first?.heading != .today {
                 SectionLabel(DayHeading.today.title)
                     .blur(radius: model.lifted ? Scrim.blurRadius : 0)

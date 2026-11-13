@@ -175,22 +175,18 @@ public struct Podium: Hashable, Sendable {
     public let sides: [MemberID]
     /// Those on the podium who trained every day they planned (练够计划), marked on their step.
     public let planDone: Set<MemberID>
-    /// Whether reaching the tied days trained first decided a place (a tie on days trained), so
-    /// the page can say why.
-    public let tieBrokenByTime: Bool
     /// The 颁奖词 for the champion.
     public let speech: String?
     public let championMove: AwardMove?
     public let sideMove: AwardMove?
 
     public init(
-        champion: MemberID, sides: [MemberID], planDone: Set<MemberID> = [], tieBrokenByTime: Bool = false,
+        champion: MemberID, sides: [MemberID], planDone: Set<MemberID> = [],
         speech: String? = nil, championMove: AwardMove? = nil, sideMove: AwardMove? = nil
     ) {
         self.champion = champion
         self.sides = Array(sides.prefix(2))
         self.planDone = planDone.intersection([champion] + self.sides)
-        self.tieBrokenByTime = tieBrokenByTime
         self.speech = speech
         self.championMove = championMove
         self.sideMove = sideMove

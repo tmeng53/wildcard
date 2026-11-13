@@ -86,6 +86,15 @@ export const NoticeSubjects = {
     comment: z.uuid().optional(),
   }),
   /**
+   * A teammate's 训练 named the member as someone it was done with (一起练): the push's words as
+   * it was put (sent or not, by the member's switch), and the post to fill their own 训练 from.
+   */
+  trainedWith: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    checkIn: z.uuid(),
+  }),
+  /**
    * The squad trained over its weekly goal `weeks` finished weeks in a row: its captain is
    * suggested a higher goal, 人均 `daysPerMember` 次, which they may set on 小队.
    */
@@ -93,6 +102,23 @@ export const NoticeSubjects = {
     version: z.literal(1),
     weeks: z.int().positive(),
     daysPerMember: z.int().min(1).max(7),
+  }),
+  /**
+   * Someone asked to join the squad the member captains (入队申请): the push's words, naming
+   * them, and the request to answer.
+   */
+  joinRequest: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    request: z.uuid(),
+    member: MemberId,
+  }),
+  /** The captain answered the member's request to join: let in (`approved`) or not. */
+  joinAnswered: z.strictObject({
+    version: z.literal(1),
+    alert: PushAlert,
+    request: z.uuid(),
+    approved: z.boolean(),
   }),
   /** A broadcast every member is told (`broadcast.ts`); its words are read when shown. */
   broadcast: z.strictObject({ version: z.literal(1), broadcast: BroadcastId }),
@@ -123,9 +149,12 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('coachLetter'), subject: NoticeSubjects.coachLetter }),
   z.object({ kind: z.literal('unlocked'), subject: NoticeSubjects.unlocked }),
   z.object({ kind: z.literal('comment'), subject: NoticeSubjects.comment }),
+  z.object({ kind: z.literal('trainedWith'), subject: NoticeSubjects.trainedWith }),
   z.object({ kind: z.literal('broadcast'), subject: NoticeSubjects.broadcast }),
   z.object({ kind: z.literal('goalSuggestion'), subject: NoticeSubjects.goalSuggestion }),
   z.object({ kind: z.literal('thanks'), subject: NoticeSubjects.thanks }),
+  z.object({ kind: z.literal('joinRequest'), subject: NoticeSubjects.joinRequest }),
+  z.object({ kind: z.literal('joinAnswered'), subject: NoticeSubjects.joinAnswered }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

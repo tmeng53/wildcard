@@ -12,6 +12,13 @@ import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
 import {
+  answerJoinRequest,
+  joinApproval,
+  setJoinApproval,
+  waitingJoinRequests,
+} from './squads/join-requests.js';
+import type { JoinRequest, JoinRequestId } from '../domain/join-request.js';
+import {
   previewInvite,
   previewPublicInvite,
   type InvitePreview,
@@ -50,7 +57,25 @@ export interface Squads {
       timeZoneWeek?: string | undefined;
     },
   ): Promise<CreatedSquad>;
+  /** Joins by invite code, or asks the captain to let the member in where the squad needs that. */
   join(input: JoinSquadInput): Promise<JoinedSquad>;
+  /** Whether joining the squad needs its captain's OK (入队要队长同意), for its members. */
+  joinApproval(input: { squad: SquadId; viewer: MemberId }): Promise<boolean>;
+  /** Turns the captain's OK on or off, for the captain; what it is now. */
+  setJoinApproval(input: { squad: SquadId; member: MemberId; required: boolean }): Promise<boolean>;
+  /** The member's newest request to join a squad, waiting or answered. */
+  myJoinRequest(member: MemberId): Promise<JoinRequest | undefined>;
+  /** Withdraws the member's waiting request, if any. Safe to repeat. */
+  withdrawJoinRequest(member: MemberId): Promise<void>;
+  /** The requests waiting for the squad's captain, the earliest first, for the captain. */
+  waitingJoinRequests(input: { squad: SquadId; viewer: MemberId }): Promise<JoinRequest[]>;
+  /** Lets a waiting member in or turns them away, for the captain. */
+  answerJoinRequest(input: {
+    squad: SquadId;
+    request: JoinRequestId;
+    member: MemberId;
+    approve: boolean;
+  }): Promise<{ readonly request: JoinRequest; readonly changed: boolean }>;
   previewInvite(input: { inviteCode: InviteCode; viewer: MemberId }): Promise<InvitePreview>;
   /** The squad as anyone holding its invite code may see it, signed in or not. */
   previewPublicInvite(inviteCode: InviteCode): Promise<PublicInvitePreview>;
@@ -180,6 +205,11 @@ export function createSquads(deps: {
   readonly store: SquadStore;
   readonly inviteCodes: InviteCodes;
   readonly aiConsent: AiConsentCheck;
+  /**
+   * Whether a squad's 入队需要审核 counts at all (the switch `joinApproval`): off, everyone joins
+   * straight in, as builds from before the request pages need. On when left out.
+   */
+  readonly joinApprovalOn?: () => Promise<boolean>;
 }): Squads {
   return {
     create: (input) =>
@@ -190,6 +220,12 @@ export function createSquads(deps: {
           input.timeZoneWeek === undefined ? undefined : SceneWeek.parse(input.timeZoneWeek),
       }),
     join: (input) => joinSquad(deps, input),
+    joinApproval: (input) => joinApproval(deps, input),
+    setJoinApproval: (input) => setJoinApproval(deps, input),
+    myJoinRequest: (member) => deps.store.latestJoinRequest(member),
+    withdrawJoinRequest: (member) => deps.store.withdrawJoinRequest(member),
+    waitingJoinRequests: (input) => waitingJoinRequests(deps, input),
+    answerJoinRequest: (input) => answerJoinRequest(deps, input),
     previewInvite: (input) => previewInvite(deps, input),
     previewPublicInvite: (inviteCode) => previewPublicInvite(deps, inviteCode),
     find: (input) => findSquad(deps, input),

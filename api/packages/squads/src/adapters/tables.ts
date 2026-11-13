@@ -31,6 +31,29 @@ export interface SquadGoalSuggestions {
   week_start: string;
 }
 
+export interface SquadJoinApprovals {
+  id: Generated<Int8>;
+  required: boolean;
+  set_at: Generated<Timestamp>;
+  set_by: string | null;
+  squad_id: string;
+}
+
+export interface SquadJoinRequestAnswers {
+  actor_id: string | null;
+  at: Generated<Timestamp>;
+  kind: string;
+  request_id: string;
+}
+
+export interface SquadJoinRequests {
+  asked_at: Generated<Timestamp>;
+  id: Generated<string>;
+  member_id: string;
+  note: string | null;
+  squad_id: string;
+}
+
 export interface SquadLanguages {
   id: Generated<Int8>;
   language: string;
@@ -93,6 +116,9 @@ export interface SquadWeeklyGoals {
 export interface DB {
   squad_events: SquadEvents;
   squad_goal_suggestions: SquadGoalSuggestions;
+  squad_join_approvals: SquadJoinApprovals;
+  squad_join_request_answers: SquadJoinRequestAnswers;
+  squad_join_requests: SquadJoinRequests;
   squad_languages: SquadLanguages;
   squad_members: SquadMembers;
   squad_membership_events: SquadMembershipEvents;

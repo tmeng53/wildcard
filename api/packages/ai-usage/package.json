@@ -13,7 +13,6 @@
     }
   },
   "dependencies": {
-    "@wildcard/errors": "workspace:*",
     "@wildcard/language-model": "workspace:*",
     "@wildcard/time-zones": "workspace:*",
     "kysely": "0.29.7",

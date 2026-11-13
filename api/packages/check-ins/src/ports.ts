@@ -1,3 +1,5 @@
+import type { PlaceKey } from '@wildcard/place-ids';
+
 import type { CheckInId, CheckInRecord, LocalDay, MemberId, SquadId } from './domain/check-in.js';
 import type { RecordTraining } from './domain/records.js';
 import type { CheckInTotals, TrainedCheckIn, TrainingDay } from './domain/totals.js';
@@ -29,6 +31,8 @@ export interface RecordRows {
     readonly inSquad: boolean;
   })[];
   readonly healthyMealDays: readonly LocalDay[];
+  /** The days the member posted a 坦白放纵餐: a meal streak runs through them without counting them. */
+  readonly cheatMealDays: readonly LocalDay[];
   /** The days the member posted a 请假条: a streak runs through them, as through a planned rest day. */
   readonly leaveDays: readonly LocalDay[];
   /** Reactions on the member's check-ins, by squadmate. */
@@ -85,6 +89,15 @@ export interface CheckInStore {
     readonly limit: number;
   }): Promise<CheckInRecord[]>;
   /**
+   * Which of `keys` anyone had posted a 训练 from to `squad` (in its 动态) for a day before
+   * `before`, members who left since included: the places the squad had already found.
+   */
+  placesTrainedBefore(query: {
+    readonly squad: SquadId;
+    readonly keys: readonly PlaceKey[];
+    readonly before: LocalDay;
+  }): Promise<ReadonlySet<PlaceKey>>;
+  /**
    * Squads that got a check-in for a day from `from` to `to` made before `before`, from anyone,
    * each once.
    */
@@ -96,18 +109,20 @@ export interface CheckInStore {
     readonly to: string;
   }): Promise<TrainingDay[]>;
   /**
-   * The days `member` checked in a 训练 and the days they checked in a meal (健康餐 or 坦白放纵餐),
-   * each day once, earliest first; with `squad`, only what they shared to it.
+   * The days `member` checked in a 训练, a 健康餐, a 坦白放纵餐 and a 请假条, each day once per kind,
+   * earliest first; with `squad`, only what they shared to it.
    */
   streakDays(query: { readonly member: MemberId; readonly squad?: SquadId }): Promise<{
     readonly trained: readonly LocalDay[];
-    readonly meals: readonly LocalDay[];
+    readonly healthyMeals: readonly LocalDay[];
+    /** Days with a 坦白放纵餐, which neither break a meal streak nor add to it. */
+    readonly cheatMeals: readonly LocalDay[];
     /** Days with a 请假条, which neither break a streak nor add to it. */
     readonly leave: readonly LocalDay[];
   }>;
   /**
    * What 外卡记录 is worked out from: every 练了 of the member's, and each squadmate's that went
-   * to `squad`; the days the member logged a 健康餐 and a 请假条; and the reactions between the member and
+   * to `squad`; the days the member logged a 健康餐, a 坦白放纵餐 and a 请假条; and the reactions between the member and
    * each squadmate, counted by squadmate.
    */
   recordRows(query: {

@@ -1,3 +1,5 @@
+import { wallClockAt } from '@wildcard/time-zones';
+
 import type { LocalDay } from './check-in.js';
 import type { SportKey } from './sports.js';
 import { addDays } from './weekly-plan.js';
@@ -44,7 +46,7 @@ export interface MemberRecords {
   readonly longestMinutes?: number;
   /** Most days trained in a row; a planned rest day between them neither breaks nor adds. */
   readonly longestStreak?: Streak;
-  /** Most days in a row with a 健康餐. */
+  /** Most days in a row with a 健康餐, as `mealBridges` bridges them. */
   readonly mealStreak?: Streak;
   /** 训练 by the hour of the member's clock they started at, 0 to 23 (`startHour`). */
   readonly hours: readonly number[];
@@ -84,17 +86,10 @@ function weekdayOf(day: LocalDay): number {
  */
 function startHour(training: RecordTraining, timeZone: string): number | undefined {
   if (training.startTime !== undefined) return Number(training.startTime.slice(0, 2));
-  if (training.workoutStartedAt !== undefined) return hourAt(training.workoutStartedAt, timeZone);
+  if (training.workoutStartedAt !== undefined)
+    return wallClockAt(training.workoutStartedAt, timeZone).hour;
   if (training.day !== training.postedDay) return undefined;
-  return hourAt(training.madeAt, timeZone);
-}
-
-/** The hour, 0 to 23, on the wall clock of `timeZone` at `moment`. */
-export function hourAt(moment: Date, timeZone: string): number {
-  const hour = new Intl.DateTimeFormat('en-US', { timeZone, hour: '2-digit', hourCycle: 'h23' })
-    .formatToParts(moment)
-    .find((part) => part.type === 'hour')?.value;
-  return Number(hour ?? 0) % 24;
+  return wallClockAt(training.madeAt, timeZone).hour;
 }
 
 /** Rest days in a row a run outlasts: a whole week without one breaks it, whatever the plan says. */
@@ -166,9 +161,23 @@ export function currentRun(
   return run === undefined ? {} : { streak: run };
 }
 
+/**
+ * The days a meal streak runs through without counting (Tracy, 2026-11-13): a 健康餐 adds a day,
+ * while a day with a 坦白放纵餐 or a 请假条 neither breaks the run nor adds to it, as a planned rest
+ * day does for training. The one rule for the player card's 外卡 and 外卡记录 alike.
+ */
+export function mealBridges(days: {
+  readonly cheatMeals: Iterable<LocalDay>;
+  readonly leave: Iterable<LocalDay>;
+}): ReadonlySet<LocalDay> {
+  return new Set([...days.cheatMeals, ...days.leave]);
+}
+
 export function memberRecords(input: {
   readonly trainings: readonly RecordTraining[];
   readonly healthyMealDays: readonly LocalDay[];
+  /** Days with a 坦白放纵餐: a meal streak runs through them without counting them. */
+  readonly cheatMealDays: readonly LocalDay[];
   /** Days the member's plans made rest days, over the span of their trainings. */
   readonly restDays: ReadonlySet<LocalDay>;
   /** Days with a 请假条: like a rest day, a streak runs through them without counting them. */
@@ -211,7 +220,10 @@ export function memberRecords(input: {
     training.minutes === undefined ? [] : [training.minutes],
   );
   const longestStreak = longestRun(trainedDays, new Set([...input.restDays, ...input.leaveDays]));
-  const mealStreak = longestRun(new Set(input.healthyMealDays), input.leaveDays);
+  const mealStreak = longestRun(
+    new Set(input.healthyMealDays),
+    mealBridges({ cheatMeals: input.cheatMealDays, leave: input.leaveDays }),
+  );
   return {
     trainedDays: trainedDays.size,
     minutes: minutes.reduce((sum, value) => sum + value, 0),

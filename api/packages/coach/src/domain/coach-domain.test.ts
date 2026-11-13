@@ -513,10 +513,10 @@ describe('when the coach wakes', () => {
         ...(keptStreaks === undefined ? {} : { keptStreaks }),
       })?.split('\n\n');
     expect(task({ training: 12, meals: 5 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天、连续吃饭打卡 5 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天、连续健康餐 5 天。',
     );
     expect(task({ training: 12, meals: 1 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天。',
     );
     expect(task({ training: 1 })?.join('\n\n')).not.toContain('连续天数');
     expect(task()?.join('\n\n')).not.toContain('连续天数');
@@ -605,6 +605,32 @@ describe('when the coach wakes', () => {
       '# 新的一天\n2026-11-26，周四。',
       '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
     ]);
+    // A coach that took over is told from whom and when, with the letter it was left, if any.
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        handover: { from: '毛头', day: '2026-11-12', letter: '交给你了，大家爱练腿。' },
+      })
+        ?.split('\n\n')
+        .slice(0, 2),
+    ).toStrictEqual([
+      '# 新的一天\n2026-11-26，周四。',
+      '## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。\n毛头走时给全队留了一封信，大家都看过：\n「交给你了，大家爱练腿。」',
+    ]);
+    expect(
+      taskOf({
+        reason: { kind: 'daily', day: '2026-11-26' },
+        week,
+        files: new Map(),
+        recentNotes: [],
+        handover: { from: '毛头', day: '2026-11-12' },
+      })
+        ?.split('\n\n')
+        .at(1),
+    ).toBe('## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。');
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       section(
@@ -986,7 +1012,15 @@ describe('memory on a waking day', () => {
       files: new Map([['memory.md', body]]),
       recentNotes: [],
       talks: [],
-      yesterday: { day: '2026-10-31', checkIns: week.checkIns },
+      pastDays: {
+        from: '2026-10-26',
+        to: '2026-11-01',
+        quiet: false,
+        checkIns: week.checkIns,
+        boards: [],
+        notes: [],
+        gifts: [],
+      },
     });
     expect(task).toContain('- 第 39 件事');
   });
@@ -1009,6 +1043,16 @@ describe('recall', () => {
   it('finds the lines holding any of the words, in file order, naming each file', () => {
     expect(recallLines(files, { query: '半马 爬山' })).toBe(
       '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
+    );
+  });
+
+  it('finds Chinese worded differently, by most of its two-character pieces', () => {
+    // 「游泳时间」 shares 游泳 with 「周三固定游泳」 but not enough of the rest.
+    expect(recallLines(files, { query: '周日爬山计划' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '花生过敏吗' })).toBe('【people/队员1.md】- 对花生过敏');
+    expect(recallLines(files, { query: '爬山周日' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '游泳时间' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
     );
   });
 

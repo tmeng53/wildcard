@@ -9,6 +9,7 @@ import {
 import { DEFAULT_DAYS_PER_MEMBER, type DaysPerMember } from '../../domain/weekly-goal.js';
 import { InviteCodeUnknownError } from '../../errors.js';
 import type { SquadStore } from '../../ports.js';
+import { needsCaptainsOk } from './join-squad.js';
 
 /** The squad an invite belongs to, before joining. */
 interface InviteSummary {
@@ -35,16 +36,25 @@ export interface PublicInvitePreview extends InviteSummary {
 export interface InvitePreview extends PublicInvitePreview {
   /** True when the viewer is in the squad already. */
   readonly joined: boolean;
+  /** True when opening the invite asks the captain rather than joining (入队需要审核). */
+  readonly needsApproval: boolean;
 }
 
 /** The squad an invite code belongs to, as the join screen shows it. */
 export async function previewInvite(
-  { store }: { readonly store: SquadStore },
+  deps: {
+    readonly store: SquadStore;
+    readonly joinApprovalOn?: (() => Promise<boolean>) | undefined;
+  },
   { inviteCode, viewer }: { readonly inviteCode: InviteCode; readonly viewer: MemberId },
 ): Promise<InvitePreview> {
-  const squad = await store.findByInviteCode(inviteCode);
+  const squad = await deps.store.findByInviteCode(inviteCode);
   if (squad === undefined) throw new InviteCodeUnknownError();
-  return { ...(await withMembers(store, squad)), joined: isMemberOf(squad, viewer) };
+  return {
+    ...(await withMembers(deps.store, squad)),
+    joined: isMemberOf(squad, viewer),
+    needsApproval: await needsCaptainsOk(deps, squad.id),
+  };
 }
 
 /** The squad an invite code belongs to, as the web invite page shows it to anyone. */
