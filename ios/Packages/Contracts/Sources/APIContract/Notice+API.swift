@@ -62,9 +62,20 @@ extension Notice {
         case "goalSuggestion":
             guard let weeks = wire.weeks, let days = wire.daysPerMember else { return nil }
             return .goalSuggestion(GoalSuggestion(weeks: weeks, daysPerMember: days))
+        case "joinRequest", "joinAnswered":
+            return joining(wire)
         default:
             return nil
         }
+    }
+
+    /// Someone asking to join the captain's squad, or the captain's answer to the member.
+    private static func joining(_ wire: Components.Schemas.NoticeEntry) -> Subject? {
+        guard let alert = wire.alert.map({ PushAlert(key: $0.key, args: $0.args) }) else { return nil }
+        if wire.kind == "joinAnswered" {
+            return wire.approved.map { .joinAnswered(alert, approved: $0) }
+        }
+        return wire.joinRequest.flatMap { try? JoinRequestID(wire: $0) }.map { .joinRequest(alert, request: $0) }
     }
 
     private static func weeklyAwards(_ wire: Components.Schemas.NoticeEntry, alert: PushAlert) -> Subject? {

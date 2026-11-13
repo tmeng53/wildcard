@@ -52,6 +52,8 @@ struct RecapTile: View {
 /// A page pushed over 今天.
 enum TodayPage: Hashable {
     case squad
+    /// 小队设置, from 小队's gear or a join request's banner, row or push.
+    case squadPreferences
     case coach(CoachRoute)
     /// The coach's own page, from a tap on the coach on 今天: its cards for the member.
     case coachDeck

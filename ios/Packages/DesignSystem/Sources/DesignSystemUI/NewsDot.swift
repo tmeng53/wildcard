@@ -8,16 +8,33 @@ extension View {
     public func newsDot(_ isShown: Bool) -> some View {
         overlay(alignment: .topTrailing) {
             if isShown {
-                Circle()
-                    .fill(Color(role: .bgBrand, in: .gym))
-                    .frame(width: NewsDotMetrics.dot, height: NewsDotMetrics.dot)
+                NewsDotMark()
                     .padding(NewsDotMetrics.ring)
                     .background(Circle().fill(Color(role: .bgCanvas, in: .gym)))
                     .offset(x: -NewsDotMetrics.dot / 2, y: NewsDotMetrics.dot / 2)
                     .transition(.opacity)
-                    .accessibilityHidden(true)
             }
         }
+    }
+
+    /// Whether the squad card's title wears the news dot after its name: the captain's squad has
+    /// someone waiting to join. The app sets it over 今天.
+    public func squadCardNews(_ isShown: Bool) -> some View {
+        environment(\.squadCardNews, isShown)
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var squadCardNews = false
+}
+
+/// The graphite news dot alone, for a place that sets it in line (after the squad card's name).
+struct NewsDotMark: View {
+    var body: some View {
+        Circle()
+            .fill(Color(role: .bgBrand, in: .gym))
+            .frame(width: NewsDotMetrics.dot, height: NewsDotMetrics.dot)
+            .accessibilityHidden(true)
     }
 }
 

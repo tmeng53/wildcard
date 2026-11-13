@@ -291,6 +291,7 @@ extension MainTabs {
                 }
             )
             .navigationRoot()
+            .squadCardNews(squad.waitingRequests > 0)
             .onAppear {
                 today.openTeammate = {
                     teammateOnHome = true
@@ -303,12 +304,16 @@ extension MainTabs {
                 case .squad:
                     SquadSettingsView(
                         model: squad, picked: land(on:coveredAt:), openCoach: { todayPages.append(.coach($0)) },
+                        openPreferences: { todayPages.append(.squadPreferences) },
                         revealing: $squadRevealing,
                         openTeammate: { (teammateOnHome, teammate) = (false, squadCard(of: $0)) },
                         pastRecaps: { PastRecaps(shelf: recap) }
                     )
                     .environment(\.sceneTheme, squad.scene)
                     .task { await recap.refreshPast() }
+                case .squadPreferences:
+                    SquadPreferencesView(model: squad)
+                        .environment(\.sceneTheme, squad.scene)
                 case .coach(let route):
                     CoachPage(
                         route: route, model: squad, pages: coachPages, note: today.coachLine,

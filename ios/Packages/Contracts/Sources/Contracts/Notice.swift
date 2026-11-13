@@ -42,6 +42,11 @@ public struct Notice: Hashable, Sendable, Identifiable {
         /// The member's squad trained over its weekly goal some weeks in a row, so they, its
         /// captain, are suggested a higher one.
         case goalSuggestion(GoalSuggestion)
+        /// Someone asked to join the squad the member captains, in the words its push was put in
+        /// (who asked); the captain answers on 小队设置.
+        case joinRequest(PushAlert, request: JoinRequestID)
+        /// The captain answered the member's request to join, in the words its push was put in.
+        case joinAnswered(PushAlert, approved: Bool)
     }
 
     public let id: NoticeID
