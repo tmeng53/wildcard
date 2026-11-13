@@ -1,19 +1,17 @@
 import Foundation
 
-/// The app opens in the phone's language when it is one the app speaks: English on a phone set to
-/// English, Traditional Chinese on a phone set to it, and Simplified Chinese on any other, until
-/// the member picks a language (`AppLanguage.pick`, or iOS Settings;
+/// The app opens in Simplified Chinese even on a phone set to English, or in Traditional Chinese
+/// on a phone set to it, until the member picks a language (`AppLanguage.pick`, or iOS Settings;
 /// both write the app's own `AppleLanguages`). To undo it, delete this file and its call in
 /// `Launch`.
 enum DefaultLanguage {
     private static let key = "AppleLanguages"
 
-    /// The language a new install opens in: English when the phone's own language is (`en…`),
-    /// Traditional Chinese when it is (`zh-Hant…`, or Taiwan's, Hong Kong's and Macau's `zh-TW`,
-    /// `zh-HK`, `zh-MO`), Simplified Chinese for any other.
+    /// The language a new install opens in: Traditional Chinese when the phone's own language is
+    /// (`zh-Hant…`, or Taiwan's, Hong Kong's and Macau's `zh-TW`, `zh-HK`, `zh-MO`), Simplified
+    /// Chinese for any other.
     static func identifier(phone: [String]) -> String {
         guard let first = phone.first else { return "zh-Hans" }
-        if first == "en" || first.hasPrefix("en-") { return "en" }
         let traditional = first.hasPrefix("zh-Hant") || ["zh-TW", "zh-HK", "zh-MO"].contains { first.hasPrefix($0) }
         return traditional ? "zh-Hant" : "zh-Hans"
     }
