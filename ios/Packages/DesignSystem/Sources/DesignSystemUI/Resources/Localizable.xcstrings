@@ -3769,6 +3769,44 @@
         }
       }
     },
+    "starRating %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld stars"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 颗星"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 顆星"
+          }
+        }
+      }
+    },
+    "星星：软糖星，点几颗就是几分": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stars: jelly stars, tap to rate"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "星星：軟糖星，點幾顆就是幾分"
+          }
+        }
+      }
+    },
     "streak.training %lld": {
       "localizations": {
         "en": {

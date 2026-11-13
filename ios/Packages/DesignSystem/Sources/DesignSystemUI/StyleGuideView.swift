@@ -24,6 +24,7 @@ public struct StyleGuideView: View {
                 ScenePickGuide()
                 KindSection()
                 StatusSection()
+                StarGuide()
                 ListSection()
                 StageSection()
                 MotionSection()
