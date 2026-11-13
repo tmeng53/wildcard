@@ -129,6 +129,13 @@ func planLengthIsTheAPIs(schema: String) throws {
 
 /// 补打卡's reach is the API's `BACKFILL_DAYS`, which the OpenAPI document only states in words,
 /// so the test reads the rule's own source.
+@Test(arguments: ["healthy", "tasty"])
+func mealScoresAreTheAPIs(field: String) throws {
+    let score = try property(field, of: "MealRating")
+    #expect(score?.minimum == Double(MealRating.scores.lowerBound))
+    #expect(score?.maximum == Double(MealRating.scores.upperBound))
+}
+
 @Test func aPostReachesBackAsFarAsTheAPIAllows() throws {
     let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
