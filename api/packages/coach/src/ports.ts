@@ -77,6 +77,15 @@ export type CoachMemberFacts = (input: {
   readonly weekStart: string;
 }) => Promise<readonly MemberFacts[]>;
 
+/**
+ * A member's streaks still going, as their squad sees them: days trained in a row and days in a
+ * row with a meal, each left out when none is going. A 请假条 day neither breaks nor adds to one.
+ */
+export type CoachStreaks = (input: {
+  readonly squad: string;
+  readonly member: string;
+}) => Promise<{ readonly training?: number; readonly meals?: number }>;
+
 /** A meme in use now, from the meme library: what it means and where it came from. */
 export interface CoachMeme {
   readonly phrase: string;

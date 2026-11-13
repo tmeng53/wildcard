@@ -39,6 +39,7 @@ import type {
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachStreaks,
   CoachMemes,
   CoachWeather,
   WeatherWords,
@@ -183,6 +184,8 @@ export interface CoachWakesDependencies {
   readonly photoUrls: CoachPhotoUrls;
   /** Member stats and plans the coach looks up. */
   readonly memberFacts: CoachMemberFacts;
+  /** The streaks a 请假条 kept going, which its wake tells as a fact. */
+  readonly streaks: CoachStreaks;
   /** The clock of each squad's daily wake and of the day it tells the coach. */
   readonly timeZonesAt: CoachTimeZones;
   /** Squads everyone left, which the coach never wakes for, whoever is hired there. */
@@ -630,6 +633,14 @@ async function think(
     wake.reason.kind === 'checkIn' && author !== undefined
       ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
       : undefined;
+  // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
+  const { reason } = wake;
+  const leave =
+    reason.kind === 'checkIn' ? week.checkIns.find(({ id }) => id === reason.checkIn) : undefined;
+  const keptStreaks =
+    leave?.kind === 'disclaimer'
+      ? await deps.streaks({ squad: wake.squad, member: leave.member })
+      : undefined;
   const task = taskOf({
     reason: wake.reason,
     week,
@@ -654,6 +665,7 @@ async function think(
           },
         }),
     ...(gifting === undefined ? {} : { gifting }),
+    ...(keptStreaks === undefined ? {} : { keptStreaks }),
     recentEmoji:
       wake.reason.kind === 'checkIn'
         ? await deps.stores.replies.recent({

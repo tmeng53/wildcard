@@ -144,6 +144,26 @@ export function memoryBlock(files: ReadonlyMap<string, string | undefined>): str
 }
 
 /**
+ * What a 请假条 kept going, as a fact: a streak runs through a day with one, neither breaking nor
+ * counting it. Nothing when no streak of two days or more is going.
+ */
+function keptStreakSection(
+  kept: { readonly training?: number; readonly meals?: number } | undefined,
+): string[] {
+  const parts = [
+    ...(kept?.training !== undefined && kept.training >= 2
+      ? [`连续训练 ${String(kept.training)} 天`]
+      : []),
+    ...(kept?.meals !== undefined && kept.meals >= 2
+      ? [`连续吃饭打卡 ${String(kept.meals)} 天`]
+      : []),
+  ];
+  return parts.length === 0
+    ? []
+    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。有了这条，${parts.join('、')}都没断。`];
+}
+
+/**
  * The task for one wake: what happened, the files there are, and what the coach may do this
  * time. `undefined` when there is nothing to wake for (the check-in left the squad's week).
  */
@@ -161,6 +181,7 @@ export function taskOf({
   backAgain = false,
   challenge,
   gifting,
+  keptStreaks,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -191,6 +212,8 @@ export function taskOf({
   };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
+  /** On a 请假条's wake, its author's streaks it kept going. */
+  readonly keptStreaks?: { readonly training?: number; readonly meals?: number };
 }): string | undefined {
   const filesLine = memoryBlock(files);
   const whoIsWho = rosterText(week);
@@ -206,6 +229,7 @@ export function taskOf({
     return [
       '# 有人打卡',
       checkInBlock(checkIn, { roster, heading: '## 这条打卡：' }),
+      ...keptStreakSection(keptStreaks),
       ...(challenge === undefined ? [] : [challengeSection(challenge)]),
       ...occasion,
       whoIsWho,

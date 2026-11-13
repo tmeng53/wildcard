@@ -135,6 +135,7 @@ describe('memberRecords', () => {
     ],
     healthyMealDays: ['2026-11-01', '2026-11-02', '2026-11-03', '2026-11-05'],
     restDays: new Set(['2026-11-04']),
+    leaveDays: new Set(),
     timeZone: NEW_YORK,
   });
 
@@ -147,6 +148,21 @@ describe('memberRecords', () => {
   it('bridges the planned rest day in the training streak but not the meal streak', () => {
     expect(records.longestStreak).toEqual({ days: 3, from: '2026-11-02', to: '2026-11-05' });
     expect(records.mealStreak).toEqual({ days: 3, from: '2026-11-01', to: '2026-11-03' });
+  });
+
+  it('runs both streaks through a 请假条 day without counting it', () => {
+    const withLeave = memberRecords({
+      trainings: [
+        training({ day: '2026-11-02', hourUtc: 0, sport: 'run' }),
+        training({ day: '2026-11-04', hourUtc: 0, sport: 'run' }),
+      ],
+      healthyMealDays: ['2026-11-02', '2026-11-04'],
+      restDays: new Set(),
+      leaveDays: new Set(['2026-11-03']),
+      timeZone: NEW_YORK,
+    });
+    expect(withLeave.longestStreak).toEqual({ days: 2, from: '2026-11-02', to: '2026-11-04' });
+    expect(withLeave.mealStreak).toEqual({ days: 2, from: '2026-11-02', to: '2026-11-04' });
   });
 
   it('puts a training without a start on the hour it was posted, leaving out 补打卡', () => {
@@ -182,6 +198,7 @@ describe('memberRecords', () => {
       ],
       healthyMealDays: [],
       restDays: new Set(),
+      leaveDays: new Set(),
       timeZone: NEW_YORK,
     });
     expect(started.hours[7]).toBe(1);
@@ -207,6 +224,7 @@ describe('squadRecords', () => {
     ],
     healthyMealDays: [],
     restDays: new Set(),
+    leaveDays: new Set(),
     timeZone: NEW_YORK,
   });
   const cocoTrainings = [
@@ -217,6 +235,7 @@ describe('squadRecords', () => {
     trainings: cocoTrainings,
     healthyMealDays: [],
     restDays: new Set(),
+    leaveDays: new Set(),
     timeZone: NEW_YORK,
   });
 
@@ -254,6 +273,7 @@ describe('squadRecords', () => {
       trainings,
       healthyMealDays: [],
       restDays: new Set(),
+      leaveDays: new Set(),
       timeZone: NEW_YORK,
     });
     expect(busy.sports.map((sport) => sport.sport)).not.toContain('run');

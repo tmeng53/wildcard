@@ -171,6 +171,8 @@ export function memberRecords(input: {
   readonly healthyMealDays: readonly LocalDay[];
   /** Days the member's plans made rest days, over the span of their trainings. */
   readonly restDays: ReadonlySet<LocalDay>;
+  /** Days with a 请假条: like a rest day, a streak runs through them without counting them. */
+  readonly leaveDays: ReadonlySet<LocalDay>;
   readonly timeZone: string;
 }): MemberRecords {
   const trainedDays = new Set(input.trainings.map((training) => training.day));
@@ -208,8 +210,8 @@ export function memberRecords(input: {
   const minutes = input.trainings.flatMap((training) =>
     training.minutes === undefined ? [] : [training.minutes],
   );
-  const longestStreak = longestRun(trainedDays, input.restDays);
-  const mealStreak = longestRun(new Set(input.healthyMealDays));
+  const longestStreak = longestRun(trainedDays, new Set([...input.restDays, ...input.leaveDays]));
+  const mealStreak = longestRun(new Set(input.healthyMealDays), input.leaveDays);
   return {
     trainedDays: trainedDays.size,
     minutes: minutes.reduce((sum, value) => sum + value, 0),
