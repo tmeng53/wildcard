@@ -397,9 +397,13 @@
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
     const posed = leveled(poses, member.level);
-    const { matrices, opacities } = layout(posed);
+    const { matrices, opacities, carriers } = layout(posed);
     let svg = '';
     const draw = (i, kept) => {
+      if (PARTS[i].rope) {
+        svg += hung(member.art[i], PARTS[i].rope, posed[i].opacity, carriers, opacities);
+        return;
+      }
       const art =
         PARTS[i].elbow && posed[i].bend && member.art[i]
           ? bent(member.art[i], PARTS[i], posed[i].bend)
@@ -420,6 +424,23 @@
       draw(i, TUCKS[i]?.over);
     });
     return svg;
+  }
+
+  // A rope's art, straight lines at rest, hung between where its two ends are now (AvatarDomain's
+  // Rope): it sags while they are closer than its length and pulls straight at it.
+  function hung(art, rope, own, carriers, opacities) {
+    const [i, j] = [INDEX[rope.from.part], INDEX[rope.to.part]];
+    const opacity = own * Math.min(opacities[i], opacities[j]);
+    if (!art || !(opacity > 0)) return '';
+    const at = ([a, b, c, d, e, f], [x, y]) => [a * x + c * y + e, b * x + d * y + f];
+    const [from, to] = [at(carriers[i], rope.from.at), at(carriers[j], rope.to.at)];
+    const rest = Math.hypot(rope.to.at[0] - rope.from.at[0], rope.to.at[1] - rope.from.at[1]);
+    const [length, reach] = [rest + rope.slack, Math.hypot(to[0] - from[0], to[1] - from[1])];
+    const sag = reach > 0 && reach < length ? Math.sqrt((3 * reach * (length - reach)) / 8) : 0;
+    const control = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2 + 2 * sag];
+    const pt = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+    const d = `M ${pt(from)} Q ${pt(control)} ${pt(to)}`;
+    return `<g opacity="${opacity.toFixed(3)}">${art.replace(/ d="[^"]*"/g, ` d="${d}"`)}</g>`;
   }
 
   window.WildcardAvatar = { pose, perform, figure, bent, layout };

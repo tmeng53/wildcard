@@ -78,10 +78,17 @@
     { "id": "food2", "parent": "propR", "pivot": [170.4, 264], "opacity": 0,
       "layers": [{ "slot": "food", "art": "food2" }] },
     { "id": "chin", "parent": "head", "pivot": [120, 210], "layers": [{ "slot": "body", "art": "chin" }] },
+    { "id": "petTail", "parent": "propFeet", "pivot": [214, 297], "layers": [{ "slot": "prop", "art": "petTail" }] },
+    { "id": "pet", "parent": "propFeet", "pivot": [206, 311], "layers": [{ "slot": "prop", "art": "pet" }] },
+    { "id": "petHead", "parent": "propFeet", "pivot": [206, 292], "layers": [{ "slot": "prop", "art": "petHead" }] },
     { "id": "propL", "parent": "armL", "pivot": [69.6, 264], "layers": [{ "slot": "prop", "art": "propL" }] },
     { "id": "gripL", "parent": "propL", "pivot": [69.6, 264], "layers": [{ "slot": "prop", "art": "gripL", "hand": "armL" }] },
     { "id": "propR", "parent": "armR", "pivot": [170.4, 264],
       "layers": [{ "slot": "prop", "art": "propR" }] },
+    {
+      "id": "leash", "pivot": [184.2, 287], "layers": [{ "slot": "prop", "art": "leash" }],
+      "rope": { "from": { "part": "propR", "at": [171, 279.4] }, "to": { "part": "petHead", "at": [197.4, 294.6] }, "slack": 6 }
+    },
     { "id": "gripR", "parent": "propR", "pivot": [170.4, 264],
       "layers": [{ "slot": "prop", "art": "grip", "hand": "armR" }] },
     { "id": "heart", "parent": "torso", "pivot": [120, 246], "opacity": 0, "layers": [{ "art": "heart" }] },

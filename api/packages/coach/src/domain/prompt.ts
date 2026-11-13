@@ -10,12 +10,13 @@ import {
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
 import { fileRole } from './memory.js';
-import { REPLY_LIMIT } from './reply.js';
+import { LINE_LIMITS } from './line-limits.js';
 import type { CoachSettings } from './settings.js';
 import {
   addressedWords,
   checkInBlock,
   checkInTitle,
+  dayWords,
   languageOf,
   rosterOf,
   rosterText,
@@ -30,12 +31,6 @@ import type { WakeReason } from './wake.js';
 // speaks. The instructions are the same for every wake of a coach and come first, and each task
 // holds only what changes, so the model's provider can cache that beginning (OpenAI does for a
 // beginning of 1024 tokens or more) and charge less for it.
-
-/** The longest 战术板 line, in characters; the database checks the same. */
-export const NOTE_LIMIT = 60;
-
-/** The longest line a gift comes with, in characters; the database checks the same. */
-export const GIFT_LINE_LIMIT = 60;
 
 /** On a daily wake, what the coach may give: the pool, and who may get one this week. */
 export interface GiftOptions {
@@ -63,8 +58,8 @@ export function instructionsOf(
  */
 function wakesOf(wakes: string): string {
   return wakes
-    .replaceAll('{replyLimit}', String(REPLY_LIMIT))
-    .replaceAll('{noteLimit}', String(NOTE_LIMIT));
+    .replaceAll('{replyLimit}', String(LINE_LIMITS.reply.chinese))
+    .replaceAll('{noteLimit}', String(LINE_LIMITS.note.chinese));
 }
 
 /**
@@ -150,6 +145,26 @@ export function memoryBlock(files: ReadonlyMap<string, string | undefined>): str
 }
 
 /**
+ * The streaks a 请假条's author has going, as a fact: a streak runs through a day with one, neither breaking nor
+ * counting it. Nothing when no streak of two days or more is going.
+ */
+function keptStreakSection(
+  kept: { readonly training?: number; readonly meals?: number } | undefined,
+): string[] {
+  const parts = [
+    ...(kept?.training !== undefined && kept.training >= 2
+      ? [`连续训练 ${String(kept.training)} 天`]
+      : []),
+    ...(kept?.meals !== undefined && kept.meals >= 2
+      ? [`连续吃饭打卡 ${String(kept.meals)} 天`]
+      : []),
+  ];
+  return parts.length === 0
+    ? []
+    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。现在${parts.join('、')}。`];
+}
+
+/**
  * The task for one wake: what happened, the files there are, and what the coach may do this
  * time. `undefined` when there is nothing to wake for (the check-in left the squad's week).
  */
@@ -167,6 +182,8 @@ export function taskOf({
   backAgain = false,
   challenge,
   gifting,
+  keptStreaks,
+  setChallenges,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
@@ -197,6 +214,13 @@ export function taskOf({
   };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
+  /** On a 请假条's wake, its author's streaks it kept going. */
+  readonly keptStreaks?: { readonly training?: number; readonly meals?: number };
+  /**
+   * On a daily wake, the challenge set for each member today, by member id, before the coach
+   * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
+   */
+  readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
   const filesLine = memoryBlock(files);
   const whoIsWho = rosterText(week);
@@ -212,6 +236,7 @@ export function taskOf({
     return [
       '# 有人打卡',
       checkInBlock(checkIn, { roster, heading: '## 这条打卡：' }),
+      ...keptStreakSection(keptStreaks),
       ...(challenge === undefined ? [] : [challengeSection(challenge)]),
       ...occasion,
       whoIsWho,
@@ -301,8 +326,26 @@ export function taskOf({
     filesLine,
     notes,
     noteSection,
+    ...(setChallenges === undefined ? [] : [setChallengesBlock(setChallenges, roster)]),
     ...giftBlock(gifting, roster),
   ].join('\n\n');
+}
+
+/** Today's challenges, set already, which go under each member's note. */
+function setChallengesBlock(
+  set: ReadonlyMap<string, Challenge>,
+  roster: ReadonlyMap<string, string>,
+): string {
+  const heading = '## 今天的挑战（已经定好，单独一张卡给他）';
+  if (set.size === 0) return `${heading}\n今天没有挑战。`;
+  return [
+    heading,
+    ...[...set].map(
+      ([member, challenge]) =>
+        `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
+    ),
+    '便条别和他的挑战拧着，也不用把挑战再说一遍。',
+  ].join('\n');
 }
 
 /** The language a line to one member is written in, as its own section. */
@@ -359,8 +402,12 @@ function occasionBlock(occasions: readonly string[], backAgain: boolean): string
 export interface YesterdayFacts {
   readonly day: string;
   readonly checkIns: readonly WeekCheckIn[];
-  /** The challenges the coach set that day and what each member said to them. */
+  /**
+   * The challenges the coach set over the last week up to that day, oldest first, and what each
+   * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
+   */
   readonly challenges?: readonly {
+    readonly day: string;
     readonly member: string;
     readonly challenge: Challenge;
     readonly answer: ChallengeAnswer | undefined;
@@ -398,7 +445,7 @@ function yesterdayBlocks(
           ),
         ].join('\n\n');
   if (challenges.length === 0) return [posts];
-  const lines = challenges.map(({ member, challenge, answer, reason, completion }) => {
+  const lines = challenges.map(({ day: on, member, challenge, answer, reason, completion }) => {
     const how =
       completion !== undefined
         ? '完成了'
@@ -409,9 +456,9 @@ function yesterdayBlocks(
               ? '没接'
               : `没接，理由：「${reason}」（只告诉了你）`
             : '没回应';
-    return `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
+    return `- ${dayWords(on)} ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」：${how}`;
   });
-  return [posts, ['## 昨天的挑战', ...lines].join('\n')];
+  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
 /** The last day's talk, for the daily wake to remember from. */

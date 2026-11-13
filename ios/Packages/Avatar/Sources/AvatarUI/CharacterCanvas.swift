@@ -8,8 +8,9 @@ public struct FigureDrawing {
     public let width: Double
     public let height: Double
     let parts: [[DrawableShape]]
-    /// Each part's art as read, kept for an arm, whose paths are rebuilt bent each frame it bends.
-    let bendable: [[ArtShape]?]
+    /// Each part's art as read, kept for an arm and a rope, whose paths are rebuilt each frame
+    /// the arm bends or the rope hangs.
+    let reshaped: [[ArtShape]?]
     /// For an arm tucked behind its body at its seam (`Figure.Part.tuck`): the clip it is
     /// drawn in over the body, and the clip it is drawn in under it, in the arm's own coordinates.
     let tucks: [(over: Path, under: Path)?]
@@ -27,7 +28,9 @@ public struct FigureDrawing {
         width = figure.width
         height = figure.height
         parts = figure.parts.map { part in Self.shapes(part.art.flatMap(\.shapes)) }
-        bendable = figure.parts.map { part in part.elbow.map { _ in part.art.flatMap(\.shapes) } }
+        reshaped = figure.parts.map { part in
+            part.elbow == nil && part.rope == nil ? nil : part.art.flatMap(\.shapes)
+        }
         let far = figure.width + figure.height
         tucks = figure.parts.map { part in
             part.tuck.map { tuck in
@@ -42,14 +45,15 @@ public struct FigureDrawing {
         }
     }
 
-    /// A part's shapes as `placement` draws them: bent first when it is a bent arm.
+    /// A part's shapes as `placement` draws them: bent first when it is a bent arm, hung when it
+    /// is a rope.
     func shapes(_ part: Int, _ placement: Placement) -> [DrawableShape] {
-        guard let bend = placement.bend, let art = bendable[part] else { return parts[part] }
+        guard placement.bend != nil || placement.rope != nil, let art = reshaped[part] else { return parts[part] }
         return Self.shapes(
             art.map { shape in
-                var bent = shape
-                bent.path = bend.apply(to: shape.path)
-                return bent
+                var shaped = shape
+                shaped.path = placement.shaped(shape.path)
+                return shaped
             })
     }
 
@@ -57,7 +61,8 @@ public struct FigureDrawing {
     /// fits a figure wearing one piece only. Nil when nothing shows.
     public func bounds(_ placements: [Placement]) -> CGRect? {
         var covered: CGRect?
-        for (shapes, placement) in zip(parts, placements) where placement.opacity > 0 {
+        for (index, placement) in placements.enumerated() where placement.opacity > 0 {
+            let shapes = placement.rope == nil ? parts[index] : self.shapes(index, placement)
             let transform = CGAffineTransform(placement.transform)
             for shape in shapes {
                 let width = shape.stroke?.style.lineWidth ?? 0

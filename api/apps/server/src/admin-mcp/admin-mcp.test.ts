@@ -81,6 +81,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -190,6 +192,8 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          placeRatings: placeRatingsOn(db),
+          savedPlaces: savedPlacesOn(db),
           weather: weatherOn(db),
           scenes: scenesOn(db),
           switches: switchesOn(db),
@@ -1225,7 +1229,7 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('puts an unlock rule and logs it, refusing a prop and a sport the list lacks', async () => {
+  it('puts an unlock rule and logs it, refusing a sport the list lacks', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
     const call = async (name: string, args: Record<string, unknown> = {}) => {
@@ -1254,14 +1258,21 @@ describe('the admin MCP server', () => {
       sports: ['tennis', 'pickleball', 'squash'],
       after: 3,
     });
-    const props = await call('put_unlock_rule', {
+    // Most props need no rule, but one may: the dogs on a leash open after a 遛狗.
+    const dog = await call('put_unlock_rule', {
       kind: 'prop',
-      id: 'racket',
-      sports: ['tennis'],
+      id: 'testdog',
+      sports: ['dogWalk'],
       after: 1,
     });
-    // Props need no rule: every member holds every one.
-    expect(props.isError).toBe(true);
+    expect(dog.isError).toBe(false);
+    expect(
+      Rules.parse(JSON.parse(dog.text)).rules.find(({ id }) => id === 'testdog'),
+    ).toMatchObject({
+      kind: 'prop',
+      sports: ['dogWalk'],
+      after: 1,
+    });
     const refused = await call('put_unlock_rule', {
       kind: 'store',
       id: 'deuce',
@@ -1285,6 +1296,11 @@ describe('the admin MCP server', () => {
           sports: ['tennis', 'pickleball', 'squash'],
           after: 3,
         },
+      },
+      {
+        version: 1,
+        tool: 'put_unlock_rule',
+        arguments: { kind: 'prop', id: 'testdog', sports: ['dogWalk'], after: 1 },
       },
     ]);
     await client.close();

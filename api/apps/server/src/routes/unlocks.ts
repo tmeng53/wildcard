@@ -236,8 +236,9 @@ export function unlocks(deps: {
       'Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in ' +
       'their sports, counting only those made since the rule was added; pieces a squad’s coach ' +
       'gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a ' +
-      'rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member ' +
-      'unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the ' +
+      'rule) are everyone’s and never listed in `unlocks` or `pieces`; a prop is listed once a ' +
+      'rule opened it (such as a dog on a leash) or when unlocked before every prop was ' +
+      'everyone’s. An unlock is never taken back. `shelf` is the ' +
       '商店街 as the member sees it now, each store and switch applied.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,

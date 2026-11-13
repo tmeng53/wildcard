@@ -90,13 +90,17 @@ public struct Rig: Hashable, Sendable {
         /// Where a sleeve on this arm is sewn to the body: its art shows only in front of it
         /// (`Tuck`). Nil for any other part.
         public var seam: Seam?
+        /// For a rope, such as a leash: the two points it hangs between. Its art is straight lines
+        /// from one to the other at rest, redrawn hanging between them as they move (`Rope`). A
+        /// rope has no parent; it shows as much as the less opaque of its ends.
+        public var rope: RopeEnds?
 
         public init(
             id: PartID, parent: PartID? = nil, pivot: Point, opacity: Double = 1, layers: [Layer] = [],
-            elbow: Elbow? = nil, seam: Seam? = nil
+            elbow: Elbow? = nil, seam: Seam? = nil, rope: RopeEnds? = nil
         ) {
             (self.id, self.parent, self.pivot, self.opacity, self.layers) = (id, parent, pivot, opacity, layers)
-            (self.elbow, self.seam) = (elbow, seam)
+            (self.elbow, self.seam, self.rope) = (elbow, seam, rope)
         }
     }
 
@@ -155,7 +159,12 @@ public struct Rig: Hashable, Sendable {
                     id: part.id, parent: part.parent, pivot: part.pivot.point,
                     opacity: part.opacity ?? 1, layers: part.layers ?? [],
                     elbow: part.elbow.map { Elbow(point: $0.point.point, hand: $0.hand.point) },
-                    seam: part.seam.map { Seam(top: $0.top.point, armpit: $0.armpit.point) })
+                    seam: part.seam.map { Seam(top: $0.top.point, armpit: $0.armpit.point) },
+                    rope: part.rope.map { rope in
+                        RopeEnds(
+                            start: Anchor(part: rope.start.part, point: rope.start.point.point),
+                            end: Anchor(part: rope.end.part, point: rope.end.point.point), slack: rope.slack)
+                    })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
             skin: try file.skin.map { skin throws(AvatarError) in
@@ -185,6 +194,10 @@ private struct RigFile: Decodable {
                 "layers": .array(.object(["slot": .value, "art": .value, "hand": .value])),
                 "elbow": .object(["at": .value, "hand": .value]),
                 "seam": .object(["top": .value, "armpit": .value]),
+                "rope": .object([
+                    "from": .object(["part": .value, "at": .value]), "to": .object(["part": .value, "at": .value]),
+                    "slack": .value,
+                ]),
             ])),
     ])
 
@@ -206,6 +219,27 @@ private struct RigFile: Decodable {
         let layers: [Rig.Layer]?
         let elbow: ElbowFile?
         let seam: SeamFile?
+        let rope: RopeFile?
+    }
+}
+
+/// `{"from": {"part": "propR", "at": [x, y]}, "to": {"part": "petHead", "at": [x, y]}, "slack": 6}`.
+private struct RopeFile: Decodable {
+    let start: RopeAnchorFile
+    let end: RopeAnchorFile
+    let slack: Double
+
+    enum CodingKeys: String, CodingKey {
+        case start = "from", end = "to", slack
+    }
+}
+
+private struct RopeAnchorFile: Decodable {
+    let part: PartID
+    let point: Pair
+
+    enum CodingKeys: String, CodingKey {
+        case part, point = "at"
     }
 }
 

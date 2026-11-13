@@ -77,6 +77,15 @@ export type CoachMemberFacts = (input: {
   readonly weekStart: string;
 }) => Promise<readonly MemberFacts[]>;
 
+/**
+ * A member's streaks still going, as their squad sees them: days trained in a row and days in a
+ * row with a meal, each left out when none is going. A 请假条 day neither breaks nor adds to one.
+ */
+export type CoachStreaks = (input: {
+  readonly squad: string;
+  readonly member: string;
+}) => Promise<{ readonly training?: number; readonly meals?: number }>;
+
 /** A meme in use now, from the meme library: what it means and where it came from. */
 export interface CoachMeme {
   readonly phrase: string;
@@ -88,14 +97,23 @@ export interface CoachMeme {
 export type CoachMemes = () => Promise<readonly CoachMeme[]>;
 
 /**
- * Today's weather where each of these members is, in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`), for
- * those whose place is known. The model reads only the weather, never where they are.
+ * A member's weather as the coach reads it: in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`),
+ * and the city their phone named, when it could.
+ */
+export interface WeatherWords {
+  readonly words: string;
+  readonly city?: string;
+}
+
+/**
+ * Today's weather where each of these members is, for those whose place is known. The model
+ * reads the weather and the city, never the place itself.
  */
 export type CoachWeather = (input: {
   readonly members: readonly string[];
   /** The day of the wake, `YYYY-MM-DD`. */
   readonly day: string;
-}) => Promise<ReadonlyMap<string, string>>;
+}) => Promise<ReadonlyMap<string, WeatherWords>>;
 
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
@@ -502,6 +520,9 @@ export type CoachTimeZones = (
   squads: readonly SquadId[],
   moment: Date,
 ) => Promise<(squad: SquadId) => string>;
+
+/** Which of these squads ended (everyone left): the coach never wakes for one. */
+export type CoachEndedSquads = (squads: readonly SquadId[]) => Promise<ReadonlySet<SquadId>>;
 
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {

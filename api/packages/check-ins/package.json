@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@wildcard/errors": "workspace:*",
+    "@wildcard/place-ids": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",
     "@wildcard/time-zones": "workspace:*",
     "@wildcard/typed-text": "workspace:*",

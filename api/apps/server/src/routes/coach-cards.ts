@@ -3,7 +3,6 @@ import {
   CARDS_DAYS,
   CoachCardId,
   CoachCardKind,
-  STACK_HOURS,
   SquadId as CoachSquadId,
   cardKey,
   type Coach,
@@ -13,6 +12,7 @@ import {
 } from '@wildcard/coach';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
+import { wallClockAt } from '@wildcard/time-zones';
 import { MemberId as UnlockMember, type CoachGift, type CoachGifts } from '@wildcard/unlocks';
 
 import { bodyVersion } from '../body-version.js';
@@ -83,7 +83,8 @@ const CoachCardsBody = z
   .strictObject({
     version: bodyVersion(1),
     stack: z.array(CoachCardBody).meta({
-      description: `The cards not seen yet from the last ${String(STACK_HOURS)} hours, oldest first: the stack.`,
+      description:
+        'The cards not seen yet from today on the squad’s clock, oldest first: the stack.',
     }),
     earlier: z.array(CoachCardBody).meta({
       description: `Every other card from the last ${String(CARDS_DAYS)} days, newest first: 以前.`,
@@ -201,7 +202,7 @@ export function coachCards(deps: {
       `${String(CARDS_DAYS)} days back: its 战术板 lines, their morning notes and challenges once ` +
       'delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins ' +
       'and replies show only under the posts. The unseen ones from ' +
-      `the last ${String(STACK_HOURS)} hours from the coach the squad has now are the stack; ` +
+      'today (on the squad’s clock) from the coach the squad has now are the stack; ' +
       'the rest, a coach’s that left too, are 以前.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -254,7 +255,7 @@ export function coachCards(deps: {
       'The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, ' +
       `${String(EARLIER_PAGE)} at a time: pass the reply’s \`next\` as \`cursor\` for the page after ` +
       'it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older ' +
-      `than ${String(STACK_HOURS)} hours); each card says whether it was seen. \`challenges\` keeps ` +
+      'than today); each card says whether it was seen. `challenges` keeps ' +
       'only the challenges, every one since the caller joined, those in the stack too (挑战, ' +
       'Tracy 2026-11-09).',
     security: [{ bearer: [] }],
@@ -335,16 +336,23 @@ export function coachCards(deps: {
     );
     const speaker = speakerIn((coach) => named(coach, squadId));
     const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
-    const fresh = now.getTime() - STACK_HOURS * 60 * 60_000;
+    // Only today's stack (Tracy, 2026-11-12): a card left unseen yesterday waits in 以前, so the
+    // stack never piles up. A card is today's by the squad day it is for, as the coach wrote it:
+    // a morning note reaches a member on their own clock, which may still be the squad's
+    // yesterday or already its tomorrow.
+    const zone = (await deps.squads.timeZonesAt([squad.id], now))(squad.id);
+    const today = wallClockAt(now, zone).day;
     return (
       [
         ...cards.map((card) => ({
           at: card.at,
+          day: card.day,
           coach: card.coach.id,
           wire: wireCard(card, speaker),
         })),
         ...gifts.map((gift) => ({
           at: gift.givenAt,
+          day: wallClockAt(gift.givenAt, zone).day,
           coach: gift.coach,
           wire: wireGift(gift, { coach: byId.get(gift.coach), speaker }),
         })),
@@ -354,7 +362,7 @@ export function coachCards(deps: {
           const seen = seenKeys.has(key);
           // A coach that left goes to 以前 whole, its boxed gifts still opening there (Tracy,
           // 2026-11-09): the stack is the coach the squad has now.
-          const stacked = card.coach === hired?.coach.id && card.at.getTime() >= fresh && !seen;
+          const stacked = card.coach === hired?.coach.id && card.day >= today && !seen;
           return { ...card, key, seen, stacked };
         })
         // Stable, so cards of one moment keep the store's order (a note before its challenge).

@@ -108,7 +108,8 @@ final class FeedUITests: XCTestCase {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let strip = app.descendants(matching: .any).matching(identifier: "post.strip").firstMatch
+        let strip = app.descendants(matching: .any).matching(identifier: "post.strip")
+            .containing(.any, identifier: "strip.duration").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0
@@ -124,7 +125,7 @@ final class FeedUITests: XCTestCase {
         assertClearOfTheTabBar(strip, in: app)
         // The strip opens the ticket's stub, across the whole card.
         let card = app.descendants(matching: .any).matching(identifier: "feed.post")
-            .containing(.any, identifier: "post.strip").firstMatch
+            .containing(.any, identifier: "strip.duration").firstMatch
         XCTAssertEqual(strip.frame.minX, card.frame.minX, accuracy: 1, "the 成绩条 doesn't reach the card's left edge")
         XCTAssertEqual(strip.frame.maxX, card.frame.maxX, accuracy: 1, "the 成绩条 doesn't reach the card's right edge")
     }
@@ -344,5 +345,35 @@ extension FeedUITests {
         XCTAssertTrue(map.exists, "no map-only cover")
         settle()
         keepScreenshot(named: "44-feed-map-cover-strip")
+    }
+}
+
+extension FeedUITests {
+    /// A rated meal shows its 健康 and 好吃 in stars and the 卡价比 worked out from them on its
+    /// 成绩条, as a 训练 shows its numbers: Mia's salad today, rated 5 and 4.
+    func testMealScoreStrip() {
+        continueAfterFailure = false
+        let app = launch(language: "zh-Hans")
+        XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
+        let strip = app.descendants(matching: .any).matching(identifier: "post.strip")
+            .containing(.any, identifier: "strip.healthy").firstMatch
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        let feed = app.scrollViews.firstMatch
+        var drags = 0
+        while drags < Self.maxSwipes, !(strip.exists && strip.frame.maxY <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(strip.exists, "no 成绩条 on the rated salad")
+        settle()
+        keepScreenshot(named: "45-feed-meal-strip")
+        assertClearOfTheTabBar(strip, in: app)
+        for (cell, words) in [("strip.healthy", "5健康"), ("strip.tasty", "4好吃"), ("strip.calorieValue", "4.0卡价比")] {
+            let label = strip.descendants(matching: .any).matching(identifier: cell).firstMatch.label
+            XCTAssertEqual(
+                label.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ",", with: ""),
+                words, "\(cell) reads \(label)")
+        }
     }
 }

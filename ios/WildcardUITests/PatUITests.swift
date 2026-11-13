@@ -14,7 +14,7 @@ final class PatUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-patted", "-uitest-bubble-hold",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-patted", "-uitest-bubble-hold",
         ]
         app.launch()
 
@@ -76,7 +76,7 @@ final class PatUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-meals", "-uitest-bubble-hold",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-meals", "-uitest-bubble-hold",
         ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch

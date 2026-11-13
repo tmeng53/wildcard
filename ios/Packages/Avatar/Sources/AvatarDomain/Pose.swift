@@ -75,13 +75,15 @@ public struct Pose: Hashable, Sendable {
 }
 
 /// Where a part is drawn: its art's transform from canvas to canvas, and its opacity
-/// including its parents'. A bent arm's art is bent first (`bend`), then transformed.
+/// including its parents'. A bent arm's art is bent first (`bend`), then transformed. A rope's art is
+/// hung between its ends (`rope`), in canvas coordinates, with no transform.
 public struct Placement: Hashable, Sendable {
     public var transform: Transform
     public var opacity: Double
     public var bend: Bend?
+    public var rope: Rope?
 
-    public init(transform: Transform, opacity: Double, bend: Bend? = nil) {
-        (self.transform, self.opacity, self.bend) = (transform, opacity, bend)
+    public init(transform: Transform, opacity: Double, bend: Bend? = nil, rope: Rope? = nil) {
+        (self.transform, self.opacity, self.bend, self.rope) = (transform, opacity, bend, rope)
     }
 }

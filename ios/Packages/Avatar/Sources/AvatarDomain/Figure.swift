@@ -61,6 +61,8 @@ public struct Figure: Hashable, Sendable {
 
         /// The seam this arm passes behind its body's cloth at (`Tuck`).
         public var tuck: Tuck? { seam.flatMap { Tuck(pivot: pivot, seam: $0) } }
+        /// For a rope, the parts it hangs between and its length (`Rig.Part.rope`).
+        public internal(set) var rope: RopeLink?
     }
 
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
@@ -111,6 +113,7 @@ public struct Figure: Hashable, Sendable {
                     id: part.id, pivot: part.pivot, restOpacity: part.opacity, elbow: part.elbow,
                     seam: part.seam, parent: parents[built.count], art: artworks, slots: slots))
         }
+        try Self.resolveRopes(&built, rig.parts)
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
@@ -324,6 +327,7 @@ public struct Figure: Hashable, Sendable {
                 if move.bend != 0 { (placements[index].bend, carriers[index]) = (bend, bend.forearm.then(transform)) }
             }
         }
+        hangRopes(&placements, carriers, pose)
         return placements
     }
 }
