@@ -19,7 +19,7 @@ struct WildcardWidgets: WidgetBundle {
 /// offers one, else 打卡 until I check in today, then 今天. Set to 本周出赛表, a tap opens 出赛表.
 struct WeekHomeWidget: Widget {
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: "week", intent: WeekIntent.self, provider: BoardProvider()) { entry in
+        AppIntentConfiguration(kind: "week", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
                 if entry.showsSchedule {
                     ScheduleWidget(board: board, size: .small)
@@ -40,7 +40,7 @@ struct WeekHomeWidget: Widget {
 /// its capsule's 打卡 opens the 训练 page started from it. Set to 本周出赛表, a tap opens 出赛表.
 struct SquadHomeWidget: Widget {
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: "squad", intent: SquadIntent.self, provider: BoardProvider()) { entry in
+        AppIntentConfiguration(kind: "squad", intent: BoardIntent.self, provider: BoardProvider()) { entry in
             WidgetFace(entry: entry) { board in
                 if entry.showsSchedule {
                     ScheduleWidget(board: board, size: .medium)
