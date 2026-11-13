@@ -49,8 +49,10 @@ struct PlacePageStoreTests {
         let source = Source()
         let store = PlacePageStore(place: gym, squad: Self.squad, source: source, directory: Directory())
         #expect(store.phase == .loading)
+        #expect(store.showsSquad)
         await store.load()
         #expect(store.phase == .loaded)
+        #expect(store.showsSquad)
         #expect(store.detail == nil)
         #expect(store.facts?.address == "897 Broadway")
         #expect(store.numbers.cells == [.squadScore(nil), .visits(0), .people(0)])
@@ -83,11 +85,12 @@ struct PlacePageStoreTests {
         #expect(await source.asked.isEmpty)
     }
 
-    @Test func anUnreachableServerLeavesTheCardEmptyAndSaysSo() async {
+    @Test func anUnreachableServerShowsThePlaceAloneNeverAnEmptySquad() async {
         let store = PlacePageStore(
             place: gym, squad: Self.squad, source: Source(failure: .unavailable), directory: Directory())
         await store.load()
         #expect(store.phase == .offline)
+        #expect(!store.showsSquad)
         #expect(store.detail == nil)
         #expect(store.facts?.address == "897 Broadway")
     }

@@ -29,7 +29,7 @@ extension MainTabs {
                 destinations: MeDestinations(
                     editCharacter: wardrobe.editCharacter, schedule: { showsSchedule = true },
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                    openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
+                    openPost: { (post, profilePlace) = (OpenedPost(id: $0, model: feed.page(of: $0)), nil) },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
                     writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
                     location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now())),
@@ -57,7 +57,9 @@ extension MainTabs {
                 if let wall {
                     PostWallView(
                         store: wall,
-                        open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
+                        open: {
+                            (post, profilePlace) = (OpenedPost(id: $0.id, model: postPage($0.id, over: wall)), nil)
+                        },
                         checkIn: { selection = .today }
                     )
                     .navigationDestination(item: $post) { opened in
@@ -90,7 +92,7 @@ extension MainTabs {
             get: { wall != nil },
             set: {
                 guard !$0 else { return }
-                (wall, post) = (nil, nil)
+                (wall, post, profilePlace) = (nil, nil, nil)
             })
     }
 

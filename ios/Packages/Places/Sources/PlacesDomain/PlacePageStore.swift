@@ -12,7 +12,8 @@ public final class PlacePageStore {
         case loading
         /// Read; `detail` is nil for a place the squad never tagged, or one without a key.
         case loaded
-        /// The server couldn't be reached; the card shows empty until a pull reads it again.
+        /// The server couldn't be reached; the card shows the place alone until a pull reads it
+        /// again.
         case offline
         /// The member isn't in the squad any more.
         case notInSquad
@@ -42,6 +43,10 @@ public final class PlacePageStore {
 
     /// The card's numbers and rows.
     public var numbers: PlaceNumbers { PlaceNumbers(kind: kind, detail: detail) }
+
+    /// Whether the card shows the squad's numbers, rows and posts: not while they couldn't be
+    /// read, so a failed read never shows as a place the squad never went to.
+    public var showsSquad: Bool { phase == .loading || phase == .loaded }
 
     /// The posts there, newest first.
     public var posts: [PlaceVisit] { detail?.posts ?? [] }

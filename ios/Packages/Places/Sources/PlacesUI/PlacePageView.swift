@@ -52,6 +52,7 @@ public struct PlacePageView<Trailing: View>: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { trailing }
         }
+        .refreshable { await store.load() }
         .task { await store.load() }
         .accessibilityIdentifier("place.page")
     }
@@ -156,24 +157,7 @@ private struct PlaceCard: View {
         VStack(alignment: .leading, spacing: Space.m + Space.xxs / 2) {
             heading
             ContactCapsules(facts: store.facts)
-            PlaceStats(cells: numbers.cells)
-            Rectangle()
-                .fill(Color(role: .borderDefault, in: theme))
-                .frame(height: Sizing.hairline)
-            if !numbers.rows.isEmpty {
-                VStack(alignment: .leading, spacing: Space.s) {
-                    SectionLabel(
-                        numbers.face == .training
-                            ? Text(copy: "运动", bundle: .module) : Text(copy: "吃的", bundle: .module))
-                    ForEach(numbers.rows, id: \.self) { row in PlaceRow(row: row) }
-                }
-            }
-            if !store.posts.isEmpty {
-                VStack(alignment: .leading, spacing: Space.s) {
-                    SectionLabel(Text(copy: "动态", bundle: .module))
-                    VisitGrid(store: store, today: today, openPost: openPost)
-                }
-            }
+            if store.showsSquad { squad(numbers) }
         }
         .padding(.horizontal, Space.m + Space.xxs)
         .padding(.top, Space.l)
@@ -183,6 +167,29 @@ private struct PlaceCard: View {
             UnevenRoundedRectangle(topLeadingRadius: Self.corner, topTrailingRadius: Self.corner, style: .continuous)
                 .fill(Color(role: .bgCanvas, in: theme))
                 .shadow(color: Color(role: .fgDefault, in: theme).opacity(0.06), radius: 10, y: -6)
+        }
+    }
+
+    /// The squad's numbers, its rows and its posts there.
+    @ViewBuilder
+    private func squad(_ numbers: PlaceNumbers) -> some View {
+        PlaceStats(cells: numbers.cells)
+        Rectangle()
+            .fill(Color(role: .borderDefault, in: theme))
+            .frame(height: Sizing.hairline)
+        if !numbers.rows.isEmpty {
+            VStack(alignment: .leading, spacing: Space.s) {
+                SectionLabel(
+                    numbers.face == .training
+                        ? Text(copy: "运动", bundle: .module) : Text(copy: "吃的", bundle: .module))
+                ForEach(numbers.rows, id: \.self) { row in PlaceRow(row: row) }
+            }
+        }
+        if !store.posts.isEmpty {
+            VStack(alignment: .leading, spacing: Space.s) {
+                SectionLabel(Text(copy: "动态", bundle: .module))
+                VisitGrid(store: store, today: today, openPost: openPost)
+            }
         }
     }
 
