@@ -149,18 +149,6 @@ export interface WeeklyPlans {
   week_start: string;
 }
 
-export interface WeekSummaryWordEvents {
-  at: Generated<Timestamp>;
-  changed_by: string | null;
-  id: Generated<Int8>;
-  words: Json;
-}
-
-export interface WeekSummaryWords {
-  only_row: Generated<boolean>;
-  words: Json;
-}
-
 export interface DB {
   check_in_comment_mentions: CheckInCommentMentions;
   check_in_comments: CheckInComments;
@@ -175,8 +163,6 @@ export interface DB {
   plan_templates: PlanTemplates;
   quick_reaction_events: QuickReactionEvents;
   quick_reactions: QuickReactions;
-  week_summary_word_events: WeekSummaryWordEvents;
-  week_summary_words: WeekSummaryWords;
   weekly_plan_events: WeeklyPlanEvents;
   weekly_plans: WeeklyPlans;
 }
