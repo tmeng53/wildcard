@@ -53,7 +53,6 @@ export {
 export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
 export { AwardMove, CHEER } from './domain/moves.js';
 export {
-  AWARDS_HOUR,
   WeekStart,
   awardsTimeOf,
   lastAwardsTimeOf,

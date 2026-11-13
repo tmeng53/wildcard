@@ -237,8 +237,8 @@ if want squad; then
   typed="$(tr '[:upper:]' '[:lower:]' <<<"${invite_code:0:4}")-${invite_code:4}"
   call GET "/squad-invites/$typed" "$newcomer_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"daysPerMember":3,"looks":[]}' ] ||
-    fail "preview should show the name, 2 members and the goal only: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"name":"早八跑团","memberCount":2,"full":false,"joined":false,"needsApproval":false,"daysPerMember":3,"looks":[]}' ] ||
+    fail "preview should show the name, 2 members and the goal and whether the captain is asked (no: the switch is off here) only: $body"
   echo "squad: newcomer previews $typed: 早八跑团, 2 members"
 
   # The web invite page, before anyone signs in: no token, only the name, size, whether full,

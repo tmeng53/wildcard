@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -198,6 +198,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/adopted`.
             public var adopted: Swift.String?
+            /// The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/joinRequest`.
+            public var joinRequest: Swift.String?
+            /// Whether the captain let the caller in (`joinAnswered`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/approved`.
+            public var approved: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -400,7 +408,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -426,6 +434,8 @@ extension Components {
             ///   - daysPerMember: The goal suggested, 人均 N 次 (`goalSuggestion`).
             ///   - feedback: The feedback we used (`thanks`): the id the app sent it with.
             ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
+            ///   - joinRequest: The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
+            ///   - approved: Whether the captain let the caller in (`joinAnswered`).
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -461,6 +471,8 @@ extension Components {
                 daysPerMember: Swift.Int? = nil,
                 feedback: Swift.String? = nil,
                 adopted: Swift.String? = nil,
+                joinRequest: Swift.String? = nil,
+                approved: Swift.Bool? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -496,6 +508,8 @@ extension Components {
                 self.daysPerMember = daysPerMember
                 self.feedback = feedback
                 self.adopted = adopted
+                self.joinRequest = joinRequest
+                self.approved = approved
                 self.title = title
                 self.body = body
                 self.action = action
@@ -532,6 +546,8 @@ extension Components {
                 case daysPerMember
                 case feedback
                 case adopted
+                case joinRequest
+                case approved
                 case title
                 case body
                 case action
@@ -6269,6 +6285,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
+            /// True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/needsApproval`.
+            public var needsApproval: Swift.Bool
             /// The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/daysPerMember`.
@@ -6285,6 +6305,7 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
+            ///   - needsApproval: True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
             ///   - daysPerMember: The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
@@ -6293,6 +6314,7 @@ extension Components {
                 memberCount: Swift.Int,
                 full: Swift.Bool,
                 joined: Swift.Bool,
+                needsApproval: Swift.Bool,
                 daysPerMember: Swift.Int,
                 looks: [Components.Schemas.Look]
             ) {
@@ -6301,6 +6323,7 @@ extension Components {
                 self.memberCount = memberCount
                 self.full = full
                 self.joined = joined
+                self.needsApproval = needsApproval
                 self.daysPerMember = daysPerMember
                 self.looks = looks
             }
@@ -6310,8 +6333,160 @@ extension Components {
                 case memberCount
                 case full
                 case joined
+                case needsApproval
                 case daysPerMember
                 case looks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinRequest`.
+        public struct JoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/version`.
+            public var version: Components.Schemas.JoinRequest.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/squadId`.
+            public var squadId: Swift.String
+            /// The squad’s name now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/squadName`.
+            public var squadName: Swift.String
+            /// What the member wrote the captain (备注).
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/note`.
+            public var note: Swift.String?
+            /// When they asked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/askedAt`.
+            public var askedAt: Foundation.Date
+            /// `waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/status`.
+            public var status: Swift.String
+            /// When it ended, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/answeredAt`.
+            public var answeredAt: Foundation.Date?
+            /// How many members the squad has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/memberCount`.
+            public var memberCount: Swift.Int
+            /// The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/looks`.
+            public var looks: [Components.Schemas.Look]
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public struct CaptainPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/nickname`.
+                public var nickname: Swift.String
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/look`.
+                public var look: Components.Schemas.Look
+                /// Creates a new `CaptainPayload`.
+                ///
+                /// - Parameters:
+                ///   - nickname:
+                ///   - look:
+                public init(
+                    nickname: Swift.String,
+                    look: Components.Schemas.Look
+                ) {
+                    self.nickname = nickname
+                    self.look = look
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case nickname
+                    case look
+                }
+            }
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public var captain: Components.Schemas.JoinRequest.CaptainPayload?
+            /// Creates a new `JoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            ///   - squadId:
+            ///   - squadName: The squad’s name now.
+            ///   - note: What the member wrote the captain (备注).
+            ///   - askedAt: When they asked, in UTC.
+            ///   - status: `waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over.
+            ///   - answeredAt: When it ended, in UTC.
+            ///   - memberCount: How many members the squad has now.
+            ///   - looks: The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///   - captain: The captain who answers it; left out until they made a character.
+            public init(
+                version: Components.Schemas.JoinRequest.VersionPayload,
+                id: Swift.String,
+                squadId: Swift.String,
+                squadName: Swift.String,
+                note: Swift.String? = nil,
+                askedAt: Foundation.Date,
+                status: Swift.String,
+                answeredAt: Foundation.Date? = nil,
+                memberCount: Swift.Int,
+                looks: [Components.Schemas.Look],
+                captain: Components.Schemas.JoinRequest.CaptainPayload? = nil
+            ) {
+                self.version = version
+                self.id = id
+                self.squadId = squadId
+                self.squadName = squadName
+                self.note = note
+                self.askedAt = askedAt
+                self.status = status
+                self.answeredAt = answeredAt
+                self.memberCount = memberCount
+                self.looks = looks
+                self.captain = captain
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case squadId
+                case squadName
+                case note
+                case askedAt
+                case status
+                case answeredAt
+                case memberCount
+                case looks
+                case captain
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinSquadRequest`.
+        public struct JoinSquadRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/version`.
+            public var version: Components.Schemas.JoinSquadRequest.VersionPayload
+            /// A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/note`.
+            public var note: Swift.String?
+            /// Creates a new `JoinSquadRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - note: A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.
+            public init(
+                version: Components.Schemas.JoinSquadRequest.VersionPayload,
+                note: Swift.String? = nil
+            ) {
+                self.version = version
+                self.note = note
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case note
             }
         }
         /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
@@ -6373,6 +6548,204 @@ extension Components {
                 case full
                 case daysPerMember
                 case looks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinApproval`.
+        public struct JoinApproval: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/version`.
+            public var version: Components.Schemas.JoinApproval.VersionPayload
+            /// Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/required`.
+            public var required: Swift.Bool
+            /// Creates a new `JoinApproval`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - required: Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it.
+            public init(
+                version: Components.Schemas.JoinApproval.VersionPayload,
+                required: Swift.Bool
+            ) {
+                self.version = version
+                self.required = required
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case required
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests`.
+        public struct WaitingJoinRequests: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/version`.
+            public var version: Components.Schemas.WaitingJoinRequests.VersionPayload
+            /// The requests waiting for the captain, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/requests`.
+            public var requests: [Components.Schemas.WaitingJoinRequest]
+            /// Creates a new `WaitingJoinRequests`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - requests: The requests waiting for the captain, the earliest first.
+            public init(
+                version: Components.Schemas.WaitingJoinRequests.VersionPayload,
+                requests: [Components.Schemas.WaitingJoinRequest]
+            ) {
+                self.version = version
+                self.requests = requests
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case requests
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest`.
+        public struct WaitingJoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/id`.
+            public var id: Swift.String
+            /// Who asked: their Supabase Auth user id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/member`.
+            public var member: Swift.String
+            /// Their nickname, once they made one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/nickname`.
+            public var nickname: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/look`.
+            public var look: Components.Schemas.Look?
+            /// What they wrote the captain (备注).
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/note`.
+            public var note: Swift.String?
+            /// When they asked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/askedAt`.
+            public var askedAt: Foundation.Date
+            /// Creates a new `WaitingJoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - member: Who asked: their Supabase Auth user id.
+            ///   - nickname: Their nickname, once they made one.
+            ///   - look:
+            ///   - note: What they wrote the captain (备注).
+            ///   - askedAt: When they asked, in UTC.
+            public init(
+                id: Swift.String,
+                member: Swift.String,
+                nickname: Swift.String? = nil,
+                look: Components.Schemas.Look? = nil,
+                note: Swift.String? = nil,
+                askedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.member = member
+                self.nickname = nickname
+                self.look = look
+                self.note = note
+                self.askedAt = askedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case member
+                case nickname
+                case look
+                case note
+                case askedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinAnswer`.
+        public struct JoinAnswer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/version`.
+            public var version: Components.Schemas.JoinAnswer.VersionPayload
+            /// `true` lets the member in, `false` turns them away.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/approve`.
+            public var approve: Swift.Bool
+            /// Creates a new `JoinAnswer`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - approve: `true` lets the member in, `false` turns them away.
+            public init(
+                version: Components.Schemas.JoinAnswer.VersionPayload,
+                approve: Swift.Bool
+            ) {
+                self.version = version
+                self.approve = approve
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case approve
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/MyJoinRequest`.
+        public struct MyJoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/version`.
+            public var version: Components.Schemas.MyJoinRequest.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request`.
+            public struct RequestPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request/value1`.
+                public var value1: Components.Schemas.JoinRequest
+                /// The member’s newest request to join, waiting or ended; left out if none.
+                ///
+                /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `RequestPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The member’s newest request to join, waiting or ended; left out if none.
+                public init(
+                    value1: Components.Schemas.JoinRequest,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request`.
+            public var request: Components.Schemas.MyJoinRequest.RequestPayload?
+            /// Creates a new `MyJoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - request:
+            public init(
+                version: Components.Schemas.MyJoinRequest.VersionPayload,
+                request: Components.Schemas.MyJoinRequest.RequestPayload? = nil
+            ) {
+                self.version = version
+                self.request = request
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case request
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
@@ -7545,7 +7918,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
+            /// Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -7558,7 +7931,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
+            ///   - nextTimeZone: Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,
