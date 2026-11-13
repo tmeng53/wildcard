@@ -63,6 +63,14 @@ const CoachCardBody = z
     challenge: CoachChallengeBody.optional().meta({
       description: 'A `challenge`’s or `challengeDone`’s challenge.',
     }),
+    expired: z
+      .boolean()
+      .optional()
+      .meta({
+        description:
+          '`true` on a `challenge` whose day is over on the squad’s clock: it can no longer be ' +
+          'answered or marked done (已过期).',
+      }),
     gift: z
       .strictObject({
         pieceId: z.string().meta({ description: 'The piece, by the art’s id.' }),
@@ -363,7 +371,12 @@ export function coachCards(deps: {
           // A coach that left goes to 以前 whole, its boxed gifts still opening there (Tracy,
           // 2026-11-09): the stack is the coach the squad has now.
           const stacked = card.coach === hired?.coach.id && card.day >= today && !seen;
-          return { ...card, key, seen, stacked };
+          // A challenge whose day is over is 已过期: never taken up or marked done after.
+          const wire =
+            card.wire.kind === 'challenge' && card.day < today
+              ? { ...card.wire, expired: true }
+              : card.wire;
+          return { ...card, wire, key, seen, stacked };
         })
         // Stable, so cards of one moment keep the store's order (a note before its challenge).
         .sort((a, b) => a.at.getTime() - b.at.getTime())

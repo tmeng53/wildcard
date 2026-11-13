@@ -2528,6 +2528,22 @@
           }
         }
       }
+    },
+    "送你一样东西": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got you something"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送你一樣東西"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
