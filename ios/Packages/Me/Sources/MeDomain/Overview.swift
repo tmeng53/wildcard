@@ -124,6 +124,8 @@ public struct MeOverview: Hashable, Sendable {
     public var dailyPushOn: Bool
     /// The coach's pushes (教练消息): its morning note and its replies, all silent.
     public var coachPushOn: Bool
+    /// The push that tells the member a squadmate just trained (队友练完提醒).
+    public var teammatePushOn: Bool
     /// The number the member picked for their card; nil until they pick one.
     public var jerseyNumber: JerseyNumber?
     /// The birthday the member chose to give, for the heart rate chart's zones; nil without one.
@@ -146,7 +148,8 @@ public struct MeOverview: Hashable, Sendable {
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
-        dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
+        dailyPushOn: Bool, coachPushOn: Bool = true, teammatePushOn: Bool = true, jerseyNumber: JerseyNumber? = nil,
+        squadPlace: Int? = nil,
         board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
         weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil,
@@ -164,6 +167,7 @@ public struct MeOverview: Hashable, Sendable {
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn
         self.coachPushOn = coachPushOn
+        self.teammatePushOn = teammatePushOn
         self.jerseyNumber = jerseyNumber
         self.squadPlace = squadPlace
         self.board = board

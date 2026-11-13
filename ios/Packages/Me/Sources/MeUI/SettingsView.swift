@@ -115,6 +115,14 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
             )
             .accessibilityIdentifier("me.coachNotifications")
+            // Its own switch too: a squadmate's 训练 rings at once, which not everyone who wants 通知 wants.
+            SwitchRow(
+                Text(copy: "队友练完提醒", bundle: .module),
+                isOn: Binding(
+                    get: { model.teammatePushOn },
+                    set: { isOn in Task { await model.setTeammatePush(isOn) } })
+            )
+            .accessibilityIdentifier("me.teammateNotifications")
             ListRow(
                 Text(copy: "生日", bundle: .module),
                 value: model.overview?.birthday.map { Text(verbatim: $0.dotted) } ?? Text(copy: "未填", bundle: .module)

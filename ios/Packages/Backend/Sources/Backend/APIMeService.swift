@@ -52,6 +52,7 @@ public struct APIMeService: MeService {
                     trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
                     disclaimers: totals.disclaimers),
                 week: week, squadName: squad?.name, dailyPushOn: push.dailyProgress, coachPushOn: push.coach,
+                teammatePushOn: push.teammate,
                 jerseyNumber: member.profile?.jerseyNumber,
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
@@ -164,6 +165,10 @@ public struct APIMeService: MeService {
 
     public func setCoachPush(_ isOn: Bool) async throws(MeError) {
         try await me { () throws(APIError) in try await api.setCoachPush(isOn) }
+    }
+
+    public func setTeammatePush(_ isOn: Bool) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.setTeammatePush(isOn) }
     }
 
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {

@@ -655,12 +655,12 @@ if want daily-push; then
 
   call GET /me/push-settings "$resting_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"settings":{"dailyProgress":true,"coach":true}}' ] || fail "the push is on until turned off: $body"
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"settings":{"dailyProgress":true,"coach":true,"teammate":true}}' ] || fail "the push is on until turned off: $body"
   # An older build sends only its own switch: the coach's stays as it was.
   call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{"dailyProgress":false}}'
   expect 200
   call GET /me/push-settings "$resting_token"
-  [ "$(jq -c .settings <<<"$body")" = '{"dailyProgress":false,"coach":true}' ] || fail "the push should be off: $body"
+  [ "$(jq -c .settings <<<"$body")" = '{"dailyProgress":false,"coach":true,"teammate":true}' ] || fail "the push should be off: $body"
   call PUT /me/push-settings "$resting_token" '{"version":1,"settings":{}}'
   expect 400 REQUEST_INVALID
   echo "daily-push: on until turned off, then off (200); a missing switch refused (400)"

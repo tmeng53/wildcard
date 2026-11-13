@@ -462,7 +462,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       method: 'PUT',
       path: '/me/push-settings',
       token: captain.token,
-      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+      body: { version: 1, settings: { dailyProgress: true, coach: false, teammate: true } },
     });
     expect(off.status).toBe(200);
     const quiet = await call({ method: 'GET', path, token: captain.token });
@@ -639,7 +639,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       method: 'PUT',
       path: '/me/push-settings',
       token: mate.token,
-      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+      body: { version: 1, settings: { dailyProgress: true, coach: false, teammate: true } },
     });
     expect(await todays(mate.token)).toStrictEqual({ version: 1, today: null });
     await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
@@ -792,7 +792,7 @@ describe('/squads/{squadId}/coach/cards', () => {
       method: 'PUT',
       path: '/me/push-settings',
       token: mate.token,
-      body: { version: 1, settings: { dailyProgress: true, coach: false } },
+      body: { version: 1, settings: { dailyProgress: true, coach: false, teammate: true } },
     });
     expect(off.status).toBe(200);
     const quiet = CardsBody.parse((await call({ method: 'GET', path, token: mate.token })).body);

@@ -1377,6 +1377,22 @@
         }
       }
     },
+    "队友练完提醒" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teammate workouts"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隊友練完提醒"
+          }
+        }
+      }
+    },
     "隐私政策" : {
       "localizations" : {
         "en" : {
