@@ -22,9 +22,12 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
-			<!-- The 6pm push (the API's dailyProgress category). -->
+			<!-- The 6pm push and the teammate push (the API's categories). -->
 			<key>UNNotificationExtensionCategory</key>
-			<string>dailyProgress</string>
+			<array>
+				<string>dailyProgress</string>
+				<string>teammateCheckIn</string>
+			</array>
 			<key>UNNotificationExtensionInitialContentSizeRatio</key>
 			<real>1.2</real>
 			<!-- The view shows the week itself, so the push's own words are hidden under it. -->

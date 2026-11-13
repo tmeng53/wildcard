@@ -107,6 +107,55 @@
       }
     }
   },
+  "push.teammate.trained": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.teammate.trained",
+        "loc-args": [
+          "超超超超超超超超超超超超",
+          "高强度间歇训练"
+        ]
+      },
+      "category": "teammateCheckIn",
+      "thread-id": "teammates",
+      "interruption-level": "active",
+      "sound": "default",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "teammateCheckIn",
+      "checkIn": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 23,
+      "squadPlannedDays": 40
+    }
+  },
+  "push.teammate.trained.minutes": {
+    "version": 1,
+    "aps": {
+      "alert": {
+        "loc-key": "push.teammate.trained.minutes",
+        "loc-args": [
+          "超超超超超超超超超超超超",
+          "高强度间歇训练",
+          "600"
+        ]
+      },
+      "category": "teammateCheckIn",
+      "thread-id": "teammates",
+      "interruption-level": "active",
+      "sound": "default",
+      "mutable-content": 1
+    },
+    "event": {
+      "kind": "teammateCheckIn",
+      "checkIn": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+      "squad": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+      "squadTrainedDays": 23,
+      "squadPlannedDays": 40
+    }
+  },
   "push.comment": {
     "version": 1,
     "aps": {

@@ -21,6 +21,8 @@ import {
 } from '@wildcard/notices';
 import {
   DeviceToken,
+  FIRST_PUSH_GENERATION,
+  PushGeneration,
   MemberId as PushMember,
   apnsPayload,
   type PushNotification,
@@ -229,8 +231,8 @@ async function checkIn(token: string, ...audience: string[]) {
   return id;
 }
 
-/** A signed-up member with a nickname and a phone; the phone's token. */
-async function withPhone(nickname: string) {
+/** A signed-up member with a nickname and a phone (on a build from before generations, unless told); the phone's token. */
+async function withPhone(nickname: string, generation = FIRST_PUSH_GENERATION) {
   const signedUp = await signUp();
   const { status } = await call('PUT', {
     path: '/me/profile',
@@ -248,7 +250,7 @@ async function withPhone(nickname: string) {
   const phone = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await push.registerDevice({
     member: PushMember.parse(signedUp.userId),
-    device: { token: phone, environment: 'sandbox' },
+    device: { token: phone, environment: 'sandbox', generation },
   });
   return { ...signedUp, phone };
 }
@@ -646,5 +648,47 @@ describe('/check-ins/{checkInId}/comments', () => {
     expect(await noticesOf(tracy.token)).toMatchObject([
       { kind: 'comment', alert: { key: 'push.comment', args: ['安安', '加油'] } },
     ]);
+  });
+});
+
+// Here for the phones and the sender this file already sets up.
+describe('a 训练 posted to the squad', () => {
+  it('is pushed at once to squadmates whose build knows the push, never to its author', async () => {
+    const current = PushGeneration.parse(2);
+    const [tracy, ann, bo] = [
+      await withPhone('翠西', current),
+      await withPhone('安安', current),
+      await withPhone('阿波'),
+    ];
+    const squad = await squadOf(tracy, ann, bo);
+    const run = await checkIn(tracy.token, squad);
+
+    expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
+      [],
+      [
+        {
+          aps: {
+            // The sport by its id: these jobs list no sports (`noJobs`).
+            alert: { 'loc-key': 'push.teammate.trained', 'loc-args': ['翠西', 'run'] },
+            category: 'teammateCheckIn',
+            'interruption-level': 'active',
+            sound: 'default',
+          },
+          event: {
+            kind: 'teammateCheckIn',
+            checkIn: run,
+            squad,
+            today: {
+              members: [{ id: ann.userId }, { id: tracy.userId, name: '翠西' }],
+              posts: [{ id: run }],
+            },
+          },
+        },
+      ],
+      // A build from before the teammate push has no words for it.
+      [],
+    ]);
+    // Not kept in 通知: the post is in 动态.
+    expect(await noticesOf(ann.token)).toStrictEqual([]);
   });
 });

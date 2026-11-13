@@ -5658,25 +5658,33 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Device/environment`.
             public var environment: Components.Schemas.Device.EnvironmentPayload
+            /// Which pushes this build has words for: 1 is every push from before generations, and what a build that leaves it out knows; 2 adds the teammate push. A push goes only to phones whose build knows it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Device/pushGeneration`.
+            public var pushGeneration: Swift.Int?
             /// Creates a new `Device`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - token: The APNs device token iOS gave the app, hex-encoded.
             ///   - environment: Which APNs servers the token is for: `sandbox` in a build run from Xcode, `production` in TestFlight and the App Store.
+            ///   - pushGeneration: Which pushes this build has words for: 1 is every push from before generations, and what a build that leaves it out knows; 2 adds the teammate push. A push goes only to phones whose build knows it.
             public init(
                 version: Components.Schemas.Device.VersionPayload,
                 token: Swift.String,
-                environment: Components.Schemas.Device.EnvironmentPayload
+                environment: Components.Schemas.Device.EnvironmentPayload,
+                pushGeneration: Swift.Int? = nil
             ) {
                 self.version = version
                 self.token = token
                 self.environment = environment
+                self.pushGeneration = pushGeneration
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case token
                 case environment
+                case pushGeneration
             }
         }
         /// - Remark: Generated from `#/components/schemas/DeviceRemoval`.

@@ -160,6 +160,8 @@ subscribe() {
 }
 # The squads' coaches look at a new check-in.
 subscribe coach-look check-in-created
+# A 训练 just posted is told to its author's squadmates.
+subscribe teammate-push check-in-created
 # A new comment is told to the post's author, whom it replies to and whom it @s.
 subscribe comment-push comment-created
 # The coach a comment replies to or @s answers it.

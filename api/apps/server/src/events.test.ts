@@ -39,6 +39,7 @@ function noting(fail?: keyof EventHandlers) {
   };
   const handlers: EventHandlers = {
     'coach-look': run('coach-look'),
+    'teammate-push': run('teammate-push'),
     'comment-push': run('comment-push'),
     'coach-answer': run('coach-answer'),
     'coach-welcome': run('coach-welcome'),
