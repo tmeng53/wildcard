@@ -1012,7 +1012,15 @@ describe('memory on a waking day', () => {
       files: new Map([['memory.md', body]]),
       recentNotes: [],
       talks: [],
-      yesterday: { day: '2026-10-31', checkIns: week.checkIns },
+      pastDays: {
+        from: '2026-10-26',
+        to: '2026-11-01',
+        quiet: false,
+        checkIns: week.checkIns,
+        boards: [],
+        notes: [],
+        gifts: [],
+      },
     });
     expect(task).toContain('- 第 39 件事');
   });
