@@ -1,5 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { DeviceToken, MemberId, PushEnvironment, type Push } from '@wildcard/push';
+import {
+  DeviceToken,
+  FIRST_PUSH_GENERATION,
+  MemberId,
+  PushEnvironment,
+  PushGeneration,
+  type Push,
+} from '@wildcard/push';
 
 import { bodyVersion } from '../body-version.js';
 import type { VerifyToken } from '../ports.js';
@@ -21,6 +28,14 @@ export const Device = z
       description:
         'Which APNs servers the token is for: `sandbox` in a build run from Xcode, ' +
         '`production` in TestFlight and the App Store.',
+    }),
+    pushGeneration: PushGeneration.optional().meta({
+      type: 'integer',
+      description:
+        'Which pushes this build has words for: 1 is every push from before generations, and ' +
+        'what a build that leaves it out knows; 2 adds the teammate push. A push goes only to ' +
+        'phones whose build knows it.',
+      example: 2,
     }),
   })
   .openapi('Device');
@@ -82,7 +97,11 @@ export function devices(deps: { readonly verifyToken: VerifyToken; readonly push
       const device = c.req.valid('json');
       await deps.push.registerDevice({
         member: MemberId.parse(c.var.caller.userId),
-        device: { token: device.token, environment: device.environment },
+        device: {
+          token: device.token,
+          environment: device.environment,
+          generation: device.pushGeneration ?? FIRST_PUSH_GENERATION,
+        },
       });
       return c.json(device, 200);
     })

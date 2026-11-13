@@ -19,6 +19,11 @@ public enum OpenedNotification: Hashable, Sendable {
             self = .open(.waitingCoachNote)
             return
         }
+        // A teammate's 训练 isn't kept in 通知 (the post is in 动态): its push opens the post.
+        if category == "teammateCheckIn" {
+            self = event["checkIn"].flatMap(UUID.init(uuidString:)).map { .open(.post(CheckInID($0))) } ?? .other
+            return
+        }
         self = Self.subject(category: category, event: event).flatMap(\.destination).map(Self.open) ?? .other
     }
 

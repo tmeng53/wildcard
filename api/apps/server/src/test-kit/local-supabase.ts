@@ -27,6 +27,8 @@ import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/save
 import {
   createOffSender,
   createPostgresDailyPushSettings,
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -199,6 +201,8 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
     dailySettings: createPostgresDailyPushSettings(db),
+    teammate: createPostgresTeammatePushStore(db),
+    teammateSettings: createPostgresTeammatePushSettings(db),
     sender,
   });
 }
@@ -226,6 +230,8 @@ export const noJobs = {
   isScheduler: undefined,
   interactions: [],
   clock: () => new Date(),
+  // No sports listed: the teammate push names a sport by its id.
+  sportNames: () => Promise.resolve(new Map()),
   coachNotes: noCoachNotes,
   // No squad is suggested a higher goal: every week reads as told already.
   suggestGoal: () => Promise.resolve('taken' as const),
