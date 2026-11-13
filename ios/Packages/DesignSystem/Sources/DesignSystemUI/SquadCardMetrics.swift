@@ -4,8 +4,8 @@ import SwiftUI
 
 /// Sizes that belong to the squad card alone.
 enum SquadCardMetrics {
-    /// Inside each page's padding: 170 tall with the card's padding, on both pages; the dots'
-    /// row adds its own height under them. 16 under what it was before the week's score took
+    /// Inside each page's padding: at least 170 tall with the card's padding, on both pages (a
+    /// page with more rows grows); the dots' row adds its own height under them. 16 under what it was before the week's score took
     /// `scoreGoal`, so the card leaves more of the scene showing (Tracy, 2026-11-13).
     static let pageContent: Double = 170 - 2 * Space.cardPadding
     /// A head in the 今天 row that hasn't checked in yet, nor rests today, fades to this, so the

@@ -276,7 +276,7 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let openCoachNews: (() -> Void)?
 
     var body: some View {
-        // With a footer the rows sit 8 apart instead of 12, so the page stays 170 tall.
+        // With a footer the rows sit 8 apart instead of 12, so the page grows as little as it can.
         let gap = footer == nil ? Space.s : Space.xs
         VStack(alignment: .leading, spacing: 0) {
             PageHeader(

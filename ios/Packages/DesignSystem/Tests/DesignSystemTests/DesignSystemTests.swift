@@ -289,11 +289,11 @@ struct TypographyTests {
         #expect([TypeRamp.tab, TypeRamp.tabSelected].map(\.size) == [12, 12])
     }
 
-    @Test func numbersAreBarlowAtSixSizes() {
+    @Test func numbersAreBarlowAtSevenSizes() {
         #expect(
             [TypeRamp.scoreStory, TypeRamp.scoreHero, TypeRamp.scoreGoal, TypeRamp.scoreCard, TypeRamp.scoreInline]
-                .map(\.size) == [132, 60, 44, 32, 22] && TypeRamp.scoreSmall.size == 18)
-        #expect(TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
+                .map(\.size) == [132, 60, 44, 32, 22])
+        #expect(TypeRamp.scoreSmall.size == 18 && TypeRamp.denominator(of: TypeRamp.scoreStory).size == 73)
         // The ending beside the scene pick, as the approved design sets it: 88 over 48.
         #expect(TypeRamp.scoreEnding.size == 88 && TypeRamp.denominator(of: TypeRamp.scoreEnding).size == 48)
         #expect(
