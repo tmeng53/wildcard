@@ -5721,7 +5721,7 @@ extension Components {
                 case settings
             }
         }
-        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach, with the city the phone named there, if it could, which the coach is told with the weather. A location sent without a city forgets the one before. Squadmates never see either, and the AI never sees the location itself.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberLocation`.
         public struct MemberLocation: Codable, Hashable, Sendable {
@@ -5735,25 +5735,33 @@ extension Components {
             public var latitude: Swift.Double
             /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
             public var longitude: Swift.Double
+            /// The city the phone’s approximate location is in, as iOS names it in the app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/city`.
+            public var city: Swift.String?
             /// Creates a new `MemberLocation`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - latitude:
             ///   - longitude:
+            ///   - city: The city the phone’s approximate location is in, as iOS names it in the app’s language.
             public init(
                 version: Components.Schemas.MemberLocation.VersionPayload,
                 latitude: Swift.Double,
-                longitude: Swift.Double
+                longitude: Swift.Double,
+                city: Swift.String? = nil
             ) {
                 self.version = version
                 self.latitude = latitude
                 self.longitude = longitude
+                self.city = city
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case latitude
                 case longitude
+                case city
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadList`.

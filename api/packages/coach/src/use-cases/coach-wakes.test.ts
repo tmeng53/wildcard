@@ -1700,14 +1700,16 @@ describe('the coach', () => {
       const weatherOf: CoachWeather = (input) => {
         asked.push(input);
         // Only 队员1 shared where they are.
-        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+        return Promise.resolve(
+          new Map([[mia, { words: '今天雨，8–13°C，降水概率 80%', city: '多伦多' }]]),
+        );
       };
       const { agent, runs } = scriptedAgent(() => []);
       await wakes(fixture, { agent, weatherOf }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
+        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
       );
       expect(daily?.task).toContain('### 队员2\n- 这周练了：0 天\n- 这周发过：还没发过\n');
     });
