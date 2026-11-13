@@ -170,28 +170,30 @@ public actor DeviceOutbox: Outbox {
                 startTime: trained ? start : nil, place: place.flatMap(\.place),
                 rating: trained ? nil : rating.flatMap(\.rating),
                 trainedWith: trained ? ((try? TrainedWith(trainedWith ?? [])) ?? .none) : .none)
-            let draft: CheckInDraft
-            switch kind {
-            case "trained":
-                let minutes = try minutes.map(WorkoutMinutes.init)
-                if let sport, let listed = Sport(rawValue: sport) {
-                    draft = .trained(.sport(listed), minutes, body)
-                } else if let customSport {
-                    draft = .trained(.custom(try CustomSport(customSport)), minutes, body)
-                } else {
-                    return nil
-                }
-            case "healthyMeal": draft = .healthyMeal(body)
-            case "cheatMeal": draft = .cheatMeal(body)
-            case "disclaimer":
-                guard let text else { return nil }
-                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
-            default: return nil
-            }
+            guard let draft = try draft(body: body, photos: prepared) else { return nil }
             return PendingCheckIn(
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
                 audience: try Audience(audience), inFeed: inFeed, draft: draft,
                 uploaded: uploaded)
+        }
+        /// The draft this kept post stands for, nil for a kind or sport this build can't read.
+        private func draft(body: PostBody, photos prepared: [PreparedPhoto]) throws -> CheckInDraft? {
+            switch kind {
+            case "trained":
+                let minutes = try minutes.map(WorkoutMinutes.init)
+                if let sport, let listed = Sport(rawValue: sport) {
+                    return .trained(.sport(listed), minutes, body)
+                } else if let customSport {
+                    return .trained(.custom(try CustomSport(customSport)), minutes, body)
+                }
+                return nil
+            case "healthyMeal": return .healthyMeal(body)
+            case "cheatMeal": return .cheatMeal(body)
+            case "disclaimer":
+                guard let text else { return nil }
+                return .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
+            default: return nil
+            }
         }
     }
 
