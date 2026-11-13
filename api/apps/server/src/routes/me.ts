@@ -143,7 +143,7 @@ export function me(
     readonly members: Members;
     readonly admins: Pick<Admins, 'isAdmin' | 'isDemoAccount' | 'demoAccounts'>;
     readonly unlocks: Pick<Unlocks, 'keepWorn'>;
-  } & Omit<DeleteAccountDependencies, 'demoAccountsOf'>,
+  } & Omit<DeleteAccountDependencies, 'demoAccountsOf' | 'isDemoAccount'>,
 ) {
   const getMe = createRoute({
     method: 'get',
@@ -313,7 +313,7 @@ export function me(
       // Whoever made demo accounts takes them along, even once off the admins list.
       const demoAccountsOf = (member: string) => deps.admins.demoAccounts(AdminId.parse(member));
       await deleteAccount(
-        { ...deps, demoAccountsOf },
+        { ...deps, demoAccountsOf, isDemoAccount: deps.admins.isDemoAccount },
         { member: c.var.caller.userId, appleAuthorizationCode },
       );
       return c.body(null, 204);

@@ -501,6 +501,40 @@ describe('DELETE /me', () => {
     expect(users.rows).toStrictEqual([]);
   });
 
+  it('deletes a demo account without touching the Apple grant its admin’s phone sends', async () => {
+    const codes: string[] = [];
+    const { call } = appWith((code) => {
+      codes.push(code);
+      return Promise.resolve();
+    });
+    const admin = await signUp();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const made = await call('POST', '/me/demo-accounts', admin.token, undefined);
+    const demo = z.object({ memberId: z.uuid() }).parse(made.body).memberId;
+    const handOff = await call(
+      'POST',
+      `/me/demo-accounts/${demo}/hand-off`,
+      admin.token,
+      undefined,
+    );
+    const { refreshToken } = z.object({ refreshToken: z.string() }).parse(handOff.body);
+    const refreshed = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: config.supabaseSecretKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const demoToken = z
+      .object({ access_token: z.string() })
+      .parse(await refreshed.json()).access_token;
+
+    const response = await call('DELETE', '/me', demoToken, {
+      version: 1,
+      appleAuthorizationCode: 'admins-own',
+    });
+    expect([response.status, codes, (await whatIsLeftOf(demo)).user]).toStrictEqual([204, [], 0]);
+    expect((await whatIsLeftOf(admin.userId)).user).toBe(1);
+  });
+
   it('takes the demo accounts along after their maker is taken off the admins list', async () => {
     const { call } = appWith(undefined);
     const admin = await signUp();

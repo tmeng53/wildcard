@@ -334,6 +334,13 @@ extension AccountSession {
         return member
     }
 
+    /// Whether this phone is on one of an admin's demo accounts, with the admin's own session
+    /// kept: what it does in the admin's name (an Apple confirmation) is never the demo account's.
+    public func isOnDemo() async -> Bool {
+        guard let kept else { return false }
+        return (try? await kept.load()) != nil
+    }
+
     /// Back on the admin's own account from a demo account, with the session kept when they
     /// switched; the demo account's session ends. Throws `signedOut` when none is kept.
     @discardableResult

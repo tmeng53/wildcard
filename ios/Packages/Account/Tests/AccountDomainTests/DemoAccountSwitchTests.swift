@@ -21,8 +21,10 @@ private func admin(_ provider: FakeProvider, _ store: MemoryStore, kept: MemoryS
     #expect(try await account.switchToDemo(with: handOff) == demo)
     #expect(await store.saved == session("demo", member: demo))
     #expect(await kept.saved == session("own"))
+    #expect(await account.isOnDemo())
 
     #expect(try await account.returnFromDemo() == tracy)
+    #expect(await !account.isOnDemo())
     #expect(try await account.accessToken() == "access-own")
     #expect(await store.saved == session("own"))
     #expect(await kept.saved == nil)

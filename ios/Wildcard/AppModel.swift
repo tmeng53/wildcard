@@ -127,7 +127,8 @@ final class AppModel {
         Self.show(catalog.kept())
         self.posted = posted
         if usesApple {
-            confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
+            confirmDeletion = { [account] () async throws(MeError) -> DeletionConfirmation in
+                if await account.isOnDemo() { return .signedInSession }
                 do throws(AccountError) {
                     return .apple(authorizationCode: try await AppleConfirmation.authorizationCode())
                 } catch .canceled {
