@@ -39,6 +39,8 @@ private func files(under root: URL, as tree: String) -> [(path: String, data: Da
     #expect(!ArtTree.reads(version, at: "avatar/rig.json"))
     #expect(!ArtTree.reads(version, at: "avatar/editor.json"))
     #expect(!ArtTree.reads(version, at: "avatar/kits.json"))
+    #expect(!ArtTree.reads(version, at: "avatar/backdrops.json"))
+    #expect(!ArtTree.reads(version, at: "coaches/alpaca/backdrop.json"))
     #expect(!ArtTree.reads(version, at: "avatar/stores/lap.json"))
     #expect(!ArtTree.reads(version, at: "avatar/moves/ski.json"))
     #expect(!ArtTree.reads(version, at: "avatar/art/top/x/tones.json"))
