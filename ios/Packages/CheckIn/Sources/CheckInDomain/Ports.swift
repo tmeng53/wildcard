@@ -36,9 +36,10 @@ public protocol CheckInBackend: Sendable {
     /// The coach `coach(in:)` last loaded, read from the device without the network, so the home
     /// shows it at once with its kept copy; nil before the first load, or after signing out.
     func savedCoach() async -> SavedCoach?
-    /// Whether the squad's coach has anything on its page the member hasn't seen (a card in its
-    /// stack: its 战术板 line, their morning note, a challenge or a gift), for the dot on its phone.
-    func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool
+    /// The newest card on the squad's coach's page the member hasn't seen (in its stack: its 战术板
+    /// line, their morning note, a challenge or a gift), for the dot on its phone and the coach's
+    /// row on the squad card; nil once they have seen them all.
+    func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard?
     /// The challenge in the member's morning note today in `squad`, answered or not; nil when
     /// there is none.
     func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge?

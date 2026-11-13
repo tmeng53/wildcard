@@ -17,8 +17,6 @@
     {"part": "torso", "channel": "scaleY", "keys": [{"t": 0, "v": 1}, {"t": 1.15, "v": 1}, {"t": 1.7, "v": 1.025, "ease": "easeInOut"}, {"t": 2.4, "v": 1, "ease": "easeInOut"}, {"t": 2.95, "v": 1.02, "ease": "easeInOut"}, {"t": 3.3, "v": 1, "ease": "easeInOut"}]},
     {"part": "head", "channel": "rotation", "keys": [{"t": 0, "v": 0}, {"t": 0.3, "v": 6, "ease": "easeOut"}, {"t": 0.6, "v": 0, "ease": "easeInOut"}, {"t": 4, "v": 0}]},
     {"part": "eyes", "channel": "scaleY", "keys": [{"t": 0, "v": 1}, {"t": 1.0, "v": 1}, {"t": 1.2, "v": 0.12, "ease": "easeOut"}, {"t": 3.0, "v": 0.12}, {"t": 3.2, "v": 1, "ease": "easeOut"}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.833, "v": 1, "ease": "hold"}, {"t": 3.167, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 0}, {"t": 0.833, "v": 1, "ease": "hold"}, {"t": 3.167, "v": 0, "ease": "hold"}]},
     {"part": "propBack", "channel": "x", "keys": [{"t": 0, "v": 57}, {"t": 0.44, "v": 57}, {"t": 0.6, "v": 0, "ease": "easeIn"}, {"t": 3.48, "v": 0}, {"t": 3.62, "v": 57, "ease": "easeOut"}, {"t": 4, "v": 57}]},
     {"part": "propBack", "channel": "y", "keys": [{"t": 0, "v": -130}, {"t": 0.44, "v": -130}, {"t": 0.6, "v": 0, "ease": "easeIn"}, {"t": 3.48, "v": 0}, {"t": 3.62, "v": -130, "ease": "easeOut"}, {"t": 4, "v": -130}]},
     {"part": "propBack", "channel": "scaleY", "keys": [{"t": 0, "v": 3.7}, {"t": 0.44, "v": 3.7}, {"t": 0.6, "v": 1, "ease": "easeIn"}, {"t": 3.48, "v": 1}, {"t": 3.62, "v": 3.7, "ease": "easeOut"}, {"t": 4, "v": 3.7}]}

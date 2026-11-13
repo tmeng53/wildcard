@@ -4,6 +4,9 @@ import {
   editBody,
   FILE_LIMIT,
   fileRole,
+  recallLines,
+  shownPathOf,
+  shownPaths,
   storedPathOf,
   type StoredPath,
 } from '../../domain/memory.js';
@@ -245,9 +248,38 @@ export function toolbox({
     }),
     ...postTools(draft.steps, { roster, weekAgo, commentsOf }),
     defineTool(draft.steps, {
+      name: 'recall',
+      reads: true,
+      description:
+        '查你的记性：任务里每个文件只列了开头几行，聊到具体的人或事、要说「记得」之前，先用它查。不填就按文件里的顺序列出全部。查不到的就是不记得。',
+      parameters: z.object({
+        path: z
+          .string()
+          .optional()
+          .describe('只查一个文件，如 people/队员1.md、memory.md、squad.md、me.md；不填查全部'),
+        query: z
+          .string()
+          .optional()
+          .describe('要找的词，几个词用空格隔开，有一个对上就算；不填列出整个文件'),
+      }),
+      run: ({ path, query }) => {
+        const view = { roster, coach };
+        // Every file the task lists, an empty one too, so recall never says a listed file is missing.
+        const shown = new Map(shownPaths(view).map((name) => [name, '']));
+        for (const [stored, body] of draft.files) {
+          const name = shownPathOf(stored, view);
+          if (name !== undefined) shown.set(name, body);
+        }
+        return recallLines(shown, {
+          ...(path === undefined ? {} : { path }),
+          ...(query === undefined ? {} : { query }),
+        });
+      },
+    }),
+    defineTool(draft.steps, {
       name: 'remember',
       description:
-        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的，不记。',
+        '把一件事记进你的记性，一次一件，一句话。值得记的是过很久还成立、会改变你以后怎么跟他们说话的事。短期的、琐碎的、记性里已经有的（拿不准先 recall），不记。',
       parameters: z.object({
         path: z
           .string()
@@ -272,7 +304,7 @@ export function toolbox({
     defineTool(draft.steps, {
       name: 'edit_file',
       description:
-        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄任务里「你的记性」的原文，必须正好出现一次。',
+        '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄原文（先用 recall 查出来），必须正好出现一次。',
       parameters: z.object({
         path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
         find: z.string().describe('要换掉的原文，照抄'),

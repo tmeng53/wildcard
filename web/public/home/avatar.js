@@ -10,7 +10,7 @@
     easeInOut: [0.42, 0, 0.58, 1],
     backOut: [0.34, 1.56, 0.64, 1],
   };
-  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity', 'bend', 'front'];
+  const CHANNELS = ['rotation', 'x', 'y', 'scaleX', 'scaleY', 'opacity', 'bend'];
   // An arm the clip swings without bending trails it a moment behind (Figure's FollowThrough).
   const LAG = 0.09;
   const GIVE = 0.9;
@@ -63,7 +63,6 @@
       scaleY: 1,
       opacity: p.opacity,
       bend: 0,
-      front: 0,
     }));
 
   function pose(clip, time) {
@@ -95,8 +94,6 @@
     a.map((x, i) => {
       const out = {};
       for (const c of CHANNELS) out[c] = x[c] + (b[i][c] - x[c]) * f;
-      // An arm in front on either side stays in front until the blend ends (Pose.blended).
-      out.front = f < 1 ? Math.max(x.front, b[i].front) : b[i].front;
       return out;
     });
   const smooth = (f) => f * f * (3 - 2 * f);
@@ -131,11 +128,6 @@
     return [c, s, -s, c, cx - c * cx + s * cy, cy - s * cx - c * cy];
   };
 
-  // An arm's front copy (the part a twin names) shows only while its `front` is 1; every other part,
-  // the copy behind the body too, always shows (Figure.depth). The head covers both.
-  const FRONT = new Set(PARTS.filter((part) => part.twin).map((part) => part.twin));
-  const depth = (part, q) => (FRONT.has(part.id) && !(q.front >= 0.5) ? 0 : 1);
-
   function layout(poses) {
     const matrices = new Array(PARTS.length);
     const opacities = new Array(PARTS.length);
@@ -162,7 +154,7 @@
         matrices[i] = m;
         carried[i] = q.opacity;
       }
-      opacities[i] = carried[i] * depth(part, q);
+      opacities[i] = carried[i];
       carriers[i] =
         part.elbow && q.bend ? multiply(matrices[i], turn(q.bend, part.elbow.at)) : matrices[i];
     };
@@ -282,8 +274,62 @@
     const pt = ([x, y]) => `${n(x)} ${n(y)}`;
     const mix = (points, weights) =>
       [0, 1].map((k) => points.reduce((sum, point, j) => sum + weights[j] * point[k], 0));
+    // A curve's points cut where it leaves the upper arm, so a piece there stays as drawn
+    // (Bend's pieces): refitted whole, a curve from the shoulder would turn at the shoulder too.
+    const edge = middle - 0.15;
+    const split = (points, t) => {
+      let row = points;
+      const [head, tail] = [[], []];
+      while (row.length) {
+        head.push(row[0]);
+        tail.unshift(row[row.length - 1]);
+        row = row.slice(1).map((to, j) => [0, 1].map((k) => row[j][k] + (to[k] - row[j][k]) * t));
+      }
+      return [head, tail];
+    };
+    const pieces = (points) => {
+      // How far each point is past the edge. The curve's own distance at a time is the same
+      // curve through these, and one whose points are all on one side never crosses.
+      const past = points.map(([x, y]) => along(x, y) - edge);
+      const behind = past.filter((v) => v < 0).length;
+      if (behind === 0 || behind === past.length) return [points];
+      const side = (t) => {
+        const u = 1 - t;
+        return past.length === 3
+          ? u * u * past[0] + 2 * u * t * past[1] + t * t * past[2]
+          : u * u * u * past[0] +
+              3 * u * u * t * past[1] +
+              3 * u * t * t * past[2] +
+              t * t * t * past[3];
+      };
+      const cuts = [];
+      for (let step = 0; step < 16; step++) {
+        let [low, high] = [step / 16, (step + 1) / 16];
+        const before = side(low) < 0;
+        if (before === side(high) < 0) continue;
+        for (let k = 0; k < 40; k++) {
+          const half = (low + high) / 2;
+          if (before === side(half) < 0) low = half;
+          else high = half;
+        }
+        cuts.push((low + high) / 2);
+      }
+      const out = [];
+      let [rest, done] = [points, 0];
+      for (const cut of cuts) {
+        const [head, tail] = split(rest, (cut - done) / (1 - done));
+        out.push(head);
+        [rest, done] = [tail, cut];
+      }
+      return [...out, rest];
+    };
     const path = (d) =>
       segments(d)
+        .flatMap(([command, from, ...rest]) =>
+          command === 'Q' || command === 'C'
+            ? pieces([from, ...rest]).map(([start, ...points]) => [command, start, ...points])
+            : [[command, from, ...rest]],
+        )
         .map(([command, from, ...rest]) => {
           if (command === 'Z') return 'Z';
           if (command === 'M' || command === 'L') return `${command} ${pt(at(rest[0]))}`;
@@ -312,32 +358,70 @@
       });
   }
 
+  // An arm with a seam (rig.json's `seam`) is drawn in two pieces that meet there, as the
+  // app's Tuck: behind its seam under its body's art, in front of it over all the body wears.
+  // So a sleeve's round never shows on the chest, and a bare shoulder never covers a strap.
+  // Each is the kept side as a clip's polygon, in the arm's own space; the piece under the
+  // body laps a little past the seam so no hairline shows where the two meet.
+  const LAP = 0.6;
+  const FAR = 600;
+  const TUCKS = PARTS.map(({ pivot, seam }) => {
+    if (!seam) return null;
+    const [top, armpit] = [seam.top, seam.armpit];
+    const length = Math.hypot(armpit[0] - top[0], armpit[1] - top[1]);
+    if (!(length > 0)) return null;
+    let back = [-(armpit[1] - top[1]) / length, (armpit[0] - top[0]) / length];
+    if ((pivot[0] - top[0]) * back[0] + (pivot[1] - top[1]) * back[1] < 0)
+      back = [-back[0], -back[1]];
+    const kept = ([x, y], [bx, by]) =>
+      [
+        [x - by * FAR, y + bx * FAR],
+        [x - by * FAR - bx * FAR, y + bx * FAR - by * FAR],
+        [x + by * FAR - bx * FAR, y - bx * FAR - by * FAR],
+        [x + by * FAR, y - bx * FAR],
+      ]
+        .map((point) => point.map((v) => +v.toFixed(2)).join(' '))
+        .join(' L ');
+    return {
+      over: kept(top, back),
+      under: kept([top[0] - back[0] * LAP, top[1] - back[1] * LAP], [-back[0], -back[1]]),
+    };
+  });
+  // For each part, the tucked arms that hang from it, drawn under it first.
+  const TUCKED = PARTS.map((part) =>
+    PARTS.flatMap((arm, j) => (arm.parent === part.id && TUCKS[j] ? [j] : [])),
+  );
+  // Each clip gets an id of its own, so figures on one page never share one.
+  let clips = 0;
+
   // SVG markup of one cast member in a pose.
   function figure(member, poses) {
-    // A twin (an arm drawn again behind the body) moves as its twin does.
-    const twinned = poses.map((q, i) => (PARTS[i].twin ? poses[INDEX[PARTS[i].twin]] : q));
-    const posed = leveled(twinned, member.level);
+    const posed = leveled(poses, member.level);
     const { matrices, opacities, carriers } = layout(posed);
     let svg = '';
-    PARTS.forEach((part, i) => {
-      if (part.rope) {
-        svg += hung(member.art[i], part.rope, posed[i].opacity, carriers, opacities);
+    const draw = (i, kept) => {
+      if (PARTS[i].rope) {
+        svg += hung(member.art[i], PARTS[i].rope, posed[i].opacity, carriers, opacities);
         return;
       }
       const art =
-        part.elbow && posed[i].bend && member.art[i]
-          ? bent(member.art[i], part, posed[i].bend)
+        PARTS[i].elbow && posed[i].bend && member.art[i]
+          ? bent(member.art[i], PARTS[i], posed[i].bend)
           : member.art[i];
       if (!art || !(opacities[i] > 0)) return;
-      const g = `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">${art}</g>`;
-      if (!FRONT.has(part.id) || !part.elbow) {
-        svg += g;
+      const open = `<g transform="matrix(${format(matrices[i])})" opacity="${opacities[i].toFixed(3)}">`;
+      if (!kept) {
+        svg += `${open}${art}</g>`;
         return;
       }
-      // An arm's front copy shows only past the elbow (Figure.forearm), so the shoulder stays behind.
-      const id = `forearm${++clips}`;
-      const points = forearm(part, carriers[i]).map(([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`);
-      svg += `<clipPath id="${id}"><path d="M ${points.join(' L ')} Z"/></clipPath><g clip-path="url(#${id})">${g}</g>`;
+      const id = `wc-tuck-${(clips = (clips + 1) % 1e9)}`;
+      svg +=
+        `${open}<clipPath id="${id}" clipPathUnits="userSpaceOnUse"><path d="M ${kept} Z"/></clipPath>` +
+        `<g clip-path="url(#${id})">${art}</g></g>`;
+    };
+    PARTS.forEach((_, i) => {
+      for (const arm of TUCKED[i]) draw(arm, TUCKS[arm].under);
+      draw(i, TUCKS[i]?.over);
     });
     return svg;
   }
@@ -357,26 +441,6 @@
     const pt = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
     const d = `M ${pt(from)} Q ${pt(control)} ${pt(to)}`;
     return `<g opacity="${opacity.toFixed(3)}">${art.replace(/ d="[^"]*"/g, ` d="${d}"`)}</g>`;
-  }
-
-  let clips = 0;
-  const REACH = 400;
-  // A wide band from the elbow out past the hand, in canvas coordinates (Figure.forearm).
-  function forearm(part, [a, b, c, d, e, f]) {
-    const [sx, sy] = part.pivot;
-    const [ex, ey] = part.elbow.at;
-    const [ax, ay] = [part.elbow.hand[0] - sx, part.elbow.hand[1] - sy];
-    const length = Math.hypot(ax, ay);
-    const [ux, uy] = [ax / length, ay / length];
-    return [
-      [-REACH, 0],
-      [REACH, 0],
-      [REACH, REACH],
-      [-REACH, REACH],
-    ].map(([across, along]) => {
-      const [x, y] = [ex - uy * across + ux * along, ey + ux * across + uy * along];
-      return [a * x + c * y + e, b * x + d * y + f];
-    });
   }
 
   window.WildcardAvatar = { pose, perform, figure, bent, layout };

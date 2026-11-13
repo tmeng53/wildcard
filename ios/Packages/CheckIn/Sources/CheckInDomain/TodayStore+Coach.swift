@@ -63,20 +63,25 @@ extension TodayStore {
         }
     }
 
-    /// Whether the coach's page has anything unseen; what was shown stays while the server can't
-    /// be reached.
+    /// The coach's page's newest unseen card; what was shown stays while the server can't be
+    /// reached.
     private func loadUnseenCoachCards(in home: Home) async {
-        guard let unseen = try? await backend.hasUnseenCoachCards(in: home.squad.id) else { return }
-        loadedUnseenCoachCards = (home.squad.id, unseen)
+        do {
+            loadedUnseenCoachCard = (home.squad.id, try await backend.newestUnseenCoachCard(in: home.squad.id))
+        } catch {}
+    }
+
+    /// The newest card on the coach's page the member hasn't seen, for its row on the squad card
+    /// (Tracy, 2026-11-13): whatever the coach said, a note, the 战术板 line, a challenge or a gift.
+    /// Swiping them away there marks them seen on the server, and the next load takes it away.
+    public var newestUnseenCoachCard: CoachPageCard? {
+        guard let loadedUnseenCoachCard, loadedUnseenCoachCard.squad == savedHome?.squad.id else { return nil }
+        return loadedUnseenCoachCard.card
     }
 
     /// Whether the coach's page has a card the member hasn't seen, for the dot on its phone (Tracy,
-    /// 2026-11-09); swiping them away there marks them seen on the server, and the next load clears
-    /// the dot.
-    public var hasUnseenCoachCards: Bool {
-        guard let loadedUnseenCoachCards, loadedUnseenCoachCards.squad == savedHome?.squad.id else { return false }
-        return loadedUnseenCoachCards.unseen
-    }
+    /// 2026-11-09).
+    public var hasUnseenCoachCards: Bool { newestUnseenCoachCard != nil }
 
     /// The 战术板 line the coach says on the home now, while its day lasts.
     public var coachLine: CoachNote? { coach?.line(at: now()) }

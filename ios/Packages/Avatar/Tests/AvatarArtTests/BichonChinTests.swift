@@ -10,7 +10,6 @@ import Testing
         #expect(try figure.part("chin").art.isEmpty == (body != "bichon"), "\(body)")
         for side in ["L", "R"] {
             #expect(try figure.index("chin") > figure.index(PartID("arm\(side)")))
-            #expect(try figure.index("chin") > figure.index(PartID("arm\(side)Back")))
         }
     }
 }

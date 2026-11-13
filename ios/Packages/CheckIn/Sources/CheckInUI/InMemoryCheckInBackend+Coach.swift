@@ -22,6 +22,16 @@ extension InMemoryCheckInBackend {
         return SidelineCoach(coach: coach, note: note)
     }
 
+    /// 毛头's morning note to me, not seen yet: the coach's row on the squad card says its start.
+    static func sampleUnseenNote(now: Date) -> CoachPageCard {
+        let words = Bundle.module.inAppLanguage
+        return CoachPageCard(
+            kind: .note, id: "41", coach: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)),
+            look: "xiaohun", time: now.addingTimeInterval(-3600),
+            day: LocalDay(at: now, in: SquadTimeZone.newYorkClock),
+            text: String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words))
+    }
+
     /// 帕帕, the coach a squad changes to in the samples.
     static var papa: CoachSpeaker {
         CoachSpeaker(

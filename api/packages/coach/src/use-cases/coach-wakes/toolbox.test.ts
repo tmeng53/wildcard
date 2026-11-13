@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mentioning } from './toolbox.js';
+import { mentioning, toolbox, type WakeDraft } from './toolbox.js';
 
 const mia = '00000000-0000-4000-8000-000000000001';
 const miao = '00000000-0000-4000-8000-000000000002';
@@ -37,5 +37,51 @@ describe('mentioning', () => {
       line: '@Mia 今天冲',
       mentions: [mia],
     });
+  });
+});
+
+describe('recall', () => {
+  it('looks up the files as the model names them, never another coach’s page', async () => {
+    const draft: WakeDraft = {
+      files: new Map([
+        [`people/${mia}.md`, '- 对花生过敏\n- 想跑半马'],
+        ['coaches/maotou.md', '- 我答应过队员1 一首歌'],
+        ['coaches/qifei.md', '- 半马那天我去加油'],
+        ['memory.md', '- 大家约好周日爬山'],
+      ]),
+      changed: new Set(),
+      note: undefined,
+      memberNotes: new Map(),
+      challenges: new Map(),
+      gifts: new Map(),
+      reply: undefined,
+      replyMentions: [],
+      reaction: undefined,
+      answer: undefined,
+      answerMentions: [],
+      challengeDone: false,
+      feedback: undefined,
+      steps: [],
+    };
+    const recall = toolbox({
+      week: { ...context.week, weekStart: '2026-11-09', checkIns: [] },
+      roster: context.roster,
+      coach: 'qifei',
+      draft,
+      kind: 'checkIn',
+    }).find(({ name }) => name === 'recall');
+    expect(await recall?.run({ query: '半马 歌' })).toBe(
+      '【me.md】- 半马那天我去加油\n【people/队员1.md】- 想跑半马',
+    );
+    // A file the task lists as still empty is there to look in, never a missing one.
+    expect(await recall?.run({ path: 'squad.md' })).toBe(
+      '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
+    );
+    // A read: its answer is kept by its length only, since it holds members' words.
+    expect(draft.steps).toStrictEqual([
+      { tool: 'recall', input: { query: '半马 歌' }, output: '（39 字）' },
+      { tool: 'recall', input: { path: 'squad.md' }, output: '（29 字）' },
+    ]);
+    expect(draft.changed.size).toBe(0);
   });
 });

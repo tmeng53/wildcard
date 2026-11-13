@@ -383,7 +383,8 @@ export function coachActivity(deps: {
     description:
       '接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it ' +
       'go if they say (their coach remembers it; squadmates never see it). The first answer ' +
-      'stands; answering again gets it back. The coach sees it when the member next checks in.',
+      'stands; answering again gets it back. Only until its day is over on the squad’s clock. ' +
+      'The coach sees it when the member next checks in.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -416,8 +417,9 @@ export function coachActivity(deps: {
         content: { 'application/json': { schema: ChallengeAnswered } },
       },
       400: problem(
-        'Not a valid squad or note id, not an answer, or a note with no challenge ' +
-          '(`COACH_NOTE_NO_CHALLENGE`)',
+        'Not a valid squad or note id, not an answer, a note with no challenge ' +
+          '(`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the ' +
+          'squad’s clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)',
       ),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
@@ -570,6 +572,7 @@ export function coachActivity(deps: {
         note: noteId,
         answer,
         ...(reason === undefined ? {} : { reason }),
+        today: await todayOf(squadId),
       });
       return c.json({ version: 1 as const, noteId, ...kept }, 200);
     })

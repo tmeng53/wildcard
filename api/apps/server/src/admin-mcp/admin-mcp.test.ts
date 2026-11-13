@@ -22,7 +22,12 @@ import {
 } from '@wildcard/check-ins';
 import { createMinimumBuilds, createPostgresMinimumBuild } from '@wildcard/switches';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
-import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
+import {
+  createDailyPushSettings,
+  createPostgresDailyPushSettings,
+  createPostgresTeammatePushSettings,
+  createTeammatePushSettings,
+} from '@wildcard/push';
 import {
   createDiceLines,
   createDraftSettings,
@@ -81,7 +86,7 @@ import {
   config,
   noJobs,
   nudgesOn,
-  placeRatingsOn,
+  placesOn,
   savedPlacesOn,
   weatherOn,
   pushOn,
@@ -94,6 +99,7 @@ import { artTools } from './tools/art.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
+import { teammatePushTools } from './tools/teammate-push.js';
 import { appCopyTools } from './tools/app-copy.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { minimumBuildTools } from './tools/minimum-build.js';
@@ -192,7 +198,7 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
-          placeRatings: placeRatingsOn(db),
+          ...placesOn(db),
           savedPlaces: savedPlacesOn(db),
           weather: weatherOn(db),
           scenes: scenesOn(db),
@@ -249,6 +255,11 @@ beforeAll(async () => {
               ...dailyPushTools({
                 settings: createDailyPushSettings({
                   store: createPostgresDailyPushSettings(scope),
+                }),
+              }),
+              ...teammatePushTools({
+                settings: createTeammatePushSettings({
+                  store: createPostgresTeammatePushSettings(scope),
                 }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
@@ -491,6 +502,8 @@ describe('the admin MCP server', () => {
       ['change_app_copy', false],
       ['get_daily_push_settings', true],
       ['change_daily_push_settings', false],
+      ['get_teammate_push_settings', true],
+      ['change_teammate_push_settings', false],
       ['get_sports', true],
       ['put_sport', false],
       ['put_sport_category', false],

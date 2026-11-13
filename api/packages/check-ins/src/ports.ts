@@ -165,6 +165,15 @@ export type CoachHired = (input: {
   readonly coach: string;
 }) => Promise<boolean>;
 
+/**
+ * Whether `place` is a place a member of one of these squads added (自建地点). The places module
+ * keeps them; check-ins only ask, so a post is tagged only with one its squads see.
+ */
+export type SquadPlaceOf = (input: {
+  readonly place: string;
+  readonly squads: readonly SquadId[];
+}) => Promise<boolean>;
+
 /** The sports list. The sports module keeps it; check-ins only ask whether a sport is in it. */
 export interface SportList {
   /** Whether `id` names a listed sport (`custom` never does). */

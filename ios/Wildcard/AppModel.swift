@@ -15,6 +15,7 @@ import MeDomain
 import NotificationsDomain
 import Observation
 import OnboardingUI
+import PlacesDomain
 import RecapDomain
 import RecapUI
 import ScenePickDomain
@@ -344,6 +345,8 @@ final class AppModel {
 
     /// 我的动态 and squadmates' player cards over our API.
     var myPosts: any MyPostsSource { APIMyPostsSource(api: api) }
+    /// A place's squad numbers, for its page.
+    var places: any PlaceSource { APIPlaceSource(api: api) }
     var squadmateCards: any SquadmateCards { APISquadmateCards(api: api) }
 
     /// 通知 over our API.

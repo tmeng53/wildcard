@@ -202,11 +202,18 @@ struct CoachDeckCard: View {
     @ViewBuilder private var buttons: some View {
         Group {
             if let shown, shown.kind == .challenge {
-                // Held while its stamp plays, then the card goes.
-                if shown.challenge?.answer == nil || stamped {
+                // Held while its stamp plays, then the card goes; one whose day is over can't be
+                // taken up any more.
+                if stamped || shown.challenge?.isOpen == true {
                     ChallengeAnswers(
                         deck: deck, card: shown, coachName: coach.name, stamped: $stamped, reason: $reason,
                         typing: $typing, putAway: putAway)
+                } else if let challenge = shown.challenge, challenge.answer == nil, challenge.isExpired {
+                    Text(copy: "已过期", bundle: .module)
+                        .typeStyle(TypeRamp.calloutEmphasis)
+                        .foregroundStyle(Color(role: .fgMuted, in: theme))
+                        .frame(maxWidth: .infinity, minHeight: Sizing.control)
+                        .accessibilityIdentifier("coachDeck.expired")
                 }
             } else {
                 HStack(spacing: Space.s) { rowButtons }

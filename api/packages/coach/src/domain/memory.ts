@@ -128,7 +128,7 @@ export function editBody(
     next = body === '' ? replace : `${body.replace(/\n*$/, '')}\n${replace}`;
   } else {
     const at = body.indexOf(find);
-    if (at === -1) return { ok: false, why: '没找到 find 的原文。照抄任务里「你的记性」的原文。' };
+    if (at === -1) return { ok: false, why: '没找到 find 的原文。先用 recall 查出原文，再照抄。' };
     if (body.slice(at + 1).includes(find)) {
       return { ok: false, why: 'find 的原文出现了不止一次，多带几个字让它只出现一次。' };
     }
@@ -147,4 +147,67 @@ export function editBody(
  */
 export function squadSeed(week: Pick<SquadWeek, 'name'>): string {
   return ['# 小队', ...(week.name === undefined ? [] : [`队名：${week.name}`])].join('\n');
+}
+
+/** The most `recall` answers with, in characters. */
+export const RECALL_LIMIT = 2000;
+
+/** The text's first `end` UTF-16 units, one fewer if the cut would split a surrogate pair. */
+export function sliceWhole(text: string, end: number): string {
+  const code = text.charCodeAt(end - 1);
+  const splits = end < text.length && code >= 0xd800 && code <= 0xdbff;
+  return text.slice(0, splits ? end - 1 : end);
+}
+
+/**
+ * The lines of the coach's files that match what it looks for, in each file's order (the night
+ * keeps what matters most at the top): every line of the files asked for, or only those holding
+ * any of the query's words. Each file is named by the path the model sees.
+ */
+export function recallLines(
+  files: ReadonlyMap<string, string>,
+  { path, query }: { readonly path?: string; readonly query?: string },
+): string {
+  if (path !== undefined && !files.has(path)) {
+    return `没有 ${path} 这个文件；能查的是：${[...files.keys()].join('，')}。`;
+  }
+  const terms = (query ?? '')
+    .toLowerCase()
+    .split(/[\s，,、。；;：:！!？?]+/)
+    .filter((term) => term !== '');
+  const found: string[] = [];
+  for (const [shown, body] of files) {
+    if (path !== undefined && shown !== path) continue;
+    const lines = body
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line !== '' && !line.startsWith('#'))
+      .filter(
+        (line) => terms.length === 0 || terms.some((term) => line.toLowerCase().includes(term)),
+      );
+    found.push(...lines.map((line) => `【${shown}】${line}`));
+  }
+  if (found.length === 0) {
+    return terms.length === 0
+      ? '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。'
+      : '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。';
+  }
+  const shown: string[] = [];
+  let length = 0;
+  for (const line of found) {
+    // A line longer than the whole answer is cut, so it is never left out for good.
+    if (shown.length === 0 && line.length > RECALL_LIMIT) {
+      shown.push(`${sliceWhole(line, RECALL_LIMIT - 1)}…`);
+      length = RECALL_LIMIT;
+      continue;
+    }
+    if (length + line.length + 1 > RECALL_LIMIT) break;
+    shown.push(line);
+    length += line.length + 1;
+  }
+  const left = found.length - shown.length;
+  return [
+    ...shown,
+    ...(left === 0 ? [] : [`（还有 ${String(left)} 行没列出，换个更具体的词再查）`]),
+  ].join('\n');
 }

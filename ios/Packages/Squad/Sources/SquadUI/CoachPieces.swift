@@ -109,7 +109,7 @@ struct CoachStage: View {
     let figureHeight: Double
     let floor: Double
     var mood: CoachSilhouette.Mood = .calm
-    /// On a grey page block (解雇) the stage is the block's grey; elsewhere a deeper grey.
+    /// On a grey page block (解雇) the stage is the block's grey; elsewhere the coach's backdrop.
     var surface: CardSurface = .scene
     /// Cheers once when the stage appears, as on the coach's 简历.
     var greets = false
@@ -117,7 +117,7 @@ struct CoachStage: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color(role: surface == .page ? .bgSubtle : .borderDefault, in: theme)
+            wall
             Color(role: surface == .page ? .borderDefault : .fgSubtle, in: theme)
                 .opacity(surface == .page ? 1 : CoachMetrics.floorShade)
                 .frame(height: floor)
@@ -130,6 +130,13 @@ struct CoachStage: View {
             .padding(.top, Space.s + 2)
             .padding(.bottom, floor * CoachMetrics.feet)
         }
+    }
+
+    /// The coach's own backdrop on a card (招聘会, 简历, Tracy 2026-11-13), the colour its head
+    /// sits on too; a grey without one, and always on a grey page block.
+    private var wall: Color {
+        if surface == .scene, let backdrop = CoachCharacter.backdrop(coach.rawValue) { return Color(backdrop) }
+        return Color(role: surface == .page ? .bgSubtle : .borderDefault, in: theme)
     }
 
     private var speech: some View {

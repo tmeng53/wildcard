@@ -307,7 +307,10 @@ public struct WildcardAPI: Sendable {
             }
         _ = try await call {
             try await client.registerMyDevice(
-                body: .json(.init(version: ._1, token: device.token.description, environment: environment))
+                body: .json(
+                    .init(
+                        version: ._1, token: device.token.description, environment: environment,
+                        pushGeneration: PushDevice.generation))
             ).ok
         }
     }

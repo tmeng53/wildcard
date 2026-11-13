@@ -48,6 +48,7 @@ export interface DailyPushSettings {
 export interface PushDevices {
   environment: string;
   member_id: string;
+  push_generation: Generated<number>;
   registered_at: Generated<Timestamp>;
   token: string;
 }
@@ -66,6 +67,26 @@ export interface PushSettings {
   topic: string;
 }
 
+export interface TeammatePushes {
+  at: Timestamp;
+  check_in_id: string;
+  member_id: string;
+  rang: boolean;
+}
+
+export interface TeammatePushSettingEvents {
+  at: Generated<Timestamp>;
+  changed_by: string | null;
+  id: Generated<Int8>;
+  settings: Json;
+}
+
+export interface TeammatePushSettings {
+  daily_rings: number;
+  only_row: Generated<boolean>;
+  sending: boolean;
+}
+
 export interface DB {
   daily_push_setting_events: DailyPushSettingEvents;
   daily_push_settings: DailyPushSettings;
@@ -73,4 +94,7 @@ export interface DB {
   push_devices: PushDevices;
   push_setting_events: PushSettingEvents;
   push_settings: PushSettings;
+  teammate_push_setting_events: TeammatePushSettingEvents;
+  teammate_push_settings: TeammatePushSettings;
+  teammate_pushes: TeammatePushes;
 }

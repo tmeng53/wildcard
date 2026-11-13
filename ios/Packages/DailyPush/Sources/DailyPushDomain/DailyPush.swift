@@ -4,7 +4,9 @@ import Foundation
 
 /// The member's squad day as the 6pm push carries it (the server's `event`): the squad's week,
 /// who patted them, and teammates' check-ins today, newest first, at most four, with how many
-/// more there are. Nothing is loaded when the push opens; this is all it shows.
+/// more there are. Nothing is loaded when the push opens; this is all it shows. The teammate
+/// push (a squadmate's 训练, told as it is posted) carries the same day, so its long-press view
+/// is this one too.
 public struct DailyPush: Hashable, Sendable {
     /// The member the push is for.
     public let viewer: MemberID
@@ -19,9 +21,12 @@ public struct DailyPush: Hashable, Sendable {
     public var nobodyPosted: Bool { posts.isEmpty && more == 0 }
     private let names: [MemberID: String]
 
+    /// The pushes that carry the squad's day: the 6pm push and the teammate push.
+    private static let kinds: Set<String> = ["dailyProgress", "teammateCheckIn"]
+
     /// Reads the push's `event`, as JSON.
     public init(event: Data) throws(DailyPushError) {
-        guard let wire = try? JSONDecoder().decode(Wire.self, from: event), wire.kind == "dailyProgress",
+        guard let wire = try? JSONDecoder().decode(Wire.self, from: event), Self.kinds.contains(wire.kind),
             let today = wire.today, let first = today.members.first
         else { throw .unreadable }
         let members = today.members.map(\.id)

@@ -11,6 +11,7 @@ import MeDomain
 import MeUI
 import NotificationsDomain
 import NotificationsUI
+import PlacesDomain
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -36,6 +37,8 @@ struct MainTabs: View {
     let recap: RecapShelf
     /// The member's own posts, for 我的动态.
     let myPosts: any MyPostsSource
+    /// What the squad did at a place, for its page.
+    let places: any PlaceSource
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
@@ -73,9 +76,13 @@ struct MainTabs: View {
     /// 我的动态, pushed over 我.
     @State var wall: PostWallStore?
     /// 我的动态's tile on 我: the wall's first page, read again each time 我 shows.
-    @State private var newestPosts: PostWallStore
+    @State var newestPosts: PostWallStore
     /// A post opened from 我的动态: 动态's post page, pushed over the wall.
     @State var post: OpenedPost?
+    /// A place opened from that post's tag, pushed over it.
+    @State var profilePlace: Place?
+    /// A post opened from that place's tiles, pushed over the place.
+    @State var profilePlacePost: OpenedPost?
     /// 设置, pushed over 我.
     @State var showsSettings = false
     /// A player's card, opened from the home or 小队, popped up over every tab and the tab bar.
@@ -85,7 +92,8 @@ struct MainTabs: View {
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
-        recap: RecapShelf, myPosts: any MyPostsSource, notices: any NoticeSource, coachCards: any CoachCardSource,
+        recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, notices: any NoticeSource,
+        coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), admin: AdminTools = AdminTools(),
         location: LocationSharing? = nil, pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {},
@@ -95,7 +103,7 @@ struct MainTabs: View {
         self.admin = admin
         self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
-        (self.squad, self.recap, self.myPosts) = (squad, recap, myPosts)
+        (self.squad, self.recap, self.myPosts, self.places) = (squad, recap, myPosts, places)
         (self.squadmateCards, self.coachCards) = (squadmateCards, coachCards)
         _selection = selection
         _destination = destination
@@ -112,11 +120,15 @@ struct MainTabs: View {
             if tab == selection { screen(tab) }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
+        .environment(\.placePage, composePlacePage)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
             today.openDestination = { open($0) }
-            feed.openTeammate = { (teammateOnHome, teammate) = (false, homeCard(of: $0)) }  // @ tag → card
+            feed.routes = FeedRoutes(
+                openTeammate: { (teammateOnHome, teammate) = (false, homeCard(of: $0)) },  // @ tag → card
+                openPlace: { open(.place($0)) })
             today.broadcastOpened = { broadcast in Task { await inbox.opened(broadcast) } }
             today.tellUnlocks(
                 with: UnlockNotices(
@@ -247,7 +259,12 @@ struct MainTabs: View {
                         inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
                     )
                 case .post(let opened):
-                    PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
+                    // Closing (a delete) takes only this post away: a place or 通知 under it stays.
+                    PostDetailView(model: opened.model, post: opened.id) {
+                        if case .post(let top) = feedPages.last, top.id == opened.id { feedPages.removeLast() }
+                    }
+                case .place(let place):
+                    placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 }
             }
         }
@@ -256,87 +273,6 @@ struct MainTabs: View {
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
         .onDisappear { inbox.close() }
-    }
-
-    /// 我, with 出赛表, 换装, 商店街 (and 换装 over it) or 我的动态 pushed over it, and a post opened from the wall or from
-    /// 训练记录 pushed over that; closing the post reads 我 again, as an edit or a delete there may
-    /// change the record.
-    private var profilePage: some View {
-        NavigationStack {
-            MeView(
-                model: profile,
-                destinations: MeDestinations(
-                    editCharacter: wardrobe.editCharacter, schedule: { showsSchedule = true },
-                    street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                    openPost: { post = OpenedPost(id: $0, model: feed.page(of: $0)) },
-                    privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
-                    writeReview: PolicyPages.writeReview, admin: admin, health: today.health,
-                    location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now())),
-                    badgeMarks: wardrobe.badgeMarks),
-                isSettingsOpen: $showsSettings
-            ) {
-                MyPostsTile(store: newestPosts) { wall = PostWallStore(source: myPosts) }
-            }
-            .navigationRoot()
-            .navigationDestination(isPresented: $showsSchedule) {
-                ScheduleView(model: schedule)
-                    .environment(\.sceneTheme, today.scene)
-                    // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
-                    .accentTone(.scene)
-            }
-            .navigationDestination(isPresented: showsShop) {
-                if let shop = wardrobe.shop {
-                    ShoppingStreetPage(model: shop)
-                        // A piece tried on: the editor over the street, so back returns to it.
-                        .navigationDestination(isPresented: showsEditor(overShop: true)) { profileEditor }
-                }
-            }
-            .navigationDestination(isPresented: showsEditor(overShop: false)) { profileEditor }
-            .navigationDestination(isPresented: showsWall) {
-                if let wall {
-                    PostWallView(
-                        store: wall,
-                        open: { post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall)) },
-                        checkIn: { selection = .today }
-                    )
-                    .navigationDestination(item: $post) { opened in
-                        PostDetailView(model: opened.model, post: opened.id) { post = nil }
-                            .environment(\.sceneTheme, today.scene)
-                    }
-                }
-            }
-            // A post from 训练记录 is pushed straight over 我.
-            .navigationDestination(item: recordPost) { opened in
-                PostDetailView(model: opened.model, post: opened.id) { post = nil }
-                    .environment(\.sceneTheme, today.scene)
-            }
-        }
-        .onChange(of: post?.id) { _, id in if id == nil { Task { await profile.reload() } } }
-        // 商店街 follows what 我 reads, made again only while it is closed so an open one keeps its place.
-        .task(id: wardrobe.key) { wardrobe.refresh() }
-        .accentTone(.brand)
-    }
-
-    /// 我的动态 is pushed; the system's back closes it.
-    private var showsWall: Binding<Bool> {
-        Binding(
-            get: { wall != nil },
-            set: {
-                guard !$0 else { return }
-                (wall, post) = (nil, nil)
-            })
-    }
-
-    /// 商店街 is pushed; the system's back closes it.
-    private var showsShop: Binding<Bool> {
-        Binding(
-            get: { wardrobe.showsShop && wardrobe.shop != nil },
-            set: { if !$0 { wardrobe.showsShop = false } })
-    }
-
-    /// A post opened from 训练记录, over 我 while 我的动态 isn't open; the system's back closes it.
-    private var recordPost: Binding<OpenedPost?> {
-        Binding(get: { wall == nil ? post : nil }, set: { if $0 == nil { post = nil } })
     }
 }
 
@@ -388,6 +324,11 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                 case .coachDeck, .coachEarlier, .coachCard:
                     coachDeckPage(page)
+                        .environment(\.sceneTheme, today.scene)
+                case .place(let place):
+                    placePage(place) { todayPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+                case .post(let opened):
+                    PostDetailView(model: opened.model, post: opened.id) { todayPages.removeLast() }
                         .environment(\.sceneTheme, today.scene)
                 }
             }

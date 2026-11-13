@@ -10,9 +10,8 @@ func everyOutfitBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
     #expect(
         figure.parts.map(\.id.rawValue) == [
-            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "armLBack",
-            "armRBack",
-            "torso", "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
+            "shadow", "dustL", "dustR", "root", "propBack", "propFeet", "tail", "legL", "legR", "propToes", "torso",
+            "medal", "acc", "armL", "armR", "earL", "earR", "head", "flapL", "flapR", "brows",
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
@@ -73,7 +72,7 @@ func everyOutfitBuilds(outfit: Outfit) throws {
 @Test(arguments: wardrobe)
 func everyLookBuilds(outfit: Outfit) throws {
     let figure = try PlaceholderCharacter.figure(wearing: outfit)
-    #expect(figure.parts.count == 65)
+    #expect(figure.parts.count == 63)
 }
 
 @Test(arguments: Persona.allCases)
@@ -87,9 +86,9 @@ func everyPersonaHasAnIdleACheerAndAWelcome(persona: Persona) throws {
         let oneShot = try figure.bind(PlaceholderCharacter.clip(name, persona: persona))
         #expect(oneShot.clip.name == name && !oneShot.clip.loops)
         // It lands where the idle starts (half-closed eyes included, for deadpan), so handing
-        // back to idle doesn't jump either. Its arms may end in front (`armsBehind`).
+        // back to idle doesn't jump either.
         #expect(
-            nearlyEqual(armsBehind(figure.pose(oneShot, at: oneShot.clip.duration)), figure.pose(idle, at: 0)),
+            nearlyEqual(figure.pose(oneShot, at: oneShot.clip.duration), figure.pose(idle, at: 0)),
             "\(name)")
     }
 }
@@ -161,15 +160,6 @@ func speciesMovesLayerOnEveryPersona(persona: Persona, body: String) throws {
     let figure = try PlaceholderCharacter.figure(wearing: Outfit(["body": "lop", "hat": "warmup-cap"]))
     #expect(try figure.index("crown") > figure.index("flapL") && figure.index("crown") > figure.index("flapR"))
     #expect(try figure.part("crown").art.count == 2)
-}
-
-/// The pose with every arm behind the body. A one-shot may end with an arm in front: the
-/// crossfade keeps it there, and `Performance` hands it back behind once the idle has it clear of
-/// the body, where even a long sleeve's cuff doesn't cover it.
-func armsBehind(_ pose: Pose) -> Pose {
-    var behind = pose
-    for index in behind.parts.indices { behind.parts[index].front = 0 }
-    return behind
 }
 
 /// The same pose, give or take floating-point rounding. A part turned a full circle (a swimmer's

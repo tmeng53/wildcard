@@ -154,8 +154,8 @@ public struct APICheckInBackend: CheckInBackend {
         try? DeviceJSON.write(data, to: savedCoachFile)
     }
 
-    public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool {
-        do { return !(try await api.coachCards(in: squad).stack.isEmpty) } catch { throw CheckInError(error) }
+    public func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
+        do { return try await api.coachCards(in: squad).stack.last } catch { throw CheckInError(error) }
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {

@@ -2465,38 +2465,6 @@
         }
       }
     },
-    "移除位置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove location"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除位置"
-          }
-        }
-      }
-    },
-    "在地图中打开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open in Maps"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在地圖中開啟"
-          }
-        }
-      }
-    },
     "这顿怎么样": {
       "localizations": {
         "en": {
@@ -2557,6 +2525,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "請假不影響連續天數"
+          }
+        }
+      }
+    },
+    "送你一样东西": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got you something"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送你一樣東西"
           }
         }
       }

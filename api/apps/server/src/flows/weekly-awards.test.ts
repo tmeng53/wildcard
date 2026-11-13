@@ -24,7 +24,12 @@ import {
   createPostgresNoticeStore,
   createPostgresBroadcastStore,
 } from '@wildcard/notices';
-import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
+import {
+  DeviceToken,
+  FIRST_PUSH_GENERATION,
+  MemberId as PushMember,
+  type PushNotification,
+} from '@wildcard/push';
 import {
   createPostgresSquadStore,
   createSquads,
@@ -60,7 +65,7 @@ import {
   config,
   noJobs,
   nudgesOn,
-  placeRatingsOn,
+  placesOn,
   savedPlacesOn,
   weatherOn,
   pushOn,
@@ -220,7 +225,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     liveEvents: ignoredNotices.liveEvents,
     aiConsent,
     nudges: nudgesOn(db),
-    placeRatings: placeRatingsOn(db),
+    ...placesOn(db),
     savedPlaces: savedPlacesOn(db),
     weather: weatherOn(db),
     ...unusedFeedback,
@@ -299,7 +304,7 @@ async function member(timeZone = 'America/Los_Angeles', agreedToAi = true) {
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await pushOn(db).registerDevice({
     member: PushMember.parse(signedUp.userId),
-    device: { token, environment: 'sandbox' },
+    device: { token, environment: 'sandbox', generation: FIRST_PUSH_GENERATION },
   });
   return { ...signedUp, device: token };
 }

@@ -44,7 +44,7 @@ import {
   config,
   noJobs,
   nudgesOn,
-  placeRatingsOn,
+  placesOn,
   savedPlacesOn,
   weatherOn,
   pushOn,
@@ -113,7 +113,7 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
-  placeRatings: placeRatingsOn(db),
+  ...placesOn(db),
   savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   scenes: scenesOn(db),
@@ -580,6 +580,14 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     // Only on its own day.
     const late = await complete(mate.token, old);
     expect([late.status, reason(late)]).toStrictEqual([400, 'COACH_CHALLENGE_DAY_OVER']);
+    // Nor taken up once its day is over (已过期): yesterday's can't be accepted today.
+    const stale = await call({
+      method: 'PUT',
+      path: `/squads/${squad}/coach/notes/${String(old)}/challenge`,
+      token: mate.token,
+      body: { version: 1, answer: 'accepted' },
+    });
+    expect([stale.status, reason(stale)]).toStrictEqual([400, 'COACH_CHALLENGE_DAY_OVER']);
 
     const done = await complete(mate.token, water);
     expect(done).toMatchObject({
@@ -1028,8 +1036,10 @@ describe('/squads/{squadId}/coach/cards', () => {
     expect(only.cards.map((card) => card.kind)).toStrictEqual(['challenge', 'challenge']);
     expect(only.cards).toMatchObject([
       { challenge: { title: '喝水' } },
-      { challenge: { title: '拉伸', completedBy: 'member' } },
+      { challenge: { title: '拉伸', completedBy: 'member' }, expired: true },
     ]);
+    // Today's is still open (已过期 only once its day is over).
+    expect(only.cards[0]).not.toHaveProperty('expired');
     // 以前 itself keeps to its 30 days and leaves the stack out.
     const all = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(all.cards.filter((card) => card.kind === 'challenge')).toStrictEqual([]);
