@@ -57,6 +57,7 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { eventPushes, jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { demoAccounts } from './routes/demo-accounts.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
@@ -194,6 +195,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
+  app.route('/', demoAccounts({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
   const handlers = eventHandlers({ coach: deps.jobs.coach, commentPush: deps });

@@ -2511,6 +2511,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Me/isAdmin`.
             public var isAdmin: Swift.Bool
+            /// Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/isDemo`.
+            public var isDemo: Swift.Bool
             /// Creates a new `Me`.
             ///
             /// - Parameters:
@@ -2518,22 +2522,26 @@ extension Components {
             ///   - userId: The signed-in member’s Supabase Auth user id.
             ///   - profile: Null until the member first saves one, right after signing up.
             ///   - isAdmin: Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
+            ///   - isDemo: Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts.
             public init(
                 version: Components.Schemas.Me.VersionPayload,
                 userId: Swift.String,
                 profile: Components.Schemas.Me.ProfilePayload? = nil,
-                isAdmin: Swift.Bool
+                isAdmin: Swift.Bool,
+                isDemo: Swift.Bool
             ) {
                 self.version = version
                 self.userId = userId
                 self.profile = profile
                 self.isAdmin = isAdmin
+                self.isDemo = isDemo
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case userId
                 case profile
                 case isAdmin
+                case isDemo
             }
         }
         /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.
@@ -2747,6 +2755,159 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case appleAuthorizationCode
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoAccounts`.
+        public struct DemoAccounts: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/version`.
+            public var version: Components.Schemas.DemoAccounts.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload`.
+            public struct AccountsPayloadPayload: Codable, Hashable, Sendable {
+                /// The account’s member id.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/memberId`.
+                public var memberId: Swift.String
+                /// Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/owner`.
+                public var owner: Swift.Bool
+                /// The account’s character, once it has saved a profile.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character`.
+                public struct CharacterPayload: Codable, Hashable, Sendable {
+                    /// What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
+                    ///
+                    /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character/nickname`.
+                    public var nickname: Swift.String
+                    /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character/look`.
+                    public var look: Components.Schemas.Look
+                    /// Creates a new `CharacterPayload`.
+                    ///
+                    /// - Parameters:
+                    ///   - nickname: What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.
+                    ///   - look:
+                    public init(
+                        nickname: Swift.String,
+                        look: Components.Schemas.Look
+                    ) {
+                        self.nickname = nickname
+                        self.look = look
+                    }
+                    public enum CodingKeys: String, CodingKey {
+                        case nickname
+                        case look
+                    }
+                }
+                /// The account’s character, once it has saved a profile.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character`.
+                public var character: Components.Schemas.DemoAccounts.AccountsPayloadPayload.CharacterPayload?
+                /// Creates a new `AccountsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - memberId: The account’s member id.
+                ///   - owner: Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off.
+                ///   - character: The account’s character, once it has saved a profile.
+                public init(
+                    memberId: Swift.String,
+                    owner: Swift.Bool,
+                    character: Components.Schemas.DemoAccounts.AccountsPayloadPayload.CharacterPayload? = nil
+                ) {
+                    self.memberId = memberId
+                    self.owner = owner
+                    self.character = character
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case memberId
+                    case owner
+                    case character
+                }
+            }
+            /// The admin’s own account, then their demo accounts, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/accounts`.
+            public typealias AccountsPayload = [Components.Schemas.DemoAccounts.AccountsPayloadPayload]
+            /// The admin’s own account, then their demo accounts, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/accounts`.
+            public var accounts: Components.Schemas.DemoAccounts.AccountsPayload
+            /// Creates a new `DemoAccounts`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - accounts: The admin’s own account, then their demo accounts, oldest first.
+            public init(
+                version: Components.Schemas.DemoAccounts.VersionPayload,
+                accounts: Components.Schemas.DemoAccounts.AccountsPayload
+            ) {
+                self.version = version
+                self.accounts = accounts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case accounts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoAccount`.
+        public struct DemoAccount: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/version`.
+            public var version: Components.Schemas.DemoAccount.VersionPayload
+            /// The account’s member id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/memberId`.
+            public var memberId: Swift.String
+            /// Creates a new `DemoAccount`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - memberId: The account’s member id.
+            public init(
+                version: Components.Schemas.DemoAccount.VersionPayload,
+                memberId: Swift.String
+            ) {
+                self.version = version
+                self.memberId = memberId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case memberId
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoHandOff`.
+        public struct DemoHandOff: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/version`.
+            public var version: Components.Schemas.DemoHandOff.VersionPayload
+            /// A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/refreshToken`.
+            public var refreshToken: Swift.String
+            /// Creates a new `DemoHandOff`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - refreshToken: A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use.
+            public init(
+                version: Components.Schemas.DemoHandOff.VersionPayload,
+                refreshToken: Swift.String
+            ) {
+                self.version = version
+                self.refreshToken = refreshToken
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case refreshToken
             }
         }
         /// - Remark: Generated from `#/components/schemas/AiConsent`.

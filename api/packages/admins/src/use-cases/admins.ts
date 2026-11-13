@@ -4,7 +4,7 @@ import {
   type LoggedAdminAction,
   type ToolName,
 } from '../domain/admin-action.js';
-import { NotAnAdminError } from '../errors.js';
+import { DemoAccountNotFoundError, NotAnAdminError } from '../errors.js';
 import type { AdminStore, Clock } from '../ports.js';
 
 /** The admin list and the log of what admins change. */
@@ -23,6 +23,20 @@ export interface Admins {
   }): Promise<LoggedAdminAction>;
   /** An admin's logged changes, newest first. */
   listLog(query: { readonly admin: AdminId; readonly limit: number }): Promise<LoggedAdminAction[]>;
+  /**
+   * The admin whose demo accounts the member may switch between: the member themselves when
+   * they are an admin, the admin who made it when they are signed in on a demo account. Throws
+   * `NotAnAdminError` for anyone else.
+   */
+  demoOwner(member: string): Promise<AdminId>;
+  /** Whether the member is a demo account an admin made. */
+  isDemoAccount(member: string): Promise<boolean>;
+  /** The admin's demo accounts, the oldest first. */
+  demoAccounts(admin: AdminId): Promise<string[]>;
+  /** Records a demo account the admin just made, at the current time. */
+  addDemoAccount(admin: AdminId, member: string): Promise<void>;
+  /** The member, when it is one of the admin's demo accounts; else `DemoAccountNotFoundError`. */
+  requireDemoAccount(admin: AdminId, member: string): Promise<string>;
 }
 
 export function createAdmins(deps: { readonly store: AdminStore; readonly clock: Clock }): Admins {
@@ -44,5 +58,20 @@ export function createAdmins(deps: { readonly store: AdminStore; readonly clock:
       return entry;
     },
     listLog: (query) => deps.store.listLog(query),
+    demoOwner: async (member) => {
+      if (await deps.store.isAdmin(member)) return AdminId.parse(member);
+      const owner = await deps.store.demoAccountOwner(member);
+      if (owner === undefined) throw new NotAnAdminError();
+      return owner;
+    },
+    isDemoAccount: async (member) => (await deps.store.demoAccountOwner(member)) !== undefined,
+    demoAccounts: (admin) => deps.store.demoAccounts(admin),
+    addDemoAccount: (admin, member) =>
+      deps.store.addDemoAccount({ admin, member, at: deps.clock() }),
+    requireDemoAccount: async (admin, member) => {
+      if ((await deps.store.demoAccountOwner(member)) !== admin)
+        throw new DemoAccountNotFoundError();
+      return member;
+    },
   };
 }

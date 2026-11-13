@@ -151,7 +151,7 @@ describe('GET /me', () => {
     const { token, userId } = await signUp();
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: null, isAdmin: false },
+      { version: 1, userId, profile: null, isAdmin: false, isDemo: false },
     ]);
   });
 
@@ -165,7 +165,7 @@ describe('GET /me', () => {
     }
     expect(await getMe({ authorization: `Bearer ${token}` })).toStrictEqual([
       200,
-      { version: 1, userId, profile: null, isAdmin: true },
+      { version: 1, userId, profile: null, isAdmin: true, isDemo: false },
     ]);
   });
 
@@ -251,6 +251,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: {
           timeZone: 'America/Los_Angeles',
           catchphrase: null,
@@ -278,6 +279,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: {
           timeZone: 'America/Toronto',
           catchphrase: null,
@@ -313,6 +315,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: { timeZone: zone, catchphrase: shout, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -332,6 +335,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -452,6 +456,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: {
           timeZone: zone,
           catchphrase: null,
@@ -477,6 +482,7 @@ describe('PUT /me/profile', () => {
         version: 1,
         userId,
         isAdmin: false,
+        isDemo: false,
         profile: { timeZone: zone, catchphrase: null, jerseyNumber: null, joinedAt: anInstant },
       },
     ]);
@@ -573,7 +579,7 @@ describe('PUT /me/profile', () => {
     });
     expect(await getMe({ authorization: `Bearer ${friend.token}` })).toStrictEqual([
       200,
-      { version: 1, userId: friend.userId, profile: null, isAdmin: false },
+      { version: 1, userId: friend.userId, profile: null, isAdmin: false, isDemo: false },
     ]);
   });
 
@@ -879,6 +885,93 @@ describe('PUT and DELETE /me/location', () => {
     expect(await send('/me/location', { method: 'DELETE' })).toStrictEqual([
       401,
       problem('AUTH_TOKEN_MISSING', 'Sign in to do this.'),
+    ]);
+  });
+});
+
+describe('demo accounts', () => {
+  const asMember = (token: string, method = 'GET') => ({
+    method,
+    headers: { authorization: `Bearer ${token}` },
+  });
+  /** A token for the account a hand-off's refresh token opens, as the app's refresh does. */
+  async function signedInWith(refreshToken: string) {
+    const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: config.supabaseSecretKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    return z.object({ access_token: z.string() }).parse(await response.json()).access_token;
+  }
+  async function admin() {
+    const signedUp = await signUp();
+    const db = createDatabase(config.databaseUrl);
+    try {
+      await sql`insert into public.admins (member_id) values (${signedUp.userId})`.execute(db);
+    } finally {
+      await db.destroy();
+    }
+    return signedUp;
+  }
+
+  it('lets an admin make a demo account, switch to it and, from it, to the next', async () => {
+    const { token, userId } = await admin();
+    const [made, first] = await send('/me/demo-accounts', asMember(token, 'POST'));
+    const demo = z.object({ memberId: z.uuid() }).parse(first).memberId;
+    expect([made, first]).toStrictEqual([201, { version: 1, memberId: demo }]);
+
+    const [handedOff, handOff] = await send(
+      `/me/demo-accounts/${demo}/hand-off`,
+      asMember(token, 'POST'),
+    );
+    const { refreshToken } = z
+      .strictObject({ version: z.literal(1), refreshToken: z.string().min(1) })
+      .parse(handOff);
+    expect(handedOff).toBe(200);
+    const demoToken = await signedInWith(refreshToken);
+    expect(await getMe({ authorization: `Bearer ${demoToken}` })).toStrictEqual([
+      200,
+      { version: 1, userId: demo, profile: null, isAdmin: false, isDemo: true },
+    ]);
+
+    // Signed in on the demo account, it lists its admin's accounts and makes another.
+    const [, second] = await send('/me/demo-accounts', asMember(demoToken, 'POST'));
+    const next = z.object({ memberId: z.uuid() }).parse(second).memberId;
+    expect(await send('/me/demo-accounts', asMember(demoToken))).toStrictEqual([
+      200,
+      {
+        version: 1,
+        accounts: [
+          { memberId: userId, owner: true },
+          { memberId: demo, owner: false },
+          { memberId: next, owner: false },
+        ],
+      },
+    ]);
+    expect((await send(`/me/demo-accounts/${next}/hand-off`, asMember(demoToken, 'POST')))[0]).toBe(
+      200,
+    );
+  });
+
+  it('never hands off the admin’s own account or anyone else’s', async () => {
+    const { token, userId } = await admin();
+    const stranger = await signUp();
+    for (const target of [userId, stranger.userId]) {
+      expect(
+        await send(`/me/demo-accounts/${target}/hand-off`, asMember(token, 'POST')),
+      ).toMatchObject([404, { reason: 'DEMO_ACCOUNT_NOT_FOUND' }]);
+    }
+  });
+
+  it('turns away members who are neither an admin nor a demo account', async () => {
+    const { token } = await signUp();
+    expect(await send('/me/demo-accounts', asMember(token))).toMatchObject([
+      403,
+      { reason: 'NOT_AN_ADMIN' },
+    ]);
+    expect(await send('/me/demo-accounts', asMember(token, 'POST'))).toMatchObject([
+      403,
+      { reason: 'NOT_AN_ADMIN' },
     ]);
   });
 });

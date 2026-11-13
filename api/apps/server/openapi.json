@@ -1032,13 +1032,18 @@
           "isAdmin": {
             "type": "boolean",
             "description": "Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves."
+          },
+          "isDemo": {
+            "type": "boolean",
+            "description": "Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts."
           }
         },
         "required": [
           "version",
           "userId",
           "profile",
-          "isAdmin"
+          "isAdmin",
+          "isDemo"
         ],
         "additionalProperties": false
       },
@@ -1184,6 +1189,107 @@
         },
         "required": [
           "version"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccounts": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "memberId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The account’s member id."
+                },
+                "owner": {
+                  "type": "boolean",
+                  "description": "Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off."
+                },
+                "character": {
+                  "type": "object",
+                  "properties": {
+                    "nickname": {
+                      "type": "string",
+                      "maxLength": 1000,
+                      "description": "What squadmates call the member: 1 to 12 characters on one line, emoji welcome, no links.",
+                      "x-max-characters": 12
+                    },
+                    "look": {
+                      "$ref": "#/components/schemas/Look"
+                    }
+                  },
+                  "required": [
+                    "nickname",
+                    "look"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The account’s character, once it has saved a profile."
+                }
+              },
+              "required": [
+                "memberId",
+                "owner"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The admin’s own account, then their demo accounts, oldest first."
+          }
+        },
+        "required": [
+          "version",
+          "accounts"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccount": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "memberId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The account’s member id."
+          }
+        },
+        "required": [
+          "version",
+          "memberId"
+        ],
+        "additionalProperties": false
+      },
+      "DemoHandOff": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use."
+          }
+        },
+        "required": [
+          "version",
+          "refreshToken"
         ],
         "additionalProperties": false
       },
@@ -8414,6 +8520,197 @@
           },
           "503": {
             "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/demo-accounts": {
+      "get": {
+        "operationId": "listDemoAccounts",
+        "summary": "The admin’s demo accounts",
+        "description": "The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccounts"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDemoAccount",
+        "summary": "Make a demo account",
+        "description": "A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Made",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/demo-accounts/{memberId}/hand-off": {
+      "post": {
+        "operationId": "handOffDemoAccount",
+        "summary": "Switch to a demo account",
+        "description": "Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Handed off",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoHandOff"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the admin’s demo accounts (`DEMO_ACCOUNT_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
             "content": {
               "application/problem+json": {
                 "schema": {

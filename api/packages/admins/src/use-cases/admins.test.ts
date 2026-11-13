@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 import { createPostgresAdminStore, type AdminTables } from '../adapters/postgres-admin-store.js';
 import { ToolName } from '../domain/admin-action.js';
-import { NotAnAdminError } from '../errors.js';
+import { DemoAccountNotFoundError, NotAnAdminError } from '../errors.js';
 import { createAdmins } from './admins.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Never a mocked database.
@@ -78,5 +78,57 @@ describe('admins', () => {
       }),
     ).rejects.toThrow(z.ZodError);
     expect(await admins.listLog({ admin, limit: 10 })).toStrictEqual([]);
+  });
+
+  describe('demo accounts', () => {
+    it('lists an admin’s demo accounts oldest first, and switches only between them', async () => {
+      const admin = await admins.requireAdmin(await member({ admin: true }));
+      const [first, second, stranger] = [
+        await member({ admin: false }),
+        await member({ admin: false }),
+        await member({ admin: false }),
+      ];
+      now = new Date('2026-11-13T09:00:00.000Z');
+      await admins.addDemoAccount(admin, first);
+      now = new Date('2026-11-13T09:01:00.000Z');
+      await admins.addDemoAccount(admin, second);
+
+      expect(await admins.demoAccounts(admin)).toStrictEqual([first, second]);
+      expect(await admins.requireDemoAccount(admin, second)).toBe(second);
+      await expect(admins.requireDemoAccount(admin, stranger)).rejects.toThrow(
+        DemoAccountNotFoundError,
+      );
+      await expect(admins.requireDemoAccount(admin, admin)).rejects.toThrow(
+        DemoAccountNotFoundError,
+      );
+    });
+
+    it('lets the admin and their demo accounts switch, and no one else', async () => {
+      const admin = await admins.requireAdmin(await member({ admin: true }));
+      const [demo, other] = [await member({ admin: false }), await member({ admin: false })];
+      await admins.addDemoAccount(admin, demo);
+
+      expect([await admins.demoOwner(admin), await admins.demoOwner(demo)]).toStrictEqual([
+        admin,
+        admin,
+      ]);
+      await expect(admins.demoOwner(other)).rejects.toThrow(NotAnAdminError);
+      expect([await admins.isDemoAccount(demo), await admins.isDemoAccount(admin)]).toStrictEqual([
+        true,
+        false,
+      ]);
+    });
+
+    it('is never changed, and goes with the account', async () => {
+      const admin = await admins.requireAdmin(await member({ admin: true }));
+      const demo = await member({ admin: false });
+      await admins.addDemoAccount(admin, demo);
+
+      await expect(
+        sql`delete from public.admin_demo_accounts where member_id = ${demo}`.execute(db),
+      ).rejects.toThrow('append-only');
+      await sql`delete from auth.users where id = ${demo}`.execute(db);
+      expect(await admins.demoAccounts(admin)).toStrictEqual([]);
+    });
   });
 });
