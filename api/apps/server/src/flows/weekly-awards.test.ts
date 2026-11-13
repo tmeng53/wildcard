@@ -969,14 +969,14 @@ describe('weekly awards', () => {
       createdAt: new Date('2026-10-12T14:00:00.000Z'),
       place: PARK,
     });
-    await trained(ana, {
+    const anaAtGym = await trained(ana, {
       squad,
       day: '2026-10-20',
       createdAt: new Date('2026-10-20T14:00:00.000Z'),
       place: GYM,
     });
     await trained(bo, { squad, day: '2026-10-21', place: GYM });
-    await trained(bo, {
+    const boInPark = await trained(bo, {
       squad,
       day: '2026-10-22',
       createdAt: new Date('2026-10-22T14:00:00.000Z'),
@@ -1026,10 +1026,22 @@ describe('weekly awards', () => {
       },
     ]);
 
-    // Deleting a meal takes it off the menu; the rest keep their order.
-    await sql`delete from public.check_ins where id = ${salad}`.execute(db);
+    // Deleting a meal takes it off the menu, and a 训练 its visit; the rest keep their order,
+    // and a place nobody's post is left at drops off, its name with it.
+    await sql`delete from public.check_ins where id in (${salad}, ${anaAtGym}, ${boInPark})`.execute(
+      db,
+    );
     const after = Story.parse((await read({ token: bo.token, squad })).body);
     expect(after.menu?.map(({ author }) => author)).toStrictEqual([bo.userId, ana.userId]);
+    expect(after.places?.map(({ key, visits }) => [key, visits.length])).toStrictEqual([
+      ['apple:I1A2B3C4D5E6F', 1],
+    ]);
+    expect(
+      (
+        await sql<{ n: number }>`select count(*)::int as n from public.week_stories
+        where squad_id = ${squad} and story::text like '%河边公园%'`.execute(db)
+      ).rows[0]?.n,
+    ).toBe(0);
   });
 
   it('freezes on the first read when no run has, and drops a post deleted since', async () => {

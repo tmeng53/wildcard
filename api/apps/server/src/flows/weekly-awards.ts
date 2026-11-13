@@ -32,6 +32,7 @@ import {
   type AwardsState,
   type Failures,
   type MenuDish,
+  type PlaceVisit,
   type ShownMemberAwards,
   type MemberWeek,
   SquadId,
@@ -379,14 +380,7 @@ export async function squadStory(
   );
   const anyone = members.some(({ checkedIn }) => checkedIn);
   const menu = await menuStillPosted(deps, members);
-  const places = (story.places ?? []).flatMap(({ key, place, firstTime }) => {
-    const visits = members
-      .flatMap(({ member, trainedAt }) =>
-        (trainedAt?.find((each) => each.key === key)?.days ?? []).map((day) => ({ member, day })),
-      )
-      .toSorted((a, b) => a.day.localeCompare(b.day));
-    return visits.length === 0 ? [] : [{ key, place, firstTime, visits }];
-  });
+  const places = placesOf(members);
   return {
     squad: { id: squad, name: story.name },
     scene: story.scene,
@@ -404,6 +398,34 @@ export async function squadStory(
     ...(menu.length === 0 ? {} : { menu }),
     ...(places.length === 0 ? {} : { places }),
   };
+}
+
+/**
+ * The week's places from the members' frozen 训练 there, in their frozen order, each as its
+ * latest 训练 still posted tagged it: a deleted post or account takes its visit with it, and a
+ * place nobody's post is left at drops off.
+ */
+function placesOf(members: readonly StoryMember[]): NonNullable<SquadStory['places']> {
+  const byKey = new Map<string, (PlaceVisit & { readonly member: string })[]>();
+  const all = members.flatMap(({ member, placeVisits }) =>
+    (placeVisits ?? []).map((visit) => ({ ...visit, member })),
+  );
+  for (const visit of all) {
+    byKey.set(visit.key, [...(byKey.get(visit.key) ?? []), visit]);
+  }
+  return [...byKey.values()]
+    .flatMap((visits) => {
+      const sorted = visits.toSorted((a, b) => a.day.localeCompare(b.day));
+      const latest = sorted.at(-1);
+      return latest === undefined ? [] : [{ latest, sorted }];
+    })
+    .toSorted((a, b) => a.latest.rank - b.latest.rank)
+    .map(({ latest, sorted }) => ({
+      key: latest.key,
+      place: latest.place,
+      firstTime: latest.firstTime,
+      visits: sorted.map(({ member, day }) => ({ member, day })),
+    }));
 }
 
 /** 小队菜单 from the members' frozen posts, best first, each photo only while its meal has it. */
@@ -541,11 +563,6 @@ async function frozenStory(
         ? {}
         : { meals: { healthy: pages.meals.healthy, cheat: pages.meals.cheat } }),
       ...(pages.ending === undefined ? {} : { ending: pages.ending }),
-      ...(pages.places === undefined
-        ? {}
-        : {
-            places: pages.places.map(({ key, place, firstTime }) => ({ key, place, firstTime })),
-          }),
     },
     members: week.members.map(({ member, checkIns }, index): StoryMember => {
       const page = pages.members[index];
@@ -572,7 +589,7 @@ async function frozenStory(
         cheatMeals: page.cheatMeals,
         reactionsReceived: page.reactionsReceived,
         ...(page.reachedAt === undefined ? {} : { reachedAt: page.reachedAt }),
-        ...placesTrainedAt(pages.places ?? [], member),
+        ...placeVisitsOf(pages.places ?? [], member),
         ...menuOf(pages.menu ?? [], member),
         ...(hottest === undefined ? {} : { hottest }),
         ...(best?.author === member
@@ -588,16 +605,17 @@ async function frozenStory(
   return story.members.some(({ checkedIn }) => checkedIn) ? deps.awards.freezeStory(story) : story;
 }
 
-/** The days `member` posted a 训练 at each of the week's places, for their frozen part. */
-function placesTrainedAt(
+/** `member`'s 训练 at the week's places, each with its place's position, for their frozen posts. */
+function placeVisitsOf(
   places: NonNullable<CheckInWeekPages['places']>,
   member: string,
-): Pick<StoryMember, 'trainedAt'> {
-  const trainedAt = places.flatMap(({ key, visits }) => {
-    const days = visits.filter((visit) => visit.member === member).map(({ day }) => day);
-    return days.length === 0 ? [] : [{ key, days }];
-  });
-  return trainedAt.length === 0 ? {} : { trainedAt };
+): Pick<StoryMember, 'placeVisits'> {
+  const theirs = places.flatMap(({ key, firstTime, visits }, rank) =>
+    visits
+      .filter((visit) => visit.member === member)
+      .map(({ checkIn, day, place }) => ({ checkIn, day, key, place, rank, firstTime })),
+  );
+  return theirs.length === 0 ? {} : { placeVisits: theirs };
 }
 
 /** `member`'s meals on 小队菜单, each with its place on it, for their frozen posts. */

@@ -56,12 +56,16 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
           const menu = theirs
             .flatMap(({ menuDish }) => (menuDish === undefined ? [] : [menuDish]))
             .toSorted((a, b) => a.rank - b.rank);
+          const placeVisits = theirs.flatMap(({ placeVisit }) =>
+            placeVisit === undefined ? [] : [placeVisit],
+          );
           return {
             member: MemberId.parse(member_id),
             ...StoredStoryMember.parse(page),
             ...(hottest === undefined ? {} : { hottest }),
             ...(best === undefined ? {} : { bestDisclaimer: best }),
             ...(menu.length === 0 ? {} : { menu }),
+            ...(placeVisits.length === 0 ? {} : { placeVisits }),
           };
         }),
       };
@@ -122,7 +126,7 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             })),
           )
           .execute();
-        const posts = members.flatMap(({ member, hottest, bestDisclaimer, menu }) => [
+        const posts = members.flatMap(({ member, hottest, bestDisclaimer, menu, placeVisits }) => [
           ...(hottest === undefined
             ? []
             : [
@@ -148,6 +152,12 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             role: 'menu',
             checkIn: menuDish.checkIn,
             post: { version: 1, menuDish },
+          })),
+          ...(placeVisits ?? []).map((placeVisit) => ({
+            member,
+            role: 'place',
+            checkIn: placeVisit.checkIn,
+            post: { version: 1, placeVisit },
           })),
         ]);
         if (posts.length === 0) return;
@@ -181,6 +191,5 @@ function pageOf(part: StoryMember): StoredStoryMember {
     cheatMeals: part.cheatMeals,
     reactionsReceived: part.reactionsReceived,
     ...(part.reachedAt === undefined ? {} : { reachedAt: part.reachedAt }),
-    ...(part.trainedAt === undefined ? {} : { trainedAt: part.trainedAt }),
   };
 }

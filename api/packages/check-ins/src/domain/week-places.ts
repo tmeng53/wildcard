@@ -30,8 +30,16 @@ export interface PlaceVisits {
   readonly key: PlaceKey;
   /** The place as its latest 训练 there was tagged with it. */
   readonly place: Place;
-  /** Each 训练 there, the earliest first. */
-  readonly visits: readonly { readonly member: MemberId; readonly day: LocalDay }[];
+  /** Each 训练 there, the earliest first, with the place as that post tagged it. */
+  readonly visits: readonly PlaceVisit[];
+}
+
+/** One 训练 posted at a place: its own post, so deleting it takes it off the 战报. */
+export interface PlaceVisit {
+  readonly checkIn: CheckInId;
+  readonly member: MemberId;
+  readonly day: LocalDay;
+  readonly place: Place;
 }
 
 /**
@@ -71,10 +79,7 @@ export function menuOf(checkIns: readonly CheckInRecord[]): MenuDish[] {
  * squad's own), the most 训练 first, then the most people, then the one first trained at.
  */
 export function placeVisitsOf(checkIns: readonly CheckInRecord[]): PlaceVisits[] {
-  const byKey = new Map<
-    PlaceKey,
-    { place: Place; visits: { member: MemberId; day: LocalDay }[] }
-  >();
+  const byKey = new Map<PlaceKey, { place: Place; visits: PlaceVisit[] }>();
   const sorted = checkIns.toSorted((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   for (const each of sorted) {
     if (!each.inFeed || each.kind !== 'trained' || each.training.place === undefined) continue;
@@ -82,7 +87,12 @@ export function placeVisitsOf(checkIns: readonly CheckInRecord[]): PlaceVisits[]
     if (key === undefined) continue;
     const found = byKey.get(key) ?? { place: each.training.place, visits: [] };
     found.place = each.training.place;
-    found.visits.push({ member: each.member, day: each.day });
+    found.visits.push({
+      checkIn: each.id,
+      member: each.member,
+      day: each.day,
+      place: each.training.place,
+    });
     byKey.set(key, found);
   }
   const people = (visits: readonly { member: MemberId }[]) =>

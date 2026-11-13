@@ -106,7 +106,7 @@ describe('the places the squad trained at', () => {
       [`squad:${OWN.squadPlaceId}`, 2],
       ['apple:I9F8E7D6C5B4A', 2],
     ]);
-    expect(places[0]?.visits).toStrictEqual([
+    expect(places[0]?.visits.map(({ member, day }) => ({ member, day }))).toStrictEqual([
       { member: who('c'), day: '2026-10-20' },
       { member: who('b'), day: '2026-10-21' },
     ]);

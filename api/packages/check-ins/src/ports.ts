@@ -87,12 +87,11 @@ export interface CheckInStore {
     readonly limit: number;
   }): Promise<CheckInRecord[]>;
   /**
-   * Which of `keys` these members had posted a 训练 from to `squad` (in its 动态) for a day before
-   * `before`: the places the squad had already found.
+   * Which of `keys` anyone had posted a 训练 from to `squad` (in its 动态) for a day before
+   * `before`, members who left since included: the places the squad had already found.
    */
   placesTrainedBefore(query: {
     readonly squad: SquadId;
-    readonly members: readonly MemberId[];
     readonly keys: readonly PlaceKey[];
     readonly before: LocalDay;
   }): Promise<ReadonlySet<PlaceKey>>;

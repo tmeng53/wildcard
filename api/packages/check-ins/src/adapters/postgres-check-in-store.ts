@@ -329,8 +329,8 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
       return withAudiences(rows);
     },
 
-    async placesTrainedBefore({ squad, members, keys, before }) {
-      if (members.length === 0 || keys.length === 0) return new Set();
+    async placesTrainedBefore({ squad, keys, before }) {
+      if (keys.length === 0) return new Set();
       // The key as `@wildcard/place-ids` makes it: the squad's own place first, else Maps' id.
       const key = sql<string>`case
         when check_ins.payload->'place' ? 'squadPlaceId'
@@ -346,7 +346,6 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         )
         .select(key.as('key'))
         .distinct()
-        .where('check_ins.member_id', 'in', members)
         .where('check_ins.kind', '=', 'trained')
         .where('check_ins.in_feed', '=', true)
         .where('check_ins.day', '<', before)
