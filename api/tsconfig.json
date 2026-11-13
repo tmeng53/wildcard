@@ -87,6 +87,12 @@
     },
     {
       "path": "packages/art"
+    },
+    {
+      "path": "packages/place-ids"
+    },
+    {
+      "path": "packages/saved-places"
     }
   ]
 }

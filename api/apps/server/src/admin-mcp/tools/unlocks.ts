@@ -1,6 +1,5 @@
-import { lineLength } from '@wildcard/coach';
+import { fitsLine, LINE_LIMITS } from '@wildcard/coach';
 import {
-  GIFT_LINE_LIMIT,
   GiftPieceEdit,
   MemberId,
   PieceEdit,
@@ -239,11 +238,11 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
         .string()
         .trim()
         .min(1)
-        .refine((line) => Math.ceil(lineLength(line)) <= GIFT_LINE_LIMIT, {
-          message: `At most ${String(GIFT_LINE_LIMIT)} characters, English letters, digits, spaces and marks counting as half.`,
+        .refine((line) => fitsLine(line, 'gift'), {
+          message: `At most ${String(LINE_LIMITS.gift.chinese)} characters in Chinese, ${String(LINE_LIMITS.gift.english)} in English.`,
         })
         .describe(
-          `What the coach says with it, in the member’s language, up to ${String(GIFT_LINE_LIMIT)} characters (English letters, digits, spaces and marks count as half).`,
+          `What the coach says with it, in the member’s language, up to ${String(LINE_LIMITS.gift.chinese)} characters in Chinese or ${String(LINE_LIMITS.gift.english)} in English.`,
         ),
     }),
     run: async (input, { admin }) => {

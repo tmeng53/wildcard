@@ -13,8 +13,9 @@ import {
 } from './memory.js';
 import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
-import { instructionsOf, NOTE_LIMIT, saidLines, taskOf } from './prompt.js';
-import { lineLength, lineProblem, REPLY_LIMIT } from './reply.js';
+import { lineLanguageOf, longestLine } from './line-limits.js';
+import { instructionsOf, saidLines, taskOf } from './prompt.js';
+import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInBlock, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
 import { wakesDue, weeksAround } from './wake.js';
@@ -517,9 +518,7 @@ describe('when the coach wakes', () => {
       coach,
     );
     // The wakes setting comes after the soul, with the API's limits put in.
-    expect(instructions).toContain(
-      `回复最多 ${String(REPLY_LIMIT)} 个字，便条最多 ${String(NOTE_LIMIT)} 个字。`,
-    );
+    expect(instructions).toContain('回复最多 100 个字，便条最多 60 个字。');
     // The 口头禅 is for its card only: told it, the model kept saying it.
     expect(instructions).not.toContain('今天也辛苦啦');
     expect(instructions).not.toContain('口头禅');
@@ -607,7 +606,7 @@ describe('when the coach wakes', () => {
                 ],
                 fuelGoals: ['喝够水', '少吃外卖'],
               },
-              weather: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
+              weather: { words: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C', city: '多伦多' },
             },
             {
               name: '队员2',
@@ -619,7 +618,7 @@ describe('when the coach wakes', () => {
               },
             },
             // Plans that couldn't be read: only the days trained.
-            { name: '队员3', trainedDays: 1, weather: '今天晴，-2–5°C' },
+            { name: '队员3', trainedDays: 1, weather: { words: '今天晴，-2–5°C' } },
           ],
         }),
         '## 今天的便条',
@@ -627,7 +626,7 @@ describe('when the coach wakes', () => {
     ).toBe(
       [
         '## 今天的便条（下面每人各写一张）',
-        '### 队员1\n- 本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息\n- 饮食小目标：喝够水、少吃外卖\n- 这周练了：2 天\n- 这周发过：周一游泳 45 分钟、健康餐，周三力量\n- 当地天气：今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
+        '### 队员1\n- 本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息\n- 饮食小目标：喝够水、少吃外卖\n- 这周练了：2 天\n- 这周发过：周一游泳 45 分钟、健康餐，周三力量\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
         '### 队员2\n- 本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息\n- 饮食小目标：这周没定\n- 这周练了：0 天\n- 这周发过：还没发过',
         '### 队员3\n- 这周练了：1 天\n- 当地天气：今天晴，-2–5°C',
       ].join('\n\n'),
@@ -892,25 +891,28 @@ describe('a line members read', () => {
   it('never names anyone as 队员N, however the number is written', () => {
     const named = '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
     expect(
-      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 100)),
+      ['队员1 加油', '队员 3 加油', '队员３加油'].map((line) => lineProblem(line, 'reply')),
     ).toStrictEqual([named, named, named]);
-    expect(lineProblem('全体队员加油', 100)).toBeUndefined();
-    expect(lineProblem('跑跑跑', 2)).toBe(
-      '太长了：3 字（英文字母、数字、空格和标点算半个字），最多 2 字。',
-    );
-    expect(lineProblem('', 2)).toBe('这句是空的。');
+    expect(lineProblem('全体队员加油', 'reply')).toBeUndefined();
+    expect(lineProblem('', 'reply')).toBe('这句是空的。');
   });
 
-  it('counts English as half, so it gets as much room as Chinese', () => {
-    expect(lineLength('跑步')).toBe(2);
-    expect(lineLength('Run 5k!')).toBe(3.5);
-    expect(lineLength('Nice 💪')).toBe(3.5);
-    expect(lineProblem('a'.repeat(200), 100)).toBeUndefined();
-    expect(lineProblem('a'.repeat(201), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
+  it('holds a Chinese line to the Chinese limit and an English one to the English limit', () => {
+    expect(lineProblem('跑'.repeat(100), 'reply')).toBeUndefined();
+    expect(lineProblem('跑'.repeat(101), 'reply')).toBe('太长了：101 字，最多 100 字。');
+    expect(lineProblem('Run '.repeat(50), 'reply')).toBeUndefined();
+    expect(lineProblem('Run '.repeat(50) + '!', 'reply')).toBe(
+      '太长了：201 个字符，英文最多 200 个。',
     );
-    expect(lineProblem('跑'.repeat(101), 100)).toBe(
-      '太长了：101 字（英文字母、数字、空格和标点算半个字），最多 100 字。',
-    );
+    expect(lineProblem('喝水'.repeat(5), 'challengeTitle')).toBe('太长了：10 字，最多 8 字。');
+    expect(lineProblem('Drink water', 'challengeTitle')).toBeUndefined();
+  });
+
+  it('reads a line by the letters it is mostly written in, a name in the other aside', () => {
+    expect(lineLanguageOf('Hannah 今天跑了五公里，腿还好吗')).toBe('chinese');
+    expect(lineLanguageOf('毛头 says hi, nice run today')).toBe('english');
+    expect(lineLanguageOf('💪💪')).toBe('chinese');
+    expect(longestLine('reply')).toBe(200);
+    expect(longestLine('challengeLine')).toBe(48);
   });
 });

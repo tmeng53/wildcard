@@ -1,3 +1,4 @@
+import Contracts
 import Foundation
 import Observation
 
@@ -41,11 +42,14 @@ public protocol LocationReader: Sendable {
     func ask() async -> LocationAccess
     /// Where the phone roughly is now, or nil when it can't tell.
     func current() async -> Coordinates?
+    /// The city `coordinates` are in, in the app's language, or nil when it can't tell.
+    func city(at coordinates: Coordinates) async -> CityName?
 }
 
 /// Where the server keeps the member's place, for their coach's weather.
 public protocol LocationRegistry: Sendable {
-    func save(_ coordinates: Coordinates) async throws(LocationError)
+    /// Keeps the place with its city; without one, the city kept before is forgotten too.
+    func save(_ coordinates: Coordinates, city: CityName?) async throws(LocationError)
     func forget() async throws(LocationError)
 }
 
@@ -53,10 +57,13 @@ public protocol LocationRegistry: Sendable {
 public struct SentPlace: Hashable, Sendable, Codable {
     public var version = 1
     public let cell: Coordinates
+    /// The city sent with it; nil when iOS couldn't name one, or sent by a build before cities.
+    public let city: CityName?
     public let sentAt: Date
 
-    public init(cell: Coordinates, sentAt: Date) {
+    public init(cell: Coordinates, city: CityName?, sentAt: Date) {
         self.cell = cell
+        self.city = city
         self.sentAt = sentAt
     }
 }
@@ -68,9 +75,10 @@ public protocol SentPlaceStore: Sendable {
 }
 
 /// The member's location for the coach's weather, one for the app: sign-up's 打开大概位置 and
-/// 设置 › 位置 ask with it, and the app syncs it each time it comes to the front. It sends a place
-/// only when it moved to another cell or a day passed, and asks the server to forget it once the
-/// member stops allowing location.
+/// 设置 › 位置 ask with it, and the app syncs it each time it comes to the front. It sends a place,
+/// with the city iOS names there, only when it moved to another cell, a day passed or the city
+/// sent before wasn't known, and asks the server to forget it once the member stops allowing
+/// location.
 @MainActor @Observable
 public final class LocationSharing {
     public private(set) var access: LocationAccess = .notAsked
@@ -129,13 +137,20 @@ public final class LocationSharing {
         do throws(LocationError) {
             switch access {
             case .allowed:
-                guard let cell = await reader.current()?.cell else { return }
+                guard let here = await reader.current() else { return }
+                let cell = here.cell
                 let time = now()
-                if let last = sent.load(), last.cell == cell, time.timeIntervalSince(last.sentAt) < Self.resendAfter {
-                    return
-                }
-                try await registry.save(cell)
-                sent.save(SentPlace(cell: cell, sentAt: time))
+                let last = sent.load()
+                let fresh =
+                    last.map { $0.cell == cell && time.timeIntervalSince($0.sentAt) < Self.resendAfter }
+                    ?? false
+                // The city is looked up only when something may be sent, and again while it
+                // wasn't known, so the coach learns it as soon as iOS can name it.
+                if fresh, last?.city != nil { return }
+                let city = await reader.city(at: here)
+                if fresh, city == nil { return }
+                try await registry.save(cell, city: city)
+                sent.save(SentPlace(cell: cell, city: city, sentAt: time))
                 forgotten = false
             case .refused, .notAsked:
                 guard sent.load() != nil || !forgotten else { return }

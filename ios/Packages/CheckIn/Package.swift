@@ -19,6 +19,7 @@ let package = Package(
         .package(path: "../Avatar"),
         .package(path: "../Sports"),
         .package(path: "../Health"),
+        .package(path: "../Location"),
     ],
     targets: [
         .target(
@@ -39,6 +40,8 @@ let package = Package(
                 .product(name: "SportsUI", package: "Sports"),
                 .product(name: "HealthDomain", package: "Health"),
                 .product(name: "HealthUI", package: "Health"),
+                .product(name: "LocationDomain", package: "Location"),
+                .product(name: "LocationUI", package: "Location"),
             ],
             resources: [.process("Resources/Localizable.xcstrings"), .process("Resources/Scenes")]
         ),

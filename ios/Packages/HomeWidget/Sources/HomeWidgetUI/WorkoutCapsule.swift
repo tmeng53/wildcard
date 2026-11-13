@@ -37,12 +37,13 @@ public struct WorkoutCapsule<Post: View>: View {
             ViewThatFits(in: .horizontal) {
                 line(minutes: workout.minutes, summary: workout.workout.summary)
                 line(minutes: workout.minutes, summary: WorkoutSummary())
-                line(minutes: nil, summary: WorkoutSummary())
+                line(minutes: nil, summary: WorkoutSummary(), fixed: false)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
             .accessibilityIdentifier("widget.workout")
-            post
+            // The button keeps its whole word; the line gives way, down to the sport alone.
+            post.fixedSize().layoutPriority(1)
         }
         .padding(.leading, Space.xs)
         .padding(.trailing, Space.xxs)
@@ -51,12 +52,14 @@ public struct WorkoutCapsule<Post: View>: View {
         .overlay { Capsule().stroke(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
     }
 
-    private func line(minutes: WorkoutMinutes?, summary: WorkoutSummary) -> some View {
+    /// A line `ViewThatFits` measures at its full width; the last, the sport alone, may still
+    /// shorten, so it never pushes the button out of the capsule.
+    private func line(minutes: WorkoutMinutes?, summary: WorkoutSummary, fixed: Bool = true) -> some View {
         WorkoutSummaryLine(activity: workout.activity, minutes: minutes, summary: summary)
             .typeStyle(size == .medium ? TypeRamp.calloutEmphasis : TypeRamp.footnoteEmphasis)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1)
-            .fixedSize()
+            .fixedSize(horizontal: fixed, vertical: false)
     }
 }
 
