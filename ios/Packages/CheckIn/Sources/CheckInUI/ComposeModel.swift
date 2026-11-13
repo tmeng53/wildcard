@@ -38,6 +38,8 @@ public final class ComposeModel {
     /// Where a new 训练 made by hand starts, and starts again when its Health workout is let go:
     /// the phone's time as the page opened, then the last start picked before a workout.
     @ObservationIgnored private var handStart: StartTime?
+    /// Where it was, if the member tagged a place (Tracy, 2026-11-12); a 请假条 has none.
+    var place: Place?
     /// The workout the 训练 is posted from, as Health has it (or, for an edit, as it was posted);
     /// nil for one made by hand.
     private(set) var workout: Workout?
@@ -97,11 +99,12 @@ public final class ComposeModel {
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(
             tiles: Array(photos.prefix(Photos.maxCount)).map(ComposedTile.photo), line: "", activity: nil,
-            minutes: nil, startTime: kind == .trained ? startingAt : nil)
+            minutes: nil, startTime: kind == .trained ? startingAt : nil, place: nil)
         var posted: Workout?
         if case .edit(let checkIn) = purpose {
             start.tiles = ComposedTile.of(checkIn)
             start.line = checkIn.entry.line ?? ""
+            start.place = checkIn.entry.place
             if case .trained(let training) = checkIn.entry {
                 start.activity = training.activity
                 start.minutes = training.minutes
@@ -114,6 +117,7 @@ public final class ComposeModel {
         activity = start.activity
         minutes = start.minutes
         startTime = start.startTime
+        place = start.place
         workout = posted
         handStart = kind == .trained ? startingAt : nil
         initial = start
@@ -168,12 +172,13 @@ public final class ComposeModel {
     /// What the member would lose by leaving: anything added to a new post, any change to an edit.
     var hasChanges: Bool {
         if isEditing {
-            return Snapshot(tiles: tiles, line: line, activity: activity, minutes: minutes, startTime: startTime)
+            return Snapshot(
+                tiles: tiles, line: line, activity: activity, minutes: minutes, startTime: startTime, place: place)
                 != initial
                 || !struck.isEmpty
         }
         return !photos.isEmpty || !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || day != nil || workout != nil
+            || day != nil || workout != nil || place != nil
     }
 
     func add(_ picked: [PreparedPhoto]) {
@@ -277,6 +282,7 @@ public final class ComposeModel {
         tiles = ComposedTile.of(body)
         line = body.caption ?? ""
         workout = body.workout
+        place = body.place
     }
 
     /// Fits what is typed: no line breaks, at most `lineLimit` characters.
@@ -299,7 +305,7 @@ public final class ComposeModel {
         let trained = kind == .trained
         let body = PostBody(
             photos: picked, caption: line, workout: trained ? postedWorkout : nil,
-            startTime: trained && workout == nil ? startTime : nil)
+            startTime: trained && workout == nil ? startTime : nil, place: place)
         return switch kind {
         case .trained: .trained(currentActivity, postedMinutes, body)
         case .healthyMeal: .healthyMeal(body)
@@ -312,7 +318,7 @@ public final class ComposeModel {
         guard case .edit(let checkIn) = purpose else { return nil }
         return PostEdit(
             original: checkIn, activity: currentActivity, minutes: postedMinutes, line: line, photos: photos,
-            workout: postedWorkout, startTime: workout == nil ? startTime : nil)
+            workout: postedWorkout, startTime: workout == nil ? startTime : nil, place: place)
     }
 
     private struct Snapshot: Equatable {
@@ -321,6 +327,7 @@ public final class ComposeModel {
         var activity: Activity?
         var minutes: WorkoutMinutes?
         var startTime: StartTime?
+        var place: Place?
     }
 }
 

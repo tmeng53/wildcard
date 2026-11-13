@@ -81,6 +81,7 @@ export interface Squads {
   captain_id: string | null;
   created_at: Generated<Timestamp>;
   created_by: string | null;
+  ended_at: Timestamp | null;
   id: Generated<string>;
   invite_code: string;
   name: string;

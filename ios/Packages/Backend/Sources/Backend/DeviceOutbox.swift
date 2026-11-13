@@ -76,6 +76,8 @@ public actor DeviceOutbox: Outbox {
         let photos: [StoredPhoto]
         /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
         let workout: Workout?
+        /// The place tagged on a 训练 or a meal; missing on the rest and on posts kept before it.
+        let place: StoredPlace?
 
         init(_ post: PendingCheckIn) {
             id = post.id
@@ -97,12 +99,14 @@ public actor DeviceOutbox: Outbox {
             var restDay: Bool?
             workout = post.draft.workout
             var startTime: String?
+            var place: Place?
             switch post.draft {
             case .trained(let activity, let workoutMinutes, let body):
                 kind = "trained"
                 minutes = workoutMinutes?.value
                 startTime = body.startTime?.wire
                 caption = body.caption
+                place = body.place
                 switch activity {
                 case .sport(let listed): sport = listed.rawValue
                 case .custom(let custom): customSport = custom.name
@@ -110,9 +114,11 @@ public actor DeviceOutbox: Outbox {
             case .healthyMeal(let body):
                 kind = "healthyMeal"
                 caption = body.caption
+                place = body.place
             case .cheatMeal(let body):
                 kind = "cheatMeal"
                 caption = body.caption
+                place = body.place
             case .disclaimer(let disclaimer, _):
                 kind = "disclaimer"
                 text = disclaimer.text
@@ -120,6 +126,7 @@ public actor DeviceOutbox: Outbox {
             }
             self.restDay = restDay
             self.startTime = startTime
+            self.place = place.map(StoredPlace.init)
             (self.sport, self.customSport, self.minutes, self.caption, self.text) = (
                 sport, customSport, minutes, caption, text
             )
@@ -142,7 +149,7 @@ public actor DeviceOutbox: Outbox {
             let start = startTime.flatMap { try? StartTime(wire: $0) }
             let body = PostBody(
                 photos: prepared, caption: caption ?? "", workout: trained ? workout : nil,
-                startTime: trained ? start : nil)
+                startTime: trained ? start : nil, place: place.flatMap(\.place))
             let draft: CheckInDraft
             switch kind {
             case "trained":
@@ -165,6 +172,26 @@ public actor DeviceOutbox: Outbox {
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
                 audience: try Audience(audience), inFeed: inFeed ?? !audience.isEmpty, draft: draft,
                 uploaded: uploaded)
+        }
+    }
+
+    /// A tagged place as the outbox keeps it.
+    private struct StoredPlace: Codable {
+        let name: String
+        let appleID: String?
+        let category: String?
+        let latitude: Double
+        let longitude: Double
+
+        init(_ place: Place) {
+            (name, appleID, category) = (place.name, place.appleID, place.category)
+            (latitude, longitude) = (place.latitude, place.longitude)
+        }
+
+        /// Nil for one this build can no longer read: the post goes out without it.
+        var place: Place? {
+            try? Place(
+                name: name, appleID: appleID, category: category, latitude: latitude, longitude: longitude)
         }
     }
 }

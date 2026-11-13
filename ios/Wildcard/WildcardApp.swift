@@ -171,7 +171,7 @@ struct WildcardApp: App {
     /// nothing to sign out of.
     private static func sampleProfile() -> MeModel {
         let service = InMemoryMeService.sample(
-            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked, stock: LaunchOptions.stock,
+            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.profileUnlocks, stock: LaunchOptions.stock,
             gifts: LaunchOptions.teamGifts)
         // What the server would work out while the app was away, for the test that 商店街 reads it again.
         if let later = LaunchOptions.stockOnReturn {

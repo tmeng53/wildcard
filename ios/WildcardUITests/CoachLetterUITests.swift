@@ -56,8 +56,8 @@ final class CoachLetterUITests: XCTestCase {
         readTheLetterAgain(in: app)
     }
 
-    /// The new coach's 简历 keeps the letter to read again. The squad card starts folded into its
-    /// capsule, which opens it first.
+    /// The new coach's 简历 keeps the letter to read again. If the squad card is folded into its
+    /// capsule, the capsule opens it first.
     private func readTheLetterAgain(in app: XCUIApplication) {
         let squadName = app.descendants(matching: .any)["squadcard.squad"]
         if !squadName.exists { app.buttons["squadcard.capsule"].tap() }

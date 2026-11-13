@@ -17,6 +17,8 @@ final class NoticeUITests: XCTestCase {
             "-uitest-bubble-hold",
             "-today.cardPage", "0", "-uitest-scene-moved", "track",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
 
         let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
@@ -52,6 +54,8 @@ final class NoticeUITests: XCTestCase {
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
             "-uitest-bubble-hold", "-uitest-live-comment",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         tabButton("tab.me", in: app).tap()
 

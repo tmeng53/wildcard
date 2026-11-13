@@ -99,6 +99,8 @@ final class BackfillUITests: XCTestCase {
             // 已发出 holds a minute, so a slow simulator still finds its 查看.
             "-uitest-bubble-hold",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         let checkIn = app.buttons["today.checkin"]

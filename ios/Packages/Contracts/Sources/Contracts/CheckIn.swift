@@ -68,10 +68,12 @@ public struct Training: Hashable, Sendable {
     public let caption: Caption?
     /// The imported workout, with only the numbers the member kept; nil on one posted by hand.
     public let workout: Workout?
+    /// Where it was, if the member tagged a place.
+    public let place: Place?
 
     public init(
         activity: Activity, minutes: WorkoutMinutes? = nil, startTime: StartTime? = nil, photos: Photos? = nil,
-        caption: Caption? = nil, workout: Workout? = nil
+        caption: Caption? = nil, workout: Workout? = nil, place: Place? = nil
     ) {
         self.activity = activity
         self.minutes = minutes
@@ -79,6 +81,7 @@ public struct Training: Hashable, Sendable {
         self.photos = photos
         self.caption = caption
         self.workout = workout
+        self.place = place
     }
 }
 
@@ -132,10 +135,13 @@ public struct StartTime: Hashable, Sendable, Comparable {
 public struct Meal: Hashable, Sendable {
     public let photos: Photos?
     public let caption: Caption?
+    /// Where it was eaten, if the member tagged a place.
+    public let place: Place?
 
-    public init(photos: Photos? = nil, caption: Caption? = nil) {
+    public init(photos: Photos? = nil, caption: Caption? = nil, place: Place? = nil) {
         self.photos = photos
         self.caption = caption
+        self.place = place
     }
 }
 
