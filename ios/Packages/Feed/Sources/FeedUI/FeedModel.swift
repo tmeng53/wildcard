@@ -390,4 +390,9 @@ extension FeedModel {
         await Task { await reload() }.value
     }
 }
+
+extension FeedModel {
+    /// The squad whose 动态 this is, known from launch, before 今天 first loads.
+    public var squad: SquadID? { store.squad }
+}
 #endif
