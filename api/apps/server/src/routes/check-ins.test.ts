@@ -2015,7 +2015,7 @@ describe('a squad’s places', () => {
           { sport: 'custom', customSport: '飞盘', count: 2 },
           { sport: 'custom', customSport: '背包', count: 1 },
         ],
-        meals: { healthyMeal: 0, cheatMeal: 0, healthy: null, tasty: null, calorieValue: null },
+        meals: { healthyMeal: 0, cheatMeal: 0 },
       },
       {
         members: [
@@ -2023,7 +2023,7 @@ describe('a squad’s places', () => {
           { member: me.userId, visits: 1 },
         ],
         sports: [],
-        meals: { healthyMeal: 1, cheatMeal: 1, healthy: 3, tasty: 4.5, calorieValue: 2.8 },
+        meals: { healthyMeal: 1, cheatMeal: 1 },
       },
     ]);
     // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover

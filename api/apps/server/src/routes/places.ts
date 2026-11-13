@@ -87,17 +87,8 @@ const summaryFields = {
     )
     .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
   meals: z
-    .strictObject({
-      healthyMeal: z.int().min(0),
-      cheatMeal: z.int().min(0),
-      healthy: z.number().nullable().meta({ description: 'Rated meals’ 健康, averaged.' }),
-      tasty: z.number().nullable().meta({ description: 'Rated meals’ 好吃, averaged.' }),
-      calorieValue: z
-        .number()
-        .nullable()
-        .meta({ description: 'Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.' }),
-    })
-    .meta({ description: '大家在这里吃: meals by kind, and what rated ones scored.' }),
+    .strictObject({ healthyMeal: z.int().min(0), cheatMeal: z.int().min(0) })
+    .meta({ description: '大家在这里吃: how many of its posts were each kind of meal.' }),
 };
 
 const Visit = z
@@ -144,6 +135,18 @@ const PlaceDetailView = z
   .strictObject({
     version: bodyVersion(1),
     ...summaryFields,
+    meals: z
+      .strictObject({
+        healthyMeal: z.int().min(0),
+        cheatMeal: z.int().min(0),
+        healthy: z.number().nullable().meta({ description: 'Rated meals’ 健康, averaged.' }),
+        tasty: z.number().nullable().meta({ description: 'Rated meals’ 好吃, averaged.' }),
+        calorieValue: z
+          .number()
+          .nullable()
+          .meta({ description: 'Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.' }),
+      })
+      .meta({ description: '大家在这里吃: meals by kind, and what rated ones scored.' }),
     myStars: Stars.nullable().meta({ description: 'The viewer’s own score; null before one.' }),
     posts: z.array(Visit).meta({ description: '动态: the posts tagged with it, newest first.' }),
   })
@@ -276,13 +279,7 @@ function wireSummary(summary: PlaceSummary) {
       ...(customSport === undefined ? {} : { customSport }),
       count,
     })),
-    meals: {
-      healthyMeal: summary.meals.healthyMeal,
-      cheatMeal: summary.meals.cheatMeal,
-      healthy: summary.meals.healthy ?? null,
-      tasty: summary.meals.tasty ?? null,
-      calorieValue: summary.meals.calorieValue ?? null,
-    },
+    meals: { healthyMeal: summary.meals.healthyMeal, cheatMeal: summary.meals.cheatMeal },
   };
 }
 
@@ -293,6 +290,13 @@ function wireDetail(
   return {
     version: 1,
     ...wireSummary(detail),
+    meals: {
+      healthyMeal: detail.meals.healthyMeal,
+      cheatMeal: detail.meals.cheatMeal,
+      healthy: detail.meals.healthy ?? null,
+      tasty: detail.meals.tasty ?? null,
+      calorieValue: detail.meals.calorieValue ?? null,
+    },
     myStars: detail.myStars ?? null,
     posts: detail.posts.flatMap((post) => visitOf(post, { ...at, key: detail.key }) ?? []),
   };

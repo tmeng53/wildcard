@@ -9067,7 +9067,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/sports`.
             public var sports: Components.Schemas.PlaceSummary.SportsPayload
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: how many of its posts were each kind of meal.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
             public struct MealsPayload: Codable, Hashable, Sendable {
@@ -9075,48 +9075,24 @@ extension Components {
                 public var healthyMeal: Swift.Int
                 /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/cheatMeal`.
                 public var cheatMeal: Swift.Int
-                /// Rated meals’ 健康, averaged.
-                ///
-                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/healthy`.
-                public var healthy: Swift.Double?
-                /// Rated meals’ 好吃, averaged.
-                ///
-                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/tasty`.
-                public var tasty: Swift.Double?
-                /// Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
-                ///
-                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/calorieValue`.
-                public var calorieValue: Swift.Double?
                 /// Creates a new `MealsPayload`.
                 ///
                 /// - Parameters:
                 ///   - healthyMeal:
                 ///   - cheatMeal:
-                ///   - healthy: Rated meals’ 健康, averaged.
-                ///   - tasty: Rated meals’ 好吃, averaged.
-                ///   - calorieValue: Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
                 public init(
                     healthyMeal: Swift.Int,
-                    cheatMeal: Swift.Int,
-                    healthy: Swift.Double? = nil,
-                    tasty: Swift.Double? = nil,
-                    calorieValue: Swift.Double? = nil
+                    cheatMeal: Swift.Int
                 ) {
                     self.healthyMeal = healthyMeal
                     self.cheatMeal = cheatMeal
-                    self.healthy = healthy
-                    self.tasty = tasty
-                    self.calorieValue = calorieValue
                 }
                 public enum CodingKeys: String, CodingKey {
                     case healthyMeal
                     case cheatMeal
-                    case healthy
-                    case tasty
-                    case calorieValue
                 }
             }
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: how many of its posts were each kind of meal.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
             public var meals: Components.Schemas.PlaceSummary.MealsPayload
@@ -9132,7 +9108,7 @@ extension Components {
             ///   - lastAt: When the newest post there was made, in UTC.
             ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///   - sports: 大家在这里练: each sport its 训练 named, most first.
-            ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
+            ///   - meals: 大家在这里吃: how many of its posts were each kind of meal.
             public init(
                 key: Swift.String,
                 place: Components.Schemas.PlaceSummary.PlacePayload,

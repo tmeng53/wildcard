@@ -5758,38 +5758,14 @@
               "cheatMeal": {
                 "type": "integer",
                 "minimum": 0
-              },
-              "healthy": {
-                "type": [
-                  "number",
-                  "null"
-                ],
-                "description": "Rated meals’ 健康, averaged."
-              },
-              "tasty": {
-                "type": [
-                  "number",
-                  "null"
-                ],
-                "description": "Rated meals’ 好吃, averaged."
-              },
-              "calorieValue": {
-                "type": [
-                  "number",
-                  "null"
-                ],
-                "description": "Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged."
               }
             },
             "required": [
               "healthyMeal",
-              "cheatMeal",
-              "healthy",
-              "tasty",
-              "calorieValue"
+              "cheatMeal"
             ],
             "additionalProperties": false,
-            "description": "大家在这里吃: meals by kind, and what rated ones scored."
+            "description": "大家在这里吃: how many of its posts were each kind of meal."
           }
         },
         "required": [
