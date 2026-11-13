@@ -25,6 +25,7 @@ extension CoachPageCard {
     public init(_ wire: Components.Schemas.CoachPageCard, isSeen: Bool = false) throws(ContractsError) {
         guard let kind = Kind(rawValue: wire.kind) else { throw .invalidID(wire.kind) }
         let challenge = wire.challenge.map(\.value1).map(Challenge.init)
+            .map { wire.expired == true ? $0.expired() : $0 }
         let gift = wire.gift.map {
             Gift(piece: $0.pieceId, line: $0.line, openedAt: $0.openedAt, worn: $0.worn)
         }

@@ -385,7 +385,7 @@ public protocol APIProtocol: Sendable {
     func completeCoachChallenge(_ input: Operations.CompleteCoachChallenge.Input) async throws -> Operations.CompleteCoachChallenge.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -1382,7 +1382,7 @@ extension APIProtocol {
     }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.

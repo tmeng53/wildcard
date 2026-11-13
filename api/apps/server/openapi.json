@@ -5206,6 +5206,10 @@
               }
             ]
           },
+          "expired": {
+            "type": "boolean",
+            "description": "`true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期)."
+          },
           "gift": {
             "type": "object",
             "properties": {
@@ -12200,7 +12204,7 @@
       "put": {
         "operationId": "answerCoachChallenge",
         "summary": "Accept or decline the challenge on the caller’s morning note",
-        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.",
+        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.",
         "security": [
           {
             "bearer": []
@@ -12247,7 +12251,7 @@
             }
           },
           "400": {
-            "description": "Not a valid squad or note id, not an answer, or a note with no challenge (`COACH_NOTE_NO_CHALLENGE`)",
+            "description": "Not a valid squad or note id, not an answer, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the squad’s clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)",
             "content": {
               "application/problem+json": {
                 "schema": {
