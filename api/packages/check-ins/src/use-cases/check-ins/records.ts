@@ -1,7 +1,6 @@
 import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 import type { MemberId, SquadId } from '../../domain/check-in.js';
 import {
-  currentRun,
   memberRecords,
   sportDays,
   squadRecords,
@@ -10,7 +9,6 @@ import {
   type SquadRecords,
   type Streak,
 } from '../../domain/records.js';
-import { localDayAt } from '../../domain/weekly-plan.js';
 import type {
   CheckInStore,
   Clock,
@@ -25,7 +23,7 @@ import { restDays } from './rest-days.js';
 export interface Records extends MemberRecords {
   /** The days trained in a row still going, as the player card's 外卡 counts them. */
   readonly currentStreak?: Streak;
-  /** The days in a row with a 健康餐 still going, beside `mealStreak`. */
+  /** The 健康餐 run still going, beside `mealStreak`, as the player card's 外卡 counts it. */
   readonly currentMealStreak?: Streak;
   readonly squad?: SquadRecords & { readonly id: SquadId };
 }
@@ -59,28 +57,25 @@ export async function records(
     (await deps.calendarOf(id))?.timeZone ?? UNSAVED_MEMBER_ZONE;
   const mine = byMember.get(member) ?? [];
   const timeZone = await timeZoneOf(member);
-  const current = (await currentStreaks(deps, { member })).training;
-  const leaveDays = new Set(rows.leaveDays);
-  const currentMeals = currentRun(new Set(rows.healthyMealDays), {
-    today: localDayAt(deps.clock(), timeZone),
-    bridges: leaveDays,
-  }).streak;
+  const going = await currentStreaks(deps, { member });
   const me = {
     ...memberRecords({
       trainings: mine,
       healthyMealDays: rows.healthyMealDays,
+      cheatMealDays: rows.cheatMealDays,
       restDays: await restDays(deps, { member, days: mine.map((training) => training.day) }),
-      leaveDays,
+      leaveDays: new Set(rows.leaveDays),
       timeZone,
     }),
-    ...(current === undefined ? {} : { currentStreak: current }),
-    ...(currentMeals === undefined ? {} : { currentMealStreak: currentMeals }),
+    ...(going.training === undefined ? {} : { currentStreak: going.training }),
+    ...(going.meals === undefined ? {} : { currentMealStreak: going.meals }),
   };
   if (squad === undefined) return me;
   const shared = mine.filter((training) => training.inSquad);
   const squadMe = memberRecords({
     trainings: shared,
     healthyMealDays: [],
+    cheatMealDays: [],
     restDays: new Set(),
     leaveDays: new Set(),
     timeZone,
@@ -95,6 +90,7 @@ export async function records(
             records: memberRecords({
               trainings,
               healthyMealDays: [],
+              cheatMealDays: [],
               restDays: new Set(),
               leaveDays: new Set(),
               timeZone: await timeZoneOf(mate),

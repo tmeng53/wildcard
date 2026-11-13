@@ -230,9 +230,6 @@ importers:
 
   packages/ai-usage:
     dependencies:
-      '@wildcard/errors':
-        specifier: workspace:*
-        version: link:../errors
       '@wildcard/language-model':
         specifier: workspace:*
         version: link:../language-model

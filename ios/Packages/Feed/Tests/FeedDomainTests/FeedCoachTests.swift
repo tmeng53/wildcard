@@ -40,7 +40,9 @@ private func reply(_ number: Int, _ text: String?, _ face: String?) -> CoachRepl
         checkIn: checkInID(number), coach: maotou, text: text, emoji: face.map(emoji), writtenAt: sevenAM)
 }
 
-private let note = CoachNote(day: day("2026-10-20"), text: "今天谁先动，谁就是队长", coach: maotou, writtenAt: sevenAM)
+private let note = CoachNote(
+    day: day("2026-10-20"), text: "今天谁先动，谁就是队长", coach: maotou, writtenAt: sevenAM,
+    timeZone: SquadTimeZone.newYorkClock)
 
 @MainActor @Test func showsTheLineOnlyOnItsDay() async {
     let coach = FeedCoach(source: FakeCoach(CoachActivity(note: note, replies: [])), squad: squad) { sevenAM }

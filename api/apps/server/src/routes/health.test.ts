@@ -52,6 +52,7 @@ const photos = {
 };
 const checkInsOn = (db: Database) =>
   createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
