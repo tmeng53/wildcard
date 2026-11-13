@@ -16,7 +16,9 @@ func everyOutfitBuilds(outfit: Outfit) throws {
             "browsSad", "browsMad",
             "crown", "award", "nose", "eyes", "glasses", "puff", "mouthSmile", "mouthOpen", "mouthSad", "mouthGasp",
             "drool", "vein", "steamL", "steamR", "stars", "gloom", "bang", "squirtL", "squirtR", "heartL", "heartR",
-            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "propL", "gripL", "propR", "gripR", "heart",
+            "sparkle", "tearL", "tearR", "food0", "food1", "food2", "chin", "petTail", "pet", "petHead", "propL",
+            "gripL",
+            "propR", "leash", "gripR", "heart",
             "propFront", "propOver", "desk",
         ])
     // Only the bear's hands are free and only it wears an accessory, and only the cat has a tail.
@@ -300,7 +302,8 @@ func outline(_ path: [PathElement]) -> [Point] {
 
 /// Every body the editor groups is bundled, and every bundled body is in a group; every piece of
 /// clothing and prop it offers is bundled, and WARM-UP's nineteen pieces recolor; any piece's first
-/// color is its art's own; every member holds every prop from the start.
+/// color is its art's own; every member holds every prop from the start but the dogs on a leash,
+/// which wait for a 遛狗 and are in no `editor.json`.
 @Test func theEditorOffersBundledArt() throws {
     let choices = try PlaceholderCharacter.editorChoices()
     #expect(choices.species.map(\.id) == ["person", "cat", "dog", "rabbit", "bear"])
@@ -308,7 +311,11 @@ func outline(_ path: [PathElement]) -> [Point] {
     let grouped = choices.species.flatMap(\.bodies)
     #expect(Set(grouped).count == grouped.count)
     #expect(Set(grouped) == Set(PlaceholderCharacter.variants(for: "body")))
-    #expect(Set(choices.props.map(\.id)) == Set(PlaceholderCharacter.variants(for: "prop")))
+    #expect(
+        Set(choices.props.map(\.id))
+            == Set(PlaceholderCharacter.variants(for: "prop")).subtracting([
+                "dogshiba", "dogcorgi", "doggolden", "dogbichon", "doghusky",
+            ]))
     #expect(
         choices.wear.mapValues { $0.filter { $0.store == "warmup" }.map(\.id) } == [
             "top": ["warmup-tee", "warmup-tank", "warmup-hoodie", "warmup-long", "warmup-raglan", "warmup-stripe"],
