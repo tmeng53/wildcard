@@ -310,8 +310,8 @@ export function me(
     })
     .openapi(deleteMe, async (c) => {
       const { appleAuthorizationCode } = c.req.valid('json');
-      const demoAccountsOf = async (member: string) =>
-        (await deps.admins.isAdmin(member)) ? deps.admins.demoAccounts(AdminId.parse(member)) : [];
+      // Whoever made demo accounts takes them along, even once off the admins list.
+      const demoAccountsOf = (member: string) => deps.admins.demoAccounts(AdminId.parse(member));
       await deleteAccount(
         { ...deps, demoAccountsOf },
         { member: c.var.caller.userId, appleAuthorizationCode },
