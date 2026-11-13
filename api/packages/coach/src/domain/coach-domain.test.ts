@@ -630,7 +630,7 @@ describe('when the coach wakes', () => {
       })
         ?.split('\n\n')
         .at(1),
-    ).toBe('## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。\n毛头走时没留信。');
+    ).toBe('## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。');
     // Whom it writes a morning note to, by the names it knows them by.
     expect(
       section(

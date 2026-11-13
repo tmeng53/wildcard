@@ -926,18 +926,21 @@ describe('the coach', () => {
       expect(quiet.runs.length).toBeGreaterThan(0);
       expect(quiet.runs.some(({ task }) => task.includes('你接手这个小队'))).toBe(false);
 
-      // 换教练 to 暖暖, then back to 小混: 小混 took over from 暖暖, who left no letter yet.
+      // 换教练 to 暖暖, then back to 小混: 小混 took over from 暖暖, whose letter isn't in yet,
+      // so nothing is said of one.
       await hiring.change({ squad, coach: nuannuan, by });
       await hiring.change({ squad, coach: CoachId.parse('xiaohun'), by });
       const { rows } = await sql<{ day: string }>`
         select to_char(now() at time zone 'America/New_York', 'YYYY-MM-DD') as day`.execute(trx);
-      const day = rows[0]?.day ?? '';
+      const day = rows[0]?.day;
+      if (day === undefined) throw new Error('No day.');
       await sql`delete from public.coach_wakes where squad_id = ${squad}`.execute(trx);
       const before = scriptedAgent(() => []);
       await wakes(fixture, { agent: before.agent }).run();
       expect(before.runs[0]?.task).toContain(
-        `## 你接手这个小队\n${day} 小队换教练，你接替了暖暖。\n暖暖走时没留信。`,
+        `## 你接手这个小队\n${day} 小队换教练，你接替了暖暖。`,
       );
+      expect(before.runs[0]?.task).not.toContain('暖暖走时');
 
       // Once 暖暖's letter is in, the next wake reads it as the squad did.
       const handover = await letters.handover(squad);

@@ -453,9 +453,8 @@ function handoverBlock(handover: TookOver | undefined): string[] {
     [
       '## 你接手这个小队',
       `${day} 小队换教练，你接替了${from}。`,
-      letter === undefined
-        ? `${from}走时没留信。`
-        : `${from}走时给全队留了一封信，大家都看过：\n「${letter}」`,
+      // No letter may be one still being written (交接中), so none is said, never 「没留信」.
+      ...(letter === undefined ? [] : [`${from}走时给全队留了一封信，大家都看过：\n「${letter}」`]),
     ].join('\n'),
   ];
 }
