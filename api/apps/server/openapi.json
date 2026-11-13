@@ -2954,6 +2954,7 @@
         },
         "required": [
           "version",
+          "streaks",
           "trainedDays",
           "healthyMeals",
           "cheatMeals",
@@ -8327,6 +8328,7 @@
           "version",
           "member",
           "squadPlace",
+          "streaks",
           "trainedDays",
           "healthyMeals",
           "cheatMeals",

@@ -60,8 +60,8 @@ public actor DeviceOutbox: Outbox {
         let postedDay: LocalDay?
         let createdAt: Timestamp
         let audience: [SquadID]
-        /// 发布到动态; missing on posts kept before it, where an empty audience meant not posted
-        /// (the server takes it the same way).
+        /// 发布到动态. Optional only so a post kept before it (days ago, never sent) is left out
+        /// alone instead of failing the whole list.
         let inFeed: Bool?
         let kind: String
         let sport: String?
@@ -150,6 +150,7 @@ public actor DeviceOutbox: Outbox {
         }
 
         func pending(photos directory: URL) throws -> PendingCheckIn? {
+            guard let inFeed else { return nil }
             var prepared: [PreparedPhoto] = []
             var uploaded: [UUID: PhotoRef] = [:]
             for photo in photos {
@@ -189,7 +190,7 @@ public actor DeviceOutbox: Outbox {
             }
             return PendingCheckIn(
                 id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
-                audience: try Audience(audience), inFeed: inFeed ?? !audience.isEmpty, draft: draft,
+                audience: try Audience(audience), inFeed: inFeed, draft: draft,
                 uploaded: uploaded)
         }
     }

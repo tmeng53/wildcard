@@ -5086,7 +5086,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
             public var version: Components.Schemas.CheckInTotals.VersionPayload
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/streaks`.
-            public var streaks: Components.Schemas.CurrentStreaks?
+            public var streaks: Components.Schemas.CurrentStreaks
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
@@ -5117,7 +5117,7 @@ extension Components {
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
-                streaks: Components.Schemas.CurrentStreaks? = nil,
+                streaks: Components.Schemas.CurrentStreaks,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -12654,7 +12654,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/PlayerCard/joinedAt`.
             public var joinedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/PlayerCard/streaks`.
-            public var streaks: Components.Schemas.CurrentStreaks?
+            public var streaks: Components.Schemas.CurrentStreaks
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/trainedDays`.
@@ -12801,7 +12801,7 @@ extension Components {
                 jerseyNumber: Swift.Int? = nil,
                 squadPlace: Swift.Int,
                 joinedAt: Foundation.Date? = nil,
-                streaks: Components.Schemas.CurrentStreaks? = nil,
+                streaks: Components.Schemas.CurrentStreaks,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
