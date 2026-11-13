@@ -73,7 +73,12 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -395,6 +400,8 @@ const checkIns = createCheckIns({
   membership: squads,
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
+  // Which places a squad's members added is the places module's to keep: check-ins ask it.
+  squadPlaceOf: (input) => squadPlaces.isPlaceOf(input),
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   coachSpoke: ({ checkIn, squads: through, coach }) =>
@@ -522,6 +529,12 @@ const placeRatings = createPlaceRatings({
 // The places each member saved (收藏).
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
+  clock: () => new Date(),
+});
+const squadPlaces = createSquadPlaces({
+  store: createPostgresSquadPlaceStore(db),
+  // Who is in which squad is the squads module's to keep: places ask it.
+  membership: squads,
   clock: () => new Date(),
 });
 // Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
@@ -787,6 +800,7 @@ const app = createApp({
   nudges,
   placeRatings,
   savedPlaces,
+  squadPlaces,
   weather,
   feedback: feedbackInbox,
   issues: feedbackIssues,

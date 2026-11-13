@@ -1420,6 +1420,11 @@
             "maxLength": 200,
             "description": "Apple Maps' identifier for the place, when Maps gave one."
           },
+          "squadPlaceId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The id of the place a squad's member added, when it is one (and not Maps')."
+          },
           "category": {
             "type": "string",
             "pattern": "^[A-Za-z]{1,60}$",
@@ -1442,7 +1447,7 @@
           "longitude"
         ],
         "additionalProperties": false,
-        "description": "A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's."
+        "description": "A place the member picked in Apple Maps (its name, Maps' id and category) or one their squad added (its id), and the place's own coordinates, never the phone's."
       },
       "PhotoView": {
         "type": "object",
@@ -5435,6 +5440,149 @@
         ],
         "additionalProperties": false
       },
+      "SquadPlaceList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SquadPlace"
+            },
+            "description": "The earliest added first."
+          }
+        },
+        "required": [
+          "version",
+          "places"
+        ],
+        "additionalProperties": false
+      },
+      "SquadPlace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+            "x-max-characters": 100
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "food",
+              "gym",
+              "outdoor"
+            ],
+            "description": "吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`)."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "addedBy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Who added it; null once they deleted their account."
+          },
+          "addedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "latitude",
+          "longitude",
+          "addedBy",
+          "addedAt"
+        ],
+        "additionalProperties": false,
+        "description": "A place one of the squad's members added. A post tags it with the place's `squadPlaceId`, `name` and coordinates."
+      },
+      "SquadPlaceAdded": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "place": {
+            "$ref": "#/components/schemas/SquadPlace"
+          }
+        },
+        "required": [
+          "version",
+          "place"
+        ],
+        "additionalProperties": false
+      },
+      "SquadPlaceChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+            "x-max-characters": 100
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "food",
+              "gym",
+              "outdoor"
+            ],
+            "description": "吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`)."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "kind",
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false
+      },
       "SquadPlaces": {
         "type": "object",
         "properties": {
@@ -5471,7 +5619,7 @@
         "properties": {
           "key": {
             "type": "string",
-            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
             "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
             "example": "apple:I6FD7682FD36BB3BE"
           },
@@ -5489,6 +5637,11 @@
                 "minLength": 1,
                 "maxLength": 200,
                 "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
               },
               "category": {
                 "type": "string",
@@ -5595,7 +5748,7 @@
           },
           "key": {
             "type": "string",
-            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
             "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
             "example": "apple:I6FD7682FD36BB3BE"
           },
@@ -5656,7 +5809,7 @@
           },
           "key": {
             "type": "string",
-            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
             "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
             "example": "apple:I6FD7682FD36BB3BE"
           },
@@ -5674,6 +5827,11 @@
                 "minLength": 1,
                 "maxLength": 200,
                 "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
               },
               "category": {
                 "type": "string",
@@ -5840,7 +5998,7 @@
           },
           "key": {
             "type": "string",
-            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
             "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
             "example": "apple:I6FD7682FD36BB3BE"
           },
@@ -5909,7 +6067,7 @@
           "key": {
             "type": "string",
             "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
-            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "description": "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.",
             "example": "apple:I6FD7682FD36BB3BE"
           },
           "place": {
@@ -12893,6 +13051,205 @@
         }
       }
     },
+    "/squads/{squadId}/custom-places": {
+      "get": {
+        "operationId": "listSquadCustomPlaces",
+        "summary": "The places the squad’s members added themselves (自建地点)",
+        "description": "What the place picker lists beside Apple Maps’ places, for every member to tag.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The places",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadPlaceList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/custom-places/{placeId}": {
+      "put": {
+        "operationId": "addSquadCustomPlace",
+        "summary": "Add a place for the squad (新建地点), under an id the app made",
+        "description": "The whole squad sees it, and anyone in it may tag their posts with it. It never changes; the same place again changes nothing, so it is safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "placeId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SquadPlaceChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Already added, as it was",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadPlaceAdded"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadPlaceAdded"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid place",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The id is already another place (`SQUAD_PLACE_ID_CONFLICT`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/squads/{squadId}/places": {
       "get": {
         "operationId": "listSquadPlaces",
@@ -12990,7 +13347,7 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+              "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
               "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
               "example": "apple:I6FD7682FD36BB3BE"
             },
@@ -13078,7 +13435,7 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+              "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
               "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
               "example": "apple:I6FD7682FD36BB3BE"
             },
@@ -13282,11 +13639,11 @@
             "schema": {
               "type": "string",
               "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
-              "description": "Which place: `apple:` and Apple Maps' identifier.",
+              "description": "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.",
               "example": "apple:I6FD7682FD36BB3BE"
             },
             "required": true,
-            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "description": "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.",
             "name": "placeKey",
             "in": "path"
           }

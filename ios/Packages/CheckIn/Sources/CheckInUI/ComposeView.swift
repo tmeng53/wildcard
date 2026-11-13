@@ -164,6 +164,8 @@ public struct ComposeView: View {
                     .typeStyle(TypeRamp.caption)
                     .foregroundStyle(Color(role: .fgMuted, in: theme))
                     .monospacedDigit()
+                    // The place's name gives way, never the count.
+                    .fixedSize()
                     .accessibilityIdentifier("compose.count")
             }
         }

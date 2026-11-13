@@ -14,6 +14,8 @@ final class WidgetUITests: XCTestCase {
         keepScreenshot(named: "70-widgets")
         app.swipeUp()
         keepScreenshot(named: "70-widgets-schedule")
+        app.swipeUp()
+        keepScreenshot(named: "70-widgets-long")
     }
 
     func testWidgetsInEnglish() {
@@ -23,6 +25,8 @@ final class WidgetUITests: XCTestCase {
         keepScreenshot(named: "70-widgets-en")
         app.swipeUp()
         keepScreenshot(named: "70-widgets-schedule-en")
+        app.swipeUp()
+        keepScreenshot(named: "70-widgets-long-en")
     }
 
     /// 本周出赛表's tap opens 出赛表, in 我, from the app on the sample squad, opened from cold with
@@ -56,6 +60,7 @@ final class WidgetUITests: XCTestCase {
         for name in [
             "widget.week", "widget.notice", "widget.squad", "widget.weekWorkout", "widget.squadWorkout",
             "widget.weekPosted", "widget.squadWorkoutEight", "widget.schedule", "widget.scheduleMedium",
+            "widget.weekWorkoutLong", "widget.weekPostedLong", "widget.squadWorkoutLong",
         ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.waitForExistence(timeout: Self.wait), "\(name) didn't show")
@@ -69,15 +74,30 @@ final class WidgetUITests: XCTestCase {
         }
         XCTAssertTrue(app.links["widget.checkIn"].exists || app.buttons["widget.checkIn"].exists, "no 打卡 on 小队今天")
         // The capsule's run and its 打卡, on both widgets.
-        for name in ["widget.weekWorkout", "widget.squadWorkout", "widget.squadWorkoutEight"] {
+        for name in [
+            "widget.weekWorkout", "widget.squadWorkout", "widget.squadWorkoutEight", "widget.weekWorkoutLong",
+            "widget.squadWorkoutLong",
+        ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.descendants(matching: .any)["widget.workout"].exists, "\(name): no workout")
             XCTAssertTrue(widget.descendants(matching: .any)["widget.postWorkout"].exists, "\(name): no 打卡")
+            assertLineClear(of: "widget.postWorkout", in: widget, name: name)
+        }
+        for name in ["widget.weekPosted", "widget.weekPostedLong"] {
+            assertLineClear(of: "widget.postedWorkout", in: app.otherElements[name], name: name)
         }
         let posted = app.otherElements["widget.weekPosted"].descendants(matching: .any)
         XCTAssertTrue(posted["widget.postedWorkout"].exists, "widget.weekPosted: no 已打卡")
         XCTAssertFalse(posted["widget.postWorkout"].exists, "widget.weekPosted: 打卡 again")
         Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    /// The workout's line ends before its button starts, so a long sport name never runs under it.
+    private func assertLineClear(of button: String, in widget: XCUIElement, name: String) {
+        let line = widget.descendants(matching: .any)["widget.workout"].frame
+        let post = widget.descendants(matching: .any)[button].frame
+        XCTAssertFalse(line.isEmpty || post.isEmpty, "\(name): no line or no \(button)")
+        XCTAssertLessThanOrEqual(line.maxX, post.minX + 0.5, "\(name): the line \(line) runs under \(post)")
     }
 
     private func keepScreenshot(named name: String) {

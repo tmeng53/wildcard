@@ -7,6 +7,7 @@ import {
   SquadNotJoinedError,
   Training,
   type CheckInRecord,
+  type SquadPost,
   type SquadToday,
 } from '@wildcard/check-ins';
 import { Character } from '@wildcard/members';
@@ -82,12 +83,14 @@ function world({
   off = [],
   rings = () => 'ring',
   named = true,
+  posts = [],
 }: {
   readonly record?: CheckInRecord | 'deleted';
   readonly sending?: boolean;
   readonly off?: readonly string[];
   readonly rings?: (member: string) => TeammatePushRing | undefined;
   readonly named?: boolean;
+  readonly posts?: readonly SquadPost[];
 } = {}) {
   const sent: { readonly member: string; readonly notification: PushNotification }[] = [];
   const settings: PushSettings = { dailyProgress: true, coach: true };
@@ -95,7 +98,7 @@ function world({
     checkIns: {
       current: () => Promise.resolve(record === 'deleted' ? undefined : record),
       squadToday: () => Promise.resolve(today),
-      listForSquad: () => Promise.resolve([]),
+      listForSquad: () => Promise.resolve([...posts]),
     },
     members: {
       squadmates: () => Promise.resolve(new Map(named ? [[tracy, profile]] : [])),
@@ -151,6 +154,14 @@ describe('a 训练 just posted', () => {
         squadPlannedDays: 9,
         today: { members: [{ id: ann }], posts: [], more: 0 },
       },
+    });
+  });
+
+  it('carries the post itself among today’s, for the long-press view to cheer', async () => {
+    const { deps, sent } = world({ posts: [{ checkIn: run, reactions: [], comments: [] }] });
+    await notifyTeammates(deps, event);
+    expect(sent[0]?.notification.event).toMatchObject({
+      today: { posts: [{ id: checkIn, minutes: 62 }], more: 0 },
     });
   });
 

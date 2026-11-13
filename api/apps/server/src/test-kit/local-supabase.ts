@@ -17,7 +17,12 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import {
   createOffSender,
@@ -149,9 +154,23 @@ export function weatherOn(db: Database) {
   });
 }
 
-/** Place scores on local Supabase. */
-export function placeRatingsOn(db: Database) {
-  return createPlaceRatings({ store: createPostgresPlaceRatingStore(db), clock: () => new Date() });
+/** Place scores and squads' own places on local Supabase, as the app's dependencies. */
+export function placesOn(db: Database) {
+  return {
+    placeRatings: createPlaceRatings({
+      store: createPostgresPlaceRatingStore(db),
+      clock: () => new Date(),
+    }),
+    squadPlaces: createSquadPlaces({
+      store: createPostgresSquadPlaceStore(db),
+      membership: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
+      }),
+      clock: () => new Date(),
+    }),
+  };
 }
 
 /** Saved places on local Supabase. */
