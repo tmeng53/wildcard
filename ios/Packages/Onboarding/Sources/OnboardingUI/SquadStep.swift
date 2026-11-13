@@ -191,7 +191,7 @@ private struct SquadFound: View {
                 if squad.isFull {
                     Text(copy: "\(squad.memberCount) 人 · 满员了", bundle: .module)
                 } else {
-                    Text(copy: "\(squad.memberCount) 人", bundle: .module)
+                    Text(copy: "\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 次", bundle: .module)
                 }
             }
             .accessibilityIdentifier("squad.found")
