@@ -115,9 +115,7 @@ struct SchedulePoster: View {
         VStack(alignment: .trailing, spacing: Space.xs - 2) {
             ForEach(Array(content.titles.enumerated()), id: \.element) { position, title in
                 HStack(spacing: Space.xxs + 1) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
-                        .accessibilityHidden(true)
+                    JellyStar(size: Sizing.smallIcon - 2)
                     Text(verbatim: title.title)
                         .typeStyle(TypeRamp.footnoteEmphasis)
                         .lineLimit(1)

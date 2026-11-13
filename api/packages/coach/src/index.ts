@@ -80,6 +80,7 @@ export type {
   CoachGifting,
   CoachMemes,
   CoachWeather,
+  WeatherWords,
   CoachOccasions,
   CoachPhotoUrls,
   CoachTimeZones,

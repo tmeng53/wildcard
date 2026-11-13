@@ -74,7 +74,7 @@ export async function editCheckIn(
     {
       ...recordFromDraft(
         {
-          ...keepingWorkout(edit, saved),
+          ...keepingRating(keepingWorkout(edit, saved), saved),
           day: saved.day,
           createdAt: saved.createdAt,
           audience: [...saved.audience],
@@ -132,6 +132,17 @@ export async function deleteCheckIn(
   // Every photo it ever had, in case an edit's Storage delete failed before.
   await deps.photos.delete(await deps.store.photoHistory(saved.id));
   await deps.store.remove(id);
+}
+
+/**
+ * The edit, keeping the saved meal's rating when it leaves `rating` out, as builds from before
+ * ratings do, so editing there never drops it. A rating can be changed, never taken off.
+ */
+function keepingRating(edit: CheckInEdit, saved: CheckInRecord): CheckInEdit {
+  if (edit.kind === 'trained' || edit.kind === 'disclaimer') return edit;
+  if (saved.kind !== edit.kind || edit.meal.rating !== undefined) return edit;
+  const { rating } = saved.meal;
+  return rating === undefined ? edit : { ...edit, meal: { ...edit.meal, rating } };
 }
 
 /**
