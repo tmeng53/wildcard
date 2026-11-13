@@ -18,9 +18,10 @@ export interface TrainedWithPushDependencies {
  * Tells each squadmate a 训练 names it was done with (一起练), once a post: in their 通知, and by
  * one push unless they turned off push (the `dailyProgress` switch, which covers teammates'
  * pushes). A tap opens their own 训练 to post, filled from this one; the tag never counts for
- * them. It runs as the `trained-with-push` event's subscriber and waits for every push: a failure
- * throws, so the event is delivered again, and a member already told (the notice is written once
- * a member a post) is not pushed again.
+ * them. It runs as the `trained-with-push` event's subscriber and waits for every push. The notice
+ * is written once a member a post, before the push, and only those told now are pushed, so a post
+ * delivered or edited twice pushes once; a push that fails after its notice is written is not
+ * tried again, as with comments, and the notice in 通知 stands for it.
  */
 export async function notifyTrainedWith(
   deps: TrainedWithPushDependencies,

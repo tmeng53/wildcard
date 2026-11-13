@@ -80,6 +80,23 @@ import Testing
         if case .trained(_, _, let body) = model.draft { #expect(body.trainedWith.members == [mia]) }
     }
 
+    @Test func anEditKeepsWhomThePostNamedEvenOnceTheyLeft() throws {
+        let gone = MemberID(UUID())
+        let saved = CheckIn(
+            id: CheckInID(UUID()), member: MemberID(UUID()),
+            day: LocalDay(at: Date(timeIntervalSince1970: 1_792_515_600), in: .gmt),
+            createdAt: Timestamp(millisecondsSince1970: 0), audience: try Audience([squad.id]),
+            entry: .trained(Training(activity: .sport("run"), trainedWith: try TrainedWith([gone, mia]))))
+        let today = SquadmateToday(
+            member: mia, catchphrase: nil, character: nil, day: saved.day, training: .notCheckedIn, latestMeal: nil,
+            plannedRest: false, firstCheckInAt: nil)
+        let model = ComposeModel(
+            kind: .trained, purpose: .edit(saved), suggestedActivity: .sport("run"), recentActivities: [],
+            together: { _, _, _ in TrainingTogether(mates: [today], hints: []) }, save: { _ in true }, close: {})
+        model.toggle(mate: jie)
+        #expect(model.edit?.trainedWith.members == [gone, mia])
+    }
+
     @Test func aHintPastTheLimitFillsNothing() throws {
         let mates = (0..<TrainedWith.limit).map { _ in MemberID(UUID()) }
         let model = page(mates: mates + [jie])
