@@ -5,7 +5,21 @@
 
 import type { ColumnType } from "kysely";
 
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
+
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
+
+export interface PlaceRatings {
+  at: Timestamp;
+  id: Generated<Int8>;
+  member_id: string;
+  place_key: string;
+  stars: number;
+}
 
 export interface SquadPlaces {
   added_at: Timestamp;
@@ -19,5 +33,6 @@ export interface SquadPlaces {
 }
 
 export interface DB {
+  place_ratings: PlaceRatings;
   squad_places: SquadPlaces;
 }

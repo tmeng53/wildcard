@@ -1,7 +1,7 @@
 -- A squad's own places: kept as added, until the squad ends; the adder's account going forgets
--- only who added it.
+-- only who added it. A squad place is scored like an Apple Maps one, under `squad:`.
 begin;
-select plan(9);
+select plan(10);
 
 insert into auth.users (id, email) values
   ('b1000000-0000-4000-8000-000000000001', 'mia@example.com');
@@ -22,7 +22,12 @@ select throws_ok($$update public.squad_places set name = 'y'$$, '42501', null, '
 select throws_ok($$delete from public.squad_places$$, '42501', null, 'a place is never removed');
 select throws_ok($$truncate public.squad_places$$, '42501', null, 'the squad''s places are never emptied');
 
-select is((select to_regclass('public.place_ratings')), null, 'places have no scores');
+select lives_ok($$insert into public.place_ratings (member_id, place_key, stars, at)
+  values ('b1000000-0000-4000-8000-000000000001', 'squad:b3000000-0000-4000-8000-000000000001', 4, now())$$,
+  'a squad place is scored under its squad key');
+select throws_ok($$insert into public.place_ratings (member_id, place_key, stars, at)
+  values ('b1000000-0000-4000-8000-000000000001', 'squad:not-an-id', 4, now())$$,
+  '23514', null, 'a squad key holds a place id');
 
 -- The adder's account going leaves the place, with no one named.
 delete from auth.users where id = 'b1000000-0000-4000-8000-000000000001';
