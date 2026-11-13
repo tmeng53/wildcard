@@ -68,6 +68,12 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineSquadName
     /// A squad name with nothing visible in it, or with a text-direction control.
     case invisibleSquadName
+    /// A 备注 to the captain that is empty or longer than `JoinNote.maxLength` characters.
+    case joinNoteLength(Int)
+    /// A 备注 with a line break, tab or other control character.
+    case multilineJoinNote
+    /// A 备注 with nothing visible in it, or with a text-direction control.
+    case invisibleJoinNote
     /// Text that can't be an invite code: not 8 letters from `InviteCode.alphabet`.
     case invalidInviteCode(String)
     /// A timestamp that isn't ISO 8601.

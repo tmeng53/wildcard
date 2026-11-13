@@ -78,7 +78,7 @@ struct LocalStack {
         let squad = try await creator.api.createSquad(
             SquadID(UUID()), named: try SquadName("backend tests"), timeZone: "America/New_York")
         for member in others {
-            _ = try await member.api.join(try InviteCode(squad.inviteCode))
+            _ = try await member.api.join(try InviteCode(squad.inviteCode), note: nil)
         }
         return squad.id
     }

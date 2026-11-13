@@ -19,6 +19,10 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     case location
     /// 本周目标, on the week's poster.
     case week
+    /// 等队长同意: only for whoever asked to join a squad whose captain lets members in (Tracy,
+    /// 2026-11-12), after the rest of sign-up; 申请没有通过 when the captain said no. On to 上场 once
+    /// they are in. Not counted in the header.
+    case waiting
     /// 这周在哪练？: only for whoever made the squad. Five cartons; the one picked opens, and the
     /// member drops onto it at home (Tracy, 2026-10-23: 「selecting a new scene always do the
     /// open and drop」). Not counted in the header.
@@ -39,15 +43,16 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
     /// Where 本周目标 goes: whoever made the squad picks its scene; whoever joined one goes
     /// straight to 上场 and the squad's welcome (Tracy, 2026-10-23: 「joining a new team should
     /// always do the join and teammates welcome effect」).
-    public static func afterWeek(madeTheSquad: Bool) -> SignUpStep {
-        madeTheSquad ? .scene : .entrance
+    /// Whoever asked a captain to let them in waits for the answer.
+    public static func afterWeek(madeTheSquad: Bool, asked: Bool = false) -> SignUpStep {
+        asked ? .waiting : madeTheSquad ? .scene : .entrance
     }
 
     /// Where 你的小队 goes: on to 关于你 in a sign-up; for a member who was in a squad and is in none
     /// now, who keeps everything else they saved (Tracy, 2026-11-11), straight to where joining or
     /// making a squad ends.
-    public static func afterSquad(rejoining: Bool, madeTheSquad: Bool) -> SignUpStep {
-        rejoining ? afterWeek(madeTheSquad: madeTheSquad) : .sports
+    public static func afterSquad(rejoining: Bool, madeTheSquad: Bool, asked: Bool = false) -> SignUpStep {
+        rejoining ? afterWeek(madeTheSquad: madeTheSquad, asked: asked) : .sports
     }
 
     /// Where back goes for a member back in no squad: from 这周在哪练？ to the squad just made, and
@@ -79,10 +84,15 @@ public enum SignUpStep: Int, CaseIterable, Comparable, Sendable {
         }
     }
 
-    /// Where back goes: the open screen signs out, so there is no back from it, and none from
-    /// 上场, which the squad has already seen.
+    /// Where back goes: the open screen signs out, so there is no back from it, none from 等队长同意,
+    /// which 撤回申请 or 重新选小队 leave, and none from 上场, which the squad has already seen.
+    /// 这周在哪练？ goes back past 等队长同意, which only a member who asked sees.
     public var previous: SignUpStep? {
-        self == .entrance ? nil : SignUpStep(rawValue: rawValue - 1)
+        switch self {
+        case .entrance, .waiting: nil
+        case .scene: .week
+        default: SignUpStep(rawValue: rawValue - 1)
+        }
     }
 
     public static func < (lhs: SignUpStep, rhs: SignUpStep) -> Bool { lhs.rawValue < rhs.rawValue }

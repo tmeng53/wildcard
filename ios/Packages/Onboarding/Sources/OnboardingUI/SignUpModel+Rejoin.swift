@@ -19,7 +19,7 @@ extension SignUpModel {
     }
 
     var afterSquad: SignUpStep {
-        .afterSquad(rejoining: isRejoining, madeTheSquad: madeTheSquad)
+        .afterSquad(rejoining: isRejoining || pastWeek, madeTheSquad: madeTheSquad, asked: request != nil)
     }
 }
 #endif
