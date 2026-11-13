@@ -1,18 +1,18 @@
 import XCTest
 
-/// The app's language: from the first launch, English on a phone set to English, Traditional
-/// Chinese on a phone set to it and Simplified Chinese on any other, until the member picks another in the app, which then speaks
+/// The app's language: from the first launch, Traditional Chinese on a phone set to it and
+/// Simplified Chinese on any other, until the member picks another in the app, which then speaks
 /// it at once.
 @MainActor
 final class LanguageUITests: XCTestCase {
     /// How long a check waits for the UI on a busy CI runner.
     private static let wait: TimeInterval = 30
 
-    /// A new install on a phone set to another language, here French, opens in Simplified Chinese
-    /// from its first launch, sign-up's: SwiftUI's text, the strings the code looks up (the squad's
-    /// suggested name) and the formatted dates alike.
-    func testFirstLaunchOnAnotherPhoneIsChinese() {
-        let app = launchFirstTime(["-onboarding", "-uitest-monday", "-uitest-phone-language", "fr-CA"])
+    /// A new install on a phone set to English opens in Chinese from its first launch, sign-up's:
+    /// SwiftUI's text, the strings the code looks up (the squad's suggested name) and the
+    /// formatted dates alike. The simulator is English, as CI's is, and no language is passed.
+    func testFirstLaunchOnAnEnglishPhoneIsChinese() {
+        let app = launchFirstTime(["-onboarding", "-uitest-monday"])
         let signIn = app.buttons["signup.signIn"]
         XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
         XCTAssertEqual(signIn.label, "通过 Apple 继续")
@@ -57,18 +57,6 @@ final class LanguageUITests: XCTestCase {
         keepScreenshot(named: "53-first-launch-week")
     }
 
-    /// A new install on a phone set to English opens in English, the sign-in button (a system
-    /// control) and the terms line included.
-    func testFirstLaunchOnAnEnglishPhoneIsEnglish() {
-        let app = launchFirstTime(["-onboarding", "-uitest-monday", "-uitest-phone-language", "en-GB"])
-        let signIn = app.buttons["signup.signIn"]
-        XCTAssertTrue(signIn.waitForExistence(timeout: Self.wait), "the open screen never appeared")
-        XCTAssertEqual(signIn.label, "Continue with Apple")
-        XCTAssertTrue(app.links["Terms"].exists, "the terms line isn't in English")
-        settle()
-        keepScreenshot(named: "51c-first-launch-open-en")
-    }
-
     /// A new install on a phone set to Traditional Chinese opens in Traditional Chinese, the sign-in
     /// button (a system control) included.
     func testFirstLaunchOnATraditionalChinesePhoneIsTraditional() {
@@ -83,7 +71,7 @@ final class LanguageUITests: XCTestCase {
     /// The open screen's globe switches the whole app to English before signing up: the
     /// screen's words, the sign-in button, the squad's suggested name, a sport and the week's days.
     func testTheGlobeSwitchesToEnglishAtOnce() {
-        let app = launchFirstTime(["-onboarding", "-uitest-monday", "-uitest-phone-language", "zh-Hans-CN"])
+        let app = launchFirstTime(["-onboarding", "-uitest-monday"])
         let globe = app.buttons["signup.language"]
         XCTAssertTrue(globe.waitForExistence(timeout: Self.wait), "the open screen has no globe")
         globe.tap()
@@ -126,10 +114,10 @@ final class LanguageUITests: XCTestCase {
         XCTAssertTrue(monday.label.contains("Mon"), "the week's days stayed Chinese: \(monday.label)")
     }
 
-    /// 设置's 语言 switches the app too, and back. The phone is Simplified Chinese here whatever the
-    /// simulator was left speaking, so the app opens in it.
+    /// 设置's 语言 switches the app too, and back. The phone is English here whatever the simulator
+    /// was left speaking, so the app opens in Simplified Chinese.
     func testSettingsSwitchesTheLanguage() {
-        let app = launchFirstTime(["-tab", "me", "-uitest-no-push", "-uitest-phone-language", "zh-Hans-CN"])
+        let app = launchFirstTime(["-tab", "me", "-uitest-no-push", "-uitest-phone-language", "en-US"])
         let settingsButton = app.buttons["me.settings"]
         XCTAssertTrue(settingsButton.waitForExistence(timeout: Self.wait), "我 never showed")
         settingsButton.tap()
