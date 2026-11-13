@@ -585,6 +585,7 @@ describe('a squad’s time zone', () => {
     const plain = await newSquad(ann, '默认');
     expect(await squads.timeZone({ squad: plain.id, viewer: ann, moment: during })).toStrictEqual({
       timeZone: 'America/New_York',
+      nextTimeZone: 'America/New_York',
     });
     const bo = await newMember();
     const { squad: taipei } = await squads.create({
@@ -596,6 +597,7 @@ describe('a squad’s time zone', () => {
     });
     expect(await squads.timeZone({ squad: taipei.id, viewer: bo, moment: during })).toStrictEqual({
       timeZone: 'Asia/Taipei',
+      nextTimeZone: 'Asia/Taipei',
     });
     // Before the squad's first week it kept New York, as every squad did.
     expect(
@@ -662,7 +664,7 @@ describe('a squad’s time zone', () => {
         timeZone: 'Asia/Taipei',
         moment: during,
       }),
-    ).toStrictEqual({ timeZone: 'Asia/Taipei' });
+    ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'Asia/Taipei' });
     expect([squad.id].map(await squads.timeZonesFor([squad.id], thisWeek))).toStrictEqual([
       'Asia/Taipei',
     ]);
@@ -698,7 +700,7 @@ describe('a squad’s time zone', () => {
         timeZone: 'America/Los_Angeles',
         moment: during,
       }),
-    ).toStrictEqual({ timeZone: 'America/Los_Angeles' });
+    ).toStrictEqual({ timeZone: 'America/Los_Angeles', nextTimeZone: 'America/Los_Angeles' });
     expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-16'))).toStrictEqual([
       'America/Los_Angeles',
     ]);
@@ -723,7 +725,7 @@ describe('a squad’s time zone', () => {
         timeZone: 'America/New_York',
         moment,
       }),
-    ).toStrictEqual({ timeZone: 'America/New_York' });
+    ).toStrictEqual({ timeZone: 'America/New_York', nextTimeZone: 'America/New_York' });
     expect([squad.id].map(await squads.timeZonesAt([squad.id], moment))).toStrictEqual([
       'America/New_York',
     ]);
@@ -733,6 +735,41 @@ describe('a squad’s time zone', () => {
     expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
       'America/New_York',
     ]);
+  });
+
+  it('counts a change from next week once this week’s 战报 froze on the new clock', async () => {
+    const ann = await newMember();
+    const { squad } = await squads.create({
+      week: thisWeek,
+      id: SquadId.parse(randomUUID()),
+      creator: ann,
+      name: name('洛杉矶队'),
+      timeZone: 'America/Los_Angeles',
+    });
+    // Sunday 2026-11-08 19:00 in Los Angeles is Monday 11:00 in Taipei, 15 hours after Taipei's
+    // Sunday 8pm: counting at once would freeze the week the squad is still playing. So the week
+    // of 11-02 keeps Los Angeles and freezes at its 8pm, and the squad, already in its next week
+    // on Taipei's clock, shows Taipei.
+    const moment = new Date('2026-11-09T03:00:00Z');
+    expect(
+      await squads.setTimeZone({ squad: squad.id, member: ann, timeZone: 'Asia/Taipei', moment }),
+    ).toStrictEqual({ timeZone: 'Asia/Taipei', nextTimeZone: 'Asia/Taipei' });
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], thisWeek))).toStrictEqual([
+      'America/Los_Angeles',
+    ]);
+    expect([squad.id].map(await squads.timeZonesFor([squad.id], '2026-11-09'))).toStrictEqual([
+      'Asia/Taipei',
+    ]);
+    // Changed back before Los Angeles's 8pm, it counts at once again, this week and the next.
+    const back = new Date('2026-11-09T03:30:00Z');
+    expect(
+      await squads.setTimeZone({
+        squad: squad.id,
+        member: ann,
+        timeZone: 'America/Los_Angeles',
+        moment: back,
+      }),
+    ).toStrictEqual({ timeZone: 'America/Los_Angeles', nextTimeZone: 'America/Los_Angeles' });
   });
 });
 

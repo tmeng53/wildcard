@@ -21,8 +21,9 @@ const SquadTimeZoneBody = z
     timeZone: squadTimeZoneField.meta({ description: 'This week’s zone.' }),
     nextTimeZone: squadTimeZoneField.meta({
       description:
-        'Always the same as `timeZone`, since a change counts at once. Kept for builds that ' +
-        'showed a change waiting for next week.',
+        'Next week’s zone: the same as `timeZone` unless the captain changed it after this ' +
+        'week’s 战报 had already frozen on the new clock (Sunday 8pm there), when the change ' +
+        'counts from next week.',
     }),
     canChange: z.boolean().meta({ description: 'True for the captain, the only one who sets it.' }),
   })
@@ -75,7 +76,8 @@ export function squadTimeZone(deps: {
     summary: 'Set the squad’s time zone',
     description:
       'For the captain. It counts at once, from the squad’s week on its own clock, so this ' +
-      'week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.',
+      'week’s 战报 freezes Sunday 8pm on the new clock, unless that moment has already passed ' +
+      'on the new clock: then it counts from next week (`nextTimeZone`). Safe to repeat.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -103,7 +105,7 @@ export function squadTimeZone(deps: {
     return {
       version: 1,
       timeZone: input.zone.timeZone,
-      nextTimeZone: input.zone.timeZone,
+      nextTimeZone: input.zone.nextTimeZone,
       canChange: found.captain === input.viewer,
     };
   }

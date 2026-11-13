@@ -16,6 +16,7 @@ import {
 } from '@wildcard/notices';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
+import { wallClockAt } from '@wildcard/time-zones';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -957,13 +958,17 @@ describe('the squad’s time zone', () => {
       'TIME_ZONE_UNKNOWN',
     ]);
     const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
-    // At once, whatever the day on either clock.
-    expect(changed.body).toStrictEqual({
+    // At once, unless Los Angeles is past this week's Sunday 8pm (Tracy, 2026-11-13): then from
+    // next week, which the squads module's tests pin to the minute on a fixed clock.
+    const there = wallClockAt(new Date(), 'America/Los_Angeles');
+    const waits = new Date(`${there.day}T00:00:00Z`).getUTCDay() === 0 && there.hour >= 20;
+    expect(changed.body).toMatchObject({
       version: 1,
-      timeZone: 'America/Los_Angeles',
       nextTimeZone: 'America/Los_Angeles',
       canChange: true,
     });
+    const { timeZone } = z.object({ timeZone: z.string() }).parse(changed.body);
+    expect(waits || timeZone === 'America/Los_Angeles').toBe(true);
     expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
   });
 
