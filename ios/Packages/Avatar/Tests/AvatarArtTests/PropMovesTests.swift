@@ -5,8 +5,10 @@ import Testing
 
 /// The props a character can hold or stand on, each with a move of its own.
 let heldProps = [
-    "badminton", "basketball", "bottle", "broom", "chalkbag", "dumbbell", "gloves", "goggles", "helmet", "kettlebell",
-    "pickleball", "pingpong", "racket", "skis", "snowboard", "soccerball", "yogamat",
+    "badminton", "basketball", "bottle", "broom", "chalkbag", "dogbichon", "dogcorgi", "doggolden", "doghusky",
+    "dogshiba",
+    "dumbbell", "gloves", "goggles", "helmet", "kettlebell", "pickleball", "pingpong", "racket", "skis", "snowboard",
+    "soccerball", "yogamat",
 ]
 
 /// A character standing with a prop plays its move over and over, at its persona's tempo (a
@@ -34,9 +36,8 @@ func everyPropHasItsMove(prop: String) throws {
         #expect(move.name == prop)
         // Its own move turns the prop itself, so a prop that keeps level is left to it.
         #expect(move.holds == prop)
-        // Its arms may end in front (`armsBehind`).
         #expect(
-            nearlyEqual(armsBehind(shown(figure.pose(bound, at: move.duration))), shown(figure.restPose)),
+            nearlyEqual(shown(figure.pose(bound, at: move.duration)), shown(figure.restPose)),
             "\(prop) ends at rest")
         expectOnCanvas(figure, bound, for: move.duration, "\(prop) \(move.name)")
     }

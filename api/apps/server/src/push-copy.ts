@@ -9,6 +9,8 @@ export const PUSH_COPY = {
   'push.dailyProgress.received': ['trainedDays', 'plannedDays', 'teammates'],
   'push.dailyProgress.poke': ['trainedDays', 'plannedDays', 'poker'],
   'push.dailyProgress.poke.more': ['trainedDays', 'plannedDays', 'poker', 'otherPokers'],
+  'push.teammate.trained': ['teammate', 'sport'],
+  'push.teammate.trained.minutes': ['teammate', 'sport', 'minutes'],
   'push.comment': ['commenter', 'text'],
   'push.comment.reply': ['commenter', 'text'],
   'push.coach.note': ['coach', 'text'],

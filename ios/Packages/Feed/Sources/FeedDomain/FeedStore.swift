@@ -68,6 +68,11 @@ public final class FeedStore {
 
     let source: any FeedSource
     private let scope: Scope
+
+    /// The squad whose feed this is; nil for one post's own page.
+    public var squad: SquadID? {
+        if case .squad(let squad) = scope { squad } else { nil }
+    }
     private let viewer: MemberID
     private let today: @Sendable () -> LocalDay
     private let now: @Sendable () -> Timestamp

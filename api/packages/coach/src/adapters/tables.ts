@@ -177,6 +177,8 @@ export interface CoachSettingEvents {
 }
 
 export interface CoachSettings {
+  challenge_model: Generated<string>;
+  challenge_rules: Generated<string>;
   coaching: boolean;
   holidays: Generated<Json>;
   model: string;
@@ -195,6 +197,7 @@ export interface CoachWakes {
   day: string | null;
   id: Generated<Int8>;
   last_error: string | null;
+  member_id: string | null;
   reason: string;
   squad_id: string;
   state: Generated<string>;

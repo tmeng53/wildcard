@@ -53,6 +53,8 @@ import {
   switchesOn,
   noJobs,
   nudgesOn,
+  placesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -127,6 +129,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  ...placesOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
   weeklyAwards: {

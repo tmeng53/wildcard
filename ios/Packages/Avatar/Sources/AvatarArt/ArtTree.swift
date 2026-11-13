@@ -11,7 +11,9 @@ public enum ArtTree {
     /// The rig this build draws. Downloaded art that needs a newer one is left out
     /// (`rigVersion` in the catalog), so new rig parts never break an older build. 2: the coaches'
     /// rigs gained the parts their shared moves play (the whistle, its cord, the front left arm).
-    public static let rigVersion = 2
+    /// 3: a pet on a leash (`pet`, `petHead`, `petTail` and the `leash` rope between fist and collar).
+    /// 4: the colour a head sits on (`avatar/backdrops.json`, a coach's `backdrop.json`).
+    public static let rigVersion = 4
 
     /// Where the downloaded files stand, mirroring the tree's paths: the app group's `Art/current`,
     /// so the widgets and push views draw the art the app downloaded (a coach that came after
@@ -81,7 +83,10 @@ public enum ArtTree {
         switch name {
         case "rig.json": return (try? Rig.decode(data)) != nil
         case "timeline.json": return parts.first == "openings" && parts.count == 3 && (try? Opening.decode(data)) != nil
-        case "editor.json", "kits.json", "names.json": return parts == ["avatar", name] && readsTopLevel(data, name)
+        case "editor.json", "kits.json", "names.json", "backdrops.json":
+            return parts == ["avatar", name] && readsTopLevel(data, name)
+        case "backdrop.json":
+            return parts.count == 3 && parts[0] == "coaches" && (try? BackdropPick.decode(data)) != nil
         case "tones.json": return (try? Tones.decode(data)) != nil
         case "hold.json": return Figure.readsHold(data)
         default:
@@ -95,6 +100,7 @@ public enum ArtTree {
         switch name {
         case "editor.json": (try? EditorChoices.decode(data)) != nil
         case "kits.json": (try? SportKits.decode(data)) != nil
+        case "backdrops.json": (try? Backdrops.decode(data)) != nil
         default: (try? ArtNames.decode(data)) != nil
         }
     }

@@ -12,6 +12,7 @@ import {
   storedPayload,
 } from './check-in.js';
 import { PhotoPath } from './photos.js';
+import { calorieValue } from './meal-rating.js';
 
 const squad = '6f1c1d2e-3b4a-4c5d-8e9f-0a1b2c3d4e5f';
 const otherSquad = '7a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
@@ -45,6 +46,88 @@ describe('CheckInDraft', () => {
         },
       ].map(issues),
     ).toStrictEqual(['ok', 'ok', 'ok', 'ok', 'ok']);
+  });
+
+  it('takes a place on a 训练 or meal, never on a 请假条', () => {
+    const place = {
+      name: ' Sweetgreen ',
+      appleId: 'I6FD7682FD36BB3BE',
+      category: 'restaurant',
+      latitude: 40.7448,
+      longitude: -73.9881,
+    };
+    const meal = CheckInDraft.parse({ ...base, kind: 'healthyMeal', meal: { place } });
+    expect(meal.kind === 'healthyMeal' && meal.meal.place).toStrictEqual({
+      ...place,
+      name: 'Sweetgreen',
+    });
+    expect(issues({ ...base, kind: 'trained', training: { sport: 'run', place } })).toBe('ok');
+    expect(
+      issues({ ...base, kind: 'disclaimer', disclaimer: { text: '困', place } }),
+    ).toStrictEqual(['disclaimer']);
+    expect(
+      issues({ ...base, kind: 'cheatMeal', meal: { place: { ...place, latitude: 91 } } }),
+    ).toStrictEqual(['meal.place.latitude']);
+    expect(
+      issues({ ...base, kind: 'cheatMeal', meal: { place: { ...place, name: ' ' } } }),
+    ).toStrictEqual(['meal.place.name']);
+    const record = recordFromDraft(meal, {
+      id: CheckInId.parse('0b6f6d2e-1c3a-4d5e-8f9a-0b1c2d3e4f5a'),
+      member: MemberId.parse('1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f'),
+    });
+    expect(storedPayload(record)).toStrictEqual({
+      version: 1,
+      place: { ...place, name: 'Sweetgreen' },
+    });
+    expect(
+      entryFromStored({ kind: 'healthyMeal', payload: storedPayload(record), photos: [] }),
+    ).toStrictEqual({
+      kind: 'healthyMeal',
+      meal: { place: { ...place, name: 'Sweetgreen' } },
+    });
+  });
+
+  it('takes a meal’s 健康 and 好吃, both 1 to 5, and keeps them', () => {
+    const meal = CheckInDraft.parse({
+      ...base,
+      kind: 'cheatMeal',
+      meal: { rating: { healthy: 2, tasty: 5 } },
+    });
+    expect(meal.kind === 'cheatMeal' && meal.meal.rating).toStrictEqual({ healthy: 2, tasty: 5 });
+    expect(
+      issues({ ...base, kind: 'healthyMeal', meal: { rating: { healthy: 0, tasty: 3 } } }),
+    ).toStrictEqual(['meal.rating.healthy']);
+    expect(
+      issues({ ...base, kind: 'healthyMeal', meal: { rating: { healthy: 3, tasty: 3.5 } } }),
+    ).toStrictEqual(['meal.rating.tasty']);
+    expect(
+      issues({ ...base, kind: 'healthyMeal', meal: { rating: { healthy: 3 } } }),
+    ).toStrictEqual(['meal.rating.tasty']);
+    expect(
+      issues({
+        ...base,
+        kind: 'trained',
+        training: { sport: 'run', rating: { healthy: 3, tasty: 3 } },
+      }),
+    ).toStrictEqual(['training']);
+    const record = recordFromDraft(meal, {
+      id: CheckInId.parse('0b6f6d2e-1c3a-4d5e-8f9a-0b1c2d3e4f5a'),
+      member: MemberId.parse('1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f'),
+    });
+    expect(
+      entryFromStored({ kind: 'cheatMeal', payload: storedPayload(record), photos: [] }),
+    ).toStrictEqual({ kind: 'cheatMeal', meal: { rating: { healthy: 2, tasty: 5 } } });
+  });
+
+  it('works out 卡价比 as 好吃 × 健康 ÷ 5', () => {
+    expect(
+      [
+        { healthy: 5, tasty: 5 },
+        { healthy: 5, tasty: 4 },
+        { healthy: 1, tasty: 1 },
+        { healthy: 2, tasty: 3 },
+      ].map(calorieValue),
+    ).toStrictEqual([5, 4, 0.2, 1.2]);
   });
 
   it('keeps the moment to the millisecond, whatever the offset', () => {

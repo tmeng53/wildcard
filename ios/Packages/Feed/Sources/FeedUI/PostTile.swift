@@ -45,13 +45,15 @@ struct PostTile: View {
                 if !Task.isCancelled { cover = nil }
                 return
             }
-            cover = await Self.thumbnail(jpeg)
+            cover = await CoverThumbnail.make(jpeg)
         }
     }
+}
 
-    /// The cover cut down to the tile's size off the main actor, so scrolling the wall never
-    /// decodes full photos.
-    nonisolated static func thumbnail(_ jpeg: Data) async -> CGImage? {
+/// A post's cover cut down to a tile's size off the main actor, so scrolling a wall of tiles
+/// (我的动态, a place's page) never decodes full photos.
+public enum CoverThumbnail {
+    public static func make(_ jpeg: Data) async -> CGImage? {
         guard let source = CGImageSourceCreateWithData(jpeg as CFData, nil) else { return nil }
         let options =
             [

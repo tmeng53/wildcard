@@ -37,6 +37,27 @@ import Testing
     #expect(clip.tracks[0].keys[2].easing == .cubicBezier(0, 0, 1, 1))
 }
 
+/// A `front` track, which picked an arm's depth before arms were always in front of the body, is
+/// left out, so a move uploaded for older builds still plays; any other unknown channel fails.
+@Test func leavesOutTheRetiredFrontChannel() throws {
+    let clip = try Clip.decode(
+        Data(
+            #"""
+            { "version": 1, "name": "wave", "duration": 1, "loops": false, "tracks": [
+              { "part": "arm", "channel": "front", "keys": [{ "t": 0, "v": 0 }, { "t": 0.5, "v": 1, "ease": "hold" }] },
+              { "part": "arm", "channel": "rotation", "keys": [{ "t": 0, "v": 0 }] } ] }
+            """#.utf8))
+    #expect(clip.tracks.map(\.channel) == [.rotation])
+    #expect(throws: AvatarError.malformedJSON("wave: unknown channel \"spin\"")) {
+        try Clip.decode(
+            Data(
+                #"""
+                { "version": 1, "name": "wave", "duration": 1, "loops": false, "tracks": [
+                  { "part": "arm", "channel": "spin", "keys": [{ "t": 0, "v": 0 }] } ] }
+                """#.utf8))
+    }
+}
+
 @Test func rejectsClipsThatCantPlay() {
     #expect(throws: AvatarError.unsupportedVersion(2)) {
         try Clip.decode(Data(#"{ "version": 2, "name": "x" }"#.utf8))
@@ -57,10 +78,6 @@ import Testing
     }
     #expect(throws: AvatarError.invalidKeyframes(clip: "wave", part: "arm", channel: .x)) {
         try clip("wave", duration: 1, loops: true, [track("arm", .x, [(0, 0), (1.5, 1)])])
-    }
-    // An arm is in front or behind, never between.
-    #expect(throws: AvatarError.invalidKeyframes(clip: "wave", part: "arm", channel: .front)) {
-        try clip("wave", duration: 1, loops: true, [track("arm", .front, [(0, 0), (0.5, 0.5)])])
     }
     #expect(throws: AvatarError.invalidDuration(clip: "wave")) { try clip("wave", duration: 0, loops: true, []) }
     #expect(throws: AvatarError.invalidEasing(clip: "wave", part: "arm", channel: .x)) {

@@ -55,13 +55,13 @@ final class TodayUITests: XCTestCase {
             let after = Int(Date().timeIntervalSince(posted) * 1000)
             keepScreenshot(named: String(format: "16-moment-%02d-%04dms", frame, after))
         }
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after posting")
-        XCTAssertTrue(bubble.label.contains("晨跑 5 公里，腿还在"))
         XCTAssertTrue(
             labeled("15/24", in: app).waitForExistence(timeout: Self.wait), "the squad's score didn't tick up to 15/24")
         // Let the cheer play out before the shot.
         Thread.sleep(forTimeInterval: 1.2)
+        // The caption stays in the post: no bubble over my head.
+        let shownCaption = app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "晨跑 5 公里")).firstMatch
+        XCTAssertFalse(shownCaption.exists && shownCaption.isHittable, "the caption showed on the scene")
         keepScreenshot(named: "16-today-trained-payoff")
         tapMeInMyKit(in: app)
 
@@ -74,10 +74,11 @@ final class TodayUITests: XCTestCase {
     }
 
     /// 请假: type a reason, pick a style, 编一句 puts a line from it up, 换一句 shows the next,
-    /// bring the typed words back, post, and the line lands on the scene without moving the
-    /// squad bar.
+    /// bring the typed words back, post: back on the scene the line stays off it, the
+    /// squad bar doesn't move, and 动态 has it.
     func testDisclaimer() {
-        let app = launch(language: "zh-Hans", photos: 0)
+        // 已发出 holds a minute, so a slow simulator still finds its 查看.
+        let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-bubble-hold"])
         _ = topCard(in: app)
         let field = openDisclaimer(in: app)
         let close = app.buttons["disclaimer.close"]
@@ -130,21 +131,24 @@ final class TodayUITests: XCTestCase {
             "the count doesn't match the excuse")
         post.tap()
 
-        let bubble = app.descendants(matching: .any).matching(identifier: "today.bubble").firstMatch
-        XCTAssertTrue(bubble.waitForExistence(timeout: Self.wait), "no payoff bubble after the 请假条")
-        XCTAssertTrue(bubble.label.contains(line))
+        // The character holds up the 请假条 sign; its words stay in 动态, off the scene.
+        waitFor(field, "exists == false", "the 请假条 page didn't close")
+        let outgoing = app.buttons["today.outgoing"]
+        waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
+        let words = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
+        XCTAssertFalse(words.exists && words.isHittable, "a 请假条's words showed on the scene")
         XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
-        settle()
         keepScreenshot(named: "19-today-disclaimer-posted")
 
-        assertOpensItsPost(bubble, saying: line, in: app)
+        // 已发出's 查看 opens the post in 动态.
+        outgoing.tap()
+        assertInFeed(saying: line, in: app)
     }
 
-    /// A caption's bubble opens its post in 动态, on screen.
-    private func assertOpensItsPost(_ bubble: XCUIElement, saying line: String, in app: XCUIApplication) {
-        bubble.tap()
+    /// 动态 opened on my post, on screen.
+    private func assertInFeed(saying line: String, in app: XCUIApplication) {
         // 动态 opens scrolled to the post, so its title may be off screen: the tab says it opened.
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "tapping the bubble didn't open 动态")
+        waitFor(app.buttons["tab.feed"], "isSelected == true", "查看 didn't open 动态")
         let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
         XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
         waitFor(post, "isHittable == true", "动态 didn't open on my post")
@@ -336,7 +340,7 @@ extension TodayUITests {
         XCTAssertFalse(app.buttons["today.pat"].exists, "my own today offers 拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "16c-today-tapped-me")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: today, in: app)
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off my card left it open")
     }
 }

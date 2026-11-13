@@ -342,14 +342,37 @@ describe('leaving and listing', () => {
   });
 
   it('ends a squad whose last member leaves, keeping it since check-ins may point at it', async () => {
-    const [ann, bo] = [await newMember(), await newMember()];
+    const [ann, bo, cy] = [await newMember(), await newMember(), await newMember()];
     const squad = await newSquad(ann);
+    const other = await newSquad(cy);
+    await squads.join({ inviteCode: squad.inviteCode, member: bo });
     await squads.leave({ squad: squad.id, member: ann });
+    expect(await squads.endedAmong([squad.id, other.id])).toStrictEqual(new Map());
+    await squads.leave({ squad: squad.id, member: bo });
     const rows = await sql`select 1 from public.squads where id = ${squad.id}`.execute(db);
     expect(rows.rows).toHaveLength(1);
-    await expect(squads.join({ inviteCode: squad.inviteCode, member: bo })).rejects.toMatchObject({
+    const ended = await squads.endedAmong([squad.id, other.id]);
+    expect([...ended.keys()]).toStrictEqual([squad.id]);
+    // The last one out ends it, in the squad's log, with who it was.
+    const { rows: log } = await sql<{ actor_id: string; kind: string; captain_id: string | null }>`
+      select actor_id, kind, captain_id from public.squad_events
+      where squad_id = ${squad.id} order by id desc limit 1`.execute(db);
+    expect(log).toStrictEqual([{ actor_id: bo, kind: 'ended', captain_id: null }]);
+    await expect(squads.join({ inviteCode: squad.inviteCode, member: ann })).rejects.toMatchObject({
       reason: 'INVITE_CODE_UNKNOWN',
     });
+    await expect(squads.previewPublicInvite(squad.inviteCode)).rejects.toMatchObject({
+      reason: 'INVITE_CODE_UNKNOWN',
+    });
+    // It stays ended, and nobody is put back in it.
+    await expect(
+      sql`update public.squads set ended_at = null where id = ${squad.id}`.execute(db),
+    ).rejects.toMatchObject({ code: '42501' });
+    await expect(
+      sql`insert into public.squad_members (squad_id, member_id) values (${squad.id}, ${ann})`.execute(
+        db,
+      ),
+    ).rejects.toMatchObject({ code: '42501' });
   });
 });
 

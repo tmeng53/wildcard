@@ -38,7 +38,16 @@ public enum CoachCharacter {
 
     public static func figure(_ coach: String) throws(AvatarError) -> Figure {
         let rig = try Rig.decode(file(coach, "rig.json"))
-        return try Figure(rig: rig, outfit: Outfit([:]), art: CoachArt(coach: coach))
+        var figure = try Figure(rig: rig, outfit: Outfit([:]), art: CoachArt(coach: coach))
+        figure.backdrop = backdrop(coach)
+        return figure
+    }
+
+    /// The colour the coach's head sits on: the backdrop its `backdrop.json` picks from
+    /// `PlaceholderCharacter.backdrops`; nil without one, or for an id the list doesn't have.
+    public static func backdrop(_ coach: String) -> RGBAColor? {
+        guard let data = try? file(coach, "backdrop.json"), let id = try? BackdropPick.decode(data) else { return nil }
+        return PlaceholderCharacter.backdrops.color(id)
     }
 
     public static func clip(_ move: Move, coach: String) throws(AvatarError) -> Clip {

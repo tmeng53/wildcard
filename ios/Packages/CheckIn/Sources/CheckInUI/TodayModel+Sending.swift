@@ -16,8 +16,8 @@ extension TodayModel {
         case waiting
     }
 
-    /// How long 已发出 or 没网 stays before 打卡 comes back.
-    static let outgoingHold: Duration = .seconds(3)
+    /// How long 已发出 or 没网 stays before 打卡 comes back, as UI tests ask with a longer `bubbleHold`.
+    static let defaultOutgoingHold = 3.0
 
     /// How far the post going out is, from 0 to 1; nil when none is.
     var outgoingProgress: Double? {
@@ -33,8 +33,6 @@ extension TodayModel {
             guard outgoing == .sending(id) else { return }
             switch delivery {
             case .posted(let saved):
-                // My bubble opens the post now the server has it.
-                if payoff?.id == id { payoff?.post = saved }
                 outgoing = .sent(saved)
             case .waiting:
                 outgoing = .waiting
@@ -43,14 +41,15 @@ extension TodayModel {
                 return
             }
             let told = outgoing
-            try? await Task.sleep(for: Self.outgoingHold)
+            try? await Task.sleep(for: .seconds(outgoingHold))
             if outgoing == told { outgoing = nil }
         }
     }
 
-    /// Puts 打卡 back at once, as a tap on 没网 does.
+    /// Puts 打卡 back at once, as a tap on 没网 or 查看 does; never while the post is going out.
     func dismissOutgoing() {
-        if outgoing == .waiting { outgoing = nil }
+        if case .sending = outgoing { return }
+        outgoing = nil
     }
 }
 #endif

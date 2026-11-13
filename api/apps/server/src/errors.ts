@@ -289,3 +289,14 @@ export class CoachPreviewNoSquadError extends AppError {
     super('That member is in no squad, so no coach writes to them.');
   }
 }
+
+/** Thrown when no post in the squad's 动态 was tagged with a place the caller asked for. */
+export class PlaceNotFoundError extends AppError {
+  override readonly name = 'PlaceNotFoundError';
+  readonly reason = 'PLACE_NOT_FOUND';
+  readonly status = 'NOT_FOUND';
+
+  constructor(readonly key: string) {
+    super(`No post in this squad was tagged with ${key}.`);
+  }
+}

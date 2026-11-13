@@ -6,7 +6,7 @@ import MeUI
 import Observation
 
 /// Where 我 dresses the member: 商店街, kept for the shopfront's dot and opened in 我's place, and
-/// the character editor over everything. An unlock opens here, from the home's banner and 通知
+/// the character editor pushed over 我 or the street. An unlock opens here, from the home's banner and 通知
 /// alike.
 /// It also keeps what this phone saw of the member's badges, for NEW on 我's badge board.
 @MainActor @Observable
@@ -72,8 +72,14 @@ final class Wardrobe {
     /// character, read again first, trying `piece` on (just the editor for nil).
     func showGift(_ piece: String?) async {
         await profile.reload()
+        tryOn(piece.map { [$0] } ?? [])
+    }
+
+    /// The editor on the character as the profile holds it now, trying `pieces` on without
+    /// saving them: the member keeps or changes them there.
+    func tryOn(_ pieces: [String]) {
         editCharacter()
-        if let piece { editor?.tryOn(piece) }
+        for piece in pieces { editor?.tryOn(piece) }
     }
 
     /// 我's shopfront: the street as it was last made at once, then read again, so a store that

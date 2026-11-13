@@ -30,15 +30,6 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// What lands on the scene after a post: the bubble's line, and the post it opens once saved.
-    struct Payoff: Equatable {
-        let id: CheckInID
-        let kind: CheckInKind
-        let line: String?
-        /// The post as the server saved it, once it has; its bubble opens it.
-        var post: CheckIn?
-    }
-
     /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
     var isBurstOpen = false {
         didSet { if isBurstOpen { pats.dismissBubble() } }
@@ -53,6 +44,8 @@ public final class TodayModel {
     private(set) var celebrations = 0
     /// How long a notice at the top stays up.
     let noticeHold: Double
+    /// How long 已发出 or 没网 holds 打卡's spot, in seconds.
+    let outgoingHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -68,7 +61,6 @@ public final class TodayModel {
 
     /// The open compose page's state.
     private(set) var compose: ComposeModel?
-    var payoff: Payoff?  // Its post is set by `deliver` once saved.
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
     private(set) var isSending = false
@@ -96,6 +88,8 @@ public final class TodayModel {
     let store: TodayStore
     /// Apple Health, for the home's card and a 训练's chips; nil where the app has none.
     public let health: HealthConnection?
+    /// The workout a widget's 打卡 asked to start a 训练 from, until it opens (`openAskedWorkout`).
+    var askedToPost: WorkoutSource?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor () -> Void
@@ -121,6 +115,7 @@ public final class TodayModel {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         together = TogetherStage(isOn: celebratesTogether)
         noticeHold = bubbleHold ?? Motion.noticeHold
+        outgoingHold = bubbleHold ?? Self.defaultOutgoingHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -260,6 +255,7 @@ public final class TodayModel {
         await store.load()
         showLoaded()
         await health?.refresh()
+        openAskedWorkout(finally: true)
     }
 
     /// How often the home is read again while 今天 is on screen, so teammates' posts show up.
@@ -284,15 +280,9 @@ public final class TodayModel {
         Task { await playOpening() }
     }
 
-    /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
-    public func openCheckIn() {
-        if step == .scene { isBurstOpen = true }
-    }
-
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
     func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
-        payoff = nil
         // Straight to the page: photos are added there, with its 「+ 照片」 (the 请假条's too).
         compose = newPost(kind, from: workout)
         step = kind == .disclaimer ? .disclaimer : .composing(kind)
@@ -302,7 +292,6 @@ public final class TodayModel {
     /// day as the member made it, to change and send again.
     func resend(_ post: PendingCheckIn) {
         sendFailed = false
-        payoff = nil
         let kind = post.draft.kind
         let model = newPost(kind, from: nil)
         model.restore(post)
@@ -347,26 +336,18 @@ public final class TodayModel {
         placeSquad()
         step = .scene
         compose = nil
-        land(draft, id: queued.id, weekBefore: before, isBackfill: isBackfill)
+        land(draft, weekBefore: before, isBackfill: isBackfill)
         posted()
         deliver(queued.id)
         return true
     }
 
-    /// Stays on the scene: the character celebrates and the line appears over it. The photos stay
-    /// in the post, off the scene (the product owner: too busy).
+    /// Stays on the scene: the character celebrates. The post's words and photos stay in the post,
+    /// off the scene (the product owner: too busy; no bubble over my head, Tracy 2026-11-11).
     private func land(
-        _ draft: CheckInDraft, id: CheckInID, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
+        _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
     ) {
-        let line: String?
-        switch draft {
-        case .trained(_, _, let body), .healthyMeal(let body), .cheatMeal(let body):
-            line = body.caption
-        case .disclaimer(let disclaimer, _):
-            line = disclaimer.text
-        }
         posts += 1
-        payoff = Payoff(id: id, kind: draft.kind, line: line)
         // A 请假条 has no cheer; the sleep cap and sign come with their art.
         let cheer =
             draft.kind == .disclaimer

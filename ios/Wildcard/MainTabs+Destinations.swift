@@ -29,11 +29,9 @@ extension MainTabs {
             closeProfilePages()
             wardrobe.openShop()
         case .wardrobe(let piece):
-            // 衣橱 in the editor, trying the piece on.
-            showsNotices = false
-            selection = .profile
-            closeProfilePages()
-            Task { await wardrobe.showGift(piece) }
+            showCloset(trying: piece.map { [$0] } ?? [])
+        case .place(let place):
+            openPlace(place)
         case .badges:
             // 我's player card turned to its badge board.
             showsNotices = false
@@ -104,7 +102,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store, .wardrobe, .badges:
+        case .post, .place, .unlock, .stores, .store, .wardrobe, .badges:
             break
         }
     }
@@ -127,14 +125,39 @@ extension MainTabs {
         }
     }
 
+    /// 衣橱 in the editor, trying `pieces` on, on the profile read again first unless it is
+    /// known to hold them (`readAgain: false`).
+    func showCloset(trying pieces: [String], readAgain: Bool = true) {
+        showsNotices = false
+        selection = .profile
+        closeProfilePages()
+        if readAgain { Task { await wardrobe.showGift(pieces.first) } } else { wardrobe.tryOn(pieces) }
+    }
+
     /// 我 back on its own page: 设置, 出赛表, 商店街, 我的动态 and a post over it all closed. 设置
     /// stays while an account is being deleted, which can't be left.
     func closeProfilePages() {
         profile.closeDeletion()
         if !profile.isDeletionOpen { showsSettings = false }
+        profile.feedbackPage = nil
         showsSchedule = false
         wardrobe.showsShop = false
-        (wall, post) = (nil, nil)
+        wardrobe.editor = nil
+        (wall, post, profilePlace, profilePlacePost) = (nil, nil, nil, nil)
+    }
+
+    /// 换装 is pushed over 商店街 while the street is open, else over 我; the system's back closes it
+    /// without saving.
+    func showsEditor(overShop: Bool) -> Binding<Bool> {
+        Binding(
+            get: { wardrobe.editor != nil && wardrobe.showsShop == overShop },
+            set: { if !$0 { wardrobe.editor = nil } })
+    }
+
+    @ViewBuilder var profileEditor: some View {
+        if let editor = wardrobe.editor {
+            ProfileEditor(model: editor, profile: profile, today: today) { wardrobe.editor = nil }
+        }
     }
 
     /// 我 with the wardrobe pushed over it, in place of any other page 我 had open.

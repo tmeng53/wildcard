@@ -106,6 +106,25 @@ private func text(_ root: URL, _ path: String) -> String? {
     #expect(text(root, "avatar/art/hat/beanie/crown.svg") != nil)
 }
 
+/// A coach's backdrop pick and the backdrop list land at the rig that reads them; a pick this build
+/// can't read leaves its coach's folder out whole, so the bundled coach stands.
+@Test func backdropsLandAndABadPickLeavesItsCoachOut() async {
+    let pick = Data(##"{"version":1,"backdrop":"tennis"}"##.utf8)
+    let badPick = Data(##"{"version":2,"backdrop":"tennis"}"##.utf8)
+    let list = Data(##"{"version":1,"backdrops":[{"id":"tennis","color":"#DDE6CC"}]}"##.utf8)
+    let (art, root) = downloads(from: Bucket([svg, pick, badPick, list]))
+    let files = [
+        file("avatar/backdrops.json", list, rig: 4),
+        file("coaches/alpaca/backdrop.json", pick, rig: 4), file("coaches/alpaca/art/base/head.svg", svg),
+        file("coaches/qifei/backdrop.json", badPick, rig: 4), file("coaches/qifei/art/base/head.svg", svg),
+    ]
+    #expect(await art.update(to: ArtManifest(generation: 1, baseURL: base, files: files)))
+    #expect(text(root, "avatar/backdrops.json") != nil)
+    #expect(text(root, "coaches/alpaca/backdrop.json") == ##"{"version":1,"backdrop":"tennis"}"##)
+    #expect(text(root, "coaches/alpaca/art/base/head.svg") != nil)
+    #expect(!FileManager.default.fileExists(atPath: root.appending(path: "current/coaches/qifei").path))
+}
+
 @Test func artForANewerRigOrOutsideTheTreeIsLeftOut() async {
     let (art, root) = downloads(from: Bucket([svg]))
     let files = [

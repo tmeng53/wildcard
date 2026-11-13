@@ -12,16 +12,14 @@ import SwiftUI
 /// 小队今天, the medium widget: the squad's week as the squad card's first page counts it, with
 /// 打卡 under it, and on the right who checked in today, ringed as on home, under the coach, who
 /// wears its ink dot while it has a card I haven't seen. While Health has a workout to post, its
-/// 打卡 capsule runs across the foot in place of 打卡, and stays with 已打卡 once it is posted.
-public struct SquadWidget<Post: View>: View {
+/// 打卡 capsule runs across the foot in place of 打卡, opening the 训练 page started from it, and
+/// stays with 已打卡 once it is posted.
+public struct SquadWidget: View {
     @Environment(\.sceneTheme) private var theme
     private let board: WidgetBoard
-    private let post: (ImportedWorkout) -> Post
 
-    /// - Parameter post: the capsule's 打卡 for the board's workout.
-    public init(board: WidgetBoard, @ViewBuilder post: @escaping (ImportedWorkout) -> Post) {
+    public init(board: WidgetBoard) {
         self.board = board
-        self.post = post
     }
 
     public var body: some View {
@@ -31,9 +29,11 @@ public struct SquadWidget<Post: View>: View {
                 today
                     .frame(width: WidgetMetrics.ringed * 4 + Space.xxs * 3)
             }
-            if let workout = board.workout {
+            if let workout = board.workout, let link = board.workoutLink {
                 Spacer(minLength: 0)
-                WorkoutCapsule(workout: workout, size: .medium) { post(workout) }
+                WorkoutCapsule(workout: workout, size: .medium) {
+                    Link(destination: link.url) { PostWorkoutLabel() }
+                }
             } else if let posted = board.postedWorkout {
                 Spacer(minLength: 0)
                 WorkoutCapsule(workout: posted, size: .medium) { PostedWorkoutLabel() }

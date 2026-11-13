@@ -22,6 +22,9 @@ public struct ComposeView: View {
     @State private var isPickingSport = false
     @State private var isRulingMinutes = false
     @State private var isDiscarding = false
+    /// The place's page the pill's name opens, pushed on the stack this page is on.
+    @Environment(\.placePage) private var placePage
+    @State private var openedPlace: Place?
 
     public init(model: ComposeModel) {
         self.model = model
@@ -52,6 +55,9 @@ public struct ComposeView: View {
                                         model.day = $0 == today ? nil : $0
                                     })
                             }
+                        }
+                        if model.ratesMeal {
+                            MealRatingRows(healthy: $model.healthy, tasty: $model.tasty)
                         }
                         if model.kind == .trained {
                             SportRow(
@@ -117,6 +123,9 @@ public struct ComposeView: View {
             }
             .accessibilityIdentifier("compose.keepEditing")
         }
+        .navigationDestination(item: $openedPlace) { place in
+            if let page = placePage.page { page(place) }
+        }
     }
 
     private static let minutesID = "minutes"
@@ -152,11 +161,21 @@ public struct ComposeView: View {
                     if fitted != typed { model.line = fitted }
                 }
                 .accessibilityIdentifier("compose.caption")
-            Text(verbatim: "\(model.line.count)/\(model.lineLimit)")
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
-                .monospacedDigit()
-                .accessibilityIdentifier("compose.count")
+            HStack(spacing: Space.xs) {
+                if model.kind != .disclaimer {
+                    PlacePill(place: $model.place) { place in
+                        if placePage.page != nil { openedPlace = place }
+                    }
+                }
+                Spacer(minLength: 0)
+                Text(verbatim: "\(model.line.count)/\(model.lineLimit)")
+                    .typeStyle(TypeRamp.caption)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+                    .monospacedDigit()
+                    // The place's name gives way, never the count.
+                    .fixedSize()
+                    .accessibilityIdentifier("compose.count")
+            }
         }
     }
 

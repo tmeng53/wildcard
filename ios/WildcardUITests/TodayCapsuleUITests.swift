@@ -7,7 +7,7 @@ final class TodayCapsuleUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
     private static let wait: TimeInterval = 30
 
-    /// Home opens on the capsule (eight members: three heads and 「+5」, then my week), which sits
+    /// Folded, home shows the capsule (eight members: three heads and 「+5」, then my week), which sits
     /// on the screen with every day inside it; a tap opens the card and its grabber folds it again.
     func testCardFoldsIntoItsCapsule() {
         let app = launch(language: "zh-Hans")
@@ -80,7 +80,7 @@ final class TodayCapsuleUITests: XCTestCase {
     /// The capsule inside the window and clear of 打卡.
     private func expectCapsule(in app: XCUIApplication) -> XCUIElement {
         let capsule = app.buttons["squadcard.capsule"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "home didn't open on the folded capsule")
+        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "home didn't show the folded capsule")
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(capsule.frame), "the capsule runs off the screen: \(capsule.frame)")
         XCTAssertLessThan(capsule.frame.maxY, app.buttons["today.checkin"].frame.minY, "the capsule runs under 打卡")

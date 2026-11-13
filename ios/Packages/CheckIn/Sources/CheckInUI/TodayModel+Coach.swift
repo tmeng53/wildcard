@@ -3,6 +3,7 @@ import AvatarArt
 import AvatarDomain
 import CheckInDomain
 import Contracts
+import DesignSystemUI
 import Foundation
 
 /// The coach on the home's sideline: a tap starts its pep talk and opens its page, the cards it
@@ -70,6 +71,23 @@ extension TodayModel {
     func openMyChallenge() {
         guard let myChallenge else { return }
         openChallenge(myChallenge)
+    }
+
+    /// What the coach said that I haven't seen, for its row on the squad card: its name and the
+    /// start of its newest line, a gift without one saying 送你一样东西.
+    var coachNews: CoachNewsLine? {
+        guard let card = store.newestUnseenCoachCard else { return nil }
+        let line = card.newsLine ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
+        return CoachNewsLine(name: card.coach.name, line: line)
+    }
+
+    /// The coach whose words wait unseen, whose head starts its row.
+    var coachNewsSpeaker: CoachSpeaker? { store.newestUnseenCoachCard?.coach }
+
+    /// The coach's row on the squad card was tapped: its page opens on what it said today.
+    func openCoachNews() {
+        guard arrival == nil else { return }
+        openCoach()
     }
 
     /// The squad on the home, whose coach's page opens.

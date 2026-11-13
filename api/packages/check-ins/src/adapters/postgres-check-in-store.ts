@@ -252,13 +252,17 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .select([sql<string>`day::text`.as('day'), 'kind'])
         .distinct()
         .where('member_id', '=', member)
-        .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal'])
+        .where('kind', 'in', ['trained', 'healthyMeal', 'cheatMeal', 'disclaimer'])
         .where(sharedTo(squad))
         .orderBy('day')
         .execute();
+      const daysOf = (kinds: readonly string[]) => [
+        ...new Set(rows.filter((row) => kinds.includes(row.kind)).map((row) => row.day)),
+      ];
       return {
-        trained: rows.filter((row) => row.kind === 'trained').map((row) => row.day),
-        meals: [...new Set(rows.filter((row) => row.kind !== 'trained').map((row) => row.day))],
+        trained: daysOf(['trained']),
+        meals: daysOf(['healthyMeal', 'cheatMeal']),
+        leave: daysOf(['disclaimer']),
       };
     },
 
@@ -302,6 +306,24 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .orderBy(dayColumn, 'desc')
         .orderBy('check_ins.created_at', 'desc')
         .orderBy('check_ins.id')
+        .execute();
+      return withAudiences(rows);
+    },
+
+    async placedForSquad({ squad, limit }) {
+      const rows = await db
+        .selectFrom('check_ins')
+        .innerJoin('check_in_squads', (join) =>
+          join
+            .onRef('check_in_squads.check_in_id', '=', 'check_ins.id')
+            .on('check_in_squads.squad_id', '=', squad),
+        )
+        .select(checkInColumns)
+        .where('check_ins.in_feed', '=', true)
+        .where(sql<boolean>`check_ins.payload ? 'place'`)
+        .orderBy('check_ins.created_at', 'desc')
+        .orderBy('check_ins.id')
+        .limit(limit)
         .execute();
       return withAudiences(rows);
     },
@@ -358,6 +380,11 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sql<string>`payload ->> 'sport'`.as('sport'),
           sql<string | null>`payload ->> 'customSport'`.as('customSport'),
           sql<string | null>`payload ->> 'minutes'`.as('minutes'),
+          sql<string | null>`payload ->> 'startTime'`.as('startTime'),
+          sql<Date | null>`(
+            select started_at from check_in_workouts
+            where check_in_workouts.check_in_id = check_ins.id
+          )`.as('workoutStartedAt'),
         ])
         .select(
           sql<boolean>`exists (
@@ -394,6 +421,13 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
         .where('member_id', '=', member)
         .where('kind', '=', 'healthyMeal')
         .execute();
+      const leave = await db
+        .selectFrom('check_ins')
+        .select(sql<string>`check_ins.day::text`.as('day'))
+        .distinct()
+        .where('member_id', '=', member)
+        .where('kind', '=', 'disclaimer')
+        .execute();
       const reactionCounts = async (author: 'member' | 'mates') => {
         if (mates.length === 0) return new Map<MemberId, number>();
         const rows = await db
@@ -428,9 +462,14 @@ export function createPostgresCheckInStore(db: Kysely<CheckInTables>): CheckInSt
           sport: SportKey.parse(row.sport),
           ...(row.customSport === null ? {} : { customSport: row.customSport }),
           ...(row.minutes === null ? {} : { minutes: Number(row.minutes) }),
+          ...(row.startTime === null ? {} : { startTime: row.startTime }),
+          ...(row.workoutStartedAt === null
+            ? {}
+            : { workoutStartedAt: new Date(row.workoutStartedAt) }),
           inSquad: row.in_squad,
         })),
         healthyMealDays: meals.map((row) => row.day),
+        leaveDays: leave.map((row) => row.day),
         received: await reactionCounts('member'),
         given: await reactionCounts('mates'),
       };

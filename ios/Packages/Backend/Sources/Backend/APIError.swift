@@ -67,6 +67,10 @@ public enum Refusal: Equatable, Sendable {
     case planDayStarted
     /// The member sent as much 意见反馈 as a day allows.
     case feedbackLimit
+    /// No post in the squad's 动态 was tagged at the place.
+    case placeNotFound
+    /// A day's challenge whose day is over on the squad's clock (已过期).
+    case coachChallengeDayOver
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -101,5 +105,7 @@ public enum Refusal: Equatable, Sendable {
         "WEEK_OVER": .weekClosed,
         "PLAN_DAY_STARTED": .planDayStarted,
         "FEEDBACK_LIMIT": .feedbackLimit,
+        "PLACE_NOT_FOUND": .placeNotFound,
+        "COACH_CHALLENGE_DAY_OVER": .coachChallengeDayOver,
     ]
 }

@@ -189,6 +189,7 @@ struct ScheduleBack: View {
                 .typeStyle(TypeRamp.scoreCaption)
                 .foregroundStyle(muted)
                 .monospacedDigit()
+                // A count of 10 or more stays on one line; the badges give way first.
                 .fixedSize()
             chevron
         }

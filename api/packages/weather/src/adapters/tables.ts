@@ -26,6 +26,7 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface MemberPlaces {
+  city: string | null;
   latitude: Numeric;
   longitude: Numeric;
   member_id: string;

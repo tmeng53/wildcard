@@ -21,6 +21,7 @@ import MeDomain
 import MeUI
 import NotificationsUI
 import OnboardingUI
+import PlacesDomain
 import RecapUI
 import ScheduleDomain
 import ScheduleUI
@@ -55,6 +56,8 @@ struct WildcardApp: App {
     @State private var feed: FeedModel
     /// The sample member's own posts, from the sample squad's 动态.
     @State private var myPosts: any MyPostsSource
+    /// Places' squad numbers, counted from the sample squad's 动态.
+    @State private var places: any PlaceSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     /// Where a tapped push goes, kept until the tabs open it.
     @State private var pushDestination: AppDestination?
@@ -124,6 +127,8 @@ struct WildcardApp: App {
         let feedSource = Self.feedSource(viewer: member, squad: squad)
         _feed = State(initialValue: Self.feed(viewer: member, squad: squad, source: feedSource, today: today))
         _myPosts = State(initialValue: feedSource)
+        _places = State(
+            initialValue: FeedPlaceSource(feed: feedSource, today: LocalDay(at: LaunchOptions.now(), in: .current)))
     }
 
     /// What every launch does first, before any model or screen is made.
@@ -171,7 +176,7 @@ struct WildcardApp: App {
     /// nothing to sign out of.
     private static func sampleProfile() -> MeModel {
         let service = InMemoryMeService.sample(
-            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.unlocked, stock: LaunchOptions.stock,
+            failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.profileUnlocks, stock: LaunchOptions.stock,
             gifts: LaunchOptions.teamGifts)
         // What the server would work out while the app was away, for the test that 商店街 reads it again.
         if let later = LaunchOptions.stockOnReturn {
@@ -229,25 +234,6 @@ struct WildcardApp: App {
         return feed
     }
 
-    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
-    /// the check-in kinds open).
-    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        switch destination {
-        case .feed:
-            tab.wrappedValue = .feed
-        case .checkIn:
-            tab.wrappedValue = .today
-            today.openCheckIn()
-        case nil:
-            tab.wrappedValue = .today
-        }
-    }
-
-    /// Opens the place a home screen widget asked for: 打卡 over 今天, or 今天.
-    static func open(_ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        open(link == .checkIn ? .checkIn : nil, today: today, tab: tab)
-    }
-
     /// After a post, once the cheer has played: the first one brings up the permission prompt.
     private static func askForNotifications() {
         guard LaunchOptions.asksForNotifications else { return }
@@ -274,8 +260,13 @@ struct WildcardApp: App {
 
     @ViewBuilder private var root: some View {
         if let editor {
-            CharacterEditorView(
-                model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in })
+            // As from 我, it is a page on a NavigationStack, whose bar holds its buttons.
+            NavigationStack {
+                CharacterEditorView(
+                    model: editor, context: CharacterEditorDemo.context, issued: .now, onBack: {}, onDone: { _ in }
+                )
+                .toolbarVisibility(CharacterEditorDemo.context == .profile ? .automatic : .hidden, for: .navigationBar)
+            }
         } else if let signUp, !signedUp {
             SignUpView(model: signUp, privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms) {
                 ContinueWithApple {
@@ -323,7 +314,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards, selection: $tab,
+                myPosts: myPosts, places: places, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards,
+                selection: $tab,
                 destination: $pushDestination, location: Self.sampleLocation
             )
             .onAppear {
@@ -340,6 +332,15 @@ struct WildcardApp: App {
                 }
                 if let destination = delegate.takeDestination() {
                     Self.open(destination, today: today, tab: $tab)
+                }
+                if let link = LaunchOptions.widgetLink {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
+                }
+            }
+            // A home screen widget's tap, as `AppRoot` opens it on the real backend.
+            .onOpenURL { url in
+                if let link = WidgetLink(url: url) {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
                 }
             }
             .task { await Self.moveSampleSquad(today: today) }
@@ -358,5 +359,41 @@ struct WildcardApp: App {
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
         await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
+    }
+}
+
+/// Where a tapped notification or home screen widget opens.
+extension WildcardApp {
+    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
+    /// the check-in kinds open).
+    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
+        switch destination {
+        case .feed:
+            tab.wrappedValue = .feed
+        case .checkIn:
+            tab.wrappedValue = .today
+            today.openCheckIn()
+        case nil:
+            tab.wrappedValue = .today
+        }
+    }
+
+    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, the 训练 page started
+    /// from the workout the widget's capsule offered, or 出赛表, which `MainTabs` opens as a
+    /// notice's place.
+    static func open(
+        _ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>, place: Binding<AppDestination?>
+    ) {
+        switch link {
+        case .schedule:
+            place.wrappedValue = .schedule
+        case .today:
+            open(nil, today: today, tab: tab)
+        case .checkIn:
+            open(.checkIn, today: today, tab: tab)
+        case .postWorkout(let source):
+            tab.wrappedValue = .today
+            Task { await today.openCheckIn(posting: source) }
+        }
     }
 }
