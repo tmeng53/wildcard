@@ -55,6 +55,8 @@ final class PushLongPressUITests: XCTestCase {
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-push", json,
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         // The system prompt's second button allows, in any language; it shows only the first time.
         let allow = springboard.alerts.firstMatch

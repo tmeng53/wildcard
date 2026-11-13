@@ -183,6 +183,8 @@ final class HealthUITests: XCTestCase {
                 "-health-sample", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
                 "-uitest-noon", "-today.cardPage", "0",
             ] + extra
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app

@@ -13,6 +13,8 @@ final class RejoinUITests: XCTestCase {
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-onboarding-rejoin", "-uitest-monday",
         ]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         // Close the app when the test ends, so the next launch never has to stop it.
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
