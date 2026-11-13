@@ -216,6 +216,7 @@ export function taskOf({
   pastDays,
   occasions = [],
   backAgain = false,
+  handover,
   challenge,
   gifting,
   keptStreaks,
@@ -243,6 +244,8 @@ export function taskOf({
   readonly occasions?: readonly string[];
   /** Whether the coach coached this squad before, was fired and is back, and speaks for the first time since. */
   readonly backAgain?: boolean;
+  /** On a waking task, whom the coach took over from and the letter it was left, if any. */
+  readonly handover?: TookOver;
   /** On a check-in's wake, the challenge the coach set its author today and their answer. */
   readonly challenge?: {
     readonly challenge: Challenge;
@@ -265,7 +268,7 @@ export function taskOf({
   const filesLine = reason.kind === 'dream' ? memoryBlock(files) : memoryIndex(files);
   const whoIsWho = rosterText(week);
   const roster = rosterOf(week);
-  const occasion = occasionBlock(occasions, backAgain);
+  const occasion = [...occasionBlock(occasions, backAgain), ...handoverBlock(handover)];
   if (reason.kind === 'checkIn') {
     const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
     if (checkIn === undefined) return undefined;
@@ -419,6 +422,33 @@ function giftBlock(
     return owned.length === 0 ? `- ${name}` : `- ${name}（已有：${owned.join('、')}）`;
   });
   return [`## 礼物清单\n${pool.join('\n')}`, `## 这周还能收礼物的\n${who.join('\n')}`];
+}
+
+/** The change of coach (换教练) that brought this coach: whom it took over from and when. */
+export interface TookOver {
+  /** The outgoing coach's name, as the squad knows it. */
+  readonly from: string;
+  /** The squad's day of the change, `YYYY-MM-DD`. */
+  readonly day: string;
+  /** The letter the outgoing coach left the squad, which every member read. */
+  readonly letter?: string;
+}
+
+/**
+ * Whom the coach took over from, and the letter left with it: facts, so it can answer when
+ * someone asks where the last coach went (Tracy, 2026-11-13).
+ */
+function handoverBlock(handover: TookOver | undefined): string[] {
+  if (handover === undefined) return [];
+  const { from, day, letter } = handover;
+  return [
+    [
+      '## 你接手这个小队',
+      `${day} 小队换教练，你接替了${from}。`,
+      // No letter may be one still being written (交接中), so none is said, never 「没留信」.
+      ...(letter === undefined ? [] : [`${from}走时给全队留了一封信，大家都看过：\n「${letter}」`]),
+    ].join('\n'),
+  ];
 }
 
 /** What is special about today, when anything is: facts only, never how to bring them up. */
