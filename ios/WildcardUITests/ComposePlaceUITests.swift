@@ -44,7 +44,7 @@ final class ComposePlaceUITests: XCTestCase {
     func testATaggedPlaceShowsOnTheFeed() {
         let app = launch(extra: ["-tab", "feed"])
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let tag = app.buttons["post.place"]
+        let tag = app.buttons.matching(identifier: "post.place").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0

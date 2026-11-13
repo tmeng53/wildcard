@@ -21,6 +21,18 @@ export interface PlaceRatings {
   stars: number;
 }
 
+export interface SquadPlaces {
+  added_at: Timestamp;
+  added_by: string | null;
+  id: string;
+  kind: string;
+  latitude: number;
+  longitude: number;
+  name: string;
+  squad_id: string;
+}
+
 export interface DB {
   place_ratings: PlaceRatings;
+  squad_places: SquadPlaces;
 }

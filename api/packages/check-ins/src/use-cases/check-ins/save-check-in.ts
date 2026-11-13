@@ -21,10 +21,12 @@ import type {
   MemberCalendar,
   PhotoFiles,
   SportList,
+  SquadPlaceOf,
   SquadMembership,
   WeeklyPlanStore,
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
+import { checkSquadPlace } from '../check-place.js';
 import { checkSport } from '../check-sport.js';
 import { planRestDay, planTrainedDay } from '../weekly-plans.js';
 
@@ -54,6 +56,7 @@ export async function saveCheckIn(
     membership,
     photos,
     sports,
+    squadPlaceOf,
     plans,
     calendarOf,
     clock,
@@ -62,6 +65,7 @@ export async function saveCheckIn(
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
     readonly sports: SportList;
+    readonly squadPlaceOf?: SquadPlaceOf;
     readonly plans: WeeklyPlanStore;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
@@ -70,7 +74,7 @@ export async function saveCheckIn(
 ): Promise<SavedCheckIn> {
   const checkIn = recordFromDraft(draft, { id, member });
   const saved = await insertCheckIn(
-    { store, membership, photos, sports, calendarOf, clock },
+    { store, membership, photos, sports, squadPlaceOf, calendarOf, clock },
     checkIn,
   );
   if (saved.checkIn.kind === 'trained') {
@@ -112,6 +116,7 @@ async function insertCheckIn(
     membership,
     photos,
     sports,
+    squadPlaceOf,
     calendarOf,
     clock,
   }: {
@@ -119,6 +124,7 @@ async function insertCheckIn(
     readonly membership: SquadMembership;
     readonly photos: PhotoFiles;
     readonly sports: SportList;
+    readonly squadPlaceOf?: SquadPlaceOf | undefined;
     readonly calendarOf: MemberCalendar;
     readonly clock: Clock;
   },
@@ -144,6 +150,7 @@ async function insertCheckIn(
     paths: photosOf(checkIn).map(({ path }) => path),
   });
   if (checkIn.kind === 'trained') await checkSport(sports, checkIn.training.sport);
+  await checkSquadPlace(squadPlaceOf, checkIn);
 
   if (checkIn.kind === 'disclaimer') await checkNotTrained(store, checkIn);
 
