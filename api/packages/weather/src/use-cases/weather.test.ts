@@ -215,7 +215,7 @@ describe('the day’s weather', () => {
 
 describe('weatherWords', () => {
   it('says the condition, the low and high, and a real chance of rain', () => {
-    expect(weatherWords(RAIN)).toBe('今天雨，8–13°C，降水概率 82%');
+    expect(weatherWords(RAIN, { timeZone: 'UTC' })).toBe('今天雨，8–13°C，降水概率 82%');
   });
 
   it('says what fell, the wind, humidity, UV, sun and night, then yesterday', () => {
@@ -243,13 +243,16 @@ describe('weatherWords', () => {
 
   it('leaves out a small chance and a condition it doesn’t know', () => {
     expect(
-      weatherWords({
-        version: 1,
-        condition: 'SomethingNew',
-        high: -0.4,
-        low: -6.6,
-        precipitationChance: 0.1,
-      }),
+      weatherWords(
+        {
+          version: 1,
+          condition: 'SomethingNew',
+          high: -0.4,
+          low: -6.6,
+          precipitationChance: 0.1,
+        },
+        { timeZone: 'UTC' },
+      ),
     ).toBe('今天-7–0°C');
   });
 });

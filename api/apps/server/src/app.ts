@@ -10,7 +10,7 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
-import type { PlaceRatings, SquadPlaces } from '@wildcard/places';
+import type { SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -58,6 +58,7 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { eventPushes, jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { demoAccounts } from './routes/demo-accounts.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
@@ -71,6 +72,7 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { squadJoinRequests } from './routes/squad-join-requests.js';
 import { squadLanguage } from './routes/squad-language.js';
 import { squadTimeZone } from './routes/squad-time-zone.js';
 import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
@@ -104,8 +106,6 @@ export interface AppDependencies {
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
-  /** Members' scores for the places they train at (地点页). */
-  readonly placeRatings: PlaceRatings;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
   readonly squadPlaces: SquadPlaces;
@@ -198,11 +198,13 @@ export function createApp(deps: AppDependencies) {
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
+  app.route('/', demoAccounts({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
   const handlers = eventHandlers({
     coach: deps.jobs.coach,
     commentPush: deps,
+    trainedWithPush: deps,
     teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
   });
   const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
@@ -214,6 +216,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', location(deps));
   app.route('/', squads({ ...deps, publish }));
+  app.route('/', squadJoinRequests({ ...deps, publish }));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(
     '/',
@@ -231,7 +234,7 @@ export function createApp(deps: AppDependencies) {
   );
   app.route('/', squadCoach(deps));
   app.route('/', squadWeeklyGoal(deps));
-  app.route('/', squadTimeZone(deps));
+  app.route('/', squadTimeZone({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));

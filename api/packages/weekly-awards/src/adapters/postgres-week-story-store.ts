@@ -53,11 +53,19 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             .map(({ post }) => StoredStoryPost.parse(post));
           const hottest = theirs.find((post) => post.hottest !== undefined)?.hottest;
           const best = theirs.find((post) => post.bestDisclaimer !== undefined)?.bestDisclaimer;
+          const menu = theirs
+            .flatMap(({ menuDish }) => (menuDish === undefined ? [] : [menuDish]))
+            .toSorted((a, b) => a.rank - b.rank);
+          const placeVisits = theirs.flatMap(({ placeVisit }) =>
+            placeVisit === undefined ? [] : [placeVisit],
+          );
           return {
             member: MemberId.parse(member_id),
             ...StoredStoryMember.parse(page),
             ...(hottest === undefined ? {} : { hottest }),
             ...(best === undefined ? {} : { bestDisclaimer: best }),
+            ...(menu.length === 0 ? {} : { menu }),
+            ...(placeVisits.length === 0 ? {} : { placeVisits }),
           };
         }),
       };
@@ -118,7 +126,7 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
             })),
           )
           .execute();
-        const posts = members.flatMap(({ member, hottest, bestDisclaimer }) => [
+        const posts = members.flatMap(({ member, hottest, bestDisclaimer, menu, placeVisits }) => [
           ...(hottest === undefined
             ? []
             : [
@@ -139,6 +147,18 @@ export function createPostgresWeekStoryStore(db: Kysely<WeeklyAwardTables>): Wee
                   post: { version: 1, bestDisclaimer },
                 },
               ]),
+          ...(menu ?? []).map((menuDish) => ({
+            member,
+            role: 'menu',
+            checkIn: menuDish.checkIn,
+            post: { version: 1, menuDish },
+          })),
+          ...(placeVisits ?? []).map((placeVisit) => ({
+            member,
+            role: 'place',
+            checkIn: placeVisit.checkIn,
+            post: { version: 1, placeVisit },
+          })),
         ]);
         if (posts.length === 0) return;
         await trx

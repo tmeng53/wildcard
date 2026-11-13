@@ -66,6 +66,7 @@ describe('the squad’s week as the coach reads it', () => {
   const sports = createSports({ store: createPostgresSportStore(db) });
   const now = new Date('2026-08-06T12:00:00.000Z');
   const checkIns = createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports,
     store: createPostgresCheckInStore(db),
     membership: squads,

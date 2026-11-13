@@ -48,6 +48,7 @@ const JOINED = new Date('2026-09-01T00:00:00.000Z');
 /** The check-ins module with its clock at `moment`. */
 const checkInsAt = (moment: Date, joinedAt = JOINED) =>
   createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership,

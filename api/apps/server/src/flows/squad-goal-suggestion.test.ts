@@ -40,6 +40,7 @@ const squads = createSquads({
 /** Check-ins whose clock reads `now`, so each member's week is the one they are in then. */
 const checkInsAt = (now: number) =>
   createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: squads,

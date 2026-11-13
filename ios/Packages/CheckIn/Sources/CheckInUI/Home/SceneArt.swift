@@ -88,10 +88,13 @@ public struct SceneBackdrop: View {
         GeometryReader { proxy in
             let height = Stage.height * proxy.size.width / StageLayout.width
             let top = min(max(height * focus - proxy.size.height / 2, 0), max(height - proxy.size.height, 0))
+            // The art runs past the frame when it is shifted; it takes no taps, so what it covers
+            // above (小队's 教练 card over 本周场地) still gets them.
             SceneArt(scene: scene, layer: .day)
                 .frame(width: proxy.size.width, height: height)
                 .offset(y: -top)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                .allowsHitTesting(false)
         }
         .background(Color(role: .bgCanvas, in: scene))
     }

@@ -18,11 +18,14 @@ public struct Home: Hashable, Sendable {
     /// days apart), and the member's own since Monday, whichever squads
     /// they went to; oldest first.
     public var checkIns: [CheckIn]
+    /// The Monday of the week the squad was made, on its clock: every 出赛表 in the squad counts
+    /// it as W1. Nil from an older server.
+    public let squadFirstWeek: LocalDay?
 
     /// The member's own posts today kept to themselves show in their row (`showingMine`).
     public init(
         member: MemberID, timeZone: TimeZone, squad: Squad, today: SquadToday,
-        plan: WeeklyPlan, checkIns: [CheckIn]
+        plan: WeeklyPlan, checkIns: [CheckIn], squadFirstWeek: LocalDay? = nil
     ) {
         self.member = member
         self.timeZone = timeZone
@@ -30,6 +33,7 @@ public struct Home: Hashable, Sendable {
         self.today = checkIns.filter { $0.member == member }.reduce(today) { $0.showingMine($1) }
         self.plan = plan
         self.checkIns = checkIns
+        self.squadFirstWeek = squadFirstWeek
     }
 
     /// The member's own entry in the squad's today.
@@ -48,8 +52,9 @@ public struct Home: Hashable, Sendable {
     }
 
     /// The member's `day` as `squad` sees it, with `pending` posts still to go out. Their row
-    /// is it unless one of that day's posts wasn't shared here; then it is what their posts
-    /// shared here add up to. The squad's counts follow this, never a row a private post moved.
+    /// is it unless one of that day's posts went to another squad (only on a day they changed
+    /// squads, since every post goes to theirs); then it is what their posts here add up to. The
+    /// squad's counts follow this, never a row a post to another squad moved.
     public func squadSees(on day: LocalDay, plus pending: some Sequence<PendingCheckIn> = []) -> TrainingStatus {
         let posts =
             checkIns.filter { $0.member == member && $0.day == day }.map {

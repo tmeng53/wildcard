@@ -6,13 +6,16 @@ import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 import { coachNoteNotification } from './flows/coach-notes.js';
 import { commentNotification, type CommentNews } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
+import { joinApprovedNotification, joinRequestNotification } from './flows/join-requests.js';
 import { teammateNotification } from './flows/teammate-push.js';
+import { trainedWithNotification } from './flows/trained-with-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
 import type { PushCopyKey } from './push-copy.js';
 
 const squad = SquadId.parse('6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80');
 const week = WeekStart.parse('2026-10-19');
 const day = '2026-10-23';
+const joinRequest = '5c3e7a91-4b2d-4e8f-a6c1-2d9b8e7f6a05';
 const mates = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map(
   (letter) => `00000000-0000-4000-8000-00000000000${letter}`,
 );
@@ -74,8 +77,24 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.comment': apnsPayload(comment('comment')),
     'push.comment.reply': apnsPayload(comment('reply')),
     'push.comment.mention': apnsPayload(comment('mention')),
+    'push.trainedWith': apnsPayload(
+      trainedWithNotification({
+        checkIn: '3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59',
+        nickname: longestNickname,
+      }),
+    ),
     'push.coach.note': apnsPayload(
       coachNoteNotification({ id: 1234, coachName: '毛头', text: '便'.repeat(60) }),
+    ),
+    'push.joinRequest': apnsPayload(
+      joinRequestNotification({
+        request: { id: joinRequest, squad, member: mates[0] ?? '', note: '备'.repeat(30) },
+        nickname: longestNickname,
+        look: { persona: 'shy', variants: { body: 'lop' }, colors: {} },
+      }),
+    ),
+    'push.joinApproved': apnsPayload(
+      joinApprovedNotification({ id: joinRequest, squad, squadName: '队'.repeat(20) }),
     ),
     'push.weeklyAwards.ready': apnsPayload(awardsReadyNotification(squad, week)),
     'push.weeklyAwards.stuck': apnsPayload(

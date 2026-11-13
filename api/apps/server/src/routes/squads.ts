@@ -1,10 +1,12 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { cors } from 'hono/cors';
+import { createMiddleware } from 'hono/factory';
 import {
   DaysPerMember,
   DEFAULT_DAYS_PER_MEMBER,
   InviteCode,
   InviteCodeUnknownError,
+  JoinNote,
   MemberId,
   SQUAD_MEMBER_LIMIT,
   SQUADS_PER_MEMBER,
@@ -24,6 +26,8 @@ import { jsonBodyFailures, problem } from '../problem.js';
 import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { LookBody } from './character.js';
+import { tellCaptain, type JoinRequestNewsDependencies } from '../flows/join-requests.js';
+import { JoinRequest, wireJoinRequest } from './squad-join-requests.js';
 import { squadTimeZoneField } from './squad-time-zone.js';
 
 const inviteCodeField = z.string().meta({
@@ -32,6 +36,27 @@ const inviteCodeField = z.string().meta({
     'without 0, O, 1, I or L.',
   example: 'K7M2QX9P',
 });
+
+/**
+ * An empty body is no body, whatever its content type says: callers from before the optional
+ * body was added may send `Content-Type: application/json` with nothing after it.
+ */
+const emptyBodyIsNone = createMiddleware(async (c, next) => {
+  if (c.req.header('content-type') !== undefined && (await c.req.raw.clone().text()) === '') {
+    c.req.raw.headers.delete('content-type');
+  }
+  await next();
+});
+
+const JoinBody = z
+  .strictObject({
+    version: bodyVersion(1),
+    note: JoinNote.optional().meta({
+      description:
+        'A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.',
+    }),
+  })
+  .openapi('JoinSquadRequest');
 
 /** A squad, as its members see it. */
 export const Squad = z
@@ -132,6 +157,11 @@ const SquadInvite = z
       description: `True when it has ${String(SQUAD_MEMBER_LIMIT)} members and can’t take more.`,
     }),
     joined: z.boolean().meta({ description: 'True when the caller is in it already.' }),
+    needsApproval: z.boolean().meta({
+      description:
+        'True when joining asks the captain first (入队需要审核): accepting answers 202 with the ' +
+        'request.',
+    }),
     daysPerMember: daysPerMemberField.meta({
       description: 'The squad’s weekly goal (人均 N 次) as its captain last set it.',
     }),
@@ -209,16 +239,18 @@ export interface PublicRoutes {
  * leave, and the captain's settings (rename, remove a member, hand on the captaincy). No route
  * deletes a squad: its members leave, and it goes only with its last member's account.
  */
-export function squads(deps: {
-  readonly verifyToken: VerifyToken;
-  readonly squads: Squads;
-  readonly members: Members;
-  /** Each member's week now, which a new squad's goal counts from. */
-  readonly checkIns: Pick<CheckIns, 'weekStartNow'>;
-  readonly publicRoutes: PublicRoutes;
-  /** Tells what follows a join (the squad's coach welcomes the member) once it is saved. */
-  readonly publish: PublishEvent;
-}) {
+export function squads(
+  deps: JoinRequestNewsDependencies & {
+    readonly verifyToken: VerifyToken;
+    readonly squads: Squads;
+    readonly members: Members;
+    /** Each member's week now, which a new squad's goal counts from. */
+    readonly checkIns: Pick<CheckIns, 'weekStartNow'>;
+    readonly publicRoutes: PublicRoutes;
+    /** Tells what follows a join (the squad's coach welcomes the member) once it is saved. */
+    readonly publish: PublishEvent;
+  },
+) {
   const squadParams = z.strictObject({ squadId: SquadId });
   // Any text: one that can't be a code answers 404 like an unknown one, so the app has one case.
   const inviteParams = z.strictObject({ inviteCode: z.string().meta({ example: 'K7M2QX9P' }) });
@@ -417,17 +449,27 @@ export function squads(deps: {
     summary: 'Join a squad by invite code',
     description:
       'The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a ' +
-      'squad the member is in answers 200 with it.',
+      'squad the member is in answers 200 with it. Where joining needs the captain’s OK ' +
+      '(入队需要审核), it asks instead and answers 202 with the request, which the captain is ' +
+      'told of; asking again finds it, and asking another squad withdraws it.',
     security: [{ bearer: [] }],
-    middleware: [requireCaller(deps.verifyToken)] as const,
-    request: { params: inviteParams },
+    middleware: [requireCaller(deps.verifyToken), emptyBodyIsNone] as const,
+    request: {
+      params: inviteParams,
+      body: { required: false, content: { 'application/json': { schema: JoinBody } } },
+    },
     responses: {
       200: squadResponse('Already in it'),
       201: squadResponse('Joined'),
+      202: {
+        description: 'Asked: waiting for the captain’s OK',
+        content: { 'application/json': { schema: JoinRequest } },
+      },
       400: problem(
         `The squad has ${String(SQUAD_MEMBER_LIMIT)} members (\`SQUAD_FULL\`), ${limitReached}, or ${noConsent}`,
       ),
       404: problem('No squad has this code (`INVITE_CODE_UNKNOWN`)'),
+      ...jsonBodyFailures,
       ...signedInFailures,
     },
   });
@@ -509,23 +551,38 @@ export function squads(deps: {
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {
-      const { name, memberCount, full, joined, members, daysPerMember } =
+      const { name, memberCount, full, joined, needsApproval, members, daysPerMember } =
         await deps.squads.previewInvite({
           inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
           viewer: caller(c.var.caller.userId),
         });
       const looks = await looksOf(members);
       return c.json(
-        { version: 1 as const, name, memberCount, full, joined, daysPerMember, looks },
+        {
+          version: 1 as const,
+          name,
+          memberCount,
+          full,
+          joined,
+          needsApproval,
+          daysPerMember,
+          looks,
+        },
         200,
       );
     })
     .openapi(join, async (c) => {
       const member = caller(c.var.caller.userId);
-      const { squad, joined } = await deps.squads.join({
+      const outcome = await deps.squads.join({
         inviteCode: inviteCodeOf(c.req.valid('param').inviteCode),
         member,
+        note: c.req.valid('json').note,
       });
+      if ('request' in outcome) {
+        if (outcome.asked) await tellCaptain(deps, outcome.request);
+        return c.json(await wireJoinRequest(deps, outcome.request), 202);
+      }
+      const { squad, joined } = outcome;
       if (joined) {
         await deps.publish({ version: 1, kind: 'squad.joined', squad: squad.id, member });
       }

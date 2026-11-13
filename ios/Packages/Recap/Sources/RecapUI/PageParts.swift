@@ -50,8 +50,6 @@ struct PageTitle: View {
     let label: Text
     var systemImage: String?
     let title: Text
-    /// A line under the title saying why something is as it is (the podium's tie-break).
-    var note: Text?
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -66,12 +64,6 @@ struct PageTitle: View {
             title
                 .typeStyle(TypeRamp.largeTitle)
                 .accessibilityAddTraits(.isHeader)
-            if let note {
-                note
-                    .typeStyle(TypeRamp.footnote)
-                    .lineLimit(2)
-                    .padding(.top, Space.xxs)
-            }
         }
         .foregroundStyle(Color(role: .fgOnScene, in: theme))
         .frame(maxWidth: .infinity, alignment: .leading)

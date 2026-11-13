@@ -72,6 +72,10 @@ public struct ComposeView: View {
                                 )
                                 .id(Self.minutesID)
                             }
+                            let together = model.together
+                            if !together.mates.isEmpty {
+                                ComposeTogetherRow(model: model, together: together)
+                            }
                         }
                         if model.sendFailed {
                             failedLine

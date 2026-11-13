@@ -37,14 +37,11 @@ final class ScoreCardModel: Identifiable {
     private(set) var hops = 0
     /// Bumps on each tap that changes the card, for its haptic.
     private(set) var changes = 0
-    /// 点数字和人物可以换, under the preview until the member first taps anything.
-    private(set) var showsHint: Bool
 
     @ObservationIgnored private let look: Outfit
     @ObservationIgnored private let persona: Persona
     @ObservationIgnored private let species: String?
     @ObservationIgnored private var stills: [ScoreCard.Pose: Still] = [:]
-    @ObservationIgnored private let defaults: UserDefaults
 
     nonisolated var id: CheckInID { checkIn.id }
 
@@ -52,12 +49,10 @@ final class ScoreCardModel: Identifiable {
     static let size = CGSize(width: 360, height: 480)
     /// The top of an A2 card, where the picture is, in card points.
     static let pictureSize = CGSize(width: 360, height: 300)
-    /// Remembered on the phone once the hint was tapped away.
-    static let hintSeenKey = "scoreCard.hintSeen"
 
     /// Nil for a post that isn't a 训练.
     init?(
-        _ checkIn: CheckIn, character: MemberCharacter?, squadName: String?, defaults: UserDefaults
+        _ checkIn: CheckIn, character: MemberCharacter?, squadName: String?
     ) {
         guard case .trained(let training) = checkIn.entry else { return nil }
         self.checkIn = checkIn
@@ -69,8 +64,6 @@ final class ScoreCardModel: Identifiable {
         species = character?.look.species
         cells = Dictionary(ScoreCell.cells(of: training).map { ($0.cell, $0) }, uniquingKeysWith: { first, _ in first })
         card = ScoreCard(training: training, hasKit: Self.kits != nil, holdsProp: look.variants["prop"] != nil)
-        self.defaults = defaults
-        showsHint = !defaults.bool(forKey: Self.hintSeenKey)
     }
 
     // MARK: Taps
@@ -107,9 +100,6 @@ final class ScoreCardModel: Identifiable {
 
     private func changed() {
         changes += 1
-        guard showsHint else { return }
-        showsHint = false
-        defaults.set(true, forKey: Self.hintSeenKey)
     }
 
     // MARK: Loading
@@ -182,7 +172,7 @@ extension FeedModel {
         guard canSaveScoreCard(post) else { return }
         closeBar()
         scoreCard = ScoreCardModel(
-            post.checkIn, character: store.characters[post.author], squadName: squadName(), defaults: defaults)
+            post.checkIn, character: store.characters[post.author], squadName: squadName())
     }
 }
 #endif

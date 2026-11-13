@@ -38,7 +38,7 @@ final class AppModel {
             recap: RecapShelf)
     }
 
-    private(set) var screen = Screen.starting {
+    var screen = Screen.starting {
         // The cover came up again; a sign-in's cover is already up and counting.
         didSet {
             if isStarting, !oldValue.isStarting, !isSigningIn { coverSince = .now }
@@ -59,6 +59,8 @@ final class AppModel {
     var removedFromName: String?
     /// Whether the signed-in member is an admin, read as the tabs open: 设置 then offers 预览注册.
     private(set) var isAdmin = false
+    /// 设置 › 管理员 › 演示账号, for an admin or one of their demo accounts; nil for everyone else.
+    var demoAccounts: DemoAccountsModel?
     /// Whether the tabs are up, so leaving them (signing out, deleting the account, leaving the
     /// squad) puts the next tabs back on 今天.
     var showsTabs: Bool {
@@ -82,7 +84,7 @@ final class AppModel {
     /// The wait before the next try at launch, which 再试一次 cuts short.
     @ObservationIgnored private var nextStartTry: Task<Void, Never>?
 
-    @ObservationIgnored private let account: AccountSession
+    @ObservationIgnored let account: AccountSession
     @ObservationIgnored let api: WildcardAPI
     /// The API for one member's own home and outbox: it stops calling once someone else signs in,
     /// so posts queued for one account never go out under the next.
@@ -106,7 +108,9 @@ final class AppModel {
     ) {
         account = AccountSession(
             provider: SupabaseAuth(url: config.authURL, publishableKey: config.authPublishableKey),
-            store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
+            store: KeychainSessionStore(accessGroup: AppGroup.id),
+            kept: KeychainSessionStore(service: Self.keptSession),
+            now: { Date() })
         // Check-in photos seen once are kept, so 动态 doesn't download them again.
         api = WildcardAPI(
             url: config.apiURL, account: account, language: { AppLanguage.current.rawValue },
@@ -123,7 +127,8 @@ final class AppModel {
         Self.show(catalog.kept())
         self.posted = posted
         if usesApple {
-            confirmDeletion = { () async throws(MeError) -> DeletionConfirmation in
+            confirmDeletion = { [account] () async throws(MeError) -> DeletionConfirmation in
+                if await account.isOnDemo() { return .signedInSession }
                 do throws(AccountError) {
                     return .apple(authorizationCode: try await AppleConfirmation.authorizationCode())
                 } catch .canceled {
@@ -224,14 +229,9 @@ final class AppModel {
         await readScene(of: homeSquad, into: today)
     }
 
-    func signOut() async {
-        try? await Push.registration.signingOut()
-        try? await account.signOut()
-    }
-
     /// Opens 今天 on the member's home; in no squad, 加入小队 for a member who was in one, else
     /// sign-up.
-    private func openHome(
+    func openHome(
         continuing signUp: SignUpModel? = nil, name: String? = nil, landingOn scene: SceneTheme? = nil
     ) async {
         // Only called once the account says who is signed in, so it is read from memory.
@@ -324,6 +324,7 @@ final class AppModel {
         let member = try? await api.me()
         // A failed read keeps what 我 may have handed Health meanwhile.
         (isAdmin, Self.health.birthday) = (member?.isAdmin ?? false, member.map(\.birthday) ?? Self.health.birthday)
+        demoAccounts = demoAccounts(on: home.member, if: member)
     }
 
     /// The member's home, from what the phone kept for them alone.
@@ -354,7 +355,7 @@ final class AppModel {
 
     private func signedOut() async {
         // The next account on this phone reads its own; until then it is no admin.
-        isAdmin = false
+        (isAdmin, demoAccounts) = (false, nil)
         Self.location.signedOut()
         SignUpProgress.clear()
         KeptScene.forgetAll()

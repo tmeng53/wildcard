@@ -7,7 +7,7 @@ import SportsUI
 import SwiftUI
 
 /// 存成绩卡's page: `SavePictureSheet` on the live card, which changes with a tap, and under it the
-/// first time 点数字和人物可以换, the backdrops the post has as thumbnails (its photos, its route, its
+/// backdrops the post has as thumbnails (its photos, its route, its
 /// chart, then 纯色) and 小队名. Saved or shared, the card is drawn as it stands, at three pixels a
 /// point.
 struct ScoreCardSheet: View {
@@ -24,13 +24,6 @@ struct ScoreCardSheet: View {
             ScaledCard(model: model)
         } options: {
             VStack(alignment: .leading, spacing: Space.s) {
-                if model.showsHint {
-                    Text(copy: "点数字和人物可以换", bundle: .module)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .frame(maxWidth: .infinity)
-                        .accessibilityIdentifier("scoreCard.hint")
-                }
                 if model.card.backdrops.count > 1 {
                     BackdropRow(model: model)
                 }

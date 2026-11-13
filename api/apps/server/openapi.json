@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -192,6 +192,15 @@
           "adopted": {
             "type": "string",
             "description": "What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another."
+          },
+          "joinRequest": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置."
+          },
+          "approved": {
+            "type": "boolean",
+            "description": "Whether the captain let the caller in (`joinAnswered`)."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -1032,13 +1041,18 @@
           "isAdmin": {
             "type": "boolean",
             "description": "Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves."
+          },
+          "isDemo": {
+            "type": "boolean",
+            "description": "Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts."
           }
         },
         "required": [
           "version",
           "userId",
           "profile",
-          "isAdmin"
+          "isAdmin",
+          "isDemo"
         ],
         "additionalProperties": false
       },
@@ -1184,6 +1198,90 @@
         },
         "required": [
           "version"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccounts": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "memberId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The account’s member id."
+                },
+                "owner": {
+                  "type": "boolean",
+                  "description": "Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off."
+                },
+                "character": {
+                  "$ref": "#/components/schemas/Character"
+                }
+              },
+              "required": [
+                "memberId",
+                "owner"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The admin’s own account, then their demo accounts, oldest first."
+          }
+        },
+        "required": [
+          "version",
+          "accounts"
+        ],
+        "additionalProperties": false
+      },
+      "DemoAccount": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "memberId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The account’s member id."
+          }
+        },
+        "required": [
+          "version",
+          "memberId"
+        ],
+        "additionalProperties": false
+      },
+      "DemoHandOff": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "refreshToken": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account."
+          }
+        },
+        "required": [
+          "version",
+          "refreshToken"
         ],
         "additionalProperties": false
       },
@@ -1380,6 +1478,15 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
           },
           "place": {
             "$ref": "#/components/schemas/Place"
@@ -2128,6 +2235,15 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "trainedWith": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 7,
+            "description": "Squadmates the member trained with (一起练), in the order picked."
+          },
           "place": {
             "$ref": "#/components/schemas/Place"
           },
@@ -2856,7 +2972,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken."
+        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken."
       },
       "RecordStreak": {
         "type": "object",
@@ -2992,7 +3108,7 @@
           "sportCount"
         ],
         "additionalProperties": false,
-        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
+        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
       },
       "RecordSport": {
         "type": "object",
@@ -3689,6 +3805,10 @@
             "type": "boolean",
             "description": "True when the caller is in it already."
           },
+          "needsApproval": {
+            "type": "boolean",
+            "description": "True when joining asks the captain first (入队需要审核): accepting answers 202 with the request."
+          },
           "daysPerMember": {
             "type": "integer",
             "minimum": 1,
@@ -3710,8 +3830,110 @@
           "memberCount",
           "full",
           "joined",
+          "needsApproval",
           "daysPerMember",
           "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad’s name now."
+          },
+          "note": {
+            "type": "string",
+            "description": "What the member wrote the captain (备注)."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, in UTC."
+          },
+          "status": {
+            "type": "string",
+            "description": "`waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over."
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it ended, in UTC."
+          },
+          "memberCount": {
+            "type": "integer",
+            "description": "How many members the squad has now."
+          },
+          "looks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Look"
+            },
+            "description": "The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids."
+          },
+          "captain": {
+            "type": "object",
+            "properties": {
+              "nickname": {
+                "type": "string"
+              },
+              "look": {
+                "$ref": "#/components/schemas/Look"
+              }
+            },
+            "required": [
+              "nickname",
+              "look"
+            ],
+            "additionalProperties": false,
+            "description": "The captain who answers it; left out until they made a character."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "squadId",
+          "squadName",
+          "askedAt",
+          "status",
+          "memberCount",
+          "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinSquadRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.",
+            "x-max-characters": 30
+          }
+        },
+        "required": [
+          "version"
         ],
         "additionalProperties": false
       },
@@ -3758,6 +3980,130 @@
           "full",
           "daysPerMember",
           "looks"
+        ],
+        "additionalProperties": false
+      },
+      "JoinApproval": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it."
+          }
+        },
+        "required": [
+          "version",
+          "required"
+        ],
+        "additionalProperties": false
+      },
+      "WaitingJoinRequests": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WaitingJoinRequest"
+            },
+            "description": "The requests waiting for the captain, the earliest first."
+          }
+        },
+        "required": [
+          "version",
+          "requests"
+        ],
+        "additionalProperties": false
+      },
+      "WaitingJoinRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who asked: their Supabase Auth user id."
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Their nickname, once they made one."
+          },
+          "look": {
+            "$ref": "#/components/schemas/Look"
+          },
+          "note": {
+            "type": "string",
+            "description": "What they wrote the captain (备注)."
+          },
+          "askedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they asked, in UTC."
+          }
+        },
+        "required": [
+          "id",
+          "member",
+          "askedAt"
+        ],
+        "additionalProperties": false
+      },
+      "JoinAnswer": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "approve": {
+            "type": "boolean",
+            "description": "`true` lets the member in, `false` turns them away."
+          }
+        },
+        "required": [
+          "version",
+          "approve"
+        ],
+        "additionalProperties": false
+      },
+      "MyJoinRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JoinRequest"
+              },
+              {
+                "description": "The member’s newest request to join, waiting or ended; left out if none."
+              }
+            ]
+          }
+        },
+        "required": [
+          "version"
         ],
         "additionalProperties": false
       },
@@ -4595,7 +4941,7 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[A-Za-z][A-Za-z0-9_+-]*(\\/[A-Za-z0-9_+-]+)*$",
-            "description": "Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.",
+            "description": "Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.",
             "example": "Asia/Taipei"
           },
           "canChange": {
@@ -5688,18 +6034,83 @@
             ],
             "minimum": 1,
             "maximum": 5,
-            "description": "小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.",
-            "example": 4.3
+            "description": "No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it."
           },
           "raters": {
             "type": "integer",
             "minimum": 0,
-            "description": "How many of the squad’s members gave a score."
+            "description": "No longer given: always 0."
           },
           "lastAt": {
             "type": "string",
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "sport",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "大家在这里练: each sport its 训练 named, most first."
+          },
+          "meals": {
+            "type": "object",
+            "properties": {
+              "healthyMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cheatMeal": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "healthyMeal",
+              "cheatMeal"
+            ],
+            "additionalProperties": false,
+            "description": "大家在这里吃: how many of its posts were each kind of meal."
           }
         },
         "required": [
@@ -5709,7 +6120,10 @@
           "people",
           "stars",
           "raters",
-          "lastAt"
+          "lastAt",
+          "members",
+          "sports",
+          "meals"
         ],
         "additionalProperties": false
       },
@@ -5778,7 +6192,7 @@
             ],
             "minimum": 1,
             "maximum": 5,
-            "description": "A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal."
+            "description": "No longer given: always null (places have no score, Tracy 2026-11-13)."
           },
           "calorieValue": {
             "type": [
@@ -5787,7 +6201,7 @@
             ],
             "minimum": 0.2,
             "maximum": 5,
-            "description": "A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练."
+            "description": "No longer given: always null (a place’s tiles show no score)."
           }
         },
         "required": [
@@ -5878,27 +6292,40 @@
             ],
             "minimum": 1,
             "maximum": 5,
-            "description": "小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.",
-            "example": 4.3
+            "description": "No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it."
           },
           "raters": {
             "type": "integer",
             "minimum": 0,
-            "description": "How many of the squad’s members gave a score."
+            "description": "No longer given: always 0."
           },
           "lastAt": {
             "type": "string",
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
           },
-          "myStars": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 5,
-            "description": "The viewer’s own score; null before one."
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
           },
           "sports": {
             "type": "array",
@@ -5940,21 +6367,21 @@
                   "number",
                   "null"
                 ],
-                "description": "Rated meals’ 健康, averaged."
+                "description": "No longer given: always null."
               },
               "tasty": {
                 "type": [
                   "number",
                   "null"
                 ],
-                "description": "Rated meals’ 好吃, averaged."
+                "description": "No longer given: always null."
               },
               "calorieValue": {
                 "type": [
                   "number",
                   "null"
                 ],
-                "description": "Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged."
+                "description": "No longer given: always null."
               }
             },
             "required": [
@@ -5965,7 +6392,16 @@
               "calorieValue"
             ],
             "additionalProperties": false,
-            "description": "大家在这里吃: meals by kind, and what rated ones scored."
+            "description": "大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃."
+          },
+          "myStars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "No longer given: always null."
           },
           "posts": {
             "type": "array",
@@ -5984,61 +6420,11 @@
           "stars",
           "raters",
           "lastAt",
-          "myStars",
+          "members",
           "sports",
           "meals",
+          "myStars",
           "posts"
-        ],
-        "additionalProperties": false
-      },
-      "PlaceRatingView": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "key": {
-            "type": "string",
-            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
-            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
-            "example": "apple:I6FD7682FD36BB3BE"
-          },
-          "stars": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 5,
-            "description": "The score, 1 to 5."
-          }
-        },
-        "required": [
-          "version",
-          "key",
-          "stars"
-        ],
-        "additionalProperties": false
-      },
-      "PlaceRatingChange": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "enum": [
-              1
-            ]
-          },
-          "stars": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 5,
-            "description": "The score, 1 to 5."
-          }
-        },
-        "required": [
-          "version",
-          "stars"
         ],
         "additionalProperties": false
       },
@@ -6761,6 +7147,23 @@
               "ending": {
                 "$ref": "#/components/schemas/StoryEnding"
               },
+              "menu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMenuDish"
+                },
+                "minItems": 1,
+                "maxItems": 3,
+                "description": "小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it."
+              },
+              "places": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryPlace"
+                },
+                "minItems": 1,
+                "description": "The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it."
+              },
               "status": {
                 "type": "string",
                 "enum": [
@@ -6867,6 +7270,23 @@
               },
               "ending": {
                 "$ref": "#/components/schemas/StoryEnding"
+              },
+              "menu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryMenuDish"
+                },
+                "minItems": 1,
+                "maxItems": 3,
+                "description": "小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it."
+              },
+              "places": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/StoryPlace"
+                },
+                "minItems": 1,
+                "description": "The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it."
               },
               "status": {
                 "type": "string",
@@ -7311,6 +7731,188 @@
         ],
         "additionalProperties": false,
         "description": "这一周: the squad’s 训练 against its weekly goal. Missing when nobody trained, so a quiet week isn’t told how short it fell."
+      },
+      "StoryMenuDish": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "author": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
+          },
+          "caption": {
+            "type": "string",
+            "description": "The meal’s line, naming the dish."
+          },
+          "photo": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "path",
+              "url"
+            ],
+            "additionalProperties": false,
+            "description": "Its first photo, while the meal still has it."
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "Where it was eaten, when tagged."
+          }
+        },
+        "required": [
+          "checkIn",
+          "author",
+          "day",
+          "rating"
+        ],
+        "additionalProperties": false
+      },
+      "StoryPlace": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "squadPlaceId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The id of the place a squad's member added, when it is one (and not Maps')."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "The place as its latest 训练 there tagged it."
+          },
+          "firstTime": {
+            "type": "boolean",
+            "description": "新发现: no member of the squad had posted a 训练 there to it before that week."
+          },
+          "visits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "day": {
+                  "type": "string",
+                  "format": "date"
+                }
+              },
+              "required": [
+                "member",
+                "day"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "description": "Each 训练 posted there, the earliest first."
+          }
+        },
+        "required": [
+          "key",
+          "place",
+          "firstTime",
+          "visits"
+        ],
+        "additionalProperties": false
       },
       "StoryTitle": {
         "type": "object",
@@ -8592,6 +9194,197 @@
         }
       }
     },
+    "/me/demo-accounts": {
+      "get": {
+        "operationId": "listDemoAccounts",
+        "summary": "The admin’s demo accounts",
+        "description": "The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccounts"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createDemoAccount",
+        "summary": "Make a demo account",
+        "description": "A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Made",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoAccount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/demo-accounts/{memberId}/hand-off": {
+      "post": {
+        "operationId": "handOffDemoAccount",
+        "summary": "Switch to a demo account",
+        "description": "Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Handed off",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoHandOff"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller is neither an admin nor one of an admin’s demo accounts (`NOT_AN_ADMIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not one of the admin’s demo accounts (`DEMO_ACCOUNT_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked, or Auth can’t be reached, right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/ai-consent": {
       "get": {
         "operationId": "getMyAiConsent",
@@ -8761,7 +9554,7 @@
             }
           },
           "400": {
-            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to, or on one off the 动态 (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -8825,7 +9618,7 @@
       "patch": {
         "operationId": "editCheckIn",
         "summary": "Edit one of the member’s own check-ins",
-        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.",
+        "description": "Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.",
         "security": [
           {
             "bearer": []
@@ -8864,7 +9657,7 @@
             }
           },
           "400": {
-            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or with a photo that isn’t uploaded",
+            "description": "Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), newly naming someone it was done with who isn’t a squadmate it is shared to (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -10877,7 +11670,7 @@
       "post": {
         "operationId": "joinSquad",
         "summary": "Join a squad by invite code",
-        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.",
+        "description": "The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.",
         "security": [
           {
             "bearer": []
@@ -10894,6 +11687,16 @@
             "in": "path"
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinSquadRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Already in it",
@@ -10911,6 +11714,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Squad"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Asked: waiting for the captain’s OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinRequest"
                 }
               }
             }
@@ -10937,6 +11750,16 @@
           },
           "404": {
             "description": "No squad has this code (`INVITE_CODE_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11013,6 +11836,442 @@
                 }
               }
             },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-approval": {
+      "get": {
+        "operationId": "getSquadJoinApproval",
+        "summary": "Whether joining the squad needs the captain’s OK",
+        "description": "For its members.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The setting",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinApproval"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "setSquadJoinApproval",
+        "summary": "Turn the captain’s OK to join on or off",
+        "description": "For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinApproval"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The setting, changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinApproval"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-requests": {
+      "get": {
+        "operationId": "listSquadJoinRequests",
+        "summary": "The requests waiting for the captain",
+        "description": "For the captain: who asked, their character and note, the earliest first.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The waiting requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WaitingJoinRequests"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/join-requests/{requestId}": {
+      "put": {
+        "operationId": "answerSquadJoinRequest",
+        "summary": "Let a member in, or turn them away",
+        "description": "For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "requestId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request, answered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JoinRequest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid id, or the squad is full (`SQUAD_FULL`), or the member is in a squad already (`SQUAD_LIMIT_REACHED`), or the request was answered another way (`JOIN_REQUEST_ANSWERED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`), or isn’t its captain (`NOT_SQUAD_CAPTAIN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such request to this squad (`JOIN_REQUEST_UNKNOWN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/join-request": {
+      "get": {
+        "operationId": "getMyJoinRequest",
+        "summary": "The member’s newest request to join a squad",
+        "description": "Waiting or ended, for the 等队长同意 page while they are in no squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request, if any",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyJoinRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "withdrawMyJoinRequest",
+        "summary": "Withdraw the member’s waiting request",
+        "description": "Safe to repeat: with none waiting, nothing changes.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Withdrawn, or none was waiting"
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -11916,7 +13175,7 @@
       "put": {
         "operationId": "setSquadTimeZone",
         "summary": "Set the squad’s time zone",
-        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.",
+        "description": "For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.",
         "security": [
           {
             "bearer": []
@@ -13404,94 +14663,6 @@
           },
           "404": {
             "description": "No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`): the app shows the place empty. A caller not in the squad gets 403, never 404.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Sign-in can’t be checked right now",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/place-ratings/{key}": {
-      "put": {
-        "operationId": "ratePlace",
-        "summary": "Give the caller’s score for a place (我的评分)",
-        "description": "One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.",
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
-              "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
-              "example": "apple:I6FD7682FD36BB3BE"
-            },
-            "required": true,
-            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
-            "name": "key",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlaceRatingChange"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The score stands",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlaceRatingView"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Not a valid place or score",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No bearer token, or not a valid one",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

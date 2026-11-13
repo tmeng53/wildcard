@@ -2,6 +2,7 @@ import AppIntents
 import Backend
 import CheckInDomain
 import Contracts
+import DesignSystem
 import DesignSystemUI
 import Foundation
 import HealthDomain
@@ -29,13 +30,16 @@ struct BoardProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: BoardIntent, in context: Context) async -> BoardEntry {
-        var entry = context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        var entry =
+            context.isPreview
+            ? Self.sample(at: Date())
+            : await Self.read(at: Date(), forSchedule: configuration.showsSchedule).entry
         entry.showsSchedule = configuration.showsSchedule
         return entry
     }
 
     func timeline(for configuration: BoardIntent, in context: Context) async -> Timeline<BoardEntry> {
-        let read = await Self.read(at: Date())
+        let read = await Self.read(at: Date(), forSchedule: configuration.showsSchedule)
         var entry = read.entry
         entry.showsSchedule = configuration.showsSchedule
         let next =
@@ -46,14 +50,20 @@ struct BoardProvider: AppIntentTimelineProvider {
     }
 
     private static func sample(at now: Date) -> BoardEntry {
-        BoardEntry(date: now, state: .board(SampleBoard.board(on: LocalDay(at: now, in: .current))))
+        let day = LocalDay(at: now, in: .current)
+        let board = SampleBoard.board(
+            on: day, coach: SampleBoard.coach, challenge: SampleBoard.challenge("慢跑", 3, "公里"))
+        return BoardEntry(date: now, state: .board(board))
     }
 
-    /// The board now, with the clock its day turns on.
-    static func read(at now: Date) async -> (entry: BoardEntry, zone: TimeZone) {
-        // The language picked in the app, and the sports' icons from the list this build ships.
+    /// The board now, with the clock its day turns on; `forSchedule` also reads what only
+    /// 本周出赛表 shows, the squad's scene and today's challenge.
+    static func read(at now: Date, forSchedule: Bool = false) async -> (entry: BoardEntry, zone: TimeZone) {
+        // The language picked in the app, and the sports' icons and scenes from the catalog this
+        // build ships.
         AppLanguage.adopt(from: AppGroup.defaults, folder: AppGroup.directory)
         SportList.shared.show(CatalogClient.bundled.sports)
+        SceneTheme.list(CatalogClient.bundled.scenes)
         // The lines put over the String Catalog, as the app last kept them.
         if let copy = SharedCopy.inAppGroup?.read() { AppCopyLines.install(copy) }
         let entry = { (state: WidgetState) in (BoardEntry(date: now, state: state), TimeZone.current) }
@@ -87,12 +97,20 @@ struct BoardProvider: AppIntentTimelineProvider {
             guard let saved = await backend.savedHome() else { return entry(.unavailable) }
             home = saved
         }
-        let coach = try? await backend.coach(in: home.squad.id)
-        let hasNews =
-            coach == nil ? false : (try? await backend.newestUnseenCoachCard(in: home.squad.id)) != nil
+        let squad = home.squad.id
+        let coach = try? await backend.coach(in: squad)
+        let hasNews = coach == nil ? false : (try? await backend.newestUnseenCoachCard(in: squad)) != nil
+        var scene: SceneID?
+        var challenge: DayChallenge?
+        if forSchedule {
+            async let readScene = try? session.api.scene(of: squad)
+            async let readChallenge = try? backend.todayChallenge(in: squad)
+            scene = await readScene?.scene
+            challenge = await readChallenge
+        }
         let board = WidgetBoard(
             home: home, day: LocalDay(at: now, in: home.timeZone), coach: coach?.coach.id, coachHasNews: hasNews,
-            health: health.workouts, putAway: health.putAway)
+            health: health.workouts, putAway: health.putAway, scene: scene, challenge: challenge)
         return (BoardEntry(date: now, state: .board(board)), home.timeZone)
     }
 }

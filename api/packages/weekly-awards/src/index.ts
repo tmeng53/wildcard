@@ -50,10 +50,15 @@ export {
   type ShownBadge,
   type SportGlyph,
 } from './domain/badges.js';
-export type { StoryDay, StoryMember, WeekStory } from './domain/week-story.js';
+export type {
+  MenuDish,
+  PlaceVisit,
+  StoryDay,
+  StoryMember,
+  WeekStory,
+} from './domain/week-story.js';
 export { AwardMove, CHEER } from './domain/moves.js';
 export {
-  AWARDS_HOUR,
   WeekStart,
   awardsTimeOf,
   lastAwardsTimeOf,

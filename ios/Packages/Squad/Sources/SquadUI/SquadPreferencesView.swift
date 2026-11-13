@@ -6,13 +6,15 @@ import SquadDomain
 import SwiftUI
 
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
-/// from the gear on 小队's header: 比赛时区 as a plain row, then 退出小队. The captain's row opens
-/// the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
-/// 2026-11-08); in the hours it waits for Monday on the new clock, one short line under the row says
-/// so. Everyone else only reads it. Then 小队语言, the language the coach and 战报 are written in,
-/// with the one line that says so (Tracy, 2026-11-08: without it the setting is confusing); the
-/// captain's opens the same menu 我's 语言 does. No other help text.
-struct SquadPreferencesView: View {
+/// from the gear on 小队's header and from 我's 设置 (Tracy, 2026-11-12), which reads the squad first
+/// when 小队 hasn't yet: 邀请队友 first while the squad has room, 比赛时区 as a plain row, then
+/// 退出小队. The captain's zone row opens the system's zone list, the one sign-up's 建小队 shows, and
+/// a change counts at once (Tracy, 2026-11-08), or from next week once this week's Sunday 8pm has
+/// passed on either clock (Tracy, 2026-11-13); the row shows the pick either way. Everyone else only
+/// reads it. Then 小队语言, the language the coach and 战报 are written in, with the one line that
+/// says so (Tracy, 2026-11-08: without it the setting is confusing); the captain's opens the same
+/// menu 我's 语言 does. No other help text.
+public struct SquadPreferencesView: View {
     @Bindable var model: SquadSettingsModel
     /// The page's squad as the model has it now, so a saved change shows here at once.
     private var settings: SquadSettings? { model.settings }
@@ -22,7 +24,22 @@ struct SquadPreferencesView: View {
     @State private var isLeavingNow = false
     @Environment(\.sceneTheme) private var theme
 
-    var body: some View {
+    public init(model: SquadSettingsModel) {
+        self.model = model
+    }
+
+    public var body: some View {
+        if settings == nil, case .failed = model.load {
+            // Opened from 我 before 小队 read the squad, and the read failed.
+            SquadFailed { Task { await model.reload() } }
+                .background(Color(role: .bgCanvas, in: theme))
+                .pushedPage()
+        } else {
+            page
+        }
+    }
+
+    private var page: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Space.l) {
                 Text(copy: "小队设置", bundle: .module)
@@ -32,6 +49,7 @@ struct SquadPreferencesView: View {
                 if model.changeFailed {
                     InlineFailure()
                 }
+                invite
                 if Switchboard.shared.isOn(.freePlan, at: .now) {
                     subscription
                 }
@@ -48,7 +66,24 @@ struct SquadPreferencesView: View {
         .background(Color(role: .bgCanvas, in: theme))
         .disabled(model.isSaving)
         .pushedPage()
+        .task { if model.settings == nil { await model.reload() } }
         .accessibilityIdentifier("squad.preferences")
+    }
+
+    // MARK: 邀请队友
+
+    /// The squad's invite, as 小队's 分享 shares it (Tracy, 2026-11-12: someone who just made a squad
+    /// looks for it here), with how many more can join; gone once the squad is full.
+    @ViewBuilder private var invite: some View {
+        if let squad = settings?.squad, model.openSpots > 0 {
+            InviteShareLink(squad: squad) {
+                ListRow(
+                    Text(copy: "邀请队友", bundle: .module),
+                    value: Text(copy: "还剩 \(model.openSpots) 个名额", bundle: .module), showsDivider: false)
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("squad.preferences.invite")
+        }
     }
 
     // MARK: 订阅
@@ -87,15 +122,15 @@ struct SquadPreferencesView: View {
         }
         .accessibilityIdentifier("squad.timeZone")
         .sheet(isPresented: $isChoosingZone) {
-            TimeZonePicker(selected: zone.timeZone) { picked in
+            TimeZonePicker(selected: zone.nextTimeZone) { picked in
                 isChoosingZone = false
                 Task { await model.setTimeZone(picked) }
             }
         }
     }
 
-    /// The zone's region (北美东部时间); the zone list shows the cities.
-    private var zoneValue: Text { Text(verbatim: name(zone.timeZone).region) }
+    /// The picked zone's region (北美东部时间); the zone list shows the cities.
+    private var zoneValue: Text { Text(verbatim: name(zone.nextTimeZone).region) }
 
     private func name(_ identifier: String) -> ZoneName {
         ZoneName(identifier, locale: AppLanguage.current.locale)

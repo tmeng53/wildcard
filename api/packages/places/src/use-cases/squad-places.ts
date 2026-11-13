@@ -1,4 +1,4 @@
-import type { MemberId } from '../domain/place-rating.js';
+import type { MemberId } from '../domain/ids.js';
 import {
   SquadPlaceId,
   type SquadId,

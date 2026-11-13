@@ -88,7 +88,7 @@ final class CoachDeckUITests: XCTestCase {
             element("coachDeck.hint", in: app), "label == '最后一张 · 右滑收起'", "the last card doesn't say it is the last")
         let reason = element("coachDeck.reason", in: app)
         XCTAssertTrue(reason.waitForExistence(timeout: Self.wait), "the challenge has no field for why")
-        XCTAssertEqual(reason.placeholderValue, "告诉毛头为什么（可选）")
+        XCTAssertEqual(reason.placeholderValue, "原因（可选）")
         reason.tap()
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: Self.wait), "the keyboard isn't up")

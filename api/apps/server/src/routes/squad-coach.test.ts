@@ -83,6 +83,7 @@ const app = createApp({
   },
   photos,
   checkIns: createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
@@ -193,6 +194,13 @@ async function squadOf(captain: { token: string }, ...others: { token: string }[
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
+  // Friends join straight in, without the captain's OK (入队需要审核 off).
+  await call({
+    method: 'PUT',
+    path: `/squads/${squad.id}/join-approval`,
+    token: captain.token,
+    body: { version: 1, required: false },
+  });
   for (const other of others) {
     const joined = await call({
       method: 'POST',

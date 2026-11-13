@@ -4,7 +4,7 @@ import type { AiUsageTables } from '@wildcard/ai-usage';
 import type { AppCopyTables } from '@wildcard/app-copy';
 import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
-import type { PlaceRatingTables } from '@wildcard/places';
+import type { SquadPlaceTables } from '@wildcard/places';
 import type { SavedPlaceTables } from '@wildcard/saved-places';
 import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
@@ -76,6 +76,19 @@ export interface Accounts {
    * for a user who is gone. Throws `AuthUnavailableError` when the provider can't be reached.
    */
   readonly signsInWithApple: (userId: UserId) => Promise<boolean>;
+  /**
+   * Makes a user who signs in only through `handOff`, never with a password or a provider of
+   * their own: an admin's demo account. `email` names them at the provider and is never mailed.
+   * Throws `AuthUnavailableError` when the provider can't be reached.
+   */
+  readonly createUser: (email: string) => Promise<UserId>;
+  /**
+   * Starts a session for the user without their credentials and returns its refresh token,
+   * which the app exchanges for the session as if it had signed in: how an admin switches to
+   * one of their demo accounts. Throws `AuthUnavailableError` when the provider can't be
+   * reached or the user is gone.
+   */
+  readonly handOff: (userId: UserId) => Promise<{ readonly refreshToken: string }>;
 }
 
 /**
@@ -173,7 +186,7 @@ export type Tables = CheckInTables &
   AiConsentTables &
   AiUsageTables &
   NudgeTables &
-  PlaceRatingTables &
+  SquadPlaceTables &
   SavedPlaceTables &
   WeatherTables &
   WeeklyAwardTables &
