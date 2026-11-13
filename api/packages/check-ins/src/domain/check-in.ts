@@ -2,8 +2,10 @@ import { isDeepStrictEqual } from 'node:util';
 
 import { z } from 'zod';
 
+import { Place } from '@wildcard/place-ids';
+
 import { Photos, type PhotoRef } from './photos.js';
-import { Place } from './place.js';
+import { MealRating } from './meal-rating.js';
 import { SportKey } from './sports.js';
 import { Caption, CustomSportName, DisclaimerText } from './text.js';
 import { Workout } from './workout.js';
@@ -99,7 +101,11 @@ function customSportMatches(
   }
 }
 
-export const storedMealFields = { caption: Caption.optional(), place: Place.optional() };
+export const storedMealFields = {
+  caption: Caption.optional(),
+  place: Place.optional(),
+  rating: MealRating.optional(),
+};
 const mealFields = { ...storedMealFields, photos: Photos.optional() };
 export const storedDisclaimerFields = {
   text: DisclaimerText,

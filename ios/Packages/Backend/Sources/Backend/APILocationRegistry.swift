@@ -1,4 +1,5 @@
 import APIContract
+import Contracts
 import Foundation
 import LocationDomain
 
@@ -11,11 +12,18 @@ public struct APILocationRegistry: LocationRegistry {
         self.api = api
     }
 
-    public func save(_ coordinates: Coordinates) async throws(LocationError) {
+    public func save(_ coordinates: Coordinates, city: CityName?) async throws(LocationError) {
         do {
             _ = try await api.call {
                 try await api.client.saveMyLocation(
-                    body: .json(.init(version: ._1, latitude: coordinates.latitude, longitude: coordinates.longitude))
+                    body: .json(
+                        .init(
+                            version: ._1,
+                            latitude: coordinates.latitude,
+                            longitude: coordinates.longitude,
+                            city: city?.name
+                        )
+                    )
                 ).ok
             }
         } catch {

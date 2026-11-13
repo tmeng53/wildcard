@@ -91,8 +91,11 @@ export interface NoteBrief {
   readonly posts?: readonly WeekPost[];
   /** This week's whole plan, Monday first, and its 饮食小目标, when they could be read. */
   readonly plan?: { readonly week: readonly PlanDayFacts[]; readonly fuelGoals: readonly string[] };
-  /** Today's (and yesterday's) weather where they are, in words starting 今天, when known. */
-  readonly weather?: string;
+  /**
+   * Today's (and yesterday's) weather where they are, in words starting 今天, and the city their
+   * phone named there, when known.
+   */
+  readonly weather?: { readonly words: string; readonly city?: string };
 }
 
 /** The weekday of a `YYYY-MM-DD` day, Monday 0, as the plan counts it. */
@@ -139,7 +142,8 @@ export function briefBlock(brief: NoteBrief): string {
   }
   lines.push(`- 这周练了：${String(brief.trainedDays)} 天`);
   if (brief.posts !== undefined) lines.push(`- 这周发过：${postsWords(brief.posts)}`);
-  if (brief.weather !== undefined) lines.push(`- 当地天气：${brief.weather}`);
+  if (brief.weather?.city !== undefined) lines.push(`- 人在：${brief.weather.city}`);
+  if (brief.weather !== undefined) lines.push(`- 当地天气：${brief.weather.words}`);
   if (brief.language !== undefined) lines.push(`- ${writeIn(brief.language)}`);
   return lines.join('\n');
 }

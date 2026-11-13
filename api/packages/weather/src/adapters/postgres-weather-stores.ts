@@ -11,13 +11,13 @@ export type WeatherTables = DB;
 /** Members' places on Postgres (`supabase/migrations`): one row a member, the latest. */
 export function createPostgresPlaceStore(db: Kysely<WeatherTables>): PlaceStore {
   return {
-    async save({ member, place: { latitude, longitude }, at }) {
+    async save({ member, place: { latitude, longitude }, city, at }) {
+      // A place sent without a city replaces the city too: it may be somewhere else.
+      const row = { latitude, longitude, city: city ?? null, updated_at: at };
       await db
         .insertInto('member_places')
-        .values({ member_id: member, latitude, longitude, updated_at: at })
-        .onConflict((conflict) =>
-          conflict.column('member_id').doUpdateSet({ latitude, longitude, updated_at: at }),
-        )
+        .values({ member_id: member, ...row })
+        .onConflict((conflict) => conflict.column('member_id').doUpdateSet(row))
         .execute();
     },
 
@@ -29,13 +29,16 @@ export function createPostgresPlaceStore(db: Kysely<WeatherTables>): PlaceStore 
       if (members.length === 0) return new Map();
       const rows = await db
         .selectFrom('member_places')
-        .select(['member_id', 'latitude', 'longitude'])
+        .select(['member_id', 'latitude', 'longitude', 'city'])
         .where('member_id', 'in', members)
         .execute();
       return new Map(
         rows.map((row) => [
           MemberId.parse(row.member_id),
-          { latitude: Number(row.latitude), longitude: Number(row.longitude) },
+          {
+            place: { latitude: Number(row.latitude), longitude: Number(row.longitude) },
+            ...(row.city === null ? {} : { city: row.city }),
+          },
         ]),
       );
     },
