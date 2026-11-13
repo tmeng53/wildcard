@@ -1259,13 +1259,13 @@ describe('the admin MCP server', () => {
     // Most props need no rule, but one may: the dogs on a leash open after a 遛狗.
     const dog = await call('put_unlock_rule', {
       kind: 'prop',
-      id: 'dogshiba',
+      id: 'testdog',
       sports: ['dogWalk'],
       after: 1,
     });
     expect(dog.isError).toBe(false);
     expect(
-      Rules.parse(JSON.parse(dog.text)).rules.find(({ id }) => id === 'dogshiba'),
+      Rules.parse(JSON.parse(dog.text)).rules.find(({ id }) => id === 'testdog'),
     ).toMatchObject({
       kind: 'prop',
       sports: ['dogWalk'],
@@ -1298,7 +1298,7 @@ describe('the admin MCP server', () => {
       {
         version: 1,
         tool: 'put_unlock_rule',
-        arguments: { kind: 'prop', id: 'dogshiba', sports: ['dogWalk'], after: 1 },
+        arguments: { kind: 'prop', id: 'testdog', sports: ['dogWalk'], after: 1 },
       },
     ]);
     await client.close();
