@@ -8667,6 +8667,138 @@ extension Components {
                 case kind
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceList`.
+        public struct SavedPlaceList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/version`.
+            public var version: Components.Schemas.SavedPlaceList.VersionPayload
+            /// Newest saved first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/places`.
+            public var places: [Components.Schemas.SavedPlace]
+            /// Creates a new `SavedPlaceList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - places: Newest saved first.
+            public init(
+                version: Components.Schemas.SavedPlaceList.VersionPayload,
+                places: [Components.Schemas.SavedPlace]
+            ) {
+                self.version = version
+                self.places = places
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case places
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlace`.
+        public struct SavedPlace: Codable, Hashable, Sendable {
+            /// Which place: `apple:` and Apple Maps' identifier.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/key`.
+            public var key: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/place`.
+            public var place: Components.Schemas.Place
+            /// The member’s note on it, left out when they wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/note`.
+            public var note: Swift.String?
+            /// When they saved it, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/savedAt`.
+            public var savedAt: Foundation.Date
+            /// Creates a new `SavedPlace`.
+            ///
+            /// - Parameters:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier.
+            ///   - place:
+            ///   - note: The member’s note on it, left out when they wrote none.
+            ///   - savedAt: When they saved it, in UTC.
+            public init(
+                key: Swift.String,
+                place: Components.Schemas.Place,
+                note: Swift.String? = nil,
+                savedAt: Foundation.Date
+            ) {
+                self.key = key
+                self.place = place
+                self.note = note
+                self.savedAt = savedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case key
+                case place
+                case note
+                case savedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved`.
+        public struct SavedPlaceSaved: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/version`.
+            public var version: Components.Schemas.SavedPlaceSaved.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/saved`.
+            public var saved: Components.Schemas.SavedPlace
+            /// Creates a new `SavedPlaceSaved`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - saved:
+            public init(
+                version: Components.Schemas.SavedPlaceSaved.VersionPayload,
+                saved: Components.Schemas.SavedPlace
+            ) {
+                self.version = version
+                self.saved = saved
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case saved
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft`.
+        public struct SavedPlaceDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/version`.
+            public var version: Components.Schemas.SavedPlaceDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/place`.
+            public var place: Components.Schemas.Place
+            /// The note to keep with it; left out, it has none (a note saved before is cleared).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/note`.
+            public var note: Swift.String?
+            /// Creates a new `SavedPlaceDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - place:
+            ///   - note: The note to keep with it; left out, it has none (a note saved before is cleared).
+            public init(
+                version: Components.Schemas.SavedPlaceDraft.VersionPayload,
+                place: Components.Schemas.Place,
+                note: Swift.String? = nil
+            ) {
+                self.version = version
+                self.place = place
+                self.note = note
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case place
+                case note
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/FeedbackSent`.
         public struct FeedbackSent: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
