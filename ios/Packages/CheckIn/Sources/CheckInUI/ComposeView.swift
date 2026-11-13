@@ -22,6 +22,9 @@ public struct ComposeView: View {
     @State private var isPickingSport = false
     @State private var isRulingMinutes = false
     @State private var isDiscarding = false
+    /// The place's page the pill's name opens, pushed on the stack this page is on.
+    @Environment(\.placePage) private var placePage
+    @State private var openedPlace: Place?
 
     public init(model: ComposeModel) {
         self.model = model
@@ -120,6 +123,9 @@ public struct ComposeView: View {
             }
             .accessibilityIdentifier("compose.keepEditing")
         }
+        .navigationDestination(item: $openedPlace) { place in
+            if let page = placePage.page { page(place) }
+        }
     }
 
     private static let minutesID = "minutes"
@@ -157,7 +163,9 @@ public struct ComposeView: View {
                 .accessibilityIdentifier("compose.caption")
             HStack(spacing: Space.xs) {
                 if model.kind != .disclaimer {
-                    PlacePill(place: $model.place)
+                    PlacePill(place: $model.place) { place in
+                        if placePage.page != nil { openedPlace = place }
+                    }
                 }
                 Spacer(minLength: 0)
                 Text(verbatim: "\(model.line.count)/\(model.lineLimit)")

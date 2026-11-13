@@ -37,7 +37,7 @@ final class PostManageUITests: XCTestCase {
     }
 
     /// The post's gym on the ticket, its whole name shown while the row has room: tapping the
-    /// name leaves it on; only its cross takes it off (Tracy, 2026-11-13).
+    /// name pushes its page and leaves it on; only its cross takes it off (Tracy, 2026-11-13).
     private func checkThePlaceTag(in app: XCUIApplication) {
         // The name and its cross are two buttons, each with its own id.
         let tag = app.buttons["pill.open"]
@@ -50,10 +50,18 @@ final class PostManageUITests: XCTestCase {
         settle()
         keepScreenshot(named: "54a-compose-place-tagged")
 
+        // The name pushes the place's page over the compose page; back returns with the tag on.
         tag.tap()
+        let name = app.staticTexts["place.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "the name didn't open the place's page")
+        XCTAssertEqual(name.label, "F45 Training Flatiron", "the page doesn't name the post's place")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(name.frame), "the place's name is cut off")
         settle()
-        XCTAssertTrue(cross.exists, "tapping the name took the place off")
-        XCTAssertEqual(tag.label, "F45 Training Flatiron", "tapping the name took the place off")
+        keepScreenshot(named: "54b-compose-place-page")
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(name.waitForNonExistence(timeout: Self.wait), "back didn't leave the place's page")
+        XCTAssertTrue(cross.waitForExistence(timeout: Self.wait), "opening the place took it off")
+        XCTAssertEqual(tag.label, "F45 Training Flatiron", "opening the place took it off")
 
         cross.tap()
         XCTAssertTrue(cross.waitForNonExistence(timeout: Self.wait), "the cross didn't take the place off")

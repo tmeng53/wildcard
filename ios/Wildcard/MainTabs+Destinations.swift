@@ -30,6 +30,8 @@ extension MainTabs {
             wardrobe.openShop()
         case .wardrobe(let piece):
             showCloset(trying: piece.map { [$0] } ?? [])
+        case .place(let place):
+            openPlace(place)
         case .badges:
             // 我's player card turned to its badge board.
             showsNotices = false
@@ -100,7 +102,7 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .unlock, .stores, .store, .wardrobe, .badges:
+        case .post, .place, .unlock, .stores, .store, .wardrobe, .badges:
             break
         }
     }
@@ -141,7 +143,7 @@ extension MainTabs {
         showsSchedule = false
         wardrobe.showsShop = false
         wardrobe.editor = nil
-        (wall, post) = (nil, nil)
+        (wall, post, profilePlace, profilePlacePost) = (nil, nil, nil, nil)
     }
 
     /// 换装 is pushed over 商店街 while the street is open, else over 我; the system's back closes it

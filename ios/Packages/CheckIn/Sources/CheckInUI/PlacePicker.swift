@@ -8,19 +8,22 @@ import MapKit
 import SwiftUI
 
 /// 添加位置 on the compose ticket, left of the caption's count (Tracy, 2026-11-12): unpicked, a
-/// pill that opens the map; picked, the place's name on graphite with ✕ to take it off.
+/// pill that opens the map; picked, the place's name on graphite with ✕ to take it off and the
+/// name opening the place's page.
 struct PlacePill: View {
     @Binding var place: Place?
+    /// Opens the picked place's page (地点页).
+    let open: (Place) -> Void
     @State private var isPicking = false
 
     var body: some View {
         Group {
             if let place {
-                // Only the cross takes the place off. The name will open the place's page (地点页),
-                // which its own PR wires here; until then it does nothing.
+                // Only the cross takes the place off; the name opens the place's page.
                 PickPill(
                     Text(verbatim: place.name), systemImage: place.kind.symbol, look: .solid, isSelected: true
                 ) {
+                    open(place)
                 } remove: {
                     self.place = nil
                 }
