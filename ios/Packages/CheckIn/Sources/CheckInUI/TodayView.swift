@@ -16,9 +16,9 @@ public struct TodayView: View {
     @State private var model: TodayModel
     /// The card's page, kept so the card reopens where it was left.
     @AppStorage("today.cardPage") private var cardPage: SquadCardPage = .squad
-    /// Whether the card is folded into its capsule so the scene shows (folded until someone
-    /// opens it, then as it was left).
-    @AppStorage("today.cardCollapsed") private var isCardCollapsed = true
+    /// Whether the card is folded into its capsule so the scene shows (open until someone folds
+    /// it, then as it was left).
+    @AppStorage("today.cardCollapsed") private var isCardCollapsed = false
     /// The card and its capsule share one piece of glass, which morphs between them.
     @Namespace private var cardGlass
     /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
@@ -76,7 +76,6 @@ public struct TodayView: View {
         .environment(\.sceneTheme, theme)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.payoff)
         .modifier(HolidayOpening(model: model))
         // The one strong haptic of the payoff.
         .haptic(.checkIn, trigger: model.posts)
@@ -124,7 +123,7 @@ public struct TodayView: View {
                 coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
                 tapVacancy: model.tapVacancy, clock: model.now
             )
-            .overlay { MyPayoff(model: model, openPost: openPost) }
+            .overlay { MyPayoff(model: model) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
             .overlay(Color(Scrim.tint).opacity(model.isSceneDimmed ? Scrim.tintOpacity : 0))
             .ignoresSafeArea()

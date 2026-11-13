@@ -170,8 +170,8 @@ public struct FeedView: View {
 }
 
 extension DayHeading {
-    /// 今天, 昨天, 周三, or 10月14日.
-    var title: Text {
+    /// 今天, 昨天, 周三, or 10月14日, as 动态's days and a place's posts say them.
+    public var title: Text {
         switch self {
         case .today: Text(copy: "今天", bundle: .module)
         case .yesterday: Text(copy: "昨天", bundle: .module)

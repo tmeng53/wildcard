@@ -1,3 +1,4 @@
+import { nameText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
 export const MemberId = z.uuid().brand<'MemberId'>();
@@ -10,6 +11,15 @@ export type MemberId = z.infer<typeof MemberId>;
 export interface Place {
   readonly latitude: number;
   readonly longitude: number;
+}
+
+/**
+ * Where a member is: their cell, and the city their phone named there, in the app's language,
+ * when it could tell. The coach is told the city (never the cell) with the weather.
+ */
+export interface MemberPlace {
+  readonly place: Place;
+  readonly city?: string;
 }
 
 /** A place as the phone sends it, which may be finer than we keep. */
@@ -25,3 +35,10 @@ export function cellOf({ latitude, longitude }: Place): Place {
   const lon = round(longitude);
   return { latitude: round(latitude), longitude: lon === 180 ? -180 : lon };
 }
+
+/** A city's name as the phone sends it, such as 多伦多 or Toronto. */
+export const CityName = nameText({
+  max: 60,
+  description:
+    'The city the phone’s approximate location is in, as iOS names it in the app’s language.',
+});

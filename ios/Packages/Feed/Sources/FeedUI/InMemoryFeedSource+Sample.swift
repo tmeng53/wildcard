@@ -30,7 +30,7 @@ extension InMemoryFeedSource {
                     WorkoutSummary(durationSec: 2700, distanceM: 7400, paceSecPerKm: 365, avgHr: 151)),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")],
                 comments: [(coco, nil, "鞋：我没签这个合同"), (jay, coco, "它会习惯的"), (mia, nil, "下次带我一起淋")]),
-            write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
+            write.post(mia, 0, 12, 30, write.taggedSalad, reactions: [(coco, "❤️")]),
             write.post(
                 kiki, 0, 6, 48,
                 write.fromHealth(
@@ -46,7 +46,7 @@ extension InMemoryFeedSource {
                 viewer, 1, 19, 20,
                 write.fromHealth(
                     "strength", ["gym"], "练腿日，明天下楼梯靠扶手", tile: 2,
-                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420)),
+                    WorkoutSummary(durationSec: 3600, avgHr: 128, maxHr: 156, activeEnergyKcal: 420), at: write.myGym),
                 reactions: [(jay, "😂"), (coco, "💪"), (mia, "😂"), (doudou, "🤣")],
                 comments: [(jay, nil, "扶手：今天也是被需要的一天")]),
             write.post(fish, 2, 18, 10, .trained(write.training("tennis", minutes: 50, [], "发球终于过网了"))),
@@ -151,23 +151,30 @@ private struct SamplePosts {
     let audience: Audience
 
     func training(
-        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil
+        _ sport: Sport, minutes: Int? = nil, _ photos: [String], _ caption: String, workout: Workout? = nil,
+        place: Place? = nil
     ) -> Training {
         Training(
             activity: .sport(sport), minutes: minutes.flatMap { try? WorkoutMinutes($0) }, photos: self.photos(photos),
-            caption: line(caption), workout: workout)
+            caption: line(caption), workout: workout, place: place)
     }
 
     /// A 训练 posted from Apple Health with its numbers, and its tile at `tile`: a swim's laps,
     /// the 17th the fastest, an hour of sets' heart rate indoors, or a loop through a park.
-    func fromHealth(_ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary)
-        -> CheckIn.Entry
-    {
+    func fromHealth(
+        _ sport: Sport, _ photos: [String], _ caption: String, tile: Int, _ summary: WorkoutSummary,
+        at place: Place? = nil
+    ) -> CheckIn.Entry {
         let minutes = (summary.durationSec ?? 0) / 60
         return .trained(
             training(
                 sport, minutes: minutes, photos, caption,
-                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary)))
+                workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary), place: place))
+    }
+
+    /// My gym, its name long enough to fill the compose ticket's row.
+    var myGym: Place? {
+        try? Place(name: "F45 Training Flatiron", category: "fitnessCenter", latitude: 40.7411, longitude: -73.9897)
     }
 
     private func workout(_ sport: String, minutes: Int, tile: Int, _ summary: WorkoutSummary) -> Workout {
@@ -218,8 +225,20 @@ private struct SamplePosts {
         post(viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")), inFeed: false)
     }
 
-    func meal(_ photo: String, _ caption: String) -> Meal {
-        Meal(photos: photos([photo]), caption: line(caption))
+    func meal(
+        _ photo: String, _ caption: String, at place: Place? = nil, healthy: Int? = nil, tasty: Int? = nil
+    ) -> Meal {
+        let rating = healthy.flatMap { healthy in tasty.flatMap { try? MealRating(healthy: healthy, tasty: $0) } }
+        return Meal(photos: photos([photo]), caption: line(caption), place: place, rating: rating)
+    }
+
+    /// Mia's salad, tagged with the restaurant it came from and rated, as 动态 shows a place and
+    /// a meal's 成绩条.
+    var taggedSalad: CheckIn.Entry {
+        let place = try? Place(
+            name: "Sweetgreen", appleID: "ISampleSweetgreen", category: "restaurant", latitude: 40.7448,
+            longitude: -73.9881)
+        return .healthyMeal(meal("salad", "今天的草，吃得很体面", at: place, healthy: 5, tasty: 4))
     }
 
     func post(

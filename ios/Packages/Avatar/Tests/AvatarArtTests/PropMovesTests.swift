@@ -5,8 +5,10 @@ import Testing
 
 /// The props a character can hold or stand on, each with a move of its own.
 let heldProps = [
-    "badminton", "basketball", "bottle", "broom", "chalkbag", "dumbbell", "gloves", "goggles", "helmet", "kettlebell",
-    "pickleball", "pingpong", "racket", "skis", "snowboard", "soccerball", "yogamat",
+    "badminton", "basketball", "bottle", "broom", "chalkbag", "dogbichon", "dogcorgi", "doggolden", "doghusky",
+    "dogshiba",
+    "dumbbell", "gloves", "goggles", "helmet", "kettlebell", "pickleball", "pingpong", "racket", "skis", "snowboard",
+    "soccerball", "yogamat",
 ]
 
 /// A character standing with a prop plays its move over and over, at its persona's tempo (a

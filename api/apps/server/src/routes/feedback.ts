@@ -104,8 +104,7 @@ export function feedback(
       member,
       kind: draft.kind,
       body: draft.body,
-      screenshots: paths,
-      app: draft.app,
+      source: { from: 'app', screenshots: paths, app: draft.app },
     });
     if (outcome === 'created') {
       const stop = new AbortController();

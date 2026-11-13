@@ -14,7 +14,7 @@ final class PatUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-patted", "-uitest-bubble-hold",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-patted", "-uitest-bubble-hold",
         ]
         app.launch()
 
@@ -76,7 +76,7 @@ final class PatUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-meals", "-uitest-bubble-hold",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-meals", "-uitest-bubble-hold",
         ]
         app.launch()
         let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
@@ -117,7 +117,7 @@ final class PatUITests: XCTestCase {
 
     /// A tap off the card, above it, closes the card and its today.
     private func closePopup(_ today: XCUIElement, in app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: today, in: app)
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off the card left it open")
     }
 

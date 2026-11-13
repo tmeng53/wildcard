@@ -44,7 +44,7 @@ extension Figure.Part {
     /// flattened to 8 segments.
     fileprivate func rings(_ placement: Placement) -> [[[Point]]] {
         art.flatMap(\.shapes).filter { $0.fill != nil && $0.opacity > 0.5 }.map { shape in
-            let path = placement.bend.map { $0.apply(to: shape.path) } ?? shape.path
+            let path = placement.shaped(shape.path)
             var rings: [[Point]] = []
             var ring: [Point] = []
             var pen = Point(x: 0, y: 0)

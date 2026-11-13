@@ -77,6 +77,15 @@ export type CoachMemberFacts = (input: {
   readonly weekStart: string;
 }) => Promise<readonly MemberFacts[]>;
 
+/**
+ * A member's streaks still going, as their squad sees them: days trained in a row and days in a
+ * row with a meal, each left out when none is going. A 请假条 day neither breaks nor adds to one.
+ */
+export type CoachStreaks = (input: {
+  readonly squad: string;
+  readonly member: string;
+}) => Promise<{ readonly training?: number; readonly meals?: number }>;
+
 /** A meme in use now, from the meme library: what it means and where it came from. */
 export interface CoachMeme {
   readonly phrase: string;
@@ -88,14 +97,23 @@ export interface CoachMeme {
 export type CoachMemes = () => Promise<readonly CoachMeme[]>;
 
 /**
- * Today's weather where each of these members is, in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`), for
- * those whose place is known. The model reads only the weather, never where they are.
+ * A member's weather as the coach reads it: in words (`今天雨，8–13°C，降水概率 80%；昨天晴，…`),
+ * and the city their phone named, when it could.
+ */
+export interface WeatherWords {
+  readonly words: string;
+  readonly city?: string;
+}
+
+/**
+ * Today's weather where each of these members is, for those whose place is known. The model
+ * reads the weather and the city, never the place itself.
  */
 export type CoachWeather = (input: {
   readonly members: readonly string[];
   /** The day of the wake, `YYYY-MM-DD`. */
   readonly day: string;
-}) => Promise<ReadonlyMap<string, string>>;
+}) => Promise<ReadonlyMap<string, WeatherWords>>;
 
 /** How a wake's run ended, with the tokens it used either way. */
 export type AgentRun =
@@ -195,7 +213,10 @@ export interface MemberNote {
 
 /** The coach's notes to each member: one a member a wake; a day's newest challenge stands. */
 export interface CoachMemberNoteStore {
-  /** Saves the member's note unless its wake wrote them one; says whether this one was saved. */
+  /**
+   * Saves the member's note unless its wake wrote them one; answers the new note's id, or
+   * `undefined` when none was saved.
+   */
   save(note: {
     readonly squad: SquadId;
     readonly member: string;
@@ -205,7 +226,12 @@ export interface CoachMemberNoteStore {
     readonly challenge?: Challenge;
     /** The wake that wrote it; none for a preview an admin sent to themselves. */
     readonly wake?: number;
-  }): Promise<boolean>;
+    /**
+     * Marks it delivered as it is saved, for a note the server tells at once (a welcome), so the
+     * morning delivery never takes it up.
+     */
+    readonly deliveredNow?: boolean;
+  }): Promise<number | undefined>;
   /**
    * The newest challenge the member's notes of `day` (the squad's day) set, and their answer;
    * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
@@ -354,7 +380,8 @@ export interface CoachActivityStore {
   /**
    * The member's answer to their note's challenge (接受挑战 or 算了); `noNote` when the note
    * isn't theirs in the squad or hasn't reached them yet, `noChallenge` when it set none. The
-   * first answer stands.
+   * first answer stands, `dayOver` when none was given and its day is before `today` (the
+   * squad's day).
    */
   answerChallenge(input: {
     readonly squad: SquadId;
@@ -363,7 +390,8 @@ export interface CoachActivityStore {
     readonly answer: ChallengeAnswer;
     /** Why they let it go, with `declined` only. */
     readonly reason?: string;
-  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge'>;
+    readonly today: string;
+  }): Promise<ChallengeAnswered | 'noNote' | 'noChallenge' | 'dayOver'>;
   /**
    * The member's challenge on their note of `day` (the squad's day), once delivered; the same
    * as the coach's `challengeOf`.
@@ -495,6 +523,9 @@ export type CoachTimeZones = (
   moment: Date,
 ) => Promise<(squad: SquadId) => string>;
 
+/** Which of these squads ended (everyone left): the coach never wakes for one. */
+export type CoachEndedSquads = (squads: readonly SquadId[]) => Promise<ReadonlySet<SquadId>>;
+
 /** The coach each squad has hired, and every hire and firing. */
 export interface CoachHiringStore {
   /** The coach the squad has hired now and since when, if any. */
@@ -618,3 +649,25 @@ export interface CoachGifting {
     readonly line: string;
   }): Promise<string | undefined>;
 }
+
+/**
+ * Passes on what a member asked for under a post (a feature they want, something broken) as
+ * feedback from them, filed like 意见反馈 (Tracy, 2026-11-12). Says why not, when it couldn't
+ * (the member's day's limit). Kept by the feedback module.
+ */
+export type CoachFeedback = (relay: {
+  /** The wake that passes it on, so a wake run twice passes it on once. */
+  readonly wake: number;
+  readonly squad: SquadId;
+  readonly coach: CoachId;
+  /** Who asked for it. */
+  readonly member: string;
+  readonly checkIn: string;
+  /** The comment it was said in, when it wasn't the post itself. */
+  readonly comment?: string;
+  readonly kind: 'problem' | 'idea';
+  /** The coach's words of what they asked for. */
+  readonly text: string;
+  /** Their own words the coach heard it in. */
+  readonly quote: string;
+}) => Promise<string | undefined>;

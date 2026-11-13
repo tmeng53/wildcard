@@ -22,7 +22,12 @@ import {
 } from '@wildcard/check-ins';
 import { createMinimumBuilds, createPostgresMinimumBuild } from '@wildcard/switches';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
-import { createDailyPushSettings, createPostgresDailyPushSettings } from '@wildcard/push';
+import {
+  createDailyPushSettings,
+  createPostgresDailyPushSettings,
+  createPostgresTeammatePushSettings,
+  createTeammatePushSettings,
+} from '@wildcard/push';
 import {
   createDiceLines,
   createDraftSettings,
@@ -81,6 +86,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placesOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -92,6 +99,7 @@ import { artTools } from './tools/art.js';
 import { listAdminLog } from './tools/admin-log.js';
 import { aiWritingTools } from './tools/ai-writing.js';
 import { dailyPushTools } from './tools/daily-push.js';
+import { teammatePushTools } from './tools/teammate-push.js';
 import { appCopyTools } from './tools/app-copy.js';
 import { disclaimerDiceTools } from './tools/disclaimer-dice.js';
 import { minimumBuildTools } from './tools/minimum-build.js';
@@ -190,6 +198,8 @@ beforeAll(async () => {
           photos,
           aiConsent: aiConsentOn(db),
           nudges: nudgesOn(db),
+          ...placesOn(db),
+          savedPlaces: savedPlacesOn(db),
           weather: weatherOn(db),
           scenes: scenesOn(db),
           switches: switchesOn(db),
@@ -245,6 +255,11 @@ beforeAll(async () => {
               ...dailyPushTools({
                 settings: createDailyPushSettings({
                   store: createPostgresDailyPushSettings(scope),
+                }),
+              }),
+              ...teammatePushTools({
+                settings: createTeammatePushSettings({
+                  store: createPostgresTeammatePushSettings(scope),
                 }),
               }),
               ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
@@ -487,6 +502,8 @@ describe('the admin MCP server', () => {
       ['change_app_copy', false],
       ['get_daily_push_settings', true],
       ['change_daily_push_settings', false],
+      ['get_teammate_push_settings', true],
+      ['change_teammate_push_settings', false],
       ['get_sports', true],
       ['put_sport', false],
       ['put_sport_category', false],
@@ -1225,7 +1242,7 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('puts an unlock rule and logs it, refusing a prop and a sport the list lacks', async () => {
+  it('puts an unlock rule and logs it, refusing a sport the list lacks', async () => {
     const admin = await member({ admin: true });
     const client = await connect(clientSignedInAs(admin));
     const call = async (name: string, args: Record<string, unknown> = {}) => {
@@ -1254,14 +1271,21 @@ describe('the admin MCP server', () => {
       sports: ['tennis', 'pickleball', 'squash'],
       after: 3,
     });
-    const props = await call('put_unlock_rule', {
+    // Most props need no rule, but one may: the dogs on a leash open after a 遛狗.
+    const dog = await call('put_unlock_rule', {
       kind: 'prop',
-      id: 'racket',
-      sports: ['tennis'],
+      id: 'testdog',
+      sports: ['dogWalk'],
       after: 1,
     });
-    // Props need no rule: every member holds every one.
-    expect(props.isError).toBe(true);
+    expect(dog.isError).toBe(false);
+    expect(
+      Rules.parse(JSON.parse(dog.text)).rules.find(({ id }) => id === 'testdog'),
+    ).toMatchObject({
+      kind: 'prop',
+      sports: ['dogWalk'],
+      after: 1,
+    });
     const refused = await call('put_unlock_rule', {
       kind: 'store',
       id: 'deuce',
@@ -1285,6 +1309,11 @@ describe('the admin MCP server', () => {
           sports: ['tennis', 'pickleball', 'squash'],
           after: 3,
         },
+      },
+      {
+        version: 1,
+        tool: 'put_unlock_rule',
+        arguments: { kind: 'prop', id: 'testdog', sports: ['dogWalk'], after: 1 },
       },
     ]);
     await client.close();

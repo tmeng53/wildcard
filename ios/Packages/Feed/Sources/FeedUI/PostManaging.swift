@@ -21,9 +21,13 @@ struct PostManaging: ViewModifier {
         content
             .fullScreenCover(isPresented: editing) {
                 if let compose = model.editing {
-                    ComposeView(model: compose)
-                        .environment(\.sceneTheme, theme)
-                        .accentTone(.brand)
+                    // A stack of its own, so the place pill's name pushes the place's page over it.
+                    NavigationStack {
+                        ComposeView(model: compose)
+                            .navigationRoot()
+                    }
+                    .environment(\.sceneTheme, theme)
+                    .accentTone(.brand)
                 }
             }
             .sheet(item: scoreCard) { card in

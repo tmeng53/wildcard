@@ -81,9 +81,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     ) -> Bool {
         // Set before launching ends, so a tap that launched the app is delivered.
         UNUserNotificationCenter.current().delegate = taps
-        // The 6pm push opens into today's check-ins (its content extension, by this category).
+        // The 6pm push and the teammate push open into today's check-ins (the content extension,
+        // by these categories).
         UNUserNotificationCenter.current().setNotificationCategories([
-            UNNotificationCategory(identifier: "dailyProgress", actions: [], intentIdentifiers: [])
+            UNNotificationCategory(identifier: "dailyProgress", actions: [], intentIdentifiers: []),
+            UNNotificationCategory(identifier: "teammateCheckIn", actions: [], intentIdentifiers: []),
         ])
         Task { await Push.registration.launched() }
         #if DEBUG

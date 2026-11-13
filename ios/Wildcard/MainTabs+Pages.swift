@@ -59,6 +59,10 @@ enum TodayPage: Hashable {
     case coachEarlier
     /// A card opened from 以前.
     case coachCard(CoachPageCard)
+    /// A place's own page, from a post's tag on a post pushed here.
+    case place(Place)
+    /// A post's own page, from a tile on a place's page.
+    case post(OpenedPost)
 }
 
 /// A post opened from 动态's card (with the feed's model), 我的动态 or 通知 (with the page's own
@@ -78,6 +82,8 @@ enum FeedPage: Hashable {
     /// A post's page: a card's, straight over 动态, or one a notice opened, over 通知 or straight
     /// over 动态.
     case post(OpenedPost)
+    /// A place's own page, from a post's tag, and posts from its tiles over it.
+    case place(Place)
 }
 
 extension MainTabs {

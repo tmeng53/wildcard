@@ -4,13 +4,28 @@ import Foundation
 
 /// The sample member's 商店街 for the UI tests.
 extension LaunchOptions {
-    /// What the team gave the sample member: with `-uitest-broadcast thanks`, the letter's piece.
+    /// What the team gave the sample member: with `-uitest-broadcast thanks`, the letter's piece,
+    /// unless `-uitest-letter-piece-unlocked` says they had unlocked it by training already, so the
+    /// team's gift left it as it was (it waits on 商店街 instead).
     static var teamGifts: [String] {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count,
-            arguments[flag + 1] == "thanks"
+            arguments[flag + 1] == "thanks", !letterPieceUnlocked
         else { return [] }
         return ["warmup-beanie"]
+    }
+
+    /// `-uitest-letter-piece-unlocked`: the team letter's piece was unlocked by training before
+    /// the letter came.
+    static var letterPieceUnlocked: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-letter-piece-unlocked")
+    }
+
+    /// What 我 reads the sample member unlocked: `unlocked`, and the letter's piece under
+    /// `-uitest-letter-piece-unlocked`.
+    static var profileUnlocks: [Unlock] {
+        guard letterPieceUnlocked else { return unlocked }
+        return unlocked + [Unlock(kind: .piece, id: "warmup-beanie", unlockedAt: now(), sports: [], checkIns: 6)]
     }
 
     /// The sample member's 商店街, as the server works it out for someone who just started, in
@@ -37,7 +52,7 @@ extension LaunchOptions {
                 ("deuce-terry", 16), ("deuce-pants", 20), ("deuce-ball", 30),
             ],
         ]
-        let held = Set(unlocked.map(\.id))
+        let held = Set(profileUnlocks.map(\.id))
         let earned = ["warmup"] + (held.contains("deuce") ? ["deuce"] : []) + (winter ? ["powder"] : [])
         let wear = (try? PlaceholderCharacter.editorChoices().wear.values.joined()).map(Array.init) ?? []
         let pieces = wear.filter { earned.contains($0.store) }.map { piece in

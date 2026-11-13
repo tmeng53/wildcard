@@ -26,6 +26,8 @@ export interface WeekCheckIn {
   readonly minutes?: number;
   /** The member's line: a caption, or a 请假条's text. */
   readonly text?: string;
+  /** The name of the place the member tagged it with, never its coordinates. */
+  readonly place?: string;
   /** For a 请假条: true when it is a planned rest (休息), not leave. */
   readonly restDay?: true;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
@@ -51,6 +53,31 @@ export interface WeekComment {
   readonly toCoach?: string;
   /** The coach it @s (@毛头), when it does. */
   readonly mentionsCoach?: string;
+  /** The teammate it replies to (回复 Mia：…), by member id, when it does. */
+  readonly replyTo?: string;
+  /** The teammates it @s, by member id, in the order written. */
+  readonly mentions?: readonly string[];
+}
+
+/**
+ * Whom a comment answers or @s, as the model reads it after its writer: `（回复队员2，@队员3）`,
+ * the coach by `coach` (`教练`, `你` or its name). Empty when it is said to no one in particular.
+ */
+export function addressedWords(
+  comment: Pick<WeekComment, 'toCoach' | 'mentionsCoach' | 'replyTo' | 'mentions'>,
+  {
+    roster,
+    coach = () => '教练',
+  }: { readonly roster: ReadonlyMap<string, string>; readonly coach?: (id: string) => string },
+): string {
+  const name = (member: string): string => roster.get(member) ?? '队员';
+  const parts = [
+    ...(comment.replyTo === undefined ? [] : [`回复${name(comment.replyTo)}`]),
+    ...(comment.toCoach === undefined ? [] : [`回复${coach(comment.toCoach)}`]),
+    ...(comment.mentions ?? []).map((member) => `@${name(member)}`),
+    ...(comment.mentionsCoach === undefined ? [] : [`@${coach(comment.mentionsCoach)}`]),
+  ];
+  return parts.length === 0 ? '' : `（${parts.join('，')}）`;
 }
 
 /** The coach a comment talks to, by replying to it or @-ing it, if any. */
@@ -110,56 +137,98 @@ export function postWhat(checkIn: WeekCheckIn): string {
   return checkIn.minutes === undefined ? sport : `${sport} ${String(checkIn.minutes)} 分钟`;
 }
 
-/** One check-in as a line the model reads. */
-export function checkInLine(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
-  const who = roster.get(checkIn.member) ?? '队员';
-  const parts = [
-    `${dayWords(checkIn.day)} ${who} ${checkIn.restDay === true ? PLANNED_REST : KIND_WORDS[checkIn.kind]}`,
-  ];
+/** A check-in's heading as the model reads it: `11-11 周三 · 队员2 · 力量 50 分钟`. */
+export function checkInTitle(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
+  const what =
+    checkIn.kind === 'trained' && checkIn.restDay !== true
+      ? `${KIND_WORDS.trained}：${postWhat(checkIn)}`
+      : postWhat(checkIn);
+  return `${dayWords(checkIn.day)} · ${roster.get(checkIn.member) ?? '队员'} · ${what}`;
+}
+
+/** One comment as a list item: `- 队员2（回复队员1）：「其实是牛奶」`. */
+function commentItem(comment: WeekComment, roster: ReadonlyMap<string, string>): string {
+  return `- ${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster, coach: () => '你' })}：「${comment.text}」`;
+}
+
+/**
+ * One check-in as a Markdown block (Tracy, 2026-11-12: one line each was too hard to read): its
+ * heading, then one fact a line, its comments under it one a line in order.
+ */
+export function checkInBlock(
+  checkIn: WeekCheckIn,
+  {
+    roster,
+    heading = '### ',
+    comments = true,
+  }: {
+    readonly roster: ReadonlyMap<string, string>;
+    readonly heading?: string;
+    /** `false` leaves the comments out, `'below'` says they are in the talk under the posts. */
+    readonly comments?: boolean | 'below';
+  },
+): string {
+  const lines = [`${heading}${checkInTitle(checkIn, roster)}`];
   if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
-    parts.push(
-      `（补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发）`,
+    lines.push(
+      `- 补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
     );
   } else if (checkIn.postedTime !== undefined) {
-    parts.push(`（本人当地 ${checkIn.postedTime} 发）`);
+    lines.push(`- 本人当地 ${checkIn.postedTime} 发`);
   }
-  if (checkIn.sport !== undefined) parts.push(checkIn.sport);
-  if (checkIn.unposted === true) parts.push('（只记录，没发动态）');
-  if (checkIn.minutes !== undefined) parts.push(`${String(checkIn.minutes)} 分钟`);
-  if (checkIn.text !== undefined) parts.push(`「${checkIn.text}」`);
+  if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
+  if (checkIn.place !== undefined) lines.push(`- 地点：「${checkIn.place}」`);
+  if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
-    parts.push(`（${String(checkIn.photos.length)} 张照片）`);
+    lines.push(`- 照片：${String(checkIn.photos.length)} 张`);
   }
-  const line = [parts.join(' ')];
   if (checkIn.reactedBy.length > 0) {
-    line.push(
-      `点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
+    lines.push(
+      `- 点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
     );
   }
-  if (checkIn.comments.length > 0) {
-    const comments = checkIn.comments.map(
-      ({ member, text, toCoach, mentionsCoach }) =>
-        `${roster.get(member) ?? '队员'}${toCoach === undefined ? (mentionsCoach === undefined ? '' : '@教练') : '回复教练'}「${text}」`,
+  if (comments === 'below') {
+    lines.push('- 评论：见下面「和你的对话」');
+  } else if (comments && checkIn.comments.length > 0) {
+    lines.push(
+      '- 评论（先后顺序）：',
+      ...checkIn.comments.map((comment) => `  ${commentItem(comment, roster)}`),
     );
-    line.push(`评论：${comments.join('；')}`);
   }
-  return line.join(' · ');
+  return lines.join('\n');
+}
+
+/**
+ * Who is who, as every task opens with it: each member's roster name with the nickname their
+ * squadmates know them by. The model reads everyone as 队员N but must speak to people by their
+ * nicknames, so it is told them each time; without it, it guessed names from the talk and mixed
+ * people up (Tracy, 2026-11-12).
+ */
+export function rosterText(week: Pick<SquadWeek, 'members'>): string {
+  const roster = rosterOf(week);
+  const members = week.members.map(({ member, nickname }) => {
+    const name = roster.get(member) ?? '队员';
+    return nickname === undefined ? `- ${name}` : `- ${name}：${nickname}`;
+  });
+  return ['## 谁是谁（队员N：昵称）', ...members].join('\n');
 }
 
 /** The week as the `squad_week` tool answers it. */
 export function weekText(week: SquadWeek): string {
   const roster = rosterOf(week);
-  const members = week.members.map(
-    ({ member, nickname }) =>
-      `${roster.get(member) ?? '队员'}${nickname === undefined ? '' : `（昵称：${nickname}）`}`,
-  );
-  const checkIns = week.checkIns.map((checkIn) => `- ${checkInLine(checkIn, roster)}`);
   return [
-    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
-    `本周从 ${week.weekStart}（周一）开始。`,
-    `队员：${members.join('，')}`,
-    checkIns.length === 0 ? '这周还没有人打卡。' : `打卡：\n${checkIns.join('\n')}`,
-  ].join('\n');
+    [
+      '# 本周',
+      ...(week.name === undefined ? [] : [`- 队名：${week.name}`]),
+      `- 从 ${week.weekStart}（周一）开始`,
+    ].join('\n'),
+    rosterText(week),
+    week.checkIns.length === 0
+      ? '## 打卡\n这周还没有人打卡。'
+      : ['## 打卡', ...week.checkIns.map((checkIn) => checkInBlock(checkIn, { roster }))].join(
+          '\n\n',
+        ),
+  ].join('\n\n');
 }
 
 /**

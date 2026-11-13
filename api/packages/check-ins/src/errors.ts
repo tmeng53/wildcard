@@ -78,6 +78,17 @@ export class SportNotListedError extends AppError {
   }
 }
 
+/** Thrown when a post is tagged with a squad's place that isn't one of its squads' places. */
+export class SquadPlaceNotFoundError extends AppError {
+  override readonly name = 'SquadPlaceNotFoundError';
+  readonly reason = 'SQUAD_PLACE_NOT_FOUND';
+  readonly status = 'INVALID_ARGUMENT';
+
+  constructor(readonly place: string) {
+    super(`${place} is not a place of the post's squads.`);
+  }
+}
+
 /**
  * Thrown when the caller isn't in a squad they name. The same answer whether or not the squad
  * exists, so it reveals nothing about other squads.

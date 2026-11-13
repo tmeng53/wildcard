@@ -2,6 +2,7 @@ import type { DailyPushSettings } from './domain/daily-push-settings.js';
 import type { DailyCandidate, DuePush, LocalDay } from './domain/daily.js';
 import type { Device, DeviceToken, MemberId } from './domain/device.js';
 import type { PushNotification } from './domain/notification.js';
+import type { TeammatePushSettings } from './domain/teammate-push-settings.js';
 import type { PushSettings, PushTopic } from './domain/topic.js';
 
 /** Where members' push devices are kept. */
@@ -66,4 +67,36 @@ export interface DailyPushSettingsStore {
    * nothing is saved or logged. Says whether anything changed.
    */
   save(settings: DailyPushSettings, by: MemberId): Promise<boolean>;
+}
+
+/** Where the teammate push's settings for everyone are kept: one value, and a log of every change. */
+export interface TeammatePushSettingsStore {
+  /**
+   * The settings now. `forUpdate` holds the row until the caller's transaction ends, so two
+   * admins changing them at once apply one change after the other.
+   */
+  current(options?: { readonly forUpdate?: boolean }): Promise<TeammatePushSettings>;
+  /**
+   * Saves `settings` with `by` as who changed them, unless they are the settings already: then
+   * nothing is saved or logged. Says whether anything changed.
+   */
+  save(settings: TeammatePushSettings, by: MemberId): Promise<boolean>;
+}
+
+/** How a teammate push goes to a member: ringing, or silently once their rings are used up. */
+export type TeammatePushRing = 'ring' | 'silent';
+
+/** Which teammate pushes have been handled, check-in by check-in and member by member. */
+export interface TeammatePushStore {
+  /**
+   * Marks the push about `checkIn` to `member` handled `at` that moment, and says how it goes:
+   * `ring` while fewer than `dailyRings` rang for the member in the 24 hours before, else
+   * `silent`. Undefined when it already was handled, and then it must not be sent again.
+   */
+  claim(handled: {
+    readonly checkIn: string;
+    readonly member: MemberId;
+    readonly at: Date;
+    readonly dailyRings: number;
+  }): Promise<TeammatePushRing | undefined>;
 }

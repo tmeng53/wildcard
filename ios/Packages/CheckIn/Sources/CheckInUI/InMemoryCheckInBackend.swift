@@ -11,18 +11,18 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var photoCount = 0
     private var squadPokes: SquadPokes
     private var sidelineCoach: SidelineCoach?
-    private var unseenCoachCards: Bool
+    private var unseenCoachCard: CoachPageCard?
     private var dayChallenge: DayChallenge?
     private var openedLetterID: Int?
 
     public init(
-        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, unseenCoachCards: Bool = false,
+        home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, unseenCoachCard: CoachPageCard? = nil,
         challenge: DayChallenge? = nil
     ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
-        self.unseenCoachCards = unseenCoachCards
+        self.unseenCoachCard = unseenCoachCard
         dayChallenge = challenge
     }
 
@@ -92,7 +92,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
             coach: sideline(coach || coachNote || challenge, coachLetter, now, squadID),
-            unseenCoachCards: coachNote,
+            unseenCoachCard: coachNote ? sampleUnseenNote(now: now) : nil,
             challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
@@ -266,7 +266,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func coach(in squad: SquadID) async throws(CheckInError) -> SidelineCoach? { sidelineCoach }
 
-    public func hasUnseenCoachCards(in squad: SquadID) async throws(CheckInError) -> Bool { unseenCoachCards }
+    public func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
+        unseenCoachCard
+    }
 }
 
 extension InMemoryCheckInBackend {

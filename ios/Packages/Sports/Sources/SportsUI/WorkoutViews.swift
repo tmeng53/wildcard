@@ -45,6 +45,16 @@ extension ScoreCell.Unit {
     }
 }
 
+extension MealScoreCell.Label {
+    public var text: Text {
+        switch self {
+        case .healthy: Text(copy: "健康", bundle: .module)
+        case .tasty: Text(copy: "好吃", bundle: .module)
+        case .calorieValue: Text(copy: "卡价比", bundle: .module)
+        }
+    }
+}
+
 extension ScoreCell.Label {
     public var text: Text {
         switch self {
@@ -74,6 +84,7 @@ extension ScoreCell.Label {
 public struct ScoreStrip: View {
     @Environment(\.locale) private var locale
     private let cells: [ScoreCell]
+    private let meal: [MealScoreCell]
     private let colors: PostBlockColors
     private let bottom: Bottom
     private let struck: Set<WorkoutCell>
@@ -97,9 +108,21 @@ public struct ScoreStrip: View {
     /// Read only, under a post's cover.
     public init(cells: [ScoreCell], activity: Activity, bottom: Bottom = .rounded, fill: Fill = .block) {
         self.cells = cells
+        meal = []
         self.bottom = bottom
         self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
+        struck = []
+        onToggle = nil
+    }
+
+    /// A rated meal's, read only, under its cover in the colour of its kind (Tracy, 2026-11-12).
+    public init(meal rating: MealRating, kind: CheckInKind, bottom: Bottom = .rounded) {
+        cells = []
+        meal = MealScoreCell.cells(of: rating)
+        self.bottom = bottom
+        fill = .block
+        colors = PostBlockColors(kind: kind, activity: nil)
         struck = []
         onToggle = nil
     }
@@ -111,6 +134,7 @@ public struct ScoreStrip: View {
         onToggle: @escaping (WorkoutCell) -> Void
     ) {
         self.cells = cells
+        meal = []
         bottom = .rounded
         self.fill = fill
         colors = PostBlockColors(kind: .trained, activity: activity)
@@ -136,12 +160,7 @@ public struct ScoreStrip: View {
     public var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(cells.enumerated()), id: \.element.id) { index, cell in
-                if index > 0 {
-                    Rectangle()
-                        .fill(Color(colors.ink).opacity(0.35))
-                        .frame(width: 1)
-                        .padding(.vertical, Space.s)
-                }
+                if index > 0 { divider }
                 if let onToggle {
                     let isStruck = struck.contains(cell.cell)
                     Button {
@@ -161,6 +180,11 @@ public struct ScoreStrip: View {
                         .accessibilityIdentifier("strip.\(cell.cell.rawValue)")
                 }
             }
+            ForEach(Array(meal.enumerated()), id: \.element.id) { index, cell in
+                if index > 0 { divider }
+                face(cell)
+                    .accessibilityIdentifier("strip.\(cell.label.rawValue)")
+            }
         }
         .frame(height: Self.height)
         .frame(maxWidth: .infinity)
@@ -170,17 +194,47 @@ public struct ScoreStrip: View {
         .accessibilityIdentifier(onToggle == nil ? "post.strip" : "compose.score")
     }
 
+    private var divider: some View {
+        Rectangle()
+            .fill(Color(colors.ink).opacity(0.35))
+            .frame(width: 1)
+            .padding(.vertical, Space.s)
+    }
+
     private func face(_ cell: ScoreCell, isStruck: Bool) -> some View {
+        face(label: cell.label.text, isStruck: isStruck) {
+            Text(verbatim: cell.value)
+                .typeStyle(TypeRamp.scoreInline)
+                .strikethrough(isStruck)
+            if let unit = cell.unit {
+                unit.text.typeStyle(TypeRamp.label)
+            }
+        }
+    }
+
+    private func face(_ cell: MealScoreCell) -> some View {
+        face(label: cell.label.text, isStruck: false) {
+            Text(verbatim: cell.value)
+                .typeStyle(TypeRamp.scoreInline)
+            if cell.isStars {
+                JellyStar(lit: true, size: Self.star)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] }
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    /// The star beside a meal's 健康 and 好吃, the design's.
+    private static let star: CGFloat = 16
+
+    private func face<Number: View>(
+        label: Text, isStruck: Bool, @ViewBuilder number: () -> Number
+    ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
-                Text(verbatim: cell.value)
-                    .typeStyle(TypeRamp.scoreInline)
-                    .strikethrough(isStruck)
-                if let unit = cell.unit {
-                    unit.text.typeStyle(TypeRamp.label)
-                }
+                number()
             }
-            cell.label.text
+            label
                 .typeStyle(TypeRamp.caption)
                 .opacity(0.85)
         }

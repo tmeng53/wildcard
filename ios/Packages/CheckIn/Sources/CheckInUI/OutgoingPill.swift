@@ -89,7 +89,9 @@ struct OutgoingPill: View {
     private func tap() {
         switch outgoing {
         case .sending: break
-        case .sent(let saved): open(saved)
+        case .sent(let saved):
+            open(saved)
+            dismiss()
         case .waiting: dismiss()
         }
     }
