@@ -143,7 +143,7 @@ extension MainTabs {
         showsSchedule = false
         wardrobe.showsShop = false
         wardrobe.editor = nil
-        (wall, post, profilePlace) = (nil, nil, nil)
+        (wall, post, profilePlace, profilePlacePost) = (nil, nil, nil, nil)
     }
 
     /// 换装 is pushed over 商店街 while the street is open, else over 我; the system's back closes it

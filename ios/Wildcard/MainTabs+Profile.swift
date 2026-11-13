@@ -29,7 +29,10 @@ extension MainTabs {
                 destinations: MeDestinations(
                     editCharacter: wardrobe.editCharacter, schedule: { showsSchedule = true },
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
-                    openPost: { (post, profilePlace) = (OpenedPost(id: $0, model: feed.page(of: $0)), nil) },
+                    openPost: {
+                        post = OpenedPost(id: $0, model: feed.page(of: $0))
+                        (profilePlace, profilePlacePost) = (nil, nil)
+                    },
                     privacyPolicy: PolicyPages.privacyPolicy, terms: PolicyPages.terms,
                     writeReview: PolicyPages.writeReview, previewSignUp: previewSignUp, health: today.health,
                     location: location, widgetGuide: AnyView(WidgetGuide(now: LaunchOptions.now())),
@@ -58,7 +61,8 @@ extension MainTabs {
                     PostWallView(
                         store: wall,
                         open: {
-                            (post, profilePlace) = (OpenedPost(id: $0.id, model: postPage($0.id, over: wall)), nil)
+                            post = OpenedPost(id: $0.id, model: postPage($0.id, over: wall))
+                            (profilePlace, profilePlacePost) = (nil, nil)
                         },
                         checkIn: { selection = .today }
                     )
@@ -66,7 +70,7 @@ extension MainTabs {
                         PostDetailView(model: opened.model, post: opened.id) { post = nil }
                             .environment(\.sceneTheme, today.scene)
                             .navigationDestination(item: $profilePlace) { place in
-                                placePage(place) { open(.post($0)) }
+                                profilePlacePage(place, over: wall)
                             }
                     }
                 }
@@ -76,11 +80,13 @@ extension MainTabs {
                 PostDetailView(model: opened.model, post: opened.id) { post = nil }
                     .environment(\.sceneTheme, today.scene)
                     .navigationDestination(item: $profilePlace) { place in
-                        placePage(place) { open(.post($0)) }
+                        profilePlacePage(place, over: nil)
                     }
             }
         }
         .onChange(of: post?.id) { _, id in if id == nil { Task { await profile.reload() } } }
+        // The place popped: a post that was over it goes too, so it never comes back with the next place.
+        .onChange(of: profilePlace) { _, place in if place == nil { profilePlacePost = nil } }
         // 商店街 follows what 我 reads, made again only while it is closed so an open one keeps its place.
         .task(id: wardrobe.key) { wardrobe.refresh() }
         .accentTone(.brand)
@@ -92,8 +98,20 @@ extension MainTabs {
             get: { wall != nil },
             set: {
                 guard !$0 else { return }
-                (wall, post, profilePlace) = (nil, nil, nil)
+                (wall, post, profilePlace, profilePlacePost) = (nil, nil, nil, nil)
             })
+    }
+
+    /// A place opened on 我, with a tile's post pushed over it on 我's own stack, so back returns to
+    /// the place; a post from 我的动态's place still tells the wall what changed.
+    private func profilePlacePage(_ place: Place, over wall: PostWallStore?) -> some View {
+        placePage(place) { id in
+            profilePlacePost = OpenedPost(id: id, model: wall.map { postPage(id, over: $0) } ?? feed.page(of: id))
+        }
+        .navigationDestination(item: $profilePlacePost) { opened in
+            PostDetailView(model: opened.model, post: opened.id) { profilePlacePost = nil }
+                .environment(\.sceneTheme, today.scene)
+        }
     }
 
     /// 商店街 is pushed; the system's back closes it.

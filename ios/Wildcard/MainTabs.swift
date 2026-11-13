@@ -81,6 +81,8 @@ struct MainTabs: View {
     @State var post: OpenedPost?
     /// A place opened from that post's tag, pushed over it.
     @State var profilePlace: Place?
+    /// A post opened from that place's tiles, pushed over the place.
+    @State var profilePlacePost: OpenedPost?
     /// 设置, pushed over 我.
     @State var showsSettings = false
     /// A player's card, opened from the home or 小队, popped up over every tab and the tab bar.
@@ -255,7 +257,10 @@ struct MainTabs: View {
                         inbox: inbox, viewer: noticeViewer, unlocked: unlockWords, now: LaunchOptions.now, open: open
                     )
                 case .post(let opened):
-                    PostDetailView(model: opened.model, post: opened.id) { noticePost = nil }
+                    // Closing (a delete) takes only this post away: a place or 通知 under it stays.
+                    PostDetailView(model: opened.model, post: opened.id) {
+                        if case .post(let top) = feedPages.last, top.id == opened.id { feedPages.removeLast() }
+                    }
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 }

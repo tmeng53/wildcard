@@ -16,7 +16,8 @@ extension MainTabs {
             todayPages.append(.place(place))
         case .profile:
             if post != nil {
-                profilePlace = place
+                // From a post over a place, back to that place's own stack level.
+                (profilePlace, profilePlacePost) = (place, nil)
             } else {
                 selection = .feed
                 feedPages.append(.place(place))
