@@ -50,8 +50,8 @@ struct MainTabs: View {
     var sceneMoved: () -> Void = {}
     /// Bumped each time a push arrives while the app is in front, which the app tells itself.
     var pushesInFront = 0
-    /// 设置's 预览注册, for admins; nil for everyone else.
-    var previewSignUp: (() -> Void)?
+    /// 设置 › 管理员's tools, for admins and their demo accounts.
+    var admin: AdminTools
     /// 设置 › 位置: the phone's approximate location for the coach's weather.
     let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
@@ -95,12 +95,12 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, notices: any NoticeSource,
         coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
-        destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
+        destination: Binding<AppDestination?> = .constant(nil), admin: AdminTools = AdminTools(),
         location: LocationSharing? = nil, pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {},
         leftSquad: @escaping () -> Void = {}
     ) {
         (self.pushesInFront, self.sceneMoved) = (pushesInFront, sceneMoved)
-        self.previewSignUp = previewSignUp
+        self.admin = admin
         self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts, self.places) = (squad, recap, myPosts, places)

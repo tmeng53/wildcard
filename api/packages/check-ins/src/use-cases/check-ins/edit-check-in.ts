@@ -38,7 +38,7 @@ interface Deps {
   readonly membership: SquadMembership;
   readonly photos: PhotoFiles;
   readonly sports: SportList;
-  readonly squadPlaceOf?: SquadPlaceOf;
+  readonly squadPlaceOf: SquadPlaceOf;
   readonly plans: WeeklyPlanStore;
 }
 

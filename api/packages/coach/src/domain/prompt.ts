@@ -157,12 +157,12 @@ function keptStreakSection(
       ? [`连续训练 ${String(kept.training)} 天`]
       : []),
     ...(kept?.meals !== undefined && kept.meals >= 2
-      ? [`连续吃饭打卡 ${String(kept.meals)} 天`]
+      ? [`连续健康餐 ${String(kept.meals)} 天`]
       : []),
   ];
   return parts.length === 0
     ? []
-    : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。现在${parts.join('、')}。`];
+    : [`## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在${parts.join('、')}。`];
 }
 
 /** How much of each file's beginning every waking task shows, in characters. */

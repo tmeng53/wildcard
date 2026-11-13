@@ -513,10 +513,10 @@ describe('when the coach wakes', () => {
         ...(keptStreaks === undefined ? {} : { keptStreaks }),
       })?.split('\n\n');
     expect(task({ training: 12, meals: 5 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天、连续吃饭打卡 5 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天、连续健康餐 5 天。',
     );
     expect(task({ training: 12, meals: 1 })).toContain(
-      '## 连续天数\n请假或休息的那天不断连续，也不算一天。现在连续训练 12 天。',
+      '## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在连续训练 12 天。',
     );
     expect(task({ training: 1 })?.join('\n\n')).not.toContain('连续天数');
     expect(task()?.join('\n\n')).not.toContain('连续天数');
@@ -1043,6 +1043,16 @@ describe('recall', () => {
   it('finds the lines holding any of the words, in file order, naming each file', () => {
     expect(recallLines(files, { query: '半马 爬山' })).toBe(
       '【people/队员1.md】- 想跑半马\n【memory.md】- 大家约好周日爬山',
+    );
+  });
+
+  it('finds Chinese worded differently, by most of its two-character pieces', () => {
+    // 「游泳时间」 shares 游泳 with 「周三固定游泳」 but not enough of the rest.
+    expect(recallLines(files, { query: '周日爬山计划' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '花生过敏吗' })).toBe('【people/队员1.md】- 对花生过敏');
+    expect(recallLines(files, { query: '爬山周日' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '游泳时间' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
     );
   });
 
