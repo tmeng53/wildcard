@@ -81,7 +81,8 @@ export type CoachMemberFacts = (input: {
 
 /**
  * A member's streaks still going, as their squad sees them: days trained in a row and days in a
- * row with a meal, each left out when none is going. A 请假条 day neither breaks nor adds to one.
+ * row with a 健康餐, each left out when none is going. A 请假条 day (and, for meals, a 坦白放纵餐 day)
+ * neither breaks nor adds to one.
  */
 export type CoachStreaks = (input: {
   readonly squad: string;

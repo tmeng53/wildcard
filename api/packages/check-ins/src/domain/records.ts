@@ -44,7 +44,7 @@ export interface MemberRecords {
   readonly longestMinutes?: number;
   /** Most days trained in a row; a planned rest day between them neither breaks nor adds. */
   readonly longestStreak?: Streak;
-  /** Most days in a row with a 健康餐. */
+  /** Most days in a row with a 健康餐, as `mealBridges` bridges them. */
   readonly mealStreak?: Streak;
   /** 训练 by the hour of the member's clock they started at, 0 to 23 (`startHour`). */
   readonly hours: readonly number[];
@@ -166,9 +166,23 @@ export function currentRun(
   return run === undefined ? {} : { streak: run };
 }
 
+/**
+ * The days a meal streak runs through without counting (Tracy, 2026-11-13): a 健康餐 adds a day,
+ * while a day with a 坦白放纵餐 or a 请假条 neither breaks the run nor adds to it, as a planned rest
+ * day does for training. The one rule for the player card's 外卡 and 外卡记录 alike.
+ */
+export function mealBridges(days: {
+  readonly cheatMeals: Iterable<LocalDay>;
+  readonly leave: Iterable<LocalDay>;
+}): ReadonlySet<LocalDay> {
+  return new Set([...days.cheatMeals, ...days.leave]);
+}
+
 export function memberRecords(input: {
   readonly trainings: readonly RecordTraining[];
   readonly healthyMealDays: readonly LocalDay[];
+  /** Days with a 坦白放纵餐: a meal streak runs through them without counting them. */
+  readonly cheatMealDays: readonly LocalDay[];
   /** Days the member's plans made rest days, over the span of their trainings. */
   readonly restDays: ReadonlySet<LocalDay>;
   /** Days with a 请假条: like a rest day, a streak runs through them without counting them. */
@@ -211,7 +225,10 @@ export function memberRecords(input: {
     training.minutes === undefined ? [] : [training.minutes],
   );
   const longestStreak = longestRun(trainedDays, new Set([...input.restDays, ...input.leaveDays]));
-  const mealStreak = longestRun(new Set(input.healthyMealDays), input.leaveDays);
+  const mealStreak = longestRun(
+    new Set(input.healthyMealDays),
+    mealBridges({ cheatMeals: input.cheatMealDays, leave: input.leaveDays }),
+  );
   return {
     trainedDays: trainedDays.size,
     minutes: minutes.reduce((sum, value) => sum + value, 0),

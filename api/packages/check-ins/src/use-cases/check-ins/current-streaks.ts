@@ -1,7 +1,7 @@
 import { UNSAVED_MEMBER_ZONE } from '@wildcard/time-zones';
 
 import type { LocalDay, MemberId, SquadId } from '../../domain/check-in.js';
-import { currentRun, type Streak } from '../../domain/records.js';
+import { currentRun, mealBridges, type Streak } from '../../domain/records.js';
 import { addDays, localDayAt, weekStartOf } from '../../domain/weekly-plan.js';
 import type { CheckInStore, Clock, MemberCalendar, WeeklyPlanStore } from '../../ports.js';
 import { restDays } from './rest-days.js';
@@ -10,7 +10,7 @@ import { restDays } from './rest-days.js';
 export interface CurrentStreaks {
   /** Days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding. */
   readonly training?: Streak;
-  /** Days in a row with a meal checked in, a 健康餐 or a 坦白放纵餐; a 请假条 neither breaks nor adds. */
+  /** Days in a row with a 健康餐; a 坦白放纵餐 or a 请假条 neither breaks nor adds (`mealBridges`). */
   readonly meals?: Streak;
 }
 
@@ -36,7 +36,10 @@ export async function currentStreaks(
   ]);
   const today = localDayAt(deps.clock(), calendar?.timeZone ?? UNSAVED_MEMBER_ZONE);
   const leave = new Set(days.leave);
-  const meals = currentRun(new Set(days.meals), { today, bridges: leave }).streak;
+  const meals = currentRun(new Set(days.healthyMeals), {
+    today,
+    bridges: mealBridges({ cheatMeals: days.cheatMeals, leave }),
+  }).streak;
   const trained = new Set(days.trained);
   // Rest days only as far back as the run reaches: read more weeks while it breaks before them.
   let from = addDays(weekStartOf(today), -7 * (FIRST_WEEKS - 1));
