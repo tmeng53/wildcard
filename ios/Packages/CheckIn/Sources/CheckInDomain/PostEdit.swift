@@ -37,6 +37,15 @@ extension CheckIn.Entry {
         case .disclaimer(let disclaimer): disclaimer.text
         }
     }
+
+    /// The place the member tagged; a 请假条 never has one.
+    public var place: Place? {
+        switch self {
+        case .trained(let training): training.place
+        case .healthyMeal(let meal), .cheatMeal(let meal): meal.place
+        case .disclaimer: nil
+        }
+    }
 }
 
 /// A saved post as the member edits it: its own fields and photos, all of them. The kind, the
@@ -55,10 +64,12 @@ public struct PostEdit: Hashable, Sendable {
     /// A 训练's workout as it is to be: numbers struck out since are gone, and its tile placed
     /// among the photos or taken off.
     public let workout: Workout?
+    /// The place as it is to be: nil takes a tagged one off. Ignored for a 请假条.
+    public let place: Place?
 
     public init(
         original: CheckIn, activity: Activity, minutes: WorkoutMinutes?, line: String, photos: [ComposedPhoto],
-        workout: Workout? = nil, startTime: StartTime? = nil
+        workout: Workout? = nil, startTime: StartTime? = nil, place: Place? = nil
     ) {
         self.original = original
         self.activity = activity
@@ -67,6 +78,7 @@ public struct PostEdit: Hashable, Sendable {
         self.line = line
         self.photos = Array(photos.prefix(Photos.maxCount))
         self.workout = workout
+        self.place = place
     }
 
     /// The photos still to upload, in order.
@@ -95,9 +107,9 @@ public struct PostEdit: Hashable, Sendable {
                     .trained(
                         Training(
                             activity: activity, minutes: minutes, startTime: startTime, photos: photos,
-                            caption: caption, workout: workout))
-                case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption))
-                case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption))
+                            caption: caption, workout: workout, place: place))
+                case .healthyMeal: .healthyMeal(Meal(photos: photos, caption: caption, place: place))
+                case .cheatMeal: .cheatMeal(Meal(photos: photos, caption: caption, place: place))
                 case .disclaimer(let old): .disclaimer(try Disclaimer(line, restDay: old.restDay, photos: photos))
                 }
             return CheckIn(
