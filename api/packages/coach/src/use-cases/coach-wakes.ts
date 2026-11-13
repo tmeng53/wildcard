@@ -50,7 +50,7 @@ import type {
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
-import { toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
+import { challengeTool, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
 import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 /**
@@ -553,6 +553,7 @@ async function think(
     changed: new Set(),
     note: undefined,
     memberNotes: new Map(),
+    challenges: new Map(),
     gifts: new Map(),
     reply: undefined,
     replyMentions: [],
@@ -616,7 +617,7 @@ async function think(
     wake.reason.kind === 'checkIn' && author !== undefined
       ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
       : undefined;
-  const task = taskOf({
+  const facts = {
     reason: wake.reason,
     week,
     files,
@@ -663,7 +664,26 @@ async function think(
         }
       : {}),
     ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
-  });
+  };
+  // On a daily wake, the day's challenges are set first, by a run of their own on the settings'
+  // challenge model, from the same task; the coach then writes its notes around them (Tracy,
+  // 2026-11-12).
+  const setting = daily && noteTo.length > 0;
+  let settingCost = 0;
+  if (setting) {
+    const pickTask = taskOf(facts);
+    if (pickTask === undefined) return undefined;
+    settingCost = await setChallenges(deps, {
+      wake,
+      settings,
+      roster,
+      noteTo,
+      draft,
+      task: pickTask,
+      author,
+    });
+  }
+  const task = taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) });
   if (task === undefined) return undefined;
   const run = await deps.agent.run({
     model: settings.model,
@@ -735,7 +755,7 @@ async function think(
     challenge,
     day,
     heard,
-    costMicros: cost,
+    costMicros: settingCost + cost,
   };
 }
 
@@ -933,6 +953,53 @@ async function briefsOf(
           : { plan: { week: mine.plan, fuelGoals: mine.fuelGoals } }),
       },
     ];
+  });
+}
+
+/**
+ * Sets each member's challenge for the day into the draft, by a run of its own: the shared rules
+ * and the settings' `challengeRules`, on the challenge model, or on the coach's own while that
+ * one has no price to count it at. Its tokens are counted to the squad like the wake's.
+ */
+async function setChallenges(
+  deps: CoachWakesDependencies,
+  {
+    wake,
+    settings,
+    roster,
+    noteTo,
+    draft,
+    task,
+    author,
+  }: {
+    readonly wake: Thought;
+    readonly settings: CoachSettings;
+    readonly roster: ReadonlyMap<string, string>;
+    readonly noteTo: readonly string[];
+    readonly draft: WakeDraft;
+    readonly task: string;
+    readonly author: string | undefined;
+  },
+): Promise<number> {
+  const model =
+    (await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.challengeModel })) ===
+    undefined
+      ? settings.challengeModel
+      : settings.model;
+  const run = await deps.agent.run({
+    model,
+    reasoning: settings.reasoning,
+    instructions: `${settings.rules}\n\n${settings.challengeRules}`,
+    task,
+    tools: [challengeTool(draft, { roster, noteTo })],
+    cacheKey: 'coach:challenges',
+  });
+  return deps.usage.record({
+    squad: wake.squad,
+    ...(author === undefined ? {} : { member: author }),
+    kind: wake.id === undefined ? 'preview' : 'wake',
+    model,
+    usage: run.usage,
   });
 }
 

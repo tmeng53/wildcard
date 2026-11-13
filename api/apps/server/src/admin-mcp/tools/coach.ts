@@ -37,7 +37,8 @@ export function getCoachSettings({ settings }: CoachToolDependencies) {
       'Shows what every AI coach runs with now: whether coaching is on (for every squad that ' +
       'hired a coach), the model (openai/…), the rules every coach follows (Chinese; each ' +
       'coach’s soul comes after them), how hard it thinks, how each kind of wake goes, the hour ' +
-      'morning notes arrive and the holiday calendar. What its calls cost and may spend a day ' +
+      'morning notes arrive, the model and rules that set each member’s day challenge before the ' +
+      'notes, and the holiday calendar. What its calls cost and may spend a day ' +
       'is get_ai_usage_settings’.',
     changes: false,
     input: z.strictObject({}),

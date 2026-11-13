@@ -177,6 +177,8 @@ export interface CoachSettingEvents {
 }
 
 export interface CoachSettings {
+  challenge_model: Generated<string>;
+  challenge_rules: Generated<string>;
   coaching: boolean;
   holidays: Generated<Json>;
   model: string;
