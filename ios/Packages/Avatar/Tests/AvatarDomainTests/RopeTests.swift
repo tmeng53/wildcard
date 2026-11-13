@@ -34,8 +34,8 @@ private func leashRig(parent: PartID? = nil) -> Rig {
                 id: "leash", parent: parent, pivot: Point(x: 25, y: 10),
                 layers: [Rig.Layer(slot: "prop", art: "leash")],
                 rope: Rig.RopeEnds(
-                    from: Rig.Anchor(part: "hand", point: Point(x: 10, y: 10)),
-                    to: Rig.Anchor(part: "dog", point: Point(x: 40, y: 10)), slack: 0)),
+                    start: Rig.Anchor(part: "hand", point: Point(x: 10, y: 10)),
+                    end: Rig.Anchor(part: "dog", point: Point(x: 40, y: 10)), slack: 0)),
         ])
 }
 
@@ -50,8 +50,8 @@ private func leashRig(parent: PartID? = nil) -> Rig {
     pose.parts[1].x = -10
     pose.parts[0].opacity = 0.5
     let slack = figure.layout(pose)[2]
-    #expect(slack.rope?.from == Point(x: 10, y: 10))
-    #expect(slack.rope?.to == Point(x: 30, y: 10))
+    #expect(slack.rope?.start == Point(x: 10, y: 10))
+    #expect(slack.rope?.end == Point(x: 30, y: 10))
     #expect(slack.rope.map { rounded($0.control) } == Point(x: 20, y: 27.321))
     #expect(slack.opacity == 0.5)
 

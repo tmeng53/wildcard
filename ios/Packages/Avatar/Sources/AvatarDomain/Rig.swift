@@ -154,8 +154,8 @@ public struct Rig: Hashable, Sendable {
                     twin: part.twin,
                     rope: part.rope.map { rope in
                         RopeEnds(
-                            from: Anchor(part: rope.from.part, point: rope.from.point.point),
-                            to: Anchor(part: rope.to.part, point: rope.to.point.point), slack: rope.slack)
+                            start: Anchor(part: rope.start.part, point: rope.start.point.point),
+                            end: Anchor(part: rope.end.part, point: rope.end.point.point), slack: rope.slack)
                     })
             },
             defaults: Dictionary(uniqueKeysWithValues: (file.defaults ?? [:]).map { (Slot($0.key), $0.value) }),
@@ -216,17 +216,21 @@ private struct RigFile: Decodable {
 
 /// `{"from": {"part": "propR", "at": [x, y]}, "to": {"part": "petHead", "at": [x, y]}, "slack": 6}`.
 private struct RopeFile: Decodable {
-    let from: AnchorFile
-    let to: AnchorFile
+    let start: RopeAnchorFile
+    let end: RopeAnchorFile
     let slack: Double
 
-    struct AnchorFile: Decodable {
-        let part: PartID
-        let point: Pair
+    enum CodingKeys: String, CodingKey {
+        case start = "from", end = "to", slack
+    }
+}
 
-        enum CodingKeys: String, CodingKey {
-            case part, point = "at"
-        }
+private struct RopeAnchorFile: Decodable {
+    let part: PartID
+    let point: Pair
+
+    enum CodingKeys: String, CodingKey {
+        case part, point = "at"
     }
 }
 

@@ -63,15 +63,6 @@ public struct Figure: Hashable, Sendable {
         public internal(set) var rope: RopeLink?
     }
 
-    /// A rope's ends as indices into `parts`, each with its point at rest, and its length.
-    public struct RopeLink: Hashable, Sendable {
-        public let from: Int
-        public let fromPoint: Point
-        public let to: Int
-        public let toPoint: Point
-        public let length: Double
-    }
-
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
         let parents = try Self.parents(rig.parts)
         evaluationOrder = try Self.order(rig.parts.map(\.id), parents)
@@ -336,17 +327,7 @@ public struct Figure: Hashable, Sendable {
                 if part.front { placements[index].area = forearm(part.pivot, elbow, carriers[index]) }
             }
         }
-        // Ropes last, once both their ends are placed.
-        for (index, part) in parts.enumerated() {
-            guard let link = part.rope else { continue }
-            let own = pose.parts[index].opacity
-            placements[index] = Placement(
-                transform: .identity,
-                opacity: own * min(placements[link.from].opacity, placements[link.to].opacity),
-                rope: Rope(
-                    from: carriers[link.from].apply(to: link.fromPoint), to: carriers[link.to].apply(to: link.toPoint),
-                    length: link.length))
-        }
+        hangRopes(&placements, carriers, pose)
         return placements
     }
 }
