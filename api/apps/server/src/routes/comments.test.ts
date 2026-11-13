@@ -213,6 +213,14 @@ async function call(
 
 /** A 练了 the member posts to these squads now; its id. */
 async function checkIn(token: string, ...audience: string[]) {
+  return checkInFor(undefined, { token, audience });
+}
+
+/** The same, for a day of the member's own (else the UTC date, as the feed's tests ask for). */
+async function checkInFor(
+  day: string | undefined,
+  { token, audience }: { readonly token: string; readonly audience: readonly string[] },
+) {
   const now = new Date(Date.now() - 60_000);
   const id = randomUUID();
   const { status } = await call('PUT', {
@@ -220,8 +228,7 @@ async function checkIn(token: string, ...audience: string[]) {
     token,
     body: {
       version: 1,
-      // The member's own day: `withPhone` puts them in Shanghai.
-      day: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(now),
+      day: day ?? now.toISOString().slice(0, 10),
       createdAt: now.toISOString(),
       audience,
       kind: 'trained',
@@ -662,7 +669,12 @@ describe('a 训练 posted to the squad', () => {
       await withPhone('阿波'),
     ];
     const squad = await squadOf(tracy, ann, bo);
-    const run = await checkIn(tracy.token, squad);
+    // For the day it is where the member is (`withPhone` puts them in Shanghai): a post for
+    // another day is a 补打卡, which is never pushed.
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(
+      new Date(Date.now() - 60_000),
+    );
+    const run = await checkInFor(day, { token: tracy.token, audience: [squad] });
 
     expect(sentTo(tracy.phone, ann.phone, bo.phone)).toMatchObject([
       [],

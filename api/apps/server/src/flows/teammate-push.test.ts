@@ -218,6 +218,15 @@ describe('a 训练 just posted', () => {
     expect(sent).toStrictEqual([]);
   });
 
+  it('throws when it can’t read the squad, so the event comes again', async () => {
+    const { deps } = world({});
+    const down = {
+      ...deps,
+      checkIns: { ...deps.checkIns, squadToday: () => Promise.reject(new Error('database down')) },
+    };
+    await expect(notifyTeammates(down, event)).rejects.toThrow('database down');
+  });
+
   it('fits APNs with the longest names', () => {
     const payload = apnsPayload(
       teammateNotification({

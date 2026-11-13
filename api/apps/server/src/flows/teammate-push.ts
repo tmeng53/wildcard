@@ -38,7 +38,11 @@ export interface TeammatePushDependencies {
  */
 export const TEAMMATE_PUSH_SINCE = 2;
 
-/** How long after it was made a 训练 is still 「刚练完」: one a phone sent up later is no news. */
+/**
+ * How long after it was made a 训练 is still 「刚练完」: one a phone sent up later is no news. By the
+ * phone's own time of the post, so a phone whose clock runs over an hour slow tells nobody, and
+ * neither does an event that comes again over an hour on.
+ */
 export const JUST_FINISHED_MS = 60 * 60 * 1000;
 
 const NAMES_KEY = {
