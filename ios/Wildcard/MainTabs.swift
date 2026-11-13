@@ -120,6 +120,8 @@ struct MainTabs: View {
             if tab == selection { screen(tab) }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
+        // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
+        .environment(\.placePage, composePlacePage)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.

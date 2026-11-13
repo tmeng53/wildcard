@@ -84,7 +84,7 @@ final class ComposePlaceUITests: XCTestCase {
     /// Scrolls 动态 down to Mia's salad's place tag, clear of the tab bar.
     @discardableResult private func scrollToTag(in app: XCUIApplication) -> XCUIElement {
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let tag = app.buttons["post.place"]
+        let tag = app.buttons.matching(identifier: "post.place").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0

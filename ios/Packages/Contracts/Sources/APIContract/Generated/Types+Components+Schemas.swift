@@ -3065,7 +3065,7 @@ extension Components {
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
         public typealias Sport = Swift.String
-        /// A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's.
+        /// A place the member picked in Apple Maps (its name, Maps' id and category) or one their squad added (its id), and the place's own coordinates, never the phone's.
         ///
         /// - Remark: Generated from `#/components/schemas/Place`.
         public struct Place: Codable, Hashable, Sendable {
@@ -3077,6 +3077,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Place/appleId`.
             public var appleId: Swift.String?
+            /// The id of the place a squad's member added, when it is one (and not Maps').
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/squadPlaceId`.
+            public var squadPlaceId: Swift.String?
             /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
             ///
             /// - Remark: Generated from `#/components/schemas/Place/category`.
@@ -3090,18 +3094,21 @@ extension Components {
             /// - Parameters:
             ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
             ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+            ///   - squadPlaceId: The id of the place a squad's member added, when it is one (and not Maps').
             ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
             ///   - latitude:
             ///   - longitude:
             public init(
                 name: Swift.String,
                 appleId: Swift.String? = nil,
+                squadPlaceId: Swift.String? = nil,
                 category: Swift.String? = nil,
                 latitude: Swift.Double,
                 longitude: Swift.Double
             ) {
                 self.name = name
                 self.appleId = appleId
+                self.squadPlaceId = squadPlaceId
                 self.category = category
                 self.latitude = latitude
                 self.longitude = longitude
@@ -3109,6 +3116,7 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case name
                 case appleId
+                case squadPlaceId
                 case category
                 case latitude
                 case longitude
@@ -4970,7 +4978,7 @@ extension Components {
                 case topSport
             }
         }
-        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken.
+        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken.
         ///
         /// - Remark: Generated from `#/components/schemas/CurrentStreaks`.
         public struct CurrentStreaks: Codable, Hashable, Sendable {
@@ -5065,7 +5073,7 @@ extension Components {
                 case checkIns
             }
         }
-        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
@@ -8667,6 +8675,188 @@ extension Components {
                 case kind
             }
         }
+        /// - Remark: Generated from `#/components/schemas/SquadPlaceList`.
+        public struct SquadPlaceList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceList/version`.
+            public var version: Components.Schemas.SquadPlaceList.VersionPayload
+            /// The earliest added first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceList/places`.
+            public var places: [Components.Schemas.SquadPlace]
+            /// Creates a new `SquadPlaceList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - places: The earliest added first.
+            public init(
+                version: Components.Schemas.SquadPlaceList.VersionPayload,
+                places: [Components.Schemas.SquadPlace]
+            ) {
+                self.version = version
+                self.places = places
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case places
+            }
+        }
+        /// A place one of the squad's members added. A post tags it with the place's `squadPlaceId`, `name` and coordinates.
+        ///
+        /// - Remark: Generated from `#/components/schemas/SquadPlace`.
+        public struct SquadPlace: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/id`.
+            public var id: Swift.String
+            /// Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/name`.
+            public var name: Swift.String
+            /// 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case food = "food"
+                case gym = "gym"
+                case outdoor = "outdoor"
+            }
+            /// 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/kind`.
+            public var kind: Components.Schemas.SquadPlace.KindPayload
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/longitude`.
+            public var longitude: Swift.Double
+            /// Who added it; null once they deleted their account.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/addedBy`.
+            public var addedBy: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/SquadPlace/addedAt`.
+            public var addedAt: Foundation.Date
+            /// Creates a new `SquadPlace`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///   - kind: 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///   - latitude:
+            ///   - longitude:
+            ///   - addedBy: Who added it; null once they deleted their account.
+            ///   - addedAt:
+            public init(
+                id: Swift.String,
+                name: Swift.String,
+                kind: Components.Schemas.SquadPlace.KindPayload,
+                latitude: Swift.Double,
+                longitude: Swift.Double,
+                addedBy: Swift.String? = nil,
+                addedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.name = name
+                self.kind = kind
+                self.latitude = latitude
+                self.longitude = longitude
+                self.addedBy = addedBy
+                self.addedAt = addedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case name
+                case kind
+                case latitude
+                case longitude
+                case addedBy
+                case addedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadPlaceAdded`.
+        public struct SquadPlaceAdded: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceAdded/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceAdded/version`.
+            public var version: Components.Schemas.SquadPlaceAdded.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceAdded/place`.
+            public var place: Components.Schemas.SquadPlace
+            /// Creates a new `SquadPlaceAdded`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - place:
+            public init(
+                version: Components.Schemas.SquadPlaceAdded.VersionPayload,
+                place: Components.Schemas.SquadPlace
+            ) {
+                self.version = version
+                self.place = place
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case place
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadPlaceChange`.
+        public struct SquadPlaceChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/version`.
+            public var version: Components.Schemas.SquadPlaceChange.VersionPayload
+            /// Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/name`.
+            public var name: Swift.String
+            /// 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case food = "food"
+                case gym = "gym"
+                case outdoor = "outdoor"
+            }
+            /// 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/kind`.
+            public var kind: Components.Schemas.SquadPlaceChange.KindPayload
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/SquadPlaceChange/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `SquadPlaceChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///   - kind: 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                version: Components.Schemas.SquadPlaceChange.VersionPayload,
+                name: Swift.String,
+                kind: Components.Schemas.SquadPlaceChange.KindPayload,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.version = version
+                self.name = name
+                self.kind = kind
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case name
+                case kind
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/SquadPlaces`.
         public struct SquadPlaces: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/SquadPlaces/version`.
@@ -8722,6 +8912,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/appleId`.
                 public var appleId: Swift.String?
+                /// The id of the place a squad's member added, when it is one (and not Maps').
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/squadPlaceId`.
+                public var squadPlaceId: Swift.String?
                 /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/category`.
@@ -8735,18 +8929,21 @@ extension Components {
                 /// - Parameters:
                 ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
                 ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - squadPlaceId: The id of the place a squad's member added, when it is one (and not Maps').
                 ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
                 ///   - latitude:
                 ///   - longitude:
                 public init(
                     name: Swift.String,
                     appleId: Swift.String? = nil,
+                    squadPlaceId: Swift.String? = nil,
                     category: Swift.String? = nil,
                     latitude: Swift.Double,
                     longitude: Swift.Double
                 ) {
                     self.name = name
                     self.appleId = appleId
+                    self.squadPlaceId = squadPlaceId
                     self.category = category
                     self.latitude = latitude
                     self.longitude = longitude
@@ -8754,6 +8951,7 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case name
                     case appleId
+                    case squadPlaceId
                     case category
                     case latitude
                     case longitude
@@ -8976,6 +9174,10 @@ extension Components {
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/appleId`.
                 public var appleId: Swift.String?
+                /// The id of the place a squad's member added, when it is one (and not Maps').
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/squadPlaceId`.
+                public var squadPlaceId: Swift.String?
                 /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/category`.
@@ -8989,18 +9191,21 @@ extension Components {
                 /// - Parameters:
                 ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
                 ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - squadPlaceId: The id of the place a squad's member added, when it is one (and not Maps').
                 ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
                 ///   - latitude:
                 ///   - longitude:
                 public init(
                     name: Swift.String,
                     appleId: Swift.String? = nil,
+                    squadPlaceId: Swift.String? = nil,
                     category: Swift.String? = nil,
                     latitude: Swift.Double,
                     longitude: Swift.Double
                 ) {
                     self.name = name
                     self.appleId = appleId
+                    self.squadPlaceId = squadPlaceId
                     self.category = category
                     self.latitude = latitude
                     self.longitude = longitude
@@ -9008,6 +9213,7 @@ extension Components {
                 public enum CodingKeys: String, CodingKey {
                     case name
                     case appleId
+                    case squadPlaceId
                     case category
                     case latitude
                     case longitude
@@ -9289,7 +9495,7 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/SavedPlace`.
         public struct SavedPlace: Codable, Hashable, Sendable {
-            /// Which place: `apple:` and Apple Maps' identifier.
+            /// Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.
             ///
             /// - Remark: Generated from `#/components/schemas/SavedPlace/key`.
             public var key: Swift.String
@@ -9306,7 +9512,7 @@ extension Components {
             /// Creates a new `SavedPlace`.
             ///
             /// - Parameters:
-            ///   - key: Which place: `apple:` and Apple Maps' identifier.
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.
             ///   - place:
             ///   - note: The member’s note on it, left out when they wrote none.
             ///   - savedAt: When they saved it, in UTC.

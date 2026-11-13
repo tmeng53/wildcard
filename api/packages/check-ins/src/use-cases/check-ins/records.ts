@@ -60,14 +60,17 @@ export async function records(
   const mine = byMember.get(member) ?? [];
   const timeZone = await timeZoneOf(member);
   const current = (await currentStreaks(deps, { member })).training;
+  const leaveDays = new Set(rows.leaveDays);
   const currentMeals = currentRun(new Set(rows.healthyMealDays), {
     today: localDayAt(deps.clock(), timeZone),
+    bridges: leaveDays,
   }).streak;
   const me = {
     ...memberRecords({
       trainings: mine,
       healthyMealDays: rows.healthyMealDays,
       restDays: await restDays(deps, { member, days: mine.map((training) => training.day) }),
+      leaveDays,
       timeZone,
     }),
     ...(current === undefined ? {} : { currentStreak: current }),
@@ -79,6 +82,7 @@ export async function records(
     trainings: shared,
     healthyMealDays: [],
     restDays: new Set(),
+    leaveDays: new Set(),
     timeZone,
   });
   const mateRecords = new Map(
@@ -92,6 +96,7 @@ export async function records(
               trainings,
               healthyMealDays: [],
               restDays: new Set(),
+              leaveDays: new Set(),
               timeZone: await timeZoneOf(mate),
             }),
             days: new Set(trainings.map((training) => training.day)),

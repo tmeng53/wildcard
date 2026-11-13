@@ -73,7 +73,12 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -162,7 +167,7 @@ import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { coachNamesIn } from './flows/coach-names.js';
-import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachMemberFacts, coachSquadWeek, coachStreaks } from './flows/coach.js';
 import { coachFeedback } from './flows/coach-feedback.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { adoptFeedback } from './flows/feedback-adoption.js';
@@ -389,6 +394,8 @@ const checkIns = createCheckIns({
   membership: squads,
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
+  // Which places a squad's members added is the places module's to keep: check-ins ask it.
+  squadPlaceOf: (input) => squadPlaces.isPlaceOf(input),
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   coachSpoke: ({ checkIn, squads: through, coach }) =>
@@ -518,6 +525,12 @@ const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
   clock: () => new Date(),
 });
+const squadPlaces = createSquadPlaces({
+  store: createPostgresSquadPlaceStore(db),
+  // Who is in which squad is the squads module's to keep: places ask it.
+  membership: squads,
+  clock: () => new Date(),
+});
 // Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
 // places are still kept, and no one has weather.
 const weather = createWeather({
@@ -625,6 +638,7 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        streaks: coachStreaks(checkIns),
         // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
         weatherOf: async ({ members: ids, day }) => {
           const zoned = await Promise.all(
@@ -780,6 +794,7 @@ const app = createApp({
   nudges,
   placeRatings,
   savedPlaces,
+  squadPlaces,
   weather,
   feedback: feedbackInbox,
   issues: feedbackIssues,

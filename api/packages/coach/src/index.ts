@@ -67,6 +67,7 @@ export type {
   CoachSettingsStore,
   CoachStores,
   CoachMemberFacts,
+  CoachStreaks,
   CoachMeme,
   CoachFeedback,
   CoachGifting,

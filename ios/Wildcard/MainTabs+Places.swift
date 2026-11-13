@@ -1,3 +1,4 @@
+import CheckInUI
 import Contracts
 import FeedUI
 import PlacesUI
@@ -32,5 +33,33 @@ extension MainTabs {
             today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), openPost: openPost
         )
         .environment(\.sceneTheme, today.scene)
+    }
+}
+
+extension MainTabs {
+    /// 地点页 from the compose page's place pill, pushed on the stack the compose page is on: 今天's,
+    /// or the editing page's own over a post.
+    var composePlacePage: PlacePageRoute {
+        PlacePageRoute { place in
+            AnyView(
+                ComposedPlacePage(
+                    place: place, page: { AnyView(placePage($0, openPost: $1)) }, post: { feed.page(of: $0) }))
+        }
+    }
+}
+
+/// The place opened from the compose page, with a tile's post pushed over it on the same stack, so
+/// back returns to the place and then to the post being written.
+private struct ComposedPlacePage: View {
+    let place: Place
+    let page: (Place, @escaping (CheckInID) -> Void) -> AnyView
+    let post: (CheckInID) -> FeedModel
+    @State private var opened: OpenedPost?
+
+    var body: some View {
+        page(place) { opened = OpenedPost(id: $0, model: post($0)) }
+            .navigationDestination(item: $opened) { opened in
+                PostDetailView(model: opened.model, post: opened.id) { self.opened = nil }
+            }
     }
 }

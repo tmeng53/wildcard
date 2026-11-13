@@ -8,33 +8,33 @@ import MapKit
 import SwiftUI
 
 /// 添加位置 on the compose ticket, left of the caption's count (Tracy, 2026-11-12): unpicked, a
-/// pill that opens the map; picked, the place's name on graphite with ✕ to take it off.
+/// pill that opens the map; picked, the place's name on graphite with ✕ to take it off and the
+/// name opening the place's page.
 struct PlacePill: View {
     @Binding var place: Place?
+    /// Opens the picked place's page (地点页).
+    let open: (Place) -> Void
     @State private var isPicking = false
-
-    /// A long name is cut so the count beside it keeps its room.
-    private static let shownLength = 10
 
     var body: some View {
         Group {
             if let place {
+                // Only the cross takes the place off; the name opens the place's page.
                 PickPill(
-                    Text(verbatim: Self.shortened(place.name)), systemImage: place.kind.symbol, look: .solid,
-                    isSelected: true, isRemovable: true
+                    Text(verbatim: place.name), systemImage: place.kind.symbol, look: .solid, isSelected: true
                 ) {
+                    open(place)
+                } remove: {
                     self.place = nil
                 }
                 .accentTone(.ink)
-                .accessibilityLabel(Text(verbatim: place.name))
-                .accessibilityHint(Text(copy: "移除位置", bundle: .module))
             } else {
                 PickPill(Text(copy: "添加位置", bundle: .module), systemImage: "mappin", look: .solid, isSelected: false) {
                     isPicking = true
                 }
+                .accessibilityIdentifier("compose.place")
             }
         }
-        .accessibilityIdentifier("compose.place")
         .sheet(isPresented: $isPicking) {
             PlacePickerSheet(current: place) { picked in
                 place = picked
@@ -45,10 +45,6 @@ struct PlacePill: View {
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
-    }
-
-    static func shortened(_ name: String) -> String {
-        name.count > shownLength ? String(name.prefix(shownLength - 1)) + "…" : name
     }
 }
 

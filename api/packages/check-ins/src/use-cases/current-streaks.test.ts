@@ -142,4 +142,19 @@ describe('currentStreaks', () => {
     // As squadmates see it, 11-08 had nothing, so the run broke.
     expect(await checkIns.currentStreaks({ member, squad })).toStrictEqual({});
   });
+
+  it('runs both streaks through a 请假条 day without counting it', async () => {
+    const member = await newMember();
+    await checkedIn(member, { kind: 'trained', day: '2026-11-06' });
+    await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-06' });
+    await checkedIn(member, { kind: 'disclaimer', day: '2026-11-07' });
+    await checkedIn(member, { kind: 'trained', day: '2026-11-08' });
+    await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-08' });
+    // Today, 11-09: a 请假条 keeps both going and adds nothing.
+    await checkedIn(member, { kind: 'disclaimer', day: '2026-11-09' });
+    expect(await checkIns.currentStreaks({ member })).toStrictEqual({
+      training: { days: 2, from: '2026-11-06', to: '2026-11-08' },
+      meals: { days: 2, from: '2026-11-06', to: '2026-11-08' },
+    });
+  });
 });

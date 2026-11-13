@@ -10,7 +10,15 @@ import {
   type CheckInRecord,
   type CheckIns,
 } from '@wildcard/check-ins';
-import { PlaceKey, Stars, type PlaceRatings } from '@wildcard/places';
+import {
+  PlaceKey,
+  SquadPlaceFields,
+  SquadPlaceId,
+  Stars,
+  type PlaceRatings,
+  type SquadPlace,
+  type SquadPlaces,
+} from '@wildcard/places';
 import type { Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
@@ -136,6 +144,50 @@ const PlaceRatingView = z
   .strictObject({ version: bodyVersion(1), key: placeKey, stars: Stars })
   .openapi('PlaceRatingView');
 
+const SquadPlaceView = z
+  .strictObject({
+    id: SquadPlaceId,
+    ...SquadPlaceFields,
+    addedBy: z
+      .uuid()
+      .nullable()
+      .meta({ description: 'Who added it; null once they deleted their account.' }),
+    addedAt: z.iso.datetime(),
+  })
+  .meta({
+    description:
+      "A place one of the squad's members added. A post tags it with the place's " +
+      '`squadPlaceId`, `name` and coordinates.',
+  })
+  .openapi('SquadPlace');
+
+const SquadPlaceList = z
+  .strictObject({
+    version: bodyVersion(1),
+    places: z.array(SquadPlaceView).meta({ description: 'The earliest added first.' }),
+  })
+  .openapi('SquadPlaceList');
+
+const SquadPlaceAdded = z
+  .strictObject({ version: bodyVersion(1), place: SquadPlaceView })
+  .openapi('SquadPlaceAdded');
+
+const SquadPlaceChange = z
+  .strictObject({ version: bodyVersion(1), ...SquadPlaceFields })
+  .openapi('SquadPlaceChange');
+
+function wireSquadPlace(place: SquadPlace): z.infer<typeof SquadPlaceView> {
+  return {
+    id: place.id,
+    name: place.name,
+    kind: place.kind,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    addedBy: place.addedBy ?? null,
+    addedAt: place.addedAt.toISOString(),
+  };
+}
+
 const signedInFailures = {
   401: problem('No bearer token, or not a valid one'),
   503: problem('Sign-in can’t be checked right now'),
@@ -245,6 +297,7 @@ export function places(deps: {
   readonly placeRatings: PlaceRatings;
   readonly photos: PhotoStorage;
   readonly log: Log;
+  readonly squadPlaces: SquadPlaces;
   readonly clock?: () => Date;
 }) {
   const clock = deps.clock ?? (() => new Date());
@@ -316,7 +369,80 @@ export function places(deps: {
     },
   });
 
+  const listAdded = createRoute({
+    method: 'get',
+    path: '/squads/{squadId}/custom-places',
+    operationId: 'listSquadCustomPlaces',
+    summary: 'The places the squad’s members added themselves (自建地点)',
+    description: 'What the place picker lists beside Apple Maps’ places, for every member to tag.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: z.strictObject({ squadId: SquadId }) },
+    responses: {
+      200: {
+        description: 'The places',
+        content: { 'application/json': { schema: SquadPlaceList } },
+      },
+      400: problem('Not a valid squad id'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      ...signedInFailures,
+    },
+  });
+
+  const add = createRoute({
+    method: 'put',
+    path: '/squads/{squadId}/custom-places/{placeId}',
+    operationId: 'addSquadCustomPlace',
+    summary: 'Add a place for the squad (新建地点), under an id the app made',
+    description:
+      'The whole squad sees it, and anyone in it may tag their posts with it. It never ' +
+      'changes; the same place again changes nothing, so it is safe to repeat.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      params: z.strictObject({ squadId: SquadId, placeId: SquadPlaceId }),
+      body: { required: true, content: { 'application/json': { schema: SquadPlaceChange } } },
+    },
+    responses: {
+      201: {
+        description: 'Added',
+        content: { 'application/json': { schema: SquadPlaceAdded } },
+      },
+      200: {
+        description: 'Already added, as it was',
+        content: { 'application/json': { schema: SquadPlaceAdded } },
+      },
+      400: problem('Not a valid place'),
+      403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
+      409: problem('The id is already another place (`SQUAD_PLACE_ID_CONFLICT`)'),
+      ...jsonBodyFailures,
+      ...signedInFailures,
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
+    .openapi(listAdded, async (c) => {
+      const { squadId } = c.req.valid('param');
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const added = await deps.squadPlaces.list({ squad: squadId, viewer });
+      return c.json({ version: 1 as const, places: added.map(wireSquadPlace) }, 200);
+    })
+    .openapi(add, async (c) => {
+      const { squadId, placeId } = c.req.valid('param');
+      const { name, kind, latitude, longitude } = c.req.valid('json');
+      const member = MemberId.parse(c.var.caller.userId);
+      const { place, created } = await deps.squadPlaces.add({
+        id: placeId,
+        squad: squadId,
+        member,
+        name,
+        kind,
+        latitude,
+        longitude,
+      });
+      const body = { version: 1 as const, place: wireSquadPlace(place) };
+      return created ? c.json(body, 201) : c.json(body, 200);
+    })
     .openapi(list, async (c) => {
       const { squadId } = c.req.valid('param');
       const viewer = MemberId.parse(c.var.caller.userId);

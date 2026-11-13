@@ -11,16 +11,20 @@ public struct WorkoutSummaryLine: View {
     private let activity: Activity?
     private let minutes: WorkoutMinutes?
     private let summary: WorkoutSummary
+    private let compact: Bool
 
-    public init(activity: Activity?, minutes: WorkoutMinutes?, summary: WorkoutSummary) {
+    /// - Parameter compact: names the sport by its card name, short where the full one is long, for
+    ///   a line with little room (a widget's).
+    public init(activity: Activity?, minutes: WorkoutMinutes?, summary: WorkoutSummary, compact: Bool = false) {
         self.activity = activity
         self.minutes = minutes
         self.summary = summary
+        self.compact = compact
     }
 
     public var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-            (activity?.name ?? Text(copy: "运动", bundle: .module))
+            ((compact ? activity?.cardName : activity?.name) ?? Text(copy: "运动", bundle: .module))
             if let minutes {
                 Text(verbatim: "\(minutes.value)").typeStyle(TypeRamp.scoreSmall)
                 Text(copy: "分钟", bundle: .module)
