@@ -59,6 +59,8 @@ public struct Figure: Hashable, Sendable {
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
         public internal(set) var slots: [Slot?]
+        /// For a rope, the parts it hangs between and its length (`Rig.Part.rope`).
+        public internal(set) var rope: RopeLink?
     }
 
     public init(rig: Rig, outfit: Outfit, art source: some ArtSource) throws(AvatarError) {
@@ -110,6 +112,7 @@ public struct Figure: Hashable, Sendable {
                     art: artworks, slots: slots))
         }
         try Self.resolveTwins(&built, rig.parts)
+        try Self.resolveRopes(&built, rig.parts)
         try Self.paintHands(&built, held: held, bodies: bodies, skin: rig.skin)
         if let (slot, variant) = variants.first(where: { !used.contains($0.key) }) {
             throw .unknownVariant(slot: slot, variant: variant)
@@ -324,6 +327,7 @@ public struct Figure: Hashable, Sendable {
                 if part.front { placements[index].area = forearm(part.pivot, elbow, carriers[index]) }
             }
         }
+        hangRopes(&placements, carriers, pose)
         return placements
     }
 }
