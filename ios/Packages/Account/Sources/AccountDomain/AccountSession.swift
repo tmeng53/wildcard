@@ -125,12 +125,6 @@ public actor AccountSession {
         return member
     }
 
-    /// Whether the admin's own session is kept, so they are on a demo account and can return.
-    public func isOnDemo() async -> Bool {
-        guard let kept, let stored = try? await kept.load() else { return false }
-        return stored != nil
-    }
-
     /// Back on the admin's own account from a demo account, with the session kept when they
     /// switched; the demo account's session ends. Throws `signedOut` when none is kept.
     @discardableResult
@@ -172,13 +166,10 @@ public actor AccountSession {
     /// removed (which then throws `storeFailed`), so its refresh token stops working either way.
     public func signOut() async throws(AccountError) {
         try await ensureRestored()
-        // Signing out of a demo account signs the admin's kept session out too: nothing of theirs
-        // stays on a phone that shows signed out.
-        if let kept, let own = try? await kept.load() {
-            try? await kept.clear()
-            try? await provider.signOut(own)
+        guard let current = session else {
+            await endKept()
+            return
         }
-        guard let current = session else { return }
         try await end(current)
     }
 
@@ -192,8 +183,18 @@ public actor AccountSession {
 
     // MARK: - Private
 
-    /// Ends `current`, which must be the session: on the device first, then at the provider.
+    /// Ends the admin's session kept while on a demo account: whichever way the demo account
+    /// signs out, nothing of the admin's stays on a phone that shows signed out.
+    private func endKept() async {
+        guard let kept, let own = try? await kept.load() else { return }
+        try? await kept.clear()
+        try? await provider.signOut(own)
+    }
+
+    /// Ends `current`, which must be the session: on the device first, then at the provider,
+    /// and any session kept for the way back from a demo account with it.
     private func end(_ current: Session) async throws(AccountError) {
+        await endKept()
         session = nil
         renewal = nil
         publish()

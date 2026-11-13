@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { Admins } from '@wildcard/admins';
+import { AdminId, type Admins } from '@wildcard/admins';
 import {
   Birthday,
   Catchphrase,
@@ -141,9 +141,9 @@ export function me(
   deps: {
     readonly verifyToken: VerifyToken;
     readonly members: Members;
-    readonly admins: Pick<Admins, 'isAdmin' | 'isDemoAccount'>;
+    readonly admins: Pick<Admins, 'isAdmin' | 'isDemoAccount' | 'demoAccounts'>;
     readonly unlocks: Pick<Unlocks, 'keepWorn'>;
-  } & DeleteAccountDependencies,
+  } & Omit<DeleteAccountDependencies, 'demoAccountsOf'>,
 ) {
   const getMe = createRoute({
     method: 'get',
@@ -310,7 +310,12 @@ export function me(
     })
     .openapi(deleteMe, async (c) => {
       const { appleAuthorizationCode } = c.req.valid('json');
-      await deleteAccount(deps, { member: c.var.caller.userId, appleAuthorizationCode });
+      const demoAccountsOf = async (member: string) =>
+        (await deps.admins.isAdmin(member)) ? deps.admins.demoAccounts(AdminId.parse(member)) : [];
+      await deleteAccount(
+        { ...deps, demoAccountsOf },
+        { member: c.var.caller.userId, appleAuthorizationCode },
+      );
       return c.body(null, 204);
     });
 }

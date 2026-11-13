@@ -46,7 +46,7 @@ export const DemoHandOff = z
       .meta({
         description:
           'A refresh token for the demo account’s new session: the app exchanges it with Auth as ' +
-          'it renews any session, and is then signed in as that account. Single-use.',
+          'it renews any session, and is then signed in as that account.',
       }),
   })
   .openapi('DemoHandOff');

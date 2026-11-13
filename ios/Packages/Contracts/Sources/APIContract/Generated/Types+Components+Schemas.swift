@@ -2860,7 +2860,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/DemoHandOff/version`.
             public var version: Components.Schemas.DemoHandOff.VersionPayload
-            /// A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use.
+            /// A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account.
             ///
             /// - Remark: Generated from `#/components/schemas/DemoHandOff/refreshToken`.
             public var refreshToken: Swift.String
@@ -2868,7 +2868,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - refreshToken: A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use.
+            ///   - refreshToken: A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account.
             public init(
                 version: Components.Schemas.DemoHandOff.VersionPayload,
                 refreshToken: Swift.String

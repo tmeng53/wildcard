@@ -25,8 +25,8 @@ export interface Admins {
   listLog(query: { readonly admin: AdminId; readonly limit: number }): Promise<LoggedAdminAction[]>;
   /**
    * The admin whose demo accounts the member may switch between: the member themselves when
-   * they are an admin, the admin who made it when they are signed in on a demo account. Throws
-   * `NotAnAdminError` for anyone else.
+   * they are an admin, the admin who made it when they are signed in on a demo account and that
+   * admin is still on the list. Throws `NotAnAdminError` for anyone else.
    */
   demoOwner(member: string): Promise<AdminId>;
   /** Whether the member is a demo account an admin made. */
@@ -61,7 +61,8 @@ export function createAdmins(deps: { readonly store: AdminStore; readonly clock:
     demoOwner: async (member) => {
       if (await deps.store.isAdmin(member)) return AdminId.parse(member);
       const owner = await deps.store.demoAccountOwner(member);
-      if (owner === undefined) throw new NotAnAdminError();
+      // An admin taken off the list loses their demo accounts' switching too.
+      if (owner === undefined || !(await deps.store.isAdmin(owner))) throw new NotAnAdminError();
       return owner;
     },
     isDemoAccount: async (member) => (await deps.store.demoAccountOwner(member)) !== undefined,

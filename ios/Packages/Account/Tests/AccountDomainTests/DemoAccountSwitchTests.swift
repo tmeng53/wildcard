@@ -21,13 +21,11 @@ private func admin(_ provider: FakeProvider, _ store: MemoryStore, kept: MemoryS
     #expect(try await account.switchToDemo(with: handOff) == demo)
     #expect(await store.saved == session("demo", member: demo))
     #expect(await kept.saved == session("own"))
-    #expect(await account.isOnDemo())
 
     #expect(try await account.returnFromDemo() == tracy)
     #expect(try await account.accessToken() == "access-own")
     #expect(await store.saved == session("own"))
     #expect(await kept.saved == nil)
-    #expect(await !account.isOnDemo())
     // The demo session ends; the admin's own was never signed out.
     #expect(await provider.signedOut == [session("demo", member: demo)])
 }
@@ -75,4 +73,17 @@ private func admin(_ provider: FakeProvider, _ store: MemoryStore, kept: MemoryS
     let account = AccountSession(provider: FakeProvider(), store: MemoryStore(session("own")), now: { start })
     await #expect(throws: AccountError.storeFailed) { try await account.switchToDemo(with: handOff) }
     #expect(try await account.accessToken() == "access-own")
+}
+
+@Test func aDemoSessionTheApiRefusesEndsTheKeptSessionToo() async throws {
+    let provider = FakeProvider()
+    await provider.signInAs(session("demo", member: demo))
+    let (store, kept) = (MemoryStore(session("own")), MemoryStore())
+    let account = admin(provider, store, kept: kept)
+    try await account.switchToDemo(with: handOff)
+
+    try await account.signOut(ifCurrent: "access-demo")
+    #expect(try await account.restore() == .signedOut)
+    #expect(await kept.saved == nil)
+    await #expect(throws: AccountError.signedOut) { try await account.returnFromDemo() }
 }

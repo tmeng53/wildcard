@@ -487,4 +487,17 @@ describe('DELETE /me', () => {
     expect([response.status, reasonOf(response.body)]).toStrictEqual([400, 'REQUEST_INVALID']);
     expect((await whatIsLeftOf(me.userId)).user).toBe(1);
   });
+
+  it('takes the demo accounts an admin made with the admin', async () => {
+    const { call } = appWith(undefined);
+    const admin = await signUp();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const made = await call('POST', '/me/demo-accounts', admin.token, undefined);
+    const demo = z.object({ memberId: z.uuid() }).parse(made.body).memberId;
+
+    expect((await call('DELETE', '/me', admin.token, { version: 1 })).status).toBe(204);
+    const users = await sql<{ id: string }>`select id from auth.users
+      where id in (${admin.userId}, ${demo})`.execute(db);
+    expect(users.rows).toStrictEqual([]);
+  });
 });

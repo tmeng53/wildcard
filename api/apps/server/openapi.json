@@ -1267,7 +1267,7 @@
           "refreshToken": {
             "type": "string",
             "minLength": 1,
-            "description": "A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account. Single-use."
+            "description": "A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account."
           }
         },
         "required": [

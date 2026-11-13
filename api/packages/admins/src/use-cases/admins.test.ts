@@ -130,5 +130,23 @@ describe('admins', () => {
       await sql`delete from auth.users where id = ${demo}`.execute(db);
       expect(await admins.demoAccounts(admin)).toStrictEqual([]);
     });
+
+    it('goes with the admin’s account too', async () => {
+      const admin = await admins.requireAdmin(await member({ admin: true }));
+      const demo = await member({ admin: false });
+      await admins.addDemoAccount(admin, demo);
+
+      await sql`delete from auth.users where id = ${admin}`.execute(db);
+      expect(await admins.isDemoAccount(demo)).toBe(false);
+    });
+
+    it('stops switching for an admin taken off the list, from their demo accounts too', async () => {
+      const admin = await admins.requireAdmin(await member({ admin: true }));
+      const demo = await member({ admin: false });
+      await admins.addDemoAccount(admin, demo);
+
+      await db.deleteFrom('admins').where('member_id', '=', admin).execute();
+      await expect(admins.demoOwner(demo)).rejects.toThrow(NotAnAdminError);
+    });
   });
 });
