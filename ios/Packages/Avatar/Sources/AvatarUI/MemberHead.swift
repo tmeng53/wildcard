@@ -7,6 +7,8 @@ import SwiftUI
 /// person small: rows, comments, reactions, who reacted, the squad's row. 24, 32 and 44 points
 /// are the usual sizes (`Sizing.characterHead` is 28).
 ///
+/// The disc is the character's own backdrop (`Figure.backdrop`, a coach's `backdrop.json`), else
+/// the page's colour.
 /// - `rim`: `.mist` (a teammate, on a white disc with a mist ring), `.coach` (the coach, a
 ///   graphite ring so it never reads as a teammate), `.cutout(role)` (heads overlapping in a
 ///   `HeadStack`: a rim in the background's colour between them) or `.none`.
@@ -88,7 +90,7 @@ public struct MemberHead: View {
 
     private var disc: some View {
         Circle()
-            .fill(Color(role: .bgCanvas, in: theme))
+            .fill(player?.figure.backdrop.map { Color($0) } ?? Color(role: .bgCanvas, in: theme))
             .overlay { face.padding(rim == .none ? 0 : Sizing.ringGap) }
             .clipShape(Circle())
             .overlay { rimStroke }

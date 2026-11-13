@@ -19,6 +19,7 @@ import type {
   PhotoFiles,
   ReactionStore,
   SportList,
+  SquadPlaceOf,
   SquadMembership,
   WeeklyPlanStore,
 } from '../ports.js';
@@ -49,6 +50,7 @@ import {
   type Commented,
 } from './check-ins/comments.js';
 import { squadWeekSummary, type SquadWeekSummary } from './check-ins/week-summary.js';
+import { placedPosts } from './check-ins/placed-posts.js';
 import { squadTrainings, weekStartNow } from './check-ins/squad-goal-weeks.js';
 import {
   squadWeekCheckIns,
@@ -76,6 +78,14 @@ export interface CheckIns {
   current(id: CheckInId): Promise<CheckInRecord | undefined>;
   /** A squad's feed: its check-ins for a range of days, each with its reactions and comments. */
   listForSquad(input: ListSquadCheckInsInput): Promise<SquadPost[]>;
+  /**
+   * The posts in a squad's 动态 tagged with a place, newest first, for a member of it: what its
+   * places are worked out from.
+   */
+  placedPosts(input: {
+    readonly squad: SquadId;
+    readonly viewer: MemberId;
+  }): Promise<CheckInRecord[]>;
   /** One post, as the feed shows it, for its author or a teammate who can see it. */
   post(input: { readonly id: CheckInId; readonly viewer: MemberId }): Promise<SquadPost>;
   listMine(input: {
@@ -200,6 +210,8 @@ export function createCheckIns(deps: {
   readonly photos: PhotoFiles;
   /** Which sports a 训练 may name. */
   readonly sports: SportList;
+  /** Whether a squad's place belongs to a post's squads; without it, none does. */
+  readonly squadPlaceOf?: SquadPlaceOf;
   readonly plans: WeeklyPlanStore;
   readonly calendarOf: MemberCalendar;
   readonly clock: Clock;
@@ -211,6 +223,7 @@ export function createCheckIns(deps: {
     current: (id) => deps.store.find(id),
     listForSquad: (input) => listSquadCheckIns(deps, input),
     post: (input) => findPost(deps, input),
+    placedPosts: (input) => placedPosts(deps, input),
     listMine: (input) => listMyCheckIns(deps, input),
     listMyPosts: (input) => listMyPosts(deps, input),
     totals: (member) => deps.store.totals(member),

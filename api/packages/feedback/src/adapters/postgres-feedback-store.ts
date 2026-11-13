@@ -6,7 +6,9 @@ import {
   FeedbackKind,
   MemberId,
   StoredAppInfo,
+  StoredFromCoach,
   type Feedback,
+  type FeedbackSource,
 } from '../domain/feedback.js';
 import type { FeedbackStore } from '../ports.js';
 import type { DB } from './tables.js';
@@ -17,7 +19,7 @@ export type FeedbackTables = DB;
 /** The feedback store on Postgres (`supabase/migrations`). */
 export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): FeedbackStore {
   return {
-    add({ id, member, kind, body, screenshots, app, at }, { limit, since }) {
+    add({ id, member, kind, body, source, at }, { limit, since }) {
       return db.transaction().execute(async (trx) => {
         // One member's messages are counted and saved one at a time, so a burst can't all pass
         // the limit together.
@@ -46,8 +48,7 @@ export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): Feedbac
             member_id: member,
             kind,
             body,
-            screenshots: [...screenshots],
-            app: JSON.stringify({ version: 1, ...app }),
+            ...storedSource(source),
             at,
           })
           .onConflict((conflict) => conflict.column('id').doNothing())
@@ -75,6 +76,7 @@ export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): Feedbac
           'feedback.body',
           'feedback.screenshots',
           'feedback.app',
+          'feedback.relayed',
           'feedback.at',
         ])
         .where('feedback_issues.feedback_id', 'is', null)
@@ -87,8 +89,7 @@ export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): Feedbac
         member: MemberId.parse(row.member_id),
         kind: FeedbackKind.parse(row.kind),
         body: row.body,
-        screenshots: row.screenshots,
-        app: StoredAppInfo.parse(row.app),
+        source: sourceOf(row),
         at: new Date(row.at),
       }));
     },
@@ -131,4 +132,34 @@ export function createPostgresFeedbackStore(db: Kysely<FeedbackTables>): Feedbac
       };
     },
   };
+}
+
+/** A message's source as its columns keep it: the app's facts and screenshots, or the coach's. */
+function storedSource(source: FeedbackSource): {
+  readonly screenshots: string[];
+  readonly app: string | null;
+  readonly relayed: string | null;
+} {
+  if (source.from === 'app') {
+    return {
+      screenshots: [...source.screenshots],
+      app: JSON.stringify({ version: 1, ...source.app }),
+      relayed: null,
+    };
+  }
+  const { coach, squad, checkIn, comment, quote } = source;
+  return {
+    screenshots: [],
+    app: null,
+    relayed: JSON.stringify({ version: 1, coach, squad, checkIn, comment, quote }),
+  };
+}
+
+function sourceOf(row: {
+  readonly screenshots: string[];
+  readonly app: unknown;
+  readonly relayed: unknown;
+}): FeedbackSource {
+  if (row.relayed !== null) return StoredFromCoach.parse(row.relayed);
+  return { from: 'app', screenshots: row.screenshots, app: StoredAppInfo.parse(row.app) };
 }

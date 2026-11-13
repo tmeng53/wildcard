@@ -242,6 +242,77 @@ test('an arm bends at the elbow whatever path commands its art is drawn with', a
   }
 });
 
+test('a raised sleeve leaves none of itself on the chest, and a bare shoulder lies under a strap', async ({
+  page,
+}) => {
+  await stub(page, 200, squad(1));
+  await page.goto('/join/K7M2QX9P');
+  const drawn = await page.evaluate(async () => {
+    const { dress } = await import('/character/dress.js');
+    const C = window.WILDCARD_CHARACTERS;
+    const arms = ['armL', 'armR'].map((id) => C.parts.findIndex((part) => part.id === id));
+    // The figure's pixels, 4 to a point: with its arms, or with nothing that hangs from them,
+    // so only the body and what it wears is left.
+    const pixels = async (top, degrees, armless) => {
+      const poses = window.WildcardAvatar.pose({ loops: true, duration: 1, tracks: [] }, 0);
+      poses[arms[0]].rotation = degrees;
+      poses[arms[1]].rotation = -degrees;
+      const art = dress(C, { body: 'cat', top }).map((svg, i) =>
+        armless && (arms.includes(i) || arms.some((arm) => C.parts[i].parent === C.parts[arm].id))
+          ? ''
+          : svg,
+      );
+      const svg = window.WildcardAvatar.figure({ art, level: [] }, poses);
+      const image = new Image();
+      image.src =
+        'data:image/svg+xml,' +
+        encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 320" width="960" height="1280">${svg}</svg>`,
+        );
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      [canvas.width, canvas.height] = [960, 1280];
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const { data } = context.getImageData(0, 0, 960, 1280);
+      return (x, y) => {
+        const at = (Math.round(y * 4) * 960 + Math.round(x * 4)) * 4;
+        return [...data.slice(at, at + 4)];
+      };
+    };
+    // Points where the body's own art shows, and how many of them the arms change.
+    const changed = async (top, degrees, where) => {
+      const [worn, body] = [await pixels(top, degrees, false), await pixels(top, degrees, true)];
+      let [points, differ] = [0, 0];
+      for (const arm of arms) {
+        const { pivot, seam } = C.parts[arm];
+        const [ax, ay] = [seam.armpit[0] - seam.top[0], seam.armpit[1] - seam.top[1]];
+        const side = (x, y) => (x - seam.top[0]) * ay - (y - seam.top[1]) * ax;
+        for (let x = pivot[0] - 14; x <= pivot[0] + 14; x += 0.5)
+          for (let y = pivot[1] - 14; y <= pivot[1] + 14; y += 0.5) {
+            // How far behind the seam the point lies, on the pivot's side of it.
+            const behind = (side(x, y) / Math.hypot(ax, ay)) * Math.sign(side(...pivot));
+            if (body(x, y)[3] < 255 || !where(Math.hypot(x - pivot[0], y - pivot[1]), behind))
+              continue;
+            points++;
+            if (worn(x, y).some((v, k) => Math.abs(v - body(x, y)[k]) > 2)) differ++;
+          }
+      }
+      return { points, differ };
+    };
+    return {
+      // A sleeve lifted high: the chest about the pivot, which every turn of the arm keeps.
+      raised: await changed('nolook-shooter', 130, (out) => out < 2),
+      // A bare arm hanging: all of a tank and its straps behind the seam.
+      strap: await changed('warmup-tank', 0, (_, behind) => behind > 1.5),
+    };
+  });
+  expect(drawn.raised.points).toBeGreaterThan(60);
+  expect(drawn.raised.differ).toBe(0);
+  expect(drawn.strap.points).toBeGreaterThan(100);
+  expect(drawn.strap.differ).toBe(0);
+});
+
 test('an arm bends as the app bends it, case for case', async ({ page }) => {
   // The app writes these (AvatarDomainTests' ArmBendCasesTests), so the two players can't drift.
   const { arm, cases } = JSON.parse(

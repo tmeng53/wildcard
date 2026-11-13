@@ -120,22 +120,23 @@ final class SignUpUITests: XCTestCase {
         app.buttons["week.done"].tap()
     }
 
-    /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card has
-    /// dropped in by four seconds, and home takes over at the end.
+    /// Frames of 上场 as fast as the simulator takes them, for the MP4; the squad card drops in
+    /// during it, and home takes over at the end. 上场's own clock starts once the art has loaded,
+    /// which a busy simulator can take seconds to do, so the card is waited for, not timed.
     private func watchTheEntrance(in app: XCUIApplication) {
         let entrance = app.descendants(matching: .any)["entrance"]
         XCTAssertTrue(entrance.waitForExistence(timeout: Self.wait), "上场 never started")
+        let card = app.descendants(matching: .any)["entrance.card"]
         let start = Date.now
         var frame = 0
-        var checkedCard = false
+        var sawCard = false
         while Date.now.timeIntervalSince(start) < 7 {
             keepScreenshot(named: String(format: "47-signup-entrance-%02d", frame))
             frame += 1
-            if !checkedCard, Date.now.timeIntervalSince(start) > 4 {
-                XCTAssertTrue(
-                    app.descendants(matching: .any)["entrance.card"].exists, "the squad card never dropped in")
-                checkedCard = true
-            }
+            if !sawCard, Date.now.timeIntervalSince(start) > 4 { sawCard = card.exists }
+        }
+        if !sawCard {
+            XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the squad card never dropped in")
         }
         // 上场 shows the tab bar too, so home is its own 打卡.
         XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")

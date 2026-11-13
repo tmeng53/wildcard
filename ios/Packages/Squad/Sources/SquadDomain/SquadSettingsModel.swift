@@ -335,7 +335,7 @@ public final class SquadSettingsModel {
             switch error {
             case .signedOut: await signOut()
             case .noSquad: hasLeft = true
-            case .outdated: await reload()
+            case .outdated, .challengeExpired: await reload()
             case .unavailable: return .unavailable
             }
             return .outdated
@@ -361,7 +361,7 @@ public final class SquadSettingsModel {
             switch error {
             case .signedOut: await signOut()
             case .noSquad: hasLeft = true
-            case .outdated: await reload()
+            case .outdated, .challengeExpired: await reload()
             case .unavailable: break
             }
         }

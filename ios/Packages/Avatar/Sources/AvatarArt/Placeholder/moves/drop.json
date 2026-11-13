@@ -29,8 +29,6 @@
     {"part": "dustL", "channel": "scaleY", "keys": [{"t": 0, "v": 0.4}, {"t": 0.55, "v": 0.4, "ease": "easeInOut"}, {"t": 1.15, "v": 1.2, "ease": "easeOut"}, {"t": 1.9, "v": 1, "ease": "hold"}]},
     {"part": "dustR", "channel": "scaleX", "keys": [{"t": 0, "v": 0.4}, {"t": 0.55, "v": 0.4, "ease": "easeInOut"}, {"t": 1.15, "v": 1.6, "ease": "easeOut"}, {"t": 1.9, "v": 1, "ease": "hold"}]},
     {"part": "dustR", "channel": "scaleY", "keys": [{"t": 0, "v": 0.4}, {"t": 0.55, "v": 0.4, "ease": "easeInOut"}, {"t": 1.15, "v": 1.2, "ease": "easeOut"}, {"t": 1.9, "v": 1, "ease": "hold"}]},
-    {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}]},
-    {"part": "armL", "channel": "front", "keys": [{"t": 0, "v": 1}, {"t": 0.533, "v": 0, "ease": "hold"}]},
-    {"part": "armR", "channel": "front", "keys": [{"t": 0, "v": 1}, {"t": 0.5, "v": 0, "ease": "hold"}]}
+    {"part": "armR", "channel": "bend", "keys": [{"t": 0, "v": 0}]}
   ]
 }

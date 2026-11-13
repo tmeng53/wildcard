@@ -72,8 +72,14 @@ final class Wardrobe {
     /// character, read again first, trying `piece` on (just the editor for nil).
     func showGift(_ piece: String?) async {
         await profile.reload()
+        tryOn(piece.map { [$0] } ?? [])
+    }
+
+    /// The editor on the character as the profile holds it now, trying `pieces` on without
+    /// saving them: the member keeps or changes them there.
+    func tryOn(_ pieces: [String]) {
         editCharacter()
-        if let piece { editor?.tryOn(piece) }
+        for piece in pieces { editor?.tryOn(piece) }
     }
 
     /// 我's shopfront: the street as it was last made at once, then read again, so a store that

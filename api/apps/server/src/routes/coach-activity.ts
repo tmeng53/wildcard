@@ -1,17 +1,13 @@
 import { TimeZone, wallClockAt } from '@wildcard/time-zones';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
-  LETTER_LIMIT,
   CHALLENGE_AMOUNT_MAX,
-  CHALLENGE_LINE_LIMIT,
-  CHALLENGE_TITLE_LIMIT,
-  CHALLENGE_UNIT_LIMIT,
   ChallengeAnswer,
   ChallengeDoneBy,
   DECLINE_REASON_LIMIT,
   DeclineReason,
+  longestLine,
   MAX_CHECK_INS,
-  REPLY_LIMIT,
   SquadId as CoachSquadId,
   type Challenge,
   type ChallengeCompletion,
@@ -64,7 +60,7 @@ const ChallengeDoneByBody = ChallengeDoneBy.meta({
 
 export const CoachChallengeBody = z
   .strictObject({
-    title: z.string().max(CHALLENGE_TITLE_LIMIT).meta({
+    title: z.string().max(longestLine('challengeTitle')).meta({
       description: 'What to do, in a few words.',
       example: '喝水',
     }),
@@ -72,11 +68,11 @@ export const CoachChallengeBody = z
       description: 'How much, when it has a number; always with `unit`.',
       example: 8,
     }),
-    unit: z.string().max(CHALLENGE_UNIT_LIMIT).optional().meta({
+    unit: z.string().max(longestLine('challengeUnit')).optional().meta({
       description: 'The amount’s unit, the coach’s own word.',
       example: '杯',
     }),
-    line: z.string().max(CHALLENGE_LINE_LIMIT).optional().meta({
+    line: z.string().max(longestLine('challengeLine')).optional().meta({
       description:
         'The coach talking to the member under the title, about why; left out on older notes.',
       example: '泳池泡久了也会渴，别等口干。',
@@ -177,7 +173,7 @@ export const CoachLetterBody = z
     from: CoachSpeakerBody.meta({ description: 'The coach who wrote it as it left: its 落款.' }),
     to: CoachSpeakerBody.meta({ description: 'The coach who took over: its 称呼.' }),
     day: z.iso.date().meta({ description: 'The day it is dated, on the squad’s clock.' }),
-    text: z.string().max(LETTER_LIMIT).meta({
+    text: z.string().max(longestLine('letter')).meta({
       description: 'Its body, without the 称呼 or 落款; lines apart by `\\n`.',
       example: '这队交给你了，我先撤。',
     }),
@@ -218,7 +214,7 @@ const CoachReplyBody = z
     }),
     text: z
       .string()
-      .max(REPLY_LIMIT)
+      .max(longestLine('reply'))
       .nullable()
       .meta({
         description:
@@ -257,7 +253,7 @@ const CoachAnswerBody = z
     }),
     text: z
       .string()
-      .max(REPLY_LIMIT)
+      .max(longestLine('reply'))
       .meta({
         description:
           'Its answer, shown among the post’s comments right after the reply it answers, as a ' +
@@ -387,7 +383,8 @@ export function coachActivity(deps: {
     description:
       '接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it ' +
       'go if they say (their coach remembers it; squadmates never see it). The first answer ' +
-      'stands; answering again gets it back. The coach sees it when the member next checks in.',
+      'stands; answering again gets it back. Only until its day is over on the squad’s clock. ' +
+      'The coach sees it when the member next checks in.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -420,8 +417,9 @@ export function coachActivity(deps: {
         content: { 'application/json': { schema: ChallengeAnswered } },
       },
       400: problem(
-        'Not a valid squad or note id, not an answer, or a note with no challenge ' +
-          '(`COACH_NOTE_NO_CHALLENGE`)',
+        'Not a valid squad or note id, not an answer, a note with no challenge ' +
+          '(`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the ' +
+          'squad’s clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)',
       ),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
@@ -574,6 +572,7 @@ export function coachActivity(deps: {
         note: noteId,
         answer,
         ...(reason === undefined ? {} : { reason }),
+        today: await todayOf(squadId),
       });
       return c.json({ version: 1 as const, noteId, ...kept }, 200);
     })

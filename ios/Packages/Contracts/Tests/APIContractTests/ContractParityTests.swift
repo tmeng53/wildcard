@@ -19,9 +19,10 @@ private final class Schema: Decodable, Sendable {
     let minItems: Int?
     let maxItems: Int?
     let maxCharacters: Int?
-    let minimum: Int?
+    // A bound may be fractional (a meal's 卡价比 starts at 0.2), so it reads as a number.
+    let minimum: Double?
     let defaultValue: Int?
-    let maximum: Int?
+    let maximum: Double?
     let ref: String?
 
     enum CodingKeys: String, CodingKey {
@@ -54,11 +55,15 @@ func customSportLimitIsTheAPIs(schema: String) throws {
     #expect(try property("customSport", of: schema)?.maxCharacters == CustomSport.maxLength)
 }
 
+@Test func cityNameLimitIsTheAPIs() throws {
+    #expect(try property("city", of: "MemberLocation")?.maxCharacters == CityName.maxLength)
+}
+
 @Test(arguments: ["Training", "TrainingView"])
 func workoutMinutesRangeIsTheAPIs(schema: String) throws {
     let minutes = try property("minutes", of: schema)
-    #expect(minutes?.minimum == WorkoutMinutes.range.lowerBound)
-    #expect(minutes?.maximum == WorkoutMinutes.range.upperBound)
+    #expect(minutes?.minimum == Double(WorkoutMinutes.range.lowerBound))
+    #expect(minutes?.maximum == Double(WorkoutMinutes.range.upperBound))
 }
 
 @Test(arguments: ["CommentDraft", "CommentEntry"])
@@ -80,8 +85,8 @@ func commentLimitIsTheAPIs(schema: String) throws {
 
 @Test func jerseyNumberRangeIsTheAPIs() throws {
     let number = try property("jerseyNumber", of: "Profile")
-    #expect(number?.minimum == JerseyNumber.range.lowerBound)
-    #expect(number?.maximum == JerseyNumber.range.upperBound)
+    #expect(number?.minimum == Double(JerseyNumber.range.lowerBound))
+    #expect(number?.maximum == Double(JerseyNumber.range.upperBound))
 }
 
 @Test func nicknameLimitIsTheAPIs() throws {
@@ -100,15 +105,15 @@ func photoCountIsTheAPIs(schema: String) throws {
 @Test(arguments: ["width", "height"])
 func photoSideRangeIsTheAPIs(side: String) throws {
     let range = try property(side, of: "PhotoSize")
-    #expect(range?.minimum == PhotoSize.sideRange.lowerBound)
-    #expect(range?.maximum == PhotoSize.sideRange.upperBound)
+    #expect(range?.minimum == Double(PhotoSize.sideRange.lowerBound))
+    #expect(range?.maximum == Double(PhotoSize.sideRange.upperBound))
 }
 
 @Test(arguments: ["NewSquad", "SquadWeeklyGoal", "SquadWeeklyGoalChange"])
 func squadWeeklyGoalIsTheAPIs(schema: String) throws {
     let days = try property("daysPerMember", of: schema)
-    #expect(days?.minimum == SquadWeeklyGoal.choices.lowerBound)
-    #expect(days?.maximum == SquadWeeklyGoal.choices.upperBound)
+    #expect(days?.minimum == Double(SquadWeeklyGoal.choices.lowerBound))
+    #expect(days?.maximum == Double(SquadWeeklyGoal.choices.upperBound))
 }
 
 @Test func newSquadDefaultGoalIsTheAPIs() throws {
@@ -124,6 +129,13 @@ func planLengthIsTheAPIs(schema: String) throws {
 
 /// 补打卡's reach is the API's `BACKFILL_DAYS`, which the OpenAPI document only states in words,
 /// so the test reads the rule's own source.
+@Test(arguments: ["healthy", "tasty"])
+func mealScoresAreTheAPIs(field: String) throws {
+    let score = try property(field, of: "MealRating")
+    #expect(score?.minimum == Double(MealRating.scores.lowerBound))
+    #expect(score?.maximum == Double(MealRating.scores.upperBound))
+}
+
 @Test func aPostReachesBackAsFarAsTheAPIAllows() throws {
     let url = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()

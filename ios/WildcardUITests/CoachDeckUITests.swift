@@ -161,13 +161,38 @@ final class CoachDeckUITests: XCTestCase {
 
     }
 
-    private func launch(extra: [String] = []) -> XCUIApplication {
+    /// While 毛头 said something I haven't seen, the squad card's last row says its name and the
+    /// start of its newest line (Tracy, 2026-11-13, option 1); a tap opens its page on today's cards.
+    func testTheSquadCardsCoachRowOpensWhatTheCoachSaid() {
+        continueAfterFailure = false
+        let app = launch(folded: false)
+        let row = app.buttons["squadcard.coachNews"]
+        XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "the squad card has no row for 毛头")
+        XCTAssertEqual(row.label, "毛头")
+        XCTAssertTrue(
+            (row.value as? String)?.hasPrefix("昨天三个人上场") ?? false, "the row doesn't say 毛头's line: \(row.value ?? "")")
+        let squadCard = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+        XCTAssertTrue(
+            squadCard.frame.contains(row.frame), "the row runs off the squad card: \(row.frame) in \(squadCard.frame)")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(row.frame), "the row runs off the screen: \(row.frame)")
+        XCTAssertTrue(row.isHittable, "the row is covered")
+        XCTAssertTrue(app.buttons["today.checkin"].isHittable, "打卡 is covered")
+        keepScreenshot(named: "104-coach-news-row")
+
+        row.tap()
+        XCTAssertTrue(
+            card("board", in: app).waitForExistence(timeout: Self.wait), "the row didn't open 毛头's page")
+    }
+
+    private func launch(extra: [String] = [], folded: Bool = true) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments +=
             [
                 "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
                 "-today.cardPage", "0", "-uitest-coach-note",
             ] + extra
+        // Home opens on the folded capsule, as most of these tests were written for.
+        app.launchArguments += folded ? ["-uitest-card-folded"] : ["-today.cardCollapsed", "NO"]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app

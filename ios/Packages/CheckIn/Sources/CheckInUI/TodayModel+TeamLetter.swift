@@ -37,7 +37,7 @@ extension TodayModel {
         broadcastOpened?(shown.broadcast)
     }
 
-    /// 立刻穿上: what the team gave is put on through the app, which opens the wardrobe wearing it.
+    /// 立刻穿上: the app opens the wardrobe trying on what the team gave, saving nothing.
     func wearTeamLetter() {
         guard let shown = teamLetter, let presents = shown.broadcast.letter?.presents else { return }
         putAwayTeamLetter()

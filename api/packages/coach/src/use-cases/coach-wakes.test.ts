@@ -21,6 +21,7 @@ import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
+  CoachChallengeDayOverError,
   CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachNotOfferedError,
@@ -31,6 +32,7 @@ import { weekText, type SquadWeek } from '../domain/squad-week.js';
 import type {
   AgentRun,
   CoachAgent,
+  CoachFeedback,
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
@@ -50,6 +52,7 @@ import {
   type CoachAnswered,
   type CoachReplied,
   type CoachWakesDependencies,
+  type CoachWelcomed,
 } from './coach-wakes.js';
 
 // Local Supabase's database, as scripts/verify.sh passes it in. Each test works inside a
@@ -190,14 +193,36 @@ interface Step {
  * An agent that calls tools as a model would, by name and with JSON arguments, from a script
  * per task, and records every task and every answer.
  */
-function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
+/** The day's challenge for 队员1, as the run setting challenges sets it. */
+const water = (): readonly Step[] => [
+  {
+    tool: 'set_challenge',
+    input: { member: '队员1', title: '喝水', amount: 8, unit: '杯', line: '天干' },
+  },
+];
+
+/**
+ * A model that runs the script's tool calls for each wake; the run setting the day's challenges
+ * before a daily wake's notes runs `pick`'s instead and is kept in `picks`.
+ */
+function scriptedAgent(
+  script: (task: string) => readonly Step[] | 'fail',
+  pick: (task: string) => readonly Step[] = () => [],
+) {
   const runs: { task: string; instructions: string; tools: string[]; answers: string[] }[] = [];
+  const picks: typeof runs = [];
   const agent: CoachAgent = {
     async run({ instructions, task, tools }): Promise<AgentRun> {
-      const steps = script(task);
+      const picking = tools.some(({ name }) => name === 'set_challenge');
+      const steps = picking ? pick(task) : script(task);
       const usage = { requests: 2, inputTokens: 12_000, cachedInputTokens: 0, outputTokens: 800 };
       const answers: string[] = [];
-      runs.push({ task, instructions, tools: tools.map(({ name }) => name), answers });
+      (picking ? picks : runs).push({
+        task,
+        instructions,
+        tools: tools.map(({ name }) => name),
+        answers,
+      });
       if (steps === 'fail') return { ok: false, usage, error: 'ModelBehaviorError: no' };
       for (const step of steps) {
         const tool: CoachTool | undefined = tools.find(({ name }) => name === step.tool);
@@ -209,7 +234,7 @@ function scriptedAgent(script: (task: string) => readonly Step[] | 'fail') {
       return { ok: true, usage };
     },
   };
-  return { agent, runs };
+  return { agent, runs, picks };
 }
 
 /**
@@ -226,12 +251,16 @@ function wakes(
     consented,
     replied,
     answered,
+    welcomed,
     photoUrls,
     memberFacts,
     wantNotes,
     memes,
     gifting,
     weatherOf,
+    relayFeedback,
+    relayingOn,
+    ended,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -240,12 +269,16 @@ function wakes(
     readonly consented?: readonly string[];
     readonly replied?: CoachReplied;
     readonly answered?: CoachAnswered;
+    readonly welcomed?: CoachWelcomed;
     readonly photoUrls?: CoachPhotoUrls;
     readonly memberFacts?: CoachMemberFacts;
     readonly wantNotes?: (members: readonly string[]) => Promise<readonly string[]>;
     readonly memes?: CoachMemes;
     readonly gifting?: CoachGifting;
     readonly weatherOf?: CoachWeather;
+    readonly relayFeedback?: CoachFeedback;
+    readonly relayingOn?: (day: string) => Promise<boolean>;
+    readonly ended?: boolean;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -272,12 +305,16 @@ function wakes(
     ...quietPorts,
     ...(replied === undefined ? {} : { replied }),
     ...(answered === undefined ? {} : { answered }),
+    ...(welcomed === undefined ? {} : { welcomed }),
     ...(photoUrls === undefined ? {} : { photoUrls }),
     ...(memberFacts === undefined ? {} : { memberFacts }),
     ...(wantNotes === undefined ? {} : { wantNotes }),
     ...(memes === undefined ? {} : { memes }),
     ...(gifting === undefined ? {} : { gifting }),
     ...(weatherOf === undefined ? {} : { weatherOf }),
+    ...(relayFeedback === undefined ? {} : { relayFeedback }),
+    ...(ended === true ? { ended: (squads) => Promise.resolve(new Set(squads)) } : {}),
+    ...(relayingOn === undefined ? {} : { relayingOn }),
   });
 }
 
@@ -288,17 +325,22 @@ function wakes(
 const quietPorts = {
   photoUrls: (paths) => Promise.resolve(paths.map((path) => `https://photos.test/${path}`)),
   memberFacts: () => Promise.resolve([]),
+  streaks: () => Promise.resolve({}),
   timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  ended: () => Promise.resolve(new Set()),
   memes: () => Promise.resolve([]),
   weatherOf: () => Promise.resolve(new Map()),
   occasions: () => Promise.resolve([]),
   replied: () => Promise.resolve(),
   answered: () => Promise.resolve(),
+  welcomed: () => Promise.resolve(),
   wantNotes: (members) => Promise.resolve(members),
   gifting: {
     options: () => Promise.resolve({ pool: [], open: new Map() }),
     give: () => Promise.resolve('no gifts in this test'),
   },
+  relayFeedback: () => Promise.resolve('no feedback in this test'),
+  relayingOn: () => Promise.resolve(true),
   warn: () => undefined,
 } satisfies Partial<CoachWakesDependencies>;
 
@@ -381,8 +423,8 @@ describe('the coach', () => {
 
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([[fixture.mia, fixture.leo]]);
-      expect(daily?.task).toContain('今天给这些人各写一张便条：\n- 队员1：');
-      expect(daily?.task).not.toContain('- 队员2：这周');
+      expect(daily?.task).toContain('## 今天的便条（下面每人各写一张）\n\n### 队员1（米亚）\n');
+      expect(daily?.task).not.toContain('### 队员2');
       expect(daily?.answers).toStrictEqual(['不能给 队员2 写便条；能写的是：队员1。']);
     });
   });
@@ -455,10 +497,12 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
           'memes',
+          'relay_feedback',
           'reply',
           'react',
         ],
@@ -466,6 +510,7 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
@@ -474,7 +519,7 @@ describe('the coach', () => {
           'note_to',
         ],
       ]);
-      expect(runs[0]?.task).toContain('队员1 训练 跑步');
+      expect(runs[0]?.task).toContain('队员1 · 训练：跑步');
       expect(runs[0]?.answers).toStrictEqual([
         '记下了，在 memory.md。',
         '已改好，people/队员2.md 现在 5 字。',
@@ -498,14 +543,16 @@ describe('the coach', () => {
       ]);
       // Every member who agreed to AI use gets a note, whether or not they checked in.
       expect(runs[1]?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 1 天；这周发过的：周日跑步。 用简体中文写。\n- 队员2：这周已经练了 0 天；这周还没发过动态。 用简体中文写。',
+        '## 今天的便条（下面每人各写一张）\n\n### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 用简体中文写。\n\n### 队员2\n- 这周练了：0 天\n- 这周发过：还没发过\n- 用简体中文写。',
       );
       // With yesterday's posts, here none.
-      expect(runs[1]?.task).toContain('昨天（周六）小队没人发动态。');
+      expect(runs[1]?.task).toContain('## 昨天（周六）小队的动态\n没人发动态。');
       expect(runs[0]?.task).not.toContain('便条');
       // The daily wake sees what the first one remembered, and the instructions are 小混's.
-      expect(runs[1]?.task).toContain('【memory.md】\n- 队员1 周日跑步');
-      expect(runs[1]?.task).toContain('过去一天没人在打卡下面和你说话。');
+      expect(runs[1]?.task).toContain('### memory.md（你和大家之间的事）\n```\n- 队员1 周日跑步');
+      expect(runs[1]?.task).toContain(
+        '## 和你的对话（过去一天，打卡下面，先后顺序）\n没人在打卡下面和你说话。',
+      );
       expect(runs[1]?.instructions).toContain('你是小混');
       expect(runs[1]?.instructions).toContain('不提谁没打卡');
       // How each wake goes is in the instructions, the same every time, so it can be cached.
@@ -524,10 +571,10 @@ describe('the coach', () => {
         trx,
       );
       expect(files.rows).toStrictEqual([
-        // The first wake starts the squad's file from who is in it.
+        // The first wake starts the squad's file; who is in it is in every task instead.
         {
           path: 'squad.md',
-          body: `# 小队\n队员（昵称会变，以 squad_week 为准）：\n- {队员:${fixture.mia}}：昵称「米亚」\n- {队员:${leo}}`,
+          body: '# 小队',
           member_id: null,
         },
         // Members named in a file are stored by id, so a name follows them when 队员N shifts.
@@ -673,6 +720,8 @@ describe('the coach', () => {
         })),
       ).toStrictEqual([
         { of: squad, member: fixture.mia, kind: 'wake', model: 'openai/gpt-6-luna' },
+        // The day's: its challenges set on the challenge model first, then the notes.
+        { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
         { of: squad, member: undefined, kind: 'wake', model: 'openai/gpt-6-luna' },
       ]);
 
@@ -732,8 +781,10 @@ describe('the coach', () => {
       await wakes(fixture, { agent, at: tomorrow }).run();
       // Both earlier wakes added a line; the new hire dreams over yesterday with them, then wakes
       // for the day.
-      expect(runs[2]?.task).toContain('夜里，整理你的记性。');
-      expect(runs[2]?.task).toContain('【memory.md】\n队名：squad\n队名：squad');
+      expect(runs[2]?.task).toContain('# 夜里，整理你的记性');
+      expect(runs[2]?.task).toContain(
+        '### memory.md（你和大家之间的事）\n```\n队名：squad\n队名：squad',
+      );
 
       const report = await createCoachReport({
         store: createPostgresCoachReport(trx),
@@ -747,13 +798,14 @@ describe('the coach', () => {
           { path: 'squad.md' },
         ],
         usage: {
+          // Each day's wake counts twice: its challenges set, then its notes.
           total: {
-            wakes: 4,
-            requests: 8,
-            inputTokens: 48_000,
+            wakes: 6,
+            requests: 12,
+            inputTokens: 72_000,
             cachedInputTokens: 0,
-            outputTokens: 3_200,
-            costMicros: 18_400,
+            outputTokens: 4_800,
+            costMicros: 27_600,
           },
         },
       });
@@ -804,7 +856,9 @@ describe('the coach', () => {
       const back = runs.length;
       await wakes(fixture, { agent, at: new Date(now.getTime() + 2 * 86_400_000) }).run();
       const his = runs[back];
-      expect(his?.task).toContain('【me.md】\n- 我最会偷懒');
+      expect(his?.task).toContain(
+        '### me.md（你自己：大家喜欢怎么跟你打交道、怎么看你这个教练，只有你读得到）\n```\n- 我最会偷懒',
+      );
       expect(his?.task).not.toContain('我说话慢');
 
       const pages = await sql<{ path: string; member_id: string | null }>`
@@ -912,6 +966,103 @@ describe('the coach', () => {
     });
   });
 
+  it('welcomes a member who joins at once, introducing itself in a note only they read', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, leo } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.includes('刚加入小队')
+          ? [{ tool: 'note_to', input: { member: '队员2', text: '我是小混，欢迎你来' } }]
+          : [],
+      );
+      const told: Parameters<CoachWelcomed>[0][] = [];
+      const welcomed: CoachWelcomed = (welcome) => {
+        told.push(welcome);
+        return Promise.resolve();
+      };
+      // What they did before joining, since the coach knows nothing of them yet.
+      const memberFacts: CoachMemberFacts = ({ members }) =>
+        Promise.resolve(
+          members.map((member) => ({
+            member,
+            trainedDays: 46,
+            topSport: { name: '游泳', checkIns: 30 },
+            healthyMeals: 0,
+            cheatMeals: 0,
+            disclaimers: 0,
+            titles: 0,
+            plan: [],
+            fuelGoals: [],
+          })),
+        );
+      const coach = wakes(fixture, { agent, welcomed, memberFacts, at: now });
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+      expect(runs[0]?.task).toContain('# 队员2刚加入小队\n今天是 2026-11-01，周日。');
+      expect(runs[0]?.task).toContain(
+        '## 新人\n\n### 队员2\n- 以前一共练了：46 天，练得最多的是游泳（30 次）\n',
+      );
+      expect(runs[0]?.task).toContain('给他写一张便条（note_to）：先介绍你自己，再欢迎他。');
+      // Only the note: no 战术板, no gift, no reply.
+      expect(runs[0]?.tools).toContain('note_to');
+      expect(runs[0]?.tools).not.toContain('post_note');
+      expect(runs[0]?.tools).not.toContain('reply');
+      expect(runs[0]?.answers).toStrictEqual(['便条写好了，给 队员2。']);
+      const notes = await sql<{ id: string; challenge_title: string | null; delivered: boolean }>`
+        select n.id, n.challenge_title, d.note_id is not null as delivered
+        from public.coach_member_notes n
+        left join public.coach_member_note_deliveries d on d.note_id = n.id
+        where n.member_id = ${leo}`.execute(trx);
+      expect(
+        notes.rows.map(({ challenge_title, delivered }) => ({ challenge_title, delivered })),
+      ).toStrictEqual([{ challenge_title: null, delivered: true }]);
+      expect(told).toStrictEqual([
+        {
+          squad,
+          member: leo,
+          coach: 'xiaohun',
+          note: Number(notes.rows[0]?.id),
+          day: '2026-11-01',
+          text: '我是小混，欢迎你来',
+        },
+      ]);
+      // Delivered already, so the morning delivery never pushes it.
+      const delivery = createCoachNoteDelivery({ store: createPostgresCoachNoteDelivery(trx) });
+      expect((await delivery.waiting(now)).filter(({ member }) => member === leo)).toStrictEqual(
+        [],
+      );
+      // Joining again the same day isn't welcomed twice.
+      await coach.welcome({ squad, member: leo });
+      expect(runs).toHaveLength(1);
+      // A member whose account went before the welcome was queued gets none, and nothing throws.
+      await coach.welcome({ squad, member: randomUUID() });
+      expect(runs).toHaveLength(1);
+    });
+  });
+
+  it('welcomes no one who hasn’t agreed to AI use, nor while coaching is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo } = fixture;
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes(fixture, { agent, consented: [mia] }).welcome({ squad, member: leo });
+      expect(runs).toHaveLength(0);
+      await createCoachSettings({ store: createPostgresCoachSettings(trx) }).change(
+        { coaching: false },
+        MemberId.parse(mia),
+      );
+      await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).welcome({
+        squad,
+        member: leo,
+      });
+      expect(runs).toHaveLength(0);
+      const queued = await sql<{ n: number }>`
+        select count(*)::int as n from public.coach_wakes where squad_id = ${squad} and reason = 'joined'`.execute(
+        trx,
+      );
+      // The first was queued and let go; none while coaching is off.
+      expect(queued.rows[0]?.n).toBe(1);
+    });
+  });
+
   it('answers an @ of it at once, even where it said nothing yet, and the job catches a missed one', async () => {
     await rolledBack(async (fixture) => {
       const { squad, leo, checkIn } = fixture;
@@ -943,9 +1094,9 @@ describe('the coach', () => {
       expect(runs).toHaveLength(0);
       await coach.answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
       const answering = runs.find(({ task }) => task.includes('要回的这句'));
-      expect(answering?.task).toContain('有人在评论里 @ 你。');
+      expect(answering?.task).toContain('# 队员2在评论里 @ 你');
       expect(answering?.task).toContain(
-        '这条下面的评论区（先后顺序）：\n- 11-01 周日 10:01 队员2（@你）：「@小混 下雨还练吗」（要回的这句）',
+        '## 评论区（先后顺序）\n- 11-01 周日 10:01 队员2（@你）：「@小混 下雨还练吗」（要回的这句）',
       );
       expect(told).toStrictEqual([
         {
@@ -1129,10 +1280,10 @@ describe('the coach', () => {
         { agent, at: new Date(now.getTime() + 20 * 3_600_000) },
       ).run();
       expect(runs.at(-1)?.task).toContain(
-        '过去一天打卡下面的对话（先后顺序）：\n- 11-01 周日 队员1 训练 跑步',
+        '## 和你的对话（过去一天，打卡下面，先后顺序）\n\n### 11-01 周日 · 队员1 · 训练：跑步',
       );
       expect(runs.at(-1)?.task).toContain(
-        '  你：「周日也跑？」\n  队员2：「你也跑吗」\n  你：「你也来跑」\n  队员1：「那你喊大声点」\n  你：「喊破嗓子」',
+        '- 你：「周日也跑？」\n- 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n- 队员1（回复你）：「那你喊大声点」\n- 你：「喊破嗓子」',
       );
       const activity = await createCoachActivity({
         store: createPostgresCoachActivity(trx),
@@ -1194,8 +1345,9 @@ describe('the coach', () => {
         trx,
       );
       expect(counts.rows).toStrictEqual([{ files: '0', notes: '0' }]);
-      // A failed run's tokens were spent all the same: every try counted.
-      expect(fixture.counted.runs).toHaveLength(6);
+      // A failed run's tokens were spent all the same: every try counted, with each daily try's
+      // challenges set before it.
+      expect(fixture.counted.runs).toHaveLength(9);
     });
   });
 
@@ -1239,6 +1391,23 @@ describe('the coach', () => {
     });
   });
 
+  it('never wakes for a squad that ended, though its coach is still on record', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const run = await wakes(fixture, { agent, ended: true }).run();
+      expect(run).toMatchObject({ coaching: true, squads: 0, queued: 0 });
+      expect(runs).toHaveLength(0);
+      await wakes(fixture, { agent, ended: true, at: new Date(now.getTime() + 86_400_000) }).run();
+      expect(runs).toHaveLength(0);
+      // Nor for a check-in whose event comes in after everyone left.
+      await wakes(fixture, { agent, ended: true }).checkedIn({
+        checkIn: fixture.checkIn,
+        squads: [fixture.squad],
+      });
+      expect(runs).toHaveLength(0);
+    });
+  });
+
   it('looks at a check-in at once, shows its recent emoji, and keeps every tool call', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, checkIn } = fixture;
@@ -1259,7 +1428,7 @@ describe('the coach', () => {
       // Only the check-in's wake runs, in the squad that hired a coach; the day's waits for the job.
       await wakes(fixture, { agent }).checkedIn({ checkIn, squads: [other, squad] });
       expect(runs).toHaveLength(1);
-      expect(runs[0]?.task).toContain('你最近没点过表情。');
+      expect(runs[0]?.task).toContain('## 你最近点过的表情\n还没点过。');
 
       // A second check-in sees the emoji the coach used, newest first.
       const second = randomUUID();
@@ -1284,7 +1453,7 @@ describe('the coach', () => {
       };
       await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: second, squads: [squad] });
       expect(runs).toHaveLength(2);
-      expect(runs[1]?.task).toContain('你最近点过的表情（新的在前）：🔥');
+      expect(runs[1]?.task).toContain('## 你最近点过的表情（新的在前）\n🔥');
 
       // Each call, with what the tool answered: a read by its length only.
       const weekLength = weekText(fixture.week).length;
@@ -1336,7 +1505,7 @@ describe('the coach', () => {
         checkIn,
         squads: [squad],
       });
-      expect(runs[0]?.task).toContain('（2 张照片）');
+      expect(runs[0]?.task).toContain('- 照片：2 张');
       expect(runs[0]?.task).not.toContain('m/a.jpg');
       expect(runs[0]?.tools).toContain('look_at_photos');
       expect(runs[0]?.answers).toStrictEqual([
@@ -1392,7 +1561,7 @@ describe('the coach', () => {
       }).checkedIn({ checkIn, squads: [squad] });
       expect(asked).toStrictEqual([{ squad, members: [mia], weekStart: fixture.week.weekStart }]);
       expect(runs[0]?.answers[0]).toContain('一共练了 50 天');
-      expect(runs[0]?.answers[1]).toContain(`本周从 ${earlier}（周一）开始。`);
+      expect(runs[0]?.answers[1]).toContain(`- 从 ${earlier}（周一）开始`);
     });
   });
 
@@ -1466,10 +1635,10 @@ describe('the coach', () => {
       }).checkedIn({ checkIn, squads: [squad] });
       expect(runs[0]?.answers).toStrictEqual([
         [
-          '队员1 的动态（新的在前）：',
-          '- 动态1：11-01 周日 队员1 训练 跑步 · 1 条评论',
-          '- 动态2：10-20 周二 队员1 训练 游泳 （只记录，没发动态） 30 分钟',
-        ].join('\n'),
+          '# 队员1 的动态（新的在前）',
+          '## 动态1 · 11-01 周日 · 队员1 · 训练：跑步\n- 评论：1 条（用 post_comments 看）',
+          '## 动态2 · 10-20 周二 · 队员1 · 训练：游泳 30 分钟\n- 只记录，没发动态',
+        ].join('\n\n'),
         '动态1 的评论区：\n- 11-01 周日 09:55 队员1：「跟队员2比谁更健康」',
         '动态2 只记录，没发动态，没有评论。',
         '没有 动态9；能看的是：动态1、动态2。',
@@ -1563,14 +1732,14 @@ describe('the coach', () => {
         members: [mia, leo],
         weekStart: fixture.week.weekStart,
       });
-      expect(daily?.task).toContain('新的一天：2026-11-01，周日。');
+      expect(daily?.task).toContain('# 新的一天\n2026-11-01，周日。');
       expect(daily?.task).toContain(
-        '- 队员1：本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳；这周的饮食小目标：喝够水；这周已经练了 1 天；这周发过的：周日跑步。',
+        '### 队员1（米亚）\n- 本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳\n- 饮食小目标：喝够水\n- 这周练了：1 天\n- 这周发过：周日跑步\n',
       );
       // A member whose plan it couldn't read still gets a note.
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周发过的：周六健康餐。');
+      expect(daily?.task).toContain('### 队员2\n- 这周练了：0 天\n- 这周发过：周六健康餐\n');
       expect(daily?.task).toContain(
-        '昨天（周六）小队的动态：\n- 10-31 周六 队员2 健康餐 （本人当地 22:05 发） 「自己做的」 · 点了表情：队员1',
+        '## 昨天（周六）小队的动态\n\n### 10-31 周六 · 队员2 · 健康餐\n- 本人当地 22:05 发\n- 写的：「自己做的」\n- 点了表情：队员1',
       );
     });
   });
@@ -1582,16 +1751,18 @@ describe('the coach', () => {
       const weatherOf: CoachWeather = (input) => {
         asked.push(input);
         // Only 队员1 shared where they are.
-        return Promise.resolve(new Map([[mia, '今天雨，8–13°C，降水概率 80%']]));
+        return Promise.resolve(
+          new Map([[mia, { words: '今天雨，8–13°C，降水概率 80%', city: '多伦多' }]]),
+        );
       };
       const { agent, runs } = scriptedAgent(() => []);
       await wakes(fixture, { agent, weatherOf }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(asked).toStrictEqual([{ members: [mia, leo], day: '2026-11-01' }]);
       expect(daily?.task).toContain(
-        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步；当地今天雨，8–13°C，降水概率 80%。',
+        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%\n',
       );
-      expect(daily?.task).toContain('- 队员2：这周已经练了 0 天；这周还没发过动态。');
+      expect(daily?.task).toContain('### 队员2\n- 这周练了：0 天\n- 这周发过：还没发过\n');
     });
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => []);
@@ -1600,7 +1771,7 @@ describe('the coach', () => {
         weatherOf: () => Promise.reject(new Error('no weather')),
       }).run();
       expect(runs.find(({ task }) => task.includes('新的一天'))?.task).toContain(
-        '- 队员1：这周已经练了 1 天；这周发过的：周日跑步。',
+        '### 队员1（米亚）\n- 这周练了：1 天\n- 这周发过：周日跑步\n- 用简体中文写。',
       );
     });
   });
@@ -1623,54 +1794,69 @@ describe('the coach', () => {
           return Promise.resolve(undefined);
         },
       };
-      const { agent, runs } = scriptedAgent((task) =>
-        task.includes('新的一天')
-          ? [
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员1',
-                  text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8, line: '天干，别等口渴' },
+      const { agent, runs, picks } = scriptedAgent(
+        (task) =>
+          task.includes('新的一天')
+            ? [
+                { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+                { tool: 'note_to', input: { member: '队员2', text: '今天走走' } },
+                { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
+                { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
+                { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
+                {
+                  tool: 'give_gift',
+                  input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
                 },
-              },
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员1',
-                  text: '今天多喝水',
-                  challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干，别等口渴' },
-                },
-              },
-              // A rest day's blank challenge, as the model sends it, is none.
-              {
-                tool: 'note_to',
-                input: {
-                  member: '队员2',
-                  text: '今天走走',
-                  challenge: { title: ' ', amount: 0, unit: '', line: '' },
-                },
-              },
-              { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
-              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-cap', line: '戴上' } },
-              { tool: 'give_gift', input: { member: '队员1', piece: 'gift-hat', line: '戴上' } },
-              {
-                tool: 'give_gift',
-                input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
-              },
-            ]
-          : task.includes('你今天给他的挑战')
-            ? [{ tool: 'complete_challenge', input: {} }]
-            : [],
+              ]
+            : task.includes('你今天给他的挑战')
+              ? [{ tool: 'complete_challenge', input: {} }]
+              : [],
+        // The day's challenges, set before the notes: only 队员1 gets one.
+        () => [
+          {
+            tool: 'set_challenge',
+            input: { member: '队员1', title: '喝水', amount: 0, unit: '杯', line: '天干' },
+          },
+          {
+            tool: 'set_challenge',
+            input: { member: '队员1', title: '喝'.repeat(9), amount: 8, unit: '杯', line: '天干' },
+          },
+          {
+            tool: 'set_challenge',
+            input: {
+              member: '队员1',
+              title: '喝水',
+              amount: 8,
+              unit: '杯',
+              line: '天干，别等口渴',
+            },
+          },
+          {
+            tool: 'set_challenge',
+            input: { member: '队员9', title: '跑步', amount: 5, unit: '公里', line: '' },
+          },
+        ],
       );
       await wakes(fixture, { agent, gifting }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'));
       expect(daily?.tools).toContain('give_gift');
-      expect(daily?.task).toContain('礼物清单：\n- gift-scarf：红围巾\n- gift-cap');
-      expect(daily?.task).toContain('这周还能收礼物的：\n- 队员1（已有：gift-cap）');
-      expect(daily?.answers.slice(0, 7)).toStrictEqual([
-        '挑战不对：title 不超过 8 字；amount 是 1 到 9999 的整数，unit 不超过 4 字，两个一起填或都不填；line 不超过 24 字。',
-        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+      expect(daily?.task).toContain('## 礼物清单\n- gift-scarf：红围巾\n- gift-cap');
+      expect(daily?.task).toContain('## 这周还能收礼物的\n- 队员1（已有：gift-cap）');
+      // Set on the challenge model, with the shared rules and what makes a good challenge.
+      expect(picks).toHaveLength(1);
+      expect(picks[0]?.tools).toStrictEqual(['set_challenge']);
+      expect(picks[0]?.task).toContain('# 新的一天');
+      expect(picks[0]?.answers).toStrictEqual([
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
+        '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
+        '定好了：队员1「喝水 8 杯」。',
+        '不能给 队员9 定挑战；能定的是：队员1、队员2。',
+      ]);
+      expect(daily?.task).toContain(
+        '## 今天的挑战（已经定好，单独一张卡给他）\n- 队员1「喝水 8 杯」，小字：天干，别等口渴',
+      );
+      expect(daily?.answers.slice(0, 6)).toStrictEqual([
+        '便条写好了，给 队员1，下面附着挑战「喝水 8 杯」。',
         '便条写好了，给 队员2。',
         '队员2 这周不能收礼物；能收的是：队员1。',
         '队员1 已经有 gift-cap 了，换一件。',
@@ -1710,14 +1896,37 @@ describe('the coach', () => {
         .then(({ rows }) => rows.map(({ id }) => Number(id)));
       // Answered only once the note reached them.
       const early = (note: number | undefined) =>
-        activity.answerChallenge({ squad, member: mia, note: note ?? 0, answer: 'accepted' });
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: note ?? 0,
+          answer: 'accepted',
+          today: '2026-11-01',
+        });
       await expect(early(mine)).rejects.toThrow(CoachNoteNotFoundError);
       await sql`insert into public.coach_member_note_deliveries (note_id)
         select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
       const answer = (
         member: string,
         { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
-      ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
+      ) =>
+        activity.answerChallenge({
+          squad,
+          member,
+          note: note ?? 0,
+          answer: said,
+          today: '2026-11-01',
+        });
+      // Not once its day is over (已过期).
+      await expect(
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: mine ?? 0,
+          answer: 'accepted',
+          today: '2026-11-02',
+        }),
+      ).rejects.toThrow(CoachChallengeDayOverError);
       expect(await answer(mia, { note: mine, said: 'accepted' })).toStrictEqual({
         answer: 'accepted',
       });
@@ -1751,7 +1960,7 @@ describe('the coach', () => {
         ],
       };
       await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: later, squads: [squad] });
-      expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，他接受了。');
+      expect(runs.at(-1)?.task).toContain('## 你今天给他的挑战\n- 挑战：喝水 8 杯\n- 他：接受了');
       // The coach saw it done in the check-in and marked it, once.
       expect(runs.at(-1)?.tools).toContain('complete_challenge');
       expect(runs.at(-1)?.answers).toStrictEqual(['已记他完成。']);
@@ -1786,7 +1995,9 @@ describe('the coach', () => {
         },
         { agent },
       ).checkedIn({ checkIn: again, squads: [squad] });
-      expect(runs.at(-1)?.task).toContain('你今天给他的挑战：「喝水 8 杯」，你已经记他完成了。');
+      expect(runs.at(-1)?.task).toContain(
+        '## 你今天给他的挑战\n- 挑战：喝水 8 杯\n- 他：完成了（你记的）',
+      );
       expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
     });
   });
@@ -1818,16 +2029,16 @@ describe('the coach', () => {
           '2026-11-02': { weekStart: '2026-11-02', members: fixture.week.members, checkIns: [] },
         },
       }).run();
-      const daily = runs.find(({ task }) => task.includes('新的一天：2026-11-02'));
+      const daily = runs.find(({ task }) => task.includes('# 新的一天\n2026-11-02'));
       expect(daily?.task).toContain(
-        '昨天（周日）小队的动态：\n- 11-01 周日 队员1 健康餐 「米亚的饭」',
+        '## 昨天（周日）小队的动态\n\n### 11-01 周日 · 队员1 · 健康餐\n- 写的：「米亚的饭」',
       );
       expect(daily?.task).not.toContain('没同意的人');
       // Only the consented member gets a note.
       expect(daily?.task).toContain(
-        '今天给这些人各写一张便条：\n- 队员1：这周已经练了 0 天；这周还没发过动态。',
+        '## 今天的便条（下面每人各写一张）\n\n### 队员1（米亚）\n- 这周练了：0 天\n- 这周发过：还没发过\n',
       );
-      expect(daily?.task).not.toContain('- 队员2：');
+      expect(daily?.task).not.toContain('### 队员2');
     });
   });
 
@@ -1902,7 +2113,7 @@ describe('the coach', () => {
         ],
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.startsWith('有人打卡')
+        task.startsWith('# 有人打卡')
           ? [
               { tool: 'reply', input: { text: '一起跑', at: ['队员3'] } },
               // The post's author gets the reply anyway: never @'d.
@@ -1933,11 +2144,150 @@ describe('the coach', () => {
     });
   });
 
+  it('passes on what a member asks of the app, from them, with all they said there', async () => {
+    await rolledBack(async (fixture) => {
+      const { squad, mia, leo, checkIn } = fixture;
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('# 有人打卡')
+          ? [
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '' } },
+              { tool: 'relay_feedback', input: { kind: 'problem', text: '照片传不上去' } },
+              { tool: 'relay_feedback', input: { kind: 'idea', text: '想在动态上标地点' } },
+              { tool: 'reply', input: { text: '帮你转给团队了' } },
+            ]
+          : task.includes('要回的这句')
+            ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想看全队的月度总结' } }]
+            : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      const relayFeedback: CoachFeedback = (relay) => {
+        relayed.push(relay);
+        return Promise.resolve(undefined);
+      };
+      const post = '今天吃得很干净，要是能 tag 地点就好了';
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: post })),
+      };
+      await wakes({ ...fixture, week: withWords }, { agent, relayFeedback }).run();
+      expect(runs[0]?.tools).toContain('relay_feedback');
+      expect(runs[0]?.answers.slice(0, 3)).toStrictEqual([
+        'text 是空的，写上他想要什么。',
+        '会转给团队。',
+        '已换成这条，会转给团队。',
+      ]);
+      // The daily wake has no one's words to pass on.
+      expect(runs[1]?.tools).not.toContain('relay_feedback');
+      // Each by the wake that passed it on, so a wake run twice passes it on once.
+      expect(typeof relayed[0]?.wake).toBe('number');
+      expect(relayed).toMatchObject([
+        {
+          squad,
+          coach: 'xiaohun',
+          member: mia,
+          checkIn,
+          kind: 'idea',
+          text: '想在动态上标地点',
+          quote: post,
+        },
+      ]);
+
+      // Under a post, it is the reply's writer who asked, quoted in all they said there up to
+      // the yes the wake answers: not the post's author's line, nor what came after.
+      const wish = await commentOn(fixture, {
+        member: leo,
+        text: '要是能出个月度总结就好了',
+        at: new Date(now.getTime() + 60_000),
+      });
+      const fromMia = await commentOn(fixture, {
+        member: mia,
+        text: '同意',
+        at: new Date(now.getTime() + 90_000),
+      });
+      const yes = await commentOn(fixture, {
+        member: leo,
+        text: '@小混 帮我转给团队吧',
+        at: new Date(now.getTime() + 120_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const later = await commentOn(fixture, {
+        member: leo,
+        text: '谢谢',
+        at: new Date(now.getTime() + 150_000),
+      });
+      const withAsk: SquadWeek = {
+        ...withWords,
+        checkIns: withWords.checkIns.map((each) => ({
+          ...each,
+          comments: [wish, fromMia, yes, later],
+        })),
+      };
+      await wakes(
+        { ...fixture, week: withAsk },
+        { agent, relayFeedback, at: new Date(now.getTime() + 3 * 60_000) },
+      ).answer({ checkIn, comment: yes.id, coach: 'xiaohun', squads: [squad] });
+      expect(relayed[1]).toMatchObject({
+        squad,
+        coach: 'xiaohun',
+        member: leo,
+        checkIn,
+        comment: yes.id,
+        kind: 'idea',
+        text: '想看全队的月度总结',
+        quote: '要是能出个月度总结就好了\n@小混 帮我转给团队吧',
+      });
+    });
+  });
+
+  it('offers nothing to pass on while passing feedback on is off', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent(() => []);
+      const asked: string[] = [];
+      const withWords: SquadWeek = {
+        ...fixture.week,
+        checkIns: fixture.week.checkIns.map((each) => ({ ...each, text: '想要标地点' })),
+      };
+      await wakes(
+        { ...fixture, week: withWords },
+        {
+          agent,
+          relayingOn: (day) => {
+            asked.push(day);
+            return Promise.resolve(false);
+          },
+        },
+      ).run();
+      expect(runs[0]?.task.startsWith('# 有人打卡')).toBe(true);
+      expect(runs[0]?.tools).not.toContain('relay_feedback');
+      expect(asked).toStrictEqual(['2026-11-01']);
+    });
+  });
+
+  it('has nothing to pass on from a post without words', async () => {
+    await rolledBack(async (fixture) => {
+      const { agent, runs } = scriptedAgent((task) =>
+        task.startsWith('# 有人打卡')
+          ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想标地点' } }]
+          : [],
+      );
+      const relayed: Parameters<CoachFeedback>[0][] = [];
+      await wakes(fixture, {
+        agent,
+        relayFeedback: (relay) => {
+          relayed.push(relay);
+          return Promise.resolve(undefined);
+        },
+      }).run();
+      expect(runs[0]?.answers).toStrictEqual(['他在这里没写字，没有能转的。']);
+      expect(relayed).toStrictEqual([]);
+    });
+  });
+
   it('dreams at night over yesterday: rewrites whole files, and only then', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, leo } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
-        task.startsWith('夜里')
+        task.startsWith('# 夜里')
           ? [
               { tool: 'rewrite_file', input: { path: 'notes.md', body: '不存在' } },
               { tool: 'rewrite_file', input: { path: 'memory.md', body: ' 队员2 周末爱跑步 \n' } },
@@ -1947,13 +2297,13 @@ describe('the coach', () => {
       );
       // Today: nothing from yesterday, so the night costs nothing.
       await wakes(fixture, { agent }).run();
-      expect(runs.map(({ task }) => task.slice(0, 4))).toStrictEqual(['有人打卡', '新的一天']);
+      expect(runs.map(({ task }) => task.slice(0, 6))).toStrictEqual(['# 有人打卡', '# 新的一天']);
       expect(runs[0]?.tools).not.toContain('rewrite_file');
 
       const tomorrow = new Date(now.getTime() + 86_400_000);
       await wakes(fixture, { agent, at: tomorrow }).run();
       const dream = runs[2];
-      expect(dream?.task).toContain('昨天（周日）小队的动态：');
+      expect(dream?.task).toContain('## 昨天（周日）小队的动态');
       expect(dream?.task).toContain('前后矛盾的，留最新的。');
       expect(dream?.tools).toContain('rewrite_file');
       expect(dream?.tools).not.toContain('post_note');
@@ -1964,7 +2314,7 @@ describe('the coach', () => {
         '已重写 squad.md，现在 8 字。',
       ]);
       // The day's wake reads what the night left.
-      expect(runs[3]?.task).toContain('【memory.md】\n队员2 周末爱跑步');
+      expect(runs[3]?.task).toContain('### memory.md（你和大家之间的事）\n```\n队员2 周末爱跑步');
       const files = await sql<{ path: string; body: string }>`
         select distinct on (path) path, body from public.coach_files
         where squad_id = ${squad} order by path, id desc`.execute(trx);
@@ -2007,6 +2357,7 @@ describe('the coach', () => {
         note: Number(noteOf(leo)),
         answer: 'declined',
         reason: '我鸡蛋过敏',
+        today: '2026-11-01',
       });
       // A check-in's wake that day is told why it was let go, and not to repeat it.
       const meal = randomUUID();
@@ -2036,7 +2387,7 @@ describe('the coach', () => {
         { agent },
       ).checkedIn({ checkIn: meal, squads: [squad] });
       expect(runs.at(-1)?.task).toContain(
-        '你今天给他的挑战：「吃鸡蛋」，他说算了，因为「我鸡蛋过敏」（他只告诉了你，别在回复里说）。',
+        '## 你今天给他的挑战\n- 挑战：吃鸡蛋\n- 他：没接，理由：「我鸡蛋过敏」（只告诉了你，别在回复里说）',
       );
       expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
       // The coach can't mark one let go, or one of another day.
@@ -2048,9 +2399,9 @@ describe('the coach', () => {
       await sql`insert into public.coach_challenge_completions (note_id, by)
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
-      const dream = runs.find(({ task }) => task.startsWith('夜里'));
+      const dream = runs.find(({ task }) => task.startsWith('# 夜里'));
       expect(dream?.task).toContain(
-        '昨天的挑战：\n- 队员1「喝水 8 杯」：完成了\n- 队员2「吃鸡蛋」：没接，因为「我鸡蛋过敏」（他只告诉了你）',
+        '## 最近 7 天的挑战\n- 11-01 周日 队员1「喝水 8 杯」：完成了\n- 11-01 周日 队员2「吃鸡蛋」：没接，理由：「我鸡蛋过敏」（只告诉了你）',
       );
     });
   });
@@ -2088,6 +2439,70 @@ describe('the coach', () => {
     });
   });
 
+  it('shows a check-in’s or reply’s wake only the pages of the people under it, the day’s every page', async () => {
+    await rolledBack(async (fixture) => {
+      const { trx, squad, mia, leo, checkIn } = fixture;
+      // A third member, who has nothing to do with 米亚's check-in.
+      const ann = randomUUID();
+      await sql`insert into auth.users (id, email) values (${ann}, ${`${ann}@example.com`})`.execute(
+        trx,
+      );
+      const week: SquadWeek = {
+        ...fixture.week,
+        members: [...fixture.week.members, { member: ann, nickname: '安' }],
+      };
+      // Each member has a page, written by an earlier wake.
+      const stores = createPostgresCoachStores(trx);
+      await stores.wakes.enqueue([{ squad, reason: { kind: 'dream', day: '2026-10-31' } }], now);
+      const [earlier] = await stores.wakes.claim({ squads: [squad], limit: 1, now });
+      if (earlier === undefined) throw new Error('no wake claimed');
+      await stores.memory.save({
+        squad,
+        wake: earlier.id,
+        files: [
+          { path: `people/${mia}.md`, body: '爱跑步' },
+          { path: `people/${leo}.md`, body: '怕下雨' },
+          { path: `people/${ann}.md`, body: '昨晚吃了冰淇淋' },
+        ],
+      });
+      await stores.wakes.finish(earlier.id);
+      const { agent, runs } = scriptedAgent(() => []);
+      await wakes({ ...fixture, week }, { agent }).run();
+      // 米亚's check-in, with no one under it yet: her page alone.
+      const onCheckIn = runs.find(({ task }) => task.startsWith('# 有人打卡'))?.task;
+      expect(onCheckIn).toContain('### people/队员1.md（队员1这个人）\n```\n爱跑步');
+      expect(onCheckIn).not.toContain('people/队员2.md');
+      expect(onCheckIn).not.toContain('冰淇淋');
+      // Who is who, with nicknames, so it never guesses a name.
+      expect(onCheckIn?.split('\n\n')).toContain(
+        '## 谁是谁（队员N：昵称）\n- 队员1：米亚\n- 队员2\n- 队员3：安',
+      );
+      // The day's wake is the squad's: every page.
+      const daily = runs.find(({ task }) => task.startsWith('# 新的一天'))?.task;
+      expect(daily).toContain('### people/队员3.md（队员3这个人）\n```\n昨晚吃了冰淇淋');
+      // Leo @s the coach under it: his page joins 米亚's, 安's stays out, and the task says who asks.
+      const asked = await commentOn(fixture, {
+        member: leo,
+        text: '下雨还跑吗',
+        at: new Date(now.getTime() + 60_000),
+        mentionsCoach: 'xiaohun',
+      });
+      const withComment: SquadWeek = {
+        ...week,
+        checkIns: week.checkIns.map((each) => ({ ...each, comments: [asked] })),
+      };
+      await wakes(
+        { ...fixture, week: withComment },
+        { agent, at: new Date(now.getTime() + 2 * 60_000) },
+      ).answer({ checkIn, comment: asked.id, coach: 'xiaohun', squads: [squad] });
+      const onReply = runs.find(({ task }) => task.includes('要回的这句'))?.task;
+      expect(onReply).toContain('# 队员2在评论里 @ 你');
+      expect(onReply).toContain('### people/队员1.md（队员1这个人）\n```\n爱跑步');
+      expect(onReply).toContain('### people/队员2.md（队员2这个人）\n```\n怕下雨');
+      expect(onReply).not.toContain('冰淇淋');
+    });
+  });
+
   it('writes the 战术板 in the squad’s language and a check-in’s reply in its author’s', async () => {
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => []);
@@ -2099,8 +2514,8 @@ describe('the coach', () => {
       await wakes(fixture, { agent, weeks: { [week.weekStart]: week } }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'))?.task;
       const checkIn = runs.find(({ task }) => task.includes('有人打卡'))?.task;
-      expect(daily).toContain('战术板：用繁體中文寫，照台灣的說法。');
-      expect(checkIn?.split('\n\n')).toContain('Write in English.');
+      expect(daily).toContain('## 战术板\n- 用繁體中文寫，照台灣的說法。');
+      expect(checkIn?.split('\n\n')).toContain('## 语言\nWrite in English.');
     });
   });
 
@@ -2117,7 +2532,10 @@ describe('the coach', () => {
         await wakes(fixture, { agent, weeks: { '2026-11-02': nextWeek } }).run(),
       ).toMatchObject({ queued: 3, done: 3 });
       // The day's wake was queued first, from this week; then the check-in's, from next week's.
-      expect(runs.map(({ task }) => task.includes('队员1 训练 跑步'))).toStrictEqual([false, true]);
+      expect(runs.map(({ task }) => task.includes('队员1 · 训练：跑步'))).toStrictEqual([
+        false,
+        true,
+      ]);
     });
   });
 
@@ -2146,7 +2564,8 @@ describe('the coach', () => {
       };
       expect(await wakes(fixture, { agent, replied }).run()).toMatchObject({ queued: 3, done: 3 });
       expect(told).toStrictEqual([]);
-      expect(fixture.counted.runs.map(({ kind }) => kind)).toStrictEqual(['wake', 'wake']);
+      // The check-in's, and the day's in two runs: its challenges, then its notes.
+      expect(fixture.counted.runs.map(({ kind }) => kind)).toStrictEqual(['wake', 'wake', 'wake']);
       // The reply to a check-in that went is dropped, and the wake still ends.
       const replies =
         await sql`select 1 from public.coach_replies where squad_id = ${squad}`.execute(trx);
@@ -2222,31 +2641,27 @@ describe('the coach', () => {
           return Promise.resolve(undefined);
         },
       };
-      const { agent, runs } = scriptedAgent(() => [
-        { tool: 'post_note', input: { text: '周日歇好' } },
-        {
-          tool: 'note_to',
-          input: {
-            member: '队员1',
-            text: '今天多喝水',
-            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
-          },
-        },
-        // Only the member previewed gets a note or a gift.
-        { tool: 'note_to', input: { member: '队员2', text: '走走' } },
-        { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
-        { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
-      ]);
+      const { agent, runs } = scriptedAgent(
+        () => [
+          { tool: 'post_note', input: { text: '周日歇好' } },
+          { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+          // Only the member previewed gets a note or a gift.
+          { tool: 'note_to', input: { member: '队员2', text: '走走' } },
+          { tool: 'give_gift', input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' } },
+          { tool: 'remember', input: { path: 'people/队员1.md', fact: '队员1爱喝水' } },
+        ],
+        water,
+      );
       const preview = await wakes(fixture, { agent, gifting }).preview({ squad, member: mia });
       expect(runs).toHaveLength(1);
       expect(runs[0]?.answers).toStrictEqual([
         '已写上战术板。',
-        '便条写好了，给 队员1，挑战「喝水 8 杯」。',
+        '便条写好了，给 队员1，下面附着挑战「喝水 8 杯」。',
         '不能给 队员2 写便条；能写的是：队员1。',
         'gift-scarf 送给 队员1 了。',
         '记下了，在 people/队员1.md。',
       ]);
-      expect(runs[0]?.task).toContain('今天给这些人各写一张便条');
+      expect(runs[0]?.task).toContain('## 今天的便条（下面每人各写一张）');
       expect(preview).toMatchObject({
         ran: true,
         day: '2026-11-01',
@@ -2256,7 +2671,8 @@ describe('the coach', () => {
           challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
         },
         gift: { piece: 'gift-scarf', line: '天冷了' },
-        costMicros: 4600,
+        // Setting the challenge and writing the notes.
+        costMicros: 9200,
       });
       expect(preview.ran && preview.files.map(({ path }) => path)).toContain(`people/${mia}.md`);
       expect(given).toStrictEqual([]);
@@ -2270,7 +2686,10 @@ describe('the coach', () => {
       // Its tokens are counted all the same, as a preview, to the squad: an admin asked for it.
       expect(
         fixture.counted.runs.map(({ kind, member, costMicros }) => ({ kind, member, costMicros })),
-      ).toStrictEqual([{ kind: 'preview', member: undefined, costMicros: 4600 }]);
+      ).toStrictEqual([
+        { kind: 'preview', member: undefined, costMicros: 4600 },
+        { kind: 'preview', member: undefined, costMicros: 4600 },
+      ]);
       expect(
         await wakes(fixture, { agent, gifting }).preview({ squad, member: randomUUID() }),
       ).toStrictEqual({
@@ -2282,17 +2701,13 @@ describe('the coach', () => {
   it('delivers a previewed note to the member alone each time asked, the newest the day’s', async () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia } = fixture;
-      const { agent } = scriptedAgent(() => [
-        { tool: 'post_note', input: { text: '周日歇好' } },
-        {
-          tool: 'note_to',
-          input: {
-            member: '队员1',
-            text: '今天多喝水',
-            challenge: { title: '喝水', amount: 8, unit: '杯', line: '天干' },
-          },
-        },
-      ]);
+      const { agent } = scriptedAgent(
+        () => [
+          { tool: 'post_note', input: { text: '周日歇好' } },
+          { tool: 'note_to', input: { member: '队员1', text: '今天多喝水' } },
+        ],
+        water,
+      );
       const first = await wakes(fixture, { agent }).preview({ squad, member: mia, deliver: true });
       expect(first).toMatchObject({ ran: true, delivered: true, note: { text: '今天多喝水' } });
       const saved = await sql<{ member: string; text: string; title: string; board: string }>`

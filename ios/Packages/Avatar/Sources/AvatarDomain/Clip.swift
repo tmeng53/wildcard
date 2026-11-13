@@ -4,16 +4,14 @@ import Foundation
 /// added to the rest pose; scales and opacity are factors. Bend is in degrees, clockwise,
 /// at an arm's elbow (`Rig.Elbow`): only a part with one bends.
 public enum Channel: String, Hashable, Sendable, Codable, CaseIterable {
-    // `front` is 1 while an arm is in front of the body (still under the head), and 0 (its rest)
-    // while it is behind (`Rig.Part.twin`), as an animator keys it; held, never eased.
     // swiftlint:disable:next identifier_name - x and y are the clip files' own channel names.
-    case rotation, x, y, scaleX, scaleY, opacity, bend, front
+    case rotation, x, y, scaleX, scaleY, opacity, bend
 
     /// An accent's value that leaves a part as it is.
     var rest: Double {
         switch self {
         case .scaleX, .scaleY: 1
-        case .rotation, .x, .y, .opacity, .bend, .front: 0
+        case .rotation, .x, .y, .opacity, .bend: 0
         }
     }
 }
@@ -181,9 +179,6 @@ public struct Clip: Hashable, Sendable {
             guard let first = times.first, let last = times.last, ordered, first >= 0, last <= duration else {
                 throw .invalidKeyframes(clip: name, part: track.part, channel: track.channel)
             }
-            guard track.channel != .front || track.keys.allSatisfy({ $0.value == 0 || $0.value == 1 }) else {
-                throw .invalidKeyframes(clip: name, part: track.part, channel: track.channel)
-            }
             guard track.keys.allSatisfy({ $0.easing.isPlayable }) else {
                 throw .invalidEasing(clip: name, part: track.part, channel: track.channel)
             }
@@ -227,12 +222,17 @@ public struct Clip: Hashable, Sendable {
     public static func decode(_ data: Data) throws(AvatarError) -> Clip {
         let file: ClipFile = try decodeJSON(data, version: currentVersion, shape: ClipFile.shape)
         var tracks: [Track] = []
-        for track in file.tracks {
+        // Arms are always drawn in front of the body now, so a `front` track (which once picked an
+        // arm's depth) in a move uploaded for older builds is left out.
+        for track in file.tracks where track.channel != ClipFile.retiredFront {
+            guard let channel = Channel(rawValue: track.channel) else {
+                throw .malformedJSON("\(file.name): unknown channel \"\(track.channel)\"")
+            }
             var keys: [Keyframe] = []
             for key in track.keys {
                 keys.append(Keyframe(time: key.time, value: key.value, easing: try easing(key.ease, file.name)))
             }
-            tracks.append(Track(part: track.part, channel: track.channel, keys: keys))
+            tracks.append(Track(part: track.part, channel: channel, keys: keys))
         }
         return try Clip(
             name: file.name, duration: file.duration, loops: file.loops, tracks: tracks, holds: file.holds)
@@ -265,9 +265,12 @@ private struct ClipFile: Decodable {
             ])),
     ])
 
+    /// The channel that picked an arm's depth before arms were always in front.
+    static let retiredFront = "front"
+
     struct TrackFile: Decodable {
         let part: PartID
-        let channel: Channel
+        let channel: String
         let keys: [KeyFrameFile]
     }
 }

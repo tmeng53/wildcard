@@ -1,11 +1,10 @@
 import { z } from 'zod';
 
+import { lengthProblem, type LineKind } from './line-limits.js';
+
 // What a coach says to a check-in shared to its squad, on that check-in's wake: one line, shown
 // among the post's comments with the 教练 tag, an emoji reaction, or both; and its answer to
 // each reply a member writes to it there, one line shown as a reply to them.
-
-/** The longest reply, in characters: as long as a member's comment; the database checks the same. */
-export const REPLY_LIMIT = 100;
 
 /**
  * The emoji a coach reacts with: a short list, so its reactions read as a coach's and every
@@ -15,13 +14,14 @@ export const CoachEmoji = z.enum(['❤️', '💪', '🔥', '👏', '😂', '�
 export type CoachEmoji = z.infer<typeof CoachEmoji>;
 
 /**
- * Why a line members read (a reply, a 战术板 line) can't be sent as it is, or `undefined` when it
- * can. The model sees members as 队员N, which members never see, so a line may not name anyone
- * that way.
+ * Why a line members read (a reply, a 战术板 line, a letter) can't be sent as it is, or
+ * `undefined` when it can: it must fit its kind's limit in its language, and, since the model
+ * sees members as 队员N, which members never see, may not name anyone that way.
  */
-export function lineProblem(text: string, limit: number): string | undefined {
+export function lineProblem(text: string, kind: LineKind): string | undefined {
   if (text === '') return '这句是空的。';
-  if (text.length > limit) return `太长了：${String(text.length)} 字，最多 ${String(limit)} 字。`;
+  const tooLong = lengthProblem(text, kind);
+  if (tooLong !== undefined) return tooLong;
   if (/队员\s*[0-9０-９]+/.test(text))
     return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
   return undefined;

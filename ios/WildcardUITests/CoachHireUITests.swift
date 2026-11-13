@@ -152,6 +152,8 @@ final class CoachHireUITests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push"]
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         let vacancy = app.buttons["today.coachVacancy"]
@@ -172,6 +174,8 @@ final class CoachHireUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments +=
             ["-tab", "squad", "-AppleLanguages", "(\(language))", "-AppleLocale", language, "-uitest-no-push"] + extra
+        // Home opens on the folded capsule, as these tests were written for.
+        app.launchArguments.append("-uitest-card-folded")
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         let page = app.descendants(matching: .any).matching(identifier: "squad.page").firstMatch
