@@ -1,3 +1,5 @@
+import Foundation
+
 /// A member's request to join a squad that needs its captain's OK (入队申请), as the member who
 /// asked reads it: the squad as its invite showed it, and the captain who answers.
 public struct JoinRequest: Hashable, Sendable {
@@ -30,4 +32,25 @@ public struct JoinRequest: Hashable, Sendable {
         (self.id, self.squad, self.squadName, self.note, self.status) = (id, squad, squadName, note, status)
         (self.memberCount, self.looks, self.captain) = (memberCount, looks, captain)
     }
+}
+
+/// A request to join the squad as its captain reads it (入队申请): who asked, their character once
+/// they made one, and what they wrote (备注).
+public struct WaitingJoinRequest: Hashable, Sendable, Identifiable {
+    public let id: JoinRequestID
+    public let member: MemberID
+    /// The member's character; nil before they made one.
+    public let character: MemberCharacter?
+    public let note: String?
+    public let askedAt: Date
+
+    public init(id: JoinRequestID, member: MemberID, character: MemberCharacter?, note: String?, askedAt: Date) {
+        (self.id, self.member, self.character, self.note, self.askedAt) = (id, member, character, note, askedAt)
+    }
+}
+
+/// The global switch that lets squads ask for the captain's OK to join (`joinApproval`): off, every
+/// invite joins at once and 小队设置 shows neither 入队申请 nor 入队需要审核.
+public enum JoinApprovalSwitch {
+    public static let id = "joinApproval"
 }

@@ -220,7 +220,11 @@ extension SquadSettingsView {
             HeaderButton(Text(copy: "小队设置", bundle: .module), systemImage: "gearshape") {
                 isPreferencesOpen = true
             }
+            .newsDot(model.waitingRequests > 0)
             .accessibilityIdentifier("squad.preferences.open")
+            .accessibilityValue(
+                model.waitingRequests > 0 ? Text(copy: "有入队申请", bundle: .module) : Text(verbatim: "")
+            )
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
         }
