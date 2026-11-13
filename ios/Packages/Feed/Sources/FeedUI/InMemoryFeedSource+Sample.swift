@@ -30,7 +30,7 @@ extension InMemoryFeedSource {
                     WorkoutSummary(durationSec: 2700, distanceM: 7400, paceSecPerKm: 365, avgHr: 151)),
                 reactions: [(coco, "💪"), (mia, "😂"), (doudou, "💪")],
                 comments: [(coco, nil, "鞋：我没签这个合同"), (jay, coco, "它会习惯的"), (mia, nil, "下次带我一起淋")]),
-            write.post(mia, 0, 12, 30, .healthyMeal(write.meal("salad", "今天的草，吃得很体面")), reactions: [(coco, "❤️")]),
+            write.post(mia, 0, 12, 30, write.taggedSalad, reactions: [(coco, "❤️")]),
             write.post(
                 kiki, 0, 6, 48,
                 write.fromHealth(
@@ -218,8 +218,18 @@ private struct SamplePosts {
         post(viewer, 0, 6, 30, .trained(training("run", minutes: 30, [], "早上自己慢跑一圈")), inFeed: false)
     }
 
-    func meal(_ photo: String, _ caption: String) -> Meal {
-        Meal(photos: photos([photo]), caption: line(caption))
+    func meal(
+        _ photo: String, _ caption: String, at place: Place? = nil, healthy: Int? = nil, tasty: Int? = nil
+    ) -> Meal {
+        let rating = healthy.flatMap { healthy in tasty.flatMap { try? MealRating(healthy: healthy, tasty: $0) } }
+        return Meal(photos: photos([photo]), caption: line(caption), place: place, rating: rating)
+    }
+
+    /// Mia's salad, tagged with the restaurant it came from and rated, as 动态 shows a place and
+    /// a meal's 成绩条.
+    var taggedSalad: CheckIn.Entry {
+        let place = try? Place(name: "Sweetgreen", category: "restaurant", latitude: 40.7448, longitude: -73.9881)
+        return .healthyMeal(meal("salad", "今天的草，吃得很体面", at: place, healthy: 5, tasty: 4))
     }
 
     func post(

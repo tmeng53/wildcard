@@ -17,6 +17,8 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import {
   createOffSender,
   createPostgresDailyPushSettings,
@@ -143,6 +145,16 @@ export function weatherOn(db: Database) {
     days: createPostgresWeatherDayStore(db),
     clock: () => new Date(),
   });
+}
+
+/** Place scores on local Supabase. */
+export function placeRatingsOn(db: Database) {
+  return createPlaceRatings({ store: createPostgresPlaceRatingStore(db), clock: () => new Date() });
+}
+
+/** Saved places on local Supabase. */
+export function savedPlacesOn(db: Database) {
+  return createSavedPlaces({ store: createPostgresSavedPlaceStore(db), clock: () => new Date() });
 }
 
 /** Nudges on local Supabase, between squadmates as the squads module keeps them. */

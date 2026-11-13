@@ -42,6 +42,7 @@ function noting(fail?: keyof EventHandlers) {
     'comment-push': run('comment-push'),
     'coach-answer': run('coach-answer'),
     'trained-with-push': run('trained-with-push'),
+    'coach-welcome': run('coach-welcome'),
   };
   return { ran, handlers };
 }
@@ -51,6 +52,7 @@ describe('events', () => {
     expect(topicOf('check-in.created')).toBe('check-in-created');
     expect(topicOf('comment.created')).toBe('comment-created');
     expect(topicOf('check-in.trained-with')).toBe('check-in-trained-with');
+    expect(topicOf('squad.joined')).toBe('squad-joined');
   });
 
   it('reach only the subscribers of their kind', async () => {

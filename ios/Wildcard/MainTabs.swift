@@ -155,13 +155,6 @@ struct MainTabs: View {
         .onChange(of: recap.picks) {
             if let picked = recap.picked { land(on: picked.scene, coveredAt: picked.coveredAt) }
         }
-        .fullScreenCover(
-            isPresented: Binding(get: { wardrobe.editor != nil }, set: { if !$0 { wardrobe.editor = nil } })
-        ) {
-            if let editor = wardrobe.editor {
-                ProfileEditor(model: editor, profile: profile, today: today) { wardrobe.editor = nil }
-            }
-        }
         .cardPopup(isPresented: Binding(get: { teammate != nil }, set: { if !$0 { teammate = nil } })) {
             if let teammate {
                 // What they're up to today over their card, with 拍一拍 (2026-11-04).
@@ -211,7 +204,9 @@ struct MainTabs: View {
     private var showsTabBar: Bool {
         switch selection {
         case .today: todayPages.isEmpty ? today.showsTabBar : !squadRevealing
-        case .profile: !profile.isDeletionOpen && post == nil
+        // 换装 and 意见反馈 have a button at the foot; their page's own hiding misses the bar.
+        case .profile:
+            !profile.isDeletionOpen && profile.feedbackPage == nil && post == nil && wardrobe.editor == nil
         case .feed: feedPages.isEmpty
         }
     }
@@ -263,7 +258,7 @@ struct MainTabs: View {
         .onDisappear { inbox.close() }
     }
 
-    /// 我, with 出赛表, 商店街 or 我的动态 pushed over it, and a post opened from the wall or from
+    /// 我, with 出赛表, 换装, 商店街 (and 换装 over it) or 我的动态 pushed over it, and a post opened from the wall or from
     /// 训练记录 pushed over that; closing the post reads 我 again, as an edit or a delete there may
     /// change the record.
     private var profilePage: some View {
@@ -290,8 +285,13 @@ struct MainTabs: View {
                     .accentTone(.scene)
             }
             .navigationDestination(isPresented: showsShop) {
-                if let shop = wardrobe.shop { ShoppingStreetPage(model: shop) }
+                if let shop = wardrobe.shop {
+                    ShoppingStreetPage(model: shop)
+                        // A piece tried on: the editor over the street, so back returns to it.
+                        .navigationDestination(isPresented: showsEditor(overShop: true)) { profileEditor }
+                }
             }
+            .navigationDestination(isPresented: showsEditor(overShop: false)) { profileEditor }
             .navigationDestination(isPresented: showsWall) {
                 if let wall {
                     PostWallView(

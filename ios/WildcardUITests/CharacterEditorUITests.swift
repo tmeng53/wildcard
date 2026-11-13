@@ -215,7 +215,9 @@ final class CharacterEditorUITests: XCTestCase {
         let save = app.buttons["editor.done"]
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "the editor never appeared")
         XCTAssertEqual(save.label, "Save")
-        XCTAssertEqual(app.buttons["editor.cancel"].label, "Cancel")
+        // From 我 it is a pushed page: undo and shuffle sit in the system's bar.
+        XCTAssertTrue(app.navigationBars.buttons["editor.undo"].exists, "undo isn't in the bar")
+        XCTAssertEqual(app.buttons["editor.shuffle"].label, "Shuffle")
         XCTAssertEqual(app.buttons["editor.tab.look"].label, "Looks")
         app.buttons["editor.tab.outfit"].tap()
         let hoodie = app.buttons["editor.tile.top.warmup-hoodie"]
@@ -225,6 +227,19 @@ final class CharacterEditorUITests: XCTestCase {
         XCTAssertEqual(app.buttons["editor.wardrobe.top"].label, "Tops")
         settle()
         keepScreenshot(named: "28-editor-profile-en")
+        // Once something changed, back asks before the changes are lost.
+        XCTAssertFalse(app.buttons["editor.back"].exists, "the editor's own back shows before any change")
+        hoodie.tap()
+        let back = app.buttons["editor.back"]
+        XCTAssertTrue(back.waitForExistence(timeout: Self.wait), "no back that asks after a change")
+        back.tap()
+        let alert = app.alerts["Discard your changes?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.wait), "back didn't ask before discarding")
+        // iOS 26's alert lists its cancel button twice, as the compose page's test finds too.
+        let keepEditing = alert.buttons["editor.keepEditing"].firstMatch
+        XCTAssertEqual(keepEditing.label, "Keep Editing")
+        keepEditing.tap()
+        XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "继续编辑 left the editor")
     }
 
     private func launch(language: String, profile: Bool = false) -> XCUIApplication {

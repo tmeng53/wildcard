@@ -1,3 +1,4 @@
+import Contracts
 import LocationDomain
 
 /// A phone that hasn't been asked yet and allows approximate location when asked, in New York, for
@@ -19,6 +20,8 @@ public actor SampleLocationReader: LocationReader {
     public func current() async -> Coordinates? {
         state == .allowed ? Coordinates(latitude: 40.7, longitude: -74) : nil
     }
+
+    public func city(at coordinates: Coordinates) async -> CityName? { nil }
 }
 
 extension LocationSharing {

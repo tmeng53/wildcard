@@ -3016,6 +3016,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/trainedWith`.
             public var trainedWith: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/TrainingView/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/photos`.
@@ -3031,6 +3033,7 @@ extension Components {
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             ///   - workout:
             public init(
@@ -3040,6 +3043,7 @@ extension Components {
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
                 trainedWith: [Swift.String]? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
                 workout: Components.Schemas.WorkoutView? = nil
             ) {
@@ -3049,6 +3053,7 @@ extension Components {
                 self.startTime = startTime
                 self.caption = caption
                 self.trainedWith = trainedWith
+                self.place = place
                 self.photos = photos
                 self.workout = workout
             }
@@ -3059,6 +3064,7 @@ extension Components {
                 case startTime
                 case caption
                 case trainedWith
+                case place
                 case photos
                 case workout
             }
@@ -3067,6 +3073,55 @@ extension Components {
         ///
         /// - Remark: Generated from `#/components/schemas/Sport`.
         public typealias Sport = Swift.String
+        /// A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's.
+        ///
+        /// - Remark: Generated from `#/components/schemas/Place`.
+        public struct Place: Codable, Hashable, Sendable {
+            /// Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/name`.
+            public var name: Swift.String
+            /// Apple Maps' identifier for the place, when Maps gave one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/appleId`.
+            public var appleId: Swift.String?
+            /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Place/category`.
+            public var category: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Place/latitude`.
+            public var latitude: Swift.Double
+            /// - Remark: Generated from `#/components/schemas/Place/longitude`.
+            public var longitude: Swift.Double
+            /// Creates a new `Place`.
+            ///
+            /// - Parameters:
+            ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+            ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+            ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+            ///   - latitude:
+            ///   - longitude:
+            public init(
+                name: Swift.String,
+                appleId: Swift.String? = nil,
+                category: Swift.String? = nil,
+                latitude: Swift.Double,
+                longitude: Swift.Double
+            ) {
+                self.name = name
+                self.appleId = appleId
+                self.category = category
+                self.latitude = latitude
+                self.longitude = longitude
+            }
+            public enum CodingKeys: String, CodingKey {
+                case name
+                case appleId
+                case category
+                case latitude
+                case longitude
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/PhotoView`.
         public struct PhotoView: Codable, Hashable, Sendable {
             /// The photo’s name, as the check-in was saved with.
@@ -3526,6 +3581,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/MealView/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/MealView/place`.
+            public var place: Components.Schemas.Place?
+            /// - Remark: Generated from `#/components/schemas/MealView/rating`.
+            public var rating: Components.Schemas.MealRating?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/MealView/photos`.
@@ -3534,17 +3593,54 @@ extension Components {
             ///
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
+            ///   - rating:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
+                rating: Components.Schemas.MealRating? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil
             ) {
                 self.caption = caption
+                self.place = place
+                self.rating = rating
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
+                case place
+                case rating
                 case photos
+            }
+        }
+        /// The member's own rating of this meal: 健康 and 好吃, each 1 to 5. Its 卡价比 is tasty × healthy ÷ 5.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MealRating`.
+        public struct MealRating: Codable, Hashable, Sendable {
+            /// 健康: how healthy the meal was, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MealRating/healthy`.
+            public var healthy: Swift.Int
+            /// 好吃: how good it tasted, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MealRating/tasty`.
+            public var tasty: Swift.Int
+            /// Creates a new `MealRating`.
+            ///
+            /// - Parameters:
+            ///   - healthy: 健康: how healthy the meal was, 1 to 5.
+            ///   - tasty: 好吃: how good it tasted, 1 to 5.
+            public init(
+                healthy: Swift.Int,
+                tasty: Swift.Int
+            ) {
+                self.healthy = healthy
+                self.tasty = tasty
+            }
+            public enum CodingKeys: String, CodingKey {
+                case healthy
+                case tasty
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn`.
@@ -3900,6 +3996,8 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/trainedWith`.
             public var trainedWith: [Swift.String]?
+            /// - Remark: Generated from `#/components/schemas/Training/place`.
+            public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Training/photos`.
@@ -3915,6 +4013,7 @@ extension Components {
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
+            ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             ///   - workout:
             public init(
@@ -3924,6 +4023,7 @@ extension Components {
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
                 trainedWith: [Swift.String]? = nil,
+                place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil,
                 workout: Components.Schemas.Workout? = nil
             ) {
@@ -3933,6 +4033,7 @@ extension Components {
                 self.startTime = startTime
                 self.caption = caption
                 self.trainedWith = trainedWith
+                self.place = place
                 self.photos = photos
                 self.workout = workout
             }
@@ -3943,6 +4044,7 @@ extension Components {
                 case startTime
                 case caption
                 case trainedWith
+                case place
                 case photos
                 case workout
             }
@@ -4116,6 +4218,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Meal/caption`.
             public var caption: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/Meal/place`.
+            public var place: Components.Schemas.Place?
+            /// - Remark: Generated from `#/components/schemas/Meal/rating`.
+            public var rating: Components.Schemas.MealRating?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Meal/photos`.
@@ -4124,16 +4230,24 @@ extension Components {
             ///
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - place:
+            ///   - rating:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 caption: Swift.String? = nil,
+                place: Components.Schemas.Place? = nil,
+                rating: Components.Schemas.MealRating? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil
             ) {
                 self.caption = caption
+                self.place = place
+                self.rating = rating
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
+                case place
+                case rating
                 case photos
             }
         }
@@ -4872,7 +4986,7 @@ extension Components {
                 case topSport
             }
         }
-        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken.
+        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken.
         ///
         /// - Remark: Generated from `#/components/schemas/CurrentStreaks`.
         public struct CurrentStreaks: Codable, Hashable, Sendable {
@@ -4967,7 +5081,7 @@ extension Components {
                 case checkIns
             }
         }
-        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
@@ -4997,7 +5111,7 @@ extension Components {
             public var currentStreak: Components.Schemas.RecordStreak?
             /// - Remark: Generated from `#/components/schemas/MemberRecords/currentMealStreak`.
             public var currentMealStreak: Components.Schemas.RecordStreak?
-            /// 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            /// 训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted; a 补打卡 without a start is left out.
             ///
             /// - Remark: Generated from `#/components/schemas/MemberRecords/hours`.
             public var hours: [Swift.Int]
@@ -5026,7 +5140,7 @@ extension Components {
             ///   - mealStreak:
             ///   - currentStreak:
             ///   - currentMealStreak:
-            ///   - hours: 训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out.
+            ///   - hours: 训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted; a 补打卡 without a start is left out.
             ///   - weekdays: Days trained by weekday, Monday first.
             ///   - sports: The sports trained on the most days, most first.
             ///   - sportCount: How many different sports the member trained.
@@ -5664,7 +5778,7 @@ extension Components {
                 case settings
             }
         }
-        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach, with the city the phone named there, if it could, which the coach is told with the weather. A location sent without a city forgets the one before. Squadmates never see either, and the AI never sees the location itself.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberLocation`.
         public struct MemberLocation: Codable, Hashable, Sendable {
@@ -5678,25 +5792,33 @@ extension Components {
             public var latitude: Swift.Double
             /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
             public var longitude: Swift.Double
+            /// The city the phone’s approximate location is in, as iOS names it in the app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/city`.
+            public var city: Swift.String?
             /// Creates a new `MemberLocation`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - latitude:
             ///   - longitude:
+            ///   - city: The city the phone’s approximate location is in, as iOS names it in the app’s language.
             public init(
                 version: Components.Schemas.MemberLocation.VersionPayload,
                 latitude: Swift.Double,
-                longitude: Swift.Double
+                longitude: Swift.Double,
+                city: Swift.String? = nil
             ) {
                 self.version = version
                 self.latitude = latitude
                 self.longitude = longitude
+                self.city = city
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case latitude
                 case longitude
+                case city
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadList`.
@@ -8101,7 +8223,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
             public var version: Components.Schemas.CoachCards.VersionPayload
-            /// The cards not seen yet from the last 72 hours, oldest first: the stack.
+            /// The cards not seen yet from today on the squad’s clock, oldest first: the stack.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
             public var stack: [Components.Schemas.CoachPageCard]
@@ -8113,7 +8235,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - stack: The cards not seen yet from the last 72 hours, oldest first: the stack.
+            ///   - stack: The cards not seen yet from today on the squad’s clock, oldest first: the stack.
             ///   - earlier: Every other card from the last 30 days, newest first: 以前.
             public init(
                 version: Components.Schemas.CoachCards.VersionPayload,
@@ -8559,6 +8681,729 @@ extension Components {
                 case version
                 case to
                 case kind
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SquadPlaces`.
+        public struct SquadPlaces: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SquadPlaces/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SquadPlaces/version`.
+            public var version: Components.Schemas.SquadPlaces.VersionPayload
+            /// 小队地图’s 常去: every place, most visited first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaces/places`.
+            public var places: [Components.Schemas.PlaceSummary]
+            /// Posts tagged with a place in the last two days, newest first: 小队地图’s 今天 shows those of the viewer’s own today.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadPlaces/recent`.
+            public var recent: [Components.Schemas.PlaceVisit]
+            /// Creates a new `SquadPlaces`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - places: 小队地图’s 常去: every place, most visited first.
+            ///   - recent: Posts tagged with a place in the last two days, newest first: 小队地图’s 今天 shows those of the viewer’s own today.
+            public init(
+                version: Components.Schemas.SquadPlaces.VersionPayload,
+                places: [Components.Schemas.PlaceSummary],
+                recent: [Components.Schemas.PlaceVisit]
+            ) {
+                self.version = version
+                self.places = places
+                self.recent = recent
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case places
+                case recent
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlaceSummary`.
+        public struct PlaceSummary: Codable, Hashable, Sendable {
+            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/key`.
+            public var key: Swift.String
+            /// The place as the newest post there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/place`.
+            public struct PlacePayload: Codable, Hashable, Sendable {
+                /// Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/name`.
+                public var name: Swift.String
+                /// Apple Maps' identifier for the place, when Maps gave one.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/appleId`.
+                public var appleId: Swift.String?
+                /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/category`.
+                public var category: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/latitude`.
+                public var latitude: Swift.Double
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/place/longitude`.
+                public var longitude: Swift.Double
+                /// Creates a new `PlacePayload`.
+                ///
+                /// - Parameters:
+                ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///   - latitude:
+                ///   - longitude:
+                public init(
+                    name: Swift.String,
+                    appleId: Swift.String? = nil,
+                    category: Swift.String? = nil,
+                    latitude: Swift.Double,
+                    longitude: Swift.Double
+                ) {
+                    self.name = name
+                    self.appleId = appleId
+                    self.category = category
+                    self.latitude = latitude
+                    self.longitude = longitude
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case name
+                    case appleId
+                    case category
+                    case latitude
+                    case longitude
+                }
+            }
+            /// The place as the newest post there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/place`.
+            public var place: Components.Schemas.PlaceSummary.PlacePayload
+            /// 小队来过 N 次: posts in the squad’s 动态 tagged with it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/visits`.
+            public var visits: Swift.Int
+            /// 来过的队友 N 人: how many people posted them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/people`.
+            public var people: Swift.Int
+            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/stars`.
+            public var stars: Swift.Double?
+            /// How many of the squad’s members gave a score.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/raters`.
+            public var raters: Swift.Int
+            /// When the newest post there was made, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/lastAt`.
+            public var lastAt: Foundation.Date
+            /// Creates a new `PlaceSummary`.
+            ///
+            /// - Parameters:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///   - place: The place as the newest post there tagged it.
+            ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
+            ///   - people: 来过的队友 N 人: how many people posted them.
+            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            ///   - raters: How many of the squad’s members gave a score.
+            ///   - lastAt: When the newest post there was made, in UTC.
+            public init(
+                key: Swift.String,
+                place: Components.Schemas.PlaceSummary.PlacePayload,
+                visits: Swift.Int,
+                people: Swift.Int,
+                stars: Swift.Double? = nil,
+                raters: Swift.Int,
+                lastAt: Foundation.Date
+            ) {
+                self.key = key
+                self.place = place
+                self.visits = visits
+                self.people = people
+                self.stars = stars
+                self.raters = raters
+                self.lastAt = lastAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case key
+                case place
+                case visits
+                case people
+                case stars
+                case raters
+                case lastAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlaceVisit`.
+        public struct PlaceVisit: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/checkIn`.
+            public var checkIn: Swift.String
+            /// Who posted it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/member`.
+            public var member: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case trained = "trained"
+                case healthyMeal = "healthyMeal"
+                case cheatMeal = "cheatMeal"
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/kind`.
+            public var kind: Components.Schemas.PlaceVisit.KindPayload
+            /// A 训练’s sport.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/sport`.
+            public var sport: Swift.String?
+            /// A custom sport’s name.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/customSport`.
+            public var customSport: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/createdAt`.
+            public var createdAt: Foundation.Date
+            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/key`.
+            public var key: Swift.String
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover`.
+            public struct CoverPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover/value1`.
+                public var value1: Components.Schemas.PhotoView
+                /// The post’s first photo, for its tile; missing when it has none (or its file is gone).
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `CoverPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The post’s first photo, for its tile; missing when it has none (or its file is gone).
+                public init(
+                    value1: Components.Schemas.PhotoView,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/cover`.
+            public var cover: Components.Schemas.PlaceVisit.CoverPayload?
+            /// A 训练’s minutes, when it has them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
+            public var minutes: Swift.Int?
+            /// A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
+            public var stars: Swift.Int?
+            /// A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/calorieValue`.
+            public var calorieValue: Swift.Double?
+            /// Creates a new `PlaceVisit`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - member: Who posted it.
+            ///   - kind:
+            ///   - sport: A 训练’s sport.
+            ///   - customSport: A custom sport’s name.
+            ///   - day:
+            ///   - createdAt:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///   - cover:
+            ///   - minutes: A 训练’s minutes, when it has them.
+            ///   - stars: A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            ///   - calorieValue: A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            public init(
+                checkIn: Swift.String,
+                member: Swift.String,
+                kind: Components.Schemas.PlaceVisit.KindPayload,
+                sport: Swift.String? = nil,
+                customSport: Swift.String? = nil,
+                day: Swift.String,
+                createdAt: Foundation.Date,
+                key: Swift.String,
+                cover: Components.Schemas.PlaceVisit.CoverPayload? = nil,
+                minutes: Swift.Int? = nil,
+                stars: Swift.Int? = nil,
+                calorieValue: Swift.Double? = nil
+            ) {
+                self.checkIn = checkIn
+                self.member = member
+                self.kind = kind
+                self.sport = sport
+                self.customSport = customSport
+                self.day = day
+                self.createdAt = createdAt
+                self.key = key
+                self.cover = cover
+                self.minutes = minutes
+                self.stars = stars
+                self.calorieValue = calorieValue
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case member
+                case kind
+                case sport
+                case customSport
+                case day
+                case createdAt
+                case key
+                case cover
+                case minutes
+                case stars
+                case calorieValue
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlaceDetail`.
+        public struct PlaceDetail: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/version`.
+            public var version: Components.Schemas.PlaceDetail.VersionPayload
+            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/key`.
+            public var key: Swift.String
+            /// The place as the newest post there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/place`.
+            public struct PlacePayload: Codable, Hashable, Sendable {
+                /// Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/name`.
+                public var name: Swift.String
+                /// Apple Maps' identifier for the place, when Maps gave one.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/appleId`.
+                public var appleId: Swift.String?
+                /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/category`.
+                public var category: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/latitude`.
+                public var latitude: Swift.Double
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/place/longitude`.
+                public var longitude: Swift.Double
+                /// Creates a new `PlacePayload`.
+                ///
+                /// - Parameters:
+                ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///   - latitude:
+                ///   - longitude:
+                public init(
+                    name: Swift.String,
+                    appleId: Swift.String? = nil,
+                    category: Swift.String? = nil,
+                    latitude: Swift.Double,
+                    longitude: Swift.Double
+                ) {
+                    self.name = name
+                    self.appleId = appleId
+                    self.category = category
+                    self.latitude = latitude
+                    self.longitude = longitude
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case name
+                    case appleId
+                    case category
+                    case latitude
+                    case longitude
+                }
+            }
+            /// The place as the newest post there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/place`.
+            public var place: Components.Schemas.PlaceDetail.PlacePayload
+            /// 小队来过 N 次: posts in the squad’s 动态 tagged with it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/visits`.
+            public var visits: Swift.Int
+            /// 来过的队友 N 人: how many people posted them.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/people`.
+            public var people: Swift.Int
+            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/stars`.
+            public var stars: Swift.Double?
+            /// How many of the squad’s members gave a score.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/raters`.
+            public var raters: Swift.Int
+            /// When the newest post there was made, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/lastAt`.
+            public var lastAt: Foundation.Date
+            /// The viewer’s own score; null before one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
+            public var myStars: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload`.
+            public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload/sport`.
+                public var sport: Components.Schemas.Sport
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload/customSport`.
+                public var customSport: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload/count`.
+                public var count: Swift.Int
+                /// Creates a new `SportsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - sport:
+                ///   - customSport:
+                ///   - count:
+                public init(
+                    sport: Components.Schemas.Sport,
+                    customSport: Swift.String? = nil,
+                    count: Swift.Int
+                ) {
+                    self.sport = sport
+                    self.customSport = customSport
+                    self.count = count
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case sport
+                    case customSport
+                    case count
+                }
+            }
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/sports`.
+            public typealias SportsPayload = [Components.Schemas.PlaceDetail.SportsPayloadPayload]
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/sports`.
+            public var sports: Components.Schemas.PlaceDetail.SportsPayload
+            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
+            public struct MealsPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/healthyMeal`.
+                public var healthyMeal: Swift.Int
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/cheatMeal`.
+                public var cheatMeal: Swift.Int
+                /// Rated meals’ 健康, averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/healthy`.
+                public var healthy: Swift.Double?
+                /// Rated meals’ 好吃, averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/tasty`.
+                public var tasty: Swift.Double?
+                /// Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/calorieValue`.
+                public var calorieValue: Swift.Double?
+                /// Creates a new `MealsPayload`.
+                ///
+                /// - Parameters:
+                ///   - healthyMeal:
+                ///   - cheatMeal:
+                ///   - healthy: Rated meals’ 健康, averaged.
+                ///   - tasty: Rated meals’ 好吃, averaged.
+                ///   - calorieValue: Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                public init(
+                    healthyMeal: Swift.Int,
+                    cheatMeal: Swift.Int,
+                    healthy: Swift.Double? = nil,
+                    tasty: Swift.Double? = nil,
+                    calorieValue: Swift.Double? = nil
+                ) {
+                    self.healthyMeal = healthyMeal
+                    self.cheatMeal = cheatMeal
+                    self.healthy = healthy
+                    self.tasty = tasty
+                    self.calorieValue = calorieValue
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case healthyMeal
+                    case cheatMeal
+                    case healthy
+                    case tasty
+                    case calorieValue
+                }
+            }
+            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
+            public var meals: Components.Schemas.PlaceDetail.MealsPayload
+            /// 动态: the posts tagged with it, newest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/posts`.
+            public var posts: [Components.Schemas.PlaceVisit]
+            /// Creates a new `PlaceDetail`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///   - place: The place as the newest post there tagged it.
+            ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
+            ///   - people: 来过的队友 N 人: how many people posted them.
+            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            ///   - raters: How many of the squad’s members gave a score.
+            ///   - lastAt: When the newest post there was made, in UTC.
+            ///   - myStars: The viewer’s own score; null before one.
+            ///   - sports: 大家在这里练: each sport its 训练 named, most first.
+            ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
+            ///   - posts: 动态: the posts tagged with it, newest first.
+            public init(
+                version: Components.Schemas.PlaceDetail.VersionPayload,
+                key: Swift.String,
+                place: Components.Schemas.PlaceDetail.PlacePayload,
+                visits: Swift.Int,
+                people: Swift.Int,
+                stars: Swift.Double? = nil,
+                raters: Swift.Int,
+                lastAt: Foundation.Date,
+                myStars: Swift.Int? = nil,
+                sports: Components.Schemas.PlaceDetail.SportsPayload,
+                meals: Components.Schemas.PlaceDetail.MealsPayload,
+                posts: [Components.Schemas.PlaceVisit]
+            ) {
+                self.version = version
+                self.key = key
+                self.place = place
+                self.visits = visits
+                self.people = people
+                self.stars = stars
+                self.raters = raters
+                self.lastAt = lastAt
+                self.myStars = myStars
+                self.sports = sports
+                self.meals = meals
+                self.posts = posts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case key
+                case place
+                case visits
+                case people
+                case stars
+                case raters
+                case lastAt
+                case myStars
+                case sports
+                case meals
+                case posts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlaceRatingView`.
+        public struct PlaceRatingView: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
+            public var version: Components.Schemas.PlaceRatingView.VersionPayload
+            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/key`.
+            public var key: Swift.String
+            /// The score, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/stars`.
+            public var stars: Swift.Int
+            /// Creates a new `PlaceRatingView`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
+            ///   - stars: The score, 1 to 5.
+            public init(
+                version: Components.Schemas.PlaceRatingView.VersionPayload,
+                key: Swift.String,
+                stars: Swift.Int
+            ) {
+                self.version = version
+                self.key = key
+                self.stars = stars
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case key
+                case stars
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/PlaceRatingChange`.
+        public struct PlaceRatingChange: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
+            public var version: Components.Schemas.PlaceRatingChange.VersionPayload
+            /// The score, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/stars`.
+            public var stars: Swift.Int
+            /// Creates a new `PlaceRatingChange`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - stars: The score, 1 to 5.
+            public init(
+                version: Components.Schemas.PlaceRatingChange.VersionPayload,
+                stars: Swift.Int
+            ) {
+                self.version = version
+                self.stars = stars
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case stars
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceList`.
+        public struct SavedPlaceList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/version`.
+            public var version: Components.Schemas.SavedPlaceList.VersionPayload
+            /// Newest saved first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceList/places`.
+            public var places: [Components.Schemas.SavedPlace]
+            /// Creates a new `SavedPlaceList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - places: Newest saved first.
+            public init(
+                version: Components.Schemas.SavedPlaceList.VersionPayload,
+                places: [Components.Schemas.SavedPlace]
+            ) {
+                self.version = version
+                self.places = places
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case places
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlace`.
+        public struct SavedPlace: Codable, Hashable, Sendable {
+            /// Which place: `apple:` and Apple Maps' identifier.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/key`.
+            public var key: Swift.String
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/place`.
+            public var place: Components.Schemas.Place
+            /// The member’s note on it, left out when they wrote none.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/note`.
+            public var note: Swift.String?
+            /// When they saved it, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlace/savedAt`.
+            public var savedAt: Foundation.Date
+            /// Creates a new `SavedPlace`.
+            ///
+            /// - Parameters:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier.
+            ///   - place:
+            ///   - note: The member’s note on it, left out when they wrote none.
+            ///   - savedAt: When they saved it, in UTC.
+            public init(
+                key: Swift.String,
+                place: Components.Schemas.Place,
+                note: Swift.String? = nil,
+                savedAt: Foundation.Date
+            ) {
+                self.key = key
+                self.place = place
+                self.note = note
+                self.savedAt = savedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case key
+                case place
+                case note
+                case savedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved`.
+        public struct SavedPlaceSaved: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/version`.
+            public var version: Components.Schemas.SavedPlaceSaved.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceSaved/saved`.
+            public var saved: Components.Schemas.SavedPlace
+            /// Creates a new `SavedPlaceSaved`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - saved:
+            public init(
+                version: Components.Schemas.SavedPlaceSaved.VersionPayload,
+                saved: Components.Schemas.SavedPlace
+            ) {
+                self.version = version
+                self.saved = saved
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case saved
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft`.
+        public struct SavedPlaceDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/version`.
+            public var version: Components.Schemas.SavedPlaceDraft.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/place`.
+            public var place: Components.Schemas.Place
+            /// The note to keep with it; left out, it has none (a note saved before is cleared).
+            ///
+            /// - Remark: Generated from `#/components/schemas/SavedPlaceDraft/note`.
+            public var note: Swift.String?
+            /// Creates a new `SavedPlaceDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - place:
+            ///   - note: The note to keep with it; left out, it has none (a note saved before is cleared).
+            public init(
+                version: Components.Schemas.SavedPlaceDraft.VersionPayload,
+                place: Components.Schemas.Place,
+                note: Swift.String? = nil
+            ) {
+                self.version = version
+                self.place = place
+                self.note = note
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case place
+                case note
             }
         }
         /// - Remark: Generated from `#/components/schemas/FeedbackSent`.

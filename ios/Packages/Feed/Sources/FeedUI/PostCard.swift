@@ -1,5 +1,7 @@
 #if os(iOS)
 import AvatarUI
+import CheckInDomain
+import CheckInUI
 import Contracts
 import DesignSystem
 import DesignSystemUI
@@ -63,8 +65,17 @@ struct PostCard: View {
         return cells.isEmpty ? nil : (cells, training.activity)
     }
 
+    /// A rated meal's 成绩条: 健康, 好吃 and 卡价比 (Tracy, 2026-11-12); none when it wasn't rated.
+    private var mealStrip: (rating: MealRating, kind: CheckInKind)? {
+        switch post.checkIn.entry {
+        case .healthyMeal(let meal): meal.rating.map { ($0, .healthyMeal) }
+        case .cheatMeal(let meal): meal.rating.map { ($0, .cheatMeal) }
+        case .trained, .disclaimer: nil
+        }
+    }
+
     var body: some View {
-        CoverTicket(tear: strip == nil ? .mist : .color) {
+        CoverTicket(tear: strip == nil && mealStrip == nil ? .mist : .color) {
             if tiles.isEmpty {
                 block
             } else {
@@ -74,6 +85,8 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: 0) {
                 if let strip {
                     ScoreStrip(cells: strip.cells, activity: strip.activity, bottom: .square)
+                } else if let mealStrip {
+                    ScoreStrip(meal: mealStrip.rating, kind: mealStrip.kind, bottom: .square)
                 }
                 details
                 if hasComments && !showsAllComments {
@@ -193,6 +206,7 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
+                if let place = post.checkIn.entry.place { PlaceTag(place) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 if case .trained(let training) = post.checkIn.entry, !training.trainedWith.isEmpty {
                     TrainedWithTag(model: model, members: training.trainedWith.members)

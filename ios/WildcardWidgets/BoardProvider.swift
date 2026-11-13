@@ -11,15 +11,12 @@ import HomeWidgetUI
 import SportsUI
 import WidgetKit
 
-/// One moment of a widget: the board then, or why there is none.
+/// One moment of a widget: the board then, or why there is none, and whether it was set to show
+/// 本周出赛表.
 struct BoardEntry: TimelineEntry {
     let date: Date
     let state: WidgetState
-}
-
-/// The widgets have nothing to set; WidgetKit's async provider needs an intent all the same.
-struct BoardIntent: WidgetConfigurationIntent {
-    static let title: LocalizedStringResource = "Wildcard"
+    var showsSchedule = false
 }
 
 /// Reads the squad for the widgets: the home over our API, signed in with the app's shared
@@ -32,15 +29,19 @@ struct BoardProvider: AppIntentTimelineProvider {
     }
 
     func snapshot(for configuration: BoardIntent, in context: Context) async -> BoardEntry {
-        context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        var entry = context.isPreview ? Self.sample(at: Date()) : await Self.read(at: Date()).entry
+        entry.showsSchedule = configuration.showsSchedule
+        return entry
     }
 
     func timeline(for configuration: BoardIntent, in context: Context) async -> Timeline<BoardEntry> {
-        let (entry, zone) = await Self.read(at: Date())
+        let read = await Self.read(at: Date())
+        var entry = read.entry
+        entry.showsSchedule = configuration.showsSchedule
         let next =
             entry.state == .unavailable
             ? entry.date.addingTimeInterval(WidgetState.retryInterval)
-            : WidgetBoard.nextLook(after: entry.date, in: zone)
+            : WidgetBoard.nextLook(after: entry.date, in: read.zone)
         return Timeline(entries: [entry], policy: .after(next))
     }
 
@@ -98,22 +99,17 @@ struct BoardProvider: AppIntentTimelineProvider {
 /// Today's workouts in Apple Health and which were put away from 今天's card, as the app keeps
 /// them in the app group. Empty while Health isn't connected, or the phone is locked, when
 /// HealthKit reads nothing. The widgets read the numbers alone, which is all the capsule shows;
-/// 打卡 reads the route and series too, for the post's map and chart. Neither asks for Health
+/// the app reads the route and series once its 打卡 opens the 训练 page. It never asks for Health
 /// access, which only the app can.
 struct HealthRead {
     var workouts: [ImportedWorkout] = []
     var putAway: Set<WorkoutSource> = []
-    /// What a post from Health carries unless struck, as 设置 › Apple 健康 says.
-    var sharing = HealthSharing()
-    /// The birthday the app keeps for the chart's zones.
-    var birthday: Birthday?
 
-    @MainActor static func now(_ detail: HealthKitLibrary.Detail = .numbers) async -> HealthRead {
+    @MainActor static func now() async -> HealthRead {
         guard let defaults = AppGroup.defaults else { return HealthRead() }
-        let library = HealthKitLibrary(defaults: defaults, detail: detail, asksForNewTypes: false)
+        let library = HealthKitLibrary(defaults: defaults, detail: .numbers, asksForNewTypes: false)
         let health = HealthConnection(library: library, defaults: defaults)
         await health.refresh()
-        return HealthRead(
-            workouts: health.recent, putAway: health.putAway, sharing: health.sharing, birthday: health.birthday)
+        return HealthRead(workouts: health.recent, putAway: health.putAway)
     }
 }

@@ -45,6 +45,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -136,6 +138,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  placeRatings: placeRatingsOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
   scenes: scenesOn(db),
@@ -161,6 +165,7 @@ const app = createApp({
     coach: {
       run: () => Promise.reject(new Error('unused')),
       preview: () => Promise.reject(new Error('unused')),
+      welcome: () => Promise.resolve(),
       answer: (asked) => {
         answersAsked.push(asked);
         return Promise.resolve();
@@ -540,8 +545,7 @@ describe('/check-ins/{checkInId}/comments', () => {
         alert: { 'loc-key': key, 'loc-args': args },
         category: 'comment',
         'thread-id': `comments-${run}`,
-        'interruption-level': 'active',
-        sound: 'default',
+        'interruption-level': 'passive',
         'mutable-content': 1,
       },
       event: { kind: 'comment', checkIn: run, comment: id },

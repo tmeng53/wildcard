@@ -59,9 +59,19 @@ export const CommentCreated = z.strictObject({
 });
 export type CommentCreated = z.infer<typeof CommentCreated>;
 
+/** A member who just joined a squad. */
+export const SquadJoined = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('squad.joined'),
+  squad: Id,
+  member: Id,
+});
+export type SquadJoined = z.infer<typeof SquadJoined>;
+
 export const ServerEvent = z.discriminatedUnion('kind', [
   CheckInCreated,
   CommentCreated,
+  SquadJoined,
   TrainedWithNamed,
 ]);
 export type ServerEvent = z.infer<typeof ServerEvent>;
@@ -77,6 +87,7 @@ export const Subscriber = z.enum([
   'coach-look',
   'comment-push',
   'coach-answer',
+  'coach-welcome',
   'trained-with-push',
 ]);
 export type Subscriber = z.infer<typeof Subscriber>;
@@ -87,6 +98,7 @@ export const SUBSCRIBERS = {
   'comment-push': 'comment.created',
   'coach-answer': 'comment.created',
   'trained-with-push': 'check-in.trained-with',
+  'coach-welcome': 'squad.joined',
 } as const satisfies Record<Subscriber, ServerEvent['kind']>;
 
 /** What each subscriber does with its kind of event. Throwing has Pub/Sub deliver it again. */
@@ -116,6 +128,9 @@ export async function deliver(
       return true;
     case 'check-in.trained-with':
       await handlers['trained-with-push'](event);
+      return true;
+    case 'squad.joined':
+      await handlers['coach-welcome'](event);
       return true;
   }
 }

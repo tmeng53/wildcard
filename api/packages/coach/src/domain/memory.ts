@@ -43,6 +43,20 @@ export function coachPagePath(coach: string): StoredPath {
   return `coaches/${coach}.md`;
 }
 
+/**
+ * What a file is for, as the model reads it beside the file (Tracy, 2026-11-12: say what things
+ * are). `me.md` is the coach's own: how members like to talk with it and what they make of it.
+ */
+export function fileRole(shown: string): string {
+  if (shown === 'squad.md') return '这个小队';
+  if (shown === 'memory.md') return '你和大家之间的事';
+  if (shown === OWN_PAGE) {
+    return '你自己：大家喜欢怎么跟你打交道、怎么看你这个教练，只有你读得到';
+  }
+  const person = /^people\/(.+)\.md$/.exec(shown)?.[1];
+  return person === undefined ? '' : `${person}这个人`;
+}
+
 /** Every path the model may read or edit, shown as it sees them. */
 export function shownPaths({ roster }: MemoryView): string[] {
   return [...SQUAD_FILES, OWN_PAGE, ...[...roster.values()].map((name) => `people/${name}.md`)];
@@ -127,21 +141,10 @@ export function editBody(
 }
 
 /**
- * The first `squad.md` of a squad whose coach hasn't written one: its name and who is in it, by
- * the names the model knows them by, for the coach to build on.
+ * The first `squad.md` of a squad whose coach hasn't written one: its name, for the coach to build
+ * on. Who is in it and their nicknames aren't copied in: every task says who is who as they are
+ * now, and a copy here went stale and named people wrongly (Tracy, 2026-11-12).
  */
-export function squadSeed(
-  week: Pick<SquadWeek, 'name' | 'members'>,
-  roster: ReadonlyMap<string, string>,
-): string {
-  const members = week.members.map(({ member, nickname }) => {
-    const name = roster.get(member) ?? '队员';
-    return nickname === undefined ? `- ${name}` : `- ${name}：昵称「${nickname}」`;
-  });
-  return [
-    '# 小队',
-    ...(week.name === undefined ? [] : [`队名：${week.name}`]),
-    '队员（昵称会变，以 squad_week 为准）：',
-    ...members,
-  ].join('\n');
+export function squadSeed(week: Pick<SquadWeek, 'name'>): string {
+  return ['# 小队', ...(week.name === undefined ? [] : [`队名：${week.name}`])].join('\n');
 }

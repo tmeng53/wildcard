@@ -4,7 +4,7 @@ import Contracts
 import DesignSystem
 import HealthDomain
 
-/// Apple Health on 今天: the home's card and a new 训练's chips.
+/// Apple Health on 今天: the home's card, a new 训练's chips and the 打卡 a widget opens.
 extension TodayModel {
     /// Today's workouts in Health, newest first, with those posted already marked; empty when
     /// Health isn't connected.
@@ -21,6 +21,49 @@ extension TodayModel {
             return nil
         }
         return health.today(day, in: timeZone, posted: posted).newestToPost(skipping: health.putAway)
+    }
+
+    /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 and a widget's
+    /// plain 打卡 land here.
+    public func openCheckIn() {
+        if step == .scene { isBurstOpen = true }
+    }
+
+    /// A home screen widget's 打卡: the 训练 page started from `source`, as the home's card starts
+    /// it, so nothing goes out until the member sends it (`AskedWorkout`). Before the server's home
+    /// is read, as on a cold launch, `load()` opens it once it is.
+    public func openCheckIn(posting source: WorkoutSource) async {
+        askedToPost = source
+        guard store.postedTrainingsKnown != nil else { return }
+        if openAskedWorkout(finally: false) { return }
+        // A workout Health synced since the app last read it.
+        await health?.refresh()
+        openAskedWorkout(finally: true)
+    }
+
+    /// Opens what a widget asked for once it is known, `finally` once the home and Health are read
+    /// as far as they will be. Only from the scene: a page already open stays as it is.
+    @discardableResult
+    func openAskedWorkout(finally: Bool) -> Bool {
+        guard let source = askedToPost else { return false }
+        let todays: [TodaysWorkout]? =
+            if let health, health.isConnected, let day = store.day, let posted = store.postedTrainingsKnown {
+                health.today(day, in: timeZone, posted: posted)
+            } else {
+                nil
+            }
+        let outcome = AskedWorkout.resolve(source, among: todays, finally: finally)
+        if outcome == .wait { return false }
+        askedToPost = nil
+        guard step == .scene else { return true }
+        switch outcome {
+        case .open(let workout):
+            isBurstOpen = false
+            pick(.trained, workout: workout)
+        case .kinds, .wait:
+            openCheckIn()
+        }
+        return true
     }
 
     /// Takes the home card's workout off it; 打卡 › 训练 still offers it.

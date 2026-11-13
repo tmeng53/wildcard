@@ -14,6 +14,10 @@ public enum ContractsError: Error, Equatable, Sendable {
     case startTime(String)
     /// More squadmates named as trained with (一起练) than `TrainedWith.limit`, or one twice.
     case trainedWith(Int)
+    /// A tagged place whose name is empty, longer than `Place.maxNameLength` or not one line.
+    case placeName(Int)
+    /// A tagged place outside the world's latitudes and longitudes.
+    case placeCoordinate(latitude: Double, longitude: Double)
     /// A caption with a line break; it is one line.
     case multilineCaption
     /// A check-in that lists the same squad twice.
@@ -72,4 +76,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case notAnEmoji(String)
     /// A coach id that isn't one: lowercase letters, digits and dashes, starting with a letter.
     case invalidCoachID(String)
+    /// A 健康 or 好吃 score outside 1 to 5.
+    case mealScore(Int)
 }

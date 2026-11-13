@@ -6,7 +6,7 @@ import HealthDomain
 /// What the home screen widgets show, from the home the app or the widget last loaded: my week
 /// (我的一周, the small widget) and the squad's week and today (小队今天, the medium one), each
 /// counted the way the home's squad card counts them, and the Apple Health workout either offers
-/// to post with one tap, as 今天's Health card does.
+/// to post, as 今天's Health card does.
 public struct WidgetBoard: Hashable, Sendable {
     /// Where one member's day stands, as their ring shows it.
     public enum MateStatus: Hashable, Sendable {
@@ -44,10 +44,10 @@ public struct WidgetBoard: Hashable, Sendable {
     /// The coach has a card I haven't seen: its phone's ink dot.
     public let coachHasNews: Bool
     /// Today's newest workout in Health I haven't posted or put away from 今天's card, of a sport
-    /// on the list: what the widgets' 打卡 capsule posts. Nil when there is none.
+    /// on the list: what the widgets' 打卡 capsule opens the 训练 page with. Nil when there is none.
     public let workout: ImportedWorkout?
     /// While there is none, today's newest workout I posted, which the capsule keeps showing with
-    /// 已打卡 once its 打卡 went out. Nil when I posted none from Health today.
+    /// 已打卡 once it went out. Nil when I posted none from Health today.
     public let postedWorkout: ImportedWorkout?
 
     /// - Parameters:
@@ -89,11 +89,41 @@ public struct WidgetBoard: Hashable, Sendable {
         postedWorkout = workout == nil ? todays.first(where: \.isPosted)?.imported : nil
     }
 
+    /// One day of my week on 本周出赛表: how it stands and its sport, what I trained else what the
+    /// plan names (nil for a rest day, a 请假条 or a day with no sport).
+    public struct PlanDay: Hashable, Sendable {
+        /// 0 for Monday.
+        public let weekday: Int
+        public let status: WeekRecord.Day
+        public let activity: Activity?
+        public let isToday: Bool
+    }
+
+    /// My week Monday to Sunday, as 本周出赛表 shows it.
+    public var plan: [PlanDay] {
+        zip(week.days, week.activities).enumerated().map { index, day in
+            PlanDay(weekday: index, status: day.0, activity: day.1, isToday: index == week.today)
+        }
+    }
+
+    /// Today and the days after it this week, at most `count`: the small 本周出赛表's list.
+    public func planAhead(_ count: Int) -> [PlanDay] {
+        Array(plan.dropFirst(week.today).prefix(count))
+    }
+
     /// How many in the squad checked in today: 今天 x/y.
     public var checkedInToday: Int { mates.count { $0.status == .checkedIn } }
 
-    /// Where a tap on 我的一周 goes: straight to 打卡 until I check in today, else 今天.
-    public var weekLink: WidgetLink { myStatus == .notCheckedIn ? .checkIn : .today }
+    /// Where a tap on 我的一周 goes, the small widget being one tap: the 训练 page started from
+    /// the workout its capsule offers, else straight to 打卡 until I check in today, else 今天.
+    public var weekLink: WidgetLink {
+        if let workout { return .postWorkout(workout.id) }
+        return myStatus == .notCheckedIn ? .checkIn : .today
+    }
+
+    /// The capsule's 打卡 on 小队今天: the 训练 page started from the workout. Nil while there is
+    /// none to post.
+    public var workoutLink: WidgetLink? { workout.map { .postWorkout($0.id) } }
 
     /// When the widgets should look again: in half an hour, or at my midnight if that comes
     /// first, when the board moves on to a new day.

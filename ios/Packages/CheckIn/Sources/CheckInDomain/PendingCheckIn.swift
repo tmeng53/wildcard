@@ -54,13 +54,19 @@ public struct PendingCheckIn: Hashable, Sendable, Identifiable {
                     .trained(
                         Training(
                             activity: activity, minutes: minutes, startTime: body.startTime, photos: photos,
-                            caption: try body.caption.map(Caption.init), workout: body.workout,
-                            // Tags go to squadmates: a post only the member sees names no one.
-                            trainedWith: audience.squads.isEmpty ? .none : body.trainedWith))
+                            caption: try body.caption.map(Caption.init), workout: body.workout, place: body.place,
+                            // Tags go to squadmates: a post off the 动态 names no one.
+                            trainedWith: inFeed && !audience.squads.isEmpty ? body.trainedWith : .none))
                 case .healthyMeal(let body):
-                    .healthyMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
+                    .healthyMeal(
+                        Meal(
+                            photos: photos, caption: try body.caption.map(Caption.init), place: body.place,
+                            rating: body.rating))
                 case .cheatMeal(let body):
-                    .cheatMeal(Meal(photos: photos, caption: try body.caption.map(Caption.init)))
+                    .cheatMeal(
+                        Meal(
+                            photos: photos, caption: try body.caption.map(Caption.init), place: body.place,
+                            rating: body.rating))
                 case .disclaimer(let disclaimer, _):
                     .disclaimer(try Disclaimer(disclaimer.text, restDay: disclaimer.restDay, photos: photos))
                 }

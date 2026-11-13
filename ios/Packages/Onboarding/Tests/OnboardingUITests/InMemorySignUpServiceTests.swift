@@ -22,6 +22,14 @@ struct InMemorySignUpServiceTests {
         #expect(joined.weekDone == 9)
     }
 
+    /// 加入小队 doesn't ask a member back in no squad for AI consent again, so the sample must let
+    /// them join without it, as the API does for an account that agreed before.
+    @Test func aMemberBackInNoSquadJoinsWithoutAgreeingAgain() async throws {
+        let service = InMemorySignUpService.sampleSquad(character: InMemorySignUpService.sampleCharacter)
+        let joined = try await service.join(InviteCode("K7Q2M9XD"))
+        #expect(joined.weekGoal == 12)
+    }
+
     @Test func aNewSquadHasOnlyTheMember() async throws {
         let service = InMemorySignUpService.sampleSquad()
         try await service.agreeToAI()

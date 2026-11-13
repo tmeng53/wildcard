@@ -19,7 +19,7 @@
 #   runs: the daily progress push every 15 minutes and the weekly awards every hour. Each call
 #   carries an ID token Google signs for that account, which the API checks, so no shared secret
 #   sits in a job. Two jobs fit in Cloud Scheduler's free tier (three a billing account);
-# - the Pub/Sub topics the server publishes events to (a new check-in, a new comment) and a push
+# - the Pub/Sub topics the server publishes events to (a new check-in, a new comment, a join) and a push
 #   subscription per subscriber, which calls `/jobs/events/<subscriber>` signed as
 #   `wildcard-scheduler`, tries again with backoff and, after five tries, parks the event on
 #   `events-dead-letter`; the server publishes once the deploy sets PUBSUB_EVENTS=on. Its traffic
@@ -138,7 +138,7 @@ grant_project "$runtime" roles/pubsub.publisher
 # Pub/Sub signs each push's ID token as `wildcard-scheduler`.
 gcloud iam service-accounts add-iam-policy-binding "$scheduler" \
   --member "serviceAccount:$pubsub_agent" --role roles/iam.serviceAccountTokenCreator >/dev/null
-for topic in check-in-created check-in-trained-with comment-created events-dead-letter; do
+for topic in check-in-created check-in-trained-with comment-created squad-joined events-dead-letter; do
   exists gcloud pubsub topics describe "$topic" || gcloud pubsub topics create "$topic" >/dev/null
 done
 gcloud pubsub topics add-iam-policy-binding events-dead-letter \
@@ -166,6 +166,8 @@ subscribe comment-push comment-created
 subscribe coach-answer comment-created
 # The squadmates a 训练 names it was done with (一起练) are told.
 subscribe trained-with-push check-in-trained-with
+# A squad's coach welcomes whoever joins it.
+subscribe coach-welcome squad-joined
 
 # Alerts, by email to whoever runs this in Cloud Shell, unless ALERT_EMAIL names someone else.
 alert_email="${ALERT_EMAIL:-$(gcloud config get account 2>/dev/null)}"

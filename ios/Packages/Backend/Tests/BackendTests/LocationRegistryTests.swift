@@ -1,3 +1,4 @@
+import Contracts
 import Foundation
 import LocationDomain
 import Testing
@@ -11,9 +12,9 @@ import Testing
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     let registry = APILocationRegistry(api: member.api)
-    try await registry.save(Coordinates(latitude: 40.7, longitude: -74))
-    // Every move sends again, and forgetting twice is fine.
-    try await registry.save(Coordinates(latitude: 25, longitude: 121.6))
+    try await registry.save(Coordinates(latitude: 40.7, longitude: -74), city: CityName("纽约"))
+    // Every move sends again, with or without a city, and forgetting twice is fine.
+    try await registry.save(Coordinates(latitude: 25, longitude: 121.6), city: nil)
     try await registry.forget()
     try await registry.forget()
 }
@@ -23,6 +24,6 @@ import Testing
     let member = try await stack.signedInMember()
     try await member.account.signOut()
     await #expect(throws: LocationError.signedOut) {
-        try await APILocationRegistry(api: member.api).save(Coordinates(latitude: 40.7, longitude: -74))
+        try await APILocationRegistry(api: member.api).save(Coordinates(latitude: 40.7, longitude: -74), city: nil)
     }
 }

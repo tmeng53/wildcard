@@ -12,6 +12,10 @@ export interface RecordTraining {
   /** The day it was posted; later than `day` for a 补打卡. */
   readonly postedDay: LocalDay;
   readonly madeAt: Date;
+  /** The start the member picked, `HH:mm` on their clock, for one made by hand. */
+  readonly startTime?: string;
+  /** When the workout it was posted from began, for one from Apple Health. */
+  readonly workoutStartedAt?: Date;
   readonly sport: SportKey;
   readonly customSport?: string;
   readonly minutes?: number;
@@ -42,7 +46,7 @@ export interface MemberRecords {
   readonly longestStreak?: Streak;
   /** Most days in a row with a 健康餐. */
   readonly mealStreak?: Streak;
-  /** 训练 by the hour of the member's clock they were posted at, 0 to 23; 补打卡 left out. */
+  /** 训练 by the hour of the member's clock they started at, 0 to 23 (`startHour`). */
   readonly hours: readonly number[];
   /** Days trained by weekday, Monday first. */
   readonly weekdays: readonly number[];
@@ -71,6 +75,18 @@ export function sportDays(trainings: readonly RecordTraining[]): ReadonlyMap<str
 function weekdayOf(day: LocalDay): number {
   const weekday = new Date(Date.parse(day)).getUTCDay();
   return weekday === 0 ? 7 : weekday;
+}
+
+/**
+ * The hour a training started on the member's clock (Tracy, 2026-11-11): the start they picked,
+ * else its Health workout's, else, for an older post with neither, the hour it was posted, which
+ * says nothing for a 补打卡, left out.
+ */
+function startHour(training: RecordTraining, timeZone: string): number | undefined {
+  if (training.startTime !== undefined) return Number(training.startTime.slice(0, 2));
+  if (training.workoutStartedAt !== undefined) return hourAt(training.workoutStartedAt, timeZone);
+  if (training.day !== training.postedDay) return undefined;
+  return hourAt(training.madeAt, timeZone);
 }
 
 /** The hour, 0 to 23, on the wall clock of `timeZone` at `moment`. */
@@ -155,14 +171,16 @@ export function memberRecords(input: {
   readonly healthyMealDays: readonly LocalDay[];
   /** Days the member's plans made rest days, over the span of their trainings. */
   readonly restDays: ReadonlySet<LocalDay>;
+  /** Days with a 请假条: like a rest day, a streak runs through them without counting them. */
+  readonly leaveDays: ReadonlySet<LocalDay>;
   readonly timeZone: string;
 }): MemberRecords {
   const trainedDays = new Set(input.trainings.map((training) => training.day));
   const hours = Array.from({ length: 24 }, () => 0);
   const weekdays = Array.from({ length: 7 }, () => 0);
   for (const training of input.trainings) {
-    if (training.day !== training.postedDay) continue;
-    const hour = hourAt(training.madeAt, input.timeZone);
+    const hour = startHour(training, input.timeZone);
+    if (hour === undefined) continue;
     hours[hour] = (hours[hour] ?? 0) + 1;
   }
   for (const day of trainedDays) {
@@ -192,8 +210,8 @@ export function memberRecords(input: {
   const minutes = input.trainings.flatMap((training) =>
     training.minutes === undefined ? [] : [training.minutes],
   );
-  const longestStreak = longestRun(trainedDays, input.restDays);
-  const mealStreak = longestRun(new Set(input.healthyMealDays));
+  const longestStreak = longestRun(trainedDays, new Set([...input.restDays, ...input.leaveDays]));
+  const mealStreak = longestRun(new Set(input.healthyMealDays), input.leaveDays);
   return {
     trainedDays: trainedDays.size,
     minutes: minutes.reduce((sum, value) => sum + value, 0),

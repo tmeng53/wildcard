@@ -44,8 +44,8 @@ select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, c
   values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-06', '喝水', '喝水', 8)$$,
   '23514', null, 'an amount comes with its unit');
 select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title)
-  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-06', '喝水', '一二三四五六七八九')$$,
-  '23514', null, 'a challenge title is short');
+  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-06', '喝水', repeat('喝', 17))$$,
+  '23514', null, 'a challenge title is short: 16 characters, its longest in any language');
 insert into public.coach_member_notes (id, squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
   overriding system value values
   (3, '33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-06', '今天多喝水', '喝水', 8, '杯');
@@ -84,8 +84,8 @@ select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, c
   values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-07', '歇着', '多睡会儿')$$,
   '23514', null, 'a challenge line needs its challenge');
 select throws_ok($$insert into public.coach_member_notes (squad_id, member_id, coach_id, day, text, challenge_title, challenge_line)
-  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-07', '歇着', '早睡', repeat('睡', 25))$$,
-  '23514', null, 'a challenge line is short');
+  values ('33333333-3333-4333-8333-333333333333', '11111111-1111-4111-8111-111111111111', 'xiaohun', '2026-11-07', '歇着', '早睡', repeat('睡', 49))$$,
+  '23514', null, 'a challenge line is short: 48 characters, its longest in any language');
 
 -- The coach page's cards each member saw: once, never changed, gone with the member or squad.
 insert into public.coach_card_seen (member_id, squad_id, kind, card_id) values

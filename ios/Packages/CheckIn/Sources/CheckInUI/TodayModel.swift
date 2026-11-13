@@ -44,6 +44,8 @@ public final class TodayModel {
     private(set) var celebrations = 0
     /// How long a notice at the top stays up.
     let noticeHold: Double
+    /// How long 已发出 or 没网 holds 打卡's spot, in seconds.
+    let outgoingHold: Double
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
@@ -86,6 +88,8 @@ public final class TodayModel {
     let store: TodayStore
     /// Apple Health, for the home's card and a 训练's chips; nil where the app has none.
     public let health: HealthConnection?
+    /// The workout a widget's 打卡 asked to start a 训练 from, until it opens (`openAskedWorkout`).
+    var askedToPost: WorkoutSource?
     private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor () -> Void
@@ -111,6 +115,7 @@ public final class TodayModel {
         pats = PatStage(bubbleHold: bubbleHold ?? PatStage.bubbleHold)
         together = TogetherStage(isOn: celebratesTogether)
         noticeHold = bubbleHold ?? Motion.noticeHold
+        outgoingHold = bubbleHold ?? Self.defaultOutgoingHold
         self.scene = scene
         self.defaults = defaults
         self.store = store
@@ -250,6 +255,7 @@ public final class TodayModel {
         await store.load()
         showLoaded()
         await health?.refresh()
+        openAskedWorkout(finally: true)
     }
 
     /// How often the home is read again while 今天 is on screen, so teammates' posts show up.
@@ -272,11 +278,6 @@ public final class TodayModel {
         }
         placeSquad()
         Task { await playOpening() }
-    }
-
-    /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 lands here.
-    public func openCheckIn() {
-        if step == .scene { isBurstOpen = true }
     }
 
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.

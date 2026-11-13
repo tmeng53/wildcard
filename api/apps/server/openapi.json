@@ -1390,6 +1390,9 @@
             "maxItems": 7,
             "description": "Squadmates the member trained with (一起练), in the order picked."
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -1410,6 +1413,45 @@
         "type": "string",
         "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
         "description": "A listed sport’s id from `GET /public/catalog`, or `custom` with the member’s own name in `customSport`."
+      },
+      "Place": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+            "x-max-characters": 100
+          },
+          "appleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Apple Maps' identifier for the place, when Maps gave one."
+          },
+          "category": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{1,60}$",
+            "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "name",
+          "latitude",
+          "longitude"
+        ],
+        "additionalProperties": false,
+        "description": "A place the member picked in Apple Maps: its name, Maps' id and category, and the place's own coordinates, never the phone's."
       },
       "PhotoView": {
         "type": "object",
@@ -1781,6 +1823,12 @@
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -1790,6 +1838,29 @@
           }
         },
         "additionalProperties": false
+      },
+      "MealRating": {
+        "type": "object",
+        "properties": {
+          "healthy": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "健康: how healthy the meal was, 1 to 5."
+          },
+          "tasty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "好吃: how good it tasted, 1 to 5."
+          }
+        },
+        "required": [
+          "healthy",
+          "tasty"
+        ],
+        "additionalProperties": false,
+        "description": "The member's own rating of this meal: 健康 and 好吃, each 1 to 5. Its 卡价比 is tasty × healthy ÷ 5."
       },
       "CheatMealCheckIn": {
         "type": "object",
@@ -2070,6 +2141,9 @@
             "maxItems": 7,
             "description": "Squadmates the member trained with (一起练), in the order picked."
           },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -2222,6 +2296,12 @@
             "maxLength": 1000,
             "description": "Trimmed, then 1 to 60 characters as people see them, on one line.",
             "x-max-characters": 60
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
           },
           "photos": {
             "type": "array",
@@ -2789,7 +2869,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐). Each ends today, or yesterday while today has none yet, and is left out once broken."
+        "description": "Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken."
       },
       "RecordStreak": {
         "type": "object",
@@ -2881,11 +2961,11 @@
             "items": {
               "type": "integer",
               "minimum": 0,
-              "description": "训练 posted in this hour."
+              "description": "训练 started in this hour."
             },
             "minItems": 24,
             "maxItems": 24,
-            "description": "训练 by the hour of the member’s clock they were posted at, 0 to 23; a 补打卡 is left out."
+            "description": "训练 by the hour of the member’s clock they started at, 0 to 23: the start picked, else the Health workout’s, else the hour posted; a 补打卡 without a start is left out."
           },
           "weekdays": {
             "type": "array",
@@ -2925,7 +3005,7 @@
           "sportCount"
         ],
         "additionalProperties": false,
-        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
+        "description": "外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest."
       },
       "RecordSport": {
         "type": "object",
@@ -3370,6 +3450,13 @@
             "minimum": -180,
             "maximum": 180,
             "example": -74
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The city the phone’s approximate location is in, as iOS names it in the app’s language.",
+            "x-max-characters": 60,
+            "example": "多伦多"
           }
         },
         "required": [
@@ -3378,7 +3465,7 @@
           "longitude"
         ],
         "additionalProperties": false,
-        "description": "The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it."
+        "description": "The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach, with the city the phone named there, if it could, which the coach is told with the weather. A location sent without a city forgets the one before. Squadmates never see either, and the AI never sees the location itself."
       },
       "SquadList": {
         "type": "object",
@@ -4189,7 +4276,7 @@
           },
           "text": {
             "type": "string",
-            "maxLength": 200,
+            "maxLength": 400,
             "description": "Its body, without the 称呼 or 落款; lines apart by `\\n`.",
             "example": "这队交给你了，我先撤。"
           },
@@ -4665,7 +4752,7 @@
         "properties": {
           "title": {
             "type": "string",
-            "maxLength": 8,
+            "maxLength": 16,
             "description": "What to do, in a few words.",
             "example": "喝水"
           },
@@ -4678,13 +4765,13 @@
           },
           "unit": {
             "type": "string",
-            "maxLength": 4,
+            "maxLength": 8,
             "description": "The amount’s unit, the coach’s own word.",
             "example": "杯"
           },
           "line": {
             "type": "string",
-            "maxLength": 24,
+            "maxLength": 48,
             "description": "The coach talking to the member under the title, about why; left out on older notes.",
             "example": "泳池泡久了也会渴，别等口干。"
           },
@@ -4944,7 +5031,7 @@
               "string",
               "null"
             ],
-            "maxLength": 100,
+            "maxLength": 200,
             "description": "Its line, shown first among the post’s comments with the 教练 tag, which members may reply to (a comment with `replyToCoach`), or null when it only reacted."
           },
           "emoji": {
@@ -5000,7 +5087,7 @@
           },
           "text": {
             "type": "string",
-            "maxLength": 100,
+            "maxLength": 200,
             "description": "Its answer, shown among the post’s comments right after the reply it answers, as a reply to that reply’s writer (毛头 回复 小美：…), with the 教练 tag."
           },
           "mentions": {
@@ -5079,7 +5166,7 @@
             "items": {
               "$ref": "#/components/schemas/CoachPageCard"
             },
-            "description": "The cards not seen yet from the last 72 hours, oldest first: the stack."
+            "description": "The cards not seen yet from today on the squad’s clock, oldest first: the stack."
           },
           "earlier": {
             "type": "array",
@@ -5358,6 +5445,549 @@
           "version",
           "to",
           "kind"
+        ],
+        "additionalProperties": false
+      },
+      "SquadPlaces": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceSummary"
+            },
+            "description": "小队地图’s 常去: every place, most visited first."
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceVisit"
+            },
+            "description": "Posts tagged with a place in the last two days, newest first: 小队地图’s 今天 shows those of the viewer’s own today."
+          }
+        },
+        "required": [
+          "version",
+          "places",
+          "recent"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceSummary": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "The place as the newest post there tagged it."
+          },
+          "visits": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "小队来过 N 次: posts in the squad’s 动态 tagged with it."
+          },
+          "people": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "来过的队友 N 人: how many people posted them."
+          },
+          "stars": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.",
+            "example": 4.3
+          },
+          "raters": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many of the squad’s members gave a score."
+          },
+          "lastAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the newest post there was made, in UTC."
+          }
+        },
+        "required": [
+          "key",
+          "place",
+          "visits",
+          "people",
+          "stars",
+          "raters",
+          "lastAt"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceVisit": {
+        "type": "object",
+        "properties": {
+          "checkIn": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who posted it."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "trained",
+              "healthyMeal",
+              "cheatMeal"
+            ]
+          },
+          "sport": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]{0,39}$",
+            "description": "A 训练’s sport."
+          },
+          "customSport": {
+            "type": "string",
+            "description": "A custom sport’s name."
+          },
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "cover": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoView"
+              },
+              {
+                "description": "The post’s first photo, for its tile; missing when it has none (or its file is gone)."
+              }
+            ]
+          },
+          "minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "A 训练’s minutes, when it has them."
+          },
+          "stars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal."
+          },
+          "calorieValue": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0.2,
+            "maximum": 5,
+            "description": "A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练."
+          }
+        },
+        "required": [
+          "checkIn",
+          "member",
+          "kind",
+          "day",
+          "createdAt",
+          "key",
+          "stars",
+          "calorieValue"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceDetail": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 1000,
+                "description": "Trimmed, then 1 to 100 characters as people see them, on one line.",
+                "x-max-characters": 100
+              },
+              "appleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200,
+                "description": "Apple Maps' identifier for the place, when Maps gave one."
+              },
+              "category": {
+                "type": "string",
+                "pattern": "^[A-Za-z]{1,60}$",
+                "description": "Apple Maps' point-of-interest category, such as `fitnessCenter`."
+              },
+              "latitude": {
+                "type": "number",
+                "minimum": -90,
+                "maximum": 90
+              },
+              "longitude": {
+                "type": "number",
+                "minimum": -180,
+                "maximum": 180
+              }
+            },
+            "required": [
+              "name",
+              "latitude",
+              "longitude"
+            ],
+            "additionalProperties": false,
+            "description": "The place as the newest post there tagged it."
+          },
+          "visits": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "小队来过 N 次: posts in the squad’s 动态 tagged with it."
+          },
+          "people": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "来过的队友 N 人: how many people posted them."
+          },
+          "stars": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.",
+            "example": 4.3
+          },
+          "raters": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many of the squad’s members gave a score."
+          },
+          "lastAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the newest post there was made, in UTC."
+          },
+          "myStars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The viewer’s own score; null before one."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "sport",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "大家在这里练: each sport its 训练 named, most first."
+          },
+          "meals": {
+            "type": "object",
+            "properties": {
+              "healthyMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cheatMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "healthy": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 健康, averaged."
+              },
+              "tasty": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 好吃, averaged."
+              },
+              "calorieValue": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged."
+              }
+            },
+            "required": [
+              "healthyMeal",
+              "cheatMeal",
+              "healthy",
+              "tasty",
+              "calorieValue"
+            ],
+            "additionalProperties": false,
+            "description": "大家在这里吃: meals by kind, and what rated ones scored."
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlaceVisit"
+            },
+            "description": "动态: the posts tagged with it, newest first."
+          }
+        },
+        "required": [
+          "version",
+          "key",
+          "place",
+          "visits",
+          "people",
+          "stars",
+          "raters",
+          "lastAt",
+          "myStars",
+          "sports",
+          "meals",
+          "posts"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceRatingView": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The score, 1 to 5."
+          }
+        },
+        "required": [
+          "version",
+          "key",
+          "stars"
+        ],
+        "additionalProperties": false
+      },
+      "PlaceRatingChange": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The score, 1 to 5."
+          }
+        },
+        "required": [
+          "version",
+          "stars"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "places": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SavedPlace"
+            },
+            "description": "Newest saved first."
+          }
+        },
+        "required": [
+          "version",
+          "places"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlace": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "example": "apple:I6FD7682FD36BB3BE"
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The member’s note on it, left out when they wrote none.",
+            "x-max-characters": 60
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they saved it, in UTC."
+          }
+        },
+        "required": [
+          "key",
+          "place",
+          "savedAt"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceSaved": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "saved": {
+            "$ref": "#/components/schemas/SavedPlace"
+          }
+        },
+        "required": [
+          "version",
+          "saved"
+        ],
+        "additionalProperties": false
+      },
+      "SavedPlaceDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "place": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The note to keep with it; left out, it has none (a note saved before is cleared).",
+            "x-max-characters": 60
+          }
+        },
+        "required": [
+          "version",
+          "place"
         ],
         "additionalProperties": false
       },
@@ -11787,7 +12417,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
         "security": [
           {
             "bearer": []
@@ -11862,7 +12492,7 @@
       "get": {
         "operationId": "getEarlierCoachCards",
         "summary": "The coach page’s 以前, a page at a time",
-        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).",
         "security": [
           {
             "bearer": []
@@ -12255,6 +12885,441 @@
           },
           "415": {
             "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/places": {
+      "get": {
+        "operationId": "listSquadPlaces",
+        "summary": "The places the squad’s posts were tagged with (小队地图)",
+        "description": "Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The places",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadPlaces"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/places/{key}": {
+      "get": {
+        "operationId": "getSquadPlace",
+        "summary": "One place’s page (地点页)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+              "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+              "example": "apple:I6FD7682FD36BB3BE"
+            },
+            "required": true,
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The place",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad id or place",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No post in the squad’s 动态 was tagged with it (`PLACE_NOT_FOUND`): the app shows the place empty. A caller not in the squad gets 403, never 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/place-ratings/{key}": {
+      "put": {
+        "operationId": "ratePlace",
+        "summary": "Give the caller’s score for a place (我的评分)",
+        "description": "One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^apple:[A-Za-z0-9._-]{1,200}$",
+              "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+              "example": "apple:I6FD7682FD36BB3BE"
+            },
+            "required": true,
+            "description": "Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.",
+            "name": "key",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceRatingChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The score stands",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceRatingView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid place or score",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/saved-places": {
+      "get": {
+        "operationId": "listMySavedPlaces",
+        "summary": "The places the signed-in member saved (收藏)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Their saved places",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlaceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "saveMyPlace",
+        "summary": "Save a place (收藏), or change its note",
+        "description": "A place saved already keeps when it was saved and takes the new note. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedPlaceDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedPlaceSaved"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid place or note, or the member keeps the most saved places already (`TOO_MANY_SAVED_PLACES`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/saved-places/{placeKey}": {
+      "delete": {
+        "operationId": "removeMySavedPlace",
+        "summary": "Remove a saved place",
+        "description": "A place not saved answers 204 too, so a retry is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(apple:[A-Za-z0-9._-]{1,200}|squad:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+              "description": "Which place: `apple:` and Apple Maps' identifier.",
+              "example": "apple:I6FD7682FD36BB3BE"
+            },
+            "required": true,
+            "description": "Which place: `apple:` and Apple Maps' identifier.",
+            "name": "placeKey",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed, or not saved"
+          },
+          "400": {
+            "description": "Not a place key",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -13670,7 +14735,7 @@
       "get": {
         "operationId": "getMyUnlocks",
         "summary": "The stores, props and pieces the signed-in member unlocked",
-        "description": "Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
+        "description": "Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`; a prop is listed once a rule opened it (such as a dog on a leash) or when unlocked before every prop was everyone’s. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.",
         "security": [
           {
             "bearer": []

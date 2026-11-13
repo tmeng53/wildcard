@@ -10,6 +10,8 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
+import type { PlaceRatings } from '@wildcard/places';
+import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
 import type { Switches } from '@wildcard/switches';
@@ -58,6 +60,8 @@ import { me } from './routes/me.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
+import { places } from './routes/places.js';
+import { savedPlaces } from './routes/saved-places.js';
 import { feedback } from './routes/feedback.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
@@ -99,6 +103,10 @@ export interface AppDependencies {
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
+  /** Members' scores for the places they train at (地点页). */
+  readonly placeRatings: PlaceRatings;
+  /** The places each member saved (收藏), with their notes. */
+  readonly savedPlaces: SavedPlaces;
   /** 意见反馈: members' messages to us. */
   readonly feedback: FeedbackInbox;
   /** Where each message is filed; undefined until its token is set, and then they wait. */
@@ -201,7 +209,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', devices(deps));
   app.route('/', pushSettings(deps));
   app.route('/', location(deps));
-  app.route('/', squads(deps));
+  app.route('/', squads({ ...deps, publish }));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(
     '/',
@@ -224,6 +232,8 @@ export function createApp(deps: AppDependencies) {
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));
   app.route('/', nudges(deps));
+  app.route('/', places(deps));
+  app.route('/', savedPlaces(deps));
   app.route('/', feedback(deps));
   app.route('/', notices(deps));
   app.route('/', events(deps));

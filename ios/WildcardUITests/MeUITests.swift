@@ -156,6 +156,10 @@ final class MeUITests: XCTestCase {
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(entry.frame), "球衣号码 runs off the screen: \(entry.frame)")
         settle()
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertFalse(
+            tabBar.exists && tabBar.isHittable && tabBar.frame.intersects(app.buttons["editor.done"].frame),
+            "the tab bar covers 换装's 保存")
         keepScreenshot(named: "48-editor-jersey-number")
         entry.tap()
         let wheel = app.pickerWheels.firstMatch
@@ -167,7 +171,8 @@ final class MeUITests: XCTestCase {
         app.buttons["number.save"].tap()
         XCTAssertTrue(entry.waitForExistence(timeout: 30), "saving didn't go back to the editor")
         waitFor(entry, "label CONTAINS '07'", "the editor doesn't show the new number")
-        app.buttons["editor.cancel"].tap()
+        // 换装 is pushed over 我: the system's back goes back to it.
+        backButton(in: app).tap()
         let card = app.buttons["me.card"]
         XCTAssertTrue(card.waitForExistence(timeout: 30))
         XCTAssertTrue(card.label.contains("07号"), "the card doesn't wear the new number: \(card.label)")
@@ -312,6 +317,10 @@ extension MeUITests {
         XCTAssertTrue(app.buttons["feedback.review"].exists, "写评价 is missing")
         XCTAssertFalse(app.buttons["feedback.send"].isEnabled, "发送 works with nothing written")
         settle()
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertFalse(
+            tabBar.exists && tabBar.isHittable && tabBar.frame.intersects(app.buttons["feedback.send"].frame),
+            "the tab bar covers 意见反馈's 发送")
         keepScreenshot(named: "95-feedback")
 
         let text = app.textViews["feedback.text"]

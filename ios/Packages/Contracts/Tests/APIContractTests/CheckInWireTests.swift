@@ -98,6 +98,46 @@ private func saved(_ kindAndFields: String) -> String {
     }
 }
 
+@Test func aTaggedPlaceGoesWithAMealBothWays() throws {
+    let place = try Place(
+        name: " Sweetgreen ", appleID: "I1A2B3", category: "restaurant", latitude: 40.7448, longitude: -73.9881)
+    let meal = Meal(place: place)
+    #expect(
+        try encode(try checkIn(.healthyMeal(meal)).draft)
+            .hasSuffix(
+                #""kind":"healthyMeal","meal":{"place":{"appleId":"I1A2B3","category":"restaurant","latitude":40.7448,"longitude":-73.9881,"name":"Sweetgreen"}},"version":1}"#
+            ))
+    #expect(
+        try decode(
+            saved(
+                #""kind":"healthyMeal","meal":{"place":{"name":"Sweetgreen","appleId":"I1A2B3","category":"restaurant","latitude":40.7448,"longitude":-73.9881}}"#
+            )) == checkIn(.healthyMeal(meal)))
+}
+
+@Test func aMealsRatingGoesBothWays() throws {
+    let meal = Meal(rating: try MealRating(healthy: 4, tasty: 5))
+    #expect(
+        try encode(try checkIn(.cheatMeal(meal)).draft)
+            .hasSuffix(#""kind":"cheatMeal","meal":{"rating":{"healthy":4,"tasty":5}},"version":1}"#))
+    #expect(
+        try decode(saved(#""kind":"cheatMeal","meal":{"rating":{"healthy":4,"tasty":5}}"#))
+            == checkIn(.cheatMeal(meal)))
+}
+
+@Test func aRatingThisBuildCantReadLeavesTheMealStanding() throws {
+    #expect(
+        try decode(saved(#""kind":"healthyMeal","meal":{"rating":{"healthy":6,"tasty":5}}"#))
+            == checkIn(.healthyMeal(Meal())))
+}
+
+@Test func aPlaceThisBuildCantReadLeavesThePostStanding() throws {
+    #expect(
+        try decode(
+            saved(
+                #""kind":"trained","training":{"sport":"run","place":{"name":"","latitude":0,"longitude":0}}"#))
+            == checkIn(.trained(Training(activity: .sport("run")))))
+}
+
 @Test func savedTrainingReadsWithItsPhotoURLs() throws {
     let json = saved(
         #""kind":"trained","training":{"sport":"swim","caption":"一千米","photos":[{"path":"\#(photoA)","url":"https://storage.example.com/a?token=1"}]}"#

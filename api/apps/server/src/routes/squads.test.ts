@@ -35,6 +35,8 @@ import {
   config,
   noJobs,
   nudgesOn,
+  placeRatingsOn,
+  savedPlacesOn,
   weatherOn,
   pushOn,
   signUp,
@@ -66,6 +68,9 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
+/** Whom the coach was asked to welcome, as each join's event reaches it. */
+const welcomes: { readonly squad: string; readonly member: string }[] = [];
+
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -112,6 +117,8 @@ const app = createApp({
   disclaimerDrafts: { write: () => Promise.reject(new Error('unused')) },
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
+  placeRatings: placeRatingsOn(db),
+  savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
   scenes: scenesOn(db),
@@ -131,7 +138,19 @@ const app = createApp({
   coachNames: () => Promise.reject(new Error('unused')),
   liveEvents: ignoredNotices.liveEvents,
   log: createLog(() => undefined),
-  jobs: noJobs,
+  jobs: {
+    ...noJobs,
+    coach: {
+      run: () => Promise.reject(new Error('unused')),
+      preview: () => Promise.reject(new Error('unused')),
+      answer: () => Promise.reject(new Error('unused')),
+      checkedIn: () => Promise.reject(new Error('unused')),
+      welcome: (asked) => {
+        welcomes.push(asked);
+        return Promise.resolve();
+      },
+    },
+  },
   admin: adminOn(),
 });
 
@@ -298,6 +317,10 @@ describe('joining by invite code', () => {
       token: friend.token,
     });
     expect([again.status, again.body]).toStrictEqual([200, joined.body]);
+    // The squad's coach is asked to welcome the newcomer once, and never the creator.
+    expect(welcomes.filter((each) => each.squad === squad.id)).toStrictEqual([
+      { squad: squad.id, member: friend.userId },
+    ]);
   });
 
   it.each(['ZZZZZZZZ', 'not-a-code!', '0O1IL0O1', 'K'.repeat(100)])(
