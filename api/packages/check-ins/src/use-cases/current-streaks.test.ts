@@ -36,6 +36,7 @@ const plans = createPostgresWeeklyPlanStore(db);
 const now = new Date('2026-11-10T03:00:00.000Z');
 const NEW_YORK = 'America/New_York';
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports: createSports({ store: createPostgresSportStore(db) }),
   store: createPostgresCheckInStore(db),
   membership: createSquads({

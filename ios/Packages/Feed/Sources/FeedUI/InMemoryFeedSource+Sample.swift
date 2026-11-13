@@ -74,7 +74,8 @@ extension InMemoryFeedSource {
         let maotou = CoachSpeaker(id: "xiaohun", name: localized("毛头"))
         let note = CoachNote(
             day: LocalDay(at: now, in: SquadTimeZone.newYorkClock), text: localized("今天谁先动，谁就是队长"),
-            coach: maotou, writtenAt: now.addingTimeInterval(-3600))
+            coach: maotou, writtenAt: now.addingTimeInterval(-3600),
+            timeZone: SquadTimeZone.newYorkClock)
         func reply(_ post: FeedPost?, _ text: String?, _ emoji: String?, mentioning: [MemberID] = []) -> CoachReply? {
             guard let post else { return nil }
             return CoachReply(
