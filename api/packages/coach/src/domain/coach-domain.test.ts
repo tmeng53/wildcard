@@ -1046,6 +1046,16 @@ describe('recall', () => {
     );
   });
 
+  it('finds Chinese worded differently, by most of its two-character pieces', () => {
+    // 「游泳时间」 shares 游泳 with 「周三固定游泳」 but not enough of the rest.
+    expect(recallLines(files, { query: '周日爬山计划' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '花生过敏吗' })).toBe('【people/队员1.md】- 对花生过敏');
+    expect(recallLines(files, { query: '爬山周日' })).toBe('【memory.md】- 大家约好周日爬山');
+    expect(recallLines(files, { query: '游泳时间' })).toBe(
+      '没查到。可以换更短的词，或者不填 query 看整个文件。还是没有，就是不记得，别说你记得。',
+    );
+  });
+
   it('lists a whole file top first, leaving out headings', () => {
     expect(recallLines(files, { path: 'people/队员1.md' })).toBe(
       '【people/队员1.md】- 对花生过敏\n【people/队员1.md】- 想跑半马\n【people/队员1.md】- 周三固定游泳',
