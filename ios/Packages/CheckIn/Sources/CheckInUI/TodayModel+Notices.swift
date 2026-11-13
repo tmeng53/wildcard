@@ -22,6 +22,9 @@ extension TodayModel {
         /// The squad trained over its goal weeks in a row: the captain is suggested a higher one,
         /// told on this phone once; its button opens 小队.
         case goalSuggestion(GoalSuggestion)
+        /// Someone asked to join the squad the member captains, by their nickname: told on this
+        /// phone once a request; its button opens 小队设置, where the captain answers.
+        case joinRequest(JoinRequestID, name: String)
         /// Posts the server refused while they went out late (`TodayModel.failed`, read when it is
         /// drawn, so one banner always says how many); its button, when `canResend`, opens the
         /// oldest to change and send again.
@@ -46,7 +49,7 @@ extension TodayModel {
             switch news {
             case .broadcast(let broadcast):
                 broadcast.action != nil || broadcast.style == .celebration || broadcast.letter != nil
-            case .goalSuggestion: true
+            case .goalSuggestion, .joinRequest: true
             case .sendFailed: true
             case .moved, .unlocked, .more, .told: false
             }
@@ -162,6 +165,22 @@ extension TodayModel {
         _ suggestion: GoalSuggestion, open: @escaping (AppDestination) -> Void, shown: @escaping () -> Void
     ) {
         let news = NoticeNews.goalSuggestion(suggestion)
+        guard notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
+        openDestination = open
+        let next = Notice(news: news)
+        bannerShown[next.id] = shown
+        pendingNotices.append(next)
+        Task { await showNextNotice() }
+    }
+
+    /// Tells the captain that `name` asked to join, in a banner after any notice already waiting,
+    /// unless it is already waiting or on screen; a tap opens 小队设置 through `open`, and `shown`
+    /// hears once it is on screen.
+    public func tellJoinRequest(
+        _ request: JoinRequestID, from name: String, open: @escaping (AppDestination) -> Void,
+        shown: @escaping () -> Void
+    ) {
+        let news = NoticeNews.joinRequest(request, name: name)
         guard notice?.news != news, !pendingNotices.contains(where: { $0.news == news }) else { return }
         openDestination = open
         let next = Notice(news: news)

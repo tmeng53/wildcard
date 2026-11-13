@@ -32,13 +32,15 @@ public struct SquadSettingsView<PastRecaps: View>: View {
     private let picked: (_ scene: SceneTheme, _ coveredAt: Date) -> Void
     /// Pushes one of the coach's pages (`CoachPage`) over this one.
     private let openCoach: (CoachRoute) -> Void
+    /// Pushes 小队设置 (`SquadPreferencesView`) over this one, from the gear; the app pushes it
+    /// too, from a join request's banner, row or push.
+    private let openPreferences: () -> Void
     @Binding private var revealing: Bool
     /// Opens a teammate's player card, from their row; the app pops it up over everything.
     private let openTeammate: ((MemberID) -> Void)?
     /// 往期战报, under this week's scene; it shows nothing until the squad has one.
     private let pastRecaps: PastRecaps
     @State private var renaming: String?
-    @State private var isPreferencesOpen = false
     @State private var reveal: Reveal?
     /// The change last asked for, so its own control shows the wait while it saves.
     @State private var working: Working?
@@ -47,12 +49,13 @@ public struct SquadSettingsView<PastRecaps: View>: View {
 
     public init(
         model: SquadSettingsModel, picked: @escaping (_ scene: SceneTheme, _ coveredAt: Date) -> Void,
-        openCoach: @escaping (CoachRoute) -> Void, revealing: Binding<Bool>,
+        openCoach: @escaping (CoachRoute) -> Void, openPreferences: @escaping () -> Void, revealing: Binding<Bool>,
         openTeammate: ((MemberID) -> Void)? = nil, @ViewBuilder pastRecaps: () -> PastRecaps
     ) {
         self.model = model
         self.picked = picked
         self.openCoach = openCoach
+        self.openPreferences = openPreferences
         _revealing = revealing
         self.openTeammate = openTeammate
         self.pastRecaps = pastRecaps()
@@ -109,9 +112,6 @@ public struct SquadSettingsView<PastRecaps: View>: View {
         .accessibilityIdentifier("squad.page")
         .alert(Text(copy: "改队名", bundle: .module), isPresented: isRenaming) {
             renameAlert
-        }
-        .navigationDestination(isPresented: $isPreferencesOpen) {
-            SquadPreferencesView(model: model)
         }
     }
 
@@ -218,7 +218,7 @@ extension SquadSettingsView {
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
             }
             HeaderButton(Text(copy: "小队设置", bundle: .module), systemImage: "gearshape") {
-                isPreferencesOpen = true
+                openPreferences()
             }
             .newsDot(model.waitingRequests > 0)
             .accessibilityIdentifier("squad.preferences.open")

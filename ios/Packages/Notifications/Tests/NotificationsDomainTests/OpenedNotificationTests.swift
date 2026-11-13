@@ -62,3 +62,8 @@ import Testing
         OpenedNotification(category: "weeklyAwards", event: ["squad": "nope", "weekStart": "2026-10-19"]) == .other)
     #expect(OpenedNotification(category: nil, event: [:]) == .other)
 }
+
+@Test func aJoinRequestOpensSquadSettingsAndBeingLetInOpensTheSquad() {
+    #expect(OpenedNotification(category: "joinRequest", event: ["squadId": "x"]) == .open(.squadPreferences))
+    #expect(OpenedNotification(category: "joinApproved", event: [:]) == .open(.squad))
+}

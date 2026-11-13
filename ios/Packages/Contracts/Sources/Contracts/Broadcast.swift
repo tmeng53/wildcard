@@ -85,6 +85,8 @@ public enum AppDestination: Hashable, Sendable {
     case schedule
     /// 小队.
     case squad
+    /// 小队设置, over 小队: where the captain answers who asked to join.
+    case squadPreferences
     /// 教练招聘会, over 今天.
     case coaches
     /// 动态.
@@ -148,6 +150,8 @@ extension Notice {
         case .broadcast(let broadcast): broadcast.letter == nil ? broadcast.action?.destination : .teamLetter(broadcast)
         // 小队, whose first card is the weekly goal.
         case .goalSuggestion: .squad
+        case .joinRequest: .squadPreferences
+        case .joinAnswered: .squad
         }
     }
 }

@@ -4,21 +4,38 @@ import XCTest
 /// Keeps screenshots for review.
 @MainActor
 final class SquadJoinRequestUITests: XCTestCase {
-    /// 入队申请 tops the captain's 小队设置, the gear carrying a dot while anyone waits; 拒绝 takes
-    /// the row away, and 入队需要审核 sits under 邀请队友.
+    /// 今天 tells the captain in a banner that stays until it is tapped, and the squad's name
+    /// wears a dot; 查看 opens 小队设置 with 入队申请 on top, 拒绝 takes the row away, and
+    /// 入队需要审核 sits under 邀请队友.
     func testTheCaptainAnswersAJoinRequest() {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launchArguments += [
-            "-tab", "squad", "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
-            "-squad-seat", "asked",
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-squad-seat", "asked",
         ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
-        let gear = app.buttons["squad.preferences.open"]
-        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
-        XCTAssertEqual(gear.value as? String, "有入队申请", "the gear has no dot while 小橘 waits")
-        gear.tap()
+        let squadName = app.descendants(matching: .any)["squadcard.squad"]
+        XCTAssertTrue(squadName.waitForExistence(timeout: 30), "no squad card on 今天")
+        XCTAssertEqual(squadName.value as? String, "有新消息", "the squad's name has no dot while 小橘 waits")
+
+        // The banner shows once on a phone: a run after one that showed it goes by the gear.
+        let banner = app.descendants(matching: .any).matching(identifier: "notice.banner").firstMatch
+        if banner.waitForExistence(timeout: 15) {
+            XCTAssertTrue(banner.label.contains("小橘 申请加入小队"), "the banner says \(banner.label)")
+            XCTAssertTrue(banner.label.contains("查看"), "the banner has no 查看: \(banner.label)")
+            XCTAssertLessThanOrEqual(banner.frame.maxX, app.frame.maxX, "the banner runs off the screen")
+            Thread.sleep(forTimeInterval: 0.6)
+            keepScreenshot(named: "92-join-request-banner")
+            banner.tap()
+        } else {
+            squadName.tap()
+            let gear = app.buttons["squad.preferences.open"]
+            XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+            XCTAssertEqual(gear.value as? String, "有入队申请", "the gear has no dot while 小橘 waits")
+            gear.tap()
+        }
+
         let requests = app.descendants(matching: .any)["squad.joinRequests"]
         XCTAssertTrue(requests.waitForExistence(timeout: 30), "no 入队申请 on the captain's 小队设置")
         let invite = app.buttons["squad.preferences.invite"]
@@ -32,12 +49,12 @@ final class SquadJoinRequestUITests: XCTestCase {
             XCTAssertLessThanOrEqual(button.frame.maxX, app.frame.maxX, "拒绝 or 同意 runs off the screen")
         }
         settle()
-        keepScreenshot(named: "92-squad-join-request")
+        keepScreenshot(named: "93-squad-join-request")
         decline.tap()
         expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: requests)
         waitForExpectations(timeout: 30)
         settle()
-        keepScreenshot(named: "93-squad-join-request-declined")
+        keepScreenshot(named: "94-squad-join-request-declined")
     }
 
     private func settle() {

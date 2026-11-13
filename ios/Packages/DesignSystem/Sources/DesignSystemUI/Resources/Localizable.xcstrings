@@ -3828,6 +3828,22 @@
           }
         }
       }
+    },
+    "有新消息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something new"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有新消息"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
