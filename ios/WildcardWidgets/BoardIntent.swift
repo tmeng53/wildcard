@@ -9,7 +9,7 @@ import WidgetKit
 /// add a parameter with a default instead, which a stored configuration without it reads.
 struct BoardIntent: WidgetConfigurationIntent {
     static let title: LocalizedStringResource = "外卡"
-    static let description = IntentDescription("选这个小组件显示什么")
+    static let description = IntentDescription("显示内容")
 
     @Parameter(title: "显示", default: .progress) var shows: BoardShows
 
