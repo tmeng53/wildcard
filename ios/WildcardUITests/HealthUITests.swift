@@ -51,9 +51,9 @@ final class HealthUITests: XCTestCase {
         XCTAssertTrue(yogaHeart.waitForExistence(timeout: Self.wait), "the yoga has no 平均心率")
         XCTAssertTrue(chart.exists, "the yoga's chart isn't in the photo row")
         XCTAssertFalse(map.exists, "the yoga has a map")
-        yogaHeart.tap()
+        tapClearOfTheFeedSwitch(yogaHeart, in: app)
         XCTAssertTrue(chart.waitForNonExistence(timeout: Self.wait), "striking 平均心率 left the chart")
-        yogaHeart.tap()
+        tapClearOfTheFeedSwitch(yogaHeart, in: app)
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "restoring 平均心率 didn't bring the chart back")
 
         checkTheSkiDay(in: app)
@@ -62,7 +62,7 @@ final class HealthUITests: XCTestCase {
         app.buttons["compose.health.sample-run"].tap()
         let heart = app.buttons["strip.averageHeartRate"]
         XCTAssertTrue(heart.waitForExistence(timeout: Self.wait), "the run has no 平均心率")
-        heart.tap()
+        tapClearOfTheFeedSwitch(heart, in: app)
         XCTAssertEqual(heart.value as? String, "不发", "tapping didn't strike 平均心率 out")
         XCTAssertTrue(chart.waitForNonExistence(timeout: Self.wait), "the run's heart rate stayed when struck")
         XCTAssertTrue(map.exists, "striking 平均心率 took the run's map off")
@@ -92,7 +92,7 @@ final class HealthUITests: XCTestCase {
     /// 时长 is struck like any other number (Tracy, 2026-11-08).
     private func strikeTheDuration(in app: XCUIApplication) {
         let duration = app.buttons["strip.duration"]
-        duration.tap()
+        tapClearOfTheFeedSwitch(duration, in: app)
         XCTAssertEqual(duration.value as? String, "不发", "tapping didn't strike 时长 out")
     }
 
@@ -186,6 +186,18 @@ final class HealthUITests: XCTestCase {
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
         return app
+    }
+
+    /// 发布到动态 floats over the compose page's foot, so a 成绩条 cell low on the page can sit
+    /// under it (the ticket's 添加位置 row made the page taller): scroll the cell clear of it first.
+    private func tapClearOfTheFeedSwitch(_ element: XCUIElement, in app: XCUIApplication) {
+        let floating = app.descendants(matching: .any)["compose.inFeed"].firstMatch
+        var swipes = 0
+        while floating.exists, element.frame.maxY > floating.frame.minY - 12, swipes < 4 {
+            app.scrollViews.firstMatch.swipeUp(velocity: .slow)
+            swipes += 1
+        }
+        element.tap()
     }
 
     /// Fully inside the window.
