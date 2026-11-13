@@ -76,6 +76,8 @@ public actor DeviceOutbox: Outbox {
         let photos: [StoredPhoto]
         /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
         let workout: Workout?
+        /// The squadmates a 训练 was done with (一起练); missing on the rest and on posts kept before it.
+        let trainedWith: [MemberID]?
         /// The place tagged on a 训练 or a meal; missing on the rest and on posts kept before it.
         let place: StoredPlace?
         /// A meal's 健康 and 好吃; missing on the rest and on posts kept before it.
@@ -90,6 +92,7 @@ public actor DeviceOutbox: Outbox {
             audience = post.audience.squads
             inFeed = post.inFeed
             photos = Self.photos(of: post)
+            trainedWith = Self.mates(of: post)
             var sport: String?
             var customSport: String?
             var minutes: Int?
@@ -133,6 +136,12 @@ public actor DeviceOutbox: Outbox {
             )
         }
 
+        /// Whom a 训练 names, nil when it names no one.
+        private static func mates(of post: PendingCheckIn) -> [MemberID]? {
+            guard case .trained(_, _, let body) = post.draft, !body.trainedWith.isEmpty else { return nil }
+            return body.trainedWith.members
+        }
+
         private static func photos(of post: PendingCheckIn) -> [StoredPhoto] {
             post.draft.photos.map {
                 StoredPhoto(
@@ -158,7 +167,8 @@ public actor DeviceOutbox: Outbox {
             let body = PostBody(
                 photos: prepared, caption: caption ?? "", workout: trained ? workout : nil,
                 startTime: trained ? start : nil, place: place.flatMap(\.place),
-                rating: trained ? nil : rating.flatMap(\.rating))
+                rating: trained ? nil : rating.flatMap(\.rating),
+                trainedWith: trained ? ((try? TrainedWith(trainedWith ?? [])) ?? .none) : .none)
             let draft: CheckInDraft
             switch kind {
             case "trained":

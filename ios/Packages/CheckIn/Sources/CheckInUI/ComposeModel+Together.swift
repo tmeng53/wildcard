@@ -1,0 +1,59 @@
+#if os(iOS)
+import CheckInDomain
+import Contracts
+
+/// 一起练 on the compose page: the squadmates a 训练 was done with, and the hints that pick them.
+extension ComposeModel {
+    /// Whether the post is in the squad's 动态, so 一起练 can name anyone in it: a new post while
+    /// 发布到动态 is on, an edit of one posted there. One only recorded names no one, since the
+    /// squadmates named couldn't see it.
+    var goesToFeed: Bool {
+        switch purpose {
+        case .new(let squad): squad != nil && inFeed
+        case .edit(let checkIn): checkIn.inFeed
+        }
+    }
+
+    /// What 一起练 offers now: the squadmates and those who trained around the same time. None for
+    /// a check-in only recorded or other than a 训练, so the row hides.
+    var together: TrainingTogether {
+        guard kind == .trained, goesToFeed else { return .none }
+        return offer(day, workout, workout == nil ? startTime : nil)
+    }
+
+    /// The squadmates picked who are still in the squad, once it is known: one who left isn't
+    /// on the row to be let go, so a new post doesn't name them (the API would refuse it). An edit
+    /// keeps whom the post named already, as the API does, since nothing here can let them go.
+    var pickedMates: [MemberID] {
+        let mates = Set(together.mates.map(\.member)).union(namedBefore)
+        return mates.isEmpty ? trainedWith : trainedWith.filter(mates.contains)
+    }
+
+    /// Whom the post being edited named when saved; none for a new one.
+    private var namedBefore: [MemberID] {
+        guard case .edit(let checkIn) = purpose, case .trained(let training) = checkIn.entry else { return [] }
+        return training.trainedWith.members
+    }
+
+    /// Names a squadmate on the 训练, or lets them go again; at most `TrainedWith.limit`.
+    func toggle(mate: MemberID) {
+        if let index = trainedWith.firstIndex(of: mate) {
+            trainedWith.remove(at: index)
+        } else if pickedMates.count < TrainedWith.limit {
+            trainedWith.append(mate)
+        }
+    }
+
+    /// Takes a hint at a tap: names its squadmate, and when they named the member, starts the 训练
+    /// from theirs (sport, start and minutes) unless a Health workout is picked, whose own numbers
+    /// stay. Tapping it again lets the squadmate go; the 训练's fields stay.
+    func take(_ hint: TrainingTogether.Hint) {
+        let picking = !trainedWith.contains(hint.mate)
+        toggle(mate: hint.mate)
+        guard picking, trainedWith.contains(hint.mate), hint.namedMe, workout == nil, !isEditing else { return }
+        activity = hint.activity
+        startTime = hint.startTime
+        minutes = hint.minutes
+    }
+}
+#endif
