@@ -83,6 +83,11 @@ public final class MeModel {
         overview?.coachPushOn ?? false
     }
 
+    /// The push that tells the member a squadmate just trained (队友练完提醒).
+    public var teammatePushOn: Bool {
+        overview?.teammatePushOn ?? false
+    }
+
     /// Flips the daily push and saves it; flips back if saving fails.
     public func setDailyPush(_ isOn: Bool) async {
         await flip(\.dailyPushOn, to: isOn) { isOn throws(MeError) in try await service.setDailyPush(isOn) }
@@ -91,6 +96,11 @@ public final class MeModel {
     /// Flips the coach's pushes and saves it; flips back if saving fails.
     public func setCoachPush(_ isOn: Bool) async {
         await flip(\.coachPushOn, to: isOn) { isOn throws(MeError) in try await service.setCoachPush(isOn) }
+    }
+
+    /// Flips the push for a squadmate's 训练 and saves it; flips back if saving fails.
+    public func setTeammatePush(_ isOn: Bool) async {
+        await flip(\.teammatePushOn, to: isOn) { isOn throws(MeError) in try await service.setTeammatePush(isOn) }
     }
 
     /// Shows a push switch flipped at once and saves it; flips it back if saving fails.

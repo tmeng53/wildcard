@@ -22,8 +22,8 @@ export const TRAINED_WITH_PUSH_SINCE = 3;
 
 /**
  * Tells each squadmate a 训练 names it was done with (一起练), once a post: in their 通知, and by
- * one push unless they turned off push (the `dailyProgress` switch, which covers teammates'
- * pushes). A tap opens their own 训练 to post, filled from this one; the tag never counts for
+ * one push unless they turned off 通知 (the `dailyProgress` switch; the teammate push's own switch
+ * is for a 训练 that doesn't name them). A tap opens their own 训练 to post, filled from this one; the tag never counts for
  * them. It runs as the `trained-with-push` event's subscriber and waits for every push. The notice
  * is written once a member a post, before the push, and only those told now are pushed, so a post
  * delivered or edited twice pushes once; a push that fails after its notice is written is not

@@ -218,7 +218,7 @@ const CurrentStreaks = z
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
-  streaks: CurrentStreaks.optional(),
+  streaks: CurrentStreaks,
   trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),

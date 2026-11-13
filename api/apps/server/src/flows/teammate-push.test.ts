@@ -81,6 +81,7 @@ function world({
   record = run,
   sending = true,
   off = [],
+  dailyOff = [],
   rings = () => 'ring',
   named = true,
   posts = [],
@@ -88,12 +89,13 @@ function world({
   readonly record?: CheckInRecord | 'deleted';
   readonly sending?: boolean;
   readonly off?: readonly string[];
+  readonly dailyOff?: readonly string[];
   readonly rings?: (member: string) => TeammatePushRing | undefined;
   readonly named?: boolean;
   readonly posts?: readonly SquadPost[];
 } = {}) {
   const sent: { readonly member: string; readonly notification: PushNotification }[] = [];
-  const settings: PushSettings = { dailyProgress: true, coach: true };
+  const settings: PushSettings = { dailyProgress: true, coach: true, teammate: true };
   const deps: TeammatePushDependencies = {
     checkIns: {
       current: () => Promise.resolve(record === 'deleted' ? undefined : record),
@@ -109,7 +111,11 @@ function world({
     push: {
       teammateSettings: () => Promise.resolve({ version: 1, sending, dailyRings: 5 }),
       settingsOf: (member) =>
-        Promise.resolve({ ...settings, dailyProgress: !off.includes(member) }),
+        Promise.resolve({
+          ...settings,
+          teammate: !off.includes(member),
+          dailyProgress: !dailyOff.includes(member),
+        }),
       claimTeammate: ({ member }) => Promise.resolve(rings(member)),
       notifyMembers: ({ members, notification }) => {
         sent.push(...members.map((member) => ({ member, notification })));
@@ -197,8 +203,8 @@ describe('a 训练 just posted', () => {
     expect(Object.keys(alerts(sent))).toStrictEqual([bo]);
   });
 
-  it('skips a member who turned 通知 off', async () => {
-    const { deps, sent } = world({ off: [ann] });
+  it('skips a member who turned its own switch off, and still tells one who turned only 通知 off', async () => {
+    const { deps, sent } = world({ off: [ann], dailyOff: [bo] });
     await notifyTeammates(deps, event);
     expect(sent.map(({ member }) => member)).toStrictEqual([bo]);
   });

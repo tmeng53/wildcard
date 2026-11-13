@@ -15,6 +15,8 @@ public protocol MeService: Sendable {
     func setDailyPush(_ isOn: Bool) async throws(MeError)
     /// Turns the coach's pushes (教练消息) on or off; 通知 keeps what it says either way.
     func setCoachPush(_ isOn: Bool) async throws(MeError)
+    /// Turns the push for a squadmate's 训练 (队友练完提醒) on or off, apart from 通知.
+    func setTeammatePush(_ isOn: Bool) async throws(MeError)
     /// Wears one of the member's titles or team badges on their card (nil: the latest title won
     /// again); answers the board as it now stands.
     func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard

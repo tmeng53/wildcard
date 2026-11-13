@@ -34,7 +34,7 @@ function flow({ pushOff = new Set<string>() } = {}) {
     members: { squadmates: () => Promise.resolve(new Map([[MemberId.parse(author), profile]])) },
     push: {
       settingsOf: (member: string) =>
-        Promise.resolve({ dailyProgress: !pushOff.has(member), coach: true }),
+        Promise.resolve({ dailyProgress: !pushOff.has(member), coach: true, teammate: true }),
       notifyMembers: ({
         members,
         notification,
