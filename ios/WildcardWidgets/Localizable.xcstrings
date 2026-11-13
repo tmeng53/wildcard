@@ -65,18 +65,18 @@
         }
       }
     },
-    "选这个小组件显示什么": {
+    "显示内容": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pick what this widget shows"
+            "value": "What to show"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選這個小工具顯示什麼"
+            "value": "顯示內容"
           }
         }
       }

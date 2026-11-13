@@ -206,7 +206,7 @@ struct CoachDeckCard: View {
                 // taken up any more.
                 if stamped || shown.challenge?.isOpen == true {
                     ChallengeAnswers(
-                        deck: deck, card: shown, coachName: coach.name, stamped: $stamped, reason: $reason,
+                        deck: deck, card: shown, stamped: $stamped, reason: $reason,
                         typing: $typing, putAway: putAway)
                 } else if let challenge = shown.challenge, challenge.answer == nil, challenge.isExpired {
                     Text(copy: "已过期", bundle: .module)

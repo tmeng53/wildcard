@@ -6,7 +6,7 @@ import Foundation
 
 /// A place's numbers counted on the phone from the squad's 动态, for the in-memory sample squad
 /// and UI tests, which have no server to count them: the posts of the last `weeks` weeks tagged
-/// there, by the server's rules (no scores, which only the server keeps). Those rules live in
+/// there, by the server's rules (places have no scores). Those rules live in
 /// `api/apps/server/src/flows/squad-places.ts` (`byPlace`, `summaryOf`, `detailOf`): a change
 /// there changes this too.
 public struct FeedPlaceSource: PlaceSource {
@@ -56,7 +56,7 @@ public struct FeedPlaceSource: PlaceSource {
             return visit
         }
         return PlaceDetail(
-            place: place, visits: tagged.count, people: Set(tagged.map(\.member)).count, stars: nil,
+            place: place, visits: tagged.count, people: Set(tagged.map(\.member)).count,
             sports: sports.map { SportCount($0.key, count: $0.value) }
                 .sorted { ($0.count, $1.activity.sortKey) > ($1.count, $0.activity.sortKey) },
             meals: meals, posts: visits)
@@ -64,7 +64,7 @@ public struct FeedPlaceSource: PlaceSource {
 }
 
 extension PlaceVisit {
-    /// A post's tile, without a score: only the server keeps those.
+    /// A post's tile.
     init(_ checkIn: CheckIn) {
         let (id, author, day) = (checkIn.id, checkIn.member, checkIn.day)
         switch checkIn.entry {

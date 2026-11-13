@@ -1,6 +1,6 @@
 -- A frozen 每周战报 is never changed: only a deleted account or squad takes its rows.
 begin;
-select plan(10);
+select plan(12);
 
 insert into auth.users (id, email) values
   ('e0000000-0000-0000-0000-000000000001', 'gus@example.com'),
@@ -22,6 +22,29 @@ insert into public.week_story_posts (squad_id, week_start, member_id, role, chec
   ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000002',
    'bestDisclaimer', 'e1111111-1111-1111-1111-111111111111',
    '{"version":1,"bestDisclaimer":{"checkIn":"e1111111-1111-1111-1111-111111111111","text":"今天进的是被窝","reactions":2}}');
+
+-- 小队菜单: a member may have several meals on it, each its own row, each gone with its post.
+insert into public.check_ins (id, member_id, day, created_at, kind, payload) values
+  ('e2222222-2222-2222-2222-222222222222', 'e0000000-0000-0000-0000-000000000001', '2026-10-20',
+   '2026-10-20 12:00+00', 'healthyMeal', '{"version":1}'),
+  ('e3333333-3333-3333-3333-333333333333', 'e0000000-0000-0000-0000-000000000001', '2026-10-22',
+   '2026-10-22 12:00+00', 'cheatMeal', '{"version":1}');
+insert into public.week_story_posts (squad_id, week_start, member_id, role, check_in_id, post) values
+  ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000001',
+   'menu', 'e2222222-2222-2222-2222-222222222222', '{"version":1}'),
+  ('5e000000-0000-0000-0000-000000000001', '2026-10-19', 'e0000000-0000-0000-0000-000000000001',
+   'menu', 'e3333333-3333-3333-3333-333333333333', '{"version":1}');
+select is(
+  (select count(*)::int from public.week_story_posts where role = 'menu'), 2,
+  'a member keeps several meals on 小队菜单'
+);
+delete from public.check_ins where id in (
+  'e2222222-2222-2222-2222-222222222222', 'e3333333-3333-3333-3333-333333333333'
+);
+select is(
+  (select count(*)::int from public.week_story_posts where role = 'menu'), 0,
+  'deleting a meal takes it off 小队菜单'
+);
 
 select throws_ok(
   $$update public.week_story_posts set post = '{"version":1}'$$,
