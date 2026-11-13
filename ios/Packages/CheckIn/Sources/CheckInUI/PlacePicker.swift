@@ -131,18 +131,31 @@ final class PlaceSearch {
 }
 
 /// 添加位置: a short sheet with the map, its ticket pins, the search field and the places as rows.
-/// A tap on a row or a pin picks it.
+/// A tap on a row or a pin only selects it (Tracy, 2026-11-13: she couldn't tell which pin a row
+/// was): the map moves to it, its pin turns graphite under its name, its row darkens and the list
+/// scrolls to it. 添加 in the header picks the selected place.
 struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var search = PlaceSearch()
     @State private var query = ""
     @State private var camera: MapCameraPosition = .userLocation(fallback: .automatic)
-    @State private var picks = 0
-    let current: Place?
+    /// How far the map's camera is from the ground now, so moving to a place keeps the zoom.
+    @State private var cameraDistance: Double?
+    @State private var selected: FoundPlace?
+    @State private var selections = 0
     let pick: (Place) -> Void
     let cancel: () -> Void
 
+    init(current: Place?, pick: @escaping (Place) -> Void, cancel: @escaping () -> Void) {
+        self.pick = pick
+        self.cancel = cancel
+        _selected = State(initialValue: current.map { FoundPlace(place: $0, address: nil, distance: nil) })
+    }
+
     private static let mapHeight: Double = 220
+    /// The farthest the map stays when it moves to a selected place, so its pin stands apart.
+    private static let closeUp: Double = 3000
 
     var body: some View {
         VStack(spacing: 0) {
@@ -150,6 +163,12 @@ struct PlacePickerSheet: View {
                 HeaderTextButton(Text(copy: "取消", bundle: .module), action: cancel)
                     .accessibilityIdentifier("place.cancel")
                 Spacer()
+                HeaderTextButton(Text(copy: "添加", bundle: .module), prominent: true) {
+                    if let selected { pick(selected.place) }
+                }
+                .disabled(selected == nil)
+                .accentTone(.ink)
+                .accessibilityIdentifier("place.add")
             }
             .overlay {
                 Text(copy: "添加位置", bundle: .module)
@@ -159,24 +178,29 @@ struct PlacePickerSheet: View {
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.xs)
-            map
-            SearchField(text: $query, prompt: Text(copy: "搜索地点", bundle: .module))
-                .padding(.horizontal, Space.pageMargin)
-                .padding(.vertical, Space.s)
-                .accessibilityIdentifier("place.search")
-            List(search.found) { found in
-                Button {
-                    choose(found)
-                } label: {
-                    PlaceRow(found: found, isCurrent: isCurrent(found))
+            ScrollViewReader { list in
+                VStack(spacing: 0) {
+                    map(list)
+                    SearchField(text: $query, prompt: Text(copy: "搜索地点", bundle: .module))
+                        .padding(.horizontal, Space.pageMargin)
+                        .padding(.vertical, Space.s)
+                        .accessibilityIdentifier("place.search")
+                    List(search.found) { found in
+                        Button {
+                            select(found, list: nil)
+                        } label: {
+                            PlaceRow(found: found, isSelected: isSelected(found))
+                        }
+                        .listRowBackground(Color(role: isSelected(found) ? .bgSubtle : .bgCanvas, in: theme))
+                        .accessibilityIdentifier("place.row")
+                    }
+                    .listStyle(.plain)
+                    .scrollDismissesKeyboard(.immediately)
                 }
-                .listRowBackground(Color(role: .bgCanvas, in: theme))
             }
-            .listStyle(.plain)
-            .scrollDismissesKeyboard(.immediately)
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
-        .haptic(.pick, trigger: picks)
+        .haptic(.pick, trigger: selections)
         .task { await search.lookAround() }
         .task(id: query) {
             try? await Task.sleep(for: .milliseconds(300))
@@ -190,30 +214,69 @@ struct PlacePickerSheet: View {
         }
     }
 
-    private var map: some View {
+    private func map(_ list: ScrollViewProxy) -> some View {
         Map(position: $camera) {
             UserAnnotation()
-            ForEach(search.found) { found in
+            ForEach(pins) { found in
                 Annotation(found.place.name, coordinate: found.coordinate, anchor: .bottom) {
-                    TicketPin(symbol: found.place.kind.symbol, isPicked: isCurrent(found))
-                        .onTapGesture { choose(found) }
+                    VStack(spacing: Space.xxs) {
+                        if isSelected(found) { PinName(name: found.place.name) }
+                        TicketPin(symbol: found.place.kind.symbol, isPicked: isSelected(found))
+                    }
+                    .onTapGesture { select(found, list: list) }
                 }
                 .annotationTitles(.hidden)
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .onMapCameraChange { context in cameraDistance = context.camera.distance }
         .frame(height: Self.mapHeight)
     }
 
-    private func isCurrent(_ found: FoundPlace) -> Bool {
-        guard let current else { return false }
-        if let id = current.appleID { return id == found.place.appleID }
-        return current == found.place
+    /// The found places, the selected one last so it draws over its neighbours, and kept on the
+    /// map when a new search no longer finds it.
+    private var pins: [FoundPlace] {
+        guard let selected else { return search.found }
+        return search.found.filter { $0.id != selected.id } + [selected]
     }
 
-    private func choose(_ found: FoundPlace) {
-        picks += 1
-        pick(found.place)
+    private func isSelected(_ found: FoundPlace) -> Bool {
+        guard let selected else { return false }
+        if let id = selected.place.appleID { return id == found.place.appleID }
+        return selected.place == found.place
+    }
+
+    /// Selects a place: the map moves to it at the zoom it has (no farther than `closeUp`), and a
+    /// pin's tap scrolls the list to its row. The tap itself puts the keyboard away (the app's
+    /// `dismissesKeyboardOnTapOutside`).
+    private func select(_ found: FoundPlace, list: ScrollViewProxy?) {
+        if !isSelected(found) { selections += 1 }
+        // A row's details (address, distance) win over the bare place a post came in with.
+        selected = search.found.first { $0.id == found.id } ?? found
+        let distance = min(cameraDistance ?? Self.closeUp, Self.closeUp)
+        withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+            camera = .camera(MapCamera(centerCoordinate: found.coordinate, distance: distance))
+            if let list, search.found.contains(where: { $0.id == found.id }) {
+                list.scrollTo(found.id, anchor: .top)
+            }
+        }
+    }
+}
+
+/// The selected pin's name over it, in graphite like the pin.
+private struct PinName: View {
+    @Environment(\.sceneTheme) private var theme
+    let name: String
+
+    var body: some View {
+        Text(verbatim: name)
+            .typeStyle(TypeRamp.footnoteEmphasis)
+            .foregroundStyle(Color(role: .bgCanvas, in: theme))
+            .lineLimit(1)
+            .padding(.horizontal, Space.s)
+            .padding(.vertical, Space.xxs)
+            .background(Color(role: .fgDefault, in: theme), in: Capsule())
+            .accessibilityHidden(true)
     }
 }
 
@@ -221,7 +284,7 @@ struct PlacePickerSheet: View {
 private struct PlaceRow: View {
     @Environment(\.sceneTheme) private var theme
     let found: FoundPlace
-    let isCurrent: Bool
+    let isSelected: Bool
 
     private static let disc: Double = 36
 
@@ -229,9 +292,9 @@ private struct PlaceRow: View {
         HStack(spacing: Space.s) {
             Image(systemName: found.place.kind.symbol)
                 .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                .foregroundStyle(Color(role: isCurrent ? .bgCanvas : .fgDefault, in: theme))
+                .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgDefault, in: theme))
                 .frame(width: Self.disc, height: Self.disc)
-                .background(Color(role: isCurrent ? .fgDefault : .bgSubtle, in: theme), in: Circle())
+                .background(Color(role: isSelected ? .fgDefault : .bgSubtle, in: theme), in: Circle())
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 Text(verbatim: found.place.name)
@@ -255,7 +318,7 @@ private struct PlaceRow: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isCurrent ? .isSelected : [])
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     static func distance(_ metres: Double) -> String {
