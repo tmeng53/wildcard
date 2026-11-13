@@ -6,7 +6,8 @@ import {
   type Place,
   type SportKey,
 } from '@wildcard/check-ins';
-import { appleKey, squadKey, type PlaceKey, type Stars } from '@wildcard/places';
+import { placeKey } from '@wildcard/place-ids';
+import type { PlaceKey, Stars } from '@wildcard/places';
 
 // A squad's places (地点页, 小队地图), worked out from the posts in its 动态 tagged with one and
 // its members' scores (Tracy, 2026-11-12): nothing about a place is kept apart from them.
@@ -55,8 +56,7 @@ export interface PlaceDetail extends PlaceSummary {
  */
 export function keyOf(record: CheckInRecord): PlaceKey | undefined {
   const place = placeOf(record);
-  if (place?.squadPlaceId !== undefined) return squadKey(place.squadPlaceId);
-  return place?.appleId === undefined ? undefined : appleKey(place.appleId);
+  return place === undefined ? undefined : placeKey(place);
 }
 
 /** The posts by place, each place's newest first, places in the order their newest came. */

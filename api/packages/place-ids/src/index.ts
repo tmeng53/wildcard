@@ -62,9 +62,18 @@ export const PlaceKey = z
   });
 export type PlaceKey = z.infer<typeof PlaceKey>;
 
-/** The key of `place`, or none when Maps gave it no identifier it can be found by again. */
+/**
+ * The key of `place`: its squad's place first, else Maps' identifier; none when Maps gave it no
+ * identifier it can be found by again.
+ */
 export function placeKey(place: Place): PlaceKey | undefined {
-  if (place.appleId === undefined) return undefined;
-  const key = PlaceKey.safeParse(`apple:${place.appleId}`);
+  const raw =
+    place.squadPlaceId !== undefined
+      ? `squad:${place.squadPlaceId.toLowerCase()}`
+      : place.appleId === undefined
+        ? undefined
+        : `apple:${place.appleId}`;
+  if (raw === undefined) return undefined;
+  const key = PlaceKey.safeParse(raw);
   return key.success ? key.data : undefined;
 }

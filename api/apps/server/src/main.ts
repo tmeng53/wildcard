@@ -394,6 +394,8 @@ const checkIns = createCheckIns({
   membership: squads,
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
+  // Which places a squad's members added is the places module's to keep: check-ins ask it.
+  squadPlaceOf: (input) => squadPlaces.isPlaceOf(input),
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   coachSpoke: ({ checkIn, squads: through, coach }) =>

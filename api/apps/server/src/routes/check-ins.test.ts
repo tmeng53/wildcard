@@ -56,6 +56,7 @@ const photos = createSupabasePhotoStorage({
 });
 /** The check-ins the coaches were asked to look at, as the route asks. */
 const looked: { readonly checkIn: string; readonly squads: readonly string[] }[] = [];
+const places = placesOn(db);
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -69,6 +70,7 @@ const app = createApp({
   photos,
   checkIns: createCheckIns({
     sports: createSports({ store: createPostgresSportStore(db) }),
+    squadPlaceOf: (input) => places.squadPlaces.isPlaceOf(input),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
       store: createPostgresSquadStore(db),
@@ -109,7 +111,7 @@ const app = createApp({
   ...unusedFeedback,
   aiConsent: aiConsentOn(db),
   nudges: nudgesOn(db),
-  ...placesOn(db),
+  ...places,
   savedPlaces: savedPlacesOn(db),
   weather: weatherOn(db),
   log: createLog(() => undefined),
@@ -2208,5 +2210,75 @@ describe('a squad’s own places', () => {
         .object({ key: z.string(), visits: z.number(), stars: z.number().nullable() })
         .parse(page.body),
     ).toStrictEqual({ key, visits: 1, stars: 4 });
+  });
+
+  it('refuses a post tagged with a place its squads don’t have', async () => {
+    const [me, outsider] = [await signUp(), await signUp()];
+    const squad = await squadOf(me);
+    const theirs = await squadOf(outsider);
+    const elsewhere = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/squads/${theirs}/custom-places/${elsewhere}`,
+          token: outsider.token,
+          body: { version: 1, name: '别人家', kind: 'gym', latitude: 1, longitude: 2 },
+        })
+      ).status,
+    ).toBe(201);
+    const { day, createdAt } = todayAndNow();
+    const tagged = (squadPlaceId: string) => ({
+      sport: 'run',
+      place: { name: '别人家', squadPlaceId, latitude: 1, longitude: 2 },
+    });
+    const post = (id: string, squadPlaceId: string) =>
+      call({
+        method: 'PUT',
+        path: `/check-ins/${id}`,
+        token: me.token,
+        body: {
+          version: 1,
+          day,
+          createdAt,
+          audience: [squad],
+          kind: 'trained',
+          training: tagged(squadPlaceId),
+        },
+      });
+    for (const squadPlaceId of [elsewhere, randomUUID()]) {
+      const refused = await post(randomUUID(), squadPlaceId);
+      expect([refused.status, refused.body]).toMatchObject([
+        400,
+        { reason: 'SQUAD_PLACE_NOT_FOUND' },
+      ]);
+    }
+
+    // Nor can an edit move a post there.
+    const id = randomUUID();
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: `/check-ins/${id}`,
+          token: me.token,
+          body: {
+            version: 1,
+            day,
+            createdAt,
+            audience: [squad],
+            kind: 'trained',
+            training: { sport: 'run' },
+          },
+        })
+      ).status,
+    ).toBe(201);
+    const edited = await call({
+      method: 'PATCH',
+      path: `/check-ins/${id}`,
+      token: me.token,
+      body: { version: 1, kind: 'trained', training: tagged(elsewhere) },
+    });
+    expect([edited.status, edited.body]).toMatchObject([400, { reason: 'SQUAD_PLACE_NOT_FOUND' }]);
   });
 });

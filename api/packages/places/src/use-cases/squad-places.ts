@@ -1,5 +1,10 @@
 import type { MemberId } from '../domain/place-rating.js';
-import type { SquadId, SquadPlace, SquadPlaceId, SquadPlaceKind } from '../domain/squad-place.js';
+import {
+  SquadPlaceId,
+  type SquadId,
+  type SquadPlace,
+  type SquadPlaceKind,
+} from '../domain/squad-place.js';
 import { SquadNotJoinedError, SquadPlaceIdConflictError } from '../errors.js';
 import type { Clock, SquadMembership, SquadPlaceStore } from '../ports.js';
 
@@ -21,6 +26,11 @@ export interface SquadPlaces {
   }): Promise<{ readonly place: SquadPlace; readonly created: boolean }>;
   /** Every place the squad's members added, the earliest first, for a member of it. */
   list(input: { readonly squad: SquadId; readonly viewer: MemberId }): Promise<SquadPlace[]>;
+  /** Whether `place` is a place of one of these squads, so a post to them may be tagged with it. */
+  isPlaceOf(input: {
+    readonly place: string;
+    readonly squads: readonly string[];
+  }): Promise<boolean>;
 }
 
 const sameContents = (a: SquadPlace, b: Omit<SquadPlace, 'addedBy' | 'addedAt'>) =>
@@ -54,6 +64,12 @@ export function createSquadPlaces(deps: {
     async list({ squad, viewer }) {
       await joined(viewer, squad);
       return deps.store.listForSquad(squad);
+    },
+    async isPlaceOf({ place, squads }) {
+      const id = SquadPlaceId.safeParse(place.toLowerCase());
+      if (!id.success) return false;
+      const saved = await deps.store.find(id.data);
+      return saved !== undefined && squads.some((squad) => squad.toLowerCase() === saved.squad);
     },
   };
 }

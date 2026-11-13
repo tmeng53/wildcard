@@ -9,14 +9,7 @@ export {
   createPostgresSquadPlaceStore,
   type SquadPlaceTables,
 } from './adapters/postgres-squad-place-store.js';
-export {
-  MemberId,
-  PlaceKey,
-  Stars,
-  appleKey,
-  squadKey,
-  type PlaceRating,
-} from './domain/place-rating.js';
+export { MemberId, PlaceKey, Stars, type PlaceRating } from './domain/place-rating.js';
 export {
   SquadId,
   SquadPlaceFields,
