@@ -128,19 +128,27 @@ describe('currentStreaks', () => {
     });
   });
 
-  it('counts any meal, keeps going while today has none, and only shared posts for a squad', async () => {
+  it('runs through a 坦白放纵餐 without counting it, keeps going while today has none, and only shared posts for a squad', async () => {
     const member = await newMember();
     const squad = await newSquad(member);
     await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-06', audience: [squad] });
+    // A 坦白放纵餐 bridges the run like a 请假条: no break, no day added.
     await checkedIn(member, { kind: 'cheatMeal', day: '2026-11-07', audience: [squad] });
     // 仅自己可见: only the member's own view counts it.
     await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-08' });
     // Today (11-09 in New York) has none yet: the run still stands.
     expect(await checkIns.currentStreaks({ member })).toStrictEqual({
-      meals: { days: 3, from: '2026-11-06', to: '2026-11-08' },
+      meals: { days: 2, from: '2026-11-06', to: '2026-11-08' },
     });
     // As squadmates see it, 11-08 had nothing, so the run broke.
     expect(await checkIns.currentStreaks({ member, squad })).toStrictEqual({});
+  });
+
+  it('counts no meal streak from 坦白放纵餐 alone', async () => {
+    const member = await newMember();
+    await checkedIn(member, { kind: 'cheatMeal', day: '2026-11-07' });
+    await checkedIn(member, { kind: 'cheatMeal', day: '2026-11-08' });
+    expect(await checkIns.currentStreaks({ member })).toStrictEqual({});
   });
 
   it('runs both streaks through a 请假条 day without counting it', async () => {
