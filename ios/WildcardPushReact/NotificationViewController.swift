@@ -14,7 +14,8 @@ import UserNotificationsUI
 
 /// The 6pm push, long-pressed: today's check-ins to react to, drawn by `DailyPushView` from the
 /// push itself and the squad's looks the app kept. Nothing loads when it opens; reacting is the
-/// only call it makes, signed in with the app's shared session.
+/// only call it makes, signed in with the app's shared session. The captain's push about a request
+/// to join opens `JoinRequestPushView`, whose 拒绝 and 同意 answer it the same way.
 final class NotificationViewController: UIViewController, UNNotificationContentExtension {
     private var hosting: UIHostingController<AnyView>?
 
@@ -23,6 +24,11 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         AppLanguage.adopt(from: AppGroup.defaults, folder: AppGroup.directory)
         if let copy = SharedCopy.inAppGroup?.read() { AppCopyLines.install(copy) }
         let content = notification.request.content
+        if let event = Self.event(content.userInfo), let push = try? JoinRequestPush(event: event) {
+            let answer = JoinRequestAnswer(push: push, answerer: Self.answerer())
+            show(AnyView(JoinRequestPushView(model: JoinRequestPushModel(answer: answer, arrived: notification.date))))
+            return
+        }
         guard let event = Self.event(content.userInfo), let push = try? DailyPush(event: event) else {
             // A push this build can't read: its words, as the banner shows them.
             show(AnyView(PlainPush(title: content.title, text: content.body)))
@@ -81,19 +87,36 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
     /// Reacting through our API, as the member signed in on the app, and only while that is the
     /// member the push is for. A build that names no backend (Debug) can't send.
     private static func sender(for member: MemberID) -> any ReactionSender {
-        guard let address = BackendAddress(info: Bundle.main.infoDictionary ?? [:]) else { return Unsent() }
+        guard let api = api(for: member) else { return Unsent() }
+        return APIReactionSender(api: api)
+    }
+
+    /// Answering a request to join through our API, as the captain signed in on the app. The push
+    /// doesn't name the captain, so the API checks the session is theirs.
+    private static func answerer() -> any JoinRequestAnswerer {
+        guard let api = api(for: nil) else { return Unsent() }
+        return APIJoinRequestAnswerer(api: api)
+    }
+
+    /// Our API as the member signed in on the app, only while that is `member` when one is named;
+    /// nil in a build that names no backend (Debug).
+    private static func api(for member: MemberID?) -> WildcardAPI? {
+        guard let address = BackendAddress(info: Bundle.main.infoDictionary ?? [:]) else { return nil }
         let account = AccountSession(
             provider: SupabaseAuth(url: address.authURL, publishableKey: address.authPublishableKey),
             store: KeychainSessionStore(accessGroup: AppGroup.id), now: { Date() })
-        return APIReactionSender(
-            api: WildcardAPI(
-                url: address.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue }))
+        return WildcardAPI(
+            url: address.apiURL, account: account, member: member, language: { AppLanguage.current.rawValue })
     }
 }
 
-/// No backend to send to: every reaction is put back.
-private struct Unsent: ReactionSender {
+/// No backend to send to: every reaction is put back and every answer fails.
+private struct Unsent: ReactionSender, JoinRequestAnswerer {
     func setReaction(_ emoji: Emoji?, on checkIn: CheckInID) async throws(DailyPushError) {
+        throw .notSent
+    }
+
+    func answer(_ request: JoinRequestID, in squad: SquadID, approve: Bool) async throws(DailyPushError) {
         throw .notSent
     }
 }
