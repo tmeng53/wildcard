@@ -11,6 +11,21 @@ import MeDomain
 import SwiftUI
 
 /// Where 我's buttons lead outside this package. The app decides.
+/// 设置 › 管理员: what admins get there, and (for 演示账号) their demo accounts.
+public struct AdminTools {
+    /// 预览注册, for admins only: sign-up from the open screen on a sample squad, saving nothing.
+    public var previewSignUp: (() -> Void)?
+    /// 演示账号, for admins and their demo accounts (Tracy, 2026-11-13).
+    public var demoAccounts: DemoAccountsModel?
+
+    public init(previewSignUp: (() -> Void)? = nil, demoAccounts: DemoAccountsModel? = nil) {
+        (self.previewSignUp, self.demoAccounts) = (previewSignUp, demoAccounts)
+    }
+
+    /// Whether there is anything to show under 管理员.
+    var isEmpty: Bool { previewSignUp == nil && demoAccounts == nil }
+}
+
 public struct MeDestinations {
     public var editCharacter: () -> Void
     /// 出赛表, opened inside 我.
@@ -26,9 +41,8 @@ public struct MeDestinations {
     public var terms: URL
     /// The App Store's 撰写评论 sheet for the app, which 意见反馈's 写评价 opens.
     public var writeReview: URL
-    /// 预览注册, for admins only: sign-up from the open screen on a sample squad, saving nothing.
-    /// Nil for everyone else, and 设置 shows no row for it.
-    public var previewSignUp: (() -> Void)?
+    /// 设置 › 管理员's tools; none for everyone else, and 设置 shows no 管理员.
+    public var admin: AdminTools
     /// Apple Health, for 设置 › Apple 健康; nil where the phone has none.
     public var health: HealthConnection?
     /// The phone's approximate location for the coach's weather, for 设置 › 位置; nil shows no row.
@@ -43,11 +57,11 @@ public struct MeDestinations {
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
         street: @escaping () -> Void = {}, streetHasNews: Bool = false,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
-        previewSignUp: (() -> Void)? = nil, health: HealthConnection? = nil, location: LocationSharing? = nil,
+        admin: AdminTools = AdminTools(), health: HealthConnection? = nil, location: LocationSharing? = nil,
         widgetGuide: AnyView? = nil, badgeMarks: BadgeMarks? = nil
     ) {
         self.badgeMarks = badgeMarks
-        self.previewSignUp = previewSignUp
+        self.admin = admin
         self.widgetGuide = widgetGuide
         self.health = health
         self.location = location

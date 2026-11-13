@@ -646,6 +646,7 @@ const coachWakes =
         squadWeek: coachWeek,
         aiConsented: coachConsented,
         hiring: createPostgresCoachHiring(db),
+        letters: createPostgresCoachLetters(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
         timeZonesAt: squadZonesAt,
