@@ -3575,6 +3575,8 @@ extension Components {
             public var caption: Swift.String?
             /// - Remark: Generated from `#/components/schemas/MealView/place`.
             public var place: Components.Schemas.Place?
+            /// - Remark: Generated from `#/components/schemas/MealView/rating`.
+            public var rating: Components.Schemas.MealRating?
             /// 1 to 3 photos, the cover first. Missing when there are none.
             ///
             /// - Remark: Generated from `#/components/schemas/MealView/photos`.
@@ -3584,20 +3586,53 @@ extension Components {
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - place:
+            ///   - rating:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             public init(
                 caption: Swift.String? = nil,
                 place: Components.Schemas.Place? = nil,
+                rating: Components.Schemas.MealRating? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil
             ) {
                 self.caption = caption
                 self.place = place
+                self.rating = rating
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case place
+                case rating
                 case photos
+            }
+        }
+        /// The member's own rating of this meal: 健康 and 好吃, each 1 to 5. Its 卡价比 is tasty × healthy ÷ 5.
+        ///
+        /// - Remark: Generated from `#/components/schemas/MealRating`.
+        public struct MealRating: Codable, Hashable, Sendable {
+            /// 健康: how healthy the meal was, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MealRating/healthy`.
+            public var healthy: Swift.Int
+            /// 好吃: how good it tasted, 1 to 5.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MealRating/tasty`.
+            public var tasty: Swift.Int
+            /// Creates a new `MealRating`.
+            ///
+            /// - Parameters:
+            ///   - healthy: 健康: how healthy the meal was, 1 to 5.
+            ///   - tasty: 好吃: how good it tasted, 1 to 5.
+            public init(
+                healthy: Swift.Int,
+                tasty: Swift.Int
+            ) {
+                self.healthy = healthy
+                self.tasty = tasty
+            }
+            public enum CodingKeys: String, CodingKey {
+                case healthy
+                case tasty
             }
         }
         /// - Remark: Generated from `#/components/schemas/CheatMealCheckIn`.
@@ -4169,6 +4204,8 @@ extension Components {
             public var caption: Swift.String?
             /// - Remark: Generated from `#/components/schemas/Meal/place`.
             public var place: Components.Schemas.Place?
+            /// - Remark: Generated from `#/components/schemas/Meal/rating`.
+            public var rating: Components.Schemas.MealRating?
             /// 1 to 3 photos, the cover first. Leave it out for none.
             ///
             /// - Remark: Generated from `#/components/schemas/Meal/photos`.
@@ -4178,19 +4215,23 @@ extension Components {
             /// - Parameters:
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
             ///   - place:
+            ///   - rating:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             public init(
                 caption: Swift.String? = nil,
                 place: Components.Schemas.Place? = nil,
+                rating: Components.Schemas.MealRating? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil
             ) {
                 self.caption = caption
                 self.place = place
+                self.rating = rating
                 self.photos = photos
             }
             public enum CodingKeys: String, CodingKey {
                 case caption
                 case place
+                case rating
                 case photos
             }
         }
@@ -5721,7 +5762,7 @@ extension Components {
                 case settings
             }
         }
-        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach. Squadmates and the AI never see it.
+        /// The phone’s approximate location. The server keeps only its 0.1° cell (about 11 km), and only the latest, to look up the weather there for the squad’s coach, with the city the phone named there, if it could, which the coach is told with the weather. A location sent without a city forgets the one before. Squadmates never see either, and the AI never sees the location itself.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberLocation`.
         public struct MemberLocation: Codable, Hashable, Sendable {
@@ -5735,25 +5776,33 @@ extension Components {
             public var latitude: Swift.Double
             /// - Remark: Generated from `#/components/schemas/MemberLocation/longitude`.
             public var longitude: Swift.Double
+            /// The city the phone’s approximate location is in, as iOS names it in the app’s language.
+            ///
+            /// - Remark: Generated from `#/components/schemas/MemberLocation/city`.
+            public var city: Swift.String?
             /// Creates a new `MemberLocation`.
             ///
             /// - Parameters:
             ///   - version:
             ///   - latitude:
             ///   - longitude:
+            ///   - city: The city the phone’s approximate location is in, as iOS names it in the app’s language.
             public init(
                 version: Components.Schemas.MemberLocation.VersionPayload,
                 latitude: Swift.Double,
-                longitude: Swift.Double
+                longitude: Swift.Double,
+                city: Swift.String? = nil
             ) {
                 self.version = version
                 self.latitude = latitude
                 self.longitude = longitude
+                self.city = city
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case latitude
                 case longitude
+                case city
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadList`.

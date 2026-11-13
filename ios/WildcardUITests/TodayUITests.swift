@@ -340,7 +340,7 @@ extension TodayUITests {
         XCTAssertFalse(app.buttons["today.pat"].exists, "my own today offers 拍一拍")
         Thread.sleep(forTimeInterval: 0.6)
         keepScreenshot(named: "16c-today-tapped-me")
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: today, in: app)
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off my card left it open")
     }
 }

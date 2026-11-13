@@ -41,6 +41,7 @@ import type {
   CoachMemberFacts,
   CoachMemes,
   CoachWeather,
+  WeatherWords,
   CoachOccasions,
   CoachPhotoUrls,
   CoachSettingsStore,
@@ -652,6 +653,8 @@ async function think(
     ...(wake.reason.kind === 'daily' || wake.reason.kind === 'joined'
       ? {
           noteTo: await briefsOf(deps, {
+            // A member just joined: what they did before, since the coach knows nothing of them.
+            record: wake.reason.kind === 'joined',
             squad: wake.squad,
             week,
             roster,
@@ -875,7 +878,9 @@ async function briefsOf(
     roster,
     members,
     day,
+    record = false,
   }: {
+    readonly record?: boolean;
     readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
@@ -890,8 +895,8 @@ async function briefsOf(
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
     members.length === 0
-      ? new Map<string, string>()
-      : await deps.weatherOf({ members, day }).catch(() => new Map<string, string>());
+      ? new Map<string, WeatherWords>()
+      : await deps.weatherOf({ members, day }).catch(() => new Map<string, WeatherWords>());
   return members.flatMap((member): NoteBrief[] => {
     const name = roster.get(member);
     if (name === undefined) return [];
@@ -907,9 +912,19 @@ async function briefsOf(
         (a, b) => a.day.localeCompare(b.day) || a.createdAt.getTime() - b.createdAt.getTime(),
       )
       .map((each) => ({ day: each.day, what: postWhat(each) }));
+    const nickname = week.members.find((each) => each.member === member)?.nickname;
     return [
       {
         name,
+        ...(nickname === undefined ? {} : { nickname }),
+        ...(record && mine !== undefined
+          ? {
+              record: {
+                trainedDays: mine.trainedDays,
+                ...(mine.topSport === undefined ? {} : { topSport: mine.topSport }),
+              },
+            }
+          : {}),
         language: languageOf(week, member),
         trainedDays,
         posts,

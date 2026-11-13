@@ -1,16 +1,24 @@
 import type { DayWeather } from '../domain/day-weather.js';
-import { cellOf, type MemberId, type Place } from '../domain/place.js';
+import { cellOf, type MemberId, type MemberPlace, type Place } from '../domain/place.js';
 import type { Forecasts, PlaceStore, WeatherDayStore } from '../ports.js';
 
-/** A member's weather: today's, and yesterday's when the provider has it. */
+/** A member's weather: today's, yesterday's when the provider has it, and the city it is in. */
 export interface MemberWeather {
   readonly today: DayWeather;
   readonly yesterday?: DayWeather;
+  /** The city the member's phone named, when it could. */
+  readonly city?: string;
 }
 
 export interface Weather {
-  /** Keeps where the member roughly is, as its 0.1° cell, and answers that cell. */
-  savePlace(member: MemberId, coordinates: Place): Promise<Place>;
+  /**
+   * Keeps where the member roughly is, as its 0.1° cell, with the city their phone named there,
+   * and answers what it kept.
+   */
+  savePlace(
+    member: MemberId,
+    where: Place & { readonly city?: string | undefined },
+  ): Promise<MemberPlace>;
   /** Forgets where the member is. Safe to repeat. */
   forgetPlace(member: MemberId): Promise<void>;
   /**
@@ -33,10 +41,15 @@ export function createWeather(deps: {
   readonly failed?: (error: unknown, place: Place) => void;
 }): Weather {
   return {
-    async savePlace(member, coordinates) {
+    async savePlace(member, { city, ...coordinates }) {
       const place = cellOf(coordinates);
-      await deps.places.save({ member, place, at: deps.clock() });
-      return place;
+      await deps.places.save({
+        member,
+        place,
+        ...(city === undefined ? {} : { city }),
+        at: deps.clock(),
+      });
+      return city === undefined ? { place } : { place, city };
     },
 
     forgetPlace: (member) => deps.places.remove(member),
@@ -90,12 +103,15 @@ export function createWeather(deps: {
       };
       const answers = await Promise.all(
         members.map(async ({ member, timeZone }) => {
-          const place = places.get(member);
-          if (place === undefined) return undefined;
-          const { today, yesterday: before } = await weatherAt(place, timeZone);
+          const kept = places.get(member);
+          if (kept === undefined) return undefined;
+          const { today, yesterday: before } = await weatherAt(kept.place, timeZone);
           if (today === undefined) return undefined;
-          const weather: MemberWeather =
-            before === undefined ? { today } : { today, yesterday: before };
+          const weather: MemberWeather = {
+            today,
+            ...(before === undefined ? {} : { yesterday: before }),
+            ...(kept.city === undefined ? {} : { city: kept.city }),
+          };
           return [member, weather] as const;
         }),
       );

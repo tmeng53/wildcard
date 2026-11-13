@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import { editBody, FILE_LIMIT, storedPathOf, type StoredPath } from '../../domain/memory.js';
+import {
+  editBody,
+  FILE_LIMIT,
+  fileRole,
+  storedPathOf,
+  type StoredPath,
+} from '../../domain/memory.js';
 import {
   Challenge,
   CHALLENGE_AMOUNT_MAX,
@@ -12,7 +18,7 @@ import {
 import { GIFT_LINE_LIMIT, NOTE_LIMIT, type GiftOptions } from '../../domain/prompt.js';
 import { CoachEmoji, HALF_WIDTH, lineProblem, REPLY_LIMIT } from '../../domain/reply.js';
 import {
-  checkInLine,
+  checkInBlock,
   weekText,
   type SquadWeek,
   type WeekCheckIn,
@@ -247,7 +253,7 @@ export function toolbox({
         path: z
           .string()
           .describe(
-            '记到哪：people/队员N.md 记这个人，squad.md 记小队，memory.md 记你和大家之间的事，me.md 记你自己（只有你读得到）',
+            `记到哪：${['squad.md', 'memory.md', 'me.md', 'people/队员N.md'].map((path) => `${path}（${fileRole(path)}）`).join('，')}`,
           ),
         fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
       }),
@@ -547,13 +553,18 @@ function postTools(
         .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       if (posts.length === 0) return `${member} 这段时间没有能看的动态。`;
       return [
-        `${member} 的动态（新的在前）：`,
+        `# ${member} 的动态（新的在前）`,
         ...posts.map((post) => {
-          const comments =
-            post.comments.length === 0 ? '' : ` · ${String(post.comments.length)} 条评论`;
-          return `- ${numberOf(post)}：${checkInLine({ ...post, comments: [] }, roster)}${comments}`;
+          const block = checkInBlock(post, {
+            roster,
+            heading: `## ${numberOf(post)} · `,
+            comments: false,
+          });
+          return post.comments.length === 0
+            ? block
+            : `${block}\n- 评论：${String(post.comments.length)} 条（用 post_comments 看）`;
         }),
-      ].join('\n');
+      ].join('\n\n');
     },
   });
   if (commentsOf === undefined) return [memberPosts];

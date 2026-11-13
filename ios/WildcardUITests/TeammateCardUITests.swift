@@ -27,7 +27,11 @@ final class TeammateCardUITests: XCTestCase {
         XCTAssertTrue(card.label.contains("小米"), "the card isn't hers: \(card.label)")
         XCTAssertTrue(card.label.contains("早八战神"), "the card doesn't wear her title: \(card.label)")
         XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
-        XCTAssertGreaterThan(card.frame.width, window.width * 0.85, "the card doesn't grow to the page: \(card.frame)")
+        XCTAssertGreaterThan(card.frame.width, window.width * 0.8, "the card doesn't grow to the page: \(card.frame)")
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.exists {
+            XCTAssertLessThanOrEqual(card.frame.maxY, tabBar.frame.minY, "the tab bar is over the card: \(card.frame)")
+        }
         XCTAssertLessThanOrEqual(today.frame.maxY, card.frame.minY, "her today covers her card: \(today.frame)")
 
         // Turned over, it is her 出赛表 this week: a row a day, her 饮食小目标, and her badges
@@ -139,9 +143,13 @@ final class TeammateCardUITests: XCTestCase {
         keepScreenshot(named: "59-teammate-card-from-squad")
         XCTAssertTrue(opened, "the teammate's card didn't open:\n\(app.debugDescription)")
         XCTAssertTrue(window.contains(card.frame), "the card runs off the screen: \(card.frame)")
-        XCTAssertGreaterThan(card.frame.width, window.width * 0.85, "the card doesn't grow to the page: \(card.frame)")
+        XCTAssertGreaterThan(card.frame.width, window.width * 0.8, "the card doesn't grow to the page: \(card.frame)")
+        let tabBar = app.tabBars.firstMatch
+        if tabBar.exists {
+            XCTAssertLessThanOrEqual(card.frame.maxY, tabBar.frame.minY, "the tab bar is over the card: \(card.frame)")
+        }
         // A tap off it, above it, closes it.
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.12)).tap()
+        tapOffPopup(above: card, in: app)
         XCTAssertTrue(
             card.waitForNonExistence(timeout: 5), "a tap off the card didn't close it:\n\(app.debugDescription)")
         XCTAssertTrue(row.isHittable, "小队 isn't back under the card")

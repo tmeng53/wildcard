@@ -327,6 +327,15 @@ struct WildcardApp: App {
                 if let destination = delegate.takeDestination() {
                     Self.open(destination, today: today, tab: $tab)
                 }
+                if let link = LaunchOptions.widgetLink {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
+                }
+            }
+            // A home screen widget's tap, as `AppRoot` opens it on the real backend.
+            .onOpenURL { url in
+                if let link = WidgetLink(url: url) {
+                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
+                }
             }
             .task { await Self.moveSampleSquad(today: today) }
         }

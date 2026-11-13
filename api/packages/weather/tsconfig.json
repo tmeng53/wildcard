@@ -10,6 +10,9 @@
   "references": [
     {
       "path": "../time-zones"
+    },
+    {
+      "path": "../typed-text"
     }
   ]
 }
