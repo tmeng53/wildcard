@@ -10,7 +10,7 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
-import type { PlaceRatings } from '@wildcard/places';
+import type { PlaceRatings, SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -107,6 +107,7 @@ export interface AppDependencies {
   readonly placeRatings: PlaceRatings;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
+  readonly squadPlaces: SquadPlaces;
   /** 意见反馈: members' messages to us. */
   readonly feedback: FeedbackInbox;
   /** Where each message is filed; undefined until its token is set, and then they wait. */

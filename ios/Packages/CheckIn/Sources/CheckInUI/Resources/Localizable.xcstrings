@@ -2465,22 +2465,6 @@
         }
       }
     },
-    "移除位置": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Remove location"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移除位置"
-          }
-        }
-      }
-    },
     "在地图中打开": {
       "localizations": {
         "en": {
