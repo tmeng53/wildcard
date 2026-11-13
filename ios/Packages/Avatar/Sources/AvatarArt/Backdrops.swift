@@ -22,7 +22,7 @@ public struct Backdrops: Hashable, Sendable {
     public static let currentVersion = 1
 
     /// `{"version": 1, "backdrops": [{"id": "tennis", "color": "#DDE6CC"}]}`. An entry whose colour
-    /// isn't `#rrggbb` is refused, so a list that reads is a list that draws.
+    /// isn't `#rrggbb` (or `#rgb`) is refused, so a list that reads is a list that draws.
     public static func decode(_ data: Data) throws(AvatarError) -> Backdrops {
         let file: File = try decodeJSON(data, version: currentVersion, shape: File.shape)
         var entries: [Backdrop] = []
