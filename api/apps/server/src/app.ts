@@ -10,6 +10,7 @@ import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
+import type { PlaceRatings, SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -29,6 +30,7 @@ import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } fr
 import { inProcessEvents, type EventHandlers, type PublishEvent } from './events.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import { eventHandlers } from './flows/event-handlers.js';
+import type { TeammatePushDependencies } from './flows/teammate-push.js';
 import type { InteractionSource } from './flows/daily-progress-push.js';
 import type { SuggestGoal } from './flows/squad-goal-suggestion.js';
 import type { Log } from './log.js';
@@ -59,6 +61,7 @@ import { me } from './routes/me.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
+import { places } from './routes/places.js';
 import { savedPlaces } from './routes/saved-places.js';
 import { feedback } from './routes/feedback.js';
 import { photoUploads } from './routes/photo-uploads.js';
@@ -102,8 +105,11 @@ export interface AppDependencies {
   readonly coachActivity: CoachActivity;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
+  /** Members' scores for the places they train at (地点页). */
+  readonly placeRatings: PlaceRatings;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
+  readonly squadPlaces: SquadPlaces;
   /** 意见反馈: members' messages to us. */
   readonly feedback: FeedbackInbox;
   /** Where each message is filed; undefined until its token is set, and then they wait. */
@@ -140,6 +146,8 @@ export interface AppDependencies {
     /** Where the daily push finds what teammates did for a member. */
     readonly interactions: readonly InteractionSource[];
     readonly clock: () => Date;
+    /** Every listed sport's names by its id, which name a 训练's sport in the teammate push. */
+    readonly sportNames: TeammatePushDependencies['sportNames'];
     /** The AI coach's wakes; left out without an OpenAI key, and then the coach never wakes. */
     readonly coach?: CoachWakes;
     /** Keeps a higher squad goal suggested to a captain and its notice together. */
@@ -193,7 +201,11 @@ export function createApp(deps: AppDependencies) {
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
-  const handlers = eventHandlers({ coach: deps.jobs.coach, commentPush: deps });
+  const handlers = eventHandlers({
+    coach: deps.jobs.coach,
+    commentPush: deps,
+    teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
+  });
   const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
   app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));
@@ -226,6 +238,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));
   app.route('/', nudges(deps));
+  app.route('/', places(deps));
   app.route('/', savedPlaces(deps));
   app.route('/', feedback(deps));
   app.route('/', notices(deps));

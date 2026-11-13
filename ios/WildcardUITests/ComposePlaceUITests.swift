@@ -1,7 +1,8 @@
 import XCTest
 
-/// Tagging a place: 添加位置 on the compose ticket, the map sheet it opens, and the place's tag
-/// under its author on 动态. The sample squad has no location, so the sheet only searches.
+/// Tagging a place: 添加位置 on the compose ticket, the map sheet it opens, the place's tag under
+/// its author on 动态 and the place's page it opens. The sample squad has no location, so the
+/// sheet only searches.
 @MainActor
 final class ComposePlaceUITests: XCTestCase {
     private static let wait: TimeInterval = 30
@@ -43,8 +44,47 @@ final class ComposePlaceUITests: XCTestCase {
     /// the tab bar.
     func testATaggedPlaceShowsOnTheFeed() {
         let app = launch(extra: ["-tab", "feed"])
+        let tag = scrollToTag(in: app)
+        settle()
+        keepScreenshot(named: "44-feed-place-tag")
+        XCTAssertEqual(tag.label, "Sweetgreen", "the tag doesn't name the place")
+        XCTAssertLessThanOrEqual(
+            tag.frame.maxY, tabButton("tab.feed", in: app).frame.minY, "the place tag is under the tab bar")
+    }
+
+    /// A tap on the tag pushes the place's own page, not Apple Maps: its card names the place,
+    /// shows the squad's numbers and the salad as a tile, all on screen.
+    func testAPlaceTagOpensThePlacesPage() {
+        let app = launch(extra: ["-tab", "feed"])
+        scrollToTag(in: app).tap()
+        let name = app.staticTexts["place.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "the tag didn't open the place's page")
+        XCTAssertEqual(name.label, "Sweetgreen", "the page doesn't name the place")
+        let stats = app.descendants(matching: .any).matching(identifier: "place.stats").firstMatch
+        XCTAssertTrue(stats.exists, "no squad numbers on the card")
+        let window = app.windows.firstMatch.frame
+        XCTAssertTrue(window.contains(name.frame), "the place's name is cut off")
+        XCTAssertTrue(window.contains(stats.frame), "the squad's numbers are cut off")
+        XCTAssertTrue(app.buttons["place.openInMaps"].exists, "no 在地图中打开")
+        settle()
+        keepScreenshot(named: "45-place-page")
+        let tile = app.buttons["place.post"].firstMatch
+        let page = app.scrollViews.firstMatch
+        var drags = 0
+        while drags < 4, !(tile.exists && tile.isHittable) {
+            let from = page.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        XCTAssertTrue(tile.exists, "the salad isn't a tile on the place's page")
+        settle()
+        keepScreenshot(named: "45-place-page-posts")
+    }
+
+    /// Scrolls 动态 down to Mia's salad's place tag, clear of the tab bar.
+    @discardableResult private func scrollToTag(in app: XCUIApplication) -> XCUIElement {
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
-        let tag = app.buttons["post.place"]
+        let tag = app.buttons.matching(identifier: "post.place").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
         var drags = 0
@@ -54,10 +94,7 @@ final class ComposePlaceUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(tag.exists, "no place tag on the tagged salad")
-        settle()
-        keepScreenshot(named: "44-feed-place-tag")
-        XCTAssertEqual(tag.label, "Sweetgreen", "the tag doesn't name the place")
-        XCTAssertLessThanOrEqual(tag.frame.maxY, tabBarTop, "the place tag is under the tab bar")
+        return tag
     }
 
     private func launch(extra: [String]) -> XCUIApplication {

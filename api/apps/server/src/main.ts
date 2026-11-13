@@ -73,6 +73,12 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -94,6 +100,9 @@ import {
   createDailyPushSettings,
   createPostgresDailyPushSettings,
   createPostgresDailyPushStore,
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
+  createTeammatePushSettings,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
   createPush,
@@ -159,9 +168,10 @@ import { appCopyTools } from './admin-mcp/tools/app-copy.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
+import { teammatePushTools } from './admin-mcp/tools/teammate-push.js';
 import { disclaimerDiceTools } from './admin-mcp/tools/disclaimer-dice.js';
 import { coachNamesIn } from './flows/coach-names.js';
-import { coachMemberFacts, coachSquadWeek } from './flows/coach.js';
+import { coachMemberFacts, coachSquadWeek, coachStreaks } from './flows/coach.js';
 import { coachFeedback } from './flows/coach-feedback.js';
 import { coachGifting, giveGiftAsAdmin, squadWeekStart } from './flows/coach-gifts.js';
 import { adoptFeedback } from './flows/feedback-adoption.js';
@@ -294,6 +304,8 @@ const push = createPush({
   settings: createPostgresSettingsStore(db),
   daily: createPostgresDailyPushStore(db),
   dailySettings: createPostgresDailyPushSettings(db),
+  teammate: createPostgresTeammatePushStore(db),
+  teammateSettings: createPostgresTeammatePushSettings(db),
   sender: config.apns === undefined ? createOffSender() : createApnsSender(config.apns),
 });
 if (config.apns === undefined) log.info('push notifications are off: no APNs key');
@@ -397,6 +409,8 @@ const checkIns = createCheckIns({
   membership: squads,
   // Which sports exist is the sports module's to keep: check-ins and plans ask it.
   sports,
+  // Which places a squad's members added is the places module's to keep: check-ins ask it.
+  squadPlaceOf: (input) => squadPlaces.isPlaceOf(input),
   reactions: createPostgresReactionStore(db),
   comments: createPostgresCommentStore(db),
   coachSpoke: ({ checkIn, squads: through, coach }) =>
@@ -517,9 +531,19 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
+const placeRatings = createPlaceRatings({
+  store: createPostgresPlaceRatingStore(db),
+  clock: () => new Date(),
+});
 // The places each member saved (收藏).
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
+  clock: () => new Date(),
+});
+const squadPlaces = createSquadPlaces({
+  store: createPostgresSquadPlaceStore(db),
+  // Who is in which squad is the squads module's to keep: places ask it.
+  membership: squads,
   clock: () => new Date(),
 });
 // Roughly where each member is, for the weather the coach reads; without WeatherKit's key the
@@ -629,6 +653,7 @@ const coachWakes =
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
         memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        streaks: coachStreaks(checkIns),
         // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
         weatherOf: async ({ members: ids, day }) => {
           const zoned = await Promise.all(
@@ -782,7 +807,9 @@ const app = createApp({
   scenes,
   switches,
   nudges,
+  placeRatings,
   savedPlaces,
+  squadPlaces,
   weather,
   feedback: feedbackInbox,
   issues: feedbackIssues,
@@ -884,6 +911,12 @@ const app = createApp({
     // Each kind of interaction the daily push counts comes from one of these.
     interactions: [checkInInteractions(checkIns), nudgeInteractions(nudges)],
     clock: () => new Date(),
+    sportNames: async () =>
+      new Map(
+        (await sports.catalog()).categories.flatMap(({ sports: listed }) =>
+          listed.map(({ id, names }) => [id, names] as const),
+        ),
+      ),
     ...(coachWakes === undefined ? {} : { coach: coachWakes }),
     // The suggestion's log row and the captain's notice commit together, or neither does.
     suggestGoal: suggestGoalIn(db, {
@@ -935,6 +968,11 @@ const app = createApp({
       ...appCopyTools({ copy: createAppCopy({ store: createPostgresAppCopy(scope) }) }),
       ...dailyPushTools({
         settings: createDailyPushSettings({ store: createPostgresDailyPushSettings(scope) }),
+      }),
+      ...teammatePushTools({
+        settings: createTeammatePushSettings({
+          store: createPostgresTeammatePushSettings(scope),
+        }),
       }),
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),

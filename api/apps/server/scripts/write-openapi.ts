@@ -18,6 +18,8 @@ import { createMembers, createPostgresProfileStore } from '@wildcard/members';
 import {
   createOffSender,
   createPostgresDailyPushSettings,
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -106,7 +108,9 @@ const app = createApp({
     clock: unused,
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
+  placeRatings: { rate: unused, of: unused, ofAll: unused },
   savedPlaces: { list: unused, save: unused, remove: unused },
+  squadPlaces: { add: unused, list: unused, isPlaceOf: unused },
   weather: { savePlace: unused, forgetPlace: unused, dayFor: unused },
   feedback: { send: unused, toFile: unused, filed: unused },
   issues: undefined,
@@ -127,6 +131,8 @@ const app = createApp({
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
     dailySettings: createPostgresDailyPushSettings(db),
+    teammate: createPostgresTeammatePushStore(db),
+    teammateSettings: createPostgresTeammatePushSettings(db),
     sender: createOffSender(),
   }),
   squads: createSquads({
@@ -179,6 +185,7 @@ const app = createApp({
     isScheduler: undefined,
     interactions: [],
     clock: unused,
+    sportNames: unused,
     suggestGoal: unused,
     coachNotes: {
       notes: { waiting: unused, delivered: unused },

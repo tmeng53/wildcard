@@ -51,25 +51,38 @@ public struct CoachPageCard: Hashable, Sendable, Identifiable {
         /// Who marked it done, on its own day: the member (我完成了) or the coach, from their
         /// check-ins. Nil until then; the first stands.
         public let completedBy: CoachChallengeCompleter?
+        /// Its day is over on the squad's clock (已过期): it is never taken up or marked done after.
+        public let isExpired: Bool
 
         public init(
             title: String, amount: Int? = nil, unit: String? = nil, line: String? = nil,
-            answer: CoachChallengeAnswer? = nil, completedBy: CoachChallengeCompleter? = nil
+            answer: CoachChallengeAnswer? = nil, completedBy: CoachChallengeCompleter? = nil,
+            isExpired: Bool = false
         ) {
             (self.title, self.amount, self.unit, self.line) = (title, amount, unit, line)
-            (self.answer, self.completedBy) = (answer, completedBy)
+            (self.answer, self.completedBy, self.isExpired) = (answer, completedBy, isExpired)
         }
+
+        /// Still to answer: not answered yet and its day not over.
+        public var isOpen: Bool { answer == nil && !isExpired }
 
         public func answered(_ answer: CoachChallengeAnswer) -> Challenge {
             Challenge(
                 title: title, amount: amount, unit: unit, line: line, answer: self.answer ?? answer,
-                completedBy: completedBy)
+                completedBy: completedBy, isExpired: isExpired)
         }
 
         public func completed(by completer: CoachChallengeCompleter) -> Challenge {
             Challenge(
                 title: title, amount: amount, unit: unit, line: line, answer: answer,
-                completedBy: completedBy ?? completer)
+                completedBy: completedBy ?? completer, isExpired: isExpired)
+        }
+
+        /// The same challenge once its day is over.
+        public func expired() -> Challenge {
+            Challenge(
+                title: title, amount: amount, unit: unit, line: line, answer: answer,
+                completedBy: completedBy, isExpired: true)
         }
     }
 

@@ -28,6 +28,12 @@ export interface PushNotification {
    */
   readonly interruption: 'passive' | 'active';
   /**
+   * The first generation of pushes whose builds have this push's words (`PushGeneration`): a
+   * phone on an older one is skipped, since it would show the key. Left out for a push every
+   * build knows.
+   */
+  readonly since?: number;
+  /**
    * What happened, for the app to open and act on, e.g. `{ checkIn: "<id>" }`, or counts by kind
    * such as `{ received: { reaction: 3 } }`. APNs takes 4KB for the whole payload.
    */

@@ -9,7 +9,12 @@ import {
   createPostgresWeeklyPlanStore,
 } from '@wildcard/check-ins';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
-import { DeviceToken, MemberId as PushMember, type PushNotification } from '@wildcard/push';
+import {
+  DeviceToken,
+  FIRST_PUSH_GENERATION,
+  MemberId as PushMember,
+  type PushNotification,
+} from '@wildcard/push';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
@@ -56,7 +61,7 @@ async function member() {
   const token = DeviceToken.parse(randomUUID().replaceAll('-', '').repeat(2));
   await pushOn(db).registerDevice({
     member: PushMember.parse(userId),
-    device: { token, environment: 'production' },
+    device: { token, environment: 'production', generation: FIRST_PUSH_GENERATION },
   });
   return { userId, token };
 }

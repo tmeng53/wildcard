@@ -53,9 +53,10 @@ public final class TodayStore {
     /// The squad's coach on the sideline as last loaded, and the squad it was loaded for.
     /// Set by `loadCoach()`, and from the device's copy before the first.
     var loadedCoach: (squad: SquadID, coach: SidelineCoach?)?
-    /// Whether the coach's page has a card the member hasn't seen, as last loaded, for the squad it
-    /// was loaded for: the dot on the coach's phone until they swipe them all away there.
-    var loadedUnseenCoachCards: (squad: SquadID, unseen: Bool)?
+    /// The newest card on the coach's page the member hasn't seen, as last loaded, for the squad it
+    /// was loaded for: the dot on the coach's phone and its row on the squad card, until they swipe
+    /// them all away there.
+    var loadedUnseenCoachCard: (squad: SquadID, card: CoachPageCard?)?
     /// The challenge in today's morning note, as last loaded, for the squad it was loaded for.
     var loadedChallenge: (squad: SquadID, challenge: DayChallenge?)?
     /// 我完成了 is on its way.

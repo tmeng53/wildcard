@@ -427,7 +427,7 @@ public protocol APIProtocol: Sendable {
     func completeCoachChallenge(_ input: Operations.CompleteCoachChallenge.Input) async throws -> Operations.CompleteCoachChallenge.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -441,14 +441,14 @@ public protocol APIProtocol: Sendable {
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
     func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
@@ -474,6 +474,39 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// The places the squad’s members added themselves (自建地点)
+    ///
+    /// What the place picker lists beside Apple Maps’ places, for every member to tag.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/custom-places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/get(listSquadCustomPlaces)`.
+    func listSquadCustomPlaces(_ input: Operations.ListSquadCustomPlaces.Input) async throws -> Operations.ListSquadCustomPlaces.Output
+    /// Add a place for the squad (新建地点), under an id the app made
+    ///
+    /// The whole squad sees it, and anyone in it may tag their posts with it. It never changes; the same place again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/custom-places/{placeId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/{placeId}/put(addSquadCustomPlace)`.
+    func addSquadCustomPlace(_ input: Operations.AddSquadCustomPlace.Input) async throws -> Operations.AddSquadCustomPlace.Output
+    /// The places the squad’s posts were tagged with (小队地图)
+    ///
+    /// Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/get(listSquadPlaces)`.
+    func listSquadPlaces(_ input: Operations.ListSquadPlaces.Input) async throws -> Operations.ListSquadPlaces.Output
+    /// One place’s page (地点页)
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places/{key}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)`.
+    func getSquadPlace(_ input: Operations.GetSquadPlace.Input) async throws -> Operations.GetSquadPlace.Output
+    /// Give the caller’s score for a place (我的评分)
+    ///
+    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
+    ///
+    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
+    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
+    func ratePlace(_ input: Operations.RatePlace.Input) async throws -> Operations.RatePlace.Output
     /// The places the signed-in member saved (收藏)
     ///
     /// - Remark: HTTP `GET /me/saved-places`.
@@ -621,7 +654,7 @@ public protocol APIProtocol: Sendable {
     func claimPiece(_ input: Operations.ClaimPiece.Input) async throws -> Operations.ClaimPiece.Output
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`; a prop is listed once a rule opened it (such as a dog on a leash) or when unlocked before every prop was everyone’s. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.
@@ -1489,7 +1522,7 @@ extension APIProtocol {
     }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -1523,7 +1556,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from the last 72 hours from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -1538,7 +1571,7 @@ extension APIProtocol {
     }
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than 72 hours); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
@@ -1597,6 +1630,83 @@ extension APIProtocol {
         body: Operations.NudgeSquadmate.Input.Body
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The places the squad’s members added themselves (自建地点)
+    ///
+    /// What the place picker lists beside Apple Maps’ places, for every member to tag.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/custom-places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/get(listSquadCustomPlaces)`.
+    public func listSquadCustomPlaces(
+        path: Operations.ListSquadCustomPlaces.Input.Path,
+        headers: Operations.ListSquadCustomPlaces.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadCustomPlaces.Output {
+        try await listSquadCustomPlaces(Operations.ListSquadCustomPlaces.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Add a place for the squad (新建地点), under an id the app made
+    ///
+    /// The whole squad sees it, and anyone in it may tag their posts with it. It never changes; the same place again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/custom-places/{placeId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/{placeId}/put(addSquadCustomPlace)`.
+    public func addSquadCustomPlace(
+        path: Operations.AddSquadCustomPlace.Input.Path,
+        headers: Operations.AddSquadCustomPlace.Input.Headers = .init(),
+        body: Operations.AddSquadCustomPlace.Input.Body
+    ) async throws -> Operations.AddSquadCustomPlace.Output {
+        try await addSquadCustomPlace(Operations.AddSquadCustomPlace.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The places the squad’s posts were tagged with (小队地图)
+    ///
+    /// Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/get(listSquadPlaces)`.
+    public func listSquadPlaces(
+        path: Operations.ListSquadPlaces.Input.Path,
+        headers: Operations.ListSquadPlaces.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadPlaces.Output {
+        try await listSquadPlaces(Operations.ListSquadPlaces.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// One place’s page (地点页)
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/places/{key}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)`.
+    public func getSquadPlace(
+        path: Operations.GetSquadPlace.Input.Path,
+        headers: Operations.GetSquadPlace.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadPlace.Output {
+        try await getSquadPlace(Operations.GetSquadPlace.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Give the caller’s score for a place (我的评分)
+    ///
+    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
+    ///
+    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
+    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
+    public func ratePlace(
+        path: Operations.RatePlace.Input.Path,
+        headers: Operations.RatePlace.Input.Headers = .init(),
+        body: Operations.RatePlace.Input.Body
+    ) async throws -> Operations.RatePlace.Output {
+        try await ratePlace(Operations.RatePlace.Input(
             path: path,
             headers: headers,
             body: body
@@ -1899,7 +2009,7 @@ extension APIProtocol {
     }
     /// The stores, props and pieces the signed-in member unlocked
     ///
-    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`, but for props a member unlocked before every prop was theirs. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
+    /// Stores on the character editor’s 商店街 and clothing pieces open by 训练 check-ins in their sports, counting only those made since the rule was added; pieces a squad’s coach gave come apart, in `gifts`. Starters (WARM-UP, every prop and every piece without a rule) are everyone’s and never listed in `unlocks` or `pieces`; a prop is listed once a rule opened it (such as a dog on a leash) or when unlocked before every prop was everyone’s. An unlock is never taken back. `shelf` is the 商店街 as the member sees it now, each store and switch applied.
     ///
     /// - Remark: HTTP `GET /me/unlocks`.
     /// - Remark: Generated from `#/paths//me/unlocks/get(getMyUnlocks)`.

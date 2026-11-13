@@ -8,15 +8,21 @@ extension Catalog {
     /// server's, or the starter street while it isn't known yet): the species in its
     /// `editor.json`, the stores the stock lists that the art has, in the stock's order, the
     /// pieces the member owns or may take, the locked ones hanging as 「？」 boxes, every prop
-    /// (props never need unlocking, Tracy 2026-11-09), every bundled hair and face part,
+    /// (props never need unlocking, Tracy 2026-11-09) and the few that do once unlocked (the dogs
+    /// on a leash, after a 遛狗, Tracy 2026-11-12; `unlockedProps`, the ones this art has), every
+    /// bundled hair and face part,
     /// and their preset colors. A closed store (its switch off) stays on the street only as the
     /// member's own rack, when they own something there.
     public static func placeholder(
-        stock: StreetStock? = nil, gifts: [String] = []
+        stock: StreetStock? = nil, gifts: [String] = [], unlockedProps: [String] = []
     ) throws(AvatarError) -> Catalog {
         let stock = stock ?? StarterStock.shared.current
         let choices = try PlaceholderCharacter.editorChoices()
         var props = choices.props.map(\.id)
+        // A prop that needs unlocking is in no `editor.json`, so an older build never offers it.
+        for prop in unlockedProps where !props.contains(prop) && PlaceholderCharacter.slot(holding: prop) == "prop" {
+            props.append(prop)
+        }
         let owned = Set(stock.pieces.filter { $0.state == .owned }.map(\.id))
         let boxed: [(String, Int)] = stock.pieces.compactMap { piece in
             guard case .locked(let left) = piece.state, !owned.contains(piece.id) else { return nil }

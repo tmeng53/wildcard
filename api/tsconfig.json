@@ -23,6 +23,9 @@
       "path": "packages/nudges"
     },
     {
+      "path": "packages/places"
+    },
+    {
       "path": "packages/weather"
     },
     {

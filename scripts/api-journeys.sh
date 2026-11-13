@@ -885,7 +885,7 @@ if want admin-mcp; then
   mcp "$mcp_token" '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
   expect 200
   tools="$(jq -r '[.result.tools[].name] | join(",")' <<<"$body")"
-  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_ai_usage_settings,change_ai_usage_settings,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
+  [ "$tools" = "list_admin_log,list_memes,add_memes,set_meme_expiry,turn_off_meme,turn_on_meme,get_disclaimer_draft_settings,change_disclaimer_draft_settings,get_weekly_award_settings,change_weekly_award_settings,get_disclaimer_dice,change_disclaimer_dice,get_ai_usage_settings,change_ai_usage_settings,get_app_copy,change_app_copy,get_daily_push_settings,change_daily_push_settings,get_teammate_push_settings,change_teammate_push_settings,get_sports,put_sport,put_sport_category,set_sport_picks,get_switches,put_switch,get_minimum_build,set_minimum_build,get_quick_reactions,change_quick_reactions,get_scenes,put_scene,get_rewards,put_unlock_rule,give_unlocks,get_stores,put_store,get_pieces,put_piece,get_gift_pieces,put_gift_piece,give_gift,get_badges,put_badge,put_voucher,put_reward_trigger,give_reward,adopt_feedback,list_broadcasts,put_broadcast,get_art,art_upload_url,put_art,retire_art,get_campaigns,put_campaign,set_campaign_status,set_switch_preview,get_coach_settings,change_coach_settings,list_coaches,put_coach,hire_coach,fire_coach,get_squad_coaching,edit_coach_files,send_test_push" ] ||
     fail "tools: $body"
   echo "admin-mcp: initialized and listed the tools ($tools)"
 
@@ -952,6 +952,16 @@ if want admin-mcp; then
   hours="$(psql "$DB_URL" -tAc "select string_agg(settings->>'hour', ',' order by id) from public.daily_push_setting_events where changed_by = '$admin'")"
   [ "$hours" = "20,18" ] || fail "the daily push log should hold the two changes, not the refusal: $hours"
   echo "admin-mcp: moved the daily push to 8pm and back, logged once each ($hours); hour 24 refused"
+
+  tool get_teammate_push_settings '{}'
+  [ "$(jq -r '"\(.sending) \(.dailyRings)"' <<<"$result")" = "true 5" ] || fail "get_teammate_push_settings: $result"
+  tool change_teammate_push_settings '{"dailyRings":3}'
+  tool change_teammate_push_settings '{"dailyRings":5}'
+  tool change_teammate_push_settings '{"dailyRings":51}'
+  [ "$is_error" = true ] || fail "more than 50 rings a day: $result"
+  rings="$(psql "$DB_URL" -tAc "select string_agg(settings->>'dailyRings', ',' order by id) from public.teammate_push_setting_events where changed_by = '$admin'")"
+  [ "$rings" = "3,5" ] || fail "the teammate push log should hold the two changes, not the refusal: $rings"
+  echo "admin-mcp: let 3 teammate pushes ring a day and back to 5, logged once each ($rings); 51 refused"
 
   # The sports list: put a sport back as it is (the list stays the seed other checks read), and
   # a short list with a sport the list doesn't have is refused.

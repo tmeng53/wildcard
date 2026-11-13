@@ -156,7 +156,9 @@ export function commentNotification({
     category: 'comment',
     thread: `comments-${checkIn}`,
     collapseId: `comment-${comment}`,
-    interruption: 'active',
+    // Quiet: comments come many a day, so they go to the notification list without ringing
+    // (Tracy, 2026-11-12); the coach's morning note is what rings.
+    interruption: 'passive',
     event: { kind: 'comment', checkIn, comment },
   };
 }

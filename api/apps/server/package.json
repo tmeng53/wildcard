@@ -34,6 +34,7 @@
     "@wildcard/notices": "workspace:*",
     "@wildcard/nudges": "workspace:*",
     "@wildcard/place-ids": "workspace:*",
+    "@wildcard/places": "workspace:*",
     "@wildcard/push": "workspace:*",
     "@wildcard/saved-places": "workspace:*",
     "@wildcard/scenes": "workspace:*",
