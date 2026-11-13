@@ -95,7 +95,7 @@ private struct ScoreCapsule: View {
     let score: VisitScore
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: Space.xxs - 1) {
             Text(verbatim: ScoreText.visit(score))
                 .typeStyle(TypeRamp.scoreCaption)
                 .monospacedDigit()
