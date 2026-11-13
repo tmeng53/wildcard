@@ -5700,6 +5700,96 @@
             "type": "string",
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
+          },
+          "sports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sport": {
+                  "$ref": "#/components/schemas/Sport"
+                },
+                "customSport": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "sport",
+                "count"
+              ],
+              "additionalProperties": false
+            },
+            "description": "大家在这里练: each sport its 训练 named, most first."
+          },
+          "meals": {
+            "type": "object",
+            "properties": {
+              "healthyMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cheatMeal": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "healthy": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 健康, averaged."
+              },
+              "tasty": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 好吃, averaged."
+              },
+              "calorieValue": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged."
+              }
+            },
+            "required": [
+              "healthyMeal",
+              "cheatMeal",
+              "healthy",
+              "tasty",
+              "calorieValue"
+            ],
+            "additionalProperties": false,
+            "description": "大家在这里吃: meals by kind, and what rated ones scored."
           }
         },
         "required": [
@@ -5709,7 +5799,10 @@
           "people",
           "stars",
           "raters",
-          "lastAt"
+          "lastAt",
+          "members",
+          "sports",
+          "meals"
         ],
         "additionalProperties": false
       },
@@ -5891,14 +5984,28 @@
             "format": "date-time",
             "description": "When the newest post there was made, in UTC."
           },
-          "myStars": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 5,
-            "description": "The viewer’s own score; null before one."
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "member": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "visits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "How many of the posts there are theirs."
+                }
+              },
+              "required": [
+                "member",
+                "visits"
+              ],
+              "additionalProperties": false
+            },
+            "description": "小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey."
           },
           "sports": {
             "type": "array",
@@ -5967,6 +6074,15 @@
             "additionalProperties": false,
             "description": "大家在这里吃: meals by kind, and what rated ones scored."
           },
+          "myStars": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The viewer’s own score; null before one."
+          },
           "posts": {
             "type": "array",
             "items": {
@@ -5984,9 +6100,10 @@
           "stars",
           "raters",
           "lastAt",
-          "myStars",
+          "members",
           "sports",
           "meals",
+          "myStars",
           "posts"
         ],
         "additionalProperties": false

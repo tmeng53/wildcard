@@ -65,6 +65,39 @@ const summaryFields = {
     }),
   raters: z.int().min(0).meta({ description: 'How many of the squad’s members gave a score.' }),
   lastAt: z.iso.datetime().meta({ description: 'When the newest post there was made, in UTC.' }),
+  members: z
+    .array(
+      z.strictObject({
+        member: z.uuid(),
+        visits: z.int().min(1).meta({ description: 'How many of the posts there are theirs.' }),
+      }),
+    )
+    .meta({
+      description:
+        '小队地图’s heads: who posted there, most posts first; one who left the squad is ' +
+        'still listed, for the app to grey.',
+    }),
+  sports: z
+    .array(
+      z.strictObject({
+        sport: SportKey,
+        customSport: z.string().optional(),
+        count: z.int().min(1),
+      }),
+    )
+    .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
+  meals: z
+    .strictObject({
+      healthyMeal: z.int().min(0),
+      cheatMeal: z.int().min(0),
+      healthy: z.number().nullable().meta({ description: 'Rated meals’ 健康, averaged.' }),
+      tasty: z.number().nullable().meta({ description: 'Rated meals’ 好吃, averaged.' }),
+      calorieValue: z
+        .number()
+        .nullable()
+        .meta({ description: 'Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.' }),
+    })
+    .meta({ description: '大家在这里吃: meals by kind, and what rated ones scored.' }),
 };
 
 const Visit = z
@@ -112,27 +145,6 @@ const PlaceDetailView = z
     version: bodyVersion(1),
     ...summaryFields,
     myStars: Stars.nullable().meta({ description: 'The viewer’s own score; null before one.' }),
-    sports: z
-      .array(
-        z.strictObject({
-          sport: SportKey,
-          customSport: z.string().optional(),
-          count: z.int().min(1),
-        }),
-      )
-      .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
-    meals: z
-      .strictObject({
-        healthyMeal: z.int().min(0),
-        cheatMeal: z.int().min(0),
-        healthy: z.number().nullable().meta({ description: 'Rated meals’ 健康, averaged.' }),
-        tasty: z.number().nullable().meta({ description: 'Rated meals’ 好吃, averaged.' }),
-        calorieValue: z
-          .number()
-          .nullable()
-          .meta({ description: 'Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.' }),
-      })
-      .meta({ description: '大家在这里吃: meals by kind, and what rated ones scored.' }),
     posts: z.array(Visit).meta({ description: '动态: the posts tagged with it, newest first.' }),
   })
   .openapi('PlaceDetail');
@@ -258,6 +270,19 @@ function wireSummary(summary: PlaceSummary) {
     stars: summary.stars ?? null,
     raters: summary.raters,
     lastAt: summary.lastAt.toISOString(),
+    members: summary.members.map(({ member, visits }) => ({ member, visits })),
+    sports: summary.sports.map(({ sport, customSport, count }) => ({
+      sport,
+      ...(customSport === undefined ? {} : { customSport }),
+      count,
+    })),
+    meals: {
+      healthyMeal: summary.meals.healthyMeal,
+      cheatMeal: summary.meals.cheatMeal,
+      healthy: summary.meals.healthy ?? null,
+      tasty: summary.meals.tasty ?? null,
+      calorieValue: summary.meals.calorieValue ?? null,
+    },
   };
 }
 
@@ -269,18 +294,6 @@ function wireDetail(
     version: 1,
     ...wireSummary(detail),
     myStars: detail.myStars ?? null,
-    sports: detail.sports.map(({ sport, customSport, count }) => ({
-      sport,
-      ...(customSport === undefined ? {} : { customSport }),
-      count,
-    })),
-    meals: {
-      healthyMeal: detail.meals.healthyMeal,
-      cheatMeal: detail.meals.cheatMeal,
-      healthy: detail.meals.healthy ?? null,
-      tasty: detail.meals.tasty ?? null,
-      calorieValue: detail.meals.calorieValue ?? null,
-    },
     posts: detail.posts.flatMap((post) => visitOf(post, { ...at, key: detail.key }) ?? []),
   };
 }

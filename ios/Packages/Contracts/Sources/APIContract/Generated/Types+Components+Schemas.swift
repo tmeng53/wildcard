@@ -8997,6 +8997,129 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/lastAt`.
             public var lastAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload`.
+            public struct MembersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload/member`.
+                public var member: Swift.String
+                /// How many of the posts there are theirs.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload/visits`.
+                public var visits: Swift.Int
+                /// Creates a new `MembersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - visits: How many of the posts there are theirs.
+                public init(
+                    member: Swift.String,
+                    visits: Swift.Int
+                ) {
+                    self.member = member
+                    self.visits = visits
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case visits
+                }
+            }
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/members`.
+            public typealias MembersPayload = [Components.Schemas.PlaceSummary.MembersPayloadPayload]
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/members`.
+            public var members: Components.Schemas.PlaceSummary.MembersPayload
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload`.
+            public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/sport`.
+                public var sport: Components.Schemas.Sport
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/customSport`.
+                public var customSport: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/count`.
+                public var count: Swift.Int
+                /// Creates a new `SportsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - sport:
+                ///   - customSport:
+                ///   - count:
+                public init(
+                    sport: Components.Schemas.Sport,
+                    customSport: Swift.String? = nil,
+                    count: Swift.Int
+                ) {
+                    self.sport = sport
+                    self.customSport = customSport
+                    self.count = count
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case sport
+                    case customSport
+                    case count
+                }
+            }
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/sports`.
+            public typealias SportsPayload = [Components.Schemas.PlaceSummary.SportsPayloadPayload]
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/sports`.
+            public var sports: Components.Schemas.PlaceSummary.SportsPayload
+            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
+            public struct MealsPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/healthyMeal`.
+                public var healthyMeal: Swift.Int
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/cheatMeal`.
+                public var cheatMeal: Swift.Int
+                /// Rated meals’ 健康, averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/healthy`.
+                public var healthy: Swift.Double?
+                /// Rated meals’ 好吃, averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/tasty`.
+                public var tasty: Swift.Double?
+                /// Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/calorieValue`.
+                public var calorieValue: Swift.Double?
+                /// Creates a new `MealsPayload`.
+                ///
+                /// - Parameters:
+                ///   - healthyMeal:
+                ///   - cheatMeal:
+                ///   - healthy: Rated meals’ 健康, averaged.
+                ///   - tasty: Rated meals’ 好吃, averaged.
+                ///   - calorieValue: Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                public init(
+                    healthyMeal: Swift.Int,
+                    cheatMeal: Swift.Int,
+                    healthy: Swift.Double? = nil,
+                    tasty: Swift.Double? = nil,
+                    calorieValue: Swift.Double? = nil
+                ) {
+                    self.healthyMeal = healthyMeal
+                    self.cheatMeal = cheatMeal
+                    self.healthy = healthy
+                    self.tasty = tasty
+                    self.calorieValue = calorieValue
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case healthyMeal
+                    case cheatMeal
+                    case healthy
+                    case tasty
+                    case calorieValue
+                }
+            }
+            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
+            public var meals: Components.Schemas.PlaceSummary.MealsPayload
             /// Creates a new `PlaceSummary`.
             ///
             /// - Parameters:
@@ -9007,6 +9130,9 @@ extension Components {
             ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
             ///   - raters: How many of the squad’s members gave a score.
             ///   - lastAt: When the newest post there was made, in UTC.
+            ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///   - sports: 大家在这里练: each sport its 训练 named, most first.
+            ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
             public init(
                 key: Swift.String,
                 place: Components.Schemas.PlaceSummary.PlacePayload,
@@ -9014,7 +9140,10 @@ extension Components {
                 people: Swift.Int,
                 stars: Swift.Double? = nil,
                 raters: Swift.Int,
-                lastAt: Foundation.Date
+                lastAt: Foundation.Date,
+                members: Components.Schemas.PlaceSummary.MembersPayload,
+                sports: Components.Schemas.PlaceSummary.SportsPayload,
+                meals: Components.Schemas.PlaceSummary.MealsPayload
             ) {
                 self.key = key
                 self.place = place
@@ -9023,6 +9152,9 @@ extension Components {
                 self.stars = stars
                 self.raters = raters
                 self.lastAt = lastAt
+                self.members = members
+                self.sports = sports
+                self.meals = meals
             }
             public enum CodingKeys: String, CodingKey {
                 case key
@@ -9032,6 +9164,9 @@ extension Components {
                 case stars
                 case raters
                 case lastAt
+                case members
+                case sports
+                case meals
             }
         }
         /// - Remark: Generated from `#/components/schemas/PlaceVisit`.
@@ -9259,10 +9394,39 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/lastAt`.
             public var lastAt: Foundation.Date
-            /// The viewer’s own score; null before one.
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload`.
+            public struct MembersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload/member`.
+                public var member: Swift.String
+                /// How many of the posts there are theirs.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload/visits`.
+                public var visits: Swift.Int
+                /// Creates a new `MembersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - visits: How many of the posts there are theirs.
+                public init(
+                    member: Swift.String,
+                    visits: Swift.Int
+                ) {
+                    self.member = member
+                    self.visits = visits
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case visits
+                }
+            }
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///
-            /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
-            public var myStars: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/members`.
+            public typealias MembersPayload = [Components.Schemas.PlaceDetail.MembersPayloadPayload]
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/members`.
+            public var members: Components.Schemas.PlaceDetail.MembersPayload
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload`.
             public struct SportsPayloadPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload/sport`.
@@ -9353,6 +9517,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
             public var meals: Components.Schemas.PlaceDetail.MealsPayload
+            /// The viewer’s own score; null before one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
+            public var myStars: Swift.Int?
             /// 动态: the posts tagged with it, newest first.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/posts`.
@@ -9368,9 +9536,10 @@ extension Components {
             ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
             ///   - raters: How many of the squad’s members gave a score.
             ///   - lastAt: When the newest post there was made, in UTC.
-            ///   - myStars: The viewer’s own score; null before one.
+            ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///   - sports: 大家在这里练: each sport its 训练 named, most first.
             ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
+            ///   - myStars: The viewer’s own score; null before one.
             ///   - posts: 动态: the posts tagged with it, newest first.
             public init(
                 version: Components.Schemas.PlaceDetail.VersionPayload,
@@ -9381,9 +9550,10 @@ extension Components {
                 stars: Swift.Double? = nil,
                 raters: Swift.Int,
                 lastAt: Foundation.Date,
-                myStars: Swift.Int? = nil,
+                members: Components.Schemas.PlaceDetail.MembersPayload,
                 sports: Components.Schemas.PlaceDetail.SportsPayload,
                 meals: Components.Schemas.PlaceDetail.MealsPayload,
+                myStars: Swift.Int? = nil,
                 posts: [Components.Schemas.PlaceVisit]
             ) {
                 self.version = version
@@ -9394,9 +9564,10 @@ extension Components {
                 self.stars = stars
                 self.raters = raters
                 self.lastAt = lastAt
-                self.myStars = myStars
+                self.members = members
                 self.sports = sports
                 self.meals = meals
+                self.myStars = myStars
                 self.posts = posts
             }
             public enum CodingKeys: String, CodingKey {
@@ -9408,9 +9579,10 @@ extension Components {
                 case stars
                 case raters
                 case lastAt
-                case myStars
+                case members
                 case sports
                 case meals
+                case myStars
                 case posts
             }
         }

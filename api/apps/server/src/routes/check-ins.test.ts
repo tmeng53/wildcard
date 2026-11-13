@@ -1999,6 +1999,33 @@ describe('a squad’s places', () => {
       { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: 4, raters: 2 },
       { key: 'apple:I0NOODLES', name: '兰州拉面', visits: 2, people: 2, stars: null, raters: 0 },
     ]);
+    // 小队地图's 常去 rows: who went (most posts first, the newest poster first on a tie), what
+    // was trained or eaten there.
+    expect(
+      z
+        .array(z.object({ members: z.unknown(), sports: z.unknown(), meals: z.unknown() }))
+        .parse(z.object({ places: z.unknown() }).parse(listed.body).places),
+    ).toStrictEqual([
+      {
+        members: [
+          { member: friend.userId, visits: 2 },
+          { member: me.userId, visits: 1 },
+        ],
+        sports: [
+          { sport: 'custom', customSport: '飞盘', count: 2 },
+          { sport: 'custom', customSport: '背包', count: 1 },
+        ],
+        meals: { healthyMeal: 0, cheatMeal: 0, healthy: null, tasty: null, calorieValue: null },
+      },
+      {
+        members: [
+          { member: friend.userId, visits: 1 },
+          { member: me.userId, visits: 1 },
+        ],
+        sports: [],
+        meals: { healthyMeal: 1, cheatMeal: 1, healthy: 3, tasty: 4.5, calorieValue: 2.8 },
+      },
+    ]);
     // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover
     // or minutes when the post had none.
     expect(recent).toStrictEqual([
