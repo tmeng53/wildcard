@@ -33,8 +33,10 @@ struct PlaceMapPage: View {
     /// every frame of its clock).
     @State private var heads: [MemberID: CharacterPlayer] = [:]
     @State private var fanned = false
+    /// Where the map was let go last.
     @State private var pan = CGSize.zero
-    @State private var panStart: CGSize?
+    /// The drag under way, gone by itself if the drag is cancelled.
+    @GestureState private var dragged = CGSize.zero
 
     var body: some View {
         GeometryReader { proxy in
@@ -46,11 +48,11 @@ struct PlaceMapPage: View {
                     // The map itself takes no touch; the page drags it, alongside the story's own
                     // touch, so a tap still moves on and a pull down still closes.
                     .contentShape(Rectangle())
-                    .offset(pan)
+                    .offset(shownPan)
                     .simultaneousGesture(drag)
                 marker(width: proxy.size.width)
                     .position(focus)
-                    .offset(pan)
+                    .offset(shownPan)
                 PageTitle(label: label, title: title, onMap: true)
                     .allowsHitTesting(false)
             }
@@ -119,17 +121,17 @@ struct PlaceMapPage: View {
     /// The map drags a little way and stays where it is let go.
     private var drag: some Gesture {
         DragGesture(minimumDistance: Space.xs)
-            .onChanged { drag in
-                let start = panStart ?? pan
-                if panStart == nil {
-                    panStart = pan
-                    stay()
-                }
-                pan = CGSize(
-                    width: Self.clamp(start.width + drag.translation.width),
-                    height: Self.clamp(start.height + drag.translation.height))
+            .updating($dragged) { drag, dragged, _ in
+                dragged = drag.translation
             }
-            .onEnded { _ in panStart = nil }
+            .onChanged { _ in stay() }
+            .onEnded { drag in pan = Self.panned(pan, by: drag.translation) }
+    }
+
+    private var shownPan: CGSize { Self.panned(pan, by: dragged) }
+
+    private static func panned(_ pan: CGSize, by translation: CGSize) -> CGSize {
+        CGSize(width: clamp(pan.width + translation.width), height: clamp(pan.height + translation.height))
     }
 
     // MARK: The heads and the place's name
