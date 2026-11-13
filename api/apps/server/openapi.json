@@ -1817,6 +1817,9 @@
           "place": {
             "$ref": "#/components/schemas/Place"
           },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
+          },
           "photos": {
             "type": "array",
             "items": {
@@ -1826,6 +1829,29 @@
           }
         },
         "additionalProperties": false
+      },
+      "MealRating": {
+        "type": "object",
+        "properties": {
+          "healthy": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "健康: how healthy the meal was, 1 to 5."
+          },
+          "tasty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "好吃: how good it tasted, 1 to 5."
+          }
+        },
+        "required": [
+          "healthy",
+          "tasty"
+        ],
+        "additionalProperties": false,
+        "description": "The member's own rating of this meal: 健康 and 好吃, each 1 to 5. Its 卡价比 is tasty × healthy ÷ 5."
       },
       "CheatMealCheckIn": {
         "type": "object",
@@ -2255,6 +2281,9 @@
           },
           "place": {
             "$ref": "#/components/schemas/Place"
+          },
+          "rating": {
+            "$ref": "#/components/schemas/MealRating"
           },
           "photos": {
             "type": "array",
