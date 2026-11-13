@@ -22,7 +22,7 @@
 	     public by design. Empty, as in Debug, reports nothing. -->
 	<key>WildcardSentryDSN</key>
 	<string>$(WILDCARD_SENTRY_DSN)</string>
-	<!-- wildcard://widget/…: where a tap on a home screen widget opens the app (WidgetLink). -->
+	<!-- wildcard://: a home screen widget's tap (wildcard://widget/…, WidgetLink) and any place in the app by its address (wildcard://store/powder, AppDestination(address:)). -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
