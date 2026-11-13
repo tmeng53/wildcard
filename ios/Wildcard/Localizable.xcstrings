@@ -241,6 +241,54 @@
         }
       }
     },
+    "push.teammate.trained": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ just finished %2$@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@刚练完%2$@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@剛練完%2$@"
+          }
+        }
+      }
+    },
+    "push.teammate.trained.minutes": {
+      "comment": "Push notification (APNs loc-key); the API sends the arguments.",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ just finished %2$@ · %3$@ min"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@刚练完%2$@ %3$@ 分钟"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@剛練完%2$@ %3$@ 分鐘"
+          }
+        }
+      }
+    },
     "push.weeklyAwards.ready": {
       "comment": "Push notification (APNs loc-key); the API sends the arguments.",
       "extractionState": "manual",

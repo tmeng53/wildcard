@@ -86,7 +86,7 @@ private struct MentionTags: ViewModifier {
                 \.openURL,
                 OpenURLAction { url in
                     guard let member = MentionLink.member(url) else { return .systemAction }
-                    model.openTeammate(member)
+                    model.routes.openTeammate(member)
                     return .handled
                 })
     }

@@ -15,6 +15,12 @@ export interface TrainedWithPushDependencies {
 }
 
 /**
+ * The generation of pushes that has the 一起练 push's words (`PushGeneration`): a phone on an
+ * older build is skipped, and the notice in 通知 tells them.
+ */
+export const TRAINED_WITH_PUSH_SINCE = 3;
+
+/**
  * Tells each squadmate a 训练 names it was done with (一起练), once a post: in their 通知, and by
  * one push unless they turned off push (the `dailyProgress` switch, which covers teammates'
  * pushes). A tap opens their own 训练 to post, filled from this one; the tag never counts for
@@ -102,5 +108,6 @@ export function trainedWithNotification({
     collapseId: `trained-with-${checkIn}`,
     interruption: 'active',
     event: { kind: 'trainedWith', checkIn },
+    since: TRAINED_WITH_PUSH_SINCE,
   };
 }

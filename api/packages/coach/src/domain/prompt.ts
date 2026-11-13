@@ -9,7 +9,7 @@ import {
 } from './challenge.js';
 import type { Coach } from './coach.js';
 import { briefBlock, weekdayOf, type NoteBrief } from './member-facts.js';
-import { fileRole } from './memory.js';
+import { fileRole, sliceWhole } from './memory.js';
 import { LINE_LIMITS } from './line-limits.js';
 import type { CoachSettings } from './settings.js';
 import {
@@ -164,6 +164,40 @@ function keptStreakSection(
     : [`## 连续天数\n请假或休息的那天不断连续，也不算一天。现在${parts.join('、')}。`];
 }
 
+/** How much of each file's beginning every waking task shows, in characters. */
+export const HEAD_LIMIT = 200;
+
+/**
+ * What the coach remembers on a waking day: only each file's first lines, where the night keeps
+ * what matters most and longest, and how long the rest is. The rest is looked up with `recall`
+ * when the talk needs it (Tracy, 2026-11-10), so the coach doesn't drag every old line into what
+ * it says, or claim to remember what it doesn't.
+ */
+export function memoryIndex(files: ReadonlyMap<string, string | undefined>): string {
+  return [
+    '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
+    ...[...files].map(([path, body]) => {
+      const text = body?.trim() ?? '';
+      if (text === '') return `### ${path}（${fileRole(path)}）\n还是空的。`;
+      const head = headOf(text);
+      const rest = head.length < text.length ? `\n……（共 ${String(text.length)} 字）` : '';
+      return `### ${path}（${fileRole(path)}）\n\`\`\`\n${head}\n\`\`\`${rest}`;
+    }),
+  ].join('\n\n');
+}
+
+/** A file's first whole lines up to `HEAD_LIMIT` characters, or the first line cut there. */
+function headOf(text: string): string {
+  const lines = text.split('\n');
+  let head = '';
+  for (const line of lines) {
+    const next = head === '' ? line : `${head}\n${line}`;
+    if (next.length > HEAD_LIMIT) break;
+    head = next;
+  }
+  return head === '' ? sliceWhole(text, HEAD_LIMIT) : head;
+}
+
 /**
  * The task for one wake: what happened, the files there are, and what the coach may do this
  * time. `undefined` when there is nothing to wake for (the check-in left the squad's week).
@@ -222,7 +256,9 @@ export function taskOf({
    */
   readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
-  const filesLine = memoryBlock(files);
+  // The night tidies the whole memory, so it reads every file in full; a waking task shows each
+  // file's beginning and looks the rest up.
+  const filesLine = reason.kind === 'dream' ? memoryBlock(files) : memoryIndex(files);
   const whoIsWho = rosterText(week);
   const roster = rosterOf(week);
   const occasion = occasionBlock(occasions, backAgain);
@@ -373,6 +409,7 @@ const DREAM = [
   '- 重复的合成一条。',
   '- 前后矛盾的，留最新的。',
   '- 过时的、一时的、琐碎的，删掉。',
+  '- 每个文件最要紧、最长久的事写在最前面：白天你只看得到每个文件的开头几行。',
   '改了哪个文件，就用 rewrite_file 把那个文件整个重写一遍；没变的不用动。',
 ].join('\n');
 

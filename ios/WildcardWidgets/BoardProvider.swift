@@ -88,7 +88,8 @@ struct BoardProvider: AppIntentTimelineProvider {
             home = saved
         }
         let coach = try? await backend.coach(in: home.squad.id)
-        let hasNews = coach == nil ? false : ((try? await backend.hasUnseenCoachCards(in: home.squad.id)) ?? false)
+        let hasNews =
+            coach == nil ? false : (try? await backend.newestUnseenCoachCard(in: home.squad.id)) != nil
         let board = WidgetBoard(
             home: home, day: LocalDay(at: now, in: home.timeZone), coach: coach?.coach.id, coachHasNews: hasNews,
             health: health.workouts, putAway: health.putAway)

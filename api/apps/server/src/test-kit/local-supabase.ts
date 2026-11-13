@@ -17,11 +17,18 @@ import {
   MemberId as ProfileMember,
 } from '@wildcard/members';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import { createPlaceRatings, createPostgresPlaceRatingStore } from '@wildcard/places';
+import {
+  createPlaceRatings,
+  createPostgresPlaceRatingStore,
+  createPostgresSquadPlaceStore,
+  createSquadPlaces,
+} from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import {
   createOffSender,
   createPostgresDailyPushSettings,
+  createPostgresTeammatePushSettings,
+  createPostgresTeammatePushStore,
   createPostgresDailyPushStore,
   createPostgresDeviceStore,
   createPostgresSettingsStore,
@@ -147,9 +154,23 @@ export function weatherOn(db: Database) {
   });
 }
 
-/** Place scores on local Supabase. */
-export function placeRatingsOn(db: Database) {
-  return createPlaceRatings({ store: createPostgresPlaceRatingStore(db), clock: () => new Date() });
+/** Place scores and squads' own places on local Supabase, as the app's dependencies. */
+export function placesOn(db: Database) {
+  return {
+    placeRatings: createPlaceRatings({
+      store: createPostgresPlaceRatingStore(db),
+      clock: () => new Date(),
+    }),
+    squadPlaces: createSquadPlaces({
+      store: createPostgresSquadPlaceStore(db),
+      membership: createSquads({
+        store: createPostgresSquadStore(db),
+        inviteCodes: randomInviteCodes,
+        aiConsent: () => Promise.resolve(true),
+      }),
+      clock: () => new Date(),
+    }),
+  };
 }
 
 /** Saved places on local Supabase. */
@@ -180,6 +201,8 @@ export function pushOn(db: Database, sender: PushSender = createOffSender()) {
     settings: createPostgresSettingsStore(db),
     daily: createPostgresDailyPushStore(db),
     dailySettings: createPostgresDailyPushSettings(db),
+    teammate: createPostgresTeammatePushStore(db),
+    teammateSettings: createPostgresTeammatePushSettings(db),
     sender,
   });
 }
@@ -207,6 +230,8 @@ export const noJobs = {
   isScheduler: undefined,
   interactions: [],
   clock: () => new Date(),
+  // No sports listed: the teammate push names a sport by its id.
+  sportNames: () => Promise.resolve(new Map()),
   coachNotes: noCoachNotes,
   // No squad is suggested a higher goal: every week reads as told already.
   suggestGoal: () => Promise.resolve('taken' as const),

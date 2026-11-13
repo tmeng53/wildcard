@@ -24,6 +24,8 @@ final class PushBannerUITests: XCTestCase {
         ("push.comment.mention", 140),
         ("push.comment.reply", 89),
         ("push.coach.note", 104),
+        ("push.teammate.trained", 148),
+        ("push.teammate.trained.minutes", 149),
     ]
 
     func testEveryPushShowsItsWordsAndOpensTheApp() throws {

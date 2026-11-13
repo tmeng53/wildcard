@@ -13,9 +13,10 @@ public enum SampleBoard {
     ///   - workout: with a run Health synced today.
     ///   - posted: that run already posted from the capsule.
     ///   - size: how many in the squad, 4 to 8.
-    public static func board(on day: LocalDay, workout: Bool = false, posted: Bool = false, size: Int = 4)
-        -> WidgetBoard
-    {
+    ///   - sport: the workout's sport, a run unless asked (a long name, to see it give way).
+    public static func board(
+        on day: LocalDay, workout: Bool = false, posted: Bool = false, size: Int = 4, sport: Sport = "run"
+    ) -> WidgetBoard {
         let people = (1...min(max(size, 4), 8)).map {
             MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID())
         }
@@ -39,8 +40,8 @@ public enum SampleBoard {
             member: viewer, timeZone: .gmt,
             squad: Squad(id: today.squad, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: people, captain: viewer),
             today: today, plan: plan(of: viewer, from: monday),
-            checkIns: posted ? [checkIn(of: run(on: day), by: viewer, to: today.squad, on: day)] : [])
-        return WidgetBoard(home: home, day: day, health: workout || posted ? [run(on: day)] : [])
+            checkIns: posted ? [checkIn(of: run(on: day, sport: sport), by: viewer, to: today.squad, on: day)] : [])
+        return WidgetBoard(home: home, day: day, health: workout || posted ? [run(on: day, sport: sport)] : [])
     }
 
     /// My 训练 posted from `run`.
@@ -55,8 +56,8 @@ public enum SampleBoard {
             entry: .trained(Training(activity: activity, minutes: run.minutes, workout: run.workout)))
     }
 
-    /// A 32 minute, 5.2 km run ending at noon on `day`, on the sample home's clock (GMT).
-    private static func run(on day: LocalDay) -> ImportedWorkout {
+    /// A 32 minute, 5.2 km run (or `sport`) ending at noon on `day`, on the sample home's clock (GMT).
+    private static func run(on day: LocalDay, sport: Sport) -> ImportedWorkout {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .gmt
         let noon =
@@ -67,7 +68,7 @@ public enum SampleBoard {
                 source: WorkoutSource(provider: WorkoutSource.appleHealth, id: "sample-run"),
                 startedAt: Timestamp(noon.addingTimeInterval(-Double(seconds))), endedAt: Timestamp(noon),
                 summary: WorkoutSummary(durationSec: seconds, distanceM: 5200)),
-            activity: .sport("run"))
+            activity: .sport(sport))
     }
 
     /// Mondays, Wednesdays, Fridays and Saturdays.

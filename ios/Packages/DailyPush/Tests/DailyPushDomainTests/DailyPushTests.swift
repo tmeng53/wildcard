@@ -79,6 +79,26 @@ private func id<Tag>(_ text: String) -> ID<Tag> { ID(UUID(uuidString: text) ?? U
     #expect(quiet.nobodyPosted)
 }
 
+@Test func readsTheTeammatePushAsTheSameSquadDay() throws {
+    // As the API's teammate push sends it: the daily push's day, with the check-in it tells of.
+    let push = """
+        {"kind": "teammateCheckIn", "checkIn": "\(squat)", "squad": "s", "squadTrainedDays": 4,
+         "squadPlannedDays": 9,
+         "today": {"members": [{"id": "\(meID)"}, {"id": "\(miID)", "name": "小米"}], "more": 0, "posts": [
+           {"id": "\(squat)", "by": 1, "kind": "trained", "sport": "tennis", "minutes": 62,
+            "at": "2026-11-13T12:00:00.000Z", "reactions": [], "reactionCount": 0}]}}
+        """
+    let read = try DailyPush(event: Data(push.utf8))
+
+    #expect(read.squadWeek == WeekCount(trainedDays: 4, plannedDays: 9))
+    #expect(read.posts.map(\.entry) == [.trained(.sport("tennis"), minutes: try WorkoutMinutes(62))])
+    #expect(read.posts.first.flatMap { read.name(of: $0.author) } == "小米")
+    #expect(read.pokedBy.isEmpty)
+    #expect(throws: DailyPushError.unreadable) {
+        try DailyPush(event: Data(push.replacingOccurrences(of: "teammateCheckIn", with: "comment").utf8))
+    }
+}
+
 @Test func refusesAPushWithoutTheSquadDay() {
     #expect(throws: DailyPushError.unreadable) {
         try DailyPush(event: Data(#"{"kind": "dailyProgress", "squadTrainedDays": 1, "squadPlannedDays": 5}"#.utf8))

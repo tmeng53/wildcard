@@ -385,7 +385,7 @@ public protocol APIProtocol: Sendable {
     func completeCoachChallenge(_ input: Operations.CompleteCoachChallenge.Input) async throws -> Operations.CompleteCoachChallenge.Output
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -432,6 +432,20 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `POST /squads/{squadId}/nudges`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/nudges/post(nudgeSquadmate)`.
     func nudgeSquadmate(_ input: Operations.NudgeSquadmate.Input) async throws -> Operations.NudgeSquadmate.Output
+    /// The places the squad’s members added themselves (自建地点)
+    ///
+    /// What the place picker lists beside Apple Maps’ places, for every member to tag.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/custom-places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/get(listSquadCustomPlaces)`.
+    func listSquadCustomPlaces(_ input: Operations.ListSquadCustomPlaces.Input) async throws -> Operations.ListSquadCustomPlaces.Output
+    /// Add a place for the squad (新建地点), under an id the app made
+    ///
+    /// The whole squad sees it, and anyone in it may tag their posts with it. It never changes; the same place again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/custom-places/{placeId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/{placeId}/put(addSquadCustomPlace)`.
+    func addSquadCustomPlace(_ input: Operations.AddSquadCustomPlace.Input) async throws -> Operations.AddSquadCustomPlace.Output
     /// The places the squad’s posts were tagged with (小队地图)
     ///
     /// Only posts in the squad’s 动态 count, never where anyone’s phone was. Scores are the squad’s current members’.
@@ -1382,7 +1396,7 @@ extension APIProtocol {
     }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -1490,6 +1504,38 @@ extension APIProtocol {
         body: Operations.NudgeSquadmate.Input.Body
     ) async throws -> Operations.NudgeSquadmate.Output {
         try await nudgeSquadmate(Operations.NudgeSquadmate.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The places the squad’s members added themselves (自建地点)
+    ///
+    /// What the place picker lists beside Apple Maps’ places, for every member to tag.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/custom-places`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/get(listSquadCustomPlaces)`.
+    public func listSquadCustomPlaces(
+        path: Operations.ListSquadCustomPlaces.Input.Path,
+        headers: Operations.ListSquadCustomPlaces.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadCustomPlaces.Output {
+        try await listSquadCustomPlaces(Operations.ListSquadCustomPlaces.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Add a place for the squad (新建地点), under an id the app made
+    ///
+    /// The whole squad sees it, and anyone in it may tag their posts with it. It never changes; the same place again changes nothing, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/custom-places/{placeId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/custom-places/{placeId}/put(addSquadCustomPlace)`.
+    public func addSquadCustomPlace(
+        path: Operations.AddSquadCustomPlace.Input.Path,
+        headers: Operations.AddSquadCustomPlace.Input.Headers = .init(),
+        body: Operations.AddSquadCustomPlace.Input.Body
+    ) async throws -> Operations.AddSquadCustomPlace.Output {
+        try await addSquadCustomPlace(Operations.AddSquadCustomPlace.Input(
             path: path,
             headers: headers,
             body: body

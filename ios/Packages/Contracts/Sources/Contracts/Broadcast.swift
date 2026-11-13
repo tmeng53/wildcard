@@ -93,6 +93,9 @@ public enum AppDestination: Hashable, Sendable {
     case recap(squad: SquadID?, week: LocalDay)
     /// One post's own page.
     case post(CheckInID)
+    /// A place's own page (地点页), pushed over the tab it opened from: every place in the app
+    /// opens it.
+    case place(Place)
     /// A new 训练, filled from a teammate's that named the member as one it was done with
     /// (一起练): its sport, start, minutes and the teammate.
     case trainAlong(CheckInID)

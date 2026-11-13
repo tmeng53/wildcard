@@ -1,6 +1,7 @@
 import {
   isSameCheckIn,
   photosOf,
+  placeOf,
   recordFromDraft,
   trainedWithOf,
   type CheckInEdit,
@@ -21,9 +22,11 @@ import type {
   PhotoFiles,
   SportList,
   SquadMembership,
+  SquadPlaceOf,
   WeeklyPlanStore,
 } from '../../ports.js';
 import { checkPhotos } from '../check-photos.js';
+import { checkSquadPlace } from '../check-place.js';
 import { checkSport } from '../check-sport.js';
 import { checkTrainedWith } from '../check-trained-with.js';
 import { planTrainedDay } from '../weekly-plans.js';
@@ -35,6 +38,7 @@ interface Deps {
   readonly membership: SquadMembership;
   readonly photos: PhotoFiles;
   readonly sports: SportList;
+  readonly squadPlaceOf?: SquadPlaceOf;
   readonly plans: WeeklyPlanStore;
 }
 
@@ -110,6 +114,9 @@ export async function editCheckIn(
     inFeed: edited.inFeed,
     added: trainedWithOf(edited).filter((each) => !before.has(each)),
   });
+  if (placeOf(edited)?.squadPlaceId !== placeOf(saved)?.squadPlaceId) {
+    await checkSquadPlace(deps.squadPlaceOf, edited);
+  }
   const outcome = await deps.store.update(edited);
   if (!outcome.saved) {
     throw outcome.taken === 'workout' ? new WorkoutAlreadyPostedError() : new PhotoInUseError();

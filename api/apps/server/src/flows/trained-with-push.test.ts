@@ -71,6 +71,8 @@ describe('telling the squadmates a 训练 names', () => {
       collapseId: `trained-with-${post}`,
       interruption: 'active',
       event: { kind: 'trainedWith', checkIn: post },
+      // A build from before the 一起练 push has no words for it.
+      since: 3,
     });
     expect(kept.map(({ member, kind, subject }) => [member, kind, subject])).toStrictEqual([
       [

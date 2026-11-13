@@ -20,6 +20,13 @@ public enum PushEnvironment: String, Hashable, Sendable, CaseIterable {
 
 /// This phone, as the API keeps it for pushes.
 public struct PushDevice: Hashable, Sendable {
+    /// Which pushes this build has words for, which the API is told with the phone: a push
+    /// carries a key in the app's String Catalog, and the API sends one only to phones whose
+    /// build has it. 1 is every push from before generations; 2 adds the teammate push
+    /// (`push.teammate.…`); 3 the 一起练 push (`push.trainedWith`). A push with new words takes
+    /// the next number, here and in the API's `PushGeneration`.
+    public static let generation = 3
+
     public let token: DeviceToken
     public let environment: PushEnvironment
 

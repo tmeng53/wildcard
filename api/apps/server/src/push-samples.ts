@@ -6,6 +6,7 @@ import { SquadId, WeekStart } from '@wildcard/weekly-awards';
 import { coachNoteNotification } from './flows/coach-notes.js';
 import { commentNotification, type CommentNews } from './flows/comment-push.js';
 import { dailyProgressNotification } from './flows/daily-progress-push.js';
+import { teammateNotification } from './flows/teammate-push.js';
 import { trainedWithNotification } from './flows/trained-with-push.js';
 import { awardsReadyNotification, awardsStuckNotification } from './flows/weekly-awards.js';
 import type { PushCopyKey } from './push-copy.js';
@@ -47,6 +48,16 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
       text: '冲'.repeat(COMMENT_MAX_CHARACTERS),
       news,
     });
+  const teammate = (minutes?: number) =>
+    teammateNotification({
+      checkIn: '3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59',
+      squad,
+      nickname: longestNickname,
+      sport: '高强度间歇训练',
+      minutes,
+      ring: 'ring',
+      squadWeek: { trainedDays: 23, plannedDays: 40 },
+    });
   return {
     'push.dailyProgress': apnsPayload(
       dailyProgressNotification({
@@ -59,6 +70,8 @@ export function pushSamples(): Record<PushCopyKey, unknown> {
     'push.dailyProgress.received': apnsPayload(daily()),
     'push.dailyProgress.poke': apnsPayload(daily({ others: 0 })),
     'push.dailyProgress.poke.more': apnsPayload(daily({ others: 7 })),
+    'push.teammate.trained': apnsPayload(teammate()),
+    'push.teammate.trained.minutes': apnsPayload(teammate(600)),
     'push.comment': apnsPayload(comment('comment')),
     'push.comment.reply': apnsPayload(comment('reply')),
     'push.comment.mention': apnsPayload(comment('mention')),

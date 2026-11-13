@@ -1,3 +1,4 @@
+import { PlaceKey } from '@wildcard/place-ids';
 import { z } from 'zod';
 
 // How members rate the places they train at (Tracy, 2026-11-12): one score, 1 to 5 tickets, a
@@ -7,25 +8,7 @@ import { z } from 'zod';
 export const MemberId = z.uuid().brand<'MemberId'>();
 export type MemberId = z.infer<typeof MemberId>;
 
-/**
- * Which place: `apple:` and Apple Maps' identifier for it, as the post's place carries it. A
- * place Maps gave no identifier can't be rated.
- */
-export const PlaceKey = z
-  .string()
-  .regex(/^apple:[A-Za-z0-9._-]{1,200}$/)
-  .brand<'PlaceKey'>()
-  .meta({
-    description: "`apple:` and Apple Maps' identifier for the place.",
-    example: 'apple:I6FD7682FD36BB3BE',
-  });
-export type PlaceKey = z.infer<typeof PlaceKey>;
-
-/** The key of a place Maps gave `appleId`. */
-export function appleKey(appleId: string): PlaceKey | undefined {
-  const parsed = PlaceKey.safeParse(`apple:${appleId}`);
-  return parsed.success ? parsed.data : undefined;
-}
+export { PlaceKey };
 
 export const Stars = z.int().min(1).max(5).meta({ description: 'The score, 1 to 5.' });
 export type Stars = z.infer<typeof Stars>;

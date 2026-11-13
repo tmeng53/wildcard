@@ -21,6 +21,7 @@ import { CoachId } from '../domain/coach.js';
 import { MemberId, SquadId } from '../domain/settings.js';
 import {
   CoachAlreadyHiredError,
+  CoachChallengeDayOverError,
   CoachNoteNoChallengeError,
   CoachNoteNotFoundError,
   CoachNotOfferedError,
@@ -496,6 +497,7 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
@@ -508,6 +510,7 @@ describe('the coach', () => {
           'squad_week',
           'member_posts',
           'post_comments',
+          'recall',
           'remember',
           'edit_file',
           'member_stats',
@@ -1893,14 +1896,37 @@ describe('the coach', () => {
         .then(({ rows }) => rows.map(({ id }) => Number(id)));
       // Answered only once the note reached them.
       const early = (note: number | undefined) =>
-        activity.answerChallenge({ squad, member: mia, note: note ?? 0, answer: 'accepted' });
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: note ?? 0,
+          answer: 'accepted',
+          today: '2026-11-01',
+        });
       await expect(early(mine)).rejects.toThrow(CoachNoteNotFoundError);
       await sql`insert into public.coach_member_note_deliveries (note_id)
         select id from public.coach_member_notes where squad_id = ${squad}`.execute(trx);
       const answer = (
         member: string,
         { note, said }: { note: number | undefined; said: 'accepted' | 'declined' },
-      ) => activity.answerChallenge({ squad, member, note: note ?? 0, answer: said });
+      ) =>
+        activity.answerChallenge({
+          squad,
+          member,
+          note: note ?? 0,
+          answer: said,
+          today: '2026-11-01',
+        });
+      // Not once its day is over (已过期).
+      await expect(
+        activity.answerChallenge({
+          squad,
+          member: mia,
+          note: mine ?? 0,
+          answer: 'accepted',
+          today: '2026-11-02',
+        }),
+      ).rejects.toThrow(CoachChallengeDayOverError);
       expect(await answer(mia, { note: mine, said: 'accepted' })).toStrictEqual({
         answer: 'accepted',
       });
@@ -2331,6 +2357,7 @@ describe('the coach', () => {
         note: Number(noteOf(leo)),
         answer: 'declined',
         reason: '我鸡蛋过敏',
+        today: '2026-11-01',
       });
       // A check-in's wake that day is told why it was let go, and not to repeat it.
       const meal = randomUUID();
