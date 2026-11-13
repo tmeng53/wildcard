@@ -23,8 +23,10 @@ public enum MemberTag {}
 public enum SquadTag {}
 public enum CheckInTag {}
 public enum CommentTag {}
+public enum JoinRequestTag {}
 
 public typealias MemberID = ID<MemberTag>
 public typealias SquadID = ID<SquadTag>
 public typealias CheckInID = ID<CheckInTag>
 public typealias CommentID = ID<CommentTag>
+public typealias JoinRequestID = ID<JoinRequestTag>

@@ -143,12 +143,13 @@ struct WildcardApp: App {
         AppModel.show(CatalogClient.bundled, keepsCopy: false)
     }
 
-    /// Sign-up on the sample squad; with `-onboarding-rejoin`, for a member back in no squad, who
-    /// made their character and agreed to AI before.
+    /// Sign-up on the sample squad; `-onboarding-rejoin`: a member back in no squad, character and
+    /// AI consent kept; `-onboarding-ask`: the captain lets members in, so joining waits.
     private static func sampleSignUp() -> SignUpModel {
         SignUpModel(
             service: InMemorySignUpService.sampleSquad(
-                character: LaunchOptions.rejoins ? InMemorySignUpService.sampleCharacter : nil),
+                character: LaunchOptions.rejoins ? InMemorySignUpService.sampleCharacter : nil,
+                asksCaptain: LaunchOptions.asksCaptain),
             nickname: "", now: LaunchOptions.signUpTime, hasAgreedToAI: LaunchOptions.rejoins,
             health: sampleHealth(), location: sampleLocation)
     }

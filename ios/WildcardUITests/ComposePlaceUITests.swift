@@ -10,7 +10,7 @@ final class ComposePlaceUITests: XCTestCase {
     private static let maxDrags = 24
 
     /// 添加位置 sits on the caption's row, left of the count, and opens the map with its search
-    /// field; 取消 closes it with nothing picked.
+    /// field and 添加, off until a place is selected; 取消 closes it with nothing picked.
     func testAddLocationOpensTheMap() {
         let app = launch(extra: ["-today.cardPage", "0"])
         let checkIn = app.buttons["today.checkin"]
@@ -34,6 +34,10 @@ final class ComposePlaceUITests: XCTestCase {
         settle()
         keepScreenshot(named: "15-compose-place-sheet")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(search.frame), "the search field is cut off")
+        // A tap on a row or pin only selects it; 添加 picks, and waits for a selection.
+        let add = app.buttons["place.add"]
+        XCTAssertTrue(add.exists, "no 添加 on the map sheet")
+        XCTAssertFalse(add.isEnabled, "添加 is on with nothing selected")
 
         app.buttons["place.cancel"].tap()
         XCTAssertTrue(search.waitForNonExistence(timeout: Self.wait), "取消 didn't close the map")

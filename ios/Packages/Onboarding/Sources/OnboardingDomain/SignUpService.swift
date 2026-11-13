@@ -11,8 +11,13 @@ public protocol SignUpService: Sendable {
     /// 请假条), which joining or making one needs. Consent is the account's: asked once, and
     /// withdrawn only by deleting the account. Safe to repeat.
     func agreeToAI() async throws(SignUpError)
-    /// Joins the squad by its code. Safe to repeat.
-    func join(_ code: InviteCode) async throws(SignUpError) -> JoinedSquad
+    /// Joins the squad by its code, or, for a squad whose captain lets members in (入队需要审核),
+    /// asks them, with `note` (备注), withdrawing any request the member had waiting. Safe to repeat.
+    func join(_ code: InviteCode, note: JoinNote?) async throws(SignUpError) -> JoinOutcome
+    /// The member's newest request to join a squad, waiting or ended; nil if they never asked.
+    func joinRequest() async throws(SignUpError) -> JoinRequest?
+    /// 撤回申请: withdraws the member's waiting request. Safe to repeat.
+    func withdrawJoinRequest() async throws(SignUpError)
     /// Makes a squad with the member in it, its goal, 人均 `daysPerMember` 次, and its 比赛时区,
     /// `timeZone` (an IANA name).
     func create(named name: SquadName, daysPerMember: Int, timeZone: String) async throws(SignUpError) -> JoinedSquad
@@ -34,6 +39,12 @@ public protocol SignUpService: Sendable {
     /// out for them from the first screen; nil when it can't be read, which keeps the starter
     /// street rather than stops sign-up.
     func stock() async -> StreetStock?
+}
+
+/// What 加入小队 did: joined the squad, or asked its captain to let the member in.
+public enum JoinOutcome: Hashable, Sendable {
+    case joined(JoinedSquad)
+    case asked(JoinRequest)
 }
 
 /// What a sign-up the app was closed during had saved: the squad, and the character if it was

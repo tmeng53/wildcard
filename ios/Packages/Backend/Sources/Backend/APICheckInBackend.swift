@@ -225,7 +225,8 @@ struct SavedHome: Codable {
             Home(
                 member: MemberID(id), timeZone: zone, squad: try Squad(squad),
                 today: try SquadToday(today),
-                plan: try WeeklyPlan(plan), checkIns: try Self.merged(checkIns, week))
+                plan: try WeeklyPlan(plan), checkIns: try Self.merged(checkIns, week),
+                squadFirstWeek: try plan.squadFirstWeek.map { text throws(ContractsError) in try LocalDay(text) })
         }
     }
 

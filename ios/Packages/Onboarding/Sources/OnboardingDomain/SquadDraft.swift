@@ -42,6 +42,18 @@ public struct SquadDraft: Hashable, Sendable {
 
     /// The name once it is one the API takes.
     public var name: SquadName? { try? SquadName(typedName) }
+
+    /// 备注 as typed, to the captain of a squad whose joining needs their OK; `note` reads it.
+    public var typedNote = ""
+
+    /// The 备注 to send: nil when left empty, or when it is one the API won't take, which
+    /// `noteIsValid` says.
+    public var note: JoinNote? {
+        typedNote.isEmpty ? nil : try? JoinNote(typedNote)
+    }
+
+    /// Whether 申请加入 can go with the 备注 as typed: empty, or one line the API takes.
+    public var noteIsValid: Bool { typedNote.isEmpty || note != nil }
 }
 
 /// The squad an invite code belongs to, as 加入小队 shows it before joining.
@@ -51,16 +63,17 @@ public struct SquadPreview: Hashable, Sendable {
     public let memberCount: Int
     /// The squad has its 8 members and can't take more.
     public let isFull: Bool
-    /// The squad's goal, 人均 N 次 a week.
-    public let daysPerMember: Int
+    /// Joining asks its captain first (入队需要审核): 加入小队 becomes 申请加入, with a 备注.
+    public let needsApproval: Bool
     /// The members' characters, the earliest to join first, for their heads under the name.
     /// Members who haven't made theirs yet are left out.
     public let looks: [CharacterLook]
 
     public init(
-        code: InviteCode, name: String, memberCount: Int, isFull: Bool, daysPerMember: Int, looks: [CharacterLook]
+        code: InviteCode, name: String, memberCount: Int, isFull: Bool, needsApproval: Bool,
+        looks: [CharacterLook]
     ) {
         (self.code, self.name, self.memberCount, self.isFull) = (code, name, memberCount, isFull)
-        (self.daysPerMember, self.looks) = (daysPerMember, looks)
+        (self.needsApproval, self.looks) = (needsApproval, looks)
     }
 }

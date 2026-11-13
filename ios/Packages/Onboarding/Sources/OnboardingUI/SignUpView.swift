@@ -59,6 +59,9 @@ public struct SignUpView<SignIn: View, Tabs: View>: View {
             case .week:
                 WeekStep(model: model)
                     .transition(transition)
+            case .waiting:
+                WaitingStep(model: model)
+                    .transition(transition)
             case .scene:
                 SceneStep(model: model)
                     .transition(transition)
