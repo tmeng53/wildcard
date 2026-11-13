@@ -289,22 +289,6 @@
         }
       }
     },
-    "不用打开 App，也能看到这周练了几天、小队今天谁练了。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "See your week and who in your squad trained today without opening the app."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "不用打開 App，也能看到這週練了幾天、小隊今天誰練了。"
-          }
-        }
-      }
-    },
     "怎么加": {
       "localizations": {
         "en": {
@@ -365,22 +349,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜尋「外卡」，選大小，點「加入小工具」"
-          }
-        }
-      }
-    },
-    "小号、中号都有": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Small and medium"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "小型、中型都有"
           }
         }
       }

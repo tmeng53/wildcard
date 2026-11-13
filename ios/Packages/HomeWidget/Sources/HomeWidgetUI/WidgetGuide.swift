@@ -23,11 +23,6 @@ public struct WidgetGuide: View {
                     .typeStyle(TypeRamp.taskTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                Text(copy: "不用打开 App，也能看到这周练了几天、小队今天谁练了。", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, Space.xxs)
                 previews
                     .padding(.top, Space.l)
                 SectionLabel(Text(copy: "怎么加", bundle: .module))
@@ -61,9 +56,6 @@ public struct WidgetGuide: View {
             }
             // The widgets always wear the gym's colours on the home screen, whatever the squad's scene.
             .environment(\.sceneTheme, .gym)
-            Text(copy: "小号、中号都有", bundle: .module)
-                .typeStyle(TypeRamp.footnote)
-                .foregroundStyle(Color(role: .fgMuted, in: theme))
         }
         // Only pictures here: the widgets' own links stay on the home screen.
         .allowsHitTesting(false)
@@ -71,7 +63,7 @@ public struct WidgetGuide: View {
         .padding(.vertical, Space.m)
         .background(Color(role: .bgSubtle, in: theme), in: RoundedRectangle(cornerRadius: Radius.menu))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(copy: "小号、中号都有", bundle: .module))
+        .accessibilityLabel(Text(copy: "桌面小组件", bundle: .module))
         .accessibilityIdentifier("widgetGuide.previews")
     }
 

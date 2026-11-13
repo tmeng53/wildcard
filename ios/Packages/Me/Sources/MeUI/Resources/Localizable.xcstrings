@@ -2299,22 +2299,6 @@
         }
       }
     },
-    "每一条我们都会看" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We read every one"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每一則我們都會看"
-          }
-        }
-      }
-    },
     "喜欢外卡吗？" : {
       "localizations" : {
         "en" : {

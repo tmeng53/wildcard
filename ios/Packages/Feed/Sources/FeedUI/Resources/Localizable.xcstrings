@@ -1713,22 +1713,6 @@
         }
       }
     },
-    "点数字和人物可以换" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap the numbers or the character to change them"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點數字和人物可以換"
-          }
-        }
-      }
-    },
     "纯色" : {
       "localizations" : {
         "en" : {
