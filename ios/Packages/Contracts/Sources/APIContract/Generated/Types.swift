@@ -280,7 +280,7 @@ public protocol APIProtocol: Sendable {
     func getSquadInvite(_ input: Operations.GetSquadInvite.Input) async throws -> Operations.GetSquadInvite.Output
     /// Join a squad by invite code
     ///
-    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
@@ -292,6 +292,48 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
     func getPublicSquadInvite(_ input: Operations.GetPublicSquadInvite.Input) async throws -> Operations.GetPublicSquadInvite.Output
+    /// Whether joining the squad needs the captain’s OK
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/get(getSquadJoinApproval)`.
+    func getSquadJoinApproval(_ input: Operations.GetSquadJoinApproval.Input) async throws -> Operations.GetSquadJoinApproval.Output
+    /// Turn the captain’s OK to join on or off
+    ///
+    /// For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/put(setSquadJoinApproval)`.
+    func setSquadJoinApproval(_ input: Operations.SetSquadJoinApproval.Input) async throws -> Operations.SetSquadJoinApproval.Output
+    /// The requests waiting for the captain
+    ///
+    /// For the captain: who asked, their character and note, the earliest first.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-requests`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/get(listSquadJoinRequests)`.
+    func listSquadJoinRequests(_ input: Operations.ListSquadJoinRequests.Input) async throws -> Operations.ListSquadJoinRequests.Output
+    /// Let a member in, or turn them away
+    ///
+    /// For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-requests/{requestId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/{requestId}/put(answerSquadJoinRequest)`.
+    func answerSquadJoinRequest(_ input: Operations.AnswerSquadJoinRequest.Input) async throws -> Operations.AnswerSquadJoinRequest.Output
+    /// The member’s newest request to join a squad
+    ///
+    /// Waiting or ended, for the 等队长同意 page while they are in no squad.
+    ///
+    /// - Remark: HTTP `GET /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/get(getMyJoinRequest)`.
+    func getMyJoinRequest(_ input: Operations.GetMyJoinRequest.Input) async throws -> Operations.GetMyJoinRequest.Output
+    /// Withdraw the member’s waiting request
+    ///
+    /// Safe to repeat: with none waiting, nothing changes.
+    ///
+    /// - Remark: HTTP `DELETE /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/delete(withdrawMyJoinRequest)`.
+    func withdrawMyJoinRequest(_ input: Operations.WithdrawMyJoinRequest.Input) async throws -> Operations.WithdrawMyJoinRequest.Output
     /// Where a squad’s day and week stand
     ///
     /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday, and a member who hasn’t saved a weekly plan has the default one. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
@@ -1167,17 +1209,19 @@ extension APIProtocol {
     }
     /// Join a squad by invite code
     ///
-    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
     public func joinSquad(
         path: Operations.JoinSquad.Input.Path,
-        headers: Operations.JoinSquad.Input.Headers = .init()
+        headers: Operations.JoinSquad.Input.Headers = .init(),
+        body: Operations.JoinSquad.Input.Body? = nil
     ) async throws -> Operations.JoinSquad.Output {
         try await joinSquad(Operations.JoinSquad.Input(
             path: path,
-            headers: headers
+            headers: headers,
+            body: body
         ))
     }
     /// The squad an invite code belongs to, for anyone
@@ -1194,6 +1238,88 @@ extension APIProtocol {
             path: path,
             headers: headers
         ))
+    }
+    /// Whether joining the squad needs the captain’s OK
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/get(getSquadJoinApproval)`.
+    public func getSquadJoinApproval(
+        path: Operations.GetSquadJoinApproval.Input.Path,
+        headers: Operations.GetSquadJoinApproval.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadJoinApproval.Output {
+        try await getSquadJoinApproval(Operations.GetSquadJoinApproval.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Turn the captain’s OK to join on or off
+    ///
+    /// For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/put(setSquadJoinApproval)`.
+    public func setSquadJoinApproval(
+        path: Operations.SetSquadJoinApproval.Input.Path,
+        headers: Operations.SetSquadJoinApproval.Input.Headers = .init(),
+        body: Operations.SetSquadJoinApproval.Input.Body
+    ) async throws -> Operations.SetSquadJoinApproval.Output {
+        try await setSquadJoinApproval(Operations.SetSquadJoinApproval.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The requests waiting for the captain
+    ///
+    /// For the captain: who asked, their character and note, the earliest first.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-requests`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/get(listSquadJoinRequests)`.
+    public func listSquadJoinRequests(
+        path: Operations.ListSquadJoinRequests.Input.Path,
+        headers: Operations.ListSquadJoinRequests.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadJoinRequests.Output {
+        try await listSquadJoinRequests(Operations.ListSquadJoinRequests.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Let a member in, or turn them away
+    ///
+    /// For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-requests/{requestId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/{requestId}/put(answerSquadJoinRequest)`.
+    public func answerSquadJoinRequest(
+        path: Operations.AnswerSquadJoinRequest.Input.Path,
+        headers: Operations.AnswerSquadJoinRequest.Input.Headers = .init(),
+        body: Operations.AnswerSquadJoinRequest.Input.Body
+    ) async throws -> Operations.AnswerSquadJoinRequest.Output {
+        try await answerSquadJoinRequest(Operations.AnswerSquadJoinRequest.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The member’s newest request to join a squad
+    ///
+    /// Waiting or ended, for the 等队长同意 page while they are in no squad.
+    ///
+    /// - Remark: HTTP `GET /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/get(getMyJoinRequest)`.
+    public func getMyJoinRequest(headers: Operations.GetMyJoinRequest.Input.Headers = .init()) async throws -> Operations.GetMyJoinRequest.Output {
+        try await getMyJoinRequest(Operations.GetMyJoinRequest.Input(headers: headers))
+    }
+    /// Withdraw the member’s waiting request
+    ///
+    /// Safe to repeat: with none waiting, nothing changes.
+    ///
+    /// - Remark: HTTP `DELETE /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/delete(withdrawMyJoinRequest)`.
+    public func withdrawMyJoinRequest(headers: Operations.WithdrawMyJoinRequest.Input.Headers = .init()) async throws -> Operations.WithdrawMyJoinRequest.Output {
+        try await withdrawMyJoinRequest(Operations.WithdrawMyJoinRequest.Input(headers: headers))
     }
     /// Where a squad’s day and week stand
     ///

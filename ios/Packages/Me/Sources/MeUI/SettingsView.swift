@@ -8,10 +8,11 @@ import SwiftUI
 import UIKit
 
 /// 设置: the member's character typing at its laptop, then a plain menu of hairline rows under
-/// small group labels (偏好, 关于 with 意见反馈, 账号), with no icons, a chevron on each row that opens a page,
+/// small group labels (小队, 偏好, 关于 with 意见反馈, 账号), with no icons, a chevron on each row that opens a page,
 /// and an ink switch; 偏好's Apple 健康 and 桌面小组件 push their own pages, and 位置 asks for approximate location
 /// once, then opens iOS Settings. Signing out and deleting the account come last. It holds only the app's
-/// own settings: what belongs to the squad or the week lives with them (2026-11-02), and 球衣号码
+/// own settings: what belongs to the squad or the week lives with them (2026-11-02), with only a way
+/// to 小队设置 here (2026-11-12), and 球衣号码
 /// with the character editor (2026-11-03).
 struct SettingsView: View {
     @Bindable var model: MeModel
@@ -21,6 +22,7 @@ struct SettingsView: View {
     @State private var isHealthOpen = false
     @State private var isBirthdayOpen = false
     @State private var isWidgetGuideOpen = false
+    @State private var isSquadSettingsOpen = false
     @State private var isDemoAccountsOpen = false
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
@@ -36,6 +38,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $isBirthdayOpen) {
                 BirthdayView(model: model)
+            }
+            .navigationDestination(isPresented: $isSquadSettingsOpen) {
+                if let squadSettings = destinations.squadSettings { squadSettings }
             }
             .navigationDestination(isPresented: $isDemoAccountsOpen) {
                 if let demoAccounts = destinations.admin.demoAccounts { DemoAccountsView(model: demoAccounts) }
@@ -80,6 +85,9 @@ struct SettingsView: View {
                     MeStage(character: model.overview?.character, mood: .typing, size: CGSize(width: 72, height: 90))
                         .accessibilityHidden(true)
                 }
+                if destinations.squadSettings != nil {
+                    squadGroup
+                }
                 preferencesGroup
                 aboutGroup
                 if !destinations.admin.isEmpty {
@@ -100,6 +108,16 @@ struct SettingsView: View {
         .barTitleOnScroll(Text(copy: "设置", bundle: .module))
         .background(Color(role: .bgCanvas, in: theme))
         .accessibilityIdentifier("settings.page")
+    }
+
+    /// 小队设置, the squad's own page (邀请队友 first), for someone looking for it here (Tracy, 2026-11-12).
+    private var squadGroup: some View {
+        MenuGroup(Text(copy: "小队", bundle: .module)) {
+            ListRow(Text(copy: "小队设置", bundle: .module), showsDivider: false) {
+                isSquadSettingsOpen = true
+            }
+            .accessibilityIdentifier("me.squadSettings")
+        }
     }
 
     private var preferencesGroup: some View {

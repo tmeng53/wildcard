@@ -160,6 +160,8 @@ async function squadOf(
   });
   expect(made.status).toBe(201);
   const { inviteCode } = z.object({ inviteCode: z.string() }).parse(made.body);
+  // The friend joins straight in, without the captain's OK (入队需要审核 off).
+  await call('PUT', `/squads/${id}/join-approval`, creator.token, { version: 1, required: false });
   const joined = await call('POST', `/squad-invites/${inviteCode}/accept`, friend.token);
   expect(joined.status).toBe(201);
   return id;

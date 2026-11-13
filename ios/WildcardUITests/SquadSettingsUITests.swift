@@ -135,6 +135,9 @@ final class SquadSettingsUITests: XCTestCase {
         let row = app.buttons["squad.timeZone"]
         XCTAssertTrue(row.waitForExistence(timeout: 30), "no 比赛时区 on the captain's 小队设置")
         XCTAssertTrue(app.buttons["squad.leave"].exists, "no 退出小队 on 小队设置")
+        let invite = app.buttons["squad.preferences.invite"]
+        XCTAssertTrue(invite.exists, "no 邀请队友 on 小队设置")
+        XCTAssertLessThan(invite.frame.minY, row.frame.minY, "邀请队友 isn't 小队设置's first row")
         XCTAssertTrue(row.label.contains(region("Asia/Taipei")), "the row doesn't show the squad's zone: \(row.label)")
         XCTAssertLessThanOrEqual(row.frame.maxX, app.frame.maxX, "the 比赛时区 row runs off the screen")
         settle()
