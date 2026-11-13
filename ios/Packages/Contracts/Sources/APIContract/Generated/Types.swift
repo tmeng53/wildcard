@@ -97,7 +97,7 @@ public protocol APIProtocol: Sendable {
     func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
@@ -795,7 +795,7 @@ extension APIProtocol {
     }
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.

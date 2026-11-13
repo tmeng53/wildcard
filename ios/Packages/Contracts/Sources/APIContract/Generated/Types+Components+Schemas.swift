@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -400,7 +400,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -3144,6 +3144,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/caption`.
             public var caption: Swift.String?
+            /// Squadmates the member trained with (一起练), in the order picked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingView/trainedWith`.
+            public var trainedWith: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/TrainingView/place`.
             public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Missing when there are none.
@@ -3160,6 +3164,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
             ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             ///   - workout:
@@ -3169,6 +3174,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                trainedWith: [Swift.String]? = nil,
                 place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
                 workout: Components.Schemas.WorkoutView? = nil
@@ -3178,6 +3184,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.trainedWith = trainedWith
                 self.place = place
                 self.photos = photos
                 self.workout = workout
@@ -3188,6 +3195,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case trainedWith
                 case place
                 case photos
                 case workout
@@ -4124,6 +4132,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/caption`.
             public var caption: Swift.String?
+            /// Squadmates the member trained with (一起练), in the order picked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Training/trainedWith`.
+            public var trainedWith: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/Training/place`.
             public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Leave it out for none.
@@ -4140,6 +4152,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
             ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             ///   - workout:
@@ -4149,6 +4162,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                trainedWith: [Swift.String]? = nil,
                 place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil,
                 workout: Components.Schemas.Workout? = nil
@@ -4158,6 +4172,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.trainedWith = trainedWith
                 self.place = place
                 self.photos = photos
                 self.workout = workout
@@ -4168,6 +4183,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case trainedWith
                 case place
                 case photos
                 case workout

@@ -27,7 +27,7 @@ export type PushEnvironment = z.infer<typeof PushEnvironment>;
  * build from before a key was added has no words for it; so each phone says which generation of
  * pushes its build knows, and a push goes only to phones that know it
  * (`PushNotification.since`). 1 is every push from before generations, and what a build that
- * says nothing knows; 2 adds the teammate push. A push with new words takes the next number,
+ * says nothing knows; 2 adds the teammate push; 3 the 一起练 push. A push with new words takes the next number,
  * here and in the app (`PushDevice.generation`).
  */
 export const PushGeneration = z.int().min(1).max(32767).brand<'PushGeneration'>();

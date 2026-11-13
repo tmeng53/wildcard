@@ -208,6 +208,10 @@ struct PostCard: View {
                 if !post.checkIn.inFeed { UnpostedTag() }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
+                if case .trained(let training) = post.checkIn.entry, !training.trainedWith.isEmpty {
+                    TrainedWithTag(model: model, members: training.trainedWith.members)
+                        .padding(.top, Space.xxs)
+                }
                 Spacer(minLength: Space.xxs)
                 HStack(spacing: 0) {
                     if hasReactions {

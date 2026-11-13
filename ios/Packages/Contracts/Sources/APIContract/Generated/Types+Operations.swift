@@ -3711,7 +3711,7 @@ public enum Operations {
     }
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
@@ -3845,7 +3845,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or with a photo that isn’t uploaded
+            /// Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), newly naming someone it was done with who isn’t a squadmate it is shared to (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)/responses/400`.
             ///
@@ -4398,7 +4398,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that isn’t uploaded
+            /// Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, counted for the wrong day (after the day it was posted on or more than 7 before it), a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was done with who isn’t a squadmate it is shared to, or on one off the 动态 (`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded
             ///
             /// - Remark: Generated from `#/paths//check-ins/{id}/put(saveCheckIn)/responses/400`.
             ///
