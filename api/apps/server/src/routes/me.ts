@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { Admins } from '@wildcard/admins';
+import { AdminId, type Admins } from '@wildcard/admins';
 import {
   Birthday,
   Catchphrase,
@@ -80,6 +80,11 @@ export const Me = z
         'Whether the member is on the admin list. The app shows admins tools only they need, ' +
         'such as previewing sign-up; the admin routes check the list again themselves.',
     }),
+    isDemo: z.boolean().meta({
+      description:
+        'Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then ' +
+        'offers switching back to the admin’s own account and to their other demo accounts.',
+    }),
   })
   .openapi('Me');
 
@@ -136,9 +141,9 @@ export function me(
   deps: {
     readonly verifyToken: VerifyToken;
     readonly members: Members;
-    readonly admins: Pick<Admins, 'isAdmin'>;
+    readonly admins: Pick<Admins, 'isAdmin' | 'isDemoAccount' | 'demoAccounts'>;
     readonly unlocks: Pick<Unlocks, 'keepWorn'>;
-  } & DeleteAccountDependencies,
+  } & Omit<DeleteAccountDependencies, 'demoAccountsOf' | 'isDemoAccount'>,
 ) {
   const getMe = createRoute({
     method: 'get',
@@ -257,10 +262,11 @@ export function me(
     .openapi(getMe, async (c) => {
       const userId = c.var.caller.userId;
       const member = MemberId.parse(userId);
-      const [profile, joinedAt, isAdmin] = await Promise.all([
+      const [profile, joinedAt, isAdmin, isDemo] = await Promise.all([
         deps.members.findProfile(member),
         deps.members.joinedAt(member),
         deps.admins.isAdmin(member),
+        deps.admins.isDemoAccount(member),
       ]);
       return c.json(
         {
@@ -275,6 +281,7 @@ export function me(
                   joinedAt: joinedAt.toISOString(),
                 },
           isAdmin,
+          isDemo,
         } as const,
         200,
       );
@@ -303,7 +310,12 @@ export function me(
     })
     .openapi(deleteMe, async (c) => {
       const { appleAuthorizationCode } = c.req.valid('json');
-      await deleteAccount(deps, { member: c.var.caller.userId, appleAuthorizationCode });
+      // Whoever made demo accounts takes them along, even once off the admins list.
+      const demoAccountsOf = (member: string) => deps.admins.demoAccounts(AdminId.parse(member));
+      await deleteAccount(
+        { ...deps, demoAccountsOf, isDemoAccount: deps.admins.isDemoAccount },
+        { member: c.var.caller.userId, appleAuthorizationCode },
+      );
       return c.body(null, 204);
     });
 }

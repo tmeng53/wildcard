@@ -63,6 +63,30 @@ const summaryFields = {
     }),
   raters: z.int().min(0).meta({ description: 'No longer given: always 0.' }),
   lastAt: z.iso.datetime().meta({ description: 'When the newest post there was made, in UTC.' }),
+  members: z
+    .array(
+      z.strictObject({
+        member: z.uuid(),
+        visits: z.int().min(1).meta({ description: 'How many of the posts there are theirs.' }),
+      }),
+    )
+    .meta({
+      description:
+        '小队地图’s heads: who posted there, most posts first; one who left the squad is ' +
+        'still listed, for the app to grey.',
+    }),
+  sports: z
+    .array(
+      z.strictObject({
+        sport: SportKey,
+        customSport: z.string().optional(),
+        count: z.int().min(1),
+      }),
+    )
+    .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
+  meals: z
+    .strictObject({ healthyMeal: z.int().min(0), cheatMeal: z.int().min(0) })
+    .meta({ description: '大家在这里吃: how many of its posts were each kind of meal.' }),
 };
 
 const Visit = z
@@ -107,16 +131,6 @@ const PlaceDetailView = z
   .strictObject({
     version: bodyVersion(1),
     ...summaryFields,
-    myStars: Stars.nullable().meta({ description: 'No longer given: always null.' }),
-    sports: z
-      .array(
-        z.strictObject({
-          sport: SportKey,
-          customSport: z.string().optional(),
-          count: z.int().min(1),
-        }),
-      )
-      .meta({ description: '大家在这里练: each sport its 训练 named, most first.' }),
     meals: z
       .strictObject({
         healthyMeal: z.int().min(0),
@@ -130,6 +144,7 @@ const PlaceDetailView = z
           '大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, ' +
           '2026-11-13); a meal keeps its own 健康 and 好吃.',
       }),
+    myStars: Stars.nullable().meta({ description: 'No longer given: always null.' }),
     posts: z.array(Visit).meta({ description: '动态: the posts tagged with it, newest first.' }),
   })
   .openapi('PlaceDetail');
@@ -246,6 +261,13 @@ function wireSummary(summary: PlaceSummary) {
     stars: null,
     raters: 0,
     lastAt: summary.lastAt.toISOString(),
+    members: summary.members.map(({ member, visits }) => ({ member, visits })),
+    sports: summary.sports.map(({ sport, customSport, count }) => ({
+      sport,
+      ...(customSport === undefined ? {} : { customSport }),
+      count,
+    })),
+    meals: { healthyMeal: summary.meals.healthyMeal, cheatMeal: summary.meals.cheatMeal },
   };
 }
 
@@ -256,12 +278,6 @@ function wireDetail(
   return {
     version: 1,
     ...wireSummary(detail),
-    myStars: null,
-    sports: detail.sports.map(({ sport, customSport, count }) => ({
-      sport,
-      ...(customSport === undefined ? {} : { customSport }),
-      count,
-    })),
     meals: {
       healthyMeal: detail.meals.healthyMeal,
       cheatMeal: detail.meals.cheatMeal,
@@ -269,6 +285,7 @@ function wireDetail(
       tasty: null,
       calorieValue: null,
     },
+    myStars: null,
     posts: detail.posts.flatMap((post) => visitOf(post, { ...at, key: detail.key }) ?? []),
   };
 }

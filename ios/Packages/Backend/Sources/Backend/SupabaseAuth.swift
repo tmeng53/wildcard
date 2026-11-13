@@ -31,6 +31,9 @@ public struct SupabaseAuth: AuthProvider {
         case .apple(let identityToken, let nonce):
             grant = "id_token"
             body = ["provider": "apple", "id_token": identityToken, "nonce": nonce]
+        case .handOff(let refreshToken):
+            grant = "refresh_token"
+            body = ["refresh_token": refreshToken]
         #if DEBUG
         case .testMember(let email, let password):
             grant = "password"

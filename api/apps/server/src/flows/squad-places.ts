@@ -1,4 +1,10 @@
-import { placeOf, type CheckInRecord, type Place, type SportKey } from '@wildcard/check-ins';
+import {
+  placeOf,
+  type CheckInRecord,
+  type MemberId,
+  type Place,
+  type SportKey,
+} from '@wildcard/check-ins';
 import { placeKey } from '@wildcard/place-ids';
 import type { PlaceKey } from '@wildcard/places';
 
@@ -16,10 +22,8 @@ export interface PlaceSummary {
   /** How many people posted them (来过的队友 N 人). */
   readonly people: number;
   readonly lastAt: Date;
-}
-
-/** A place's own page: its summary and what the squad did there. */
-export interface PlaceDetail extends PlaceSummary {
+  /** Who posted there and how many times, most first (小队地图's heads). */
+  readonly members: readonly { readonly member: MemberId; readonly visits: number }[];
   /** 大家在这里练: each sport its 训练 named, most first. */
   readonly sports: readonly {
     readonly sport: SportKey;
@@ -28,6 +32,10 @@ export interface PlaceDetail extends PlaceSummary {
   }[];
   /** 大家在这里吃: how many of its posts were each kind of meal. */
   readonly meals: { readonly healthyMeal: number; readonly cheatMeal: number };
+}
+
+/** A place's own page: its summary and what the squad did there. */
+export interface PlaceDetail extends PlaceSummary {
   /** The posts tagged with it, newest first. */
   readonly posts: readonly CheckInRecord[];
 }
@@ -63,12 +71,44 @@ export function summaryOf({
   const [newest] = posts;
   const place = newest === undefined ? undefined : placeOf(newest);
   if (newest === undefined || place === undefined) throw new Error('A place has a post');
+  const members = new Map<MemberId, number>();
+  const sports = new Map<
+    string,
+    { sport: SportKey; customSport: string | undefined; count: number }
+  >();
+  let healthyMeal = 0;
+  let cheatMeal = 0;
+  for (const post of posts) {
+    members.set(post.member, (members.get(post.member) ?? 0) + 1);
+    switch (post.kind) {
+      case 'trained': {
+        const { sport, customSport } = post.training;
+        const name = `${sport}\n${customSport ?? ''}`;
+        const seen = sports.get(name) ?? { sport, customSport, count: 0 };
+        sports.set(name, { ...seen, count: seen.count + 1 });
+        break;
+      }
+      case 'healthyMeal':
+        healthyMeal += 1;
+        break;
+      case 'cheatMeal':
+        cheatMeal += 1;
+        break;
+      case 'disclaimer':
+        break;
+    }
+  }
   return {
     key,
     place,
     visits: posts.length,
-    people: new Set(posts.map((post) => post.member)).size,
+    people: members.size,
     lastAt: newest.createdAt,
+    members: [...members]
+      .map(([member, visits]) => ({ member, visits }))
+      .sort((a, b) => b.visits - a.visits),
+    sports: [...sports.values()].sort((a, b) => b.count - a.count),
+    meals: { healthyMeal, cheatMeal },
   };
 }
 
@@ -80,34 +120,5 @@ export function detailOf({
   readonly key: PlaceKey;
   readonly posts: readonly CheckInRecord[];
 }): PlaceDetail {
-  const sports = new Map<
-    string,
-    { sport: SportKey; customSport: string | undefined; count: number }
-  >();
-  let healthyMeal = 0;
-  let cheatMeal = 0;
-  for (const post of posts) {
-    switch (post.kind) {
-      case 'trained': {
-        const { sport, customSport } = post.training;
-        const name = `${sport}\n${customSport ?? ''}`;
-        const seen = sports.get(name) ?? { sport, customSport, count: 0 };
-        sports.set(name, { ...seen, count: seen.count + 1 });
-        break;
-      }
-      case 'healthyMeal':
-      case 'cheatMeal':
-        if (post.kind === 'healthyMeal') healthyMeal += 1;
-        else cheatMeal += 1;
-        break;
-      case 'disclaimer':
-        break;
-    }
-  }
-  return {
-    ...summaryOf({ key, posts }),
-    sports: [...sports.values()].sort((a, b) => b.count - a.count),
-    meals: { healthyMeal, cheatMeal },
-    posts,
-  };
+  return { ...summaryOf({ key, posts }), posts };
 }

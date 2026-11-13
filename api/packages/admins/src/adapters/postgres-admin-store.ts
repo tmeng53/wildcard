@@ -43,5 +43,29 @@ export function createPostgresAdminStore(db: Kysely<AdminTables>): AdminStore {
         action: AdminAction.parse(row.action),
       }));
     },
+    addDemoAccount: async ({ admin, member, at }) => {
+      await db
+        .insertInto('admin_demo_accounts')
+        .values({ member_id: member, admin_id: admin, made_at: at })
+        .execute();
+    },
+    demoAccounts: async (admin) => {
+      const rows = await db
+        .selectFrom('admin_demo_accounts')
+        .select('member_id')
+        .where('admin_id', '=', admin)
+        .orderBy('made_at')
+        .orderBy('member_id')
+        .execute();
+      return rows.map(({ member_id }) => member_id);
+    },
+    demoAccountOwner: async (member) => {
+      const row = await db
+        .selectFrom('admin_demo_accounts')
+        .select('admin_id')
+        .where('member_id', '=', member)
+        .executeTakeFirst();
+      return row === undefined ? undefined : AdminId.parse(row.admin_id);
+    },
   };
 }
