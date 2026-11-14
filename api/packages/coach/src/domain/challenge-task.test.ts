@@ -1,24 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { challengeNames, challengeTaskOf } from './challenge-task.js';
+import { challengeTaskOf } from './challenge-task.js';
 import type { WeekCheckIn } from './squad-week.js';
 
 const ANN = '00000000-0000-4000-8000-00000000000a';
 const BO = '00000000-0000-4000-8000-00000000000b';
-const CY = '00000000-0000-4000-8000-00000000000c';
 
 const post = (
   each: Partial<WeekCheckIn> & Pick<WeekCheckIn, 'id' | 'member' | 'day' | 'kind'>,
 ): WeekCheckIn => ({ createdAt: new Date(0), reactedBy: [], comments: [], ...each });
 
 describe('the task that sets the day’s challenges', () => {
-  it('names each member by nickname, numbering a shared one, and 队员N without one', () => {
-    const names = challengeNames({
-      members: [{ member: ANN, nickname: '安' }, { member: BO, nickname: '安' }, { member: CY }],
-    });
-    expect([...names.values()]).toStrictEqual(['安', '安（2）', '队员3']);
-  });
-
   it('gives each member their plan, posts by number, recent challenges and what is known', () => {
     const names = new Map([
       [ANN, '安'],

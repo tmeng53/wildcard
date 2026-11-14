@@ -59,26 +59,6 @@ export function challengeText({ title, amount, unit }: Challenge): string {
   return amount === undefined || unit === undefined ? title : `${title} ${String(amount)} ${unit}`;
 }
 
-/**
- * The challenge the member took up today, as a check-in's wake tells the coach; one they let go or
- * never answered is never told there.
- */
-export function challengeSection({
-  challenge,
-  completion,
-}: {
-  readonly challenge: Challenge;
-  readonly completion?: ChallengeCompletion | undefined;
-}): string {
-  const said =
-    completion?.by === 'member'
-      ? '说已经完成了'
-      : completion?.by === 'coach'
-        ? '完成了（你记的）'
-        : '接受了';
-  return ['## 你今天给他的挑战', `- 挑战：${challengeText(challenge)}`, `- 他：${said}`].join('\n');
-}
-
 /** A note that reached its member, with how its challenge went if it set one. */
 export interface DeliveredNote {
   readonly member: string;

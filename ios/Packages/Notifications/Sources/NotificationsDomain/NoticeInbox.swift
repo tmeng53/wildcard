@@ -48,8 +48,11 @@ public final class NoticeInbox {
         notices.contains { isNewerThanSeen($0) && !opened.contains($0.id) }
     }
 
-    /// The newest notice the member has seen, as the server last said or as this page marked.
+    /// The newest notice the member has seen: the newer of what the server last said and what
+    /// this phone marked, since a page read before a mark reached the server still has the older.
     private var seenThrough: NoticeID?
+    /// A mark the server hasn't taken yet (the network failed): sent again on the next load.
+    private var unsentSeen: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
     /// Notices the member opened from the home's banner (its button) or their row in 通知.
@@ -151,9 +154,11 @@ public final class NoticeInbox {
             let live = notices.filter { notice in found.first.map { notice.id > $0.id } ?? false }
             notices = live + found
             next = page.next
-            seenThrough = page.seenThrough
+            // Never goes back, as on the server: an older answer must not light the dot again.
+            seenThrough = [seenThrough, page.seenThrough].compactMap(\.self).max()
             moreFailed = false
             phase = .current
+            await sendSeen()
         } catch {
             // A read cut short (the page closed, the app went to the background) didn't fail.
             guard mine == generation, !Task.isCancelled else { return }
@@ -256,7 +261,27 @@ public final class NoticeInbox {
     private func markNewestSeen() async {
         guard let newest = notices.first?.id, seenThrough.map({ newest > $0 }) ?? true else { return }
         seenThrough = newest
-        try? await source.markSeen(through: newest)
+        unsentSeen = newest
+        await sendSeen()
+    }
+
+    /// Tells the server what was marked and not yet taken. It runs in a task of its own: the page
+    /// that marked is often gone a moment later (back, a row tapped, another tab), and that
+    /// cancels its task, which would cancel the request with it and leave the server behind.
+    private func sendSeen() async {
+        guard let through = unsentSeen else { return }
+        let source = source
+        let done = await Task { () -> Bool in
+            do throws(NotificationsError) {
+                try await source.markSeen(through: through)
+                return true
+            } catch {
+                // With no session there is nothing to send again.
+                return error == .signedOut
+            }
+        }.value
+        guard done, unsentSeen == through else { return }
+        unsentSeen = nil
     }
 
     /// Loads the next, older page, as the member scrolls to the end or tries again after a

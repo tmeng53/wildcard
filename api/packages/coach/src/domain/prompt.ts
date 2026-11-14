@@ -2,10 +2,8 @@ import { writeIn } from '@wildcard/language-model';
 
 import {
   challengeHow,
-  challengeSection,
   challengeText,
   type Challenge,
-  type ChallengeCompletion,
   type DayChallengeFacts,
   type DeliveredNote,
 } from './challenge.js';
@@ -19,7 +17,6 @@ import {
   checkInBlock,
   checkInTitle,
   dayWords,
-  languageOf,
   rosterOf,
   rosterText,
   type SquadWeek,
@@ -90,7 +87,7 @@ export interface CoachThread {
 }
 
 /**
- * A post's comment section as the model reads it, one line each in order: who said it (队员N,
+ * A post's comment section as the model reads it, one line each in order: who said it (a name,
  * 你, or another coach by name), when, and whom a member's comment replies to or @s.
  */
 export function saidLines(
@@ -146,26 +143,6 @@ export function memoryBlock(files: ReadonlyMap<string, string | undefined>): str
   ].join('\n\n');
 }
 
-/**
- * The streaks a 请假条's author has going, as a fact: a streak runs through a day with one, neither breaking nor
- * counting it. Nothing when no streak of two days or more is going.
- */
-function keptStreakSection(
-  kept: { readonly training?: number; readonly meals?: number } | undefined,
-): string[] {
-  const parts = [
-    ...(kept?.training !== undefined && kept.training >= 2
-      ? [`连续训练 ${String(kept.training)} 天`]
-      : []),
-    ...(kept?.meals !== undefined && kept.meals >= 2
-      ? [`连续健康餐 ${String(kept.meals)} 天`]
-      : []),
-  ];
-  return parts.length === 0
-    ? []
-    : [`## 连续天数\n请假、休息或放纵餐的那天不断连续，也不算一天。现在${parts.join('、')}。`];
-}
-
 /** How much of each file's beginning every waking task shows, in characters. */
 export const HEAD_LIMIT = 200;
 
@@ -209,19 +186,14 @@ export function taskOf({
   week,
   files,
   recentNotes,
-  thread,
-  recentEmoji = [],
   talks = [],
-  talkWith,
   noteTo = [],
   yesterday,
   pastDays,
   occasions = [],
   backAgain = false,
   handover,
-  challenge,
   gifting,
-  keptStreaks,
   setChallenges,
 }: {
   readonly reason: WakeReason;
@@ -230,17 +202,8 @@ export function taskOf({
   readonly files: ReadonlyMap<string, string | undefined>;
   /** The squad's last 战术板 lines, newest first. */
   readonly recentNotes: readonly { readonly day: string; readonly text: string }[];
-  /** On a reply's wake, what was said under its check-in. */
-  readonly thread?: CoachThread;
-  /** On a check-in's wake, the emoji the coach reacted with lately, newest first. */
-  readonly recentEmoji?: readonly string[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
-  /**
-   * On a check-in's or a reply's wake, what the member it answers and the coach said to each
-   * other under other posts over the last day.
-   */
-  readonly talkWith?: { readonly member: string; readonly talks: readonly DayTalk[] };
   /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
@@ -253,15 +216,8 @@ export function taskOf({
   readonly backAgain?: boolean;
   /** On a waking task, whom the coach took over from and the letter it was left, if any. */
   readonly handover?: TookOver;
-  /** On a check-in's wake, the challenge its author took up today, and whether they did it. */
-  readonly challenge?: {
-    readonly challenge: Challenge;
-    readonly completion?: ChallengeCompletion;
-  };
   /** On a daily wake, the gift pool and who may get one this week. */
   readonly gifting?: GiftOptions;
-  /** On a 请假条's wake, its author's streaks it kept going. */
-  readonly keptStreaks?: { readonly training?: number; readonly meals?: number };
   /**
    * On a daily wake, the challenge set for each member today, by member id, before the coach
    * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
@@ -274,57 +230,6 @@ export function taskOf({
   const whoIsWho = rosterText(week);
   const roster = rosterOf(week);
   const occasion = [...occasionBlock(occasions, backAgain), ...handoverBlock(handover)];
-  if (reason.kind === 'checkIn') {
-    const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
-    if (checkIn === undefined) return undefined;
-    const emoji =
-      recentEmoji.length === 0
-        ? '## 你最近点过的表情\n还没点过。'
-        : `## 你最近点过的表情（新的在前）\n${recentEmoji.join(' ')}`;
-    return [
-      '# 有人打卡',
-      checkInBlock(checkIn, { roster, heading: '## 这条打卡：' }),
-      ...talkWithBlock(talkWith, roster),
-      ...keptStreakSection(keptStreaks),
-      ...(challenge === undefined ? [] : [challengeSection(challenge)]),
-      ...occasion,
-      whoIsWho,
-      emoji,
-      languageSection(languageOf(week, checkIn.member)),
-      filesLine,
-    ].join('\n\n');
-  }
-  if (reason.kind === 'comment') {
-    const checkIn = week.checkIns.find(({ id }) => id === reason.checkIn);
-    if (checkIn === undefined || thread === undefined) return undefined;
-    const answering = checkIn.comments.find(({ id }) => id === reason.comment);
-    // Without this the model answers from the words alone and guesses what the photos show.
-    const photoCount = checkIn.photos?.length ?? 0;
-    const photos =
-      photoCount > 0
-        ? [
-            `## 照片\n这条打卡有 ${String(photoCount)} 张照片，你还没看过。要回的这句问到照片里的东西，就先用 look_at_photos 看。`,
-          ]
-        : [];
-    // Who wrote the line to answer, named up front: the post's author is often someone else.
-    const askedBy = thread.said.find((each) => each.answering === true)?.by;
-    const asker =
-      askedBy !== undefined && askedBy !== 'you' && 'member' in askedBy
-        ? (roster.get(askedBy.member) ?? '有人')
-        : '有人';
-    return [
-      `# ${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? `${asker}在评论里 @ 你` : `${asker}回复你`}`,
-      checkInBlock(checkIn, { roster, heading: '## 这条打卡：', comments: false }),
-      `## 评论区（先后顺序）\n${saidLines(thread.said, roster).join('\n')}`,
-      ...talkWithBlock(talkWith, roster),
-      `## 现在\n${thread.now}`,
-      ...photos,
-      ...occasion,
-      whoIsWho,
-      ...(answering === undefined ? [] : [languageSection(languageOf(week, answering.member))]),
-      filesLine,
-    ].join('\n\n');
-  }
   if (reason.kind === 'joined') {
     const name = roster.get(reason.member);
     const brief = noteTo.find((each) => each.name === name);
@@ -350,6 +255,8 @@ export function taskOf({
       `## 整理记性\n${DREAM}`,
     ].join('\n\n');
   }
+  // A reply's task is `replyTaskOf`'s.
+  if (reason.kind !== 'daily') return undefined;
   const notes = [
     '## 战术板',
     `- ${writeIn(week.language ?? 'zh-Hans')}`,
@@ -389,11 +296,6 @@ function setChallengesBlock(
         `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
     ),
   ].join('\n');
-}
-
-/** The language a line to one member is written in, as its own section. */
-function languageSection(language: Parameters<typeof writeIn>[0]): string {
-  return `## 语言\n${writeIn(language)}`;
 }
 
 /**
@@ -454,6 +356,23 @@ function handoverBlock(handover: TookOver | undefined): string[] {
       // No letter may be one still being written (交接中), so none is said, never 「没留信」.
       ...(letter === undefined ? [] : [`${from}走时给全队留了一封信，大家都看过：\n「${letter}」`]),
     ].join('\n'),
+  ];
+}
+
+/** What is special about today as plain lines: the occasions, a coach back again, a handover. */
+export function todayLines({
+  occasions,
+  backAgain,
+  handover,
+}: {
+  readonly occasions: readonly string[];
+  readonly backAgain: boolean;
+  readonly handover?: TookOver | undefined;
+}): string[] {
+  return [
+    ...occasions,
+    ...(backAgain ? [BACK_AGAIN] : []),
+    ...handoverBlock(handover).map((block) => block.replace(/^## 你接手这个小队\n/, '')),
   ];
 }
 
@@ -619,24 +538,6 @@ function talksBlock(
   const heading = `## 和你的对话（${span}，打卡下面，先后顺序）`;
   if (talks.length === 0) return `${heading}\n没人在打卡下面和你说话。`;
   return [heading, ...talkBlocks(talks, roster)].join('\n\n');
-}
-
-/**
- * What the member a line answers and the coach said to each other under other posts over the
- * last day, under each post: nothing when they said nothing.
- */
-function talkWithBlock(
-  talkWith: { readonly member: string; readonly talks: readonly DayTalk[] } | undefined,
-  roster: ReadonlyMap<string, string>,
-): string[] {
-  if (talkWith === undefined || talkWith.talks.length === 0) return [];
-  const name = roster.get(talkWith.member) ?? '队员';
-  return [
-    [
-      `## 你和${name}在别的打卡下说过的话（过去一天，先后顺序）`,
-      ...talkBlocks(talkWith.talks, roster),
-    ].join('\n\n'),
-  ];
 }
 
 /** Each post's talk: its title, then the coach's reply and what was said, one a line. */

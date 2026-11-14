@@ -14,6 +14,7 @@ import type {
   MemberFacts,
   PlanDayFacts,
   SquadWeekSource,
+  TrainedTime,
   WeekCheckIn,
 } from '@wildcard/coach';
 import type { Members } from '@wildcard/members';
@@ -82,6 +83,7 @@ export function coachSquadWeek(deps: {
           : { postedDay: record.postedDay }),
         createdAt: record.createdAt,
         ...postedTimeOf(record.createdAt, timeZones.get(record.member)),
+        ...trainedTimeOf(record, timeZones.get(record.member)),
         kind: record.kind,
         // A check-in only recorded (发布到动态 off) counts with what was done (its sport and
         // minutes, as squadmates see on the member's card); its line and photos stay its author's.
@@ -121,8 +123,36 @@ export function coachSquadWeek(deps: {
 /** When a check-in was posted on its author's own clock, `HH:MM`, when their zone is known. */
 function postedTimeOf(createdAt: Date, zone: string | undefined): Pick<WeekCheckIn, 'postedTime'> {
   if (zone === undefined) return {};
-  const { hour, minute } = wallClockAt(createdAt, zone);
-  return { postedTime: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` };
+  return { postedTime: clockWords(wallClockAt(createdAt, zone)) };
+}
+
+/**
+ * When a 训练 was done on its author's clock, apart from when it was posted: the Apple Health
+ * workout's start and end, else the start they typed.
+ */
+function trainedTimeOf(
+  record: CheckInRecord,
+  zone: string | undefined,
+): { readonly trainedTime?: TrainedTime } {
+  if (record.kind !== 'trained') return {};
+  const { workout, startTime } = record.training;
+  if (workout !== undefined && zone !== undefined) {
+    const from = wallClockAt(new Date(workout.startedAt), zone);
+    const to = wallClockAt(new Date(workout.endedAt), zone);
+    return {
+      trainedTime: {
+        from: clockWords(from),
+        to: clockWords(to),
+        ...(from.day === record.day ? {} : { day: from.day }),
+        source: 'health',
+      },
+    };
+  }
+  return startTime === undefined ? {} : { trainedTime: { from: startTime, source: 'typed' } };
+}
+
+function clockWords({ hour, minute }: { readonly hour: number; readonly minute: number }): string {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
 /** An entry without its member's line or place. */
