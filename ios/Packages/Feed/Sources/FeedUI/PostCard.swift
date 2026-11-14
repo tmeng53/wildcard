@@ -206,6 +206,7 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
+                if let time = WorkoutTime(post.checkIn) { WorkoutTimeTag(time: time) }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 if case .trained(let training) = post.checkIn.entry, !training.trainedWith.isEmpty {
@@ -288,6 +289,56 @@ struct PostCard: View {
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .fixedSize(horizontal: false, vertical: true)
     }
+}
+
+/// 下午8:03–8:23 with a clock, in the place row's look: when a 训练 was done, apart from when it
+/// was posted. A Health workout's moments are on the viewer's clock; a start picked by hand is the
+/// author's own hour and minute, drawn on GMT so no zone moves it.
+struct WorkoutTimeTag: View {
+    @Environment(\.sceneTheme) private var theme
+    @Environment(\.locale) private var locale
+    @Environment(\.timeZone) private var timeZone
+    let time: WorkoutTime
+
+    var body: some View {
+        HStack(spacing: Space.xxs) {
+            Image(systemName: "clock")
+                .font(.system(size: Sizing.smallIcon - 3, weight: .semibold))
+                .accessibilityHidden(true)
+            Text(verbatim: words)
+                .typeStyle(TypeRamp.footnote)
+                .lineLimit(1)
+        }
+        .foregroundStyle(Color(role: .fgMuted, in: theme))
+        .frame(minHeight: Sizing.smallTag)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("post.workoutTime")
+    }
+
+    private var words: String {
+        switch time {
+        case .moments(let start, let end):
+            return Self.span(start.date, end.date, in: timeZone, locale: locale)
+        case .wallClock(let start, let minutes):
+            guard let begun = Self.gmt.date(from: DateComponents(year: 2001, hour: start.hour, minute: start.minute))
+            else { return "" }
+            guard let minutes else {
+                return begun.formatted(Date.FormatStyle(locale: locale, timeZone: .gmt).hour().minute())
+            }
+            return Self.span(begun, begun.addingTimeInterval(TimeInterval(minutes * 60)), in: .gmt, locale: locale)
+        }
+    }
+
+    /// 下午8:03–8:23, the system's way of saying a span of the same day once.
+    private static func span(_ start: Date, _ end: Date, in zone: TimeZone, locale: Locale) -> String {
+        (start..<max(start, end)).formatted(Date.IntervalFormatStyle(locale: locale, timeZone: zone).hour().minute())
+    }
+
+    private static let gmt: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        return calendar
+    }()
 }
 
 /// 补周日的: which day a 补打卡 counts for, after the post's time.

@@ -101,7 +101,8 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
     }
 
-    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first, across the card. The newest posts on top
+    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first, across the card, and when it
+    /// was done under its byline. The newest posts on top
     /// are a run from Apple Health, a 请假条 and a salad, so the strip is scrolled to, a little at a
     /// time, until one clears the tab bar.
     func testScoreStrip() {
@@ -128,6 +129,20 @@ final class FeedUITests: XCTestCase {
             .containing(.any, identifier: "strip.duration").firstMatch
         XCTAssertEqual(strip.frame.minX, card.frame.minX, accuracy: 1, "the 成绩条 doesn't reach the card's left edge")
         XCTAssertEqual(strip.frame.maxX, card.frame.maxX, accuracy: 1, "the 成绩条 doesn't reach the card's right edge")
+
+        // Under the byline, when the run happened (it ended at 7:00), apart from when it was posted.
+        let time = card.descendants(matching: .any).matching(identifier: "post.workoutTime").firstMatch
+        drags = 0
+        while drags < Self.maxSwipes, !(time.exists && time.frame.maxY <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -120)))
+            drags += 1
+        }
+        XCTAssertTrue(time.exists, "a 训练 from Apple Health doesn't say when it was done")
+        settle()
+        keepScreenshot(named: "44-feed-workout-time")
+        XCTAssertTrue(time.label.contains("7:00"), "the workout's span isn't its own: \(time.label)")
+        XCTAssertTrue(card.frame.contains(time.frame), "the workout's time spills out of its card: \(time.frame)")
     }
 
     /// A post without a cover shows the shared colour block with its words, its minutes on the
