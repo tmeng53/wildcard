@@ -1,5 +1,6 @@
 import AvatarArt
 import AvatarDomain
+import Foundation
 import Testing
 
 /// Every bundled coach builds, plays each move from rest, and stays on the canvas.
@@ -54,4 +55,38 @@ import Testing
 @Test func aCoachWithoutArtHasNone() {
     #expect(!CoachCharacter.exists("not-a-coach"))
     #expect(throws: AvatarError.self) { try CoachCharacter.figure("not-a-coach") }
+}
+
+/// A coach without clips of its own for the home's moments plays what it already plays: its idle
+/// standing, a move it shares for each moment, and nothing for a moment with no stand-in.
+@Test func aCoachWithoutItsOwnMomentsFallsBack() throws {
+    #expect(try CoachCharacter.stance(coach: "xiaohun") == CoachCharacter.clip(.idle, coach: "xiaohun"))
+    #expect(try CoachCharacter.stance(coach: "xiaohun", night: true) == CoachCharacter.clip(.idle, coach: "xiaohun"))
+    let expected: [CoachCharacter.Moment: String?] = [
+        .myTraining: "cheer", .healthyMeal: "whistle", .cheatMeal: "whistle", .dayOff: "whistle",
+        .celebration: "clap", .challengeAccepted: "cheer", .morning: nil, .lightsOn: nil,
+    ]
+    for moment in CoachCharacter.Moment.allCases {
+        #expect(CoachCharacter.clip(moment, coach: "xiaohun")?.name == expected[moment] ?? nil, "\(moment)")
+    }
+    #expect(CoachCharacter.habits(coach: "xiaohun").isEmpty)
+}
+
+/// A coach's own clips, put on the server, stand in for every fallback: its signature stance,
+/// its doze at night, its answer to a moment, and each habit.
+@Test func aCoachsOwnClipsPlayFirst() throws {
+    let coach = "test-\(UUID().uuidString.lowercased())"
+    let clips = ArtTree.downloaded.appending(path: "coaches/\(coach)/clips")
+    try FileManager.default.createDirectory(at: clips, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: clips.deletingLastPathComponent()) }
+    for (name, loops) in [
+        ("home", true), ("doze", true), ("thumbs-up", false), ("habit-snack", false), ("habit-yawn", false),
+    ] {
+        let json = #"{"version":1,"name":"\#(name)","duration":1,"loops":\#(loops),"tracks":[]}"#
+        try Data(json.utf8).write(to: clips.appending(path: "\(name).json"))
+    }
+    #expect(try CoachCharacter.stance(coach: coach).name == "home")
+    #expect(try CoachCharacter.stance(coach: coach, night: true).name == "doze")
+    #expect(CoachCharacter.clip(.healthyMeal, coach: coach)?.name == "thumbs-up")
+    #expect(CoachCharacter.habits(coach: coach).map(\.name) == ["habit-snack", "habit-yawn"])
 }

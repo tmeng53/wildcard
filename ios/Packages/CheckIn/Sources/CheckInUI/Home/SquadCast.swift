@@ -57,6 +57,9 @@ final class SquadCast {
     private(set) var vacancy: StagePoint?
     /// Until when the coach's last move plays, so its whistle for news doesn't cut one short.
     @ObservationIgnored private var coachBusyUntil = Date.distantPast
+    /// Whether each coach's character stands in its night stance (the lights off) or its day one,
+    /// from the moment it was made, so a coach walking in on 换教练 keeps its own.
+    @ObservationIgnored private var coachStances: [CoachID: Bool] = [:]
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
     /// What the coach last saw on the home, for its next cue, and whose eyes they were.
@@ -93,8 +96,9 @@ final class SquadCast {
     ) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
         let standing = handover?.leaving ?? speaker
-        coach = sideline(standing)
-        incoming = handover.flatMap { sideline($0.coming) }
+        coach = sideline(standing, night: phase == .night)
+        stand(coach, night: phase == .night)
+        incoming = handover.flatMap { sideline($0.coming, night: phase == .night) }
         self.handover = incoming == nil ? nil : handover
         vacancy = hiring && coach == nil && incoming == nil ? stage.layout.sideline : nil
         watch(home, by: standing)
@@ -153,6 +157,7 @@ final class SquadCast {
     /// after another, into their day pose; switched off, they doze off into sleep. Under Reduce
     /// Motion their pose just swaps. Whoever trains keeps training.
     func switchLights(_ flip: LightsFlip) {
+        stand(coach, night: !flip.isOn, moving: !flip.reduceMotion)
         for (index, mate) in sleepers.enumerated() {
             let pose = stage.pose(of: mate.member, at: flip.isOn ? .day : .night)
             guard let loop = try? pose.loop(persona: mate.persona, species: mate.species) else { continue }
@@ -201,7 +206,7 @@ final class SquadCast {
 
     /// The coach on this scene's sideline, its character made once per coach: the one that walked
     /// in keeps its own as it steps onto the spot.
-    private func sideline(_ speaker: CoachSpeaker?) -> Coach? {
+    private func sideline(_ speaker: CoachSpeaker?, night: Bool) -> Coach? {
         guard let speaker, let spot = stage.layout.sideline else { return nil }
         if let made = [coach, incoming].compactMap { $0 }.first(where: { $0.speaker.id == speaker.id }) {
             return Coach(speaker: speaker, player: made.player, spot: spot)
@@ -209,8 +214,9 @@ final class SquadCast {
         let id = speaker.id.rawValue
         guard CoachCharacter.exists(id),
             let player = try? CharacterPlayer(
-                figure: CoachCharacter.figure(id), idle: CoachCharacter.clip(.idle, coach: id))
+                figure: CoachCharacter.figure(id), idle: CoachCharacter.stance(coach: id, night: night))
         else { return nil }
+        coachStances[speaker.id] = night
         return Coach(speaker: speaker, player: player, spot: spot)
     }
 
@@ -233,8 +239,21 @@ final class SquadCast {
         guard let cue = CoachCue.after(before, now: now) else { return }
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(Motion.ringFill))
-            self?.play(cue == .clap ? .clap : .whistle)
+            self?.answer(cue)
         }
+    }
+
+    /// The coach takes the stance it stands in on the home: its signature loop by day, its doze
+    /// at night with the lights off, jolting awake when they go on.
+    private func stand(_ coach: Coach?, night: Bool, moving: Bool = true) {
+        guard let coach else { return }
+        let id = coach.speaker.id
+        guard let before = coachStances[id], before != night,
+            let stance = try? CoachCharacter.stance(coach: id.rawValue, night: night),
+            (try? coach.player.wear(coach.player.figure, idle: stance)) != nil
+        else { return }
+        coachStances[id] = night
+        if before && !night && moving { play(.lightsOn) }
     }
 
     /// The coach whistles because its page has news, unless another of its moves is still playing
@@ -245,9 +264,17 @@ final class SquadCast {
     }
 
     private func play(_ move: CoachCharacter.Move, now: Date = .now) {
-        guard let coach, let clip = try? CoachCharacter.clip(move, coach: coach.speaker.id.rawValue),
-            (try? coach.player.play(clip, now: now)) != nil
-        else { return }
+        guard let coach, let clip = try? CoachCharacter.clip(move, coach: coach.speaker.id.rawValue) else { return }
+        play(clip, now: now)
+    }
+
+    private func play(_ moment: CoachCharacter.Moment, now: Date = .now) {
+        guard let coach, let clip = CoachCharacter.clip(moment, coach: coach.speaker.id.rawValue) else { return }
+        play(clip, now: now)
+    }
+
+    private func play(_ clip: Clip, now: Date) {
+        guard let coach, (try? coach.player.play(clip, now: now)) != nil else { return }
         coachBusyUntil = now.addingTimeInterval(clip.duration)
     }
 
@@ -295,6 +322,45 @@ final class SquadCast {
         case .deadpan: String(copy: "可以", bundle: .module)
         case .shy: String(copy: "（小声）加油", bundle: .module)
         }
+    }
+}
+
+/// The coach's moves on the home beyond its stance (Tracy, 2026-11-14).
+extension SquadCast {
+    /// The coach's answer to a cue: its own move for the moment, else one every coach shares.
+    fileprivate func answer(_ cue: CoachCue) {
+        switch cue {
+        case .whistle: play(.whistle)
+        case .clap: play(.clap)
+        case .myTraining: play(.myTraining)
+        case .healthyMeal: play(.healthyMeal)
+        case .cheatMeal: play(.cheatMeal)
+        case .dayOff: play(.dayOff)
+        }
+    }
+
+    /// The coach claps along as the squad celebrates together.
+    func coachClapsAlong() {
+        play(.celebration)
+    }
+
+    /// The coach pumps its fist: I just accepted its challenge for today.
+    func coachCheersTheChallenge() {
+        play(.challengeAccepted)
+    }
+
+    /// The coach stretches with me on my first open of the day.
+    func coachStretches() {
+        play(.morning)
+    }
+
+    /// One of the coach's habits, picked by `pick` from those it has, while nothing else plays
+    /// and the coaches aren't changing places; nothing for a coach without any.
+    func coachDoesAHabit(now: Date = .now, pick: ([Clip]) -> Clip? = { $0.randomElement() }) {
+        guard handover == nil, now >= coachBusyUntil, let coach,
+            let habit = pick(CoachCharacter.habits(coach: coach.speaker.id.rawValue))
+        else { return }
+        play(habit, now: now)
     }
 }
 #endif

@@ -3,11 +3,13 @@ import Contracts
 import Foundation
 import Testing
 
-private func post(_ number: Int, by member: MemberID) throws -> CheckIn {
+private let yoga = CheckIn.Entry.trained(Training(activity: .sport("yoga")))
+
+private func post(_ number: Int, by member: MemberID, _ entry: CheckIn.Entry = yoga) throws -> CheckIn {
     CheckIn(
         id: CheckInID(id(number)), member: member, day: tuesday,
         createdAt: Timestamp(millisecondsSince1970: 1_792_500_000_000 + Int64(number)),
-        audience: try Audience([squadID]), entry: .trained(Training(activity: .sport("yoga"))))
+        audience: try Audience([squadID]), entry: entry)
 }
 
 private func home(posts: [CheckIn], mine: Int = 1, squad: Int = 14) -> Home {
@@ -21,10 +23,35 @@ private func cue(from before: Home?, to now: Home) -> CoachCue? {
     CoachCue.after(before.map(CoachCue.Sighting.init), now: CoachCue.Sighting(now))
 }
 
-@Test func theCoachWhistlesWhenAPostArrives() throws {
-    let first = try post(1, by: mate)
-    #expect(cue(from: home(posts: [first]), to: home(posts: [first, try post(2, by: myID)])) == .whistle)
+@Test func theCoachWhistlesWhenATeammatesTrainingArrives() throws {
+    let first = try post(1, by: myID)
+    #expect(cue(from: home(posts: [first]), to: home(posts: [first, try post(2, by: mate)])) == .whistle)
     #expect(cue(from: home(posts: [first]), to: home(posts: [first])) == nil)
+}
+
+@Test func theCoachCheersMyOwnTraining() throws {
+    let first = try post(1, by: mate)
+    #expect(cue(from: home(posts: [first]), to: home(posts: [first, try post(2, by: myID)])) == .myTraining)
+}
+
+@Test func theCoachAnswersEachKindOfPost() throws {
+    let first = try post(1, by: mate)
+    let kinds: [(CheckIn.Entry, CoachCue)] = [
+        (.healthyMeal(Meal()), .healthyMeal), (.cheatMeal(Meal()), .cheatMeal),
+        (.disclaimer(try Disclaimer("加班")), .dayOff),
+    ]
+    for (entry, expected) in kinds {
+        for author in [mate, myID] {
+            let next = [first, try post(2, by: author, entry)]
+            #expect(cue(from: home(posts: [first]), to: home(posts: next)) == expected)
+        }
+    }
+}
+
+@Test func theCoachAnswersTheNewestOfSeveralPosts() throws {
+    let first = try post(1, by: mate)
+    let next = [first, try post(3, by: myID, .cheatMeal(Meal())), try post(2, by: mate)]
+    #expect(cue(from: home(posts: [first]), to: home(posts: next)) == .cheatMeal)
 }
 
 @Test func theCoachStaysQuietTheFirstTimeItLooks() throws {
@@ -32,8 +59,8 @@ private func cue(from before: Home?, to now: Home) -> CoachCue? {
 }
 
 @Test func theCoachClapsWhenAWeekReachesItsGoal() throws {
-    let first = try post(1, by: mate)
-    let next = [first, try post(2, by: myID)]
+    let first = try post(1, by: myID)
+    let next = [first, try post(2, by: mate)]
     // My week: 4 of 5 to 5 of 5; the clap wins over the post's whistle.
     #expect(cue(from: home(posts: [first], mine: 4), to: home(posts: next, mine: 5)) == .clap)
     // The squad's: 21 of 22 to 22 of 22.
