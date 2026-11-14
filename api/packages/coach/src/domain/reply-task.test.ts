@@ -106,7 +106,7 @@ describe('the reply step', () => {
     expect(task).toBe(
       [
         '# 米亚发了动态2\n现在是 10-28 周三 08:05（小队时间）。',
-        '## 动态2 · 米亚 · 坦白放纵餐\n- 10-28 周三 08:00 发（米亚当地时间）\n- 写的：「炸鸡」\n- 照片 2 张，你还没看过（look_at_photos）',
+        '## 动态2 · 10-28 周三 · 米亚 · 坦白放纵餐\n- 发帖：本人当地 08:00\n- 写的：「炸鸡」\n- 照片 2 张，你还没看过（look_at_photos）',
         [
           '## 米亚',
           '- 今天的计划：力量',
@@ -144,7 +144,7 @@ describe('the reply step', () => {
     );
     expect(task.split('\n\n').slice(0, 3)).toStrictEqual([
       '# 里奥在动态1下面回复你\n现在是 10-28 周三 08:05（小队时间）。',
-      '## 动态1 · 米亚 · 训练：跑步 30 分钟\n- 10-27 周二 08:00 发（米亚当地时间）\n- 写的：「腿废了」',
+      '## 动态1 · 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 发帖：本人当地 08:00\n- 运动：几点练的不知道（发帖时间不是运动时间）\n- 写的：「腿废了」',
       '## 评论区（先后顺序）\n- 你：「跑得好」\n- 10-27 周二 09:00 里奥（回复你）：「你也跑吗」（要回的这句）',
     ]);
     expect(task).toContain('## 里奥\n- 你对里奥的了解：还没记过。');
@@ -168,6 +168,30 @@ describe('the reply step', () => {
       '\n\n## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。\n\n',
     );
     expect(replyTaskOf(facts({ keptStreaks: { training: 1 } }))).not.toContain('连续');
+  });
+
+  it('tells when a post went up apart from when the 训练 was done (2026-11-14)', () => {
+    // A walk at 21:05 posted at 23:30 is not one at 23:30.
+    const walk: WeekCheckIn = {
+      ...run,
+      sport: '快走',
+      minutes: 20,
+      postedTime: '23:30',
+      trainedTime: { from: '21:05', to: '21:25', source: 'health' },
+    };
+    expect(replyTaskOf(facts({ post: walk, to: mia }))).toContain(
+      '\n- 发帖：本人当地 23:30\n- 运动：本人当地 21:05–21:25（Apple 健康记的）\n',
+    );
+    // Done the evening before it counts for, as the member typed it.
+    const typed: WeekCheckIn = {
+      ...walk,
+      trainedTime: { from: '22:40', day: '2026-10-26', source: 'typed' },
+    };
+    expect(replyTaskOf(facts({ post: typed, to: mia }))).toContain(
+      '\n- 运动：本人当地 10-26 周一 22:40 开始（他自己填的）\n',
+    );
+    // A meal has no 运动 line.
+    expect(replyTaskOf(facts())).not.toContain('- 运动');
   });
 
   it('writes to a member in their app’s language', () => {

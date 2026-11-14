@@ -102,10 +102,20 @@ describe('the squad’s week as the coach reads it', () => {
       values (${shanghai.userId}, 'Asia/Shanghai'), (${newYork.userId}, 'America/New_York')`.execute(
       db,
     );
-    const post = async ({ member, day, at }: { member: string; day: string; at: string }) => {
+    const post = async ({
+      member,
+      day,
+      at,
+      payload = { version: 1, sport: 'run' },
+    }: {
+      member: string;
+      day: string;
+      at: string;
+      payload?: Record<string, unknown>;
+    }) => {
       const id = randomUUID();
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
-        values (${id}, ${member}, ${day}, ${at}, 'trained', '{"version":1,"sport":"run"}')`.execute(
+        values (${id}, ${member}, ${day}, ${at}, 'trained', ${JSON.stringify(payload)}::jsonb)`.execute(
         db,
       );
       await sql`insert into public.check_in_squads (check_in_id, squad_id, position)
@@ -118,7 +128,19 @@ describe('the squad’s week as the coach reads it', () => {
       day: '2026-08-04',
       at: '2026-08-04T15:40:00.000Z',
     });
-    await post({ member: newYork.userId, day: '2026-08-05', at: '2026-08-05T09:10:00.000Z' });
+    // Shanghai's was walked 21:05 to 21:25 by Apple Health; New York typed a 05:00 start.
+    await sql`insert into public.check_in_workouts
+        (check_in_id, member_id, provider, provider_workout_id, started_at, ended_at, summary)
+      values (${late}, ${shanghai.userId}, 'apple_health', 'w-late',
+        '2026-08-04T13:05:00.000Z', '2026-08-04T13:25:00.000Z', '{"version":1,"durationSec":1200}')`.execute(
+      db,
+    );
+    await post({
+      member: newYork.userId,
+      day: '2026-08-05',
+      at: '2026-08-05T09:10:00.000Z',
+      payload: { version: 1, sport: 'run', startTime: '05:00' },
+    });
     await post({ member: noProfile.userId, day: '2026-08-05', at: '2026-08-05T10:00:00.000Z' });
     await sql`insert into public.check_in_reactions (check_in_id, member_id, emoji, reacted_at)
       values (${late}, ${noProfile.userId}, '🔥', '2026-08-05T01:00:00.000Z'),
@@ -133,15 +155,27 @@ describe('the squad’s week as the coach reads it', () => {
       clock: () => now,
     })({ squad: SquadId.parse(squad), weekStart: '2026-08-03' });
     expect(
-      week.checkIns.map(({ member, postedTime, reactedBy }) => ({ member, postedTime, reactedBy })),
+      week.checkIns.map(({ member, postedTime, trainedTime, reactedBy }) => ({
+        member,
+        postedTime,
+        trainedTime,
+        reactedBy,
+      })),
     ).toStrictEqual([
       {
         member: shanghai.userId,
         postedTime: '23:40',
+        // When it was done, apart from when it went up (2026-11-14).
+        trainedTime: { from: '21:05', to: '21:25', source: 'health' },
         reactedBy: [newYork.userId, noProfile.userId],
       },
-      { member: newYork.userId, postedTime: '05:10', reactedBy: [] },
-      { member: noProfile.userId, postedTime: undefined, reactedBy: [] },
+      {
+        member: newYork.userId,
+        postedTime: '05:10',
+        trainedTime: { from: '05:00', source: 'typed' },
+        reactedBy: [],
+      },
+      { member: noProfile.userId, postedTime: undefined, trainedTime: undefined, reactedBy: [] },
     ]);
   });
 

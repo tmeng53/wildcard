@@ -47,7 +47,13 @@ export {
 export type { CoachLetter } from './domain/letter.js';
 export { fitsLine, LINE_LIMITS, longestLine, type LineKind } from './domain/line-limits.js';
 export { CoachEmoji, type CoachAnswer, type CoachReply } from './domain/reply.js';
-export type { CheckInKind, SquadWeek, WeekCheckIn, WeekComment } from './domain/squad-week.js';
+export type {
+  CheckInKind,
+  SquadWeek,
+  TrainedTime,
+  WeekCheckIn,
+  WeekComment,
+} from './domain/squad-week.js';
 export type { MemberFacts, PlanDayFacts } from './domain/member-facts.js';
 export type {
   AgentRun,

@@ -3,7 +3,7 @@ import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 import { challengeText, type Challenge, type ChallengeCompletion } from './challenge.js';
 import type { Coach } from './coach.js';
 import { planIndexOf, type NoteBrief, type PlanDayFacts } from './member-facts.js';
-import { dayWords, postWhat, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import { dayWords, postWhat, timeLines, type SquadWeek, type WeekCheckIn } from './squad-week.js';
 
 // The reply step (Tracy, 2026-11-14: one prompt for answering a post and answering a comment,
 // written from first principles): the coach's soul and what a good reply is, then a task with
@@ -139,12 +139,10 @@ function postBlock(
   post: WeekCheckIn,
   { number, name }: { readonly number: string; readonly name: (member: string) => string },
 ): string {
-  const lines = [`## ${number} · ${name(post.member)} · ${kindWords(post)}`];
-  if (post.postedDay !== undefined && post.postedDay !== post.day) {
-    lines.push(`- 补打卡：算 ${dayWords(post.day)} 的，${dayWords(post.postedDay)} 才发`);
-  } else if (post.postedTime !== undefined) {
-    lines.push(`- ${dayWords(post.day)} ${post.postedTime} 发（${name(post.member)}当地时间）`);
-  }
+  const lines = [
+    `## ${number} · ${dayWords(post.day)} · ${name(post.member)} · ${kindWords(post)}`,
+    ...timeLines(post),
+  ];
   if (post.place !== undefined) lines.push(`- 地点：${post.place}`);
   if (post.text !== undefined) lines.push(`- 写的：「${post.text}」`);
   const photos = post.photos?.length ?? 0;

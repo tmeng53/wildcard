@@ -20,6 +20,12 @@ export interface WeekCheckIn {
    * zone is known.
    */
   readonly postedTime?: string;
+  /**
+   * When a 训练 itself was done on the member's own clock, apart from when it was posted
+   * (2026-11-14: a walk posted at 23:30 was told as one at 23:30): from the Apple Health workout
+   * it was posted from, or the start the member typed.
+   */
+  readonly trainedTime?: TrainedTime;
   readonly kind: CheckInKind;
   /** A 练了's sport, by its name. */
   readonly sport?: string;
@@ -41,6 +47,47 @@ export interface WeekCheckIn {
    * words and photos stay with its author and the coach never answers under it.
    */
   readonly unposted?: true;
+}
+
+/** When a 训练 was done, on the member's own clock. */
+export interface TrainedTime {
+  /** `HH:MM`. */
+  readonly from: string;
+  /** `HH:MM`, when known (a workout from Apple Health). */
+  readonly to?: string;
+  /** The day it started, `YYYY-MM-DD`, when that isn't the check-in's day. */
+  readonly day?: string;
+  /** `health` for an Apple Health workout, `typed` for a start the member typed. */
+  readonly source: 'health' | 'typed';
+}
+
+/**
+ * When it was posted and when the 训练 was done, as lines the model reads apart, so it never takes
+ * the one for the other: `- 发帖：本人当地 23:30`, `- 运动：本人当地 21:05–21:25（Apple 健康记的）`.
+ */
+export function timeLines(checkIn: WeekCheckIn): string[] {
+  const lines: string[] = [];
+  if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
+    lines.push(
+      `- 补打卡：算 ${dayWords(checkIn.day)} 的，${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
+    );
+  } else if (checkIn.postedTime !== undefined) {
+    lines.push(`- 发帖：本人当地 ${checkIn.postedTime}`);
+  }
+  if (checkIn.kind !== 'trained' || checkIn.restDay === true) return lines;
+  const done = checkIn.trainedTime;
+  if (done === undefined) {
+    // Said only beside a time it was posted, which it is never to be taken for.
+    if (checkIn.postedTime !== undefined)
+      lines.push('- 运动：几点练的不知道（发帖时间不是运动时间）');
+  } else {
+    const day = done.day === undefined ? '' : `${dayWords(done.day)} `;
+    const span = done.to === undefined ? `${done.from} 开始` : `${done.from}–${done.to}`;
+    lines.push(
+      `- 运动：本人当地 ${day}${span}（${done.source === 'health' ? 'Apple 健康记的' : '他自己填的'}）`,
+    );
+  }
+  return lines;
 }
 
 /** A comment on a check-in. */
@@ -184,14 +231,7 @@ export function checkInBlock(
     readonly comments?: boolean | 'below';
   },
 ): string {
-  const lines = [`${heading}${checkInTitle(checkIn, roster)}`];
-  if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
-    lines.push(
-      `- 补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
-    );
-  } else if (checkIn.postedTime !== undefined) {
-    lines.push(`- 本人当地 ${checkIn.postedTime} 发`);
-  }
+  const lines = [`${heading}${checkInTitle(checkIn, roster)}`, ...timeLines(checkIn)];
   if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
   if (checkIn.place !== undefined) lines.push(`- 地点：「${checkIn.place}」`);
   if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);

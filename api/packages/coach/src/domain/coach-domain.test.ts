@@ -201,14 +201,14 @@ describe('the squad’s week, as the model reads it', () => {
     const backdated = { ...first, comments: [], reactedBy: [], postedDay: '2026-10-29' };
     const roster = rosterOf(week);
     expect(checkInBlock(backdated, { roster })).toBe(
-      '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 补打卡：10-29 周四 才发\n- 写的：「腿废了」',
+      '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 补打卡：算 10-27 周二 的，10-29 周四 才发\n- 写的：「腿废了」',
     );
     // With the author's zone known, the time on their clock too.
     expect(checkInBlock({ ...backdated, postedTime: '23:40' }, { roster })).toContain(
-      '\n- 补打卡：10-29 周四 本人当地 23:40 才发\n',
+      '\n- 补打卡：算 10-27 周二 的，10-29 周四 本人当地 23:40 才发\n',
     );
     expect(checkInBlock({ ...first, postedTime: '23:40' }, { roster })).toContain(
-      '\n- 本人当地 23:40 发\n',
+      '\n- 发帖：本人当地 23:40\n',
     );
     expect(weekText({ ...week, name: '周末不睡懒觉', checkIns: [] })).toBe(
       [

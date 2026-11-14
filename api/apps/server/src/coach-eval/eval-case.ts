@@ -31,6 +31,17 @@ const CheckIn = z.strictObject({
     .string()
     .regex(/^\d\d:\d\d$/)
     .optional(),
+  trainedTime: z
+    .strictObject({
+      from: z.string().regex(/^\d\d:\d\d$/),
+      to: z
+        .string()
+        .regex(/^\d\d:\d\d$/)
+        .optional(),
+      day: z.iso.date().optional(),
+      source: z.enum(['health', 'typed']),
+    })
+    .optional(),
   kind: z.enum(['trained', 'healthyMeal', 'cheatMeal', 'disclaimer']),
   sport: z.string().optional(),
   minutes: z.int().optional(),

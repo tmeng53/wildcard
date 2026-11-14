@@ -983,8 +983,11 @@ async function briefsOf(
     members,
     day,
     record = false,
+    weather: withWeather = true,
   }: {
     readonly record?: boolean;
+    /** Whether to read the weather, which only the day's notes use. */
+    readonly weather?: boolean;
     readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
@@ -998,7 +1001,7 @@ async function briefsOf(
       : await deps.memberFacts({ squad, members, weekStart: week.weekStart }).catch(() => []);
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
-    members.length === 0
+    members.length === 0 || !withWeather
       ? new Map<string, WeatherWords>()
       : await deps.weatherOf({ members, day }).catch(() => new Map<string, WeatherWords>());
   return members.flatMap((member): NoteBrief[] => {
@@ -1556,6 +1559,7 @@ async function replyFactsOf(
     roster,
     members: [to],
     day,
+    weather: false,
   });
   const name = roster.get(to);
   const pagePath = name === undefined ? undefined : `people/${name}.md`;
