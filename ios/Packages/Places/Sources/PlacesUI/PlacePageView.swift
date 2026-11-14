@@ -92,11 +92,7 @@ public struct PlacePageView<Trailing: View, Note: View>: View {
 extension PlacePageView where Trailing == EmptyView, Note == EmptyView {
     /// A page with nothing at the bar's right or under the name.
     public init(store: PlacePageStore, today: LocalDay, openPost: @escaping (CheckInID) -> Void) {
-        self.init(store: store, today: today, openPost: openPost) {
-            EmptyView()
-        } note: {
-            EmptyView()
-        }
+        self.init(store: store, today: today, openPost: openPost, trailing: EmptyView.init, note: EmptyView.init)
     }
 }
 
