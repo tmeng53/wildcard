@@ -1,6 +1,6 @@
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
-import { challengeText, type Challenge, type DayChallengeFacts } from './challenge.js';
+import { challengeText, type Challenge } from './challenge.js';
 import { memberBlocks, todayHeading, type ChallengeMember } from './challenge-task.js';
 import type { Coach } from './coach.js';
 import { giftBlock, type DayTalk, type GiftOptions } from './prompt.js';
@@ -28,8 +28,6 @@ export interface NoteFacts {
   readonly members: readonly ChallengeMember[];
   /** The posts a member's block may list, oldest first. */
   readonly posts: readonly WeekCheckIn[];
-  /** The challenges of the last days, with how each went. */
-  readonly challenges: readonly DayChallengeFacts[];
   /** Today's challenge each member was set, by member id. */
   readonly set: ReadonlyMap<string, Challenge>;
   /** The talk under posts over the last day, where the coach was in it. */
@@ -49,8 +47,10 @@ export function noteTaskOf(facts: NoteFacts): {
   readonly numbered: ReadonlyMap<string, WeekCheckIn>;
 } {
   const { day, names, members, set, talks } = facts;
+  // How past challenges went is the challenge run's to weigh; a note told it nags about them.
   const { blocks, numbered } = memberBlocks({
     ...facts,
+    challenges: [],
     more: (member, numberOf) => {
       const lines: string[] = [];
       const challenge = set.get(member);

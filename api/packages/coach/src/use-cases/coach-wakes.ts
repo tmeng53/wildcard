@@ -82,6 +82,8 @@ const AT_ONCE = 4;
 /** How many of its last 战术板 lines a coach sees, so it doesn't repeat itself. */
 const RECENT_NOTES = 7;
 
+/** How many of its own last lines a reply reads, so it says something new. */
+const RECENT_LINES = 6;
 /** How many of its last reactions a coach sees on a check-in's wake, so it varies them. */
 const RECENT_EMOJI = 8;
 
@@ -830,6 +832,7 @@ async function think(
         ? { relaying: 'off' as const }
         : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
+      challenges: () => challengesToday(deps, { squad: wake.squad, day }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
       noteTo,
@@ -1301,6 +1304,16 @@ function dayBefore(day: string, days: number): string {
 }
 
 /** The photos of the check-in a wake is about, to look at on demand, when it has any. */
+/** Today's challenges in the squad, only of members who agree to AI use. */
+async function challengesToday(
+  deps: CoachWakesDependencies,
+  { squad, day }: { readonly squad: SquadId; readonly day: string },
+): Promise<readonly DayChallengeFacts[]> {
+  const set = await deps.stores.memberNotes.challengesOn({ squad, day });
+  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
+  return set.filter(({ member }) => consented.has(member));
+}
+
 function photosOf(
   photoUrls: CoachPhotoUrls,
   { week, wake }: { readonly week: SquadWeek; readonly wake: NewWake },
@@ -1618,6 +1631,11 @@ async function replyFactsOf(
           limit: RECENT_EMOJI,
         })
       : [];
+  const recentLines = await deps.stores.replies.recentLines({
+    squad: wake.squad,
+    coach: coach.id,
+    limit: RECENT_LINES,
+  });
   return {
     kind: reason.kind,
     week,
@@ -1625,6 +1643,7 @@ async function replyFactsOf(
     numbers,
     post,
     to,
+    recentLines,
     now: clockWords(now, zone),
     at: answering?.at ?? post.createdAt,
     ...(thread === undefined

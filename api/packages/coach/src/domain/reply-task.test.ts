@@ -54,6 +54,7 @@ function facts(more: Partial<ReplyFacts> = {}): ReplyFacts {
     day: '2026-10-28',
     talkedUnder: [],
     today: [],
+    recentLines: [],
     recentEmoji: [],
     language: 'zh-Hans',
     ...more,

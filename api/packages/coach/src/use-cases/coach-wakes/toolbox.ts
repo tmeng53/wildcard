@@ -10,7 +10,13 @@ import {
   storedPathOf,
   type StoredPath,
 } from '../../domain/memory.js';
-import { Challenge, CHALLENGE_AMOUNT_MAX, challengeText } from '../../domain/challenge.js';
+import {
+  Challenge,
+  CHALLENGE_AMOUNT_MAX,
+  challengeHow,
+  challengeText,
+  type DayChallengeFacts,
+} from '../../domain/challenge.js';
 import { fitsLine, limitWords } from '../../domain/line-limits.js';
 import type { GiftOptions } from '../../domain/prompt.js';
 import { PostNumbers } from '../../domain/reply-task.js';
@@ -260,7 +266,10 @@ export function toolbox({
   to,
   relaying = 'nothing',
   numbers = new PostNumbers(),
+  challenges,
 }: {
+  /** On a check-in's or a reply's wake, today's challenges in the squad, looked up on demand. */
+  readonly challenges?: () => Promise<readonly DayChallengeFacts[]>;
   /** Each post's number for the run, the same as the task's. */
   readonly numbers?: PostNumbers;
   readonly week: SquadWeek;
@@ -573,10 +582,52 @@ export function toolbox({
       }),
     );
   }
+  if (replying && challenges !== undefined) tools.push(dayChallenge(draft.steps, roster, challenges));
   if (photos !== undefined && (kind === 'checkIn' || kind === 'comment')) {
     tools.push(lookAtPhotos(draft.steps, photos));
   }
   return tools;
+}
+
+/**
+ * `day_challenge`: a member's challenge today and how it stands, looked up only when a post or
+ * comment is about it (Tracy, 2026-11-14: told it in every task, the coach brought it up under
+ * every post).
+ */
+function dayChallenge(
+  steps: WakeStep[],
+  roster: Roster,
+  challenges: () => Promise<readonly DayChallengeFacts[]>,
+): CoachTool {
+  return defineTool(steps, {
+    name: 'day_challenge',
+    reads: true,
+    description:
+      '查一个队员今天的挑战：标题和数量、挑战卡上的小字、他接没接、完没完成。挑战每天早上定，在他自己的挑战卡上，他随时看得到，所以平时回复里不用提。有人在这里问到挑战，或者这条动态说的就是在做挑战，才查。今天没给他定就返回没有。',
+    parameters: z.object({
+      user_id: z.string().describe('查谁：他的 user_id，任务里名字后面括号里的那串'),
+    }),
+    run: async ({ user_id: userId }) => {
+      const id = memberOf(roster, userId);
+      if (id === undefined) {
+        return `没有 user_id 是「${userId}」的人。小队的人：${peopleOf(roster)}。`;
+      }
+      let today: readonly DayChallengeFacts[];
+      try {
+        today = await challenges();
+      } catch {
+        return '挑战现在查不到，先不提。';
+      }
+      const found = today.find(({ member }) => member === id);
+      if (found === undefined) return `${personOf(roster, id)} 今天没有挑战。`;
+      const { challenge } = found;
+      return [
+        `${personOf(roster, id)} 今天的挑战：${challengeText(challenge)}`,
+        ...(challenge.line === undefined ? [] : [`- 挑战卡上的小字：「${challenge.line}」`]),
+        `- ${challengeHow(found)}`,
+      ].join('\n');
+    },
+  });
 }
 
 /** The longest line a coach writes of what a member asked of the app. */

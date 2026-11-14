@@ -105,6 +105,8 @@ export interface ReplyFacts {
   readonly page?: { readonly path: string; readonly body: string | undefined };
   /** What is special about today, one line each (a holiday, a change of coach). */
   readonly today: readonly string[];
+  /** The lines the coach wrote lately in the squad, under any post, newest first. */
+  readonly recentLines: readonly string[];
   /** The emoji the coach reacted with lately, newest first. */
   readonly recentEmoji: readonly string[];
   readonly language: ReaderLanguage;
@@ -132,6 +134,15 @@ export function replyTaskOf(facts: ReplyFacts): string {
       ? []
       : [['## 今天', ...facts.today.map((line) => `- ${line}`)].join('\n')]),
     `## 小队的人（括号里是 user_id）\n${peopleOf(roster)}。\n小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。`,
+    ...(facts.recentLines.length === 0
+      ? []
+      : [
+          [
+            '## 你最近在小队里说过的话（新的在前）',
+            ...facts.recentLines.map((line) => `- 「${line}」`),
+            '这些大家都看过了：里面有过的说法、梗和招牌，这次不用。',
+          ].join('\n'),
+        ]),
     ...(kind === 'checkIn'
       ? [
           `## 你最近点过的表情\n${facts.recentEmoji.length === 0 ? '还没点过。' : facts.recentEmoji.join(' ')}`,

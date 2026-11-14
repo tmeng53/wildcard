@@ -24,6 +24,8 @@ export function lineProblem(text: string, kind: LineKind): string | undefined {
   if (tooLong !== undefined) return tooLong;
   if (/队员\s*[0-9０-９]+/.test(text))
     return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
+  // No coach says it (Tracy, 2026-11-10): held here, so no prompt has to forbid it.
+  if (/[稳穩]/.test(text)) return '这句里有「稳」字，教练都不说这个字，换个说法。';
   return undefined;
 }
 

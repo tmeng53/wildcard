@@ -50,6 +50,9 @@ export interface TrialOutcome {
   readonly emoji?: string;
   /** Its answer to the comment. */
   readonly answer?: string;
+  /** On a morning, the 战术板 line and each member's note, by member id. */
+  readonly note?: string;
+  readonly memberNotes?: readonly { readonly member: string; readonly text: string }[];
   /** The memory files it changed, as saved. */
   readonly files: readonly { readonly path: string; readonly body: string }[];
   /** What it passed on to the team. */
@@ -80,6 +83,8 @@ export async function runTrial(
   let reply: { text: string | undefined; emoji: string | undefined } | undefined;
   let answer: string | undefined;
   let feedback: string | undefined;
+  let note: string | undefined;
+  const memberNotes: { member: string; text: string }[] = [];
   let usage: TokenUsage = { requests: 0, inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 };
   let queued: Parameters<CoachStores['wakes']['enqueue']>[0] = [];
   // What happened to the wake, which the stores and the agent below are told.
@@ -132,9 +137,18 @@ export async function runTrial(
         return Promise.resolve();
       },
     },
-    notes: { save: () => Promise.resolve(true), recent: () => Promise.resolve([]) },
+    notes: {
+      save: ({ text }) => {
+        note = text;
+        return Promise.resolve(true);
+      },
+      recent: () => Promise.resolve([]),
+    },
     memberNotes: {
-      save: nothing,
+      save: ({ member, text }) => {
+        memberNotes.push({ member, text });
+        return Promise.resolve(undefined);
+      },
       deliveredBetween: () => Promise.resolve([]),
       challengesOn: ({ day }) =>
         Promise.resolve(
@@ -172,6 +186,14 @@ export async function runTrial(
             const parsed = CoachEmoji.safeParse(each.emoji);
             return parsed.success && (each.coach ?? coach) === coach ? [parsed.data] : [];
           }),
+        ),
+      recentLines: ({ limit }) =>
+        Promise.resolve(
+          [...testCase.replies, ...testCase.answers]
+            .filter((each) => (each.coach ?? coach) === coach)
+            .toSorted((a, b) => (b.at?.getTime() ?? 0) - (a.at?.getTime() ?? 0))
+            .flatMap(({ text }) => (text === undefined ? [] : [text]))
+            .slice(0, limit),
         ),
     },
     answers: {
@@ -348,6 +370,8 @@ export async function runTrial(
     ...(reply?.text === undefined ? {} : { reply: reply.text }),
     ...(reply?.emoji === undefined ? {} : { emoji: reply.emoji }),
     ...(answer === undefined ? {} : { answer }),
+    ...(note === undefined ? {} : { note }),
+    ...(memberNotes.length === 0 ? {} : { memberNotes }),
     files,
     ...(feedback === undefined ? {} : { feedback }),
     steps,
