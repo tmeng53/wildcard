@@ -125,7 +125,9 @@ export async function runTrial(
         if (run.claimed) return Promise.resolve([]);
         run.claimed = true;
         const own = queued.filter(
-          ({ reason }) => testCase.wake.kind !== 'challenges' || reason.kind === 'daily',
+          ({ reason }) =>
+            (testCase.wake.kind !== 'challenges' && testCase.wake.kind !== 'daily') ||
+            reason.kind === 'daily',
         );
         return Promise.resolve(own.slice(0, 1).map((wake) => ({ ...wake, id: 1 })));
       },

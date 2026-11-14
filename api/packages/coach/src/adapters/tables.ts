@@ -185,6 +185,7 @@ export interface CoachSettings {
   holidays: Generated<Json>;
   model: string;
   note_hour: Generated<number>;
+  note_rules: string;
   only_row: Generated<boolean>;
   reasoning: Generated<string>;
   reply_rules: string;

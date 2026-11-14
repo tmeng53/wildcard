@@ -38,7 +38,8 @@ export function getCoachSettings({ settings }: CoachToolDependencies) {
       'hired a coach), the model (openai/…), the rules every coach follows (Chinese; each ' +
       'coach’s soul comes after them), how hard it thinks, how each kind of wake goes, the hour ' +
       'morning notes arrive, the rules a reply to a post or a comment follows (replyRules, after ' +
-      'the coach’s soul and nothing else), the model and rules that set each member’s day ' +
+      'the coach’s soul and nothing else), the rules the morning’s 战术板 line and notes follow ' +
+      '(noteRules, the same way), the model and rules that set each member’s day ' +
       'challenge before the notes, and the holiday calendar. What its calls cost and may spend a day ' +
       'is get_ai_usage_settings’.',
     changes: false,

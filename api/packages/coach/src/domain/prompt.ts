@@ -1,9 +1,6 @@
-import { writeIn } from '@wildcard/language-model';
-
 import {
   challengeHow,
   challengeText,
-  type Challenge,
   type DayChallengeFacts,
   type DeliveredNote,
 } from './challenge.js';
@@ -185,29 +182,21 @@ export function taskOf({
   reason,
   week,
   files,
-  recentNotes,
   talks = [],
   noteTo = [],
-  yesterday,
   pastDays,
   occasions = [],
   backAgain = false,
   handover,
-  gifting,
-  setChallenges,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
   /** Each file the model may use, by the path it sees, with its body when it has one. */
   readonly files: ReadonlyMap<string, string | undefined>;
-  /** The squad's last 战术板 lines, newest first. */
-  readonly recentNotes: readonly { readonly day: string; readonly text: string }[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
   /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
-  /** On a daily wake, the squad's posts of the day before, oldest first. */
-  readonly yesterday?: YesterdayFacts;
   /** On the night's dream, the days it looks back over. */
   readonly pastDays?: PastDays;
   /** What is special about the day, such as a holiday, one line each. */
@@ -216,13 +205,6 @@ export function taskOf({
   readonly backAgain?: boolean;
   /** On a waking task, whom the coach took over from and the letter it was left, if any. */
   readonly handover?: TookOver;
-  /** On a daily wake, the gift pool and who may get one this week. */
-  readonly gifting?: GiftOptions;
-  /**
-   * On a daily wake, the challenge set for each member today, by member id, before the coach
-   * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
-   */
-  readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
   // The night tidies the whole memory, so it reads every file in full; a waking task shows each
   // file's beginning and looks the rest up.
@@ -255,47 +237,8 @@ export function taskOf({
       `## 整理记性\n${DREAM}`,
     ].join('\n\n');
   }
-  // A reply's task is `replyTaskOf`'s.
-  if (reason.kind !== 'daily') return undefined;
-  const notes = [
-    '## 战术板',
-    `- ${writeIn(week.language ?? 'zh-Hans')}`,
-    ...(recentNotes.length === 0
-      ? ['- 你还没写过。']
-      : ['- 你最近写过：', ...recentNotes.map(({ day, text }) => `  - ${day}：${text}`)]),
-  ].join('\n');
-  const noteSection =
-    noteTo.length === 0
-      ? '## 今天的便条\n今天没有要写便条的人。'
-      : ['## 今天的便条（下面每人各写一张）', ...noteTo.map(briefBlock)].join('\n\n');
-  return [
-    `# 新的一天\n${reason.day}，${weekdayOf(reason.day)}。`,
-    ...occasion,
-    whoIsWho,
-    ...(yesterday === undefined ? [] : yesterdayBlocks(yesterday, { roster, talks })),
-    talksBlock(talks, { roster }),
-    filesLine,
-    notes,
-    noteSection,
-    ...(setChallenges === undefined ? [] : [setChallengesBlock(setChallenges, roster)]),
-    ...giftBlock(gifting, roster),
-  ].join('\n\n');
-}
-
-/** Today's challenges, set already, which go under each member's note. */
-function setChallengesBlock(
-  set: ReadonlyMap<string, Challenge>,
-  roster: ReadonlyMap<string, string>,
-): string {
-  const heading = '## 今天的挑战（已经定好，单独一张卡给他）';
-  if (set.size === 0) return `${heading}\n今天没有挑战。`;
-  return [
-    heading,
-    ...[...set].map(
-      ([member, challenge]) =>
-        `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
-    ),
-  ].join('\n');
+  // A reply's task is `replyTaskOf`'s, the morning's `noteTaskOf`'s.
+  return undefined;
 }
 
 /**
@@ -317,7 +260,7 @@ const DREAM = [
 ].join('\n');
 
 /** The gift pool and who may get one, when anyone may: the give_gift tool's choices. */
-function giftBlock(
+export function giftBlock(
   gifting: GiftOptions | undefined,
   roster: ReadonlyMap<string, string>,
 ): string[] {
@@ -391,33 +334,6 @@ export interface YesterdayFacts {
    * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
    */
   readonly challenges?: readonly DayChallengeFacts[];
-}
-
-/** The squad's posts of the day before, and how that day's challenges went. */
-function yesterdayBlocks(
-  { day, checkIns, challenges = [] }: YesterdayFacts,
-  {
-    roster,
-    talks,
-  }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
-): string[] {
-  const talkedUnder = talkedUnderOf(talks);
-  const heading = `## 昨天（${weekdayOf(day)}）小队的动态`;
-  const posts =
-    checkIns.length === 0
-      ? `${heading}\n没人发动态。`
-      : [
-          heading,
-          ...checkIns.map((each) =>
-            checkInBlock(each, { roster, comments: talkedUnder.has(each.id) ? 'below' : true }),
-          ),
-        ].join('\n\n');
-  if (challenges.length === 0) return [posts];
-  const lines = challenges.map(
-    (each) =>
-      `- ${dayWords(each.day)} ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
-  );
-  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
 }
 
 /** What the night's dream looks back over: the squad's days, and what the coach did in them. */

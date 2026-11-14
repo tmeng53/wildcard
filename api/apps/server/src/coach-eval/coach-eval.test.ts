@@ -25,6 +25,7 @@ const settings = EvalSettings.parse({
     rules: '规矩',
     wakes: '醒来',
     replyRules: '回复',
+    noteRules: '便条',
     challengeModel: 'openai/gpt-6-luna',
     challengeRules: '挑战',
     noteHour: 8,
