@@ -66,6 +66,17 @@ extension TodayModel {
     /// The day's challenge I accepted from the coach, while its day lasts.
     var myChallenge: DayChallenge? { store.acceptedChallenge }
 
+    /// Where this phone keeps the challenge, by its note, the coach last pumped its fist for.
+    static let cheeredChallengeKey = "today.cheeredChallenge"
+
+    /// The coach pumps its fist once for each challenge I accepted, the first time the home shows
+    /// it on this phone: right after I accept it, or on the next open after accepting elsewhere.
+    func cheerAcceptedChallenge() {
+        guard let note = myChallenge?.note, defaults.string(forKey: Self.cheeredChallengeKey) != note else { return }
+        defaults.set(note, forKey: Self.cheeredChallengeKey)
+        cast.coachCheersTheChallenge()
+    }
+
     /// 我完成了 on today's challenge: the coach who set it claps.
     func completeChallenge() {
         guard myChallenge?.challenge.completedBy == nil else { return }

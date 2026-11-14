@@ -1,6 +1,6 @@
-import Foundation
 import AvatarArt
 import AvatarDomain
+import Foundation
 import Testing
 
 /// Every bundled coach builds, plays each move from rest, and stays on the canvas.

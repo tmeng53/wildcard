@@ -57,8 +57,9 @@ final class SquadCast {
     private(set) var vacancy: StagePoint?
     /// Until when the coach's last move plays, so its whistle for news doesn't cut one short.
     @ObservationIgnored private var coachBusyUntil = Date.distantPast
-    /// Whether the coach stands in its night stance (the lights off), and whose stance it is.
-    @ObservationIgnored private var coachStance: (coach: CoachID, night: Bool)?
+    /// Whether each coach's character stands in its night stance (the lights off) or its day one,
+    /// from the moment it was made, so a coach walking in on 换教练 keeps its own.
+    @ObservationIgnored private var coachStances: [CoachID: Bool] = [:]
     /// Bumps each time the squad cheers me, with who joins in, nearest first.
     private(set) var cheer = Cheer(count: 0, order: [])
     /// What the coach last saw on the home, for its next cue, and whose eyes they were.
@@ -95,9 +96,9 @@ final class SquadCast {
     ) {
         if stage.layout != .of(scene) { stage = SquadStage(layout: .of(scene)) }
         let standing = handover?.leaving ?? speaker
-        coach = sideline(standing)
+        coach = sideline(standing, night: phase == .night)
         stand(coach, night: phase == .night)
-        incoming = handover.flatMap { sideline($0.coming) }
+        incoming = handover.flatMap { sideline($0.coming, night: phase == .night) }
         self.handover = incoming == nil ? nil : handover
         vacancy = hiring && coach == nil && incoming == nil ? stage.layout.sideline : nil
         watch(home, by: standing)
@@ -205,7 +206,7 @@ final class SquadCast {
 
     /// The coach on this scene's sideline, its character made once per coach: the one that walked
     /// in keeps its own as it steps onto the spot.
-    private func sideline(_ speaker: CoachSpeaker?) -> Coach? {
+    private func sideline(_ speaker: CoachSpeaker?, night: Bool) -> Coach? {
         guard let speaker, let spot = stage.layout.sideline else { return nil }
         if let made = [coach, incoming].compactMap { $0 }.first(where: { $0.speaker.id == speaker.id }) {
             return Coach(speaker: speaker, player: made.player, spot: spot)
@@ -213,8 +214,9 @@ final class SquadCast {
         let id = speaker.id.rawValue
         guard CoachCharacter.exists(id),
             let player = try? CharacterPlayer(
-                figure: CoachCharacter.figure(id), idle: CoachCharacter.stance(coach: id))
+                figure: CoachCharacter.figure(id), idle: CoachCharacter.stance(coach: id, night: night))
         else { return nil }
+        coachStances[speaker.id] = night
         return Coach(speaker: speaker, player: player, spot: spot)
     }
 
@@ -244,18 +246,14 @@ final class SquadCast {
     /// The coach takes the stance it stands in on the home: its signature loop by day, its doze
     /// at night with the lights off, jolting awake when they go on.
     private func stand(_ coach: Coach?, night: Bool, moving: Bool = true) {
-        guard let coach else {
-            coachStance = nil
-            return
-        }
+        guard let coach else { return }
         let id = coach.speaker.id
-        guard coachStance?.coach != id || coachStance?.night != night else { return }
-        let woke = coachStance?.coach == id && coachStance?.night == true && !night
-        coachStance = (id, night)
-        guard let stance = try? CoachCharacter.stance(coach: id.rawValue, night: night),
+        guard let before = coachStances[id], before != night,
+            let stance = try? CoachCharacter.stance(coach: id.rawValue, night: night),
             (try? coach.player.wear(coach.player.figure, idle: stance)) != nil
         else { return }
-        if woke && moving { play(.lightsOn) }
+        coachStances[id] = night
+        if before && !night && moving { play(.lightsOn) }
     }
 
     /// The coach whistles because its page has news, unless another of its moves is still playing
