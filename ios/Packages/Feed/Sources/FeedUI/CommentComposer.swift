@@ -91,7 +91,8 @@ struct CommentComposer: View {
                     .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.l) / 2))
             }
             .buttonStyle(.plain)
-            .keepsKeyboard()
+            // As far as the tap reaches.
+            .keepsKeyboard(outset: (Sizing.minimumTapTarget - Space.l) / 2)
             .accessibilityLabel(Text(copy: "不回复了", bundle: .module))
             .accessibilityIdentifier("post.cancelReply")
         }

@@ -72,7 +72,13 @@ final class CoachFeedUITests: XCTestCase {
     private func mentionTheSquad(under comments: XCUIElementQuery, in app: XCUIApplication) {
         let window = app.windows.firstMatch.frame
         let box = element("post.field", in: app)
-        box.tap()
+        // Replying to 毛头 and then 不回复了 takes the reply away and keeps typing.
+        element("post.coachComment", in: app).tap()
+        let cancel = app.buttons["post.cancelReply"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: Self.wait), "tapping his word didn't reply")
+        cancel.tap()
+        waitFor(cancel, "exists == false", "× didn't take the reply away")
+        assertTyping(in: box, "× put the keyboard away")
         box.typeText("@")
         let coach = element("post.mention.0", in: app)
         XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "typing @ didn't open the list")
