@@ -72,7 +72,13 @@ final class CoachFeedUITests: XCTestCase {
     private func mentionTheSquad(under comments: XCUIElementQuery, in app: XCUIApplication) {
         let window = app.windows.firstMatch.frame
         let box = element("post.field", in: app)
-        box.tap()
+        // Replying to 毛头 and then 不回复了 takes the reply away and keeps typing.
+        element("post.coachComment", in: app).tap()
+        let cancel = app.buttons["post.cancelReply"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: Self.wait), "tapping his word didn't reply")
+        cancel.tap()
+        waitFor(cancel, "exists == false", "× didn't take the reply away")
+        assertTyping(in: box, "× put the keyboard away")
         box.typeText("@")
         let coach = element("post.mention.0", in: app)
         XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "typing @ didn't open the list")
@@ -87,13 +93,13 @@ final class CoachFeedUITests: XCTestCase {
         mate.tap()
         XCTAssertTrue(
             (box.value as? String)?.hasPrefix("@") == true, "the pick didn't go in: \(String(describing: box.value))")
-        // The simulator's hardware keyboard can leave the field once the list closes; a person
-        // taps back into the box, so the test does too rather than typing into nothing.
-        if (box.value(forKey: "hasKeyboardFocus") as? Bool) != true { box.tap() }
+        // Picking someone keeps the keyboard: the member goes on typing (Tracy, 2026-11-14).
+        assertTyping(in: box, "picking from the @ list put the keyboard away")
         box.typeText("周六爬山")
         app.buttons["post.mentionCoach"].tap()
         XCTAssertTrue(
             (box.value as? String)?.contains("@毛头") == true, "「@毛头」 didn't go in: \(String(describing: box.value))")
+        assertTyping(in: box, "「@毛头」 put the keyboard away")
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "142-post-mention-typed")
         let answers = app.descendants(matching: .any).matching(identifier: "post.coachAnswer")
@@ -105,6 +111,12 @@ final class CoachFeedUITests: XCTestCase {
             answers.element(boundBy: answered).waitForExistence(timeout: Self.wait), "毛头 didn't answer the @")
         Thread.sleep(forTimeInterval: 0.8)
         keepScreenshot(named: "143-post-mention-answered")
+    }
+
+    /// The box still has the keyboard, a moment after the tap (when a tap outside would have put it away).
+    private func assertTyping(in box: XCUIElement, _ message: String) {
+        Thread.sleep(forTimeInterval: 0.3)
+        XCTAssertEqual(box.value(forKey: "hasKeyboardFocus") as? Bool, true, message)
     }
 
     /// Replying to 毛头 is replying to a teammate: tap his word, write, send, and he answers.

@@ -18,6 +18,12 @@ extension SignUpModel {
 
     // MARK: 本周目标
 
+    /// The template's training days from today on: what this week plans, since the first week
+    /// counts only from the day the member joined.
+    var plannedThisWeek: Int {
+        week?.trainingDays(from: daysGone) ?? 0
+    }
+
     func selectDay(_ index: Int) {
         week?.select(index)
     }
