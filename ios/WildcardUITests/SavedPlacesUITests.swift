@@ -53,6 +53,10 @@ final class SavedPlacesUITests: XCTestCase {
 
     /// ④ 我's bookmark; ③ the list, a row opening its place, a swipe left removing it.
     private func checkTheListOnMe(in app: XCUIApplication) {
+        // 地点页 sits on 小队地图, which hides the tab bar: back out to 动态 first.
+        for _ in 0..<3 where !app.tabBars.firstMatch.waitForExistence(timeout: 3) {
+            backButton(in: app).tap()
+        }
         tabButton("tab.me", in: app).tap()
         let open = app.buttons["me.savedPlaces"]
         XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "我 has no 收藏 button")
