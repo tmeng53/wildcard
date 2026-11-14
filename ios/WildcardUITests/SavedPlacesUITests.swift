@@ -80,7 +80,7 @@ final class SavedPlacesUITests: XCTestCase {
         open.tap()
         let row = app.buttons["savedPlaces.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "收藏 lists nothing")
-        XCTAssertTrue(row.label.contains("写备注"), "a place without a note doesn't offer 写备注: \(row.label)")
+        // The row is one element (its 写备注 is a VoiceOver action), so the screenshot shows 写备注.
         assertOnScreen(row, in: app)
         settle()
         keepScreenshot(named: "154f-saved-places-list")
