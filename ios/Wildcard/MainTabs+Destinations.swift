@@ -103,6 +103,10 @@ extension MainTabs {
         case .squad:
             selection = .today
             todayPages = [.squad]
+        case .squadPreferences:
+            selection = .today
+            todayPages = [.squad, .squadPreferences]
+            Task { await squad.reload() }
         case .coaches:
             selection = .today
             todayPages = [.coach(.market)]
@@ -191,10 +195,12 @@ extension MainTabs {
         Task { await wardrobe.open(kind, item: item) }
     }
 
-    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队.
+    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队, and a
+    /// join request's 小队设置.
     func tellWaiting() {
         tellBroadcasts()
         tellGoalSuggestions()
+        tellJoinRequests()
     }
 
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
@@ -215,13 +221,16 @@ extension MainTabs {
             switch notice.subject {
             case .broadcast, .goalSuggestion:
                 continue
+            case .joinRequest:
+                // 小队 reads who waits again: its banner (`tellJoinRequests`) and dots follow.
+                Task { await squad.reload() }
             case .unlocked:
                 Task { await today.checkUnlocks() }
             case .sceneMoved:
                 sceneMoved()
             case .comment(_, let post), .coachReply(let post, _, _, _, _):
                 if !isOnScreen(post) { tell(notice) }
-            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter, .trainedWith:
+            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter, .trainedWith, .joinAnswered:
                 tell(notice)
             }
         }
@@ -248,7 +257,7 @@ extension MainTabs {
     /// What drops in on 今天 from 通知, with whose phone it is: told again when any changes.
     var bannerNotices: [String] {
         inbox.unseenBroadcasts.map(\.id) + inbox.unseenGoalSuggestions.map(\.id.rawValue.description)
-            + [today.home?.member.description ?? ""]
+            + (squad.joining?.requests ?? []).map(\.id.description) + [today.home?.member.description ?? ""]
     }
 
     /// The higher squad goals suggested to the captain not yet seen in 通知 that this phone hasn't

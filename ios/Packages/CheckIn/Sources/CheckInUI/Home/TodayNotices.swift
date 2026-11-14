@@ -75,6 +75,8 @@ private struct TodayNotices: ViewModifier {
                 detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 action: Text(copy: "去改目标", bundle: .module)
             ) { NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis") }
+        case .joinRequest(_, let name):
+            joinRequestBanner(from: name)
         case .sendFailed(let canResend):
             NoticeBanner(
                 model.failed.count == 1
@@ -90,6 +92,15 @@ private struct TodayNotices: ViewModifier {
         case .told(let told):
             model.toldBanner?(told)
         }
+    }
+
+    /// 「小橘 申请加入小队 · 查看」, which opens 小队设置.
+    private func joinRequestBanner(from name: String) -> some View {
+        NoticeBanner(
+            name.isEmpty
+                ? Text(copy: "有人申请加入小队", bundle: .module) : Text(copy: "\(name) 申请加入小队", bundle: .module),
+            action: Text(copy: "查看", bundle: .module)
+        ) { NoticeSymbol(systemImage: "person.badge.plus") }
     }
 
     private func sendFailedDetail(canResend: Bool) -> Text {
@@ -109,6 +120,7 @@ private struct TodayNotices: ViewModifier {
             model.broadcastOpened?(broadcast)
             model.openDestination?(broadcast.action?.destination ?? .notices)
         case .goalSuggestion: model.openDestination?(.squad)
+        case .joinRequest: model.openDestination?(.squadPreferences)
         case .sendFailed: model.resendFirst()
         case .more: model.openDestination?(.notices)
         case .moved: model.openDestination?(.today)

@@ -30,10 +30,17 @@ public struct APISquadSettingsService: SquadSettingsService {
                 if let character = mate.character { characters[mate.member] = character }
             }
             let timeZone = member.profile?.timeZone ?? .current
+            // 入队申请 and 入队需要审核 are the captain's, and only while squads may ask at all.
+            var joining: SquadJoining?
+            if first.captain == member.id, Switchboard.shared.isOn(JoinApprovalSwitch.id, at: now()) {
+                joining = SquadJoining(
+                    required: try await api.joinApproval(of: first.id),
+                    requests: try await api.joinRequests(of: first.id))
+            }
             return SquadSettings(
                 squad: first, viewer: member.id, characters: characters, scene: scene, coach: coach,
                 today: LocalDay(at: now(), in: timeZone), timeZone: timeZone, goal: goal,
-                matchTimeZone: matchTimeZone, language: language)
+                matchTimeZone: matchTimeZone, language: language, joining: joining)
         }
     }
 
@@ -77,6 +84,14 @@ public struct APISquadSettingsService: SquadSettingsService {
         -> SquadLanguage
     {
         try await self.squad { () throws(APIError) in try await api.setLanguage(of: squad, to: language) }
+    }
+
+    public func answer(_ request: JoinRequestID, in squad: SquadID, approve: Bool) async throws(SquadError) {
+        try await self.squad { () throws(APIError) in try await api.answer(request, in: squad, approve: approve) }
+    }
+
+    public func setJoinApproval(of squad: SquadID, required: Bool) async throws(SquadError) -> Bool {
+        try await self.squad { () throws(APIError) in try await api.setJoinApproval(of: squad, required: required) }
     }
 
     private func squad<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {

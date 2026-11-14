@@ -122,3 +122,32 @@ private func entry(
     #expect(notice.destination == .teamLetter(broadcast))
     #expect(try entry(action: "wardrobe/thanks-bugnet")?.destination == .wardrobe(piece: "thanks-bugnet"))
 }
+
+@Test func aJoinRequestOpensSquadSettingsAndAnAnswerOpensTheSquad() throws {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let asked = #"""
+        {"id": 20, "kind": "joinRequest", "at": "2026-11-13T22:00:00Z",
+         "squadId": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+         "alert": {"key": "push.joinRequest", "args": ["小橘"]},
+         "joinRequest": "b0000000-0000-4000-8000-000000000001"}
+        """#
+    let request = try #require(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(asked.utf8))))
+    let id = JoinRequestID(try #require(UUID(uuidString: "b0000000-0000-4000-8000-000000000001")))
+    #expect(request.subject == .joinRequest(PushAlert(key: "push.joinRequest", args: ["小橘"]), request: id))
+    #expect(request.destination == .squadPreferences)
+    let answered = #"""
+        {"id": 21, "kind": "joinAnswered", "at": "2026-11-13T22:05:00Z",
+         "squadId": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59",
+         "alert": {"key": "push.joinApproved", "args": ["周末早起队"]},
+         "joinRequest": "b0000000-0000-4000-8000-000000000001", "approved": true}
+        """#
+    let answer = try #require(
+        Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(answered.utf8))))
+    #expect(answer.subject == .joinAnswered(PushAlert(key: "push.joinApproved", args: ["周末早起队"]), approved: true))
+    #expect(answer.destination == .squad)
+    // Without the request it is about, this build can't show it.
+    let partial = asked.replacingOccurrences(
+        of: #""joinRequest": "b0000000-0000-4000-8000-000000000001""#, with: #""x": 1"#)
+    #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
+}

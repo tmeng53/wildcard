@@ -11,10 +11,6 @@ public struct NoticeBell: View {
     private let inbox: NoticeInbox
     private let open: () -> Void
 
-    /// The dot, and the ring of the button's own colour around it.
-    private static let dot: Double = 8
-    private static let dotRing: Double = 2
-
     public init(inbox: NoticeInbox, open: @escaping () -> Void) {
         self.inbox = inbox
         self.open = open
@@ -22,18 +18,7 @@ public struct NoticeBell: View {
 
     public var body: some View {
         HeaderButton(label, systemImage: "bell", action: open)
-            .overlay(alignment: .topTrailing) {
-                if inbox.hasUnread {
-                    Circle()
-                        .fill(Color(role: .bgBrand, in: .gym))
-                        .frame(width: Self.dot, height: Self.dot)
-                        .padding(Self.dotRing)
-                        .background(Circle().fill(Color(role: .bgCanvas, in: .gym)))
-                        .offset(x: -Self.dot / 2, y: Self.dot / 2)
-                        .transition(.opacity)
-                        .accessibilityHidden(true)
-                }
-            }
+            .newsDot(inbox.hasUnread)
             .accessibilityIdentifier("notices.bell")
             .accessibilityValue(inbox.hasUnread ? Text(copy: "有新通知", bundle: .module) : Text(verbatim: ""))
     }

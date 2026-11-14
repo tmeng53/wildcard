@@ -576,6 +576,38 @@
           }
         }
       }
+    },
+    "有人申请加入小队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Someone asked to join your squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有人申請加入小隊"
+          }
+        }
+      }
+    },
+    "队长同意了你的申请": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The captain let you in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隊長同意了你的申請"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

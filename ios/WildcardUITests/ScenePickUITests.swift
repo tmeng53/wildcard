@@ -133,9 +133,10 @@ final class ScenePickUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
         tile.tap()
         let ending = app.descendants(matching: .any).matching(identifier: "recap.page.ending").firstMatch
-        for _ in 0..<12 where !ending.exists {
+        for _ in 0..<14 where !ending.exists {
             XCTAssertTrue(app.buttons["recap.close"].waitForExistence(timeout: Self.wait), "the story didn't open")
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+            // Low down, under 小队菜单's cards, which a tap turns over.
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.9)).tap()
         }
         XCTAssertTrue(ending.waitForExistence(timeout: Self.wait), "the last page never showed")
         // Let the count settle before the shots.

@@ -27,6 +27,8 @@ final class PushBannerUITests: XCTestCase {
         ("push.teammate.trained", 148),
         ("push.teammate.trained.minutes", 149),
         ("push.trainedWith", 150),
+        ("push.joinRequest", 151),
+        ("push.joinApproved", 152),
     ]
 
     func testEveryPushShowsItsWordsAndOpensTheApp() throws {

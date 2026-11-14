@@ -28,6 +28,16 @@ public struct FeedPlaceSource: PlaceSource {
         return Self.detail(of: place, from: posts.map(\.checkIn))
     }
 
+    public func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData {
+        let posts: [FeedPost]
+        do throws(FeedError) {
+            posts = try await feed.posts(in: squad, from: today.adding(days: -7 * weeks), through: today)
+        } catch {
+            throw PlacesError(error)
+        }
+        return Self.map(from: posts.map(\.checkIn), today: today)
+    }
+
     public func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] {
         do throws(FeedError) {
             return try await feed.characters(in: squad)
@@ -60,6 +70,47 @@ public struct FeedPlaceSource: PlaceSource {
             sports: sports.map { SportCount($0.key, count: $0.value) }
                 .sorted { ($0.count, $1.activity.sortKey) > ($1.count, $0.activity.sortKey) },
             meals: meals, posts: visits)
+    }
+}
+
+extension FeedPlaceSource {
+    /// 小队地图 from these check-ins, by the server's rules: every place tagged, most visited first
+    /// (the newest first on a tie), and the posts of `today` and the day before, newest first.
+    public static func map(from checkIns: [CheckIn], today: LocalDay) -> SquadMapData {
+        let tagged = checkIns.filter { $0.inFeed && $0.entry.place?.key != nil }
+            .sorted { $0.createdAt > $1.createdAt }
+        var order: [PlaceKey] = []
+        var byPlace: [PlaceKey: [CheckIn]] = [:]
+        for checkIn in tagged {
+            guard let key = checkIn.entry.place?.key else { continue }
+            if byPlace[key] == nil { order.append(key) }
+            byPlace[key, default: []].append(checkIn)
+        }
+        let places = order.compactMap { key -> MapPlace? in
+            guard let detail = detail(of: key, from: byPlace[key] ?? []) else { return nil }
+            var visits: [MemberID: Int] = [:]
+            var members: [MemberID] = []
+            for post in detail.posts {
+                if visits[post.author] == nil { members.append(post.author) }
+                visits[post.author, default: 0] += 1
+            }
+            let counted = members.map { MemberVisits($0, visits: visits[$0] ?? 0) }
+                .enumerated().sorted { ($0.element.visits, $1.offset) > ($1.element.visits, $0.offset) }
+                .map(\.element)
+            return MapPlace(
+                key: key, place: detail.place, visits: detail.visits, members: counted, sports: detail.sports,
+                meals: detail.meals)
+        }
+        .enumerated().sorted { ($0.element.visits, $1.offset) > ($1.element.visits, $0.offset) }.map(\.element)
+        let since = today.adding(days: -1)
+        let recent = tagged.filter { $0.day >= since }.compactMap { checkIn -> MapVisit? in
+            guard let key = checkIn.entry.place?.key else { return nil }
+            let tile = PlaceVisit(checkIn)
+            return MapVisit(
+                id: tile.id, author: tile.author, kind: tile.kind, activity: tile.activity, day: tile.day,
+                createdAt: checkIn.createdAt, key: key)
+        }
+        return SquadMapData(places: places, recent: recent)
     }
 }
 

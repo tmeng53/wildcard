@@ -175,6 +175,17 @@ struct NoticeWords {
                 title: Text(copy: "连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
                 detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 icon: AnyView(NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis")))
+        case .joinRequest(let alert, _):
+            // 「小橘 申请加入小队」, which opens 小队设置, where the captain answers.
+            return Words(
+                title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
+                    ?? Text(copy: "有人申请加入小队", bundle: .module),
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.badge.plus")))
+        case .joinAnswered(let alert, _):
+            return Words(
+                title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
+                    ?? Text(copy: "队长同意了你的申请", bundle: .module),
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.crop.circle.badge.checkmark")))
         }
     }
 

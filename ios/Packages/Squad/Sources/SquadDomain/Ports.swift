@@ -16,6 +16,9 @@ public struct SquadSettings: Hashable, Sendable {
     public var matchTimeZone: SquadTimeZone
     /// The squad's language (小队语言), what its coach and 战报 are written in.
     public var language: SquadLanguage
+    /// 入队申请 and 入队需要审核: the captain's only, and only while squads may ask for the captain's
+    /// OK at all (`JoinApprovalSwitch`).
+    public var joining: SquadJoining?
     /// The member's day and clock when the page was read, for 「执教 N 天」 and 「执教 N 周」.
     public let today: LocalDay
     public let timeZone: TimeZone
@@ -23,7 +26,7 @@ public struct SquadSettings: Hashable, Sendable {
     public init(
         squad: Squad, viewer: MemberID, characters: [MemberID: MemberCharacter], scene: SquadScene,
         coach: SquadCoach, today: LocalDay, timeZone: TimeZone, goal: SquadWeeklyGoal,
-        matchTimeZone: SquadTimeZone, language: SquadLanguage
+        matchTimeZone: SquadTimeZone, language: SquadLanguage, joining: SquadJoining? = nil
     ) {
         self.squad = squad
         self.viewer = viewer
@@ -33,8 +36,22 @@ public struct SquadSettings: Hashable, Sendable {
         self.goal = goal
         self.matchTimeZone = matchTimeZone
         self.language = language
+        self.joining = joining
         self.today = today
         self.timeZone = timeZone
+    }
+}
+
+/// Who is waiting to join the squad and whether joining needs the captain's OK, as its captain
+/// reads them on 小队设置.
+public struct SquadJoining: Hashable, Sendable {
+    /// 入队需要审核: on for a squad that never set it.
+    public var required: Bool
+    /// The requests waiting for the captain's answer, the earliest first.
+    public var requests: [WaitingJoinRequest]
+
+    public init(required: Bool, requests: [WaitingJoinRequest]) {
+        (self.required, self.requests) = (required, requests)
     }
 }
 
@@ -65,6 +82,11 @@ public protocol SquadSettingsService: Sendable {
     /// Sets the squad's language (小队语言) from now on; only the captain may. Safe to repeat.
     func setLanguage(of squad: SquadID, to language: SquadLanguage.Language) async throws(SquadError)
         -> SquadLanguage
+    /// Lets a member in (`approve`), joining them as the captain's join, or turns them away; only the
+    /// captain may. Answering again the same way changes nothing.
+    func answer(_ request: JoinRequestID, in squad: SquadID, approve: Bool) async throws(SquadError)
+    /// Turns 入队需要审核 on or off, counting for the next invite opened; only the captain may.
+    func setJoinApproval(of squad: SquadID, required: Bool) async throws(SquadError) -> Bool
 }
 
 /// What can go wrong on 小队设置, by what the member can do about it.

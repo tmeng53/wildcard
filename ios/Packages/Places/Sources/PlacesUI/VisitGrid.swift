@@ -88,7 +88,7 @@ private struct VisitTile: View {
 
 /// The authors' heads, made once a look: a character player is too costly to make each frame.
 @MainActor
-private final class AuthorHeads {
+final class AuthorHeads {
     private var players: [CharacterLook: CharacterPlayer] = [:]
 
     func player(for look: CharacterLook?) -> CharacterPlayer? {

@@ -6,7 +6,9 @@ import PackageDescription
 // app. `DailyPushDomain` reads what the push carries and holds the rules of reacting there (the
 // same emoji again takes it back; a reaction shows at once and is put back if it fails); it
 // sends through its `ReactionSender` port and is pure Swift, so it tests on Linux.
-// `DailyPushUI` is the view the notification content extension shows.
+// `DailyPushUI` is the view the notification content extension shows. The captain's push about a
+// request to join opens there too: `JoinRequestPush` reads it and `JoinRequestAnswer` sends 同意
+// or 拒绝 through its `JoinRequestAnswerer` port; `JoinRequestPushView` draws the asker.
 let package = Package(
     name: "DailyPush",
     defaultLocalization: "zh-Hans",
