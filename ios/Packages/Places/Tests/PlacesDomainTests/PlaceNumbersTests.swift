@@ -17,40 +17,39 @@ struct PlaceNumbersTests {
     }
 
     private static func detail(
-        _ place: Place, sports: [SportCount] = [], meals: MealTally = .none, stars: Double? = nil
+        _ place: Place, sports: [SportCount] = [], meals: MealTally = .none
     ) -> PlaceDetail {
-        PlaceDetail(place: place, visits: 7, people: 3, stars: stars, sports: sports, meals: meals, posts: [])
+        PlaceDetail(place: place, visits: 7, people: 3, sports: sports, meals: meals, posts: [])
     }
 
     @Test func aGymTheSquadNeverTaggedShowsAnEmptyCard() {
         let numbers = PlaceNumbers(kind: gym.kind, detail: nil)
         #expect(numbers.face == .training)
-        #expect(numbers.cells == [.squadScore(nil), .visits(0), .people(0)])
+        #expect(numbers.cells == [.visits(0), .people(0)])
         #expect(numbers.rows.isEmpty)
     }
 
-    @Test func aRestaurantTheSquadNeverTaggedShowsHealthyTastyAndVisits() {
+    @Test func aRestaurantTheSquadNeverTaggedShowsNoScore() {
         let numbers = PlaceNumbers(kind: salad.kind, detail: nil)
         #expect(numbers.face == .eating)
-        #expect(numbers.cells == [.healthy(nil), .tasty(nil), .visits(0)])
+        #expect(numbers.cells == [.visits(0), .people(0)])
     }
 
-    @Test func aGymShowsItsScoreAndItsSportsAgainstTheMostTrained() {
+    @Test func aGymShowsItsVisitsAndItsSportsAgainstTheMostTrained() {
         let detail = Self.detail(
-            gym, sports: [SportCount(.sport("cycling"), count: 4), SportCount(.sport("hiit"), count: 1)],
-            stars: 4.3)
+            gym, sports: [SportCount(.sport("cycling"), count: 4), SportCount(.sport("hiit"), count: 1)])
         let numbers = PlaceNumbers(kind: gym.kind, detail: detail)
-        #expect(numbers.cells == [.squadScore(4.3), .visits(7), .people(3)])
+        #expect(numbers.cells == [.visits(7), .people(3)])
         #expect(
             numbers.rows == [
                 .sport(.sport("cycling"), count: 4, fraction: 1), .sport(.sport("hiit"), count: 1, fraction: 0.25),
             ])
     }
 
-    @Test func aRestaurantShowsItsMealsAndTheirScores() {
-        let meals = MealTally(healthyMeals: 6, cheatMeals: 0, healthy: 4.6, tasty: 4.2, calorieValue: 3.9)
+    @Test func aRestaurantShowsItsVisitsAndItsMeals() {
+        let meals = MealTally(healthyMeals: 6, cheatMeals: 0)
         let numbers = PlaceNumbers(kind: salad.kind, detail: Self.detail(salad, meals: meals))
-        #expect(numbers.cells == [.healthy(4.6), .tasty(4.2), .calorieValue(3.9), .visits(7)])
+        #expect(numbers.cells == [.visits(7), .people(3)])
         #expect(numbers.rows == [.healthyMeals(count: 6, fraction: 1)])
     }
 
@@ -59,14 +58,6 @@ struct PlaceNumbersTests {
         let numbers = PlaceNumbers(kind: park.kind, detail: Self.detail(park, meals: meals))
         #expect(numbers.face == .eating)
         #expect(numbers.rows == [.healthyMeals(count: 1, fraction: 0.5), .cheatMeals(count: 2, fraction: 1)])
-    }
-
-    @Test func scoresReadAsWholeStarsOrOneDecimal() {
-        #expect(ScoreText.average(4.25) == "4.3")
-        #expect(ScoreText.average(4) == "4.0")
-        #expect(ScoreText.average(nil) == "—")
-        #expect(ScoreText.visit(.stars(5)) == "5")
-        #expect(ScoreText.visit(.calorieValue(2.36)) == "2.4")
     }
 
     @Test func mapsFactsReadAsTheCapsulesSayThem() throws {

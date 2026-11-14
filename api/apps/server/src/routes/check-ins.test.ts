@@ -1967,15 +1967,7 @@ describe('a squad’s places', () => {
     return id;
   }
 
-  const rate = (member: { readonly token: string }, [key, stars]: readonly [string, number]) =>
-    call({
-      method: 'PUT',
-      path: `/me/place-ratings/${key}`,
-      token: member.token,
-      body: { version: 1, stars },
-    });
-
-  it('lists the places the squad’s posts were tagged with, scored by its members', async () => {
+  it('lists the places the squad’s posts were tagged with, with no score', async () => {
     const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     await post({
@@ -2031,19 +2023,17 @@ describe('a squad’s places', () => {
       entry: { kind: 'healthyMeal', meal: { place: { ...park, name: '家', appleId: undefined } } },
     });
 
-    expect(await rate(me, ['apple:I0PARK', 5])).toStrictEqual({
-      status: 200,
-      type: 'application/json',
-      body: { version: 1, key: 'apple:I0PARK', stars: 5 },
-    });
-    expect((await rate(friend, ['apple:I0PARK', 4])).status).toBe(200);
-    // A later score stands over the earlier one; the same again is a no-op.
-    expect((await rate(friend, ['apple:I0PARK', 3])).status).toBe(200);
-    expect((await rate(friend, ['apple:I0PARK', 3])).status).toBe(200);
-    // Someone outside the squad scores too, and isn't counted.
-    expect((await rate(outsider, ['apple:I0PARK', 1])).status).toBe(200);
-    expect((await rate(me, ['apple:I0PARK', 6])).status).toBe(400);
-    expect((await rate(me, ['I0PARK', 5])).status).toBe(400);
+    // Places have no score: the route to give one is gone.
+    expect(
+      (
+        await call({
+          method: 'PUT',
+          path: '/me/place-ratings/apple:I0PARK',
+          token: me.token,
+          body: { version: 1, stars: 5 },
+        })
+      ).status,
+    ).toBe(404);
 
     const listed = await call({ method: 'GET', path: `/squads/${squad}/places`, token: me.token });
     expect(listed.status).toBe(200);
@@ -2081,7 +2071,7 @@ describe('a squad’s places', () => {
         raters,
       })),
     ).toStrictEqual([
-      { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: 4, raters: 2 },
+      { key: 'apple:I0PARK', name: 'Central Park', visits: 3, people: 2, stars: null, raters: 0 },
       { key: 'apple:I0NOODLES', name: '兰州拉面', visits: 2, people: 2, stars: null, raters: 0 },
     ]);
     // 小队地图's 常去 rows: who went (most posts first, the newest poster first on a tie), what
@@ -2111,38 +2101,37 @@ describe('a squad’s places', () => {
         meals: { healthyMeal: 1, cheatMeal: 1 },
       },
     ]);
-    // Each visit carries its poster's standing score (a 训练) or its meal's 卡价比, and no cover
-    // or minutes when the post had none.
+    // No visit carries a score; none has a cover or minutes when the post had none.
     expect(recent).toStrictEqual([
       expect.objectContaining({
         key: 'apple:I0NOODLES',
         kind: 'cheatMeal',
         stars: null,
-        calorieValue: 1.6,
+        calorieValue: null,
       }),
       expect.objectContaining({
         key: 'apple:I0NOODLES',
         kind: 'healthyMeal',
         stars: null,
-        calorieValue: 4,
+        calorieValue: null,
       }),
       expect.objectContaining({
         key: 'apple:I0PARK',
         kind: 'trained',
-        stars: 3,
+        stars: null,
         calorieValue: null,
         minutes: 40,
       }),
       expect.objectContaining({
         key: 'apple:I0PARK',
         kind: 'trained',
-        stars: 3,
+        stars: null,
         calorieValue: null,
       }),
       expect.objectContaining({
         key: 'apple:I0PARK',
         kind: 'trained',
-        stars: 5,
+        stars: null,
         calorieValue: null,
       }),
     ]);
@@ -2162,8 +2151,8 @@ describe('a squad’s places', () => {
     ).toStrictEqual({
       myStars: null,
       sports: [],
-      // 卡价比: (5 × 4 ÷ 5 + 4 × 2 ÷ 5) ÷ 2 = 2.8
-      meals: { healthyMeal: 1, cheatMeal: 1, healthy: 3, tasty: 4.5, calorieValue: 2.8 },
+      // Meals by kind only: a place shows no average of its meals' scores.
+      meals: { healthyMeal: 1, cheatMeal: 1, healthy: null, tasty: null, calorieValue: null },
     });
     const parkPage = await call({
       method: 'GET',
@@ -2175,8 +2164,8 @@ describe('a squad’s places', () => {
         .object({ sports: z.unknown(), myStars: z.unknown(), stars: z.unknown() })
         .parse(parkPage.body),
     ).toStrictEqual({
-      myStars: 3,
-      stars: 4,
+      myStars: null,
+      stars: null,
       sports: [
         { sport: 'custom', customSport: '飞盘', count: 2 },
         { sport: 'custom', customSport: '背包', count: 1 },
@@ -2192,46 +2181,10 @@ describe('a squad’s places', () => {
         .status,
     ).toBe(403);
   });
-
-  it('stops counting a member’s score once they leave the squad', async () => {
-    const [me, friend] = [await signUp(), await signUp()];
-    const squad = await squadOf(me, friend);
-    await post({
-      member: me,
-      squad,
-      entry: {
-        kind: 'trained',
-        training: { sport: 'custom', customSport: '跑步', place: park },
-      },
-    });
-    expect((await rate(me, ['apple:I0PARK', 2])).status).toBe(200);
-    expect((await rate(friend, ['apple:I0PARK', 4])).status).toBe(200);
-    const stars = async () =>
-      z.object({ stars: z.number().nullable(), raters: z.number() }).parse(
-        (
-          await call({
-            method: 'GET',
-            path: `/squads/${squad}/places/apple:I0PARK`,
-            token: me.token,
-          })
-        ).body,
-      );
-    expect(await stars()).toStrictEqual({ stars: 3, raters: 2 });
-    expect(
-      (
-        await call({
-          method: 'DELETE',
-          path: `/squads/${squad}/members/${friend.userId}`,
-          token: friend.token,
-        })
-      ).status,
-    ).toBe(204);
-    expect(await stars()).toStrictEqual({ stars: 2, raters: 1 });
-  });
 });
 
 describe('a squad’s own places', () => {
-  it('lets every member tag a place one of them added, and score it', async () => {
+  it('lets every member tag a place one of them added', async () => {
     const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const id = randomUUID();
@@ -2280,7 +2233,7 @@ describe('a squad’s own places', () => {
         .status,
     ).toBe(403);
 
-    // A teammate tags their own 训练 with it, and scores it under its `squad:` key.
+    // A teammate tags their own 训练 with it, and it gets a page under its `squad:` key.
     const { day, createdAt } = todayAndNow();
     const posted = await call({
       method: 'PUT',
@@ -2301,16 +2254,6 @@ describe('a squad’s own places', () => {
     });
     expect(posted.status).toBe(201);
     const key = `squad:${id}`;
-    expect(
-      (
-        await call({
-          method: 'PUT',
-          path: `/me/place-ratings/${key}`,
-          token: friend.token,
-          body: { version: 1, stars: 4 },
-        })
-      ).status,
-    ).toBe(200);
     const page = await call({
       method: 'GET',
       path: `/squads/${squad}/places/${key}`,
@@ -2321,7 +2264,7 @@ describe('a squad’s own places', () => {
       z
         .object({ key: z.string(), visits: z.number(), stars: z.number().nullable() })
         .parse(page.body),
-    ).toStrictEqual({ key, visits: 1, stars: 4 });
+    ).toStrictEqual({ key, visits: 1, stars: null });
   });
 
   it('refuses a post tagged with a place its squads don’t have', async () => {

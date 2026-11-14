@@ -13,9 +13,12 @@ final class WidgetUITests: XCTestCase {
         assertContentInside(app)
         keepScreenshot(named: "70-widgets")
         app.swipeUp()
-        keepScreenshot(named: "70-widgets-schedule")
-        app.swipeUp()
         keepScreenshot(named: "70-widgets-long")
+        // 本周出赛表: the coach behind today's challenge, small over medium, on each scene.
+        for page in 1...4 {
+            app.swipeUp()
+            keepScreenshot(named: "70-widgets-schedule-\(page)")
+        }
     }
 
     func testWidgetsInEnglish() {
@@ -24,9 +27,12 @@ final class WidgetUITests: XCTestCase {
         assertContentInside(app)
         keepScreenshot(named: "70-widgets-en")
         app.swipeUp()
-        keepScreenshot(named: "70-widgets-schedule-en")
-        app.swipeUp()
         keepScreenshot(named: "70-widgets-long-en")
+        // 本周出赛表: the coach behind today's challenge, small over medium, on each scene.
+        for page in 1...4 {
+            app.swipeUp()
+            keepScreenshot(named: "70-widgets-schedule-\(page)-en")
+        }
     }
 
     /// 本周出赛表's tap opens 出赛表, in 我, from the app on the sample squad, opened from cold with
@@ -59,8 +65,10 @@ final class WidgetUITests: XCTestCase {
     private func assertContentInside(_ app: XCUIApplication) {
         for name in [
             "widget.week", "widget.notice", "widget.squad", "widget.weekWorkout", "widget.squadWorkout",
-            "widget.weekPosted", "widget.squadWorkoutEight", "widget.schedule", "widget.scheduleMedium",
-            "widget.weekWorkoutLong", "widget.weekPostedLong", "widget.squadWorkoutLong",
+            "widget.weekPosted", "widget.squadWorkoutEight", "widget.weekWorkoutLong", "widget.weekPostedLong",
+            "widget.squadWorkoutLong", "widget.schedule", "widget.scheduleMedium", "widget.scheduleLong",
+            "widget.scheduleLongMedium", "widget.scheduleDone", "widget.scheduleDoneMedium", "widget.scheduleNoCoach",
+            "widget.scheduleNoCoachMedium", "widget.schedulePool", "widget.schedulePoolMedium",
         ] {
             let widget = app.otherElements[name]
             XCTAssertTrue(widget.waitForExistence(timeout: Self.wait), "\(name) didn't show")

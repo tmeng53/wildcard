@@ -14,8 +14,12 @@ public enum SampleBoard {
     ///   - posted: that run already posted from the capsule.
     ///   - size: how many in the squad, 4 to 8.
     ///   - sport: the workout's sport, a run unless asked (a long name, to see it give way).
+    ///   - coach: the squad's coach, for 本周出赛表.
+    ///   - challenge: today's challenge from it, for 本周出赛表.
+    ///   - scene: the squad's scene, for 本周出赛表.
     public static func board(
-        on day: LocalDay, workout: Bool = false, posted: Bool = false, size: Int = 4, sport: Sport = "run"
+        on day: LocalDay, workout: Bool = false, posted: Bool = false, size: Int = 4, sport: Sport = "run",
+        coach: CoachID? = nil, challenge: CoachPageCard.Challenge? = nil, scene: SceneID? = nil
     ) -> WidgetBoard {
         let people = (1...min(max(size, 4), 8)).map {
             MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000000\($0)") ?? UUID())
@@ -36,12 +40,46 @@ public enum SampleBoard {
             myWeek: MyWeek(
                 firstDay: monday, lastDay: monday.adding(days: 6), week: WeekCount(trainedDays: 2, plannedDays: 4)),
             squadWeek: WeekCount(trainedDays: 7, plannedDays: 12))
+        // Monday's run, once Monday is past: the week's first tick.
+        let mondayRun = day > monday ? [morningRun(by: viewer, to: today.squad, on: monday)] : []
         let home = Home(
             member: viewer, timeZone: .gmt,
             squad: Squad(id: today.squad, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: people, captain: viewer),
             today: today, plan: plan(of: viewer, from: monday),
-            checkIns: posted ? [checkIn(of: run(on: day, sport: sport), by: viewer, to: today.squad, on: day)] : [])
-        return WidgetBoard(home: home, day: day, health: workout || posted ? [run(on: day, sport: sport)] : [])
+            checkIns: mondayRun
+                + (posted ? [checkIn(of: run(on: day, sport: sport), by: viewer, to: today.squad, on: day)] : []),
+            squadFirstWeek: monday.adding(days: -7 * 7))
+        let dayChallenge = challenge.flatMap { challenge in
+            coach.map {
+                DayChallenge(note: "sample", day: day, challenge: challenge, coach: CoachSpeaker(id: $0, name: ""))
+            }
+        }
+        return WidgetBoard(
+            home: home, day: day, coach: coach, health: workout || posted ? [run(on: day, sport: sport)] : [],
+            scene: scene, challenge: dayChallenge)
+    }
+
+    /// The coach the gallery's 本周出赛表 shows: 毛头.
+    public static let coach = CoachID(rawValue: "xiaohun")
+
+    /// A challenge as the coach sets one: what to do, how much and in what.
+    public static func challenge(
+        _ title: String, _ amount: Int, _ unit: String, answer: CoachChallengeAnswer? = nil, done: Bool = false
+    ) -> CoachPageCard.Challenge {
+        CoachPageCard.Challenge(
+            title: title, amount: amount, unit: unit, answer: answer, completedBy: done ? .member : nil)
+    }
+
+    /// A run logged by hand at 7am on `day`.
+    private static func morningRun(by member: MemberID, to squad: SquadID, on day: LocalDay) -> CheckIn {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        let morning =
+            calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day, hour: 7)) ?? Date()
+        guard let audience = try? Audience([squad]) else { fatalError("one squad is always an audience") }
+        return CheckIn(
+            id: CheckInID(UUID()), member: member, day: day, createdAt: Timestamp(morning), audience: audience,
+            entry: .trained(Training(activity: .sport("run"))))
     }
 
     /// My 训练 posted from `run`.
@@ -71,9 +109,12 @@ public enum SampleBoard {
             activity: .sport(sport))
     }
 
-    /// Mondays, Wednesdays, Fridays and Saturdays.
+    /// A run on Monday, tennis on Wednesday, strength on Friday and a swim on Saturday.
     private static func plan(of member: MemberID, from monday: LocalDay) -> WeeklyPlan {
-        let days: [PlanDay] = [.train(nil), .rest, .train(nil), .rest, .train(nil), .train(nil), .rest]
+        let days: [PlanDay] = [
+            .train(.sport("run")), .rest, .train(.sport("tennis")), .rest, .train(.sport("strength")),
+            .train(.sport("swim")), .rest,
+        ]
         guard let plan = try? WeeklyPlan(member: member, weekStart: monday, days: days) else {
             fatalError("a seven-day plan is always a plan")
         }

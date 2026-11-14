@@ -24,6 +24,15 @@ public enum OpenedNotification: Hashable, Sendable {
             self = event["checkIn"].flatMap(UUID.init(uuidString:)).map { .open(.post(CheckInID($0))) } ?? .other
             return
         }
+        // Someone asked to join: 小队设置, where the captain answers; let in: the squad.
+        if category == "joinRequest" {
+            self = .open(.squadPreferences)
+            return
+        }
+        if category == "joinApproved" {
+            self = .open(.squad)
+            return
+        }
         self = Self.subject(category: category, event: event).flatMap(\.destination).map(Self.open) ?? .other
     }
 

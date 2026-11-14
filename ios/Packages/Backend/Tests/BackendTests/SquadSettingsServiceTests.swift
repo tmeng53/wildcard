@@ -1,4 +1,5 @@
 import Contracts
+import DailyPushDomain
 import DesignSystem
 import Foundation
 import ScenePickDomain
@@ -85,4 +86,37 @@ import Testing
 
     #expect(try await captains.fireCoach(of: squad) == SquadCoach(hire: nil, canHire: true))
     #expect(try await mates.settings().coach.hire == nil)
+}
+
+@Test func theCaptainTurnsJoinApprovalOffAndReadsWhoWaitsAndAMateIsRefused() async throws {
+    let stack = try LocalStack()
+    let (captain, mate) = (try await stack.signedInMember(), try await stack.signedInMember())
+    let squad = try await stack.squad(of: captain, mate)
+    let captains = APISquadSettingsService(api: captain.api)
+
+    // On for a squad that never set it.
+    #expect(try await captain.api.joinApproval(of: squad))
+    #expect(try await captains.setJoinApproval(of: squad, required: false) == false)
+    #expect(try await captain.api.joinApproval(of: squad) == false)
+    // The switch `joinApproval` is off locally, so nobody can be waiting.
+    #expect(try await captain.api.joinRequests(of: squad).isEmpty)
+
+    let mates = APISquadSettingsService(api: mate.api)
+    await #expect(throws: SquadError.outdated) { _ = try await mates.setJoinApproval(of: squad, required: true) }
+    await #expect(throws: SquadError.outdated) {
+        try await mates.answer(JoinRequestID(UUID()), in: squad, approve: true)
+    }
+}
+
+@Test func thePushsAnswerToARequestNoLongerWaitingClosesIt() async throws {
+    let stack = try LocalStack()
+    let (captain, mate) = (try await stack.signedInMember(), try await stack.signedInMember())
+    let squad = try await stack.squad(of: captain, mate)
+    // The switch `joinApproval` is off locally, so no request waits: the API knows none by this id.
+    let gone = JoinRequestID(UUID())
+    for approve in [true, false] {
+        await #expect(throws: DailyPushError.answeredElsewhere) {
+            try await APIJoinRequestAnswerer(api: captain.api).answer(gone, in: squad, approve: approve)
+        }
+    }
 }

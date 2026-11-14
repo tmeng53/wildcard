@@ -146,6 +146,11 @@ public actor InMemoryMeService: MeService {
         current.coachPushOn = isOn
     }
 
+    public func setTeammatePush(_ isOn: Bool) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        current.teammatePushOn = isOn
+    }
+
     public func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard {
         if failsSaving { throw .unavailable }
         current.board.wear(wearable)

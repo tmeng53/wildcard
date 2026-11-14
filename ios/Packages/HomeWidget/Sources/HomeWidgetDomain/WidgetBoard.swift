@@ -49,6 +49,14 @@ public struct WidgetBoard: Hashable, Sendable {
     /// While there is none, today's newest workout I posted, which the capsule keeps showing with
     /// 已打卡 once it went out. Nil when I posted none from Health today.
     public let postedWorkout: ImportedWorkout?
+    /// The squad's scene this week, which 本周出赛表 wears; nil when it couldn't be read.
+    public let scene: SceneID?
+    /// Today's challenge from the coach (今日挑战), answered or not; nil before the coach set one,
+    /// once its day is over, or without a coach.
+    public let challenge: DayChallenge?
+    /// This week's number in the squad (W8), counted from the week the squad was made; nil from
+    /// an older server.
+    public let weekNumber: Int?
 
     /// - Parameters:
     ///   - home: the home as last loaded; moved on to `day` when it is from an earlier one.
@@ -56,9 +64,11 @@ public struct WidgetBoard: Hashable, Sendable {
     ///   - health: the workouts read from Health lately; pass none for a home that is the copy kept
     ///     on the phone, which may be from before a post and so can't say what is still to post.
     ///   - putAway: the workouts put away from 今天's Health card on this phone.
+    ///   - scene: the squad's scene this week, for 本周出赛表.
+    ///   - challenge: today's challenge, for 本周出赛表.
     public init(
         home: Home, day: LocalDay, coach: CoachID? = nil, coachHasNews: Bool = false, health: [ImportedWorkout] = [],
-        putAway: Set<WorkoutSource> = []
+        putAway: Set<WorkoutSource> = [], scene: SceneID? = nil, challenge: DayChallenge? = nil
     ) {
         // A copy read on an earlier day of mine says nothing about anyone's today yet. Each
         // teammate's row is their own today on their own clock, so a teammate behind me in time
@@ -81,6 +91,11 @@ public struct WidgetBoard: Hashable, Sendable {
         }
         self.coach = coach
         self.coachHasNews = coachHasNews
+        self.scene = scene
+        // Today's challenge shows while the squad has a coach (even one hired since it was set,
+        // as the member may still be doing it), only on its own day.
+        self.challenge = coach == nil || challenge?.challenge.isExpired == true ? nil : challenge
+        weekNumber = home.squadFirstWeek.map { day.weekStart.weekNumber(since: $0) }
         // One Health has no sport of the list for is picked by hand in the app, so the widgets
         // leave it out.
         let todays = health.filter { $0.activity != nil }
@@ -106,10 +121,11 @@ public struct WidgetBoard: Hashable, Sendable {
         }
     }
 
-    /// Today and the days after it this week, at most `count`: the small 本周出赛表's list.
-    public func planAhead(_ count: Int) -> [PlanDay] {
-        Array(plan.dropFirst(week.today).prefix(count))
-    }
+    /// Today on 本周出赛表.
+    public var planToday: PlanDay? { plan.first(where: \.isToday) }
+
+    /// Tomorrow, while it is in this week; nil on a Sunday.
+    public var planTomorrow: PlanDay? { plan.first { $0.weekday == week.today + 1 } }
 
     /// How many in the squad checked in today: 今天 x/y.
     public var checkedInToday: Int { mates.count { $0.status == .checkedIn } }

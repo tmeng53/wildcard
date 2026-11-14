@@ -73,12 +73,7 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import {
-  createPlaceRatings,
-  createPostgresPlaceRatingStore,
-  createPostgresSquadPlaceStore,
-  createSquadPlaces,
-} from '@wildcard/places';
+import { createPostgresSquadPlaceStore, createSquadPlaces } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
 import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
@@ -165,6 +160,7 @@ import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiUsageTools } from './admin-mcp/tools/ai-usage.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { appCopyTools } from './admin-mcp/tools/app-copy.js';
+import { appRouteTools } from './admin-mcp/tools/app-routes.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -530,10 +526,6 @@ const nudges = createNudges({
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
   clock: () => new Date(),
 });
-const placeRatings = createPlaceRatings({
-  store: createPostgresPlaceRatingStore(db),
-  clock: () => new Date(),
-});
 // The places each member saved (收藏).
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
@@ -808,7 +800,6 @@ const app = createApp({
   scenes,
   switches,
   nudges,
-  placeRatings,
   savedPlaces,
   squadPlaces,
   weather,
@@ -977,6 +968,7 @@ const app = createApp({
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
       ...minimumBuildTools({ minimum: minimumBuildsOn(scope) }),
+      ...appRouteTools(),
       ...quickReactionTools({ reactions: quickReactionsOn(scope) }),
       ...sceneTools({
         scenes: createScenes({

@@ -23,8 +23,8 @@ export function getTeammatePushSettings({ settings }: TeammatePushToolDependenci
     description:
       'Shows whether a squadmate’s 训练 is pushed to the rest of the squad as it is posted ' +
       '(`sending`) and how many of those pushes may ring on one member’s phone in any 24 hours ' +
-      '(`dailyRings`, 0 to 50); the ones past it arrive silently. Members’ own 通知 switch ' +
-      'applies on top.',
+      '(`dailyRings`, 0 to 50); the ones past it arrive silently. Each member’s own switch for ' +
+      'it (队友练完提醒) applies on top.',
     changes: false,
     input: z.strictObject({}),
     run: async () => settings.current(),

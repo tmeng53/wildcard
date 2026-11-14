@@ -44,7 +44,7 @@ struct SquadStep: View {
         } actions: {
             FailureLine(failure: model.failure)
             StepButton(
-                title: isJoining ? Text(copy: "加入小队", bundle: .module) : Text(copy: "建小队", bundle: .module),
+                title: buttonTitle,
                 isWorking: model.isWorking, isEnabled: model.canFinishSquad, action: model.finishSquad
             )
             .accessibilityIdentifier("squad.done")
@@ -56,6 +56,12 @@ struct SquadStep: View {
     }
 
     private var isJoining: Bool { model.squad.choice == .join }
+
+    /// 申请加入 for a squad whose captain lets members in.
+    private var buttonTitle: Text {
+        if model.asksCaptain { return Text(copy: "申请加入", bundle: .module) }
+        return isJoining ? Text(copy: "加入小队", bundle: .module) : Text(copy: "建小队", bundle: .module)
+    }
 
     /// No way back for a member back in no squad. Spelled out, since a ternary of `nil` and a method
     /// reference crashes the type checker.
@@ -113,6 +119,16 @@ private struct JoinPanel: View {
             .onTapGesture { isTyping = true }
             SquadFound(lookup: model.preview, heads: model.previewHeads)
                 .padding(.top, Space.xxs)
+            if model.asksCaptain {
+                // 备注（可选）, to the captain of a squad whose joining needs their OK.
+                InputField(
+                    text: Binding(get: { model.squad.typedNote }, set: { model.typeNote($0) }),
+                    label: Text(copy: "备注", bundle: .module), prompt: Text(copy: "备注（可选）", bundle: .module),
+                    limit: JoinNote.maxLength
+                )
+                .padding(.top, Space.xxs)
+                .accessibilityIdentifier("squad.note")
+            }
         }
         .padding(.vertical, Space.xs)
         .onAppear { if model.squad.code == nil { isTyping = true } }
@@ -171,34 +187,54 @@ private struct SquadFound: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .card()
         case .found(let squad):
-            VStack(alignment: .leading, spacing: Space.xs) {
-                Text(verbatim: squad.name)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
-                HStack(spacing: Space.xs) {
-                    if !heads.isEmpty {
-                        HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgCanvas)
-                    }
-                    Group {
-                        if squad.isFull {
-                            Text(copy: "\(squad.memberCount) 人 · 满员了", bundle: .module)
-                        } else {
-                            Text(copy: "\(squad.memberCount) 人 · 人均每周 \(squad.daysPerMember) 次", bundle: .module)
-                        }
-                    }
-                    .typeStyle(TypeRamp.footnote)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+            SquadCard(name: squad.name, heads: heads) {
+                if squad.isFull {
+                    Text(copy: "\(squad.memberCount) 人 · 满员了", bundle: .module)
+                } else {
+                    Text(copy: "\(squad.memberCount) 人", bundle: .module)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .card()
-            .accessibilityElement(children: .combine)
             .accessibilityIdentifier("squad.found")
         case .failed(_, let failure):
             FailureLine(failure: failure)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+}
+
+/// A squad on a white card with a hairline like the rows around it (Tracy, 2026-11-08): its name,
+/// its members' heads and a line about it. Greyed with a graphite 未通过 when a captain said no.
+struct SquadCard<Line: View>: View {
+    let name: String
+    let heads: [CastMember]
+    var isDeclined = false
+    @ViewBuilder let line: Line
+    @Environment(\.sceneTheme) private var theme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            Text(verbatim: name)
+                .typeStyle(TypeRamp.headline)
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
+                .lineLimit(1)
+            HStack(spacing: Space.xs) {
+                if !heads.isEmpty {
+                    HeadStack(heads.map(\.player), size: Sizing.characterHead, on: .bgCanvas)
+                }
+                line
+                    .typeStyle(TypeRamp.footnote)
+                    .foregroundStyle(Color(role: .fgMuted, in: theme))
+            }
+        }
+        .opacity(isDeclined ? 0.45 : 1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(alignment: .topTrailing) {
+            if isDeclined {
+                Tag(Text(copy: "未通过", bundle: .module), style: .ink, size: .small)
+            }
+        }
+        .card()
+        .accessibilityElement(children: .combine)
     }
 }
 

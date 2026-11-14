@@ -56,6 +56,18 @@ struct AppRoot: View {
                         SignUpProgress.save(squad: squad, madeIt: signUp.madeTheSquad, rejoining: signUp.isRejoining)
                     }
                 }
+                .onChange(of: signUp.request, initial: true) { _, request in
+                    guard let request else { return }
+                    switch request.status {
+                    case .waiting:
+                        // A yes while the app is closed opens 上场 in the squad on the next launch.
+                        SignUpProgress.save(squad: request.squad, madeIt: false, rejoining: true)
+                    case .declined:
+                        DeclineNotice.shown(request.id)
+                    case .approved, .over:
+                        break
+                    }
+                }
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
@@ -105,6 +117,9 @@ struct AppRoot: View {
         // An invite link: universal links come here in a SwiftUI app.
         .onOpenURL { url in
             if let code = InviteLink.code(in: url) { app.open(invite: code) }
+            // A place in the app by its address (wildcard://store/powder): the tabs open it as a
+            // notice's place, now or once they are up.
+            if let place = AppDestination(address: url.absoluteString) { pushDestination = place }
             // A home screen widget: open its place now, or once the tabs are up.
             if let link = WidgetLink(url: url) {
                 if case .tabs(let today, _, _, _, _, _) = app.screen {

@@ -1,7 +1,7 @@
 import { nameText } from '@wildcard/typed-text';
 import { z } from 'zod';
 
-import type { MemberId } from './place-rating.js';
+import type { MemberId } from './ids.js';
 
 // Places a squad's members add themselves (Tracy, 2026-11-12), anywhere Apple Maps doesn't
 // list: the whole squad sees them and may tag their own posts with them. Never changed once

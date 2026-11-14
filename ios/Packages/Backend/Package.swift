@@ -23,6 +23,7 @@ import PackageDescription
 // - `APIMeService`, the adapter behind `MeDomain`'s `MeService`: 我's overview, the daily push
 //   switch and deleting the account.
 // - `APIReactionSender`, behind `DailyPushDomain`'s `ReactionSender`: reacting from the 6pm push;
+//   `APIJoinRequestAnswerer`, behind its `JoinRequestAnswerer`: the captain answering from a push;
 //   `AppGroup` and `SharedSquad`, what the app shares with that push's view.
 // - `APIFeedSource`, the adapter behind `FeedDomain`'s `FeedSource`: 动态's posts with their
 //   reactions, the squad's characters and the photos.
@@ -88,6 +89,7 @@ let package = Package(
                 .product(name: "APIContract", package: "Contracts"),
                 .product(name: "AvatarArt", package: "Avatar"), .product(name: "AvatarDomain", package: "Avatar"),
                 .product(name: "CheckInDomain", package: "CheckIn"), "Contracts",
+                .product(name: "DailyPushDomain", package: "DailyPush"),
                 .product(name: "FeedDomain", package: "Feed"),
                 .product(name: "LocationDomain", package: "Location"),
                 .product(name: "MeDomain", package: "Me"),

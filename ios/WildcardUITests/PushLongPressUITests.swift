@@ -47,6 +47,21 @@ final class PushLongPressUITests: XCTestCase {
         XCTAssertTrue(plain.label.contains("测试队友"), "the extension's words aren't the push's: \(plain.label)")
     }
 
+    /// The captain's push about a request to join: the view draws who asked, their note, 拒绝 and
+    /// 同意. A Debug build names no backend, so answering here isn't tried.
+    func testAJoinRequestOpensWhoAskedWithTheAnswers() throws {
+        continueAfterFailure = false
+        let expanded = try longPress(Self.joinRequest, shot: "95-push-long-press-join-request")
+        XCTAssertTrue(
+            expanded.descendants(matching: .any).matching(identifier: "joinPush.approve").firstMatch
+                .waitForExistence(timeout: Self.wait),
+            "the long-pressed join request has no 同意:\n\(springboard.debugDescription.prefix(4000))")
+        XCTAssertTrue(expanded.descendants(matching: .any).matching(identifier: "joinPush.decline").firstMatch.exists)
+        XCTAssertTrue(
+            expanded.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "阿杰拉我来的")).firstMatch.exists,
+            "the long-pressed join request doesn't show the note:\n\(springboard.debugDescription.prefix(4000))")
+    }
+
     /// Launches the app with the push, goes home, long-presses its banner and keeps a screenshot
     /// of what opens.
     private func longPress(_ payload: [String: Any], shot: String) throws -> XCUIApplication {
@@ -65,7 +80,7 @@ final class PushLongPressUITests: XCTestCase {
         }
         XCUIDevice.shared.press(.home)
         let banner = springboard.buttons.matching(NSPredicate(format: "label CONTAINS %@", "测试队友")).firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "no banner for the 6pm push")
+        XCTAssertTrue(banner.waitForExistence(timeout: Self.wait), "no banner for the push")
         banner.press(forDuration: 1.5)
         // The extension starts, draws and resizes its card.
         Thread.sleep(forTimeInterval: 4)
@@ -95,6 +110,22 @@ final class PushLongPressUITests: XCTestCase {
         ],
         "more": 0,
         "pokedBy": [2],
+    ]
+
+    /// The captain's push as `push-samples.json`'s `push.joinRequest`, from 测试队友.
+    private static let joinRequest: [String: Any] = [
+        "version": 1,
+        "aps": [
+            "alert": ["loc-key": "push.joinRequest", "loc-args": ["测试队友"]],
+            "category": "joinRequest", "thread-id": "join-6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+            "mutable-content": 1,
+        ],
+        "event": [
+            "kind": "joinRequest", "squadId": "6f1c2a5e-8d3b-4f7a-9c2e-1b4d5a6e7f80",
+            "request": "5c3e7a91-4b2d-4e8f-a6c1-2d9b8e7f6a05", "member": "00000000-0000-4000-8000-00000000000a",
+            "nickname": "测试队友", "note": "我是测试队友，阿杰拉我来的",
+            "look": ["persona": "shy", "variants": ["body": "lop"], "colors": [String: String]()],
+        ],
     ]
 
     /// The 6pm push naming the teammate who patted, as `push-samples.json`'s, with `today` or not.
