@@ -34,6 +34,9 @@ public struct RecapView: View {
     @State private var reveal: Reveal?
     /// 地点页s pushed over the story from its places; the story waits while one is open.
     @State private var places: [Place] = []
+    /// How many times the reader came back from a 地点页: the story's touch starts afresh each time,
+    /// since the tap that opened the place was cut off by the push and never ended.
+    @State private var returns = 0
     @Environment(\.placePage) private var placePage
 
     private let autoAdvances: Bool
@@ -58,12 +61,22 @@ public struct RecapView: View {
                 }
         }
         // Back from a place, the page still waits for the reader's tap, as after any play with it.
-        .onChange(of: places.isEmpty) { _, isEmpty in if !isEmpty { model.hold(true) } }
+        .onChange(of: places.isEmpty) { _, isEmpty in
+            if isEmpty {
+                touchedAt = nil
+                touchStart = nil
+                dragDown = 0
+                returns += 1
+            } else {
+                model.hold(true)
+            }
+        }
     }
 
     private var content: some View {
         ZStack {
             story
+                .id(returns)
                 // Under the reveal the page is a picture: no taps, nothing for VoiceOver.
                 .allowsHitTesting(reveal == nil)
                 .accessibilityHidden(reveal != nil)
