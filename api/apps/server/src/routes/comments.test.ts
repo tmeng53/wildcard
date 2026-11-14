@@ -61,6 +61,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -153,6 +154,7 @@ const app = createApp({
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   // Real, so a comment's notices are read back from 通知.
   notices: createNotices({

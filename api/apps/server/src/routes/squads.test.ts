@@ -55,6 +55,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -139,6 +140,7 @@ const app = createApp({
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),

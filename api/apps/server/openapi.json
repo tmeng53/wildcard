@@ -5531,12 +5531,12 @@
         "properties": {
           "kind": {
             "type": "string",
-            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.",
+            "description": "`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.",
             "example": "challenge"
           },
           "id": {
             "type": "string",
-            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.",
+            "description": "The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.",
             "example": "42"
           },
           "coach": {
@@ -5597,6 +5597,9 @@
             ],
             "additionalProperties": false,
             "description": "A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`."
+          },
+          "message": {
+            "$ref": "#/components/schemas/CoachMessage"
           }
         },
         "required": [
@@ -5604,6 +5607,226 @@
           "id",
           "coach",
           "at"
+        ],
+        "additionalProperties": false
+      },
+      "CoachMessage": {
+        "type": "object",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachMessageCard"
+            },
+            "description": "Every card of the message, the first (path ``) first."
+          },
+          "answered": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachMessageAnswered"
+            },
+            "description": "What the caller did on each card so far; the first answer to each part stands. A card whose tap closed it or turned it shows that on every phone."
+          }
+        },
+        "required": [
+          "cards",
+          "answered"
+        ],
+        "additionalProperties": false,
+        "description": "A `message`’s cards and what the caller answered; answer one with `PUT /squads/{squadId}/coach/messages/{messageId}/answer`."
+      },
+      "CoachMessageCard": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).",
+            "example": "no"
+          },
+          "line": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "body": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "about": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string"
+              },
+              "name": {
+                "$ref": "#/components/schemas/LocalizedWords"
+              },
+              "detail": {
+                "$ref": "#/components/schemas/LocalizedWords"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false,
+            "description": "What it is about: a symbol, a name and a line."
+          },
+          "stage": {
+            "type": "object",
+            "properties": {
+              "cast": {
+                "type": "string",
+                "description": "Who stands with the coach: `coach`, `coachAndMe` (the reader), `coachAndSquad` (the squad, in two rows of four past four) or `members` (`members`); more may come.",
+                "example": "coachAndMe"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "With `members`, these members by id, beside the coach."
+              },
+              "move": {
+                "type": "string",
+                "description": "The move the coach plays, by the art’s id; left out, its idle."
+              },
+              "scene": {
+                "type": "string",
+                "description": "The scene behind them, by id; left out, the squad’s scene this week."
+              }
+            },
+            "required": [
+              "cast"
+            ],
+            "additionalProperties": false,
+            "description": "The picture on top."
+          },
+          "stars": {
+            "type": "boolean",
+            "description": "`true`: five stars to tap (`stars` answers)."
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "placeholder": {
+                "$ref": "#/components/schemas/LocalizedWords"
+              }
+            },
+            "additionalProperties": false,
+            "description": "A box to type in (`text` answers)."
+          },
+          "buttons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachMessageButton"
+            },
+            "description": "0 to 3 buttons, left to right."
+          },
+          "thanks": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalizedWords"
+              },
+              {
+                "description": "What the card says once a button `close`s it."
+              }
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "line",
+          "stage",
+          "stars",
+          "buttons"
+        ],
+        "additionalProperties": false
+      },
+      "CoachMessageButton": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Its id within its card.",
+            "example": "yes"
+          },
+          "label": {
+            "$ref": "#/components/schemas/LocalizedWords"
+          },
+          "icon": {
+            "type": "string",
+            "description": "An SF Symbol before the words."
+          },
+          "style": {
+            "type": "string",
+            "description": "`primary` (graphite), `outline` or `plain` (words only); more may come.",
+            "example": "outline"
+          },
+          "tap": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachMessageStep"
+            },
+            "description": "What a tap does, step by step."
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "style",
+          "tap"
+        ],
+        "additionalProperties": false
+      },
+      "CoachMessageStep": {
+        "type": "object",
+        "properties": {
+          "open": {
+            "type": "string",
+            "description": "Opens this: a page in the app by its address (as a `wildcard://` link would) or an https web page.",
+            "example": "store/powder"
+          },
+          "feedback": {
+            "type": "string",
+            "description": "Sends what was typed in the card’s box as 意见反馈 (`POST /feedback`), as this kind: `problem` or `idea`.",
+            "example": "problem"
+          },
+          "close": {
+            "type": "boolean",
+            "description": "`true`: folds the card to its `thanks`."
+          },
+          "next": {
+            "type": "string",
+            "description": "Turns the card into the card at this path.",
+            "example": "no"
+          }
+        },
+        "additionalProperties": false,
+        "description": "One step, exactly one of its fields set; skip a step you don’t know."
+      },
+      "CoachMessageAnswered": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).",
+            "example": "no"
+          },
+          "tap": {
+            "type": "string",
+            "description": "The button the caller tapped."
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The stars they gave."
+          },
+          "text": {
+            "type": "string",
+            "description": "What they typed."
+          }
+        },
+        "required": [
+          "path"
         ],
         "additionalProperties": false
       },
@@ -5677,6 +5900,72 @@
           "version",
           "kind",
           "id"
+        ],
+        "additionalProperties": false
+      },
+      "CoachMessageAnswers": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "The message."
+          },
+          "answered": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoachMessageAnswered"
+            }
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "answered"
+        ],
+        "additionalProperties": false
+      },
+      "CoachMessageAnswer": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(|[a-z0-9][a-z0-9-]{0,23}(\\.[a-z0-9][a-z0-9-]{0,23}){0,1})$",
+            "description": "The card answered, by its path.",
+            "example": ""
+          },
+          "tap": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,23}$",
+            "description": "The button tapped.",
+            "example": "yes"
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "The stars given."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "What was typed; kept trimmed, up to 500 characters."
+          }
+        },
+        "required": [
+          "version",
+          "path"
         ],
         "additionalProperties": false
       },
@@ -13831,7 +14120,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
         "security": [
           {
             "bearer": []
@@ -14045,7 +14334,8 @@
                 "note",
                 "challenge",
                 "challengeDone",
-                "gift"
+                "gift",
+                "message"
               ]
             },
             "required": true,
@@ -14098,6 +14388,120 @@
           },
           "403": {
             "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/squads/{squadId}/coach/messages/{messageId}/answer": {
+      "put": {
+        "operationId": "answerCoachMessage",
+        "summary": "Keep what the caller did on one card of a coach message",
+        "description": "One part of the caller’s answer on one card of a coach message they got (a `message` card on the coach page): the button they tapped, the stars they gave or what they typed. Each part once a card; the first stands, and sending it again gets the answers back. A follow-up card takes answers once the button that turns into it was tapped. Sending 意见反馈 is the app’s own `POST /feedback`.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,47}$"
+            },
+            "required": true,
+            "name": "messageId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoachMessageAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Everything the caller answered on the message so far",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoachMessageAnswers"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid squad or message id, or not an answer that card takes (`COACH_MESSAGE_ANSWER_INVALID`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not a message the caller got in this squad (`COACH_MESSAGE_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

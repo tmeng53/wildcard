@@ -76,6 +76,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
@@ -217,6 +218,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     notices: createNotices({
       store: createPostgresNoticeStore(db),

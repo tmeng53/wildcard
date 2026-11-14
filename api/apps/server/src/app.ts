@@ -8,6 +8,7 @@ import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/discl
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
+import type { CoachMessages } from '@wildcard/coach-messages';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
 import type { SquadPlaces } from '@wildcard/places';
@@ -78,6 +79,7 @@ import { squadTimeZone } from './routes/squad-time-zone.js';
 import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { coachCards } from './routes/coach-cards.js';
+import { coachMessageAnswers } from './routes/coach-messages.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
@@ -104,6 +106,8 @@ export interface AppDependencies {
   readonly coachLetters: CoachLetters;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
   readonly coachActivity: CoachActivity;
+  /** 教练消息卡: cards admins put on members' coach pages. */
+  readonly coachMessages: Pick<CoachMessages, 'cardsFor' | 'answer'>;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
   /** The places each member saved (收藏), with their notes. */
@@ -238,6 +242,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));
+  app.route('/', coachMessageAnswers(deps));
   app.route('/', nudges(deps));
   app.route('/', places(deps));
   app.route('/', savedPlaces(deps));

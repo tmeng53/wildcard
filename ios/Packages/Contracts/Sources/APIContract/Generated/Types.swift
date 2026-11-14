@@ -462,7 +462,7 @@ public protocol APIProtocol: Sendable {
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -481,6 +481,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
     func markCoachCardSeen(_ input: Operations.MarkCoachCardSeen.Input) async throws -> Operations.MarkCoachCardSeen.Output
+    /// Keep what the caller did on one card of a coach message
+    ///
+    /// One part of the caller’s answer on one card of a coach message they got (a `message` card on the coach page): the button they tapped, the stars they gave or what they typed. Each part once a card; the first stands, and sending it again gets the answers back. A follow-up card takes answers once the button that turns into it was tapped. Sending 意见反馈 is the app’s own `POST /feedback`.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/messages/{messageId}/answer/put(answerCoachMessage)`.
+    func answerCoachMessage(_ input: Operations.AnswerCoachMessage.Input) async throws -> Operations.AnswerCoachMessage.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -1603,7 +1610,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -1646,6 +1653,23 @@ extension APIProtocol {
         try await markCoachCardSeen(Operations.MarkCoachCardSeen.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Keep what the caller did on one card of a coach message
+    ///
+    /// One part of the caller’s answer on one card of a coach message they got (a `message` card on the coach page): the button they tapped, the stars they gave or what they typed. Each part once a card; the first stands, and sending it again gets the answers back. A follow-up card takes answers once the button that turns into it was tapped. Sending 意见反馈 is the app’s own `POST /feedback`.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/messages/{messageId}/answer/put(answerCoachMessage)`.
+    public func answerCoachMessage(
+        path: Operations.AnswerCoachMessage.Input.Path,
+        headers: Operations.AnswerCoachMessage.Input.Headers = .init(),
+        body: Operations.AnswerCoachMessage.Input.Body
+    ) async throws -> Operations.AnswerCoachMessage.Output {
+        try await answerCoachMessage(Operations.AnswerCoachMessage.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// The caller’s pokes in a squad (拍一拍)

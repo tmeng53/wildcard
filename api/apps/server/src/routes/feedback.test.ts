@@ -40,6 +40,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   ignoredNotices,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachHiring,
   unusedCoachLetters,
   unusedGifts,
@@ -148,6 +149,7 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     feedback,

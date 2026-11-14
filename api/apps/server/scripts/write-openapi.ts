@@ -162,6 +162,7 @@ const app = createApp({
     markSeen: unused,
     spoke: unused,
   },
+  coachMessages: { cardsFor: unused, answer: unused },
   coachLetters: { write: unused },
   scenes: createScenes({
     store: createPostgresSceneStore(db),
