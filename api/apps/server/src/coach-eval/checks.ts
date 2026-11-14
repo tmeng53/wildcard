@@ -100,7 +100,6 @@ export async function judgeVerdict(
   const did = [
     `Reply to the post: ${outcome.reply ?? '(none)'}${outcome.emoji === undefined ? '' : ` [emoji ${outcome.emoji}]`}`,
     `Answer to the comment: ${outcome.answer ?? '(none)'}`,
-    `Marked the member's challenge done: ${outcome.challengeDone ? 'yes' : 'no'}`,
     `Tools called: ${outcome.steps.map(({ tool, input }) => `${tool}(${JSON.stringify(input)})`).join('; ') || '(none)'}`,
   ].join('\n');
   try {

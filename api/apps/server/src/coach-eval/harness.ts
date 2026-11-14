@@ -42,8 +42,6 @@ export interface TrialOutcome {
   readonly emoji?: string;
   /** Its answer to the comment. */
   readonly answer?: string;
-  /** Whether it marked the author's challenge done. */
-  readonly challengeDone: boolean;
   /** The memory files it changed, as saved. */
   readonly files: readonly { readonly path: string; readonly body: string }[];
   /** What it passed on to the team. */
@@ -73,7 +71,6 @@ export async function runTrial(
   const files: { path: string; body: string }[] = [];
   let reply: { text: string | undefined; emoji: string | undefined } | undefined;
   let answer: string | undefined;
-  let challengeDone = false;
   let feedback: string | undefined;
   let usage: TokenUsage = { requests: 0, inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 };
   let queued: Parameters<CoachStores['wakes']['enqueue']>[0] = [];
@@ -141,10 +138,6 @@ export async function runTrial(
     memberNotes: {
       save: nothing,
       challengeOf,
-      complete: () => {
-        challengeDone = true;
-        return Promise.resolve(true);
-      },
       deliveredBetween: () => Promise.resolve([]),
       challengesOn: () => Promise.resolve([]),
     },
@@ -309,7 +302,6 @@ export async function runTrial(
     ...(reply?.text === undefined ? {} : { reply: reply.text }),
     ...(reply?.emoji === undefined ? {} : { emoji: reply.emoji }),
     ...(answer === undefined ? {} : { answer }),
-    challengeDone,
     files,
     ...(feedback === undefined ? {} : { feedback }),
     steps,

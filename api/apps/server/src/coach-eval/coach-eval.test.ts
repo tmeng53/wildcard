@@ -150,23 +150,23 @@ describe('the coach eval harness', () => {
     const agent = scripted([
       ['react', { emoji: '😂' }],
       ['reply', { text: '商场逛 20 分钟，腿也算动过了' }],
-      ['complete_challenge', {}],
     ]);
     const outcome = await runTrial(squats, { settings, agent });
 
-    expect(agent.seen.tools).toContain('complete_challenge');
+    expect(agent.seen.tools).toContain('reply');
+    expect(agent.seen.tools).not.toContain('complete_challenge');
     expect(agent.seen.task).toContain('逛商场是我唯一的运动');
     expect(agent.seen.task).toContain('做深蹲 50 个');
     expect(outcome).toMatchObject({
       reply: '商场逛 20 分钟，腿也算动过了',
       emoji: '😂',
-      challengeDone: true,
       costMicros: 100_000,
     });
-    expect(outcome.steps.map(({ tool }) => tool)).toEqual(['react', 'reply', 'complete_challenge']);
-    expect(codeVerdict(expectation(0), outcome)).toEqual({
+    expect(outcome.steps.map(({ tool }) => tool)).toEqual(['react', 'reply']);
+    expect(codeVerdict(expectation(0), outcome)).toEqual({ pass: true });
+    expect(codeVerdict({ kind: 'tool', tool: 'reply', called: false }, outcome)).toEqual({
       pass: false,
-      note: 'complete_challenge was called',
+      note: 'reply was called',
     });
     expect(codeVerdict(expectation(1), outcome)).toEqual({ pass: true });
   });
