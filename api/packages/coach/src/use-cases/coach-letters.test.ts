@@ -223,10 +223,10 @@ describe('the outgoing coach’s letter', () => {
       // A goodbye to the squad and the next coach, never a briefing between coaches.
       expect(run?.task).toContain('给小队和暖暖留一封告别信，全队都会看到');
       expect(run?.task).toContain('不写谁住哪、做什么工作、私下说过什么');
-      expect(run?.task).toContain('- 队员1：米亚\n- 队员2：阿杰');
+      expect(run?.task).toContain('小队的人：米亚、阿杰');
       // Its memory, members by the names the model knows them by.
       expect(run?.task).toContain(
-        '### people/队员1.md（队员1这个人）\n```\n队员1 周三雷打不动游泳',
+        '### people/米亚.md（米亚这个人）\n```\n米亚 周三雷打不动游泳',
       );
       expect(run?.task).toContain('### squad.md（这个小队）\n```\n周日晚上最热闹');
       expect(run?.task).not.toContain('回来');
@@ -259,7 +259,7 @@ describe('the outgoing coach’s letter', () => {
       await hiring.change({ squad, coach: nuannuan, by });
       const { agent, runs } = writingAgent(['交给你了。']);
       await letters(fixture, { agent, consented: [mia] }).write(squad);
-      expect(runs[0]?.task).toContain('队员1 周三雷打不动游泳');
+      expect(runs[0]?.task).toContain('米亚 周三雷打不动游泳');
       expect(runs[0]?.task).not.toContain('备战半马');
       expect(runs[0]?.task).not.toContain('阿杰');
     });

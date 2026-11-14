@@ -468,10 +468,10 @@ describe('the coach', () => {
                 input: { path: 'people/队员3.md', find: '', replace: '没这个人' },
               },
               { tool: 'post_note', input: { text: '不该有这个工具' } },
-              { tool: 'reply', input: { text: '队员1 周日还跑' } },
-              { tool: 'reply', input: { text: '跑'.repeat(101) } },
-              { tool: 'reply', input: { text: '周日也跑？' } },
-              { tool: 'reply', input: { text: '  周日也跑，腿还在吗  ' } },
+              { tool: 'reply', input: { point: '接住', text: '队员1 周日还跑' } },
+              { tool: 'reply', input: { point: '接住', text: '跑'.repeat(101) } },
+              { tool: 'reply', input: { point: '接住', text: '周日也跑？' } },
+              { tool: 'reply', input: { point: '接住', text: '  周日也跑，腿还在吗  ' } },
               { tool: 'react', input: { emoji: '💩' } },
               { tool: 'react', input: { emoji: '🔥' } },
             ],
@@ -1128,7 +1128,7 @@ describe('the coach', () => {
     await rolledBack(async (fixture) => {
       const { squad, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('要回的这句') ? [{ tool: 'answer', input: { text: '下雨就练核心' } }] : [],
+        task.includes('要回的这句') ? [{ tool: 'reply', input: { point: '接住', text: '下雨就练核心' } }] : [],
       );
       const told: Parameters<CoachAnswered>[0][] = [];
       const answered: CoachAnswered = (answer) => {
@@ -1196,12 +1196,12 @@ describe('the coach', () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) => {
-        if (task.includes('有人打卡')) return [{ tool: 'reply', input: { text: '周日也跑？' } }];
+        if (task.includes('发了动态')) return [{ tool: 'reply', input: { point: '接住', text: '周日也跑？' } }];
         if (task.includes('要回的这句')) {
           return [
             { tool: 'react', input: { emoji: '🔥' } },
-            { tool: 'answer', input: { text: '队员2 你也来' } },
-            { tool: 'answer', input: { text: task.includes('你喊') ? '喊破嗓子' : '你也来跑' } },
+            { tool: 'reply', input: { point: '接住', text: '队员2 你也来' } },
+            { tool: 'reply', input: { point: '接住', text: task.includes('你喊') ? '喊破嗓子' : '你也来跑' } },
           ];
         }
         return [];
@@ -1300,8 +1300,8 @@ describe('the coach', () => {
       expect(runs.map(({ tools }) => tools.at(-1))).toStrictEqual([
         'react',
         'note_to',
-        'answer',
-        'answer',
+        'reply',
+        'reply',
       ]);
       expect(runs[2]?.task).toContain(
         '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」（要回的这句）',
@@ -1309,7 +1309,7 @@ describe('the coach', () => {
       expect(runs[3]?.task).toContain(
         '- 你：「周日也跑？」\n- 11-01 周日 10:01 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n- 11-01 周日 10:03 队员1（回复你）：「那你喊大声点」（要回的这句）',
       );
-      // Only `answer` on a reply's wake; it may not name 队员N, as any line members read.
+      // No react on a reply's wake; a line may not name 队员N, as any line members read.
       expect(runs[2]?.answers).toStrictEqual([
         'no tool react',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
@@ -1512,11 +1512,11 @@ describe('the coach', () => {
     await rolledBack(async (fixture) => {
       const { trx, squad, mia, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('有人打卡')
+        task.includes('发了动态')
           ? [
               { tool: 'squad_week', input: {} },
               { tool: 'react', input: { emoji: '🔥' } },
-              { tool: 'reply', input: { text: '队员1 好' } },
+              { tool: 'reply', input: { point: '接住', text: '队员1 好' } },
               { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '米亚怕下雨' } },
             ]
           : [],
@@ -1587,11 +1587,11 @@ describe('the coach', () => {
         return Promise.resolve(paths.map((path) => `https://photos.test/${path}`));
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('有人打卡')
+        task.includes('发了动态')
           ? [
               { tool: 'look_at_photos', input: {} },
               { tool: 'look_at_photos', input: {} },
-              { tool: 'reply', input: { text: '这碗面看着不错' } },
+              { tool: 'reply', input: { point: '接住', text: '这碗面看着不错' } },
             ]
           : [],
       );
@@ -1642,7 +1642,7 @@ describe('the coach', () => {
         );
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('有人打卡')
+        task.includes('发了动态')
           ? [
               { tool: 'member_stats', input: {} },
               { tool: 'squad_week', input: { weeks_ago: 1 } },
@@ -1697,7 +1697,7 @@ describe('the coach', () => {
         ],
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('有人打卡')
+        task.includes('发了动态')
           ? [
               { tool: 'member_posts', input: { member: '队员1' } },
               { tool: 'post_comments', input: { post: '动态1' } },
@@ -1767,7 +1767,7 @@ describe('the coach', () => {
         ]);
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.includes('有人打卡') ? [{ tool: 'memes', input: {} }] : [],
+        task.includes('发了动态') ? [{ tool: 'memes', input: {} }] : [],
       );
       await wakes(fixture, { agent, memes }).checkedIn({ checkIn, squads: [squad] });
       expect(reads).toBe(1);
@@ -2216,11 +2216,11 @@ describe('the coach', () => {
         ],
       };
       const { agent, runs } = scriptedAgent((task) =>
-        task.startsWith('# 有人打卡')
+        /^# .+发了动态/.test(task)
           ? [
-              { tool: 'reply', input: { text: '一起跑', at: ['队员3'] } },
+              { tool: 'reply', input: { point: '接住', text: '一起跑', at: ['队员3'] } },
               // The post's author gets the reply anyway: never @'d.
-              { tool: 'reply', input: { text: '一起跑', at: ['队员1', '队员2'] } },
+              { tool: 'reply', input: { point: '接住', text: '一起跑', at: ['队员1', '队员2'] } },
             ]
           : [],
       );
@@ -2251,12 +2251,12 @@ describe('the coach', () => {
     await rolledBack(async (fixture) => {
       const { squad, mia, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
-        task.startsWith('# 有人打卡')
+        /^# .+发了动态/.test(task)
           ? [
               { tool: 'relay_feedback', input: { kind: 'idea', text: '' } },
               { tool: 'relay_feedback', input: { kind: 'problem', text: '照片传不上去' } },
               { tool: 'relay_feedback', input: { kind: 'idea', text: '想在动态上标地点' } },
-              { tool: 'reply', input: { text: '帮你转给团队了' } },
+              { tool: 'reply', input: { point: '接住', text: '帮你转给团队了' } },
             ]
           : task.includes('要回的这句')
             ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想看全队的月度总结' } }]
@@ -2360,7 +2360,7 @@ describe('the coach', () => {
           },
         },
       ).run();
-      expect(runs[0]?.task.startsWith('# 有人打卡')).toBe(true);
+      expect(runs[0]?./^# .+发了动态/.test(task)).toBe(true);
       expect(runs[0]?.tools).not.toContain('relay_feedback');
       expect(asked).toStrictEqual(['2026-11-01']);
     });
@@ -2369,7 +2369,7 @@ describe('the coach', () => {
   it('has nothing to pass on from a post without words', async () => {
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent((task) =>
-        task.startsWith('# 有人打卡')
+        /^# .+发了动态/.test(task)
           ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想标地点' } }]
           : [],
       );
@@ -2400,7 +2400,8 @@ describe('the coach', () => {
       );
       // Today: nothing from yesterday, so the night costs nothing.
       await wakes(fixture, { agent }).run();
-      expect(runs.map(({ task }) => task.slice(0, 6))).toStrictEqual(['# 有人打卡', '# 新的一天']);
+      expect(runs.map(({ task }) => task.split('\n')[0]?.endsWith('发了动态2') ?? false)).toStrictEqual([true, false]);
+      expect(runs[1]?.task.startsWith('# 新的一天')).toBe(true);
       expect(runs[0]?.tools).not.toContain('rewrite_file');
 
       const tomorrow = new Date(now.getTime() + 86_400_000);
@@ -2639,7 +2640,7 @@ describe('the coach', () => {
       const { agent, runs } = scriptedAgent(() => []);
       await wakes({ ...fixture, week }, { agent }).run();
       // 米亚's check-in, with no one under it yet: her page alone.
-      const onCheckIn = runs.find(({ task }) => task.startsWith('# 有人打卡'))?.task;
+      const onCheckIn = runs.find(({ task }) => /^# .+发了动态/.test(task))?.task;
       expect(onCheckIn).toContain('### people/队员1.md（队员1这个人）\n```\n爱跑步');
       expect(onCheckIn).not.toContain('people/队员2.md');
       expect(onCheckIn).not.toContain('冰淇淋');
@@ -2683,7 +2684,7 @@ describe('the coach', () => {
       };
       await wakes(fixture, { agent, weeks: { [week.weekStart]: week } }).run();
       const daily = runs.find(({ task }) => task.includes('新的一天'))?.task;
-      const checkIn = runs.find(({ task }) => task.includes('有人打卡'))?.task;
+      const checkIn = runs.find(({ task }) => task.includes('发了动态'))?.task;
       expect(daily).toContain('## 战术板\n- 用繁體中文寫，照台灣的說法。');
       expect(checkIn?.split('\n\n')).toContain('## 语言\nWrite in English.');
     });

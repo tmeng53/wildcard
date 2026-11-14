@@ -1,5 +1,5 @@
 // A squad's week as the coach sees it: who is in the squad, and what they checked in, with the
-// reactions and comments on it. The model never sees a member's id: each member is 队员N, by
+// reactions and comments on it. The model never sees a member's id: each member is their name, by
 // the order they joined, with the nickname they gave their character.
 
 import type { ReaderLanguage } from '@wildcard/language-model';
@@ -107,9 +107,23 @@ export interface SquadWeek {
   readonly checkIns: readonly WeekCheckIn[];
 }
 
-/** Each member's name for the model: 队员1, 队员2, … by the order they joined. */
+/**
+ * Each member's name for the model: their nickname, as their squadmates read it (Tracy,
+ * 2026-11-14: real names, never 队员N), numbered from the second on when two share one
+ * (`Mia`, `Mia2`). A member the model may not know by name (no nickname, or no AI consent) is
+ * 队员N by the order they joined.
+ */
 export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, string> {
-  return new Map(week.members.map(({ member }, index) => [member, `队员${String(index + 1)}`]));
+  const taken = new Set<string>();
+  return new Map(
+    week.members.map(({ member, nickname }, index) => {
+      const base = nickname?.trim() ?? '';
+      let name = base === '' ? `队员${String(index + 1)}` : base;
+      for (let count = 2; taken.has(name); count += 1) name = `${base || '队员'}${String(count)}`;
+      taken.add(name);
+      return [member, name];
+    }),
+  );
 }
 
 const KIND_WORDS: Readonly<Record<CheckInKind, string>> = {
@@ -198,19 +212,9 @@ export function checkInBlock(
   return lines.join('\n');
 }
 
-/**
- * Who is who, as every task opens with it: each member's roster name with the nickname their
- * squadmates know them by. The model reads everyone as 队员N but must speak to people by their
- * nicknames, so it is told them each time; without it, it guessed names from the talk and mixed
- * people up (Tracy, 2026-11-12).
- */
+/** Who is in the squad, as a waking task lists them: everyone by name. */
 export function rosterText(week: Pick<SquadWeek, 'members'>): string {
-  const roster = rosterOf(week);
-  const members = week.members.map(({ member, nickname }) => {
-    const name = roster.get(member) ?? '队员';
-    return nickname === undefined ? `- ${name}` : `- ${name}：${nickname}`;
-  });
-  return ['## 谁是谁（队员N：昵称）', ...members].join('\n');
+  return `## 小队的人\n${[...rosterOf(week).values()].join('、')}`;
 }
 
 /** The week as the `squad_week` tool answers it. */
@@ -233,8 +237,8 @@ export function weekText(week: SquadWeek): string {
 
 /**
  * The week as the model may read it: only members with a current AI consent have their words
- * in it (their nickname, check-ins and comments). The others stay on the roster as 队员N, so the
- * numbering holds, with nothing they wrote.
+ * in it (their nickname, check-ins and comments). The others stay on the roster as 队员N, with
+ * nothing they wrote.
  */
 export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): SquadWeek {
   return {

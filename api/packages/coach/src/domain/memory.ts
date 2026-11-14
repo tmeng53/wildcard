@@ -3,8 +3,8 @@ import { z } from 'zod';
 import type { SquadWeek } from './squad-week.js';
 
 // A squad's memory: the files its coach keeps. Stored by member id (`people/<id>.md`), shown to
-// the model by roster name (`people/队员N.md`), so the model never sees an id and a member's
-// page follows them when the numbering changes. Each coach also keeps a page of its own in the
+// the model by name (`people/Mia.md`), so the model never sees an id and a member's page follows
+// them when their name changes. Each coach also keeps a page of its own in the
 // squad (`coaches/<coach id>.md`, shown to it as `me.md`), which only that coach reads: a coach
 // who comes back finds its page again, and a new one starts its own (Tracy, 2026-11-09).
 
@@ -32,7 +32,7 @@ export const CoachFilePath = z
 
 /** Whose eyes the files are shown to: the squad's roster names and the coach reading them. */
 export interface MemoryView {
-  /** Each member's roster name (`队员N`), by member id. */
+  /** Each member's name as the model knows them, by member id. */
   readonly roster: ReadonlyMap<string, string>;
   /** The coach reading the files, by id: it sees its own page and no other coach's. */
   readonly coach: string;
@@ -84,14 +84,24 @@ export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): 
   return name === undefined ? undefined : `people/${name}.md`;
 }
 
-// In a file's text, the model names members by roster name too, but the numbering changes when
-// someone leaves, so a body is stored with each name as the member's id (`{队员:<id>}`) and shown
-// with each id as the member's name now. A member who left is shown as 一位已离队的队员.
+// In a file's text, the model names members by name too, but a name changes (a new nickname, a
+// number when two share one), so a body is stored with each name as the member's id
+// (`{队员:<id>}`) and shown with each id as the member's name now. A member who left is shown as
+// 一位已离队的队员.
 
-/** A body as stored: each roster name in it as its member's id. */
+/**
+ * A body as stored: each roster name in it as its member's id, the longest names first. A
+ * one-character name is left as written, since it turns up inside other words.
+ */
 export function storedBody(shown: string, roster: ReadonlyMap<string, string>): string {
-  const members = new Map([...roster].map(([member, name]) => [name, member]));
-  return shown.replace(/队员\d+/g, (name) => {
+  const members = new Map(
+    [...roster].flatMap(([member, name]) => (name.length > 1 ? [[name, member] as const] : [])),
+  );
+  if (members.size === 0) return shown;
+  const names = [...members.keys()]
+    .toSorted((a, b) => b.length - a.length)
+    .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return shown.replace(new RegExp(names.join('|'), 'g'), (name) => {
     const member = members.get(name);
     return member === undefined ? name : `{队员:${member}}`;
   });
