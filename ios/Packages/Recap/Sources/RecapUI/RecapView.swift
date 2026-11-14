@@ -29,6 +29,8 @@ public struct RecapView: View {
     @State private var touchedAt: Date?
     /// Where the touch under way began, to tell a new touch from one a page's own gesture took.
     @State private var touchStart: CGPoint?
+    /// When the touch began by the touch's own clock, to tell a tap from a hold.
+    @State private var touchBegan: Date?
     /// When the reader last played with the page (turned a card, dragged the map).
     @State private var stayedAt: Date?
     @State private var reveal: Reveal?
@@ -116,16 +118,20 @@ public struct RecapView: View {
         DragGesture(minimumDistance: 0)
             .onChanged { drag in
                 if touchedAt == nil || touchStart != drag.startLocation {
-                    touchedAt = drag.time
+                    // The clock `stay()` reads, never `drag.time`: the two aren't on the same clock,
+                    // and comparing them kept every tap after a page's play from moving on.
+                    touchedAt = .now
+                    touchBegan = drag.time
                     touchStart = drag.startLocation
                     model.hold(true)
                 }
                 dragDown = touchStayed ? 0 : drag.translation.height
             }
             .onEnded { drag in
-                let held = drag.time.timeIntervalSince(touchedAt ?? drag.time)
+                let held = drag.time.timeIntervalSince(touchBegan ?? drag.time)
                 let stayed = touchStayed
                 touchedAt = nil
+                touchBegan = nil
                 touchStart = nil
                 withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { dragDown = 0 }
                 // The page took this touch (a card turned, the map dragged): it stays up.
