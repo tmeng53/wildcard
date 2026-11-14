@@ -241,11 +241,17 @@ struct DeckMember: View {
         Group {
             if let player { CharacterView(player: player) } else { Color.clear }
         }
-        .task(id: wearing) {
+        // Dressed again when the card names someone else, or a gift goes on them.
+        .task(id: Dressing(character: character, wearing: wearing)) {
             // Put on once the gift has flown over to them.
             if wearing != nil, !reduceMotion { try? await Task.sleep(for: .seconds(StageTiming.landing)) }
             dress()
         }
+    }
+
+    private struct Dressing: Hashable {
+        let character: DeckCharacter
+        let wearing: String?
     }
 
     private func dress() {
