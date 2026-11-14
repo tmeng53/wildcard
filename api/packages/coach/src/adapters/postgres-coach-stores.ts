@@ -306,23 +306,6 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 
       challengeOf: (input) => dayChallenge(db, input),
 
-      async complete({ note, by, day }) {
-        // Only a challenge, on its own day, not let go, and only the first time: the member may
-        // have said 算了 while the run thought.
-        const done = await sql`
-          insert into public.coach_challenge_completions (note_id, by)
-          select m.id, ${by} from public.coach_member_notes m
-          where m.id = ${String(note)}::bigint and m.challenge_title is not null
-            and m.day = ${day}::date
-            and not exists (
-              select 1 from public.coach_challenge_answers a
-              where a.note_id = m.id and a.answer = 'declined'
-            )
-          on conflict (note_id) do nothing
-          returning note_id`.execute(db);
-        return done.rows.length > 0;
-      },
-
       async deliveredBetween({ squad, coach, from, to }) {
         const rows = await db
           .selectFrom('coach_member_notes')

@@ -59,7 +59,6 @@ describe('recall', () => {
       reaction: undefined,
       answer: undefined,
       answerMentions: [],
-      challengeDone: false,
       feedback: undefined,
       steps: [],
     };
