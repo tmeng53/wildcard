@@ -60,8 +60,10 @@ extension MainTabs {
             .navigationDestination(isPresented: showsEditor(overShop: false)) { profileEditor }
             // 收藏, and a place opened from it pushed over it.
             .navigationDestination(isPresented: $showsSavedPlaces) {
-                SavedPlacesPage(store: savedPlaces) { savedPlace = $0 }
-                    .navigationDestination(item: $savedPlace) { place in profilePlacePage(place, over: nil) }
+                SavedPlacesPage(store: savedPlaces) { savedPlace = SavedPlaceRoute(place: $0, writesNote: $1) }
+                    .navigationDestination(item: $savedPlace) { route in
+                        profilePlacePage(route.place, over: nil, writesNote: route.writesNote)
+                    }
             }
             .navigationDestination(isPresented: showsWall) {
                 if let wall {
@@ -111,8 +113,10 @@ extension MainTabs {
 
     /// A place opened on 我, with a tile's post pushed over it on 我's own stack, so back returns to
     /// the place; a post from 我的动态's place still tells the wall what changed.
-    private func profilePlacePage(_ place: Place, over wall: PostWallStore?) -> some View {
-        placePage(place) { id in
+    private func profilePlacePage(
+        _ place: Place, over wall: PostWallStore?, writesNote: Bool = false
+    ) -> some View {
+        placePage(place, writesNote: writesNote) { id in
             profilePlacePost = OpenedPost(id: id, model: wall.map { postPage(id, over: $0) } ?? feed.page(of: id))
         }
         .navigationDestination(item: $profilePlacePost) { opened in
