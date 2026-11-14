@@ -27,10 +27,20 @@ final class CommentButtonUITests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.5)
         keepScreenshot(named: "52-post-comment-button")
 
-        // With the keyboard put away, the card's comment button on the page brings it back.
-        app.scrollViews.firstMatch.swipeDown()
-        waitFor(app.keyboards.firstMatch, "exists == false", "swiping down didn't put the keyboard away")
-        app.buttons.matching(identifier: "feed.comment").firstMatch.tap()
+        // Typing on the page, the card's comment button keeps the keyboard (a tap elsewhere puts it away).
+        let onPage = app.buttons.matching(identifier: "feed.comment").firstMatch
+        onPage.tap()
+        assertTyping(in: box, "the comment button on the post's page put the keyboard away")
+
+        // With the keyboard dragged away, the button brings it back.
+        let keyboard = app.keyboards.firstMatch
+        let window = app.windows.firstMatch
+        let top = window.coordinate(withNormalizedOffset: .zero)
+        top.withOffset(CGVector(dx: window.frame.midX, dy: keyboard.frame.minY - 30))
+            .press(
+                forDuration: 0.05, thenDragTo: top.withOffset(CGVector(dx: window.frame.midX, dy: window.frame.maxY)))
+        waitFor(keyboard, "exists == false", "dragging down didn't put the keyboard away")
+        onPage.tap()
         assertTyping(in: box, "the comment button on the post's page didn't bring the keyboard back")
     }
 

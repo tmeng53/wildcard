@@ -149,7 +149,8 @@ struct CommentComposer: View {
             .onChange(of: model.startsComment, initial: true) { _, asked in
                 guard asked == post.id else { return }
                 model.startsComment = nil
-                isTyping.wrappedValue = true
+                // A turn later, once the field is in the pushed page's window, so focus holds.
+                Task { @MainActor in isTyping.wrappedValue = true }
             }
             .accessibilityIdentifier("post.field")
             .onChange(of: draft.text) { _, typed in
