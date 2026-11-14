@@ -6,9 +6,9 @@ import XCTest
 /// content clears the floating tab bar runs where the screen has the most in it.
 @MainActor
 final class FeedUITests: XCTestCase {
-    private static let wait: TimeInterval = 30
+    static let wait: TimeInterval = 30
     /// More than the sample squad's posts need to reach the end.
-    private static let maxSwipes = 24
+    static let maxSwipes = 24
     /// The 成绩条 under a cover, with room to spare.
     private static let stripHeight = 80.0
 
@@ -101,7 +101,8 @@ final class FeedUITests: XCTestCase {
         XCTAssertTrue(photos.waitForExistence(timeout: Self.wait), "动态 didn't come back")
     }
 
-    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first, across the card. The newest posts on top
+    /// A 训练 shows its numbers on the 成绩条 under its cover, 时长 first, across the card, and when it
+    /// was done under its byline. The newest posts on top
     /// are a run from Apple Health, a 请假条 and a salad, so the strip is scrolled to, a little at a
     /// time, until one clears the tab bar.
     func testScoreStrip() {
@@ -128,6 +129,8 @@ final class FeedUITests: XCTestCase {
             .containing(.any, identifier: "strip.duration").firstMatch
         XCTAssertEqual(strip.frame.minX, card.frame.minX, accuracy: 1, "the 成绩条 doesn't reach the card's left edge")
         XCTAssertEqual(strip.frame.maxX, card.frame.maxX, accuracy: 1, "the 成绩条 doesn't reach the card's right edge")
+
+        seeWhenItWasDone(on: card, in: feed, above: tabBarTop)
     }
 
     /// A post without a cover shows the shared colour block with its words, its minutes on the
@@ -313,11 +316,11 @@ final class FeedUITests: XCTestCase {
     }
 
     /// Lets springs settle before a screenshot.
-    private func settle() {
+    func settle() {
         Thread.sleep(forTimeInterval: 0.8)
     }
 
-    private func keepScreenshot(named name: String) {
+    func keepScreenshot(named name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name
         attachment.lifetime = .keepAlways

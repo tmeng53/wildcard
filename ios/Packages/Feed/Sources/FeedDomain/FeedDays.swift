@@ -47,6 +47,27 @@ public enum BackfillDay: Hashable, Sendable {
     }
 }
 
+/// When a 训练 was done, which its card shows beside the time it was posted: its Apple Health
+/// workout's start and end, else the start picked by hand and, with minutes, its end. Nil for
+/// anything else, and for a 训练 with no start.
+public enum WorkoutTime: Hashable, Sendable {
+    /// Moments, shown on the viewer's clock.
+    case moments(start: Timestamp, end: Timestamp)
+    /// On the author's own clock, as they picked it; `minutes` after the start it ended.
+    case wallClock(start: StartTime, minutes: Int?)
+
+    public init?(_ checkIn: CheckIn) {
+        guard case .trained(let training) = checkIn.entry else { return nil }
+        if let workout = training.workout {
+            self = .moments(start: workout.startedAt, end: workout.endedAt)
+        } else if let start = training.startTime {
+            self = .wallClock(start: start, minutes: training.minutes?.value)
+        } else {
+            return nil
+        }
+    }
+}
+
 /// One day of the feed: its posts, newest first.
 public struct FeedSection: Hashable, Sendable, Identifiable {
     public let day: LocalDay
