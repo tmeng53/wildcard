@@ -67,7 +67,7 @@ public final class NoticeInbox {
     private var unsentOpened: Set<NoticeID> = []
     /// Places opened since the last load, applied again once it comes: a push tapped at launch
     /// opens its post before the page that holds its notice is here.
-    private var pendingVisits: [(Notice) -> Bool] = []
+    private var pendingVisits: [Visit] = []
     /// 通知 is open on screen, from `open()` until `close()`.
     public private(set) var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
@@ -141,22 +141,25 @@ public final class NoticeInbox {
         Task { await sendOpened() }
     }
 
-    /// The member opened `place` (a post's page, a push, a banner): every notice that opens there
-    /// is read, on every phone.
-    public func visited(_ place: AppDestination) async {
-        await visited { $0.destination == place }
+    /// The member opened `place` (a post's page, a push, a banner) at `now`: every notice told by
+    /// then that opens there is read, on every phone.
+    public func visited(_ place: AppDestination, at now: Date) async {
+        await visited(at: now) { $0.destination == place }
     }
 
     /// The member opened a place the notices `about` are about (the coach page for its morning
-    /// notes): each is read, on every phone.
-    public func visited(where about: @escaping (Notice) -> Bool) async {
-        pendingVisits.append(about)
-        await markVisited(about)
+    /// notes) at `now`: each told by then is read, on every phone; one told later is new.
+    public func visited(at now: Date, where about: @escaping (Notice) -> Bool) async {
+        let visit = Visit(about: about, made: now)
+        pendingVisits.append(visit)
+        await markVisited(visit)
     }
 
-    private func markVisited(_ about: (Notice) -> Bool) async {
+    private func markVisited(_ visit: Visit) async {
+        // The phone's clock against the server's: a notice told a little after still counts.
+        let told = visit.made.addingTimeInterval(Self.clockSlack)
         let fresh = notices.filter { notice in
-            about(notice) && !opened.contains(notice.id)
+            visit.about(notice) && notice.toldAt <= told && !opened.contains(notice.id)
                 && (isNewerThanSeen(notice) || seenWhenOpened.map { notice.id > $0 } == true)
         }
         guard !fresh.isEmpty else { return }
@@ -226,7 +229,7 @@ public final class NoticeInbox {
             phase = .current
             let visits = pendingVisits
             pendingVisits = []
-            for about in visits { await markVisited(about) }
+            for visit in visits { await markVisited(visit) }
             await sendSeen()
             await sendOpened()
         } catch {
@@ -297,6 +300,14 @@ public final class NoticeInbox {
     public static let longestWait = Duration.seconds(60)
     /// How recent a notice must be for a push to tell it when nothing was loaded before it.
     public static let catchUpWindow: TimeInterval = 120
+    /// How far the phone's clock may be behind the server's when a visit reads what was told by then.
+    public static let clockSlack: TimeInterval = 60
+
+    /// A place the member opened, and when: it reads only what was told by then.
+    private struct Visit {
+        let about: (Notice) -> Bool
+        let made: Date
+    }
 
     func hear(_ heard: LiveNotice) async {
         switch heard {

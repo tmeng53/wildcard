@@ -13,7 +13,7 @@ extension MainTabs {
     /// stays under a post it opens, so back returns to it; elsewhere it closes.
     func open(_ destination: AppDestination) {
         // From a row, a banner or a push alike: what it is about is read on every phone.
-        Task { [inbox] in await inbox.visited(destination) }
+        Task { [inbox] in await inbox.visited(destination, at: LaunchOptions.now()) }
         switch destination {
         case .post(let id):
             selection = .feed

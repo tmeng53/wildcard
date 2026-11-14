@@ -17,13 +17,14 @@ extension EnvironmentValues {
 }
 
 extension NoticeInbox {
-    /// Marks read every notice about `visit`.
+    /// Marks read every notice about `visit` told by now.
     func visited(_ visit: NoticeVisit) async {
+        let now = LaunchOptions.now()
         switch visit {
         case .place(let place):
-            await visited(place)
+            await visited(place, at: now)
         case .coachPage:
-            await visited { notice in
+            await visited(at: now) { notice in
                 if case .coachNote = notice.subject { true } else { false }
             }
         }
