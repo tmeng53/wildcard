@@ -582,7 +582,8 @@ export function toolbox({
       }),
     );
   }
-  if (replying && challenges !== undefined) tools.push(dayChallenge(draft.steps, roster, challenges));
+  if (replying && challenges !== undefined)
+    tools.push(dayChallenge(draft.steps, { roster, challenges }));
   if (photos !== undefined && (kind === 'checkIn' || kind === 'comment')) {
     tools.push(lookAtPhotos(draft.steps, photos));
   }
@@ -596,8 +597,13 @@ export function toolbox({
  */
 function dayChallenge(
   steps: WakeStep[],
-  roster: Roster,
-  challenges: () => Promise<readonly DayChallengeFacts[]>,
+  {
+    roster,
+    challenges,
+  }: {
+    readonly roster: Roster;
+    readonly challenges: () => Promise<readonly DayChallengeFacts[]>;
+  },
 ): CoachTool {
   return defineTool(steps, {
     name: 'day_challenge',

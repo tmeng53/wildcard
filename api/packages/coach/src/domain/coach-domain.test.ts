@@ -59,36 +59,36 @@ const week: SquadWeek = {
 };
 
 describe('the squad’s week, as the model reads it', () => {
-  it('names members by their nickname, 队员N without one, never by id', () => {
+  it('names members by their nickname, 队员N without one, each with their user_id after', () => {
     const roster = rosterOf(week);
     const [first] = week.checkIns;
     if (first === undefined) throw new Error('no check-in');
     expect([...roster]).toStrictEqual([
-      [mia, '米亚'],
-      [leo, '队员2'],
+      [mia, { name: '米亚', userId: '11111111' }],
+      [leo, { name: '队员2', userId: '22222222' }],
     ]);
     expect(weekText(week)).toBe(
       [
         '# 本周',
         '- 从 2026-10-26（周一）开始',
         '',
-        '## 小队的人',
-        '米亚、队员2',
+        '## 小队的人（括号里是 user_id）',
+        '米亚（11111111）、队员2（22222222）',
         '',
         '## 打卡',
         '',
-        '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟',
+        '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟',
         '- 写的：「腿废了」',
-        '- 点了表情：队员2',
+        '- 点了表情：队员2（22222222）',
         '- 评论（先后顺序）：',
-        '  - 队员2：「强」',
+        '  - 队员2（22222222）：「强」',
         '',
-        '### 11-01 周日 · 队员2 · 请假条',
+        '### 11-01 周日 · 队员2（22222222） · 请假条',
         '- 写的：「下雨」',
       ].join('\n'),
     );
     expect(weekText(week)).not.toContain(mia);
-    // Two who share a nickname, and one whose nickname is another's 队员N, stay apart.
+    // Two who share a nickname, and one whose nickname is another's 队员N, stay apart by user_id.
     expect([
       ...rosterOf({
         members: [
@@ -98,7 +98,12 @@ describe('the squad’s week, as the model reads it', () => {
           { member: 'd', nickname: '队员3' },
         ],
       }).values(),
-    ]).toStrictEqual(['安', '安（2）', '队员3', '队员3（2）']);
+    ]).toStrictEqual([
+      { name: '安', userId: 'a' },
+      { name: '安', userId: 'b' },
+      { name: '队员3', userId: 'c' },
+      { name: '队员3', userId: 'd' },
+    ]);
   });
 
   it('names the place a post was tagged with', () => {
@@ -110,7 +115,7 @@ describe('the squad’s week, as the model reads it', () => {
         { roster: rosterOf(week) },
       ),
     ).toBe(
-      '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 地点：「Equinox Flatiron」\n- 写的：「腿废了」\n- 点了表情：队员2',
+      '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟\n- 地点：「Equinox Flatiron」\n- 写的：「腿废了」\n- 点了表情：队员2（22222222）',
     );
   });
 
@@ -126,13 +131,13 @@ describe('the squad’s week, as the model reads it', () => {
     ];
     expect(checkInBlock({ ...first, reactedBy: [], comments }, { roster })).toBe(
       [
-        '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟',
+        '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟',
         '- 写的：「腿废了」',
         '- 评论（先后顺序）：',
-        '  - 队员2：「强」',
-        '  - 米亚（回复队员2）：「你也来」',
-        '  - 队员2（@米亚，@你）：「看」',
-        '  - 米亚（回复你）：「谢谢」',
+        '  - 队员2（22222222）：「强」',
+        '  - 米亚（11111111）（回复队员2（22222222））：「你也来」',
+        '  - 队员2（22222222）（@米亚（11111111），@你）：「看」',
+        '  - 米亚（11111111）（回复你）：「谢谢」',
       ].join('\n'),
     );
     expect(
@@ -148,14 +153,17 @@ describe('the squad’s week, as the model reads it', () => {
         ],
         roster,
       ),
-    ).toStrictEqual(['- 米亚（回复队员2）：「你也来」', '- 队员2（@米亚，@你）：「看」']);
+    ).toStrictEqual([
+      '- 米亚（11111111）（回复队员2（22222222））：「你也来」',
+      '- 队员2（22222222）（@米亚（11111111），@你）：「看」',
+    ]);
   });
 
   it('calls a planned rest 计划休息, not a 请假条', () => {
     const [, leave] = week.checkIns;
     if (leave === undefined) throw new Error('no check-in');
     expect(checkInBlock({ ...leave, restDay: true }, { roster: rosterOf(week) })).toBe(
-      '### 11-01 周日 · 队员2 · 计划休息\n- 写的：「下雨」',
+      '### 11-01 周日 · 队员2（22222222） · 计划休息\n- 写的：「下雨」',
     );
   });
 
@@ -165,12 +173,12 @@ describe('the squad’s week, as the model reads it', () => {
         '# 本周',
         '- 从 2026-10-26（周一）开始',
         '',
-        '## 小队的人',
-        '队员1、队员2',
+        '## 小队的人（括号里是 user_id）',
+        '队员1（11111111）、队员2（22222222）',
         '',
         '## 打卡',
         '',
-        '### 11-01 周日 · 队员2 · 请假条',
+        '### 11-01 周日 · 队员2（22222222） · 请假条',
         '- 写的：「下雨」',
       ].join('\n'),
     );
@@ -179,17 +187,19 @@ describe('the squad’s week, as the model reads it', () => {
         '# 本周',
         '- 从 2026-10-26（周一）开始',
         '',
-        '## 小队的人',
-        '米亚、队员2',
+        '## 小队的人（括号里是 user_id）',
+        '米亚（11111111）、队员2（22222222）',
         '',
         '## 打卡',
         '',
-        '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟',
+        '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟',
         '- 写的：「腿废了」',
       ].join('\n'),
     );
     // Who reacted keeps only members who agreed, too.
-    expect(weekText(consentedOnly(week, new Set([mia, leo])))).toContain('点了表情：队员2');
+    expect(weekText(consentedOnly(week, new Set([mia, leo])))).toContain(
+      '点了表情：队员2（22222222）',
+    );
   });
 
   it('names the squad, and says when a check-in was posted days after the day it counts for', () => {
@@ -198,7 +208,7 @@ describe('the squad’s week, as the model reads it', () => {
     const backdated = { ...first, comments: [], reactedBy: [], postedDay: '2026-10-29' };
     const roster = rosterOf(week);
     expect(checkInBlock(backdated, { roster })).toBe(
-      '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 补打卡：算 10-27 周二 的，10-29 周四 才发\n- 写的：「腿废了」',
+      '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟\n- 补打卡：算 10-27 周二 的，10-29 周四 才发\n- 写的：「腿废了」',
     );
     // With the author's zone known, the time on their clock too.
     expect(checkInBlock({ ...backdated, postedTime: '23:40' }, { roster })).toContain(
@@ -213,8 +223,8 @@ describe('the squad’s week, as the model reads it', () => {
         '- 队名：周末不睡懒觉',
         '- 从 2026-10-26（周一）开始',
         '',
-        '## 小队的人',
-        '米亚、队员2',
+        '## 小队的人（括号里是 user_id）',
+        '米亚（11111111）、队员2（22222222）',
         '',
         '## 打卡',
         '这周还没有人打卡。',
@@ -250,21 +260,22 @@ describe('the memory files', () => {
 
   const roster = rosterOf(week);
 
-  it('show each member’s page by name and store it by member id', () => {
+  it('show each member’s page by user_id and store it by member id', () => {
     const view = { roster, coach: 'xiaohun' };
     expect(shownPaths(view)).toStrictEqual([
       'squad.md',
       'memory.md',
       'me.md',
-      'people/米亚.md',
-      'people/队员2.md',
+      'people/11111111.md',
+      'people/22222222.md',
     ]);
-    expect(storedPathOf('people/队员2.md', view)).toBe(`people/${leo}.md`);
+    expect(storedPathOf('people/22222222.md', view)).toBe(`people/${leo}.md`);
     expect(storedPathOf('memory.md', view)).toBe('memory.md');
-    expect(storedPathOf('people/队员3.md', view)).toBeUndefined();
-    expect(storedPathOf(`people/${mia}.md`, view)).toBeUndefined();
+    expect(storedPathOf('people/33333333.md', view)).toBeUndefined();
+    expect(storedPathOf('people/队员2.md', view)).toBeUndefined();
+    expect(storedPathOf(`people/${mia}.md`, view)).toBe(`people/${mia}.md`);
     expect(storedPathOf('../secrets.md', view)).toBeUndefined();
-    expect(shownPathOf(`people/${leo}.md`, view)).toBe('people/队员2.md');
+    expect(shownPathOf(`people/${leo}.md`, view)).toBe('people/22222222.md');
     expect(shownPathOf('people/00000000-0000-4000-8000-000000000000.md', view)).toBeUndefined();
   });
 
@@ -491,7 +502,6 @@ describe('when the coach wakes', () => {
         { member: leo, brief: { member: leo, trainedDays: 0, language: 'en' } },
       ],
       posts: [first],
-      challenges: [],
       set: new Map([[mia, { title: '游泳', amount: 30, unit: '分钟', line: '雨天进泳池' }]]),
       talks: [{ checkIn: first, said: [{ member: leo, text: '强' }] }],
       recentNotes: [{ day: '2026-10-27', text: '周二腿软也算练' }],
@@ -503,11 +513,11 @@ describe('when the coach wakes', () => {
         '# 早上\n今天是 2026-10-28，周三。',
         '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
         '## 战术板\n- 用繁體中文寫，照台灣的說法。\n- 你最近写过：\n  - 2026-10-27：周二腿软也算练\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
-        '## 便条（下面每人一张）\n小队的人：米亚、队员2。',
+        '## 便条（下面每人一张）\n小队的人（括号里是 user_id）：米亚（11111111）、队员2（22222222）。',
         // Each member's own day, posts by number, the challenge set for them and where they
         // talked with the coach, in their own language; never reactions or the talk itself.
-        '## 米亚\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二跑步，周三游泳，周四休息，周五休息，周六休息，周日休息\n- 这周饮食小目标：喝够水\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 10-27 周二 跑步 30 分钟：「腿废了」（1 条评论）\n- 当地天气：多伦多，今天雨，8–13°C\n- 你对他的了解：\n- 米亚爱跑步\n- 今天的挑战：「游泳 30 分钟」，小字：雨天进泳池\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- 用繁體中文寫，照台灣的說法。',
-        '## 队员2\n- 今天的计划：没填出赛表\n- 这周练了：0 天\n- 最近发的：没有\n- 今天的挑战：没有\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- Write in English.',
+        '## 米亚（11111111）\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二跑步，周三游泳，周四休息，周五休息，周六休息，周日休息\n- 这周饮食小目标：喝够水\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 10-27 周二 跑步 30 分钟：「腿废了」（1 条评论）\n- 当地天气：多伦多，今天雨，8–13°C\n- 你对他的了解：\n- 米亚爱跑步\n- 今天的挑战：「游泳 30 分钟」，小字：雨天进泳池\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- 用繁體中文寫，照台灣的說法。',
+        '## 队员2（22222222）\n- 今天的计划：没填出赛表\n- 这周练了：0 天\n- 最近发的：没有\n- 今天的挑战：没有\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- Write in English.',
       ].join('\n\n'),
     );
     // The tools go on from the task's numbers.
@@ -522,7 +532,6 @@ describe('when the coach wakes', () => {
       names: rosterOf(week),
       members: [],
       posts: [],
-      challenges: [],
       set: new Map(),
       talks: [],
       recentNotes: [],
@@ -534,7 +543,7 @@ describe('when the coach wakes', () => {
       '## 战术板\n- 用简体中文写。\n- 你还没写过。\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
       '## 便条\n今天没有要写便条的人。',
       '## 礼物清单\n- gift-scarf：红围巾',
-      '## 这周还能收礼物的\n- 米亚',
+      '## 这周还能收礼物的\n- 米亚（11111111）',
     ]);
   });
 
@@ -622,9 +631,9 @@ describe('what the coach looks up', () => {
       ),
     ).toBe(
       [
-        '米亚：一共练了 50 天，健康餐 3 次，坦白放纵餐 1 次，请假条 2 次。最常练跑步（31 次）。拿过 2 个周奖，最近一个是「早起之王」。',
+        '米亚（11111111）：一共练了 50 天，健康餐 3 次，坦白放纵餐 1 次，请假条 2 次。最常练跑步（31 次）。拿过 2 个周奖，最近一个是「早起之王」。',
         '本周出赛表：周一跑步，周二休息，周三练，周四休息，周五休息，周六休息，周日休息。这周的饮食小目标：喝够水、奶茶减半。',
-        '队员2：一共练了 0 天，健康餐 0 次，坦白放纵餐 0 次，请假条 0 次。还没拿过周奖。',
+        '队员2（22222222）：一共练了 0 天，健康餐 0 次，坦白放纵餐 0 次，请假条 0 次。还没拿过周奖。',
         '本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息。这周没定饮食小目标。',
       ].join('\n'),
     );
@@ -637,7 +646,7 @@ describe('what the coach looks up', () => {
         { roster: rosterOf(week) },
       ),
     ).toBe(
-      '### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 写的：「腿废了」\n- 照片：2 张\n- 点了表情：队员2',
+      '### 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟\n- 写的：「腿废了」\n- 照片：2 张\n- 点了表情：队员2（22222222）',
     );
   });
 });

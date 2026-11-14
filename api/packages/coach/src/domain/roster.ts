@@ -1,5 +1,3 @@
-import type { SquadWeek } from './squad-week.js';
-
 // Who is who for the model (Tracy, 2026-11-14: people are found by user id, never by name). Every
 // task and tool result writes a member as their name with their user_id after it,
 // `Tracy（3f2a9c1e）`, and every tool that takes a person takes that user_id. The name is only
@@ -25,7 +23,9 @@ const SHORT = 8;
  * Each member's name and user_id for the model. A member the model may not know by name (no
  * nickname, or no AI consent) is 队员N by the order they joined.
  */
-export function rosterOf(week: Pick<SquadWeek, 'members'>): Roster {
+export function rosterOf(week: {
+  readonly members: readonly { readonly member: string; readonly nickname?: string | undefined }[];
+}): Roster {
   const shorts = week.members.map(({ member }) => member.slice(0, SHORT));
   return new Map(
     week.members.map(({ member, nickname }, index) => {

@@ -71,18 +71,70 @@ describe('recall', () => {
       pastWeek: () => Promise.reject(new Error('not read')),
       commentsOf: () => Promise.reject(new Error('not read')),
     }).find(({ name }) => name === 'recall');
-    expect(await recall?.run({ query: '半马 歌' })).toBe(
-      '【me.md】- 半马那天我去加油\n【people/队员1.md】- 想跑半马',
+    expect(await recall?.run({ path: null, query: '半马 歌' })).toBe(
+      '【me.md】- 半马那天我去加油\n【people/aaaa1111.md】- 想跑半马',
     );
     // A file the task lists as still empty is there to look in, never a missing one.
-    expect(await recall?.run({ path: 'squad.md' })).toBe(
+    expect(await recall?.run({ path: 'squad.md', query: null })).toBe(
       '没查到，这些文件还是空的。查不到的就是不记得，别说你记得。',
     );
     // A read: its answer is kept by its length only, since it holds members' words.
     expect(draft.steps).toStrictEqual([
-      { tool: 'recall', input: { query: '半马 歌' }, output: '（39 字）' },
-      { tool: 'recall', input: { path: 'squad.md' }, output: '（29 字）' },
+      { tool: 'recall', input: { path: null, query: '半马 歌' }, output: '（44 字）' },
+      { tool: 'recall', input: { path: 'squad.md', query: null }, output: '（29 字）' },
     ]);
     expect(draft.changed.size).toBe(0);
+  });
+});
+
+describe('day_challenge', () => {
+  const emptyDraft = (): WakeDraft => ({
+    files: new Map(),
+    changed: new Set(),
+    note: undefined,
+    memberNotes: new Map(),
+    challenges: new Map(),
+    gifts: new Map(),
+    reply: undefined,
+    replyMentions: [],
+    reaction: undefined,
+    answer: undefined,
+    answerMentions: [],
+    feedback: undefined,
+    steps: [],
+  });
+  const tools = (kind: 'checkIn' | 'daily') =>
+    toolbox({
+      week: { ...context.week, weekStart: '2026-11-09', checkIns: [] },
+      roster: context.roster,
+      coach: 'qifei',
+      draft: emptyDraft(),
+      kind,
+      pastWeek: () => Promise.reject(new Error('not read')),
+      commentsOf: () => Promise.reject(new Error('not read')),
+      challenges: () =>
+        Promise.resolve([
+          {
+            day: '2026-11-13',
+            member: mia,
+            challenge: { title: '吃不同颜色的菜', amount: 5, unit: '种', line: '休息日也能玩' },
+            answer: 'accepted' as const,
+            reason: undefined,
+            completion: undefined,
+          },
+        ]),
+    });
+
+  it('tells a member’s challenge today by user_id, only when a reply looks it up', async () => {
+    const lookUp = tools('checkIn').find(({ name }) => name === 'day_challenge');
+    expect(await lookUp?.run({ user_id: 'aaaa1111' })).toBe(
+      'Mia（aaaa1111） 今天的挑战：吃不同颜色的菜 5 种\n- 挑战卡上的小字：「休息日也能玩」\n- 接了，没记完成',
+    );
+    expect(await lookUp?.run({ user_id: 'bbbb2222' })).toBe('Miao（bbbb2222） 今天没有挑战。');
+    expect(await lookUp?.run({ user_id: 'Mia' })).toBe(
+      '没有 user_id 是「Mia」的人。小队的人：Mia（aaaa1111）、Miao（bbbb2222）。',
+    );
+    // The morning sets the challenges itself; it has no such lookup.
+    expect(tools('daily').some(({ name }) => name === 'day_challenge')).toBe(false);
   });
 });

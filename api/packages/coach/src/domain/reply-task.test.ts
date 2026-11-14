@@ -100,23 +100,23 @@ describe('the reply step', () => {
           },
         },
         talkedUnder: [run],
-        page: { path: 'people/米亚.md', body: '- 米亚爱吃炸鸡' },
+        page: { path: 'people/11111111.md', body: '- 米亚爱吃炸鸡' },
         recentEmoji: ['🔥', '💪'],
       }),
     );
     expect(task).toBe(
       [
-        '# 米亚发了动态2\n现在是 10-28 周三 08:05（小队时间）。',
-        '## 动态2 · 10-28 周三 · 米亚 · 坦白放纵餐\n- 发帖：本人当地 08:00\n- 写的：「炸鸡」\n- 照片 2 张，你还没看过（look_at_photos）',
+        '# 米亚（11111111）发了动态2\n现在是 10-28 周三 08:05（小队时间）。',
+        '## 动态2 · 10-28 周三 · 米亚（11111111） · 坦白放纵餐\n- 发帖：本人当地 08:00\n- 写的：「炸鸡」\n- 照片 2 张，你还没看过（look_at_photos）',
         [
-          '## 你在回的人：米亚',
+          '## 你在回的人：米亚（11111111）',
           '- 今天的计划：力量',
           '- 这周练了：1 天',
           '- 这周发的：动态1 周二训练：跑步 30 分钟',
           '- 过去一天你们还在 动态1 下面聊过（post_comments 可看）',
-          '- 你对米亚的了解（people/米亚.md）：\n```\n- 米亚爱吃炸鸡\n```',
+          '- 你对米亚（11111111）的了解（people/11111111.md）：\n```\n- 米亚爱吃炸鸡\n```',
         ].join('\n'),
-        '## 小队的人\n米亚、里奥。小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
+        '## 小队的人（括号里是 user_id）\n米亚（11111111）、里奥（22222222）。\n小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
         '## 你最近点过的表情\n🔥 💪',
         '## 他 App 的语言\n用简体中文写。',
       ].join('\n\n'),
@@ -143,17 +143,19 @@ describe('the reply step', () => {
       }),
     );
     expect(task.split('\n\n').slice(0, 3)).toStrictEqual([
-      '# 里奥在动态1下面回复你\n现在是 10-28 周三 08:05（小队时间）。',
-      '## 动态1 · 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 发帖：本人当地 08:00\n- 运动：几点练的不知道（发帖时间不是运动时间）\n- 写的：「腿废了」',
+      '# 里奥（22222222）在动态1下面回复你\n现在是 10-28 周三 08:05（小队时间）。',
+      '## 动态1 · 10-27 周二 · 米亚（11111111） · 训练：跑步 30 分钟\n- 发帖：本人当地 08:00\n- 运动：几点练的不知道（发帖时间不是运动时间）\n- 写的：「腿废了」',
       '## 评论区（先后顺序）\n- 你：「跑得好」\n- 10-27 周二 09:00 里奥（回复你）：「你也跑吗」（要回的这句）',
     ]);
-    expect(task).toContain('## 你在回的人：里奥\n- 你对里奥的了解：还没记过。');
+    expect(task).toContain(
+      '## 你在回的人：里奥（22222222）\n- 你对里奥（22222222）的了解：还没记过。',
+    );
     expect(task).not.toContain('表情');
     expect(
       replyTaskOf(
         facts({ kind: 'comment', post: run, to: leo, thread: { lines: [], mention: true } }),
       ),
-    ).toContain('# 里奥在动态1下面 @ 你');
+    ).toContain('# 里奥（22222222）在动态1下面 @ 你');
   });
 
   it('says a 请假条’s streaks from two days on, and what is special about today', () => {
@@ -194,6 +196,14 @@ describe('the reply step', () => {
     expect(replyTaskOf(facts())).not.toContain('- 运动');
   });
 
+  it('tells a reply the lines the coach lately said in the squad, newest first (2026-11-14)', () => {
+    const task = replyTaskOf(facts({ recentLines: ['冲啊', '今天也稳稳的'] }));
+    expect(task).toContain(
+      '\n\n## 你最近在小队里说过的话（新的在前）\n- 「冲啊」\n- 「今天也稳稳的」\n这些大家都看过了：里面有过的说法、梗和招牌，这次不用。\n\n',
+    );
+    expect(replyTaskOf(facts())).not.toContain('你最近在小队里说过的话');
+  });
+
   it('writes to a member in their app’s language', () => {
     const english: SquadWeek = {
       ...week,
@@ -217,6 +227,6 @@ describe('the reply step', () => {
     const task = replyTaskOf(
       facts({ post: together, week: { ...week, checkIns: [meal, together] } }),
     );
-    expect(task).toContain('- 和谁一起练：里奥');
+    expect(task).toContain('- 和谁一起练：里奥（22222222）');
   });
 });
