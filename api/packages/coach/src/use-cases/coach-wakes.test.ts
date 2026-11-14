@@ -2535,34 +2535,41 @@ describe('the coach', () => {
         reason: '我鸡蛋过敏',
         today: '2026-11-01',
       });
-      // A check-in's wake that day isn't told a challenge they let go.
-      const meal = randomUUID();
-      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
-        values (${meal}, ${leo}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
-        trx,
-      );
-      await wakes(
-        {
-          ...fixture,
-          week: {
-            ...fixture.week,
-            checkIns: [
-              ...fixture.week.checkIns,
-              {
-                id: meal,
-                member: leo,
-                day: '2026-11-01',
-                createdAt: now,
-                kind: 'healthyMeal',
-                reactedBy: [],
-                comments: [],
-              },
-            ],
+      // A check-in's wake that day isn't told a challenge they let go (Leo) or never answered (Mia).
+      const mealWake = async (member: string) => {
+        const meal = randomUUID();
+        await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+          values (${meal}, ${member}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
+          trx,
+        );
+        await wakes(
+          {
+            ...fixture,
+            week: {
+              ...fixture.week,
+              checkIns: [
+                ...fixture.week.checkIns,
+                {
+                  id: meal,
+                  member,
+                  day: '2026-11-01',
+                  createdAt: now,
+                  kind: 'healthyMeal',
+                  reactedBy: [],
+                  comments: [],
+                },
+              ],
+            },
           },
-        },
-        { agent },
-      ).checkedIn({ checkIn: meal, squads: [squad] });
-      expect(runs.at(-1)?.task).not.toContain('挑战');
+          { agent },
+        ).checkedIn({ checkIn: meal, squads: [squad] });
+        return runs.at(-1)?.task;
+      };
+      for (const member of [leo, mia]) {
+        const task = await mealWake(member);
+        expect(task).toContain('# 有人打卡');
+        expect(task).not.toContain('## 你今天给他的挑战');
+      }
       await sql`insert into public.coach_challenge_completions (note_id, by)
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
