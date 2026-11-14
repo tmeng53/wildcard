@@ -31,6 +31,7 @@ private let squad = SquadID(UUID(uuidString: "5a000000-0000-4000-8000-0000000000
     var opened: [String] = []
     var feedback: [MessageFeedback] = []
     var feedbackWorks = true
+    var ids = 0
 }
 
 @MainActor private func deck(_ source: MessageAnswers, _ outside: Outside) async -> CoachDeck {
@@ -39,6 +40,10 @@ private let squad = SquadID(UUID(uuidString: "5a000000-0000-4000-8000-0000000000
         sendFeedback: { sent in
             outside.feedback.append(sent)
             return outside.feedbackWorks
+        },
+        newID: {
+            outside.ids += 1
+            return UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", outside.ids)) ?? UUID()
         })
     await deck.reload()
     return deck
@@ -67,7 +72,8 @@ private let squad = SquadID(UUID(uuidString: "5a000000-0000-4000-8000-0000000000
     await deck.tap(send, on: card, at: "more", typed: "  ")
     #expect(outside.feedback.isEmpty)
     await deck.tap(send, on: card, at: "more", typed: "  人有点多 ")
-    #expect(outside.feedback == [MessageFeedback(kind: "idea", text: "人有点多")])
+    #expect(outside.feedback.map(\.text) == ["人有点多"])
+    #expect(outside.feedback.map(\.kind) == ["idea"])
     #expect(outside.opened == ["feed"])
     #expect(deck.current(card).message?.place == .closed("more"))
     #expect(
@@ -94,6 +100,8 @@ private let squad = SquadID(UUID(uuidString: "5a000000-0000-4000-8000-0000000000
     await deck.tap(send, on: card, at: "more", typed: "人有点多")
     #expect(deck.failed == nil)
     #expect(outside.feedback.count == 2)
+    // Tried again, it is the same message, so the server keeps it once.
+    #expect(Set(outside.feedback.map(\.id)).count == 1)
     #expect(deck.current(card).message?.place == .closed("more"))
 }
 

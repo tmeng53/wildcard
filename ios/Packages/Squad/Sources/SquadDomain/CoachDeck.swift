@@ -32,14 +32,16 @@ public protocol CoachCardSource: Sendable {
 }
 
 /// What a coach message's `feedback` step sends as 意见反馈: the kind its step names and what the
-/// member typed in the card's box.
+/// member typed in the card's box, with an id that stays the same when it is tried again, so it
+/// is saved once.
 public struct MessageFeedback: Hashable, Sendable {
+    public let id: UUID
     /// `problem` or `idea`, as the step names it.
     public let kind: String
     public let text: String
 
-    public init(kind: String, text: String) {
-        (self.kind, self.text) = (kind, text)
+    public init(id: UUID, kind: String, text: String) {
+        (self.id, self.kind, self.text) = (id, kind, text)
     }
 }
 
@@ -85,6 +87,9 @@ public final class CoachDeck {
     /// The message cards whose words already went as 意见反馈, so a tap tried again doesn't send
     /// them twice.
     @ObservationIgnored private var feedbackSent: Set<String> = []
+    /// Each message card's 意见反馈 id, kept across tries.
+    @ObservationIgnored private var feedbackIDs: [String: UUID] = [:]
+    @ObservationIgnored private let newID: @MainActor () -> UUID
     /// Cards swiped away whose seen mark didn't reach the server yet; the next read sends them again.
     @ObservationIgnored private var unmarked: [CoachPageCard.Key] = []
     /// The cards swiped away on this page, newest first, which a read already on its way doesn't
@@ -95,15 +100,16 @@ public final class CoachDeck {
     /// `wear` puts a gift on the member's character (立刻穿上) once it is opened; `changed` is
     /// called after a gift is opened or a card seen, so 我's wardrobe and 今天 read again. A coach
     /// message's buttons `open` a place by its address and send the card's words as 意见反馈 with
-    /// `sendFeedback`, true once they went.
+    /// `sendFeedback`, true once they went, each with an id from `newID`.
     public init(
         squad: SquadID, source: any CoachCardSource, wear: @escaping @MainActor (String) async -> Void = { _ in },
         changed: @escaping @MainActor () -> Void = {},
         open: @escaping @MainActor (String) -> Void = { _ in },
-        sendFeedback: @escaping @MainActor (MessageFeedback) async -> Bool = { _ in false }
+        sendFeedback: @escaping @MainActor (MessageFeedback) async -> Bool = { _ in false },
+        newID: @escaping @MainActor () -> UUID = { UUID() }
     ) {
         (self.squad, self.source, self.wear, self.changed) = (squad, source, wear, changed)
-        (self.openAddress, self.sendFeedback) = (open, sendFeedback)
+        (self.openAddress, self.sendFeedback, self.newID) = (open, sendFeedback, newID)
     }
 
     /// The card on top, or nil once everything is seen (「暂时没有新消息」).
@@ -266,7 +272,9 @@ public final class CoachDeck {
         defer { sending.remove(card.key) }
         let sent = "\(card.id):\(path)"
         for case .feedback(let kind) in button.tap where !feedbackSent.contains(sent) {
-            guard let words, await sendFeedback(MessageFeedback(kind: kind, text: words)) else {
+            let id = feedbackIDs[sent] ?? newID()
+            feedbackIDs[sent] = id
+            guard let words, await sendFeedback(MessageFeedback(id: id, kind: kind, text: words)) else {
                 failed = card.key
                 return
             }

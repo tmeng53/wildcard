@@ -133,7 +133,7 @@ extension MainTabs {
     @MainActor private static func send(_ sent: MessageFeedback, through feedback: any FeedbackService) async -> Bool {
         guard let words = try? FeedbackText(sent.text) else { return false }
         let message = FeedbackMessage(
-            id: UUID(), kind: FeedbackKind(rawValue: sent.kind) ?? .idea, text: words, screenshots: [],
+            id: sent.id, kind: FeedbackKind(rawValue: sent.kind) ?? .idea, text: words, screenshots: [],
             app: FeedbackApp.current)
         do {
             try await feedback.send(message)
