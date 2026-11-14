@@ -22,6 +22,7 @@ extension Haptic {
         case .unseal: .impact(weight: .light)
         case .zone: .selection
         case .done: .success
+        case .save: .impact(weight: .light)
         }
     }
 }

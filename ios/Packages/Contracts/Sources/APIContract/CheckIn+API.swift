@@ -307,7 +307,8 @@ extension Timestamp {
 }
 
 extension Place {
-    var wire: Components.Schemas.Place {
+    /// The place as the API takes it: on a post, and as a saved place (收藏).
+    public var wire: Components.Schemas.Place {
         .init(name: name, appleId: appleID, category: category, latitude: latitude, longitude: longitude)
     }
 

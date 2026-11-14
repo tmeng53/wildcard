@@ -38,6 +38,8 @@ public enum Haptic: String, CaseIterable, Sendable {
     case zone
     /// 我完成了 on the day's challenge, as its flag turns into a check: the system's success.
     case done
+    /// A place saved to 收藏, as its bookmark fills: a light tap.
+    case save
 
     /// How many ticks a status ring plays while it draws itself closed.
     public static let ringTicks = 3

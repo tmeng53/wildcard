@@ -74,6 +74,12 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineJoinNote
     /// A 备注 with nothing visible in it, or with a text-direction control.
     case invisibleJoinNote
+    /// A note on a saved place that is empty or longer than `SavedPlaceNote.maxLength` characters.
+    case savedPlaceNoteLength(Int)
+    /// A note on a saved place with a line break, tab or other control character.
+    case multilineSavedPlaceNote
+    /// A note on a saved place with nothing visible in it, or with a text-direction control.
+    case invisibleSavedPlaceNote
     /// Text that can't be an invite code: not 8 letters from `InviteCode.alphabet`.
     case invalidInviteCode(String)
     /// A timestamp that isn't ISO 8601.
