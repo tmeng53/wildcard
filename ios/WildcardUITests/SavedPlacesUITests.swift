@@ -1,57 +1,73 @@
 import XCTest
 
-/// 收藏 on the sample squad (Tracy, 2026-11-12): a place's bookmark pops up the note card with
-/// the keyboard up, 收藏 fills the bookmark, 我's bookmark lists the place with its note, a row
-/// opens its page, and a swipe left removes it. Screenshots are kept for review against the
-/// approved design (收藏 ①, ②, ③, ④).
+/// 收藏 on the sample squad (Tracy, 2026-11-14, v2 A): a place's bookmark saves it at once and
+/// fills, a 写备注 row under the name turns into the field in place, the filled bookmark asks before
+/// taking a place with a note off, 我's bookmark lists the place, a row opens its page, and a swipe
+/// left removes it. Screenshots are kept for review against the approved design.
 @MainActor
 final class SavedPlacesUITests: XCTestCase {
     private static let wait: TimeInterval = 30
+    private static let note = "周六早上的单车课"
 
     func testAPlaceIsSavedWithANoteListedOnMeAndRemoved() {
         continueAfterFailure = false
         let app = launch()
         openAPlace(in: app)
 
-        // ① The bookmark at the bar's right; ② its card, with the keyboard up.
         let bookmark = app.buttons["place.save"]
         XCTAssertTrue(bookmark.waitForExistence(timeout: Self.wait), "the place's page has no bookmark")
-        XCTAssertEqual(bookmark.label, "收藏")
+        waitFor(bookmark, "label == '收藏' AND isEnabled == true", "the bookmark isn't ready")
+        XCTAssertFalse(app.buttons["place.note"].exists, "a place not saved yet shows a note row")
         settle()
         keepScreenshot(named: "154a-saved-places-bookmark")
-        bookmark.tap()
-        let note = app.textFields["savePlace.note"]
-        XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "the bookmark didn't pop up the note card")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard didn't come up")
-        note.typeText("周六早上的单车课")
-        let save = app.buttons["savePlace.save"]
-        assertClearOfTheKeyboard(save, in: app)
-        assertClearOfTheKeyboard(app.buttons["savePlace.cancel"], in: app)
-        XCTAssertFalse(app.buttons["savePlace.remove"].exists, "a place not saved yet offers 取消收藏")
-        settle()
-        keepScreenshot(named: "154b-saved-places-card")
-        save.tap()
-        XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "收藏 didn't close the card")
-        waitFor(bookmark, "label == '已收藏'", "the bookmark didn't fill")
 
-        checkTheSavedPlacesCard(in: app, bookmark: bookmark, note: note)
+        // One tap saves it: no card, the bookmark fills and 写备注 shows under the name.
+        bookmark.tap()
+        waitFor(bookmark, "label == '已收藏'", "the bookmark didn't fill")
+        let noteRow = app.buttons["place.note"]
+        XCTAssertTrue(noteRow.waitForExistence(timeout: Self.wait), "no 写备注 under a saved place")
+        XCTAssertTrue(noteRow.label.contains("写备注"), "the note row says \(noteRow.label)")
+        settle()
+        keepScreenshot(named: "154b-saved-places-saved")
+
+        writeTheNote(in: app, row: noteRow)
+        takeItOffWithTheNote(in: app, bookmark: bookmark)
         checkTheListOnMe(in: app)
     }
 
-    /// The same card again changes the note and offers 取消收藏.
-    private func checkTheSavedPlacesCard(in app: XCUIApplication, bookmark: XCUIElement, note: XCUIElement) {
-        bookmark.tap()
-        XCTAssertTrue(app.buttons["savePlace.remove"].waitForExistence(timeout: Self.wait), "no 取消收藏 on a saved place")
-        XCTAssertEqual(note.value as? String, "周六早上的单车课", "the card lost the note")
-        assertClearOfTheKeyboard(app.buttons["savePlace.remove"], in: app)
+    /// 写备注 turns into the field with the keyboard up; the keyboard's ✓ saves it.
+    private func writeTheNote(in app: XCUIApplication, row: XCUIElement) {
+        row.tap()
+        let field = app.textFields["place.noteField"]
+        XCTAssertTrue(field.waitForExistence(timeout: Self.wait), "写备注 didn't open the field")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard didn't come up")
+        field.typeText(Self.note)
+        assertClearOfTheKeyboard(field, in: app)
         settle()
-        keepScreenshot(named: "154c-saved-places-card-saved")
-        app.buttons["savePlace.cancel"].tap()
-        XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "取消 didn't close the card")
-
+        keepScreenshot(named: "154c-saved-places-writing")
+        field.typeText("\n")
+        XCTAssertTrue(field.waitForNonExistence(timeout: Self.wait), "✓ didn't save the note")
+        waitFor(row, "label CONTAINS '\(Self.note)'", "the note isn't under the name")
+        settle()
+        keepScreenshot(named: "154d-saved-places-note")
     }
 
-    /// ④ 我's bookmark; ③ the list, a row opening its place, a swipe left removing it.
+    /// The filled bookmark asks first when the place has a note, then takes it off; one more tap saves
+    /// it again, without a note, for the list.
+    private func takeItOffWithTheNote(in app: XCUIApplication, bookmark: XCUIElement) {
+        bookmark.tap()
+        let remove = app.buttons["取消收藏"]
+        XCTAssertTrue(remove.waitForExistence(timeout: Self.wait), "no confirmation before losing the note")
+        settle()
+        keepScreenshot(named: "154e-saved-places-confirm")
+        remove.tap()
+        waitFor(bookmark, "label == '收藏'", "取消收藏 left it saved")
+        XCTAssertTrue(app.buttons["place.note"].waitForNonExistence(timeout: Self.wait), "the note row stayed")
+        bookmark.tap()
+        waitFor(bookmark, "label == '已收藏'", "the bookmark didn't fill again")
+    }
+
+    /// 我's bookmark; the list, a row opening its place, a swipe left removing it.
     private func checkTheListOnMe(in app: XCUIApplication) {
         // 地点页 sits on 小队地图, which hides the tab bar: back out to 动态 first.
         for _ in 0..<3 where !app.tabBars.firstMatch.waitForExistence(timeout: 3) {
@@ -61,17 +77,13 @@ final class SavedPlacesUITests: XCTestCase {
         let open = app.buttons["me.savedPlaces"]
         XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "我 has no 收藏 button")
         assertOnScreen(open, in: app)
-        settle()
-        keepScreenshot(named: "154d-saved-places-me")
         open.tap()
         let row = app.buttons["savedPlaces.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "收藏 lists nothing")
-        XCTAssertTrue(
-            app.staticTexts.containing(NSPredicate(format: "label CONTAINS '周六早上的单车课'")).firstMatch.exists
-                || row.label.contains("周六早上的单车课"), "the row doesn't show the note")
+        XCTAssertTrue(row.label.contains("写备注"), "a place without a note doesn't offer 写备注: \(row.label)")
         assertOnScreen(row, in: app)
         settle()
-        keepScreenshot(named: "154e-saved-places-list")
+        keepScreenshot(named: "154f-saved-places-list")
 
         // A row opens the place's page, saved.
         row.tap()
@@ -88,7 +100,7 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["还没有收藏"].waitForExistence(timeout: Self.wait), "the swiped place is still listed")
         settle()
-        keepScreenshot(named: "154f-saved-places-empty")
+        keepScreenshot(named: "154g-saved-places-empty")
     }
 
     /// 动态's map, 常去, its first place.

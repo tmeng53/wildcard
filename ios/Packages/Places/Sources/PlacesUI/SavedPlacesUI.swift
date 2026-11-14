@@ -6,9 +6,11 @@ import DesignSystemUI
 import PlacesDomain
 import SwiftUI
 
-/// 地点页 with 收藏 (Tracy, 2026-11-12): the bookmark at the bar's right, filled once the place is
-/// saved, which pops up the note card (`SavePlaceCard`) over the page. A place without an Apple
-/// Maps id can't be saved and shows no bookmark.
+/// 地点页 with 收藏 (Tracy, 2026-11-14, v2 A): the bookmark at the bar's right saves the place at
+/// once, as Apple Maps and Google Maps do, and fills; a saved place shows its note under its name,
+/// or a grey 写备注, which turns into the field in place. The filled bookmark takes it off again,
+/// asking first only when that would lose a note. A place without an Apple Maps id can't be saved
+/// and shows no bookmark.
 public struct SavablePlaceScreen: View {
     private let place: Place
     private let squad: SquadID?
@@ -16,34 +18,67 @@ public struct SavablePlaceScreen: View {
     private let saved: SavedPlacesStore
     private let today: LocalDay
     private let openPost: (CheckInID) -> Void
-    @State private var isCardOpen = false
-    /// Counts saves made from the card, for the bookmark's tap as it fills.
+    @State private var isWritingNote: Bool
+    @State private var failure: SavedPlacesError?
+    @State private var confirmsRemoval = false
+    /// Counts saves from the bookmark, for its tap as it fills.
     @State private var saves = 0
 
+    /// - Parameter writesNote: opens with the note's field up (收藏's 写备注).
     public init(
         place: Place, squad: SquadID?, source: any PlaceSource, saved: SavedPlacesStore, today: LocalDay,
-        openPost: @escaping (CheckInID) -> Void
+        writesNote: Bool = false, openPost: @escaping (CheckInID) -> Void
     ) {
         (self.place, self.squad, self.source, self.saved) = (place, squad, source, saved)
         (self.today, self.openPost) = (today, openPost)
+        _isWritingNote = State(initialValue: writesNote)
     }
 
     public var body: some View {
         PlaceScreen(place: place, squad: squad, source: source, today: today, openPost: openPost) { place in
             if place.key != nil {
                 // Until the list is read, nobody can tell whether it is saved or what its note says.
-                SavePlaceButton(isSaved: saved.saved(place) != nil) { isCardOpen = true }
-                    .disabled(saved.phase != .loaded)
+                SavePlaceButton(isSaved: saved.saved(place) != nil) { toggle(place) }
+                    .disabled(saved.phase != .loaded || saved.isWriting)
+            }
+        } note: { place in
+            if let entry = saved.saved(place) {
+                SavedNoteRow(saved: entry, store: saved, isWriting: $isWritingNote)
+            }
+            if failure == .full {
+                InlineFailure(Text(copy: "最多收藏 \(SavedPlace.maxCount) 个地方", bundle: .module))
+            } else if failure != nil {
+                InlineFailure()
             }
         }
-        .cardPopup(isPresented: $isCardOpen) {
-            SavePlaceCard(place: place, store: saved) { didSave in
-                isCardOpen = false
-                if didSave { saves += 1 }
+        .confirmationDialog(
+            Text(copy: "备注也会一起删掉", bundle: .module), isPresented: $confirmsRemoval, titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                remove(place)
+            } label: {
+                Text(copy: "取消收藏", bundle: .module)
             }
         }
         .haptic(.save, trigger: saves)
         .task { await saved.loadIfNeeded() }
+    }
+
+    private func toggle(_ place: Place) {
+        guard let entry = saved.saved(place) else {
+            Task {
+                failure = await saved.save(place, note: "")
+                if failure == nil { saves += 1 }
+            }
+            return
+        }
+        if entry.note == nil { remove(place) } else { confirmsRemoval = true }
+    }
+
+    private func remove(_ place: Place) {
+        guard let key = place.key else { return }
+        isWritingNote = false
+        Task { failure = await saved.remove(key) }
     }
 }
 
@@ -61,143 +96,83 @@ struct SavePlaceButton: View {
     }
 }
 
-/// The note card 收藏 pops up: the place, its 备注 with the keyboard up, 取消 and the graphite
-/// 收藏; on a place saved already it changes the note and offers 取消收藏 under them.
-struct SavePlaceCard: View {
-    let place: Place
+/// A saved place's note under its name: the note, or a grey 写备注, either a tap from the field in
+/// its place. The keyboard's ✓, or leaving the field, saves it; emptied, the note is gone.
+struct SavedNoteRow: View {
+    let saved: SavedPlace
     let store: SavedPlacesStore
-    /// Closes the card; true once the place was saved.
-    let close: (_ didSave: Bool) -> Void
-    @State private var note: String
+    @Binding var isWriting: Bool
+    @State private var draft = ""
     @State private var failure: SavedPlacesError?
     @Environment(\.sceneTheme) private var theme
 
-    init(place: Place, store: SavedPlacesStore, close: @escaping (_ didSave: Bool) -> Void) {
-        (self.place, self.store, self.close) = (place, store, close)
-        _note = State(initialValue: store.saved(place)?.note?.text ?? "")
-    }
-
-    private var isSaved: Bool { store.saved(place) != nil }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            PlaceHeading(place: place, iconSize: Sizing.control - Space.xxs)
-            SectionLabel(Text(copy: "备注", bundle: .module))
-                .padding(.top, Space.m)
-                .padding(.bottom, Space.xs)
-            InputField(
-                text: $note, label: Text(copy: "备注", bundle: .module), limit: SavedPlaceNote.maxLength,
-                focusesOnAppear: true
-            )
-            .submitLabel(.done)
-            .onSubmit(save)
-            .accessibilityIdentifier("savePlace.note")
-            if failure == .full {
-                InlineFailure(Text(copy: "最多收藏 \(SavedPlace.maxCount) 个地方", bundle: .module))
-                    .padding(.top, Space.xs)
-            } else if failure != nil {
-                InlineFailure().padding(.top, Space.xs)
-            }
-            HStack(spacing: Space.s) {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            if isWriting {
+                InputField(
+                    text: $draft, label: Text(copy: "备注", bundle: .module), limit: SavedPlaceNote.maxLength,
+                    focusesOnAppear: true
+                ) { focused in
+                    if !focused { commit() }
+                }
+                .submitLabel(.done)
+                .onSubmit(commit)
+                .accessibilityIdentifier("place.noteField")
+            } else {
                 Button {
-                    close(false)
+                    draft = saved.note?.text ?? ""
+                    isWriting = true
                 } label: {
-                    Text(copy: "取消", bundle: .module).frame(maxWidth: .infinity)
-                }
-                .buttonStyle(TextButtonStyle(.muted))
-                .accessibilityIdentifier("savePlace.cancel")
-                Button(action: save) {
                     Label {
-                        Text(copy: "收藏", bundle: .module)
+                        if let note = saved.note {
+                            Text(verbatim: note.text)
+                        } else {
+                            Text(copy: "写备注", bundle: .module)
+                        }
                     } icon: {
-                        Image(systemName: "bookmark.fill")
+                        Image(systemName: "pencil")
                     }
-                    .loadingLabel(store.isWriting)
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!SavedPlacesStore.canSave(note: note) || store.isWriting)
-                .accessibilityIdentifier("savePlace.save")
-            }
-            .padding(.top, Space.s)
-            if isSaved {
-                Button(action: remove) {
-                    Text(copy: "取消收藏", bundle: .module).frame(maxWidth: .infinity)
-                }
-                .buttonStyle(TextButtonStyle(.danger))
-                .disabled(store.isWriting)
-                .accessibilityIdentifier("savePlace.remove")
-            }
-        }
-        .padding(Space.m + Space.xxs)
-        .frame(width: Self.width)
-        .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.menu))
-        .accentTone(.brand)
-    }
-
-    /// The card's own width, the smallest phone's page between its gutters; `cardPopup` grows it
-    /// to the page.
-    private static var width: Double { 343 }
-
-    private func save() {
-        guard SavedPlacesStore.canSave(note: note), !store.isWriting else { return }
-        Task {
-            failure = await store.save(place, note: note)
-            if failure == nil { close(true) }
-        }
-    }
-
-    private func remove() {
-        guard let key = place.key else { return }
-        Task {
-            failure = await store.remove(key)
-            if failure == nil { close(false) }
-        }
-    }
-}
-
-/// The place's kind icon in a mist disc, its name, and its kind under it.
-struct PlaceHeading: View {
-    let place: Place
-    let iconSize: Double
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        HStack(spacing: Space.s) {
-            Image(systemName: place.kind.symbol)
-                .font(.system(size: iconSize * 0.45, weight: .semibold))
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .frame(width: iconSize, height: iconSize)
-                .background(Color(role: .bgSubtle, in: theme), in: Circle())
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Space.xxs / 2) {
-                Text(verbatim: place.name)
-                    .typeStyle(TypeRamp.headline)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
+                    .typeStyle(TypeRamp.callout)
+                    .foregroundStyle(Color(role: saved.note == nil ? .fgSubtle : .fgDefault, in: theme))
                     .lineLimit(2)
-                if let kind = place.kind.localizedName {
-                    Text(verbatim: kind)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
+                    .frame(maxWidth: .infinity, minHeight: Sizing.control, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("place.note")
             }
+            if failure != nil { InlineFailure() }
+        }
+        .onAppear { draft = saved.note?.text ?? "" }
+    }
+
+    /// Saves the note typed, once, unless it is the one saved already or one the API won't take.
+    private func commit() {
+        guard isWriting, !store.isWriting else { return }
+        guard SavedPlacesStore.canSave(note: draft) else { return }
+        let typed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard typed != (saved.note?.text ?? "") else {
+            isWriting = false
+            return
+        }
+        Task {
+            failure = await store.save(saved.place, note: draft)
+            if failure == nil { isWriting = false }
         }
     }
 }
 
 /// 收藏, pushed from 我's bookmark: every place the member saved in one list, newest first, each
-/// with its note, or a grey 写备注 that pops up the note card. A tap opens the place's page; a
-/// swipe left removes it. Only the member sees it.
+/// with its note, or a grey 写备注 that opens the place's page with the note's field up. A tap
+/// opens the place's page; a swipe left removes it. Only the member sees it.
 public struct SavedPlacesPage: View {
     private let store: SavedPlacesStore
-    private let open: (Place) -> Void
-    @State private var editing: Place?
+    private let open: (Place, _ writingNote: Bool) -> Void
     @State private var removeFailed = false
     @Environment(\.sceneTheme) private var theme
 
-    /// - Parameter open: a row was tapped: its place's page.
-    public init(store: SavedPlacesStore, open: @escaping (Place) -> Void) {
+    /// - Parameter open: a row was tapped: its place's page, with the note's field up for 写备注.
+    public init(store: SavedPlacesStore, open: @escaping (Place, _ writingNote: Bool) -> Void) {
         (self.store, self.open) = (store, open)
     }
 
@@ -213,7 +188,7 @@ public struct SavedPlacesPage: View {
                     .listRowSeparator(.hidden)
             }
             ForEach(store.places) { saved in
-                SavedPlaceRow(saved: saved, open: { open(saved.place) }, writeNote: { editing = saved.place })
+                SavedPlaceRow(saved: saved, open: { open(saved.place, false) }, writeNote: { open(saved.place, true) })
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             Task { removeFailed = await store.remove(saved.key) != nil }
@@ -233,14 +208,6 @@ public struct SavedPlacesPage: View {
         .background(Color(role: .bgCanvas, in: theme))
         .barTitleOnScroll(Text(copy: "收藏", bundle: .module))
         .pushedPage()
-        .cardPopup(isPresented: Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })) {
-            if let editing {
-                SavePlaceCard(place: editing, store: store) { _ in
-                    // A save that ends after a tap off the card leaves a card opened since alone.
-                    if self.editing == editing { self.editing = nil }
-                }
-            }
-        }
         .refreshable {
             removeFailed = false
             await store.load()
