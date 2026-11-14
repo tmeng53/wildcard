@@ -126,7 +126,7 @@ struct MessageFace: View {
         }
         .disabled(!isTop)
         .onChange(of: typed) { _, now in
-            if now.count > CoachMessage.textLimit { typed = String(now.prefix(CoachMessage.textLimit)) }
+            if now.utf16.count > CoachMessage.textLimit { typed = CoachMessage.cut(now) }
         }
         .accessibilityIdentifier("coachDeck.box")
     }

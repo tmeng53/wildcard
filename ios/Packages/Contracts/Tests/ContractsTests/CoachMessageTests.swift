@@ -53,6 +53,10 @@ private let enjoying = CoachMessage(cards: [
     #expect(CoachMessage.text("  器械很新  ") == "器械很新")
     #expect(CoachMessage.text("   ") == nil)
     #expect(CoachMessage.text(String(repeating: "好", count: 600))?.count == CoachMessage.textLimit)
+    // The API counts UTF-16 units: a family emoji is 11 of them and is never cut in half.
+    let families = CoachMessage.text(String(repeating: "👨‍👩‍👧‍👦", count: 100))
+    #expect(families?.utf16.count == 495)
+    #expect(families?.count == 45)
     #expect(enjoying.cards[2].buttons[0].sendsFeedback)
     #expect(!enjoying.cards[0].buttons[0].sendsFeedback)
 }

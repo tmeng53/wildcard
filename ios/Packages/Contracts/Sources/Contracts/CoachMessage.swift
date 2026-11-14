@@ -143,13 +143,28 @@ public struct CoachMessage: Hashable, Sendable {
         }
     }
 
-    /// The most characters a typed answer keeps; the API checks the same.
+    /// The most a typed answer keeps, in UTF-16 units as the API counts them (JavaScript's
+    /// `length`), so an emoji made of several takes several.
     public static let textLimit = 500
 
     /// What was typed as it is sent: trimmed and cut to `textLimit`, nil when nothing is left.
     public static func text(_ typed: String) -> String? {
-        let trimmed = typed.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : String(trimmed.prefix(textLimit))
+        let trimmed = cut(typed.trimmingCharacters(in: .whitespacesAndNewlines))
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// `typed` cut to `textLimit` UTF-16 units, never through a character.
+    public static func cut(_ typed: String) -> String {
+        guard typed.utf16.count > textLimit else { return typed }
+        var units = 0
+        var end = typed.startIndex
+        for index in typed.indices {
+            let next = typed[index].utf16.count
+            guard units + next <= textLimit else { break }
+            units += next
+            end = typed.index(after: index)
+        }
+        return String(typed[..<end])
     }
 
     /// Every card, the first (path ``) first.
