@@ -100,6 +100,9 @@ public enum TypeRamp {
     public static let scoreEnding = TypeStyle(face: .scoreboard(.extraBold), size: 88, anchor: .largeTitle)
     /// The one hero number on a screen (the squad's 14/22).
     public static let scoreHero = TypeStyle(face: .scoreboard(.extraBold), size: 60, anchor: .largeTitle)
+    /// The squad's week on the home's squad card (14/24 次): a step under `scoreHero`, so the card
+    /// leaves more of the scene showing (Tracy, 2026-11-13).
+    public static let scoreGoal = TypeStyle(face: .scoreboard(.extraBold), size: 44, anchor: .largeTitle)
     /// The big number on a 成绩卡 over a photo (7.4 公里): `scoreHero`'s size, italic and a little
     /// tight, as the 出赛表 poster writes its numbers. A picture saved at a fixed size, so it doesn't
     /// scale with Dynamic Type.
@@ -155,7 +158,7 @@ public enum TypeRamp {
         ("footnoteEmphasis", footnoteEmphasis), ("label", label), ("action", action), ("callout", callout),
         ("calloutEmphasis", calloutEmphasis), ("tab", tab), ("tabSelected", tabSelected), ("caption", caption),
         ("scoreStory", scoreStory), ("scoreEnding", scoreEnding),
-        ("scoreHero", scoreHero), ("scoreCardHero", scoreCardHero),
+        ("scoreHero", scoreHero), ("scoreGoal", scoreGoal), ("scoreCardHero", scoreCardHero),
         ("scoreCard", scoreCard), ("scoreWeek", scoreWeek),
         ("scoreInline", scoreInline), ("scoreSmall", scoreSmall), ("scoreCaption", scoreCaption),
         ("ticketDate", ticketDate), ("ticketStamp", ticketStamp), ("posterWeek", posterWeek),
