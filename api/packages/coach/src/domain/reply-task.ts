@@ -175,7 +175,7 @@ function planDayWords(day: PlanDayFacts | undefined): string {
 /** The member the reply answers: their day, their week, and what the coach knows of them. */
 function personBlock(facts: ReplyFacts, name: (member: string) => string): string {
   const { brief, numbers, post, to } = facts;
-  const lines = [`## ${name(to)}`];
+  const lines = [`## 你在回的人：${name(to)}`];
   if (brief?.plan !== undefined) {
     lines.push(`- 今天的计划：${planDayWords(brief.plan.week[planIndexOf(facts.day)])}`);
   }

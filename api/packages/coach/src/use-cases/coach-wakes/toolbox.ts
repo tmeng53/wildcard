@@ -24,6 +24,33 @@ import {
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
 import type { CoachMemes, CoachTool, ToolAnswer } from '../../ports.js';
 
+// What the coach thinks out before a line, in order, as required fields (Tracy, 2026-11-14: a
+// structure to think in, so it gets simple things right). Kept only in coach_wake_steps.
+const privately = '只记在你自己这里，谁都看不到';
+const voiceOf = z
+  .string()
+  .describe(
+    `按你的人设，这句该用什么语气、怎么说才像你。人设是你说话的方式，不用把人设里的东西写进这句。${privately}`,
+  );
+const factsUsed = z
+  .string()
+  .describe(
+    `这句要用到的事实，各是谁的、从哪来（任务里写的、工具查到的）。用不上的别写，也别硬塞进这句。${privately}`,
+  );
+
+/** A line's thinking, kept by its length only. */
+function thoughtLengths(
+  input: Readonly<Record<string, unknown>>,
+  fields: readonly string[],
+): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => [
+      key,
+      fields.includes(key) && typeof value === 'string' ? `（${String(value.length)} 字）` : value,
+    ]),
+  );
+}
+
 /** What a wake's tools change, kept in memory until the run ends and saved together then. */
 export interface WakeDraft {
   /** The squad's files, by stored path, as the run left them. */
@@ -385,7 +412,13 @@ export function toolbox({
       defineTool(draft.steps, {
         name: 'post_note',
         description: `在小队的战术板上写今天的一句，全队都看得到。一天一句，再写会换掉这句。${limitWords('note')}。`,
-        parameters: z.object({ text: z.string().describe('今天的一句') }),
+        parameters: z.object({
+          point: z.string().describe(`今天全队一起看的是哪件事，为什么是这件。${privately}`),
+          facts: factsUsed,
+          voice: voiceOf,
+          text: z.string().describe('今天的一句'),
+        }),
+        kept: (input) => thoughtLengths(input, ['point', 'facts', 'voice']),
         run: ({ text }) => {
           const line = text.trim();
           const problem = lineProblem(line, 'note');
@@ -437,11 +470,14 @@ export function toolbox({
         name: 'reply',
         description: `${kind === 'checkIn' ? '在这条动态下回一句' : '回复对方写给你的这句'}：显示在评论区，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。${limitWords('reply')}。`,
         parameters: z.object({
-          point: z
+          who: z
             .string()
             .describe(
-              '先想清楚：他这条最在意的是什么，你要接住的是哪件事。只记在你自己这里，谁都看不到',
+              `你在回谁，这是谁的动态。写评论的人不一定是发动态的人，他的事和动态主人的事分开。${privately}`,
             ),
+          said: z.string().describe(`他这条实际在说什么、问什么，你要接住的是哪件事。${privately}`),
+          facts: factsUsed,
+          voice: voiceOf,
           text: z.string().describe('回的这一句'),
           at: atParameter,
         }),
@@ -850,11 +886,8 @@ function noteTool(
   };
   const member = z.string().describe('写给谁：名字');
   // Kept by length: it is about the member, and stays in its own table.
-  const kept = ({ text, point, ...rest }: { readonly text: string; readonly point?: string }) => ({
-    ...rest,
-    ...(point === undefined ? {} : { point: `（${String(point.length)} 字）` }),
-    text: `（${String(text.length)} 字）`,
-  });
+  const kept = (input: Readonly<Record<string, unknown>>): unknown =>
+    thoughtLengths(input, ['point', 'facts', 'voice', 'text']);
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
@@ -869,9 +902,9 @@ function noteTool(
     description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
     parameters: z.object({
       member,
-      point: z
-        .string()
-        .describe('先想清楚：今天对他说哪一件事，为什么是这件。只记在你自己这里，谁都看不到'),
+      point: z.string().describe(`今天对他说哪一件事，为什么是这件。${privately}`),
+      facts: factsUsed,
+      voice: voiceOf,
       text: z.string().describe('便条上的这一句'),
     }),
     kept,

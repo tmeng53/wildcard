@@ -432,7 +432,10 @@ describe('the coach', () => {
   it('writes no morning note to a member who switched the coach off', async () => {
     await rolledBack(async (fixture) => {
       const { agent, runs } = scriptedAgent(() => [
-        { tool: 'note_to', input: { member: '队员2', point: '想好了', text: '今天走走' } },
+        {
+          tool: 'note_to',
+          input: { member: '队员2', point: '想好了', facts: '有', voice: '我的', text: '今天走走' },
+        },
       ]);
       const asked: (readonly string[])[] = [];
       const wantNotes = (members: readonly string[]) => {
@@ -459,24 +462,68 @@ describe('the coach', () => {
         task.includes('# 早上')
           ? [
               { tool: 'squad_week', input: {} },
-              { tool: 'post_note', input: { text: '队员1 周日也跑了' } },
-              { tool: 'post_note', input: { text: '  周日也跑了，米亚是认真的  ' } },
               {
-                tool: 'note_to',
-                input: { member: '米亚', point: '想好了', text: '周日那趟我看见了' },
-              },
-              { tool: 'note_to', input: { member: '队员3', point: '想好了', text: '你好' } },
-              {
-                tool: 'note_to',
-                input: { member: '队员2', point: '想好了', text: '队员2 今天动一动？' },
+                tool: 'post_note',
+                input: { point: '想好了', facts: '有', voice: '我的', text: '队员1 周日也跑了' },
               },
               {
-                tool: 'note_to',
-                input: { member: '队员2', point: '想好了', text: '今天动一动？走走也算' },
+                tool: 'post_note',
+                input: {
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '  周日也跑了，米亚是认真的  ',
+                },
               },
               {
                 tool: 'note_to',
-                input: { member: '米亚', point: '想好了', text: ' 周日那趟跑得真稳 ' },
+                input: {
+                  member: '米亚',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '周日那趟我看见了',
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员3',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '你好',
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员2',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '队员2 今天动一动？',
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '队员2',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '今天动一动？走走也算',
+                },
+              },
+              {
+                tool: 'note_to',
+                input: {
+                  member: '米亚',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: ' 周日那趟跑得真稳 ',
+                },
               },
               { tool: 'remember', input: { path: 'people/队员2.md', fact: '还没打卡过' } },
               { tool: 'remember', input: { path: 'people/队员3.md', fact: '没这个人' } },
@@ -484,11 +531,44 @@ describe('the coach', () => {
           : [
               { tool: 'remember', input: { path: 'memory.md', fact: ' 米亚 周日跑步 ' } },
               { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '没这个工具' } },
-              { tool: 'post_note', input: { text: '不该有这个工具' } },
-              { tool: 'reply', input: { point: '接住', text: '队员1 周日还跑' } },
-              { tool: 'reply', input: { point: '接住', text: '跑'.repeat(101) } },
-              { tool: 'reply', input: { point: '接住', text: '周日也跑？' } },
-              { tool: 'reply', input: { point: '接住', text: '  周日也跑，腿还在吗  ' } },
+              {
+                tool: 'post_note',
+                input: { point: '想好了', facts: '有', voice: '我的', text: '不该有这个工具' },
+              },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '队员1 周日还跑',
+                },
+              },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '跑'.repeat(101),
+                },
+              },
+              {
+                tool: 'reply',
+                input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '周日也跑？' },
+              },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '  周日也跑，腿还在吗  ',
+                },
+              },
               { tool: 'react', input: { emoji: '💩' } },
               { tool: 'react', input: { emoji: '🔥' } },
             ],
@@ -1036,7 +1116,13 @@ describe('the coach', () => {
           ? [
               {
                 tool: 'note_to',
-                input: { member: '队员2', point: '想好了', text: '我是小混，欢迎你来' },
+                input: {
+                  member: '队员2',
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  text: '我是小混，欢迎你来',
+                },
               },
             ]
           : [],
@@ -1135,7 +1221,18 @@ describe('the coach', () => {
       const { squad, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) =>
         task.includes('要回的这句')
-          ? [{ tool: 'reply', input: { point: '接住', text: '下雨就练核心' } }]
+          ? [
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '下雨就练核心',
+                },
+              },
+            ]
           : [],
       );
       const told: Parameters<CoachAnswered>[0][] = [];
@@ -1205,14 +1302,28 @@ describe('the coach', () => {
       const { trx, squad, mia, leo, checkIn } = fixture;
       const { agent, runs } = scriptedAgent((task) => {
         if (task.includes('发了动态'))
-          return [{ tool: 'reply', input: { point: '接住', text: '周日也跑？' } }];
+          return [
+            {
+              tool: 'reply',
+              input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '周日也跑？' },
+            },
+          ];
         if (task.includes('要回的这句')) {
           return [
             { tool: 'react', input: { emoji: '🔥' } },
-            { tool: 'reply', input: { point: '接住', text: '队员2 你也来' } },
             {
               tool: 'reply',
-              input: { point: '接住', text: task.includes('你喊') ? '喊破嗓子' : '你也来跑' },
+              input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员2 你也来' },
+            },
+            {
+              tool: 'reply',
+              input: {
+                who: '他',
+                said: '接住',
+                facts: '有',
+                voice: '我的',
+                text: task.includes('你喊') ? '喊破嗓子' : '你也来跑',
+              },
             },
           ];
         }
@@ -1525,7 +1636,10 @@ describe('the coach', () => {
           ? [
               { tool: 'member_posts', input: { member: '米亚' } },
               { tool: 'react', input: { emoji: '🔥' } },
-              { tool: 'reply', input: { point: '接住', text: '队员1 好' } },
+              {
+                tool: 'reply',
+                input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员1 好' },
+              },
               { tool: 'remember', input: { path: 'memory.md', fact: '米亚怕下雨' } },
             ]
           : [],
@@ -1571,7 +1685,7 @@ describe('the coach', () => {
         { tool: 'react', input: { emoji: '🔥' }, output: '已点 🔥。' },
         {
           tool: 'reply',
-          input: { point: '接住', text: '队员1 好' },
+          input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员1 好' },
           output: '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
         },
         // A fact by its length: it may be a member's words.
@@ -1599,7 +1713,16 @@ describe('the coach', () => {
           ? [
               { tool: 'look_at_photos', input: {} },
               { tool: 'look_at_photos', input: {} },
-              { tool: 'reply', input: { point: '接住', text: '这碗面看着不错' } },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '这碗面看着不错',
+                },
+              },
             ]
           : [],
       );
@@ -1914,8 +2037,26 @@ describe('the coach', () => {
         (task) =>
           task.includes('# 早上')
             ? [
-                { tool: 'note_to', input: { member: '米亚', point: '想好了', text: '今天多喝水' } },
-                { tool: 'note_to', input: { member: '队员2', point: '想好了', text: '今天走走' } },
+                {
+                  tool: 'note_to',
+                  input: {
+                    member: '米亚',
+                    point: '想好了',
+                    facts: '有',
+                    voice: '我的',
+                    text: '今天多喝水',
+                  },
+                },
+                {
+                  tool: 'note_to',
+                  input: {
+                    member: '队员2',
+                    point: '想好了',
+                    facts: '有',
+                    voice: '我的',
+                    text: '今天走走',
+                  },
+                },
                 { tool: 'give_gift', input: { member: '队员2', piece: 'gift-scarf', line: '冷' } },
                 { tool: 'give_gift', input: { member: '米亚', piece: 'gift-cap', line: '戴上' } },
                 { tool: 'give_gift', input: { member: '米亚', piece: 'gift-hat', line: '戴上' } },
@@ -2262,9 +2403,29 @@ describe('the coach', () => {
       const { agent, runs } = scriptedAgent((task) =>
         /^# .+发了动态/.test(task)
           ? [
-              { tool: 'reply', input: { point: '接住', text: '一起跑', at: ['队员3'] } },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '一起跑',
+                  at: ['队员3'],
+                },
+              },
               // The post's author gets the reply anyway: never @'d.
-              { tool: 'reply', input: { point: '接住', text: '一起跑', at: ['米亚', '小乐'] } },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '一起跑',
+                  at: ['米亚', '小乐'],
+                },
+              },
             ]
           : [],
       );
@@ -2297,7 +2458,16 @@ describe('the coach', () => {
               { tool: 'relay_feedback', input: { kind: 'idea', text: '' } },
               { tool: 'relay_feedback', input: { kind: 'problem', text: '照片传不上去' } },
               { tool: 'relay_feedback', input: { kind: 'idea', text: '想在动态上标地点' } },
-              { tool: 'reply', input: { point: '接住', text: '帮你转给团队了' } },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  text: '帮你转给团队了',
+                },
+              },
             ]
           : task.includes('要回的这句')
             ? [{ tool: 'relay_feedback', input: { kind: 'idea', text: '想看全队的月度总结' } }]
@@ -2860,10 +3030,25 @@ describe('the coach', () => {
       };
       const { agent, runs } = scriptedAgent(
         () => [
-          { tool: 'post_note', input: { text: '周日歇好' } },
-          { tool: 'note_to', input: { member: '米亚', point: '想好了', text: '今天多喝水' } },
+          {
+            tool: 'post_note',
+            input: { point: '想好了', facts: '有', voice: '我的', text: '周日歇好' },
+          },
+          {
+            tool: 'note_to',
+            input: {
+              member: '米亚',
+              point: '想好了',
+              facts: '有',
+              voice: '我的',
+              text: '今天多喝水',
+            },
+          },
           // Only the member previewed gets a note or a gift.
-          { tool: 'note_to', input: { member: '队员2', point: '想好了', text: '走走' } },
+          {
+            tool: 'note_to',
+            input: { member: '队员2', point: '想好了', facts: '有', voice: '我的', text: '走走' },
+          },
           { tool: 'give_gift', input: { member: '米亚', piece: 'gift-scarf', line: '天冷了' } },
           { tool: 'remember', input: { path: 'people/米亚.md', fact: '米亚爱喝水' } },
         ],
@@ -2920,8 +3105,20 @@ describe('the coach', () => {
       const { trx, squad, mia } = fixture;
       const { agent } = scriptedAgent(
         () => [
-          { tool: 'post_note', input: { text: '周日歇好' } },
-          { tool: 'note_to', input: { member: '米亚', point: '想好了', text: '今天多喝水' } },
+          {
+            tool: 'post_note',
+            input: { point: '想好了', facts: '有', voice: '我的', text: '周日歇好' },
+          },
+          {
+            tool: 'note_to',
+            input: {
+              member: '米亚',
+              point: '想好了',
+              facts: '有',
+              voice: '我的',
+              text: '今天多喝水',
+            },
+          },
         ],
         water,
       );
