@@ -146,7 +146,7 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
     title: 'Read a squad’s coaching',
     description:
       'Shows a squad’s AI coach (null when it hired none) and what it has done: its memory files now (squad.md, memory.md and a ' +
-      'page per member, stored as people/<member id>.md; the model sees each member as 队员N; ' +
+      'page per member, stored as people/<member id>.md; the model reads it as people/<user_id>.md, the first 8 characters of the member id, and each member as 名字（user_id）; ' +
       'and each coach’s own page, coaches/<coach id>.md, which only that coach reads, as me.md), ' +
       'its last 14 战术板 lines, its last 20 wakes (checkIn, comment or daily, state, tries, why ' +
       'the last try failed, and each tool call of its runs in order: the tool, its arguments and ' +
