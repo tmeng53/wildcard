@@ -32,16 +32,24 @@ struct SavedPlacesStoreTests {
         }
     }
 
-    /// A source that refuses every write with `failure`, and reads `places`.
+    /// A source that refuses every write with `failure`, and reads `places` unless `listFails`
+    /// (or it is signed out).
     private actor Refusing: SavedPlaceSource {
         let places: [SavedPlace]
         let failure: SavedPlacesError
-        init(places: [SavedPlace], failure: SavedPlacesError) { (self.places, self.failure) = (places, failure) }
+        let listFails: Bool
+        private(set) var saves = 0
+        init(places: [SavedPlace], failure: SavedPlacesError, listFails: Bool = false) {
+            (self.places, self.failure, self.listFails) = (places, failure, listFails)
+        }
         func list() async throws(SavedPlacesError) -> [SavedPlace] {
-            if failure == .signedOut { throw failure }
+            if listFails || failure == .signedOut { throw failure }
             return places
         }
-        func save(_ place: Place, note: SavedPlaceNote?) async throws(SavedPlacesError) -> SavedPlace { throw failure }
+        func save(_ place: Place, note: SavedPlaceNote?) async throws(SavedPlacesError) -> SavedPlace {
+            saves += 1
+            throw failure
+        }
         func remove(_ key: PlaceKey) async throws(SavedPlacesError) { throw failure }
     }
 
@@ -92,6 +100,24 @@ struct SavedPlacesStoreTests {
         #expect(await store.remove(try #require(gym.key)) == .unavailable)
 
         #expect(store.places.map(\.place.name) == ["Equinox Flatiron", "兰州拉面"])
+    }
+
+    @Test func aNoteTheAPIWouldRefuseIsNotSavedAsNone() async throws {
+        let store = SavedPlacesStore(source: InMemorySavedPlaceSource(now: Self.clock()))
+        _ = await store.save(gym, note: "单车课")
+        #expect(await store.save(gym, note: "a\nb") == .unavailable)
+        #expect(store.saved(gym)?.note?.text == "单车课")
+    }
+
+    @Test func aSaveWaitsForTheListSoItNeverClearsANoteItDidNotShow() async throws {
+        let key = try #require(gym.key)
+        let earlier = SavedPlace(
+            key: key, place: gym, note: try SavedPlaceNote("单车课"), savedAt: Timestamp(millisecondsSince1970: 1))
+        let unreadable = Refusing(places: [earlier], failure: .unavailable, listFails: true)
+        let store = SavedPlacesStore(source: unreadable)
+        // The list can't be read: nothing is sent over the note saved before.
+        #expect(await store.save(gym, note: "") == .unavailable)
+        #expect(await unreadable.saves == 0)
     }
 
     @Test func aSaveTheServerRefusesSaysWhyAndSavesNothing() async throws {

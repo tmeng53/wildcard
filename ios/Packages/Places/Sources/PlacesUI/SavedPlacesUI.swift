@@ -31,7 +31,9 @@ public struct SavablePlaceScreen: View {
     public var body: some View {
         PlaceScreen(place: place, squad: squad, source: source, today: today, openPost: openPost) { place in
             if place.key != nil {
+                // Until the list is read, nobody can tell whether it is saved or what its note says.
                 SavePlaceButton(isSaved: saved.saved(place) != nil) { isCardOpen = true }
+                    .disabled(saved.phase != .loaded)
             }
         }
         .cardPopup(isPresented: $isCardOpen) {
@@ -234,10 +236,16 @@ public struct SavedPlacesPage: View {
         .pushedPage()
         .cardPopup(isPresented: Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })) {
             if let editing {
-                SavePlaceCard(place: editing, store: store) { _ in self.editing = nil }
+                SavePlaceCard(place: editing, store: store) { _ in
+                    // A save that ends after a tap off the card leaves a card opened since alone.
+                    if self.editing == editing { self.editing = nil }
+                }
             }
         }
-        .refreshable { await store.load() }
+        .refreshable {
+            removeFailed = false
+            await store.load()
+        }
         .task { await store.loadIfNeeded() }
         .accessibilityIdentifier("savedPlaces.page")
     }

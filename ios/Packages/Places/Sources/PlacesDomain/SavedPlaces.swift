@@ -95,10 +95,15 @@ public final class SavedPlacesStore {
     }
 
     /// Saves the place with the note typed (blank for none), or changes the note on one saved
-    /// already, which keeps its place in the list. Nil when it went through.
+    /// already, which keeps its place in the list. Nil when it went through. Never before the list
+    /// is read, so a note saved before can't be cleared by a card that never showed it.
     public func save(_ place: Place, note typed: String) async -> SavedPlacesError? {
         guard place.key != nil else { return .unavailable }
+        let blank = typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let note = try? SavedPlaceNote(typed)
+        guard blank || note != nil else { return .unavailable }
+        if phase != .loaded { await load() }
+        guard phase == .loaded else { return phase == .signedOut ? .signedOut : .unavailable }
         isWriting = true
         defer { isWriting = false }
         do throws(SavedPlacesError) {
