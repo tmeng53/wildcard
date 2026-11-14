@@ -71,7 +71,7 @@ final class PostManageUITests: XCTestCase {
     /// 删除 asks first, then the post is gone from 动态.
     func testDeleteMyPost() {
         let app = launch(language: "zh-Hans")
-        let manage = openMenuOnMyPost(in: app)
+        openMenuOnMyPost(in: app)
         app.buttons["post.delete"].tap()
         // The menu asks in place: its header reads the question and what goes as one element.
         let confirm = app.buttons["post.delete.confirm"].firstMatch
@@ -83,7 +83,14 @@ final class PostManageUITests: XCTestCase {
         settle()
         keepScreenshot(named: "56-feed-delete-confirm")
         confirm.tap()
-        waitFor(manage, "exists == false", "my post is still in 动态 after deleting it")
+        // Asked afresh each time: `manage` stays resolved to the card it found, and on a busy CI
+        // simulator kept answering that it exists after the card was gone (main, 2026-11-14).
+        let menus = app.descendants(matching: .any).matching(identifier: "post.manage")
+        let deadline = Date.now.addingTimeInterval(Self.wait)
+        while menus.count > 0, Date.now < deadline {
+            RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
+        }
+        XCTAssertEqual(menus.count, 0, "my post is still in 动态 after deleting it")
         XCTAssertFalse(
             app.staticTexts.containing(NSPredicate(format: "label CONTAINS '练腿日'")).firstMatch.exists,
             "the deleted post's line is still shown")
