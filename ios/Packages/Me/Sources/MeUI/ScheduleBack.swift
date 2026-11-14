@@ -153,30 +153,14 @@ struct ScheduleBack: View {
         return goals.dropFirst().reduce(goals.first ?? Text(verbatim: "")) { $0 + Text(verbatim: " · ") + $1 }
     }
 
-    /// 徽章, the newest badges and how many, opening the board.
+    /// 徽章, the newest badges and how many, opening the board. On a narrow card fewer badges show,
+    /// so the label and the count always stay on one line.
     private var badges: some View {
         Button(action: openBoard) {
-            HStack(spacing: Space.xs) {
-                Text(copy: "徽章", bundle: .module)
-                    .typeStyle(TypeRamp.label)
-                    .foregroundStyle(ink)
-                    .fixedSize()
-                HStack(spacing: Space.xxs) {
-                    ForEach(face.board.titles.prefix(Self.badgesShown)) { title in
-                        TitleBadgeView(
-                            shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
-                            glyph: title.badge.glyph,
-                            size: Self.smallBadge)
-                    }
-                }
-                Spacer(minLength: Space.xxs)
-                Text(verbatim: "\(face.board.count)")
-                    .typeStyle(TypeRamp.scoreCaption)
-                    .foregroundStyle(muted)
-                    .monospacedDigit()
-                    // A count of 10 or more stays on one line; the badges give way first.
-                    .fixedSize()
-                chevron
+            ViewThatFits(in: .horizontal) {
+                badgeRow(showing: Self.badgesShown)
+                badgeRow(showing: 1)
+                badgeRow(showing: 0)
             }
             .padding(.horizontal, Space.xxs)
             .padding(.vertical, Space.s)
@@ -184,6 +168,31 @@ struct ScheduleBack: View {
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityIdentifier("me.cardBadges")
+    }
+
+    private func badgeRow(showing shown: Int) -> some View {
+        HStack(spacing: Space.xs) {
+            Text(copy: "徽章", bundle: .module)
+                .typeStyle(TypeRamp.label)
+                .foregroundStyle(ink)
+                .fixedSize()
+            HStack(spacing: Space.xxs) {
+                ForEach(face.board.titles.prefix(shown)) { title in
+                    TitleBadgeView(
+                        shape: title.badge.shape, colour: title.badge.colour, tone: title.badge.tone,
+                        glyph: title.badge.glyph,
+                        size: Self.smallBadge)
+                }
+            }
+            Spacer(minLength: Space.xxs)
+            Text(verbatim: "\(face.board.count)")
+                .typeStyle(TypeRamp.scoreCaption)
+                .foregroundStyle(muted)
+                .monospacedDigit()
+                // A count of 10 or more stays on one line; the badges give way first.
+                .fixedSize()
+            chevron
+        }
     }
 
     /// 穿搭 and the first pieces they wear, opening what they wear.
