@@ -242,6 +242,14 @@ describe('the memory files', () => {
     // A one-character name stays as written, since it turns up inside other words.
     const short = rosterOf({ ...week, members: [{ member: mia, nickname: '美' }] });
     expect(storedBody('美食很美', short)).toBe('美食很美');
+    // A Latin name, or one ending in a digit, counts only on its own, never inside a word.
+    const latin = rosterOf({
+      ...week,
+      members: [{ member: mia, nickname: 'Al' }, { member: leo }],
+    });
+    expect(storedBody('Al also ran; Al跑了，队员23 不是队员2', latin)).toBe(
+      `{队员:${mia}} also ran; {队员:${mia}}跑了，队员23 不是{队员:${leo}}`,
+    );
   });
 
   const roster = rosterOf(week);

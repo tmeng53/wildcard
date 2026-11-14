@@ -91,7 +91,9 @@ export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): 
 
 /**
  * A body as stored: each roster name in it as its member's id, the longest names first. A
- * one-character name is left as written, since it turns up inside other words.
+ * one-character name is left as written, since it turns up inside other words, and a name that
+ * starts or ends with a Latin letter or digit counts only where no other one touches it there, so
+ * 「Al」 is never taken out of 「also」.
  */
 export function storedBody(shown: string, roster: ReadonlyMap<string, string>): string {
   const members = new Map(
@@ -100,7 +102,12 @@ export function storedBody(shown: string, roster: ReadonlyMap<string, string>): 
   if (members.size === 0) return shown;
   const names = [...members.keys()]
     .toSorted((a, b) => b.length - a.length)
-    .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    .map(
+      (name) =>
+        (/^[A-Za-z0-9]/.test(name) ? '(?<![A-Za-z0-9])' : '') +
+        name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+        (/[A-Za-z0-9]$/.test(name) ? '(?![A-Za-z0-9])' : ''),
+    );
   return shown.replace(new RegExp(names.join('|'), 'g'), (name) => {
     const member = members.get(name);
     return member === undefined ? name : `{队员:${member}}`;
