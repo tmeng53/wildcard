@@ -5,8 +5,22 @@ extension XCTestCase {
     /// at once. A busy CI simulator can take seconds per accessibility query; a wait that succeeds
     /// returns as soon as it does.
     func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String, timeout: TimeInterval = 30) {
-        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [met], timeout: timeout), .completed, message)
+        XCTAssertTrue(isMet(element, predicate, within: timeout), message)
+    }
+
+    /// Whether `element` meets `predicate` within `timeout`, asked again every second. One
+    /// `XCTNSPredicateExpectation` over the whole wait may check only once: on a busy CI simulator
+    /// it checked a deleted post's 「…」 the moment after 删除, while the post was still going, and
+    /// never again for 30 s (PostManageUITests, main, 2026-11-14), so short waits in a row instead.
+    func isMet(_ element: XCUIElement, _ predicate: String, within timeout: TimeInterval) -> Bool {
+        let condition = NSPredicate(format: predicate)
+        let deadline = Date.now.addingTimeInterval(timeout)
+        repeat {
+            let met = XCTNSPredicateExpectation(predicate: condition, object: element)
+            let left = deadline.timeIntervalSinceNow
+            if XCTWaiter().wait(for: [met], timeout: min(1, max(left, 0.1))) == .completed { return true }
+        } while deadline.timeIntervalSinceNow > 0
+        return false
     }
 
     /// Waits until `element` is laid out on screen, then for it to be hittable. While a page is
@@ -50,8 +64,7 @@ extension XCTestCase {
         timeout: TimeInterval = 30
     ) {
         element.tap()
-        let met = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: target)
-        if XCTWaiter().wait(for: [met], timeout: 10) == .completed { return }
+        if isMet(target, predicate, within: 10) { return }
         element.tap()
         waitFor(target, predicate, message, timeout: timeout)
     }
