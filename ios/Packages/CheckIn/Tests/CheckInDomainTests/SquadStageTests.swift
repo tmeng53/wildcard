@@ -128,6 +128,31 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     }
 }
 
+@Test func everyonesWholeBodyShowsAboveTheHeadsInFront() {
+    // Tracy, 2026-11-14: on the snowfield the back row stood half a body behind the front one and
+    // showed only their heads.
+    for scene in SceneTheme.allCases {
+        for coach in [false, true] {
+            var stage = SquadStage(layout: .of(scene))
+            stage.arrange((1...7).map { member($0, .notYet) }, coach: coach)
+            var figures = stage.placements.values.compactMap { placement -> StageRect? in
+                guard case .floor(let spot) = placement else { return nil }
+                return StageLayout.figure(at: spot, scale: StageLayout.scale(atDepth: spot.y))
+            }
+            #expect(figures.count == 7, "\(scene) coach: \(coach)")
+            // The coach keeps them clear of itself only while there is room, which
+            // nobodyStandsUnderTheCoachsBubbleOrBehindItWhileThereIsRoom covers.
+            figures.append(StageLayout.figure(at: StageLayout.mySpot, scale: StageLayout.myScale))
+            for front in figures {
+                for back in figures where back.maxY < front.maxY && back.minX < front.maxX && front.minX < back.maxX {
+                    // The feet behind are no lower than the top of the head in front, give or take.
+                    #expect(back.maxY <= front.minY + 2, "\(scene) coach: \(coach): \(back) behind \(front)")
+                }
+            }
+        }
+    }
+}
+
 @Test func theSquadScattersOverTheSceneEarliestCheckInsPickingFirst() {
     var stage = SquadStage(layout: .of(.track))
     stage.arrange([

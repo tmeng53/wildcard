@@ -74,7 +74,9 @@ public struct SquadStage: Hashable, Sendable {
         }
         for member in ordered where next[member.id] == nil {
             let free = clear.filter(isFree)
-            let spots = free.isEmpty ? open.filter(isFree) : free
+            let roomy = free.isEmpty ? open.filter(isFree) : free
+            // A full squad on a small floor: someone stands close rather than not at all.
+            let spots = roomy.isEmpty ? open : roomy
             let spot = member.keepsToTheBack ? Self.furthestBack(spots) : Self.apart(spots, from: taken)
             guard let spot else { continue }
             taken.append(spot)
