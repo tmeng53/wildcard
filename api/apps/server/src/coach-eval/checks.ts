@@ -40,7 +40,7 @@ const LATIN = /\p{Script=Latin}/gu;
 /**
  * Whether a line is in the language, by its Han characters against its Latin letters, a Han
  * character weighing about a word's three letters: a name or a place in the other script
- * doesn't tip it.
+ * doesn't tip it. It tells Chinese from English only, not Simplified from Traditional.
  */
 export function inLanguage(line: string, language: 'zh-Hans' | 'zh-Hant' | 'en'): boolean {
   const han = (line.match(HAN)?.length ?? 0) * 3;
@@ -62,7 +62,9 @@ export function codeVerdict(expectation: Expectation, outcome: TrialOutcome): Ve
     case 'says':
       return lines.length > 0 ? { pass: true } : { pass: false, note: 'said nothing' };
     case 'avoids': {
-      const found = expectation.words.filter((word) => lines.some((line) => line.includes(word)));
+      const found = expectation.words.filter((word) =>
+        lines.some((line) => line.toLowerCase().includes(word.toLowerCase())),
+      );
       return found.length === 0
         ? { pass: true }
         : { pass: false, note: `said ${found.join(', ')}` };

@@ -208,6 +208,31 @@ describe('the coach eval harness', () => {
     );
   });
 
+  it('leaves a trial ungraded when its judge check had no judge', async () => {
+    const judged = EvalCase.parse({
+      ...squatsInput(),
+      expect: [{ kind: 'judge', criterion: 'The reply is about the walk.' }],
+    });
+    const run = await runEval({
+      cases: [judged],
+      settings,
+      agent: scripted([['reply', { text: '商场也是赛道' }]]),
+      trials: 1,
+    });
+    expect(run.cases[0]?.trials.map(({ pass, skipped }) => [pass, skipped])).toEqual([
+      [false, true],
+    ]);
+    const report = reportOf(run, { at: new Date('2026-11-14T06:00:00Z') });
+    expect(report).toContain('Passed 0/0 trials (1 more not graded');
+    expect(report).toContain('| squats-given-up | n/a |  |');
+  });
+
+  it('refuses a run of no trials', async () => {
+    await expect(
+      runEval({ cases: [squats], settings, agent: scripted([]), trials: Number('abc') }),
+    ).rejects.toThrow(/whole number/);
+  });
+
   it('tells Chinese lines from English ones', () => {
     expect(inLanguage('Ptooey. Not at you, Hannah!', 'en')).toBe(true);
     expect(inLanguage('毛毛雨里还去跑！', 'en')).toBe(false);

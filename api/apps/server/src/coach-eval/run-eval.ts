@@ -14,6 +14,8 @@ export interface TrialResult {
   /** Each expectation's verdict, in the case's order; `undefined` when no judge was given. */
   readonly verdicts: readonly (Verdict | undefined)[];
   readonly pass: boolean;
+  /** No check failed but one went ungraded (no judge), so the trial counts neither way. */
+  readonly skipped: boolean;
 }
 
 export interface CaseResult {
@@ -47,34 +49,45 @@ export async function runEval({
   readonly judge?: Judge;
   readonly progress?: (line: string) => void;
 }): Promise<EvalRun> {
+  if (!Number.isInteger(trials) || trials < 1)
+    throw new Error('Trials must be a whole number, 1 or more');
+  // A few trials at a time, so a long case list doesn't hit the provider's rate limit and grade
+  // its refusals as the coach's failures.
+  const slot = limiter(4);
   const results = await Promise.all(
     cases.map(async (testCase): Promise<CaseResult> => {
       const done = await Promise.all(
-        Array.from({ length: trials }, async (_, index): Promise<TrialResult> => {
-          // The task the wake gave the model, for the judge to read.
-          let task = '';
-          const outcome = await runTrial(testCase, {
-            settings,
-            agent: {
-              run: (request) => {
-                task = request.task;
-                return agent.run(request);
+        Array.from({ length: trials }, (_, index) =>
+          slot(async (): Promise<TrialResult> => {
+            // The task the wake gave the model, for the judge to read.
+            let task = '';
+            const outcome = await runTrial(testCase, {
+              settings,
+              agent: {
+                run: (request) => {
+                  task = request.task;
+                  return agent.run(request);
+                },
               },
-            },
-          });
-          const verdicts = await Promise.all(
-            testCase.expect.map(async (expectation) => {
-              if (outcome.error !== undefined) return { pass: false, note: outcome.error };
-              const byCode = codeVerdict(expectation, outcome);
-              if (byCode !== undefined) return byCode;
-              if (expectation.kind !== 'judge' || judge === undefined) return undefined;
-              return judgeVerdict(judge, { criterion: expectation.criterion, task, outcome });
-            }),
-          );
-          const pass = verdicts.every((verdict) => verdict === undefined || verdict.pass);
-          progress(`${testCase.id} #${String(index + 1)} ${pass ? 'pass' : 'FAIL'}`);
-          return { trial: index + 1, outcome, verdicts, pass };
-        }),
+            });
+            const verdicts = await Promise.all(
+              testCase.expect.map(async (expectation) => {
+                if (outcome.error !== undefined) return { pass: false, note: outcome.error };
+                const byCode = codeVerdict(expectation, outcome);
+                if (byCode !== undefined) return byCode;
+                if (expectation.kind !== 'judge' || judge === undefined) return undefined;
+                return judgeVerdict(judge, { criterion: expectation.criterion, task, outcome });
+              }),
+            );
+            const failed = verdicts.some((verdict) => verdict?.pass === false);
+            const skipped = !failed && verdicts.some((verdict) => verdict === undefined);
+            const pass = !failed && !skipped;
+            progress(
+              `${testCase.id} #${String(index + 1)} ${pass ? 'pass' : skipped ? 'skipped' : 'FAIL'}`,
+            );
+            return { trial: index + 1, outcome, verdicts, pass, skipped };
+          }),
+        ),
       );
       return { id: testCase.id, title: testCase.title, expect: testCase.expect, trials: done };
     }),
@@ -92,18 +105,21 @@ export async function runEval({
 
 /** The run as Markdown: a table of pass rates, then each failed trial's lines and why. */
 export function reportOf(run: EvalRun, { at }: { readonly at: Date }): string {
-  const passed = run.cases.flatMap(({ trials }) => trials).filter(({ pass }) => pass).length;
-  const total = run.cases.flatMap(({ trials }) => trials).length;
+  const graded = run.cases.flatMap(({ trials }) => trials).filter(({ skipped }) => !skipped);
+  const passed = graded.filter(({ pass }) => pass).length;
+  const skipped = run.cases.flatMap(({ trials }) => trials).length - graded.length;
   const lines = [
     `# Coach eval ${at.toISOString()}`,
     '',
     `Model ${run.model}, reasoning ${run.reasoning}, judge ${run.judge ?? 'none (judge checks skipped)'}.`,
-    `Passed ${String(passed)}/${String(total)} trials. Coach cost $${(run.costMicros / 1_000_000).toFixed(4)}.`,
+    `Passed ${String(passed)}/${String(graded.length)} trials${skipped > 0 ? ` (${String(skipped)} more not graded: their judge checks were skipped)` : ''}. Coach cost $${(run.costMicros / 1_000_000).toFixed(4)}.`,
     '',
     '| Case | Pass | Failed checks |',
     '| --- | --- | --- |',
     ...run.cases.map(({ id, expect, trials }) => {
       const ok = trials.filter(({ pass }) => pass).length;
+      const counted = trials.filter(({ skipped }) => !skipped).length;
+      const rate = counted === 0 ? 'n/a' : `${String(ok)}/${String(counted)}`;
       const failing = expect
         .map((expectation, index) => ({
           label: labelOf(expectation),
@@ -111,12 +127,12 @@ export function reportOf(run: EvalRun, { at }: { readonly at: Date }): string {
         }))
         .filter(({ fails }) => fails > 0)
         .map(({ label, fails }) => `${label} ×${String(fails)}`);
-      return `| ${id} | ${String(ok)}/${String(trials.length)} | ${failing.join('; ')} |`;
+      return `| ${id} | ${rate} | ${failing.join('; ')} |`;
     }),
   ];
   for (const { id, expect, trials } of run.cases) {
-    for (const { trial, outcome, verdicts, pass } of trials) {
-      if (pass) continue;
+    for (const { trial, outcome, verdicts, pass, skipped } of trials) {
+      if (pass || skipped) continue;
       lines.push('', `## ${id} #${String(trial)}`, '');
       if (outcome.error !== undefined) lines.push(`- Error: ${outcome.error}`);
       if (outcome.reply !== undefined) lines.push(`- Reply: ${outcome.reply}`);
@@ -146,4 +162,20 @@ function labelOf(expectation: Expectation): string {
     case 'judge':
       return `judge「${expectation.criterion.slice(0, 24)}」`;
   }
+}
+
+/** Runs at most `size` of the tasks given to it at once, the rest waiting their turn. */
+function limiter(size: number): <T>(task: () => Promise<T>) => Promise<T> {
+  let running = 0;
+  const waiting: (() => void)[] = [];
+  return async (task) => {
+    if (running >= size) await new Promise<void>((resolve) => waiting.push(resolve));
+    running += 1;
+    try {
+      return await task();
+    } finally {
+      running -= 1;
+      waiting.shift()?.();
+    }
+  };
 }

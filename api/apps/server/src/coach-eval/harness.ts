@@ -18,6 +18,10 @@ import type { EvalCase, EvalSettings } from './eval-case.js';
 // tools and saving, over stores that hold the case in memory, with only the agent real. What the
 // wake would have saved and told is kept as the trial's outcome; nothing leaves this process but
 // the model's requests.
+//
+// Not yet held by a case, so told to the model empty: streaks, member facts (birthday and the
+// like), memes, weather and holidays, and the coach's hire date (the epoch). A case about one of
+// them needs it added here first.
 
 /** The squad every case runs in: cases name members and check-ins, never their squad. */
 const SQUAD = SquadId.parse('00000000-0000-4000-8000-000000000001');
