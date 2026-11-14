@@ -16,15 +16,16 @@ final class RecapUITests: XCTestCase {
         tile.tap()
 
         let pages = [
-            ("podium", 4.0), ("titles", 2.5), ("myWeek", 1.5), ("squadWeek", 1.5), ("hottest", 2.5), ("meals", 3.0),
-            ("bestDisclaimer", 3.5), ("ending", 3.0),
+            ("podium", 4.0), ("titles", 2.5), ("myWeek", 1.5), ("squadWeek", 1.5), ("favoritePlace", 3.0),
+            ("discovery", 3.0), ("hottest", 2.5), ("meals", 3.0), ("menu", 1.5), ("bestDisclaimer", 3.5),
+            ("ending", 3.0),
         ]
         for (index, (page, settle)) in pages.enumerated() {
             show(page, in: app)
             // Let the page's animation play out before the shot.
             Thread.sleep(forTimeInterval: settle)
-            keepScreenshot(named: "7\(index + 1)-recap-\(page)")
-            if page != "ending" { next(in: app) }
+            keepScreenshot(named: "7\(String(format: "%02d", index + 1))-recap-\(page)")
+            if page != "ending" { next(in: app, from: page) }
         }
         let save = app.buttons["recap.save"]
         XCTAssertTrue(save.waitForExistence(timeout: Self.wait), "no 存图 on the ending")
@@ -41,10 +42,9 @@ final class RecapUITests: XCTestCase {
         let tile = app.buttons["recap.entry"]
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
         tile.tap()
-        let pages = ["podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending"]
-        for page in pages {
+        for page in Self.pages {
             show(page, in: app)
-            if page != "ending" { next(in: app) }
+            if page != "ending" { next(in: app, from: page) }
         }
         let plan = app.buttons["recap.planNextWeek"]
         XCTAssertTrue(plan.waitForExistence(timeout: Self.wait), "no 排下周 on the ending")
@@ -52,6 +52,58 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(app.buttons["schedule.save"].waitForExistence(timeout: Self.wait), "排下周 didn't open 出赛表")
         keepScreenshot(named: "7a-recap-plan-next-week")
     }
+
+    /// 小队菜单's card turns over to its stars and place, whose 地点页 pushes over the story; back, the
+    /// story is where it was. The heads on 小队最爱去 fan out, and its place opens too.
+    func testMenuAndPlacesOpenTheirPlace() {
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
+        let tile = app.buttons["recap.entry"]
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
+        tile.tap()
+        for page in Self.pages.prefix(while: { $0 != "favoritePlace" }) {
+            show(page, in: app)
+            next(in: app)
+        }
+        show("favoritePlace", in: app)
+        let heads = app.buttons["recap.place.heads"]
+        XCTAssertTrue(heads.waitForExistence(timeout: Self.wait), "no heads on 小队最爱去")
+        Thread.sleep(forTimeInterval: 2.5)
+        heads.tap()
+        Thread.sleep(forTimeInterval: 1)
+        keepScreenshot(named: "7l-recap-favorite-fanned")
+        app.buttons["recap.place.open"].tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["place.page"].waitForExistence(timeout: Self.wait),
+            "the place's name didn't open 地点页")
+        keepScreenshot(named: "7m-recap-favorite-place-page")
+        app.navigationBars.buttons.firstMatch.tap()
+        show("favoritePlace", in: app)
+
+        for page in ["favoritePlace", "discovery", "hottest", "meals"] {
+            show(page, in: app)
+            next(in: app)
+        }
+        show("menu", in: app)
+        let card = app.descendants(matching: .any)["recap.menu.0"]
+        XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "no dish on 小队菜单")
+        Thread.sleep(forTimeInterval: 1)
+        card.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3)).tap()
+        let place = app.buttons["recap.menu.place"]
+        XCTAssertTrue(place.waitForExistence(timeout: Self.wait), "the dish didn't turn over to its place")
+        keepScreenshot(named: "7n-recap-menu-back")
+        place.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["place.page"].waitForExistence(timeout: Self.wait),
+            "the dish's place didn't open 地点页")
+        app.navigationBars.buttons.firstMatch.tap()
+        show("menu", in: app)
+    }
+
+    /// Every page of the sample week, in order.
+    private static let pages = [
+        "podium", "titles", "myWeek", "squadWeek", "favoritePlace", "discovery", "hottest", "meals", "menu",
+        "bestDisclaimer", "ending",
+    ]
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
     func testPendingTitlesCanBeNudged() {
@@ -94,9 +146,9 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no recap tile")
         XCTAssertTrue(tile.label.contains("Weekly recap"))
         tile.tap()
-        for page in ["podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer"] {
+        for page in Self.pages.dropLast() {
             show(page, in: app)
-            next(in: app)
+            next(in: app, from: page)
         }
         show("ending", in: app)
         Thread.sleep(forTimeInterval: 3)
@@ -122,9 +174,9 @@ final class RecapUITests: XCTestCase {
 
         tile.tap()
         let ending = app.descendants(matching: .any).matching(identifier: "recap.page.ending").firstMatch
-        for _ in 0..<12 where !ending.exists {
+        for _ in 0..<14 where !ending.exists {
             XCTAssertTrue(app.buttons["recap.close"].waitForExistence(timeout: Self.wait), "the story didn't open")
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.9)).tap()
         }
         XCTAssertTrue(ending.waitForExistence(timeout: Self.wait), "the last page never showed")
         app.buttons["recap.close"].tap()
@@ -146,9 +198,10 @@ final class RecapUITests: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: Self.wait), "the \(page) page never showed")
     }
 
-    /// A tap on the right of the screen, as a reader moves on.
-    private func next(in app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap()
+    /// A tap on the right of the screen, as a reader moves on; on 小队菜单, low down, under its cards,
+    /// which a tap turns over.
+    private func next(in app: XCUIApplication, from page: String? = nil) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: page == "menu" ? 0.9 : 0.5)).tap()
     }
 
     private func keepScreenshot(named name: String) {

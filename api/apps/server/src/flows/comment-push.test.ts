@@ -74,7 +74,8 @@ describe('a comment push', () => {
               squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
             },
             push: {
-              settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
+              settingsOf: () =>
+                Promise.resolve({ dailyProgress: true, coach: true, teammate: true }),
               notifyMembers: async ({ members }) => {
                 await new Promise((resolve) => setTimeout(resolve, 10));
                 sent.push(...members);
@@ -125,7 +126,7 @@ describe('a coach’s line pushed', () => {
     const push = {
       // The coach's own switch: off for `writer`, whose daily push stays on.
       settingsOf: (member: string) =>
-        Promise.resolve({ dailyProgress: true, coach: on.has(member) }),
+        Promise.resolve({ dailyProgress: true, coach: on.has(member), teammate: true }),
       notifyMembers: (input: { members: readonly string[]; notification: PushNotification }) => {
         sent.push(input);
         return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });
@@ -186,7 +187,7 @@ describe('a coach’s line pushed', () => {
     const sent: PushNotification[] = [];
     const deps = {
       push: {
-        settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true }),
+        settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true, teammate: true }),
         notifyMembers: (input: { notification: PushNotification }) => {
           sent.push(input.notification);
           return Promise.resolve({ sent: 1, gone: 0, off: 0, failures: [] });

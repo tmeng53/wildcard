@@ -137,6 +137,14 @@ struct SettingsView: View {
                     set: { isOn in Task { await model.setCoachPush(isOn) } })
             )
             .accessibilityIdentifier("me.coachNotifications")
+            // Its own switch too: a squadmate's 训练 rings at once, which not everyone who wants 通知 wants.
+            SwitchRow(
+                Text(copy: "队友练完提醒", bundle: .module),
+                isOn: Binding(
+                    get: { model.teammatePushOn },
+                    set: { isOn in Task { await model.setTeammatePush(isOn) } })
+            )
+            .accessibilityIdentifier("me.teammateNotifications")
             ListRow(
                 Text(copy: "生日", bundle: .module),
                 value: model.overview?.birthday.map { Text(verbatim: $0.dotted) } ?? Text(copy: "未填", bundle: .module)
@@ -278,7 +286,7 @@ private struct MenuGroup<Rows: View>: View {
 extension FeedbackApp {
     /// This app on this phone: its version and build, iOS, the model (iPhone17,3) and the
     /// language picked in the app.
-    @MainActor static var current: FeedbackApp {
+    @MainActor public static var current: FeedbackApp {
         let info = Bundle.main.infoDictionary ?? [:]
         var system = utsname()
         uname(&system)

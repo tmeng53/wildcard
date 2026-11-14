@@ -107,6 +107,7 @@ struct Grabber: View {
 /// `open`, the title is a button with a chevron after it.
 struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.squadCardNews) private var hasNews
     let label: Text
     let title: String
     let count: Int
@@ -126,11 +127,13 @@ struct PageHeader: View {
                                 .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
                                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                                 .accessibilityHidden(true)
+                            if hasNews { NewsDotMark() }
                         }
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier("squadcard.squad")
+                    .accessibilityValue(hasNews ? Text(copy: "有新消息", bundle: .module) : Text(verbatim: ""))
                 } else {
                     titleText
                 }

@@ -703,11 +703,11 @@ describe('the daily progress push', () => {
     await trained(eve, squad);
     expect(await call('GET', { path: '/me/push-settings', token: eve.token })).toStrictEqual({
       status: 200,
-      body: { version: 1, settings: { dailyProgress: true, coach: true } },
+      body: { version: 1, settings: { dailyProgress: true, coach: true, teammate: true } },
     });
     // An older build sends only its own switch; the coach's stays as it was.
     const off = { version: 1, settings: { dailyProgress: false } };
-    const saved = { version: 1, settings: { dailyProgress: false, coach: true } };
+    const saved = { version: 1, settings: { dailyProgress: false, coach: true, teammate: true } };
     expect(
       await call('PUT', { path: '/me/push-settings', token: eve.token, body: off }),
     ).toStrictEqual({ status: 200, body: saved });

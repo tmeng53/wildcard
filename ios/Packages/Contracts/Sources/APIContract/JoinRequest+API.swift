@@ -25,3 +25,17 @@ extension JoinRequest.Status {
         }
     }
 }
+
+extension WaitingJoinRequest {
+    public init(_ wire: Components.Schemas.WaitingJoinRequest) throws(ContractsError) {
+        let character: MemberCharacter? =
+            if let nickname = wire.nickname, let look = wire.look {
+                MemberCharacter(nickname: try Nickname(nickname), look: CharacterLook(look))
+            } else {
+                nil
+            }
+        self.init(
+            id: try JoinRequestID(wire: wire.id), member: try MemberID(wire: wire.member), character: character,
+            note: wire.note, askedAt: wire.askedAt)
+    }
+}

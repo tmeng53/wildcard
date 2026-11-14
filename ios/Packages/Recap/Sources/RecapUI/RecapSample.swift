@@ -84,13 +84,52 @@ public enum RecapSample {
             bestDisclaimer: BestDisclaimer(
                 checkIn: CheckInID(uuid(21)), author: jay, text: "教练说要循序渐进，我今天进的是被窝。", reactions: 6,
                 authorMove: ready ? .flat : nil, squadMove: ready ? .laugh : nil),
-            ending: missed
-                ? Ending(
-                    done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "下周的腿已经在热身了" : nil,
-                    move: ready ? .warmup : nil)
-                : Ending(
-                    done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
-                    move: ready ? .stack : nil))
+            menu: menu, places: places,
+            ending: ending(missed: missed, ready: ready))
+    }
+
+    /// 这一周: over the plan, or just short of it.
+    private static func ending(missed: Bool, ready: Bool) -> Ending {
+        missed
+            ? Ending(
+                done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "下周的腿已经在热身了" : nil,
+                move: ready ? .warmup : nil)
+            : Ending(
+                done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
+                move: ready ? .stack : nil)
+    }
+
+    /// 小队菜单: the week's three best 卡价比, the API's order.
+    private static let menu = [
+        MenuDish(
+            checkIn: CheckInID(uuid(30)), author: mia, day: day(13), healthy: 5, tasty: 5, caption: "牛油果碗",
+            place: place("Sweetgreen", 40.7397, -73.9897)),
+        MenuDish(checkIn: CheckInID(uuid(31)), author: lin, day: day(15), healthy: 4, tasty: 5, caption: "刺身拼盘"),
+        MenuDish(checkIn: CheckInID(uuid(32)), author: coco, day: day(16), healthy: 4, tasty: 4, caption: "番茄炒蛋"),
+    ]
+
+    /// Where the squad trained: the gym most, and the park for the first time.
+    private static let places = [
+        PlaceWeek(
+            key: "apple:I1A2B3C4D5E6F", place: place("Equinox Flatiron", 40.7404, -73.9914), firstTime: false,
+            visits: [
+                .init(member: lin, day: day(12)), .init(member: lin, day: day(14)), .init(member: lin, day: day(16)),
+                .init(member: mia, day: day(13)), .init(member: mia, day: day(15)), .init(member: coco, day: day(13)),
+                .init(member: coco, day: day(17)), .init(member: reader, day: day(15)),
+                .init(member: reader, day: day(17)),
+            ]),
+        PlaceWeek(
+            key: "apple:I9F8E7D6C5B4A", place: place("Hudson River Park", 40.7267, -74.0110), firstTime: true,
+            visits: [
+                .init(member: jay, day: day(14)), .init(member: mia, day: day(16)), .init(member: coco, day: day(17)),
+            ]),
+    ]
+
+    private static func place(_ name: String, _ latitude: Double, _ longitude: Double) -> Place {
+        guard let place = try? Place(name: name, latitude: latitude, longitude: longitude) else {
+            fatalError("The sample squad's places are valid")
+        }
+        return place
     }
 
     private static func week(from monday: LocalDay) -> Week {
