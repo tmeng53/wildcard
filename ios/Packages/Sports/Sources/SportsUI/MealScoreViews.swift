@@ -25,7 +25,6 @@ struct CalorieValueInfo<Face: View>: View {
             face
         }
         .buttonStyle(.plain)
-        .accessibilityHint(Text(copy: "卡路里性价比", bundle: .module))
         .popover(isPresented: $showsInfo) {
             Text(copy: "卡路里性价比", bundle: .module)
                 .typeStyle(TypeRamp.footnote)

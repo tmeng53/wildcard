@@ -378,8 +378,12 @@ extension FeedUITests {
         }
         // 卡价比 says what it is on a tap, over the card, which stays.
         strip.descendants(matching: .any).matching(identifier: "strip.calorieValue").firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["卡路里性价比"].waitForExistence(timeout: Self.wait), "no 卡价比 tip")
-        XCTAssertTrue(app.staticTexts["feed.title"].exists, "the tap left 动态")
+        let tip = app.staticTexts["卡路里性价比"]
+        XCTAssertTrue(tip.waitForExistence(timeout: Self.wait), "no 卡价比 tip")
         keepScreenshot(named: "45b-feed-meal-strip-tip")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue(tip.waitForNonExistence(timeout: Self.wait), "the 卡价比 tip stayed")
+        XCTAssertTrue(strip.exists, "the strip went")
+        XCTAssertFalse(app.descendants(matching: .any)["post.comment"].exists, "the tap opened the post")
     }
 }

@@ -233,8 +233,8 @@ public struct ScoreStrip: View {
     /// The star beside a meal's 健康 and 好吃, the design's.
     private static let star: CGFloat = 16
 
-    private func face<Label: View, Number: View>(
-        label: Label, isStruck: Bool, @ViewBuilder number: () -> Number
+    private func face<Caption: View, Number: View>(
+        label: Caption, isStruck: Bool, @ViewBuilder number: () -> Number
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {
