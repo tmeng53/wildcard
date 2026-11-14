@@ -68,7 +68,11 @@ public struct PostDetailView: View {
             if phase == .active { Task { await model.loadPage(id) } }
         }
         // However the page goes, the feed and tab bar stop treating the post as open.
-        .onDisappear { if model.opened == id { model.opened = nil } }
+        // A comment asked for and never started (the post didn't load) doesn't wait for a later visit.
+        .onDisappear {
+            if model.opened == id { model.opened = nil }
+            if model.startsComment == id { model.startsComment = nil }
+        }
     }
 
     private func page(_ post: FeedPost) -> some View {

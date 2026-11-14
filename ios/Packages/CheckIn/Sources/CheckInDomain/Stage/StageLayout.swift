@@ -189,10 +189,14 @@ public struct StageLayout: Hashable, Sendable {
         stations.first { $0.kind == kind }
     }
 
-    /// Where people can stand, on a team-photo grid: rows 70 apart from the front (closer on a
-    /// shallow floor, so three rows always fit), five across the whole width 76 apart and centred on
-    /// the screen, every other row offset half a step, clear of the `busy` spots, each row in the
-    /// middle of the lane it falls in.
+    /// How far apart the rows are: a teammate's height, so whoever stands behind is drawn whole
+    /// above the heads in front and everyone's move and prop shows. A shallow floor holds fewer
+    /// rows, never closer ones.
+    static let rowGap = 70.0
+
+    /// Where people can stand, on a team-photo grid: rows `rowGap` apart from the front, five
+    /// across the whole width 76 apart and centred on the screen, every other row offset half a
+    /// step, clear of the `busy` spots, each row in the middle of the lane it falls in.
     private static func floorSpots(
         in areas: [StageRect], avoiding: [StageRect], busy: [StagePoint], lines: [Double]
     ) -> [StagePoint] {
@@ -202,8 +206,6 @@ public struct StageLayout: Hashable, Sendable {
         for area in areas {
             var row = 0
             var y = area.maxY - 24
-            // Never under a character's width apart, so a floor too shallow for rows still ends.
-            let gap = max(24, min(70, (y - area.minY) / 2))
             while y >= area.minY {
                 var x = mySpot.x - across * (row.isMultiple(of: 2) ? 2 : 1.5)
                 while x <= area.maxX - 30 {
@@ -217,7 +219,7 @@ public struct StageLayout: Hashable, Sendable {
                     }
                     x += across
                 }
-                y -= gap
+                y -= rowGap
                 row += 1
             }
         }

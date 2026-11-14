@@ -29,7 +29,7 @@ export interface MemberFacts {
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 /** A plan day in words: `游泳`, `练` (any sport) or `休息`. */
-function planDayWords(day: PlanDayFacts): string {
+export function planDayWords(day: PlanDayFacts): string {
   return day.kind === 'rest' ? '休息' : (day.sport ?? '练');
 }
 

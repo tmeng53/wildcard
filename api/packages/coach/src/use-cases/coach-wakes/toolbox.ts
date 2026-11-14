@@ -527,6 +527,49 @@ function postTools(
   },
 ): CoachTool[] {
   const listed = new Map<string, WeekCheckIn>();
+  return [
+    memberPostsTool(steps, { roster, weekAgo, listed }),
+    postCommentsTool(steps, { listed, commentsOf }),
+  ];
+}
+
+/**
+ * The challenge run's tools: `set_challenge`, and `post_comments` over the posts its task
+ * numbered, under the members' names.
+ */
+export function challengeTools(
+  draft: WakeDraft,
+  {
+    names,
+    noteTo,
+    numbered,
+    commentsOf,
+  }: {
+    readonly names: ReadonlyMap<string, string>;
+    readonly noteTo: readonly string[];
+    readonly numbered: ReadonlyMap<string, WeekCheckIn>;
+    readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
+  },
+): CoachTool[] {
+  return [
+    challengeTool(draft, { roster: names, noteTo }),
+    postCommentsTool(draft.steps, { listed: new Map(numbered), commentsOf }),
+  ];
+}
+
+/** `member_posts`: a member's posts, each numbered (动态N) into `listed` for `post_comments`. */
+function memberPostsTool(
+  steps: WakeStep[],
+  {
+    roster,
+    weekAgo,
+    listed,
+  }: {
+    readonly roster: ReadonlyMap<string, string>;
+    readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
+    readonly listed: Map<string, WeekCheckIn>;
+  },
+): CoachTool {
   const numberOf = (checkIn: WeekCheckIn): string => {
     const known = [...listed].find(([, each]) => each.id === checkIn.id)?.[0];
     if (known !== undefined) return known;
@@ -534,7 +577,7 @@ function postTools(
     listed.set(number, checkIn);
     return number;
   };
-  const memberPosts = defineTool(steps, {
+  return defineTool(steps, {
     name: 'member_posts',
     reads: true,
     description:
@@ -577,17 +620,30 @@ function postTools(
       ].join('\n\n');
     },
   });
-  const postComments = defineTool(steps, {
+}
+
+/** `post_comments`: the comment section under a post `listed` numbered. */
+function postCommentsTool(
+  steps: WakeStep[],
+  {
+    listed,
+    commentsOf,
+  }: {
+    readonly listed: ReadonlyMap<string, WeekCheckIn>;
+    readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
+  },
+): CoachTool {
+  return defineTool(steps, {
     name: 'post_comments',
     reads: true,
     description:
-      '看一条动态下面的评论区，先后顺序，你自己说过的也在里面。动态的编号从 member_posts 来。',
+      '看一条动态下面的评论区，先后顺序，你自己说过的也在里面。动态的编号在任务里，或者从 member_posts 来。',
     parameters: z.object({ post: z.string().describe('哪条：动态N') }),
     run: async ({ post }) => {
       const checkIn = listed.get(post.trim());
       if (checkIn === undefined) {
         return listed.size === 0
-          ? `没有 ${post}；先用 member_posts 找到那条动态。`
+          ? `没有 ${post}；先找到那条动态的编号。`
           : `没有 ${post}；能看的是：${[...listed.keys()].join('、')}。`;
       }
       if (checkIn.unposted === true) return `${post} 只记录，没发动态，没有评论。`;
@@ -602,7 +658,6 @@ function postTools(
         : `${post} 的评论区：\n${said.join('\n')}`;
     },
   });
-  return [memberPosts, postComments];
 }
 
 /**
@@ -697,7 +752,10 @@ function challengeFits({ title, unit, line }: Challenge): boolean {
 /**
  * `set_challenge`: the day's challenge for one member, set on a daily wake by a run of its own
  * before the coach writes its notes (Tracy, 2026-11-12: a stronger model sets them, the coach
- * keeps its own voice in the note). What makes a good one is the settings' `challengeRules`.
+ * keeps its own voice in the note). What makes a good one is the settings' `challengeRules`. It
+ * first says how the member has been and what they need today (Tracy, 2026-11-14: force a
+ * structured thought), which only the wake's steps keep: the member never sees it. Members go by
+ * their names here (`challengeNames`), not 队员N.
  */
 export function challengeTool(
   draft: WakeDraft,
@@ -710,7 +768,11 @@ export function challengeTool(
     name: 'set_challenge',
     description: '给一个队员定今天的挑战，一人一个，再定会换掉。',
     parameters: z.object({
-      member: z.string().describe('给谁：队员N'),
+      member: z.string().describe('给谁：名字，照任务里写的'),
+      recent: z
+        .string()
+        .describe('先想：他这几天怎么样，从计划、发的动态、评论、最近的挑战和你对他的了解里看'),
+      needs: z.string().describe('再想：所以今天他最需要什么'),
       title: z
         .string()
         .describe(
