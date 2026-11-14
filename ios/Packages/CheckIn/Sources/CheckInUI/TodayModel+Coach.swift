@@ -60,6 +60,19 @@ extension TodayModel {
         }
     }
 
+    /// Everyone in the squad by id, me too, as they made their characters (a stand-in before), for a
+    /// coach message that names who stands with the coach.
+    public var squadCharactersByMember: [MemberID: (look: Outfit, persona: Persona)] {
+        guard let home else { return [:] }
+        var characters: [MemberID: (look: Outfit, persona: Persona)] = [:]
+        for member in home.today.members {
+            characters[member.member] = (SquadCast.look(of: member), SquadCast.persona(of: member))
+        }
+        // Mine as I'm dressed now, as the coach's page stands me beside the coach.
+        characters[home.member] = myCharacter
+        return characters
+    }
+
     /// The coach on the sideline, as last read; nil while the squad has none.
     public var sidelineCoach: CoachSpeaker? { store.coach?.coach }
 
@@ -91,10 +104,13 @@ extension TodayModel {
     }
 
     /// What the coach said that I haven't seen, for its row on the squad card: its name and the
-    /// start of its newest line, a gift without one saying 送你一样东西.
+    /// start of its newest line (a coach message's first line in the app's language), a gift
+    /// without one saying 送你一样东西.
     var coachNews: CoachNewsLine? {
         guard let card = store.newestUnseenCoachCard else { return nil }
-        let line = card.newsLine ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
+        let line =
+            card.newsLine ?? card.message?.cards.first?.line.localized(in: [AppLanguage.current.rawValue])
+            ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
         return CoachNewsLine(name: card.coach.name, line: line)
     }
 
