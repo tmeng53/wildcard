@@ -206,7 +206,6 @@ import {
   reactionsSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
-import { inProcessEvents, type EventHandlers } from './events.js';
 import { createLog, redactText, reportingErrors, type Log } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
@@ -928,14 +927,13 @@ const app = createApp({
         }),
       notices: noticesOn,
     }),
-    // Events go through Pub/Sub once it is set up, and run in the request when it can't take one.
+    // Hosted, events go only through Pub/Sub; locally and in tests they run in the request.
     ...(pubSubProject === undefined
       ? {}
       : {
-          publishEvents: (handlers: EventHandlers, eventLog: Log) =>
+          publishEvents: (eventLog: Log) =>
             pubSubEvents({
               project: pubSubProject,
-              fallback: inProcessEvents(handlers, eventLog),
               log: eventLog,
             }),
         }),
