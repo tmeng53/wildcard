@@ -83,6 +83,7 @@ final class PostManageUITests: XCTestCase {
         settle()
         keepScreenshot(named: "56-feed-delete-confirm")
         confirm.tap()
+        diagnose(app, manage)
         waitFor(manage, "exists == false", "my post is still in 动态 after deleting it")
         XCTAssertFalse(
             app.staticTexts.containing(NSPredicate(format: "label CONTAINS '练腿日'")).firstMatch.exists,
@@ -196,6 +197,51 @@ final class PostManageUITests: XCTestCase {
         settle()
         keepScreenshot(named: "53-feed-manage-menu")
         return manage
+    }
+
+    /// TEMPORARY diagnostics for the flaky delete.
+    private func diagnose(_ app: XCUIApplication, _ manage: XCUIElement) {
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: manage)
+        if XCTWaiter().wait(for: [gone], timeout: 20) == .completed {
+            print("DIAG: deleted fine, frame was \(manage.frame)")
+            return
+        }
+        print("DIAG: confirm still there: \(app.buttons["post.delete.confirm"].exists)")
+        print("DIAG: cancel still there: \(app.buttons["glassMenu.cancel"].exists)")
+        print("DIAG: leg-day text: \(app.staticTexts.containing(NSPredicate(format: "label CONTAINS '练腿日'")).firstMatch.exists)")
+        print("DIAG: manage count \(app.descendants(matching: .any).matching(identifier: "post.manage").count) frame \(manage.frame)")
+        keepScreenshot(named: "99-delete-failed")
+        print("DIAG: tree\n\(app.debugDescription)")
+    }
+
+    /// TEMPORARY: the same delete with my post one drag higher, as in the failing runs.
+    func testDeleteMyPostHigher() {
+        let app = launch(language: "zh-Hans")
+        continueAfterFailure = false
+        let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
+        let feed = app.scrollViews.firstMatch
+        XCTAssertTrue(feed.waitForExistence(timeout: Self.wait))
+        let tabBarTop = tabButton("tab.feed", in: app).frame.minY
+        var drags = 0
+        while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY <= tabBarTop) {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            drags += 1
+        }
+        let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -200)))
+        print("DIAG: higher, manage at \(manage.frame)")
+        manage.tap()
+        XCTAssertTrue(app.buttons["post.delete"].waitForExistence(timeout: Self.wait))
+        app.buttons["post.delete"].tap()
+        let confirm = app.buttons["post.delete.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait))
+        settle()
+        keepScreenshot(named: "98-delete-higher-confirm")
+        print("DIAG: confirm at \(confirm.frame)")
+        confirm.tap()
+        diagnose(app, manage)
+        waitFor(manage, "exists == false", "my post is still in 动态 after deleting it (higher)")
     }
 
     private func launch(language: String) -> XCUIApplication {
