@@ -103,6 +103,7 @@ private let trot = Data(
     #expect(PlaceholderCharacter.names(downloaded: before).variant("medball", in: Slot("prop")) == nil)
     let named = PlaceholderCharacter.names(downloaded: after).variant("medball", in: Slot("prop"))
     #expect(named?.simplifiedChinese == "药球")
+    #expect(PlaceholderCharacter.names(downloaded: before) == PlaceholderCharacter.names(downloaded: before))
     #expect(PlaceholderCharacter.names(downloaded: nil) == PlaceholderCharacter.bundledNames)
     #expect(PlaceholderCharacter.names(downloaded: Data("not json".utf8)) == PlaceholderCharacter.bundledNames)
 }

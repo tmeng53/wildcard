@@ -123,18 +123,19 @@ private struct ArtWords: Decodable {
 extension PlaceholderCharacter {
     /// The bundled names with the downloaded ones in front, read again whenever a download
     /// changed the file, so a piece that arrives while the app is open (a prop on the editor's
-    /// 道具 rack) is named at once, as `editorChoices()` lists it at once.
+    /// 道具 rack) is named at once, as `editorChoices()` lists it at once. Like that one, each call
+    /// reads the small file again and decodes it only when its bytes changed.
     public static func names() -> ArtNames {
         names(downloaded: ArtTree.downloadedFile("names.json", in: tree).flatMap { try? Data(contentsOf: $0) })
     }
 
     /// `downloaded`'s names in front of the bundled ones, decoded once per file's bytes; the
-    /// bundled ones alone when nothing was downloaded or this build can't read it.
+    /// bundled ones alone when nothing was downloaded or this build can't read it (kept for those
+    /// bytes too, so an unreadable file isn't decoded again on every call).
     static func names(downloaded bytes: Data?) -> ArtNames {
         guard let bytes else { return bundledNames }
         if let kept = keptNames.withLock({ $0 }), kept.bytes == bytes { return kept.names }
-        guard let uploaded = try? ArtNames.decode(bytes) else { return bundledNames }
-        let names = bundledNames.overlaid(by: uploaded)
+        let names = (try? ArtNames.decode(bytes)).map(bundledNames.overlaid(by:)) ?? bundledNames
         keptNames.withLock { $0 = (bytes, names) }
         return names
     }
