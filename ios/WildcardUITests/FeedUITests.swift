@@ -350,7 +350,8 @@ extension FeedUITests {
 
 extension FeedUITests {
     /// A rated meal shows its 健康 and 好吃 in stars and the 卡价比 worked out from them on its
-    /// 成绩条, as a 训练 shows its numbers: Mia's salad today, rated 5 and 4.
+    /// 成绩条, as a 训练 shows its numbers: Mia's salad today, rated 5 and 4. A tap on 卡价比 says
+    /// what it is.
     func testMealScoreStrip() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
@@ -375,5 +376,14 @@ extension FeedUITests {
             let joined = label.filter { !" ,、".contains($0) }
             XCTAssertEqual(joined, words, "\(cell) reads \(label)")
         }
+        // 卡价比 says what it is on a tap, over the card, which stays.
+        strip.descendants(matching: .any).matching(identifier: "strip.calorieValue").firstMatch.tap()
+        let tip = app.staticTexts["卡路里性价比"]
+        XCTAssertTrue(tip.waitForExistence(timeout: Self.wait), "no 卡价比 tip")
+        keepScreenshot(named: "45b-feed-meal-strip-tip")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        XCTAssertTrue(tip.waitForNonExistence(timeout: Self.wait), "the 卡价比 tip stayed")
+        XCTAssertTrue(strip.exists, "the strip went")
+        XCTAssertFalse(app.descendants(matching: .any)["post.comment"].exists, "the tap opened the post")
     }
 }
