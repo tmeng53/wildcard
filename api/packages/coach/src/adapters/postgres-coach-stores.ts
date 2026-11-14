@@ -304,8 +304,6 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         return Number(id);
       },
 
-      challengeOf: (input) => dayChallenge(db, input),
-
       async deliveredBetween({ squad, coach, from, to }) {
         const rows = await db
           .selectFrom('coach_member_notes')

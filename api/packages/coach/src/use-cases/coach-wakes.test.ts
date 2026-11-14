@@ -2923,9 +2923,6 @@ describe('the coach', () => {
       for (const { id } of notes.rows) await delivery.delivered(Number(id));
       const stores = createPostgresCoachStores(trx);
       const day = first.ran ? first.day : '';
-      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
-        note: Number(notes.rows[1]?.id),
-      });
       expect(await stores.memberNotes.challengesOn({ squad, day })).toMatchObject([
         { member: mia, note: Number(notes.rows[1]?.id) },
       ]);
@@ -2941,9 +2938,9 @@ describe('the coach', () => {
         select max(id) as id from public.coach_member_notes where member_id = ${mia}
       `.execute(trx);
       await delivery.delivered(Number(plainNote.rows[0]?.id));
-      expect(await stores.memberNotes.challengeOf({ squad, member: mia, day })).toMatchObject({
-        note: Number(notes.rows[1]?.id),
-      });
+      expect(await stores.memberNotes.challengesOn({ squad, day })).toMatchObject([
+        { member: mia, note: Number(notes.rows[1]?.id) },
+      ]);
       const plain = await wakes(fixture, { agent }).preview({ squad, member: mia });
       expect(plain.ran && 'delivered' in plain).toBe(false);
     });

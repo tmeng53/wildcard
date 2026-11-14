@@ -95,22 +95,6 @@ export async function runTrial(
     );
     return found ?? { weekStart, members: testCase.week.members, checkIns: [] };
   };
-  const challengeOf: CoachStores['memberNotes']['challengeOf'] = ({ member, day }) => {
-    const index = testCase.challenges.findIndex(
-      (each) => each.member === member && each.day === day,
-    );
-    const found = testCase.challenges[index];
-    if (found === undefined) return Promise.resolve(undefined);
-    return Promise.resolve({
-      note: index + 1,
-      day: found.day,
-      challenge: found.challenge,
-      coach: { id: coach, name: coach, look: coach },
-      answer: found.answer,
-      reason: found.reason,
-      completion: found.completion,
-    });
-  };
   const nothing = () => Promise.resolve(undefined);
 
   const stores: CoachStores = {
@@ -149,7 +133,6 @@ export async function runTrial(
     notes: { save: () => Promise.resolve(true), recent: () => Promise.resolve([]) },
     memberNotes: {
       save: nothing,
-      challengeOf,
       deliveredBetween: () => Promise.resolve([]),
       challengesOn: ({ day }) =>
         Promise.resolve(
