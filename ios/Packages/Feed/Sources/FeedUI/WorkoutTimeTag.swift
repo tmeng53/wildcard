@@ -43,9 +43,17 @@ struct WorkoutTimeTag: View {
         }
     }
 
-    /// 下午8:03–8:23, the system's way of saying a span of the same day once.
+    /// 下午8:03–8:23, the system's way of saying a span of the same day once. One past midnight is
+    /// the two times alone (晚上11:50–上午12:10), since the system would add both dates.
     private static func span(_ start: Date, _ end: Date, in zone: TimeZone, locale: Locale) -> String {
-        (start..<max(start, end)).formatted(Date.IntervalFormatStyle(locale: locale, timeZone: zone).hour().minute())
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        guard calendar.isDate(start, inSameDayAs: end) else {
+            let clock = Date.FormatStyle(locale: locale, timeZone: zone).hour().minute()
+            return "\(start.formatted(clock))–\(end.formatted(clock))"
+        }
+        return (start..<max(start, end)).formatted(
+            Date.IntervalFormatStyle(locale: locale, timeZone: zone).hour().minute())
     }
 
     private static let gmt: Calendar = {
