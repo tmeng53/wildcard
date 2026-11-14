@@ -309,7 +309,7 @@ jobs:
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac. The suite runs in three
   # parts on three Macs at once (scripts/ios-test.sh, SHARD), each building the app itself:
-  # each part about 67 minutes instead of 3h20 one after another (2026-11-14). Reproducing one test
+  # each part 65 to 80 minutes instead of 3h20 one after another (2026-11-14). Reproducing one test
   # (only_testing) uses one Mac.
   ios:
     needs: changes
@@ -320,9 +320,11 @@ jobs:
       fail-fast: false
       matrix:
         shard: ${{ fromJSON(inputs.only_testing && '[1]' || '[1, 2, 3]') }}
-    # One part is about 54 minutes of tests after a 13-minute build and boot (2026-11-14, by
-    # scripts/ios-test-weights); the limit leaves room for a retry or two.
-    timeout-minutes: 75
+    # One part is about 54 minutes of tests by scripts/ios-test-weights, but a class's time varies
+    # by up to a third from run to run and the build and boot took 13 to 19 minutes: one part
+    # needed about 80 minutes (run 43645151243, 2026-11-14); the limit leaves room for that and a
+    # retry or two.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
         with:
