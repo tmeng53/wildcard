@@ -309,7 +309,7 @@ jobs:
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac. The suite runs in three
   # parts on three Macs at once (scripts/ios-test.sh, SHARD), each building the app itself:
-  # each part about 70 minutes instead of 3h30 one after another (2026-11-14). Reproducing one test
+  # each part about 67 minutes instead of 3h20 one after another (2026-11-14). Reproducing one test
   # (only_testing) uses one Mac.
   ios:
     needs: changes
