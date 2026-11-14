@@ -34,7 +34,12 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "收藏 didn't close the card")
         waitFor(bookmark, "label == '已收藏'", "the bookmark didn't fill")
 
-        // The same card again changes the note and offers 取消收藏.
+        checkTheSavedPlacesCard(in: app, bookmark: bookmark, note: note)
+        checkTheListOnMe(in: app)
+    }
+
+    /// The same card again changes the note and offers 取消收藏.
+    private func checkTheSavedPlacesCard(in app: XCUIApplication, bookmark: XCUIElement, note: XCUIElement) {
         bookmark.tap()
         XCTAssertTrue(app.buttons["savePlace.remove"].waitForExistence(timeout: Self.wait), "no 取消收藏 on a saved place")
         XCTAssertEqual(note.value as? String, "周六早上的单车课", "the card lost the note")
@@ -44,7 +49,10 @@ final class SavedPlacesUITests: XCTestCase {
         app.buttons["savePlace.cancel"].tap()
         XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "取消 didn't close the card")
 
-        // ④ 我's bookmark; ③ the list.
+    }
+
+    /// ④ 我's bookmark; ③ the list, a row opening its place, a swipe left removing it.
+    private func checkTheListOnMe(in app: XCUIApplication) {
         tabButton("tab.me", in: app).tap()
         let open = app.buttons["me.savedPlaces"]
         XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "我 has no 收藏 button")
