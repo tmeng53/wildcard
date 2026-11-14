@@ -103,6 +103,13 @@ const fields = {
     .describe(
       'How the coach answers a post or a comment written to it, Chinese: the instructions of a reply, after the coach’s soul. Only a reply reads them, never the shared rules or wakes.',
     ),
+  noteRules: z
+    .string()
+    .min(1)
+    .max(20_000)
+    .describe(
+      'How the coach writes its morning, the 战术板 line and each member’s 便条, Chinese: the instructions of the daily wake’s notes, after the coach’s soul. Only the morning’s notes read them, never the shared rules or wakes.',
+    ),
   challengeModel: CoachModel.describe(
     'The model that sets each member’s day challenge on the daily wake, before the coach writes its notes in its own voice (openai/model). Without a price in the AI usage settings, the coach’s own model sets them.',
   ),

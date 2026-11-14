@@ -1,6 +1,7 @@
 import type { TokenUsage } from '@wildcard/language-model';
-import type { Challenge } from '../domain/challenge.js';
-import { challengeTaskOf } from '../domain/challenge-task.js';
+import type { Challenge, DayChallengeFacts } from '../domain/challenge.js';
+import { challengeTaskOf, type ChallengeMember } from '../domain/challenge-task.js';
+import { noteInstructionsOf, noteTaskOf } from '../domain/note-task.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   memberOfPath,
@@ -736,26 +737,51 @@ async function think(
       names,
     );
   };
-  const setting = daily && noteTo.length > 0;
+  // The draft's files are as the model reads them, members by their names now.
+  const morning = daily
+    ? morningOf({
+        week,
+        roster,
+        noteTo,
+        briefs: facts.noteTo ?? [],
+        yesterday: facts.yesterday,
+        files: draft.files,
+      })
+    : undefined;
   let settingCost = 0;
-  if (setting) {
+  if (morning !== undefined && noteTo.length > 0) {
     settingCost = await setChallenges(deps, {
       wake,
       settings,
       week,
       day,
-      roster,
       noteTo,
-      briefs: facts.noteTo ?? [],
-      yesterday: facts.yesterday,
+      morning,
       draft,
       commentsOf,
       author,
     });
   }
+  // The morning's notes have their own instructions and a task of only what they need, the
+  // members as the challenge run read them, with the challenge each was set (Tracy, 2026-11-14).
+  const noting =
+    morning === undefined
+      ? undefined
+      : noteTaskOf({
+          day,
+          names: roster,
+          ...morning,
+          set: draft.challenges,
+          talks: facts.talks,
+          recentNotes: facts.recentNotes,
+          language: week.language ?? 'zh-Hans',
+          today: todayLines(facts),
+          ...(gifting === undefined ? {} : { gifting }),
+        });
   // A reply (to a post, or to a line written to the coach) has its own instructions and a task
   // of only what it needs, its posts by number (Tracy, 2026-11-14).
-  const numbers = new PostNumbers(week.checkIns);
+  const numbers =
+    noting === undefined ? new PostNumbers(week.checkIns) : PostNumbers.numbered(noting.numbered);
   const replying =
     wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment'
       ? await replyFactsOf(deps, {
@@ -776,9 +802,11 @@ async function think(
   if ((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') && replying === undefined)
     return undefined;
   const task =
-    replying === undefined
-      ? taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) })
-      : replyTaskOf(replying);
+    replying !== undefined
+      ? replyTaskOf(replying)
+      : noting !== undefined
+        ? noting.task
+        : taskOf(facts);
   if (task === undefined) return undefined;
   const runsOn = modelOf(settings, wake.reason.kind);
   // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
@@ -786,9 +814,11 @@ async function think(
   const run = await deps.agent.run({
     ...runsOn,
     instructions:
-      replying === undefined
-        ? instructionsOf(settings, speaking)
-        : replyInstructionsOf(settings, speaking),
+      replying !== undefined
+        ? replyInstructionsOf(settings, speaking)
+        : noting !== undefined
+          ? noteInstructionsOf(settings, speaking)
+          : instructionsOf(settings, speaking),
     task,
     tools: toolbox({
       week,
@@ -1042,6 +1072,49 @@ async function briefsOf(
   });
 }
 
+/** What the morning's two runs read of each member: the challenge run's and the notes'. */
+interface Morning {
+  readonly members: readonly ChallengeMember[];
+  /** The posts a member's block may list, oldest first. */
+  readonly posts: readonly WeekCheckIn[];
+  readonly challenges: readonly DayChallengeFacts[];
+}
+
+/** Each member a note goes to, with their brief and page, and the posts and challenges they read. */
+function morningOf({
+  week,
+  roster,
+  noteTo,
+  briefs,
+  yesterday,
+  files,
+}: {
+  readonly week: SquadWeek;
+  readonly roster: ReadonlyMap<string, string>;
+  readonly noteTo: readonly string[];
+  readonly briefs: readonly NoteBrief[];
+  readonly yesterday: YesterdayFacts | undefined;
+  readonly files: ReadonlyMap<string, string>;
+}): Morning {
+  const briefOf = new Map(briefs.map((brief) => [brief.name, brief]));
+  return {
+    members: noteTo.flatMap((member) => {
+      const brief = briefOf.get(roster.get(member) ?? '');
+      if (brief === undefined) return [];
+      const page = files.get(`people/${member}.md`);
+      return [{ member, brief, ...(page === undefined ? {} : { about: page }) }];
+    }),
+    // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
+    posts: [
+      ...(yesterday?.checkIns ?? []).filter(
+        (each) => !week.checkIns.some(({ id }) => id === each.id),
+      ),
+      ...week.checkIns,
+    ],
+    challenges: yesterday?.challenges ?? [],
+  };
+}
+
 /**
  * Sets each member's challenge for the day into the draft, by a run of its own (Tracy,
  * 2026-11-14: from first principles): the settings' `challengeRules` alone, never the shared
@@ -1056,10 +1129,8 @@ async function setChallenges(
     settings,
     week,
     day,
-    roster,
     noteTo,
-    briefs,
-    yesterday,
+    morning,
     draft,
     commentsOf,
     author,
@@ -1068,10 +1139,8 @@ async function setChallenges(
     readonly settings: CoachSettings;
     readonly week: SquadWeek;
     readonly day: string;
-    readonly roster: ReadonlyMap<string, string>;
     readonly noteTo: readonly string[];
-    readonly briefs: readonly NoteBrief[];
-    readonly yesterday: YesterdayFacts | undefined;
+    readonly morning: Morning;
     readonly draft: WakeDraft;
     readonly commentsOf: (
       checkIn: WeekCheckIn,
@@ -1081,32 +1150,7 @@ async function setChallenges(
   },
 ): Promise<number> {
   const names = rosterOf(week);
-  const briefOf = new Map(briefs.map((brief) => [brief.name, brief]));
-  // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
-  const posts = [
-    ...(yesterday?.checkIns ?? []).filter(
-      (each) => !week.checkIns.some(({ id }) => id === each.id),
-    ),
-    ...week.checkIns,
-  ];
-  const { task, numbered } = challengeTaskOf({
-    day,
-    names,
-    members: noteTo.flatMap((member) => {
-      const brief = briefOf.get(roster.get(member) ?? '');
-      if (brief === undefined) return [];
-      const page = draft.files.get(`people/${member}.md`);
-      return [
-        {
-          member,
-          brief,
-          ...(page === undefined ? {} : { about: shownBody(page, names) }),
-        },
-      ];
-    }),
-    posts,
-    challenges: yesterday?.challenges ?? [],
-  });
+  const { task, numbered } = challengeTaskOf({ day, names, ...morning });
   const model =
     (await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.challengeModel })) ===
     undefined

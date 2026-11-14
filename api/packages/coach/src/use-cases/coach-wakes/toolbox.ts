@@ -325,15 +325,15 @@ export function toolbox({
       },
     }),
   ];
-  // A reply reads the posts it needs by number and remembers as it goes; the week's whole list,
-  // the stats and tidying the files are the morning's and the night's (Tracy, 2026-11-14).
+  // A reply and the morning's notes read the posts they need by number and remember as they go;
+  // the week's whole list, the stats and tidying the files are the night's (Tracy, 2026-11-14).
   const replying = kind === 'checkIn' || kind === 'comment';
-  if (replying) {
+  if (replying || kind === 'daily') {
     const kept = tools.filter(({ name }) => name !== 'squad_week' && name !== 'edit_file');
     tools.length = 0;
     tools.push(...kept);
   }
-  if (facts !== undefined && !replying) {
+  if (facts !== undefined && !replying && kind !== 'daily') {
     tools.push(
       defineTool(draft.steps, {
         name: 'member_stats',
@@ -850,8 +850,9 @@ function noteTool(
   };
   const member = z.string().describe('写给谁：名字');
   // Kept by length: it is about the member, and stays in its own table.
-  const kept = ({ text, ...rest }: { readonly text: string }) => ({
+  const kept = ({ text, point, ...rest }: { readonly text: string; readonly point?: string }) => ({
     ...rest,
+    ...(point === undefined ? {} : { point: `（${String(point.length)} 字）` }),
     text: `（${String(text.length)} 字）`,
   });
   if (welcome) {
@@ -866,7 +867,13 @@ function noteTool(
   return defineTool(draft.steps, {
     name: 'note_to',
     description: `给一个队员写今天的便条：只有这个人自己看得到，早上（他那里的时间）送到他手机上。一人一张，再写会换掉。${limitWords('note')}，对他说话用「你」。`,
-    parameters: z.object({ member, text: z.string().describe('便条上的这一句') }),
+    parameters: z.object({
+      member,
+      point: z
+        .string()
+        .describe('先想清楚：今天对他说哪一件事，为什么是这件。只记在你自己这里，谁都看不到'),
+      text: z.string().describe('便条上的这一句'),
+    }),
     kept,
     run: write,
   });

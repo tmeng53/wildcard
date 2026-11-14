@@ -18,6 +18,7 @@ import { factsText } from './member-facts.js';
 import { Coach } from './coach.js';
 import { lineLanguageOf, longestLine } from './line-limits.js';
 import { HEAD_LIMIT, instructionsOf, memoryIndex, saidLines, taskOf } from './prompt.js';
+import { noteInstructionsOf, noteTaskOf } from './note-task.js';
 import { lineProblem } from './reply.js';
 import { CoachHoliday, holidaysOn, SquadId } from './settings.js';
 import { checkInBlock, consentedOnly, rosterOf, weekText, type SquadWeek } from './squad-week.js';
@@ -26,11 +27,6 @@ import { wakesDue, weeksAround } from './wake.js';
 const mia = '11111111-1111-4111-8111-111111111111';
 const leo = '22222222-2222-4222-8222-222222222222';
 const squad = SquadId.parse('6f1c3e2a-8b4d-4c5e-9f60-7a8b9c0d1e2f');
-
-/** The task's `## ` section that starts with `heading`, with everything under it. */
-function section(task: string | undefined, heading: string): string | undefined {
-  return (task ?? '').split(/\n\n(?=## )/).find((part) => part.startsWith(heading));
-}
 
 const week: SquadWeek = {
   weekStart: '2026-10-26',
@@ -462,255 +458,89 @@ describe('when the coach wakes', () => {
     expect(instructions).not.toContain('口头禅');
   });
 
-  it('keeps what every wake begins with in the instructions, and only what changes in the task', () => {
-    const task = taskOf({
-      reason: { kind: 'daily', day: '2026-11-01' },
-      week,
-      files: new Map([
-        ['memory.md', '米亚爱跑步'],
-        ['squad.md', undefined],
-      ]),
-      recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
+  it('writes the morning: the 战术板 in the squad’s language, then each member’s day by name', () => {
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    const { task, numbered } = noteTaskOf({
+      day: '2026-10-28',
+      names: rosterOf(week),
+      members: [
+        {
+          member: mia,
+          brief: {
+            name: '米亚',
+            trainedDays: 1,
+            language: 'zh-Hant',
+            plan: {
+              week: [
+                { kind: 'rest' },
+                { kind: 'train', sport: '跑步' },
+                { kind: 'train', sport: '游泳' },
+                { kind: 'rest' },
+                { kind: 'rest' },
+                { kind: 'rest' },
+                { kind: 'rest' },
+              ],
+              fuelGoals: ['喝够水'],
+            },
+            weather: { words: '今天雨，8–13°C', city: '多伦多' },
+          },
+          about: '- 米亚爱跑步',
+        },
+        { member: leo, brief: { name: '队员2', trainedDays: 0, language: 'en' } },
+      ],
+      posts: [first],
+      challenges: [],
+      set: new Map([[mia, { title: '游泳', amount: 30, unit: '分钟', line: '雨天进泳池' }]]),
+      talks: [{ checkIn: first, said: [{ member: leo, text: '强' }] }],
+      recentNotes: [{ day: '2026-10-27', text: '周二腿软也算练' }],
+      language: 'zh-Hant',
+      today: ['感恩节', '你以前带过这个小队，被换掉后，现在又被请回来了。'],
     });
     expect(task).toBe(
       [
-        '# 新的一天\n2026-11-01，周日。',
-        '## 小队的人\n米亚、队员2',
-        '## 和你的对话（过去一天，打卡下面，先后顺序）\n没人在打卡下面和你说话。',
-        // What it remembers: each file's beginning, the rest looked up with recall.
-        '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
-        '### memory.md（你和大家之间的事）\n```\n米亚爱跑步\n```',
-        '### squad.md（这个小队）\n还是空的。',
-        // The 战术板 in the squad's language (Simplified Chinese until the week says another),
-        // and what it wrote lately.
-        '## 战术板\n- 用简体中文写。\n- 你最近写过：\n  - 2026-10-31：周末也要动一动',
-        '## 今天的便条\n今天没有要写便条的人。',
+        '# 早上\n今天是 2026-10-28，周三。',
+        '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
+        '## 战术板\n- 用繁體中文寫，照台灣的說法。\n- 你最近写过：\n  - 2026-10-27：周二腿软也算练\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
+        '## 便条（下面每人一张）\n小队的人：米亚、队员2。',
+        // Each member's own day, posts by number, the challenge set for them and where they
+        // talked with the coach, in their own language; never reactions or the talk itself.
+        '## 米亚\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二跑步，周三游泳，周四休息，周五休息，周六休息，周日休息\n- 这周饮食小目标：喝够水\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 10-27 周二 跑步 30 分钟：「腿废了」（1 条评论）\n- 当地天气：多伦多，今天雨，8–13°C\n- 你对他的了解：\n- 米亚爱跑步\n- 今天的挑战：「游泳 30 分钟」，小字：雨天进泳池\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- 用繁體中文寫，照台灣的說法。',
+        '## 队员2\n- 今天的计划：没填出赛表\n- 这周练了：0 天\n- 最近发的：没有\n- 今天的挑战：没有\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- Write in English.',
       ].join('\n\n'),
     );
-    // A holiday's morning: told right after the day.
-    expect(
-      taskOf({
-        reason: { kind: 'daily', day: '2026-11-26' },
-        week,
-        files: new Map(),
-        recentNotes: [],
-        occasions: ['感恩节'],
-      })
-        ?.split('\n\n')
-        .slice(0, 2),
-    ).toStrictEqual(['# 新的一天\n2026-11-26，周四。', '## 今天\n- 感恩节']);
-    // A coach hired back is told so, once, after the day's facts; what it says is its own.
-    expect(
-      taskOf({
-        reason: { kind: 'daily', day: '2026-11-26' },
-        week,
-        files: new Map(),
-        recentNotes: [],
-        occasions: ['感恩节'],
-        backAgain: true,
-      })
-        ?.split('\n\n')
-        .slice(0, 2),
-    ).toStrictEqual([
-      '# 新的一天\n2026-11-26，周四。',
-      '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
-    ]);
-    // A coach that took over is told from whom and when, with the letter it was left, if any.
-    expect(
-      taskOf({
-        reason: { kind: 'daily', day: '2026-11-26' },
-        week,
-        files: new Map(),
-        recentNotes: [],
-        handover: { from: '毛头', day: '2026-11-12', letter: '交给你了，大家爱练腿。' },
-      })
-        ?.split('\n\n')
-        .slice(0, 2),
-    ).toStrictEqual([
-      '# 新的一天\n2026-11-26，周四。',
-      '## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。\n毛头走时给全队留了一封信，大家都看过：\n「交给你了，大家爱练腿。」',
-    ]);
-    expect(
-      taskOf({
-        reason: { kind: 'daily', day: '2026-11-26' },
-        week,
-        files: new Map(),
-        recentNotes: [],
-        handover: { from: '毛头', day: '2026-11-12' },
-      })
-        ?.split('\n\n')
-        .at(1),
-    ).toBe('## 你接手这个小队\n2026-11-12 小队换教练，你接替了毛头。');
-    // Whom it writes a morning note to, by the names it knows them by.
-    expect(
-      section(
-        taskOf({
-          reason: { kind: 'daily', day: '2026-11-01' },
-          week,
-          files: new Map(),
-          recentNotes: [],
-          noteTo: [
-            {
-              name: '米亚',
-              trainedDays: 2,
-              posts: [
-                { day: '2026-10-26', what: '游泳 45 分钟' },
-                { day: '2026-10-26', what: '健康餐' },
-                { day: '2026-10-28', what: '力量' },
-              ],
-              plan: {
-                week: [
-                  { kind: 'train', sport: '游泳' },
-                  { kind: 'rest' },
-                  { kind: 'train', sport: '力量' },
-                  { kind: 'rest' },
-                  { kind: 'train', sport: '游泳' },
-                  { kind: 'train' },
-                  { kind: 'rest' },
-                ],
-                fuelGoals: ['喝够水', '少吃外卖'],
-              },
-              weather: { words: '今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C', city: '多伦多' },
-            },
-            {
-              name: '队员2',
-              trainedDays: 0,
-              posts: [],
-              plan: {
-                week: Array.from({ length: 7 }, () => ({ kind: 'rest' }) as const),
-                fuelGoals: [],
-              },
-            },
-            // Plans that couldn't be read: only the days trained.
-            { name: '队员3', trainedDays: 1, weather: { words: '今天晴，-2–5°C' } },
-          ],
-        }),
-        '## 今天的便条',
-      ),
-    ).toBe(
-      [
-        '## 今天的便条（下面每人各写一张）',
-        '### 米亚\n- 本周出赛表：周一游泳，周二休息，周三力量，周四休息，周五游泳，周六练，周日休息\n- 饮食小目标：喝够水、少吃外卖\n- 这周练了：2 天\n- 这周发过：周一游泳 45 分钟、健康餐，周三力量\n- 人在：多伦多\n- 当地天气：今天雨，8–13°C，降水概率 80%；昨天晴，5–12°C',
-        '### 队员2\n- 本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息\n- 饮食小目标：这周没定\n- 这周练了：0 天\n- 这周发过：还没发过',
-        '### 队员3\n- 这周练了：1 天\n- 当地天气：今天晴，-2–5°C',
-      ].join('\n\n'),
+    // The tools go on from the task's numbers.
+    expect([...numbered.keys()]).toStrictEqual(['动态1']);
+    // The morning reads the coach's soul and the note rules, nothing else.
+    expect(noteInstructionsOf({ noteRules: '只说一件事。' }, { soul: '你是暖暖。' })).toBe(
+      '你是暖暖。\n\n只说一件事。',
     );
-    // Yesterday's posts, for the notes to pick up on, and a day nobody posted.
-    const [posted] = week.checkIns;
-    if (posted === undefined) throw new Error('no check-in');
-    expect(
-      section(
-        taskOf({
-          reason: { kind: 'daily', day: '2026-10-28' },
-          week,
-          files: new Map(),
-          recentNotes: [],
-          yesterday: { day: '2026-10-27', checkIns: [posted] },
-        }),
-        '## 昨天',
-      ),
-    ).toBe(
-      '## 昨天（周二）小队的动态\n\n### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 写的：「腿废了」\n- 点了表情：队员2\n- 评论（先后顺序）：\n  - 队员2：「强」',
-    );
-    expect(
-      section(
-        taskOf({
-          reason: { kind: 'daily', day: '2026-10-29' },
-          week,
-          files: new Map(),
-          recentNotes: [],
-          yesterday: { day: '2026-10-28', checkIns: [] },
-        }),
-        '## 昨天',
-      ),
-    ).toBe('## 昨天（周三）小队的动态\n没人发动态。');
-    // The last day's talk under check-ins, for it to remember from.
-    const [first] = week.checkIns;
-    if (first === undefined) throw new Error('no check-in');
-    expect(
-      section(
-        taskOf({
-          reason: { kind: 'daily', day: '2026-11-01' },
-          week,
-          files: new Map([['memory.md', undefined]]),
-          recentNotes: [],
-          talks: [
-            {
-              checkIn: first,
-              reply: '腿废了也算练',
-              said: [
-                { member: leo, text: '我下周膝盖手术' },
-                { member: undefined, text: '那这周先歇着' },
-              ],
-            },
-          ],
-        }),
-        '## 和你的对话',
-      ),
-    ).toBe(
-      '## 和你的对话（过去一天，打卡下面，先后顺序）\n\n### 10-27 周二 · 米亚 · 训练：跑步 30 分钟\n- 你：「腿废了也算练」\n- 队员2：「我下周膝盖手术」\n- 你：「那这周先歇着」',
-    );
-    // Yesterday's post points to the talk below only when the talk holds all its comments; the
-    // talk keeps only the last day's, so an older comment stays under the post.
-    const yesterdayWith = (said: { member: string | undefined; text: string }[]) =>
-      section(
-        taskOf({
-          reason: { kind: 'daily', day: '2026-10-28' },
-          week,
-          files: new Map(),
-          recentNotes: [],
-          yesterday: { day: '2026-10-27', checkIns: [first] },
-          talks: [{ checkIn: first, said }],
-        }),
-        '## 昨天',
-      );
-    expect(yesterdayWith([{ member: leo, text: '强' }])).toContain(
-      '\n- 点了表情：队员2\n- 评论：见下面「和你的对话」',
-    );
-    expect(yesterdayWith([{ member: undefined, text: '谢谢' }])).toContain(
-      '\n- 评论（先后顺序）：\n  - 队员2：「强」',
-    );
-  });
-
-  it('writes what one member reads in their language, and the 战术板 in the squad’s', () => {
-    const multilingual: SquadWeek = {
-      ...week,
-      members: [
-        { member: mia, nickname: '米亚', language: 'zh-Hant' },
-        { member: leo, language: 'en' },
-      ],
-      language: 'zh-Hant',
-    };
-    const daily = taskOf({
-      reason: { kind: 'daily', day: '2026-11-01' },
-      week: multilingual,
-      files: new Map(),
+    // Nobody to write to, and a gift to give.
+    const quiet = noteTaskOf({
+      day: '2026-10-28',
+      names: rosterOf(week),
+      members: [],
+      posts: [],
+      challenges: [],
+      set: new Map(),
+      talks: [],
       recentNotes: [],
-      noteTo: [
-        { name: '米亚', language: 'zh-Hant', trainedDays: 1 },
-        { name: '队员2', language: 'en', trainedDays: 0 },
-      ],
-    })?.split('\n\n');
-    expect(daily).toContain('## 战术板\n- 用繁體中文寫，照台灣的說法。\n- 你还没写过。');
-    expect(daily?.slice(-2)).toStrictEqual([
-      '### 米亚\n- 这周练了：1 天\n- 用繁體中文寫，照台灣的說法。',
-      '### 队员2\n- 这周练了：0 天\n- Write in English.',
+      language: 'zh-Hans',
+      today: [],
+      gifting: { pool: [{ id: 'gift-scarf', description: '红围巾' }], open: new Map([[mia, []]]) },
+    }).task.split('\n\n');
+    expect(quiet.slice(1)).toStrictEqual([
+      '## 战术板\n- 用简体中文写。\n- 你还没写过。\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
+      '## 便条\n今天没有要写便条的人。',
+      '## 礼物清单\n- gift-scarf：红围巾',
+      '## 这周还能收礼物的\n- 米亚',
     ]);
   });
 
-  it('leaves a reply’s task to the reply step, and writes the day’s', () => {
+  it('leaves a reply’s task to the reply step and the morning’s to the note step', () => {
     const files = new Map([['memory.md', undefined]]);
-    expect(
-      taskOf({ reason: { kind: 'checkIn', checkIn: 'c2' }, week, files, recentNotes: [] }),
-    ).toBeUndefined();
-    expect(
-      taskOf({
-        reason: { kind: 'daily', day: '2026-11-01' },
-        week,
-        files: new Map([['memory.md', '米亚爱跑步']]),
-        recentNotes: [{ day: '2026-10-31', text: '周末也要动一动' }],
-      }),
-    ).toContain('- 2026-10-31：周末也要动一动');
+    expect(taskOf({ reason: { kind: 'checkIn', checkIn: 'c2' }, week, files })).toBeUndefined();
+    expect(taskOf({ reason: { kind: 'daily', day: '2026-11-01' }, week, files })).toBeUndefined();
   });
 });
 
@@ -880,7 +710,6 @@ describe('memory on a waking day', () => {
       reason: { kind: 'dream', day: '2026-11-01' },
       week,
       files: new Map([['memory.md', body]]),
-      recentNotes: [],
       talks: [],
       pastDays: {
         from: '2026-10-26',
