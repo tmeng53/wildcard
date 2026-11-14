@@ -2535,7 +2535,7 @@ describe('the coach', () => {
         reason: '我鸡蛋过敏',
         today: '2026-11-01',
       });
-      // A check-in's wake that day is told why it was let go, and not to repeat it.
+      // A check-in's wake that day isn't told a challenge they let go.
       const meal = randomUUID();
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${meal}, ${leo}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
@@ -2562,9 +2562,7 @@ describe('the coach', () => {
         },
         { agent },
       ).checkedIn({ checkIn: meal, squads: [squad] });
-      expect(runs.at(-1)?.task).toContain(
-        '## 你今天给他的挑战\n- 挑战：吃鸡蛋\n- 他：没接，理由：「我鸡蛋过敏」（只告诉了你，别在回复里说）',
-      );
+      expect(runs.at(-1)?.task).not.toContain('挑战');
       await sql`insert into public.coach_challenge_completions (note_id, by)
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();

@@ -59,16 +59,15 @@ export function challengeText({ title, amount, unit }: Challenge): string {
   return amount === undefined || unit === undefined ? title : `${title} ${String(amount)} ${unit}`;
 }
 
-/** The member's challenge today and what they said to it, as a check-in's wake tells the coach. */
+/**
+ * The challenge the member took up today, as a check-in's wake tells the coach; one they let go or
+ * never answered is never told there.
+ */
 export function challengeSection({
   challenge,
-  answer,
-  reason,
   completion,
 }: {
   readonly challenge: Challenge;
-  readonly answer?: ChallengeAnswer | undefined;
-  readonly reason?: string | undefined;
   readonly completion?: ChallengeCompletion | undefined;
 }): string {
   const said =
@@ -76,13 +75,7 @@ export function challengeSection({
       ? '说已经完成了'
       : completion?.by === 'coach'
         ? '完成了（你记的）'
-        : answer === 'accepted'
-          ? '接受了'
-          : answer === 'declined'
-            ? reason === undefined
-              ? '没接'
-              : `没接，理由：「${reason}」（只告诉了你，别在回复里说）`
-            : '还没回应';
+        : '接受了';
   return ['## 你今天给他的挑战', `- 挑战：${challengeText(challenge)}`, `- 他：${said}`].join('\n');
 }
 

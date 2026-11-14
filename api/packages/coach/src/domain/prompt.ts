@@ -252,11 +252,9 @@ export function taskOf({
   readonly backAgain?: boolean;
   /** On a waking task, whom the coach took over from and the letter it was left, if any. */
   readonly handover?: TookOver;
-  /** On a check-in's wake, the challenge the coach set its author today and their answer. */
+  /** On a check-in's wake, the challenge its author took up today, and whether they did it. */
   readonly challenge?: {
     readonly challenge: Challenge;
-    readonly answer?: ChallengeAnswer;
-    readonly reason?: string;
     readonly completion?: ChallengeCompletion;
   };
   /** On a daily wake, the gift pool and who may get one this week. */

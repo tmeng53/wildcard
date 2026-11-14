@@ -663,12 +663,18 @@ async function think(
         ),
       })
     : undefined;
-  // On a check-in's wake, the challenge its author got on today's note and what they said.
+  // On a check-in's wake, the challenge its author got on today's note, only once they took it up:
+  // told one they let go or never answered, the coach brought it up under every post they made
+  // (Tracy, 2026-11-14).
   const author = addresseeOf(week, wake.reason);
   const heard = heardOf(week, wake.reason);
-  const challenge =
+  const dayChallenge =
     wake.reason.kind === 'checkIn' && author !== undefined
       ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
+      : undefined;
+  const challenge =
+    dayChallenge?.answer === 'accepted' || dayChallenge?.completion !== undefined
+      ? dayChallenge
       : undefined;
   // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
   const { reason } = wake;
@@ -699,8 +705,6 @@ async function think(
       : {
           challenge: {
             challenge: challenge.challenge,
-            ...(challenge.answer === undefined ? {} : { answer: challenge.answer }),
-            ...(challenge.reason === undefined ? {} : { reason: challenge.reason }),
             ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
           },
         }),
