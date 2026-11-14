@@ -133,7 +133,6 @@ struct SavePlaceCard: View {
         .frame(width: Self.width)
         .background(Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.menu))
         .accentTone(.brand)
-        .accessibilityIdentifier("savePlace.card")
     }
 
     /// The card's own width, the smallest phone's page between its gutters; `cardPopup` grows it
@@ -247,7 +246,6 @@ public struct SavedPlacesPage: View {
             await store.load()
         }
         .task { await store.loadIfNeeded() }
-        .accessibilityIdentifier("savedPlaces.page")
     }
 
     @ViewBuilder private var emptyOrFailed: some View {
