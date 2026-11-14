@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
 import type { SquadWeek } from './squad-week.js';
+import { memberOf, nameOf, type Roster } from './roster.js';
 
-// A squad's memory: the files its coach keeps. Stored by member id (`people/<id>.md`), shown to
-// the model by name (`people/Mia.md`), so the model never sees an id and a member's page follows
-// them when their name changes. Each coach also keeps a page of its own in the
+// A squad's memory: the files its coach keeps. A member's page is stored by their member id
+// (`people/<id>.md`) and shown to the model by their user_id (`people/3f2a9c1e.md`, Tracy,
+// 2026-11-14: people are found by id, never by name), so it follows them when their name changes. Each coach also keeps a page of its own in the
 // squad (`coaches/<coach id>.md`, shown to it as `me.md`), which only that coach reads: a coach
 // who comes back finds its page again, and a new one starts its own (Tracy, 2026-11-09).
 
@@ -32,8 +33,8 @@ export const CoachFilePath = z
 
 /** Whose eyes the files are shown to: the squad's roster names and the coach reading them. */
 export interface MemoryView {
-  /** Each member's name as the model knows them, by member id. */
-  readonly roster: ReadonlyMap<string, string>;
+  /** Each member as the model knows them, by member id. */
+  readonly roster: Roster;
   /** The coach reading the files, by id: it sees its own page and no other coach's. */
   readonly coach: string;
 }
@@ -47,29 +48,36 @@ export function coachPagePath(coach: string): StoredPath {
  * What a file is for, as the model reads it beside the file (Tracy, 2026-11-12: say what things
  * are). `me.md` is the coach's own: how members like to talk with it and what they make of it.
  */
-export function fileRole(shown: string): string {
+export function fileRole(shown: string, roster?: Roster): string {
   if (shown === 'squad.md') return '这个小队';
   if (shown === 'memory.md') return '你和大家之间的事';
   if (shown === OWN_PAGE) {
     return '你自己：大家喜欢怎么跟你打交道、怎么看你这个教练，只有你读得到';
   }
-  const person = /^people\/(.+)\.md$/.exec(shown)?.[1];
-  return person === undefined ? '' : `${person}这个人`;
+  const userId = /^people\/(.+)\.md$/.exec(shown)?.[1];
+  if (userId === undefined) return '';
+  const member = roster === undefined ? undefined : memberOf(roster, userId);
+  return member === undefined || roster === undefined
+    ? '一个队员，文件名是他的 user_id'
+    : `${nameOf(roster, member)}这个人`;
 }
 
 /** Every path the model may read or edit, shown as it sees them. */
 export function shownPaths({ roster }: MemoryView): string[] {
-  return [...SQUAD_FILES, OWN_PAGE, ...[...roster.values()].map((name) => `people/${name}.md`)];
+  return [
+    ...SQUAD_FILES,
+    OWN_PAGE,
+    ...[...roster.values()].map(({ userId }) => `people/${userId}.md`),
+  ];
 }
 
 /** The stored path for a path the model named, or `undefined` for one it may not use. */
 export function storedPathOf(shown: string, { roster, coach }: MemoryView): StoredPath | undefined {
   if (SQUAD_FILES.some((path) => path === shown)) return shown;
   if (shown === OWN_PAGE) return coachPagePath(coach);
-  for (const [member, name] of roster) {
-    if (shown === `people/${name}.md`) return `people/${member}.md`;
-  }
-  return undefined;
+  const userId = /^people\/(.+)\.md$/.exec(shown)?.[1];
+  const member = userId === undefined ? undefined : memberOf(roster, userId);
+  return member === undefined ? undefined : `people/${member}.md`;
 }
 
 /**
@@ -80,8 +88,8 @@ export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): 
   if (SQUAD_FILES.some((path) => path === stored)) return stored;
   if (stored === coachPagePath(coach)) return OWN_PAGE;
   const member = memberOfPath(stored);
-  const name = member === undefined ? undefined : roster.get(member);
-  return name === undefined ? undefined : `people/${name}.md`;
+  const person = member === undefined ? undefined : roster.get(member);
+  return person === undefined ? undefined : `people/${person.userId}.md`;
 }
 
 // In a file's text, the model names members by their name and it is kept as written: a name can be
@@ -92,9 +100,9 @@ export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): 
 // member who left is shown as 一位已离队的队员.
 
 /** A body as stored: each roster 队员N in it as its member's id; every other word as written. */
-export function storedBody(shown: string, roster: ReadonlyMap<string, string>): string {
+export function storedBody(shown: string, roster: Roster): string {
   const members = new Map(
-    [...roster].flatMap(([member, name]) =>
+    [...roster].flatMap(([member, { name }]) =>
       /^队员\d+$/.test(name) ? [[name, member] as const] : [],
     ),
   );
@@ -106,10 +114,10 @@ export function storedBody(shown: string, roster: ReadonlyMap<string, string>): 
 }
 
 /** A body as the model reads it: each member's id in it as their roster name now. */
-export function shownBody(stored: string, roster: ReadonlyMap<string, string>): string {
+export function shownBody(stored: string, roster: Roster): string {
   return stored.replace(
     /\{队员:([0-9a-f-]{36})\}/g,
-    (_token, member: string) => roster.get(member) ?? '一位已离队的队员',
+    (_token, member: string) => roster.get(member)?.name ?? '一位已离队的队员',
   );
 }
 

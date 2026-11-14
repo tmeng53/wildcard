@@ -178,6 +178,8 @@ export const EvalCase = z.strictObject({
     z.strictObject({ kind: z.literal('checkIn'), checkIn: z.string() }),
     z.strictObject({ kind: z.literal('comment'), checkIn: z.string(), comment: z.string() }),
     z.strictObject({ kind: z.literal('challenges') }),
+    /** The whole morning: the challenges set, then the 战术板 line and each member's note. */
+    z.strictObject({ kind: z.literal('daily') }),
   ]),
   expect: z.array(Expectation).min(1),
 });

@@ -8,7 +8,7 @@ import { instructionsOf, memoryBlock } from '../domain/prompt.js';
 import { limitWords } from '../domain/line-limits.js';
 import { lineProblem } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
-import { consentedOnly, rosterOf } from '../domain/squad-week.js';
+import { consentedOnly } from '../domain/squad-week.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -21,6 +21,7 @@ import type {
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
+import { personOf, rosterOf } from '../domain/roster.js';
 
 /**
  * How long after a change of coach its letter may still be written: the app asks at once, so a
@@ -166,8 +167,8 @@ async function taskFor(
     to,
     history,
     names: new Map([...coaches].map(([id, coach]) => [id, coach.name])),
-    members: [...roster.values()],
-    memory: memoryBlock(files),
+    members: [...roster.keys()].map((member) => personOf(roster, member)),
+    memory: memoryBlock(files, roster),
   });
 }
 

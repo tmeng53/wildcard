@@ -2,7 +2,14 @@ import { writeIn } from '@wildcard/language-model';
 
 import { challengeHow, challengeText, type DayChallengeFacts } from './challenge.js';
 import { planDayWords, planIndexOf, type NoteBrief } from './member-facts.js';
-import { dayWords, postWhat, type WeekCheckIn } from './squad-week.js';
+import {
+  dayWords,
+  postWhat,
+  ratingWords,
+  trainedWithWords,
+  type WeekCheckIn,
+} from './squad-week.js';
+import { personOf, type Roster } from './roster.js';
 
 // The task of the run that sets each member's day challenge (Tracy, 2026-11-14: start from first
 // principles). It reads only what a challenge is set from, member by member under their names:
@@ -31,14 +38,51 @@ export function challengeTaskOf({
   challenges,
 }: {
   readonly day: string;
-  readonly names: ReadonlyMap<string, string>;
+  readonly names: Roster;
   readonly members: readonly ChallengeMember[];
   readonly posts: readonly WeekCheckIn[];
   readonly challenges: readonly DayChallengeFacts[];
 }): { readonly task: string; readonly numbered: ReadonlyMap<string, WeekCheckIn> } {
+  const { blocks, numbered } = memberBlocks({ day, names, members, posts, challenges });
+  return { task: [todayHeading(day), ...blocks].join('\n\n'), numbered };
+}
+
+/** `今天是 2026-11-14，周六。` */
+export function todayHeading(day: string): string {
+  return `今天是 ${day}，${WEEKDAYS[planIndexOf(day)] ?? ''}。`;
+}
+
+/**
+ * Each member's block under their name, as the morning reads them: today's plan and the week's,
+ * 饮食小目标, days trained, their recent posts by number, recent challenges and how each went,
+ * weather, what the coach knows of them and their language. `more` adds lines of a member's own
+ * before their language (the notes' run: today's challenge, where they talked with the coach).
+ * The posts are numbered in the order listed, from `numbered` on when it is given.
+ */
+export function memberBlocks({
+  day,
+  names,
+  members,
+  posts,
+  challenges,
+  more = () => [],
+}: {
+  readonly day: string;
+  readonly names: Roster;
+  readonly members: readonly ChallengeMember[];
+  readonly posts: readonly WeekCheckIn[];
+  readonly challenges: readonly DayChallengeFacts[];
+  readonly more?: (member: string, numberOf: (post: WeekCheckIn) => string) => readonly string[];
+}): { readonly blocks: readonly string[]; readonly numbered: ReadonlyMap<string, WeekCheckIn> } {
   const numbered = new Map<string, WeekCheckIn>();
+  const numberOf = (post: WeekCheckIn): string => {
+    for (const [number, each] of numbered) if (each.id === post.id) return number;
+    const number = `动态${String(numbered.size + 1)}`;
+    numbered.set(number, post);
+    return number;
+  };
   const blocks = members.map(({ member, brief, about }) => {
-    const lines = [`## ${names.get(member) ?? '队员'}`];
+    const lines = [`## ${personOf(names, member)}`];
     const plan = brief.plan?.week;
     const today = plan?.[planIndexOf(day)];
     lines.push(`- 今天的计划：${today === undefined ? '没填出赛表' : planDayWords(today)}`);
@@ -55,12 +99,10 @@ export function challengeTaskOf({
     if (mine.length === 0) {
       lines.push('- 最近发的：没有');
     } else {
-      lines.push('- 最近发的：');
-      for (const post of mine) {
-        const number = `动态${String(numbered.size + 1)}`;
-        numbered.set(number, post);
-        lines.push(`  - ${number} · ${postLine(post)}`);
-      }
+      lines.push(
+        '- 最近发的：',
+        ...mine.map((post) => `  - ${numberOf(post)} · ${postLine(post, names)}`),
+      );
     }
     const theirs = challenges.filter((each) => each.member === member);
     if (theirs.length > 0) {
@@ -79,22 +121,23 @@ export function challengeTaskOf({
     }
     const known = about?.trim();
     if (known !== undefined && known !== '') lines.push(`- 你对他的了解：\n${known}`);
+    lines.push(...more(member, numberOf));
     lines.push(`- ${writeIn(brief.language ?? 'zh-Hans')}`);
     return lines.join('\n');
   });
-  return {
-    task: [`今天是 ${day}，${WEEKDAYS[planIndexOf(day)] ?? ''}。`, ...blocks].join('\n\n'),
-    numbered,
-  };
+  return { blocks, numbered };
 }
 
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 /** One post in a line: `11-13 周五 篮球 15 分钟：「打篮球也是练了」（6 条评论）`. */
-function postLine(post: WeekCheckIn): string {
+function postLine(post: WeekCheckIn, names: Roster): string {
   const words = [`${dayWords(post.day)} ${postWhat(post)}`];
   if (post.unposted === true) return `${words[0] ?? ''}（只记录，没发动态）`;
   if (post.text !== undefined) words.push(`：「${post.text}」`);
+  if (post.rating !== undefined) words.push(`（${ratingWords(post.rating)}）`);
+  const together = trainedWithWords(post, (member) => personOf(names, member));
+  if (together !== undefined) words.push(`（和 ${together} 一起练）`);
   if (post.comments.length > 0) words.push(`（${String(post.comments.length)} 条评论）`);
   return words.join('');
 }

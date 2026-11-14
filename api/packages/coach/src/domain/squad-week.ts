@@ -2,6 +2,7 @@
 // reactions and comments on it. The model never sees a member's id: each member is their name, by
 // the order they joined, with the nickname they gave their character.
 
+import { peopleOf, personOf, rosterOf, type Roster } from './roster.js';
 import type { ReaderLanguage } from '@wildcard/language-model';
 
 /** What a member checked in. */
@@ -36,6 +37,10 @@ export interface WeekCheckIn {
   readonly place?: string;
   /** For a 请假条: true when it is a planned rest (休息), not leave. */
   readonly restDay?: true;
+  /** For a 训练: the squadmates its author named as trained with (一起练), by member id. */
+  readonly trainedWith?: readonly string[];
+  /** For a meal: how its author rated it, 健康 and 好吃, each 1 to 5. */
+  readonly rating?: MealRating;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
   readonly photos?: readonly string[];
   /** The teammates who reacted to it, by member id, in the order they reacted. */
@@ -47,6 +52,12 @@ export interface WeekCheckIn {
    * words and photos stay with its author and the coach never answers under it.
    */
   readonly unposted?: true;
+}
+
+/** How a member rated a meal they posted: 健康 and 好吃, each 1 to 5. */
+export interface MealRating {
+  readonly healthy: number;
+  readonly tasty: number;
 }
 
 /** When a 训练 was done, on the member's own clock. */
@@ -115,9 +126,9 @@ export function addressedWords(
   {
     roster,
     coach = () => '教练',
-  }: { readonly roster: ReadonlyMap<string, string>; readonly coach?: (id: string) => string },
+  }: { readonly roster: Roster; readonly coach?: (id: string) => string },
 ): string {
-  const name = (member: string): string => roster.get(member) ?? '队员';
+  const name = (member: string): string => personOf(roster, member);
   const parts = [
     ...(comment.replyTo === undefined ? [] : [`回复${name(comment.replyTo)}`]),
     ...(comment.toCoach === undefined ? [] : [`回复${coach(comment.toCoach)}`]),
@@ -154,27 +165,6 @@ export interface SquadWeek {
   readonly checkIns: readonly WeekCheckIn[];
 }
 
-/**
- * Each member's name for the model: their nickname, as their squadmates read it (Tracy,
- * 2026-11-14: real names, never 队员N), numbered from the second on when two share one
- * (`Mia`, `Mia（2）`). A member the model may not know by name (no nickname, or no AI consent) is
- * 队员N by the order they joined.
- */
-export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, string> {
-  const taken = new Set<string>();
-  return new Map(
-    week.members.map(({ member, nickname }, index) => {
-      const base = nickname?.trim() ?? '';
-      let name = base === '' ? `队员${String(index + 1)}` : base;
-      for (let count = 2; taken.has(name); count += 1) {
-        name = `${base === '' ? `队员${String(index + 1)}` : base}（${String(count)}）`;
-      }
-      taken.add(name);
-      return [member, name];
-    }),
-  );
-}
-
 const KIND_WORDS: Readonly<Record<CheckInKind, string>> = {
   trained: '训练',
   healthyMeal: '健康餐',
@@ -201,17 +191,35 @@ export function postWhat(checkIn: WeekCheckIn): string {
 }
 
 /** A check-in's heading as the model reads it: `11-11 周三 · 队员2 · 力量 50 分钟`. */
-export function checkInTitle(checkIn: WeekCheckIn, roster: ReadonlyMap<string, string>): string {
+export function checkInTitle(checkIn: WeekCheckIn, roster: Roster): string {
   const what =
     checkIn.kind === 'trained' && checkIn.restDay !== true
       ? `${KIND_WORDS.trained}：${postWhat(checkIn)}`
       : postWhat(checkIn);
-  return `${dayWords(checkIn.day)} · ${roster.get(checkIn.member) ?? '队员'} · ${what}`;
+  return `${dayWords(checkIn.day)} · ${personOf(roster, checkIn.member)} · ${what}`;
+}
+
+/**
+ * A meal's rating as the model reads it (Tracy, 2026-11-14: the coach couldn't see it, and out of 5
+ * so it knows the full marks): `健康 2/5，好吃 4/5，卡价比 1.6/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）`.
+ */
+export function ratingWords(rating: MealRating): string {
+  const value = Math.round(((rating.tasty * rating.healthy) / 5) * 10) / 10;
+  return `健康 ${String(rating.healthy)}/5，好吃 ${String(rating.tasty)}/5，卡价比 ${String(value)}/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）`;
+}
+
+/** Whom a 训练 was done with, by name: `Fran、Hannah`, or nothing. */
+export function trainedWithWords(
+  checkIn: Pick<WeekCheckIn, 'trainedWith'>,
+  name: (member: string) => string,
+): string | undefined {
+  const mates = checkIn.trainedWith ?? [];
+  return mates.length === 0 ? undefined : mates.map(name).join('、');
 }
 
 /** One comment as a list item: `- 队员2（回复队员1）：「其实是牛奶」`. */
-function commentItem(comment: WeekComment, roster: ReadonlyMap<string, string>): string {
-  return `- ${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster, coach: () => '你' })}：「${comment.text}」`;
+function commentItem(comment: WeekComment, roster: Roster): string {
+  return `- ${personOf(roster, comment.member)}${addressedWords(comment, { roster, coach: () => '你' })}：「${comment.text}」`;
 }
 
 /**
@@ -225,7 +233,7 @@ export function checkInBlock(
     heading = '### ',
     comments = true,
   }: {
-    readonly roster: ReadonlyMap<string, string>;
+    readonly roster: Roster;
     readonly heading?: string;
     /** `false` leaves the comments out, `'below'` says they are in the talk under the posts. */
     readonly comments?: boolean | 'below';
@@ -235,12 +243,15 @@ export function checkInBlock(
   if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
   if (checkIn.place !== undefined) lines.push(`- 地点：「${checkIn.place}」`);
   if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);
+  if (checkIn.rating !== undefined) lines.push(`- 打分：${ratingWords(checkIn.rating)}`);
+  const together = trainedWithWords(checkIn, (member) => personOf(roster, member));
+  if (together !== undefined) lines.push(`- 和谁一起练：${together}`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
     lines.push(`- 照片：${String(checkIn.photos.length)} 张`);
   }
   if (checkIn.reactedBy.length > 0) {
     lines.push(
-      `- 点了表情：${checkIn.reactedBy.map((member) => roster.get(member) ?? '队员').join('、')}`,
+      `- 点了表情：${checkIn.reactedBy.map((member) => personOf(roster, member)).join('、')}`,
     );
   }
   if (comments === 'below') {
@@ -256,7 +267,7 @@ export function checkInBlock(
 
 /** Who is in the squad, as a waking task lists them: everyone by name. */
 export function rosterText(week: Pick<SquadWeek, 'members'>): string {
-  return `## 小队的人\n${[...rosterOf(week).values()].join('、')}`;
+  return `## 小队的人（括号里是 user_id）\n${peopleOf(rosterOf(week))}`;
 }
 
 /** The week as the `squad_week` tool answers it. */

@@ -13,8 +13,8 @@ const post = (
 describe('the task that sets the day’s challenges', () => {
   it('gives each member their plan, posts by number, recent challenges and what is known', () => {
     const names = new Map([
-      [ANN, '安'],
-      [BO, '波'],
+      [ANN, { name: '安', userId: 'ann00001' }],
+      [BO, { name: '波', userId: 'bo000002' }],
     ]);
     const { task, numbered } = challengeTaskOf({
       day: '2026-11-14',
@@ -23,7 +23,7 @@ describe('the task that sets the day’s challenges', () => {
         {
           member: ANN,
           brief: {
-            name: '队员1',
+            member: ANN,
             trainedDays: 1,
             plan: {
               week: [
@@ -41,7 +41,7 @@ describe('the task that sets the day’s challenges', () => {
           },
           about: '- 安想增肌。',
         },
-        { member: BO, brief: { name: '队员2', trainedDays: 0, language: 'en' } },
+        { member: BO, brief: { member: BO, trainedDays: 0, language: 'en' } },
       ],
       posts: [
         post({

@@ -30,6 +30,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         rules: row.rules,
         wakes: row.wakes,
         replyRules: row.reply_rules,
+        noteRules: row.note_rules,
         challengeModel: row.challenge_model,
         challengeRules: row.challenge_rules,
         noteHour: row.note_hour,
@@ -47,6 +48,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
         rules: settings.rules,
         wakes: settings.wakes,
         reply_rules: settings.replyRules,
+        note_rules: settings.noteRules,
         challenge_model: settings.challengeModel,
         challenge_rules: settings.challengeRules,
         note_hour: settings.noteHour,
@@ -60,7 +62,7 @@ export function createPostgresCoachSettings(db: Kysely<DB>): CoachSettingsStore 
             .updateTable('coach_settings')
             .set(columns)
             .where(
-              sql<boolean>`(coaching, model, reasoning, dream_model, dream_reasoning, rules, wakes, reply_rules, challenge_model, challenge_rules, note_hour, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.reasoning}, ${columns.dream_model}, ${columns.dream_reasoning}, ${columns.rules}, ${columns.wakes}, ${columns.reply_rules}, ${columns.challenge_model}, ${columns.challenge_rules}, ${columns.note_hour}::integer, ${columns.holidays}::jsonb)`,
+              sql<boolean>`(coaching, model, reasoning, dream_model, dream_reasoning, rules, wakes, reply_rules, note_rules, challenge_model, challenge_rules, note_hour, holidays) is distinct from (${columns.coaching}, ${columns.model}, ${columns.reasoning}, ${columns.dream_model}, ${columns.dream_reasoning}, ${columns.rules}, ${columns.wakes}, ${columns.reply_rules}, ${columns.note_rules}, ${columns.challenge_model}, ${columns.challenge_rules}, ${columns.note_hour}::integer, ${columns.holidays}::jsonb)`,
             )
             .returning('only_row'),
         )

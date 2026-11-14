@@ -12,28 +12,28 @@ const context = {
     ],
   },
   roster: new Map([
-    [mia, '队员1'],
-    [miao, '队员2'],
+    [mia, { name: 'Mia', userId: 'aaaa1111' }],
+    [miao, { name: 'Miao', userId: 'bbbb2222' }],
   ]),
 };
 
 describe('mentioning', () => {
   it('puts a space after a nickname the line already @s, so the app sees where it ends', () => {
-    expect(mentioning({ line: '@Mia加油，@Mia 冲', at: ['队员1'] }, context)).toEqual({
+    expect(mentioning({ line: '@Mia加油，@Mia 冲', at: ['aaaa1111'] }, context)).toEqual({
       line: '@Mia 加油，@Mia 冲',
       mentions: [mia],
     });
   });
 
   it('leaves a longer name that starts with the nickname as it is', () => {
-    expect(mentioning({ line: '@Miao加油 @Mia', at: ['队员1'] }, context)).toEqual({
+    expect(mentioning({ line: '@Miao加油 @Mia', at: ['aaaa1111'] }, context)).toEqual({
       line: '@Miao加油 @Mia',
       mentions: [mia],
     });
   });
 
   it('starts the line with the @ when the line leaves it out', () => {
-    expect(mentioning({ line: '今天冲', at: ['队员1'] }, context)).toEqual({
+    expect(mentioning({ line: '今天冲', at: ['aaaa1111'] }, context)).toEqual({
       line: '@Mia 今天冲',
       mentions: [mia],
     });
