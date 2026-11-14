@@ -146,10 +146,9 @@ export async function deliver(
 const IN_REQUEST_WAIT_MS = 8_000;
 
 /**
- * Events without Pub/Sub (local stacks, tests, and the hosted server when Pub/Sub can't be
- * reached): every subscriber of the event runs in the request, side by side, which waits at most
- * `IN_REQUEST_WAIT_MS`, since Cloud Run gives the server CPU only while a request runs. A failure
- * is logged; what the request saved stays saved.
+ * Events without Pub/Sub (local stacks and tests; never the hosted server): every subscriber of
+ * the event runs in the request, side by side, which waits at most `IN_REQUEST_WAIT_MS`. A
+ * failure is logged; what the request saved stays saved.
  */
 export function inProcessEvents(handlers: EventHandlers, log: Log): PublishEvent {
   return async (event) => {

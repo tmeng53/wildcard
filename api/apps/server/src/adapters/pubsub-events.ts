@@ -7,8 +7,10 @@ import type { Log } from '../log.js';
 export const METADATA_TOKEN_URL =
   'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 
-/** How long a publish may take before the event runs in the request instead. */
+/** How long one try to publish may take. */
 const PUBLISH_TIMEOUT_MS = 3_000;
+/** How many times an event is offered to Pub/Sub before it is logged as lost. */
+const PUBLISH_TRIES = 2;
 /** A token is fetched again this long before Google says it expires. */
 const TOKEN_MARGIN_MS = 60_000;
 
@@ -20,14 +22,15 @@ const Published = z.object({ messageIds: z.array(z.string()).min(1) });
  * Events through Google Pub/Sub, on the hosted server: each kind to its topic in `project`
  * (`check-in-created`, …), signed with the server's own service account, which
  * `scripts/gcp-setup.sh` lets publish. Pub/Sub then pushes it to each subscriber's
- * `/jobs/events/<subscriber>`. When Pub/Sub can't take it (not set up yet, unreachable), the event
- * goes to `fallback` instead, so its work still happens.
+ * `/jobs/events/<subscriber>`. The request never runs an event's work itself: when Pub/Sub can't
+ * take it after a second try (with a fresh token), the event is logged as an error, and so
+ * reported. The coach job still catches the check-ins and replies to the coach it missed; a lost
+ * push or welcome is not sent again.
  * https://cloud.google.com/pubsub/docs/reference/rest/v1/projects.topics/publish
  * https://cloud.google.com/run/docs/securing/service-identity#fetching_identity_and_access_tokens
  */
 export function pubSubEvents(options: {
   readonly project: string;
-  readonly fallback: PublishEvent;
   readonly log: Log;
   readonly tokenUrl?: string;
   readonly pubSubUrl?: string;
@@ -49,33 +52,44 @@ export function pubSubEvents(options: {
     return token;
   };
 
+  const publishOnce = async (event: Parameters<PublishEvent>[0], topic: string): Promise<void> => {
+    const response = await fetch(
+      `${pubSubUrl}/v1/projects/${options.project}/topics/${topic}:publish`,
+      {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${await accessToken()}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              data: Buffer.from(JSON.stringify(event)).toString('base64'),
+              attributes: { kind: event.kind },
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(PUBLISH_TIMEOUT_MS),
+      },
+    );
+    if (!response.ok) throw new Error(`Pub/Sub answered ${String(response.status)}`);
+    Published.parse(await response.json());
+  };
+
   return async (event) => {
     const topic = topicOf(event.kind);
-    try {
-      const response = await fetch(
-        `${pubSubUrl}/v1/projects/${options.project}/topics/${topic}:publish`,
-        {
-          method: 'POST',
-          headers: {
-            authorization: `Bearer ${await accessToken()}`,
-            'content-type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                data: Buffer.from(JSON.stringify(event)).toString('base64'),
-                attributes: { kind: event.kind },
-              },
-            ],
-          }),
-          signal: AbortSignal.timeout(PUBLISH_TIMEOUT_MS),
-        },
-      );
-      if (!response.ok) throw new Error(`Pub/Sub answered ${String(response.status)}`);
-      Published.parse(await response.json());
-    } catch (error) {
-      options.log.warn('event not published, running it in the request', { topic, error });
-      await options.fallback(event);
+    for (let tried = 1; ; tried += 1) {
+      try {
+        await publishOnce(event, topic);
+        return;
+      } catch (error) {
+        // A token Google stopped taking is fetched again for the next try.
+        cached = undefined;
+        if (tried >= PUBLISH_TRIES) {
+          options.log.error('event not published', { topic, event, error });
+          return;
+        }
+      }
     }
   };
 }

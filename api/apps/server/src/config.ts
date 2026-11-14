@@ -108,8 +108,9 @@ const Environment = z.object({
     .string()
     .regex(/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/)
     .optional(),
-  // `on` sends events (a new check-in, a new comment) through Pub/Sub topics in
-  // GOOGLE_CLOUD_PROJECT, which `scripts/gcp-setup.sh` makes; otherwise they run in the request.
+  // `on` (hosted) sends events (a new check-in, a new comment, a join) only through Pub/Sub topics
+  // in GOOGLE_CLOUD_PROJECT, which `scripts/gcp-setup.sh` makes; `off` (local, tests) runs them in
+  // the request.
   PUBSUB_EVENTS: z.enum(['on', 'off']).default('off'),
 });
 
@@ -186,7 +187,7 @@ export interface Config {
     | undefined;
   /** The Google Cloud project log entries name their traces in; undefined off Google Cloud. */
   readonly traceProject: string | undefined;
-  /** The project whose Pub/Sub topics take events; undefined runs them in the request. */
+  /** The project whose Pub/Sub topics take events; undefined (local, tests) runs them in requests. */
   readonly pubSubProject: string | undefined;
   /** Where 意见反馈 is filed; undefined until the token is set, and then messages wait. */
   readonly feedbackIssues: { readonly repo: string; readonly token: string } | undefined;
@@ -239,6 +240,9 @@ export function readConfig(environment: Record<string, string | undefined>): Con
     throw new Error(
       `Bad server environment: set all of ${WEATHERKIT.join(', ')} or none (missing ${missing.join(', ')})`,
     );
+  }
+  if (result.data.PUBSUB_EVENTS === 'on' && result.data.GOOGLE_CLOUD_PROJECT === undefined) {
+    throw new Error('Bad server environment: PUBSUB_EVENTS=on needs GOOGLE_CLOUD_PROJECT');
   }
   const { WEATHERKIT_TEAM_ID, WEATHERKIT_SERVICE_ID, WEATHERKIT_KEY_ID, WEATHERKIT_PRIVATE_KEY } =
     result.data;
