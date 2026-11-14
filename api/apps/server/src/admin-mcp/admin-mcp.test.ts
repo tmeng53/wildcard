@@ -1486,7 +1486,7 @@ describe('the admin MCP server', () => {
       card: {
         line: words('喜欢外卡吗？'),
         stars: true,
-        buttons: [{ id: 'yes', label: words('喜欢'), tap: [{ close: true }] }],
+        buttons: [{ id: 'constructor', label: words('喜欢'), tap: [{ close: true }] }],
         thanks: words('收到，谢谢你。'),
       },
       // Only the admin, in a year no other test's message runs in.
@@ -1547,12 +1547,12 @@ describe('the admin MCP server', () => {
       squad,
       message: MessageId.parse(id),
       path: CardPath.parse(''),
-      part: { part: 'tap', button: 'yes' },
+      part: { part: 'tap', button: 'constructor' },
     });
     expect(JSON.parse((await call('get_coach_message_answers', { id })).text)).toStrictEqual({
       version: 1,
       id,
-      cards: [{ path: '', taps: { yes: 1 }, stars: { count: 1, average: 4 }, texts: [] }],
+      cards: [{ path: '', taps: { constructor: 1 }, stars: { count: 1, average: 4 }, texts: [] }],
     });
     const rows = await sql<{ action: unknown }>`
       select action from public.admin_actions where admin_id = ${admin.userId} order by at

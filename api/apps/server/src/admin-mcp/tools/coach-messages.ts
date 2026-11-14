@@ -96,11 +96,12 @@ export function getCoachMessageAnswers({ messages }: CoachMessageToolDependencie
         id,
         cards: paths.map((path) => {
           const here = rows.filter((row) => row.path === path);
-          const taps: Record<string, number> = {};
+          // A Map, so a button named like an Object property (`constructor`) counts from 0.
+          const taps = new Map<string, number>();
           const stars: number[] = [];
           const texts: { member: string; text: string; at: string }[] = [];
           for (const row of here) {
-            if (row.part === 'tap') taps[row.button] = (taps[row.button] ?? 0) + 1;
+            if (row.part === 'tap') taps.set(row.button, (taps.get(row.button) ?? 0) + 1);
             if (row.part === 'stars') stars.push(row.stars);
             if (row.part === 'text') {
               texts.push({ member: row.member, text: row.text, at: row.at.toISOString() });
@@ -108,7 +109,7 @@ export function getCoachMessageAnswers({ messages }: CoachMessageToolDependencie
           }
           return {
             path,
-            taps,
+            taps: Object.fromEntries(taps),
             stars: {
               count: stars.length,
               ...(stars.length === 0
