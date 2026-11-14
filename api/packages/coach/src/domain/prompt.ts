@@ -211,6 +211,7 @@ export function taskOf({
   thread,
   recentEmoji = [],
   talks = [],
+  talkWith,
   noteTo = [],
   yesterday,
   pastDays,
@@ -234,6 +235,11 @@ export function taskOf({
   readonly recentEmoji?: readonly string[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
+  /**
+   * On a check-in's or a reply's wake, what the member it answers and the coach said to each
+   * other under other posts over the last day.
+   */
+  readonly talkWith?: { readonly member: string; readonly talks: readonly DayTalk[] };
   /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
   /** On a daily wake, the squad's posts of the day before, oldest first. */
@@ -279,6 +285,7 @@ export function taskOf({
     return [
       '# 有人打卡',
       checkInBlock(checkIn, { roster, heading: '## 这条打卡：' }),
+      ...talkWithBlock(talkWith, roster),
       ...keptStreakSection(keptStreaks),
       ...(challenge === undefined ? [] : [challengeSection(challenge)]),
       ...occasion,
@@ -310,6 +317,7 @@ export function taskOf({
       `# ${answering?.toCoach === undefined && answering?.mentionsCoach !== undefined ? `${asker}在评论里 @ 你` : `${asker}回复你`}`,
       checkInBlock(checkIn, { roster, heading: '## 这条打卡：', comments: false }),
       `## 评论区（先后顺序）\n${saidLines(thread.said, roster).join('\n')}`,
+      ...talkWithBlock(talkWith, roster),
       `## 现在\n${thread.now}`,
       ...photos,
       ...occasion,
@@ -637,7 +645,30 @@ function talksBlock(
 ): string {
   const heading = `## 和你的对话（${span}，打卡下面，先后顺序）`;
   if (talks.length === 0) return `${heading}\n没人在打卡下面和你说话。`;
-  const blocks = talks.map(({ checkIn, reply, said }) =>
+  return [heading, ...talkBlocks(talks, roster)].join('\n\n');
+}
+
+/**
+ * What the member a line answers and the coach said to each other under other posts over the
+ * last day, under each post: nothing when they said nothing.
+ */
+function talkWithBlock(
+  talkWith: { readonly member: string; readonly talks: readonly DayTalk[] } | undefined,
+  roster: ReadonlyMap<string, string>,
+): string[] {
+  if (talkWith === undefined || talkWith.talks.length === 0) return [];
+  const name = roster.get(talkWith.member) ?? '队员';
+  return [
+    [
+      `## 你和${name}在别的打卡下说过的话（过去一天，先后顺序）`,
+      ...talkBlocks(talkWith.talks, roster),
+    ].join('\n\n'),
+  ];
+}
+
+/** Each post's talk: its title, then the coach's reply and what was said, one a line. */
+function talkBlocks(talks: readonly DayTalk[], roster: ReadonlyMap<string, string>): string[] {
+  return talks.map(({ checkIn, reply, said }) =>
     [
       `### ${checkInTitle(checkIn, roster)}`,
       ...(reply === undefined ? [] : [`- 你：「${reply}」`]),
@@ -647,5 +678,4 @@ function talksBlock(
       ),
     ].join('\n'),
   );
-  return [heading, ...blocks].join('\n\n');
 }
