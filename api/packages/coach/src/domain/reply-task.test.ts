@@ -211,4 +211,12 @@ describe('the reply step', () => {
       '- 打分：健康 2/5，好吃 4/5，卡价比 1.6/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）',
     );
   });
+
+  it('tells whom a 训练 was done with, by name', () => {
+    const together = { ...run, trainedWith: [leo] };
+    const task = replyTaskOf(
+      facts({ post: together, week: { ...week, checkIns: [meal, together] } }),
+    );
+    expect(task).toContain('- 和谁一起练：里奥');
+  });
 });

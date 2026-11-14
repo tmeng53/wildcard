@@ -7,6 +7,7 @@ import {
   dayWords,
   postWhat,
   ratingWords,
+  trainedWithWords,
   timeLines,
   type SquadWeek,
   type WeekCheckIn,
@@ -153,6 +154,8 @@ function postBlock(
   if (post.place !== undefined) lines.push(`- 地点：${post.place}`);
   if (post.text !== undefined) lines.push(`- 写的：「${post.text}」`);
   if (post.rating !== undefined) lines.push(`- 打分：${ratingWords(post.rating)}`);
+  const together = trainedWithWords(post, name);
+  if (together !== undefined) lines.push(`- 和谁一起练：${together}`);
   const photos = post.photos?.length ?? 0;
   if (photos > 0) lines.push(`- 照片 ${String(photos)} 张，你还没看过（look_at_photos）`);
   return lines.join('\n');

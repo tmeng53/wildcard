@@ -2,7 +2,13 @@ import { writeIn } from '@wildcard/language-model';
 
 import { challengeHow, challengeText, type DayChallengeFacts } from './challenge.js';
 import { planDayWords, planIndexOf, type NoteBrief } from './member-facts.js';
-import { dayWords, postWhat, ratingWords, type WeekCheckIn } from './squad-week.js';
+import {
+  dayWords,
+  postWhat,
+  ratingWords,
+  trainedWithWords,
+  type WeekCheckIn,
+} from './squad-week.js';
 
 // The task of the run that sets each member's day challenge (Tracy, 2026-11-14: start from first
 // principles). It reads only what a challenge is set from, member by member under their names:
@@ -94,7 +100,7 @@ export function memberBlocks({
     } else {
       lines.push(
         '- 最近发的：',
-        ...mine.map((post) => `  - ${numberOf(post)} · ${postLine(post)}`),
+        ...mine.map((post) => `  - ${numberOf(post)} · ${postLine(post, names)}`),
       );
     }
     const theirs = challenges.filter((each) => each.member === member);
@@ -124,11 +130,13 @@ export function memberBlocks({
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
 /** One post in a line: `11-13 周五 篮球 15 分钟：「打篮球也是练了」（6 条评论）`. */
-function postLine(post: WeekCheckIn): string {
+function postLine(post: WeekCheckIn, names: ReadonlyMap<string, string>): string {
   const words = [`${dayWords(post.day)} ${postWhat(post)}`];
   if (post.unposted === true) return `${words[0] ?? ''}（只记录，没发动态）`;
   if (post.text !== undefined) words.push(`：「${post.text}」`);
   if (post.rating !== undefined) words.push(`（${ratingWords(post.rating)}）`);
+  const together = trainedWithWords(post, (member) => names.get(member) ?? '队员');
+  if (together !== undefined) words.push(`（和 ${together} 一起练）`);
   if (post.comments.length > 0) words.push(`（${String(post.comments.length)} 条评论）`);
   return words.join('');
 }
