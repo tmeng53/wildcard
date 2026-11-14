@@ -34,6 +34,8 @@ public struct MeDestinations {
     public var street: () -> Void
     /// Whether a piece came in that 商店街 hasn't shown yet: the dot on its button.
     public var streetHasNews: Bool
+    /// 收藏, the places the member saved, opened inside 我 from its bookmark; nil shows no button.
+    public var savedPlaces: (() -> Void)?
     /// A post opened from 训练记录's popover, over 我.
     public var openPost: (CheckInID) -> Void
     /// The published policy pages.
@@ -57,7 +59,7 @@ public struct MeDestinations {
 
     public init(
         editCharacter: @escaping () -> Void, schedule: @escaping () -> Void,
-        street: @escaping () -> Void = {}, streetHasNews: Bool = false,
+        street: @escaping () -> Void = {}, streetHasNews: Bool = false, savedPlaces: (() -> Void)? = nil,
         openPost: @escaping (CheckInID) -> Void = { _ in }, privacyPolicy: URL, terms: URL, writeReview: URL,
         admin: AdminTools = AdminTools(), health: HealthConnection? = nil, location: LocationSharing? = nil,
         widgetGuide: AnyView? = nil, squadSettings: AnyView? = nil, badgeMarks: BadgeMarks? = nil
@@ -72,6 +74,7 @@ public struct MeDestinations {
         self.schedule = schedule
         self.street = street
         self.streetHasNews = streetHasNews
+        self.savedPlaces = savedPlaces
         self.openPost = openPost
         self.privacyPolicy = privacyPolicy
         self.terms = terms
@@ -79,7 +82,7 @@ public struct MeDestinations {
     }
 }
 
-/// 我: 换装, 商店街 and 设置 at the top right, the member's player card across the page (tap it
+/// 我: 换装, 商店街, 收藏 and 设置 at the top right, the member's player card across the page (tap it
 /// to turn it over), under it the 出赛表 tile and the 我的动态 tile the app passes in side by side,
 /// and then 训练记录, the heatmap of the member's last weeks; all as wide as the card. 设置 pushes
 /// the settings menu, and from there 注销账号, on the NavigationStack 我 is the root of. These
@@ -123,7 +126,7 @@ public struct MeView<PostsTile: View>: View {
             .task { await model.reload() }
     }
 
-    /// 换装, 商店街 (with its dot while a piece waits there unseen) and 设置: the system's round
+    /// 换装, 商店街 (with its dot while a piece waits there unseen), 收藏 and 设置: the system's round
     /// header buttons, icons only.
     private var header: some View {
         HStack(spacing: Space.xs) {
@@ -144,6 +147,10 @@ public struct MeView<PostsTile: View>: View {
                     destinations.streetHasNews ? Text(copy: "有新货", bundle: .module) : Text(verbatim: "")
                 )
                 .accessibilityIdentifier("me.street")
+            if let savedPlaces = destinations.savedPlaces {
+                HeaderButton(Text(copy: "收藏", bundle: .module), systemImage: "bookmark", action: savedPlaces)
+                    .accessibilityIdentifier("me.savedPlaces")
+            }
             HeaderButton(Text(copy: "设置", bundle: .module), systemImage: "gearshape") { isSettingsOpen = true }
                 .accessibilityIdentifier("me.settings")
         }

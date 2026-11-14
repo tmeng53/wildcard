@@ -14,6 +14,15 @@ extension Place {
 }
 
 extension Place {
+    /// A place the member saved (收藏), as they saved it.
+    public init(_ wire: Components.Schemas.Place) throws(ContractsError) {
+        try self.init(
+            name: wire.name, appleID: wire.appleId, category: wire.category, latitude: wire.latitude,
+            longitude: wire.longitude)
+    }
+}
+
+extension Place {
     /// A place on 小队地图, as the newest post there tagged it.
     public init(_ wire: Components.Schemas.PlaceSummary.PlacePayload) throws(ContractsError) {
         try self.init(

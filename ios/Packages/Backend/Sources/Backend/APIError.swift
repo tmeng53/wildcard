@@ -73,6 +73,8 @@ public enum Refusal: Equatable, Sendable {
     case placeNotFound
     /// A day's challenge whose day is over on the squad's clock (已过期).
     case coachChallengeDayOver
+    /// The member keeps as many saved places (收藏) as allowed.
+    case savedPlacesFull
     /// Any other refusal, with its `reason`: a request this build should never send.
     case invalid(reason: String)
 
@@ -110,6 +112,7 @@ public enum Refusal: Equatable, Sendable {
         "PLAN_DAY_STARTED": .planDayStarted,
         "FEEDBACK_LIMIT": .feedbackLimit,
         "PLACE_NOT_FOUND": .placeNotFound,
+        "TOO_MANY_SAVED_PLACES": .savedPlacesFull,
         "COACH_CHALLENGE_DAY_OVER": .coachChallengeDayOver,
     ]
 }

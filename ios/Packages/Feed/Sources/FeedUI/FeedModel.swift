@@ -76,6 +76,9 @@ public final class FeedModel {
     @ObservationIgnored public var routes = FeedRoutes()
     /// Whom the member's next comment replies to (回复 Mia：…), on the open page.
     var replyingTo: ReplyTarget?
+    /// The post whose comment box takes the keyboard next: a card's comment button asked to
+    /// write, on 动态 or on the post's own page.
+    var startsComment: CheckInID?
     /// Bumps on each comment the member sends, for its haptic.
     var commentsSent = 0
     private(set) var played: [CheckInID: Played] = [:]
@@ -116,8 +119,7 @@ public final class FeedModel {
 
     public init(
         store: FeedStore, viewer: MemberID, editor: (any PostEditing)? = nil, coach: FeedCoach? = nil,
-        now: @escaping () -> Date = { Date() },
-        defaults: UserDefaults = .standard
+        now: @escaping () -> Date = { Date() }, defaults: UserDefaults = .standard
     ) {
         self.store = store
         self.viewer = viewer

@@ -5,8 +5,12 @@ import Contracts
 import FeedDomain
 import FeedUI
 import Foundation
+import PlacesDomain
 
 extension AppModel {
+    /// 收藏, the places the member saved, over our API.
+    var savedPlaces: any SavedPlaceSource { APISavedPlaceSource(api: api) }
+
     /// 动态 on the member's squad, its days by the member's own clock (the phone's, which the
     /// profile's zone follows once the outbox is empty), with what its coach said. The member's
     /// own posts change through 今天's store (`editor`), which recounts.

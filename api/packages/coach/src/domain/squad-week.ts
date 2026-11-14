@@ -1,5 +1,5 @@
 // A squad's week as the coach sees it: who is in the squad, and what they checked in, with the
-// reactions and comments on it. The model never sees a member's id: each member is 队员N, by
+// reactions and comments on it. The model never sees a member's id: each member is their name, by
 // the order they joined, with the nickname they gave their character.
 
 import type { ReaderLanguage } from '@wildcard/language-model';
@@ -20,6 +20,12 @@ export interface WeekCheckIn {
    * zone is known.
    */
   readonly postedTime?: string;
+  /**
+   * When a 训练 itself was done on the member's own clock, apart from when it was posted
+   * (2026-11-14: a walk posted at 23:30 was told as one at 23:30): from the Apple Health workout
+   * it was posted from, or the start the member typed.
+   */
+  readonly trainedTime?: TrainedTime;
   readonly kind: CheckInKind;
   /** A 练了's sport, by its name. */
   readonly sport?: string;
@@ -41,6 +47,47 @@ export interface WeekCheckIn {
    * words and photos stay with its author and the coach never answers under it.
    */
   readonly unposted?: true;
+}
+
+/** When a 训练 was done, on the member's own clock. */
+export interface TrainedTime {
+  /** `HH:MM`. */
+  readonly from: string;
+  /** `HH:MM`, when known (a workout from Apple Health). */
+  readonly to?: string;
+  /** The day it started, `YYYY-MM-DD`, when that isn't the check-in's day. */
+  readonly day?: string;
+  /** `health` for an Apple Health workout, `typed` for a start the member typed. */
+  readonly source: 'health' | 'typed';
+}
+
+/**
+ * When it was posted and when the 训练 was done, as lines the model reads apart, so it never takes
+ * the one for the other: `- 发帖：本人当地 23:30`, `- 运动：本人当地 21:05–21:25（Apple 健康记的）`.
+ */
+export function timeLines(checkIn: WeekCheckIn): string[] {
+  const lines: string[] = [];
+  if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
+    lines.push(
+      `- 补打卡：算 ${dayWords(checkIn.day)} 的，${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
+    );
+  } else if (checkIn.postedTime !== undefined) {
+    lines.push(`- 发帖：本人当地 ${checkIn.postedTime}`);
+  }
+  if (checkIn.kind !== 'trained' || checkIn.restDay === true) return lines;
+  const done = checkIn.trainedTime;
+  if (done === undefined) {
+    // Said only beside a time it was posted, which it is never to be taken for.
+    if (checkIn.postedTime !== undefined)
+      lines.push('- 运动：几点练的不知道（发帖时间不是运动时间）');
+  } else {
+    const day = done.day === undefined ? '' : `${dayWords(done.day)} `;
+    const span = done.to === undefined ? `${done.from} 开始` : `${done.from}–${done.to}`;
+    lines.push(
+      `- 运动：本人当地 ${day}${span}（${done.source === 'health' ? 'Apple 健康记的' : '他自己填的'}）`,
+    );
+  }
+  return lines;
 }
 
 /** A comment on a check-in. */
@@ -107,9 +154,25 @@ export interface SquadWeek {
   readonly checkIns: readonly WeekCheckIn[];
 }
 
-/** Each member's name for the model: 队员1, 队员2, … by the order they joined. */
+/**
+ * Each member's name for the model: their nickname, as their squadmates read it (Tracy,
+ * 2026-11-14: real names, never 队员N), numbered from the second on when two share one
+ * (`Mia`, `Mia（2）`). A member the model may not know by name (no nickname, or no AI consent) is
+ * 队员N by the order they joined.
+ */
 export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, string> {
-  return new Map(week.members.map(({ member }, index) => [member, `队员${String(index + 1)}`]));
+  const taken = new Set<string>();
+  return new Map(
+    week.members.map(({ member, nickname }, index) => {
+      const base = nickname?.trim() ?? '';
+      let name = base === '' ? `队员${String(index + 1)}` : base;
+      for (let count = 2; taken.has(name); count += 1) {
+        name = `${base === '' ? `队员${String(index + 1)}` : base}（${String(count)}）`;
+      }
+      taken.add(name);
+      return [member, name];
+    }),
+  );
 }
 
 const KIND_WORDS: Readonly<Record<CheckInKind, string>> = {
@@ -168,14 +231,7 @@ export function checkInBlock(
     readonly comments?: boolean | 'below';
   },
 ): string {
-  const lines = [`${heading}${checkInTitle(checkIn, roster)}`];
-  if (checkIn.postedDay !== undefined && checkIn.postedDay !== checkIn.day) {
-    lines.push(
-      `- 补打卡：${dayWords(checkIn.postedDay)}${checkIn.postedTime === undefined ? '' : ` 本人当地 ${checkIn.postedTime}`} 才发`,
-    );
-  } else if (checkIn.postedTime !== undefined) {
-    lines.push(`- 本人当地 ${checkIn.postedTime} 发`);
-  }
+  const lines = [`${heading}${checkInTitle(checkIn, roster)}`, ...timeLines(checkIn)];
   if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
   if (checkIn.place !== undefined) lines.push(`- 地点：「${checkIn.place}」`);
   if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);
@@ -198,19 +254,9 @@ export function checkInBlock(
   return lines.join('\n');
 }
 
-/**
- * Who is who, as every task opens with it: each member's roster name with the nickname their
- * squadmates know them by. The model reads everyone as 队员N but must speak to people by their
- * nicknames, so it is told them each time; without it, it guessed names from the talk and mixed
- * people up (Tracy, 2026-11-12).
- */
+/** Who is in the squad, as a waking task lists them: everyone by name. */
 export function rosterText(week: Pick<SquadWeek, 'members'>): string {
-  const roster = rosterOf(week);
-  const members = week.members.map(({ member, nickname }) => {
-    const name = roster.get(member) ?? '队员';
-    return nickname === undefined ? `- ${name}` : `- ${name}：${nickname}`;
-  });
-  return ['## 谁是谁（队员N：昵称）', ...members].join('\n');
+  return `## 小队的人\n${[...rosterOf(week).values()].join('、')}`;
 }
 
 /** The week as the `squad_week` tool answers it. */
@@ -233,8 +279,8 @@ export function weekText(week: SquadWeek): string {
 
 /**
  * The week as the model may read it: only members with a current AI consent have their words
- * in it (their nickname, check-ins and comments). The others stay on the roster as 队员N, so the
- * numbering holds, with nothing they wrote.
+ * in it (their nickname, check-ins and comments). The others stay on the roster as 队员N, with
+ * nothing they wrote.
  */
 export function consentedOnly(week: SquadWeek, consented: ReadonlySet<string>): SquadWeek {
   return {

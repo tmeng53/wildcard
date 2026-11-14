@@ -105,7 +105,8 @@ extension StageLayout {
         props: [])
 
     // Skiers carve across the glacier's face, two runs down it; everyone else stands on the
-    // snowfield below. The art isn't lifted.
+    // snowfield below, in two rows: the front one just behind me, the back one where the snowfield
+    // starts. The art isn't lifted.
     static let ski = StageLayout(
         stations: [
             Station(
@@ -114,7 +115,8 @@ extension StageLayout {
                 scale: nil)
         ],
         stationsBySport: ["ski": [.carving], "snowboard": [.carving], "crossCountrySki": [.carving]],
-        standing: [StageRect(x: 0...390, y: 576...650)],
-        // The snowman.
-        props: [StageRect(x: 310...390, y: 576...650)])
+        standing: [StageRect(x: 0...390, y: 566...660)],
+        // The snowman's head and body: the back row keeps off it, the front row may stand before
+        // its foot.
+        props: [StageRect(x: 326...360, y: 561...600)])
 }

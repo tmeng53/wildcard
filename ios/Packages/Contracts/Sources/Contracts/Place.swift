@@ -37,3 +37,22 @@ public struct Place: Hashable, Sendable {
             && text.unicodeScalars.allSatisfy { ("a"..."z").contains($0) || ("A"..."Z").contains($0) }
     }
 }
+
+/// The member's own note on a place they saved (收藏的备注): one line of at most `maxLength`
+/// characters. The API's rule, so the field can count and refuse before anything is sent.
+public struct SavedPlaceNote: Hashable, Sendable {
+    /// Characters, counted as people see them. The API's limit; `APIContract`'s tests fail when
+    /// the two differ.
+    public static let maxLength = 60
+
+    public let text: String
+
+    public init(_ text: String) throws(ContractsError) {
+        switch NameText.check(text, maxLength: Self.maxLength) {
+        case .success(let trimmed): self.text = trimmed
+        case .failure(.notOneLine): throw .multilineSavedPlaceNote
+        case .failure(.length(let length)): throw .savedPlaceNoteLength(length)
+        case .failure(.invisible): throw .invisibleSavedPlaceNote
+        }
+    }
+}

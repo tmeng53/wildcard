@@ -187,6 +187,7 @@ export interface CoachSettings {
   note_hour: Generated<number>;
   only_row: Generated<boolean>;
   reasoning: Generated<string>;
+  reply_rules: string;
   rules: string;
   wakes: string;
 }

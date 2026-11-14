@@ -60,8 +60,9 @@ struct ReactionRow: View {
         }
     }
 
-    /// Opens the post's own page to comment; anyone who sees the post comments, its author too.
-    /// On the page itself it starts a comment to the post rather than to someone.
+    /// Opens the post's own page with the comment box ready to type in; anyone who sees the post
+    /// comments, its author too. On the page itself it starts a comment to the post rather than to
+    /// someone.
     private var commentButton: some View {
         Button {
             withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
@@ -71,6 +72,7 @@ struct ReactionRow: View {
                     model.openPage(post.id)
                 }
             }
+            model.startsComment = post.id
         } label: {
             Image(systemName: "bubble")
                 .font(.system(size: Self.buttonGlyph, weight: .regular))
@@ -79,6 +81,8 @@ struct ReactionRow: View {
                 .glassEffect(.regular.interactive(), in: Circle())
                 .frame(minWidth: Sizing.minimumTapTarget, minHeight: Sizing.minimumTapTarget)
                 .contentShape(Rectangle())
+                // On the post's page while typing, it goes on typing to the post.
+                .keepsKeyboard()
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(Text(copy: "写评论", bundle: .module))
