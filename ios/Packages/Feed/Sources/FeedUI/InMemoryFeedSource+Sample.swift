@@ -173,9 +173,12 @@ private struct SamplePosts {
                 workout: workout(sport.rawValue, minutes: minutes, tile: tile, summary), place: place))
     }
 
-    /// My gym, its name long enough to fill the compose ticket's row.
+    /// My gym, its name long enough to fill the compose ticket's row. It has a Maps id, like a
+    /// place picked from the search, so 小队地图's 常去 lists it beside Sweetgreen.
     var myGym: Place? {
-        try? Place(name: "F45 Training Flatiron", category: "fitnessCenter", latitude: 40.7411, longitude: -73.9897)
+        try? Place(
+            name: "F45 Training Flatiron", appleID: "ISampleF45Flatiron", category: "fitnessCenter", latitude: 40.7411,
+            longitude: -73.9897)
     }
 
     private func workout(_ sport: String, minutes: Int, tile: Int, _ summary: WorkoutSummary) -> Workout {

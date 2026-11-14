@@ -48,6 +48,7 @@ import {
   postgresCoachTransaction,
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
+import { createCoachMessages, createPostgresMessageStore } from '@wildcard/coach-messages';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import {
   DisclaimerWriterOffError,
@@ -184,6 +185,7 @@ import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
+import { coachMessageTools } from './admin-mcp/tools/coach-messages.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
@@ -483,6 +485,9 @@ const noticesOn = (scope: Database) =>
     giveGifts: giveBroadcastGifts(scope),
   });
 const notices = noticesOn(db);
+// 教练消息卡: cards admins put on members' coach pages, said by the squad's coach.
+const coachMessagesOn = (scope: Database) =>
+  createCoachMessages({ store: createPostgresMessageStore(scope), clock: () => new Date() });
 /**
  * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
  * inside an admin tool's transaction.
@@ -893,6 +898,7 @@ const app = createApp({
     },
   }),
   coachActivity,
+  coachMessages: coachMessagesOn(db),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
@@ -998,6 +1004,7 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         clock: () => new Date(),
       }),
+      ...coachMessageTools({ messages: coachMessagesOn(scope), clock: () => new Date() }),
       ...artTools({ art: artOn(scope) }),
       ...campaignTools({
         campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),

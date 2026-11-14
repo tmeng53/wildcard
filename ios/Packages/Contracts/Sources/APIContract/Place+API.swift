@@ -13,7 +13,21 @@ extension Place {
     }
 }
 
+extension Place {
+    /// A place on 小队地图, as the newest post there tagged it.
+    public init(_ wire: Components.Schemas.PlaceSummary.PlacePayload) throws(ContractsError) {
+        try self.init(
+            name: wire.name, appleID: wire.appleId, category: wire.category, latitude: wire.latitude,
+            longitude: wire.longitude)
+    }
+}
+
 extension Activity {
+    /// A sport the squad trained at a place on 小队地图.
+    public init(_ wire: Components.Schemas.PlaceSummary.SportsPayloadPayload) throws(ContractsError) {
+        try self.init(sport: wire.sport, customSport: wire.customSport)
+    }
+
     /// A sport the squad trained at a place.
     public init(_ wire: Components.Schemas.PlaceDetail.SportsPayloadPayload) throws(ContractsError) {
         try self.init(sport: wire.sport, customSport: wire.customSport)

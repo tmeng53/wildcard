@@ -29,6 +29,17 @@ public struct APIPlaceSource: PlaceSource {
         }
     }
 
+    public func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData {
+        do throws(APIError) {
+            let wire = try await api.call {
+                try await api.client.listSquadPlaces(path: .init(squadId: squad.description)).ok.body.json
+            }
+            return SquadMapData(wire)
+        } catch {
+            throw PlacesError(error)
+        }
+    }
+
     public func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] {
         do throws(APIError) {
             let today = try await api.today(of: squad)
@@ -59,6 +70,41 @@ extension PlaceDetail {
             },
             meals: MealTally(healthyMeals: meals.healthyMeal, cheatMeals: meals.cheatMeal),
             posts: wire.posts.compactMap { try? PlaceVisit($0) })
+    }
+}
+
+extension SquadMapData {
+    /// 小队地图 as the API sends it; a place or post this build can't read is left off the map,
+    /// never the map itself.
+    init(_ wire: Components.Schemas.SquadPlaces) {
+        self.init(
+            places: wire.places.compactMap { try? MapPlace($0) },
+            recent: wire.recent.compactMap { try? MapVisit($0) })
+    }
+}
+
+extension MapPlace {
+    init(_ wire: Components.Schemas.PlaceSummary) throws(ContractsError) {
+        guard let key = PlaceKey(rawValue: wire.key) else { throw .invalidID(wire.key) }
+        self.init(
+            key: key, place: try Place(wire.place), visits: wire.visits,
+            members: wire.members.compactMap { each in
+                UUID(uuidString: each.member).map { MemberVisits(MemberID($0), visits: each.visits) }
+            },
+            sports: wire.sports.compactMap { sport in
+                (try? Activity(sport)).map { SportCount($0, count: sport.count) }
+            },
+            meals: MealTally(healthyMeals: wire.meals.healthyMeal, cheatMeals: wire.meals.cheatMeal))
+    }
+}
+
+extension MapVisit {
+    init(_ wire: Components.Schemas.PlaceVisit) throws(ContractsError) {
+        let tile = try PlaceVisit(wire)
+        guard let key = PlaceKey(rawValue: wire.key) else { throw .invalidID(wire.key) }
+        self.init(
+            id: tile.id, author: tile.author, kind: tile.kind, activity: tile.activity, day: tile.day,
+            createdAt: Timestamp(wire.createdAt), key: key)
     }
 }
 

@@ -86,6 +86,8 @@ enum FeedPage: Hashable {
     case post(OpenedPost)
     /// A place's own page, from a post's tag, and posts from its tiles over it.
     case place(Place)
+    /// 小队地图, behind the map button left of the bell; places and posts open over it.
+    case squadMap
 }
 
 extension MainTabs {

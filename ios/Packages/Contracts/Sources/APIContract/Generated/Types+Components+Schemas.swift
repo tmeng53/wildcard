@@ -8781,11 +8781,11 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/CoachPageCard`.
         public struct CoachPageCard: Codable, Hashable, Sendable {
-            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
+            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/kind`.
             public var kind: Swift.String
-            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
+            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/id`.
             public var id: Swift.String
@@ -8887,11 +8887,13 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
             public var gift: Components.Schemas.CoachPageCard.GiftPayload?
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/message`.
+            public var message: Components.Schemas.CoachMessage?
             /// Creates a new `CoachPageCard`.
             ///
             /// - Parameters:
-            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
-            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
+            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
+            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.
             ///   - coach:
             ///   - at: When it came: a note when it was delivered, a `challengeDone` when marked.
             ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
@@ -8899,6 +8901,7 @@ extension Components {
             ///   - challenge:
             ///   - expired: `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
             ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///   - message:
             public init(
                 kind: Swift.String,
                 id: Swift.String,
@@ -8908,7 +8911,8 @@ extension Components {
                 text: Swift.String? = nil,
                 challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
                 expired: Swift.Bool? = nil,
-                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
+                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil,
+                message: Components.Schemas.CoachMessage? = nil
             ) {
                 self.kind = kind
                 self.id = id
@@ -8919,6 +8923,7 @@ extension Components {
                 self.challenge = challenge
                 self.expired = expired
                 self.gift = gift
+                self.message = message
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -8930,6 +8935,372 @@ extension Components {
                 case challenge
                 case expired
                 case gift
+                case message
+            }
+        }
+        /// A `message`’s cards and what the caller answered; answer one with `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMessage`.
+        public struct CoachMessage: Codable, Hashable, Sendable {
+            /// Every card of the message, the first (path ``) first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessage/cards`.
+            public var cards: [Components.Schemas.CoachMessageCard]
+            /// What the caller did on each card so far; the first answer to each part stands. A card whose tap closed it or turned it shows that on every phone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessage/answered`.
+            public var answered: [Components.Schemas.CoachMessageAnswered]
+            /// Creates a new `CoachMessage`.
+            ///
+            /// - Parameters:
+            ///   - cards: Every card of the message, the first (path ``) first.
+            ///   - answered: What the caller did on each card so far; the first answer to each part stands. A card whose tap closed it or turned it shows that on every phone.
+            public init(
+                cards: [Components.Schemas.CoachMessageCard],
+                answered: [Components.Schemas.CoachMessageAnswered]
+            ) {
+                self.cards = cards
+                self.answered = answered
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cards
+                case answered
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageCard`.
+        public struct CoachMessageCard: Codable, Hashable, Sendable {
+            /// Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/path`.
+            public var path: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/line`.
+            public var line: Components.Schemas.LocalizedWords
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/body`.
+            public var body: Components.Schemas.LocalizedWords?
+            /// What it is about: a symbol, a name and a line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about`.
+            public struct AboutPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/icon`.
+                public var icon: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/name`.
+                public var name: Components.Schemas.LocalizedWords
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/detail`.
+                public var detail: Components.Schemas.LocalizedWords?
+                /// Creates a new `AboutPayload`.
+                ///
+                /// - Parameters:
+                ///   - icon:
+                ///   - name:
+                ///   - detail:
+                public init(
+                    icon: Swift.String? = nil,
+                    name: Components.Schemas.LocalizedWords,
+                    detail: Components.Schemas.LocalizedWords? = nil
+                ) {
+                    self.icon = icon
+                    self.name = name
+                    self.detail = detail
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case icon
+                    case name
+                    case detail
+                }
+            }
+            /// What it is about: a symbol, a name and a line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about`.
+            public var about: Components.Schemas.CoachMessageCard.AboutPayload?
+            /// The picture on top.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage`.
+            public struct StagePayload: Codable, Hashable, Sendable {
+                /// Who stands with the coach: `coach`, `coachAndMe` (the reader), `coachAndSquad` (the squad, in two rows of four past four) or `members` (`members`); more may come.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/cast`.
+                public var cast: Swift.String
+                /// With `members`, these members by id, beside the coach.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/members`.
+                public var members: [Swift.String]?
+                /// The move the coach plays, by the art’s id; left out, its idle.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/move`.
+                public var move: Swift.String?
+                /// The scene behind them, by id; left out, the squad’s scene this week.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/scene`.
+                public var scene: Swift.String?
+                /// Creates a new `StagePayload`.
+                ///
+                /// - Parameters:
+                ///   - cast: Who stands with the coach: `coach`, `coachAndMe` (the reader), `coachAndSquad` (the squad, in two rows of four past four) or `members` (`members`); more may come.
+                ///   - members: With `members`, these members by id, beside the coach.
+                ///   - move: The move the coach plays, by the art’s id; left out, its idle.
+                ///   - scene: The scene behind them, by id; left out, the squad’s scene this week.
+                public init(
+                    cast: Swift.String,
+                    members: [Swift.String]? = nil,
+                    move: Swift.String? = nil,
+                    scene: Swift.String? = nil
+                ) {
+                    self.cast = cast
+                    self.members = members
+                    self.move = move
+                    self.scene = scene
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case cast
+                    case members
+                    case move
+                    case scene
+                }
+            }
+            /// The picture on top.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage`.
+            public var stage: Components.Schemas.CoachMessageCard.StagePayload
+            /// `true`: five stars to tap (`stars` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stars`.
+            public var stars: Swift.Bool
+            /// A box to type in (`text` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input`.
+            public struct InputPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input/placeholder`.
+                public var placeholder: Components.Schemas.LocalizedWords?
+                /// Creates a new `InputPayload`.
+                ///
+                /// - Parameters:
+                ///   - placeholder:
+                public init(placeholder: Components.Schemas.LocalizedWords? = nil) {
+                    self.placeholder = placeholder
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case placeholder
+                }
+            }
+            /// A box to type in (`text` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input`.
+            public var input: Components.Schemas.CoachMessageCard.InputPayload?
+            /// 0 to 3 buttons, left to right.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/buttons`.
+            public var buttons: [Components.Schemas.CoachMessageButton]
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks`.
+            public struct ThanksPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks/value1`.
+                public var value1: Components.Schemas.LocalizedWords
+                /// What the card says once a button `close`s it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `ThanksPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: What the card says once a button `close`s it.
+                public init(
+                    value1: Components.Schemas.LocalizedWords,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks`.
+            public var thanks: Components.Schemas.CoachMessageCard.ThanksPayload?
+            /// Creates a new `CoachMessageCard`.
+            ///
+            /// - Parameters:
+            ///   - path: Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///   - line:
+            ///   - body:
+            ///   - about: What it is about: a symbol, a name and a line.
+            ///   - stage: The picture on top.
+            ///   - stars: `true`: five stars to tap (`stars` answers).
+            ///   - input: A box to type in (`text` answers).
+            ///   - buttons: 0 to 3 buttons, left to right.
+            ///   - thanks:
+            public init(
+                path: Swift.String,
+                line: Components.Schemas.LocalizedWords,
+                body: Components.Schemas.LocalizedWords? = nil,
+                about: Components.Schemas.CoachMessageCard.AboutPayload? = nil,
+                stage: Components.Schemas.CoachMessageCard.StagePayload,
+                stars: Swift.Bool,
+                input: Components.Schemas.CoachMessageCard.InputPayload? = nil,
+                buttons: [Components.Schemas.CoachMessageButton],
+                thanks: Components.Schemas.CoachMessageCard.ThanksPayload? = nil
+            ) {
+                self.path = path
+                self.line = line
+                self.body = body
+                self.about = about
+                self.stage = stage
+                self.stars = stars
+                self.input = input
+                self.buttons = buttons
+                self.thanks = thanks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case path
+                case line
+                case body
+                case about
+                case stage
+                case stars
+                case input
+                case buttons
+                case thanks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageButton`.
+        public struct CoachMessageButton: Codable, Hashable, Sendable {
+            /// Its id within its card.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/label`.
+            public var label: Components.Schemas.LocalizedWords
+            /// An SF Symbol before the words.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/icon`.
+            public var icon: Swift.String?
+            /// `primary` (graphite), `outline` or `plain` (words only); more may come.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/style`.
+            public var style: Swift.String
+            /// What a tap does, step by step.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/tap`.
+            public var tap: [Components.Schemas.CoachMessageStep]
+            /// Creates a new `CoachMessageButton`.
+            ///
+            /// - Parameters:
+            ///   - id: Its id within its card.
+            ///   - label:
+            ///   - icon: An SF Symbol before the words.
+            ///   - style: `primary` (graphite), `outline` or `plain` (words only); more may come.
+            ///   - tap: What a tap does, step by step.
+            public init(
+                id: Swift.String,
+                label: Components.Schemas.LocalizedWords,
+                icon: Swift.String? = nil,
+                style: Swift.String,
+                tap: [Components.Schemas.CoachMessageStep]
+            ) {
+                self.id = id
+                self.label = label
+                self.icon = icon
+                self.style = style
+                self.tap = tap
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case label
+                case icon
+                case style
+                case tap
+            }
+        }
+        /// One step, exactly one of its fields set; skip a step you don’t know.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMessageStep`.
+        public struct CoachMessageStep: Codable, Hashable, Sendable {
+            /// Opens this: a page in the app by its address (as a `wildcard://` link would) or an https web page.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/open`.
+            public var open: Swift.String?
+            /// Sends what was typed in the card’s box as 意见反馈 (`POST /feedback`), as this kind: `problem` or `idea`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/feedback`.
+            public var feedback: Swift.String?
+            /// `true`: folds the card to its `thanks`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/close`.
+            public var close: Swift.Bool?
+            /// Turns the card into the card at this path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/next`.
+            public var next: Swift.String?
+            /// Creates a new `CoachMessageStep`.
+            ///
+            /// - Parameters:
+            ///   - open: Opens this: a page in the app by its address (as a `wildcard://` link would) or an https web page.
+            ///   - feedback: Sends what was typed in the card’s box as 意见反馈 (`POST /feedback`), as this kind: `problem` or `idea`.
+            ///   - close: `true`: folds the card to its `thanks`.
+            ///   - next: Turns the card into the card at this path.
+            public init(
+                open: Swift.String? = nil,
+                feedback: Swift.String? = nil,
+                close: Swift.Bool? = nil,
+                next: Swift.String? = nil
+            ) {
+                self.open = open
+                self.feedback = feedback
+                self.close = close
+                self.next = next
+            }
+            public enum CodingKeys: String, CodingKey {
+                case open
+                case feedback
+                case close
+                case next
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered`.
+        public struct CoachMessageAnswered: Codable, Hashable, Sendable {
+            /// Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/path`.
+            public var path: Swift.String
+            /// The button the caller tapped.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/tap`.
+            public var tap: Swift.String?
+            /// The stars they gave.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/stars`.
+            public var stars: Swift.Int?
+            /// What they typed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/text`.
+            public var text: Swift.String?
+            /// Creates a new `CoachMessageAnswered`.
+            ///
+            /// - Parameters:
+            ///   - path: Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///   - tap: The button the caller tapped.
+            ///   - stars: The stars they gave.
+            ///   - text: What they typed.
+            public init(
+                path: Swift.String,
+                tap: Swift.String? = nil,
+                stars: Swift.Int? = nil,
+                text: Swift.String? = nil
+            ) {
+                self.path = path
+                self.tap = tap
+                self.stars = stars
+                self.text = text
+            }
+            public enum CodingKeys: String, CodingKey {
+                case path
+                case tap
+                case stars
+                case text
             }
         }
         /// - Remark: Generated from `#/components/schemas/EarlierCoachCards`.
@@ -9048,6 +9419,94 @@ extension Components {
                 case version
                 case kind
                 case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers`.
+        public struct CoachMessageAnswers: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/version`.
+            public var version: Components.Schemas.CoachMessageAnswers.VersionPayload
+            /// The message.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/answered`.
+            public var answered: [Components.Schemas.CoachMessageAnswered]
+            /// Creates a new `CoachMessageAnswers`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: The message.
+            ///   - answered:
+            public init(
+                version: Components.Schemas.CoachMessageAnswers.VersionPayload,
+                id: Swift.String,
+                answered: [Components.Schemas.CoachMessageAnswered]
+            ) {
+                self.version = version
+                self.id = id
+                self.answered = answered
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case answered
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer`.
+        public struct CoachMessageAnswer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/version`.
+            public var version: Components.Schemas.CoachMessageAnswer.VersionPayload
+            /// The card answered, by its path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/path`.
+            public var path: Swift.String
+            /// The button tapped.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/tap`.
+            public var tap: Swift.String?
+            /// The stars given.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/stars`.
+            public var stars: Swift.Int?
+            /// What was typed; kept trimmed, up to 500 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/text`.
+            public var text: Swift.String?
+            /// Creates a new `CoachMessageAnswer`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - path: The card answered, by its path.
+            ///   - tap: The button tapped.
+            ///   - stars: The stars given.
+            ///   - text: What was typed; kept trimmed, up to 500 characters.
+            public init(
+                version: Components.Schemas.CoachMessageAnswer.VersionPayload,
+                path: Swift.String,
+                tap: Swift.String? = nil,
+                stars: Swift.Int? = nil,
+                text: Swift.String? = nil
+            ) {
+                self.version = version
+                self.path = path
+                self.tap = tap
+                self.stars = stars
+                self.text = text
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case path
+                case tap
+                case stars
+                case text
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.

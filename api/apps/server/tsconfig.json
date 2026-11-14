@@ -89,6 +89,9 @@
       "path": "../../packages/coach"
     },
     {
+      "path": "../../packages/coach-messages"
+    },
+    {
       "path": "../../packages/unlocks"
     },
     {

@@ -17,7 +17,7 @@ struct ScheduleCoach: View {
     let height: Double
 
     /// The see-through white of the empty spot's +, and of a rest day's or a 请假条 day's disc.
-    static let wash: Double = 0.16
+    nonisolated static let wash: Double = 0.16
 
     private var onScene: Color { Color(role: .fgOnAccent, in: theme) }
 
@@ -25,7 +25,7 @@ struct ScheduleCoach: View {
         if let coach, let player = WidgetCoach.player(of: coach) {
             let frame = player.restFrame
             CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: CoachCanvas.full)
-                .frame(width: height * CoachCanvas.full.width / CoachCanvas.full.height, height: height)
+                .frame(width: height * Double(CoachCanvas.full.width / CoachCanvas.full.height), height: height)
                 .accessibilityHidden(true)
         } else if coach == nil {
             let width = height * 0.5
@@ -46,6 +46,7 @@ struct ScheduleCoach: View {
 }
 
 /// A coach on the widgets, drawn still: a widget is a picture, so nothing plays.
+@MainActor
 enum WidgetCoach {
     /// The coach standing still; nil for a coach this build has no art for.
     static func player(of coach: CoachID) -> CharacterPlayer? {

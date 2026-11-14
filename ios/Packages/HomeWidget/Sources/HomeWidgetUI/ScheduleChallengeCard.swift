@@ -43,8 +43,8 @@ struct ScheduleChallengeCard: View {
         .padding(.leading, compact ? Space.s : Space.s - 2)
         .padding(.trailing, compact ? Space.s : Space.xs + 2)
         .padding(.vertical, compact ? Space.xs : 0)
-        .frame(minHeight: compact ? CardMetrics.smallCard : nil)
-        .frame(height: compact ? nil : CardMetrics.mediumCard)
+        .frame(minHeight: compact ? CGFloat(CardMetrics.smallCard) : nil)
+        .frame(height: compact ? nil : CGFloat(CardMetrics.mediumCard))
         .background(
             Color(role: .bgCanvas, in: theme), in: RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous)
         )

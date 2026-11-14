@@ -66,6 +66,14 @@ import {
   createPostgresBroadcastStore,
   createPostgresNoticeStore,
 } from '@wildcard/notices';
+import {
+  CardPath,
+  MemberId as MessageMember,
+  MessageId,
+  SquadId as MessageSquad,
+  createCoachMessages,
+  createPostgresMessageStore,
+} from '@wildcard/coach-messages';
 import { createAwardSettings, createPostgresAwardSettings } from '@wildcard/weekly-awards';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -112,6 +120,7 @@ import { sportTools } from './tools/sports.js';
 import { rewardTools } from './tools/rewards.js';
 import { unlockTools } from './tools/unlocks.js';
 import { broadcastTools } from './tools/broadcasts.js';
+import { coachMessageTools } from './tools/coach-messages.js';
 import { giveGiftAsAdmin } from '../flows/coach-gifts.js';
 import { adoptFeedback } from '../flows/feedback-adoption.js';
 import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
@@ -122,6 +131,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -211,6 +221,7 @@ beforeAll(async () => {
           rewards: noRewards,
           coachHiring: unusedCoachHiring,
           coachActivity: unusedCoachActivity,
+          coachMessages: unusedCoachMessages,
           coachLetters: unusedCoachLetters,
           ...ignoredNotices,
           ...unusedFeedback,
@@ -300,6 +311,13 @@ beforeAll(async () => {
                   clock: () => new Date(),
                 }),
                 unlocks: createPostgresUnlockStore(scope),
+                clock: () => new Date('2091-11-21T00:00:00Z'),
+              }),
+              ...coachMessageTools({
+                messages: createCoachMessages({
+                  store: createPostgresMessageStore(scope),
+                  clock: () => new Date(),
+                }),
                 clock: () => new Date('2091-11-21T00:00:00Z'),
               }),
               ...artTools({
@@ -530,6 +548,9 @@ describe('the admin MCP server', () => {
       ['adopt_feedback', false],
       ['list_broadcasts', true],
       ['put_broadcast', false],
+      ['list_coach_messages', true],
+      ['put_coach_message', false],
+      ['get_coach_message_answers', true],
       ['get_art', true],
       ['art_upload_url', true],
       ['put_art', false],
@@ -1447,6 +1468,98 @@ describe('the admin MCP server', () => {
     expect(rows.rows.map(({ action }) => action)).toStrictEqual([
       { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
       { version: 1, tool: 'put_broadcast', arguments: { id, broadcast } },
+    ]);
+    await client.close();
+  });
+
+  it('writes a coach message, logs it, lists it and reads its answers', async () => {
+    const admin = await member({ admin: true });
+    const client = await connect(clientSignedInAs(admin));
+    const call = async (name: string, args: Record<string, unknown> = {}) => {
+      const result = await client.callTool({ name, arguments: args });
+      return { isError: result.isError === true, text: textOf(result) };
+    };
+    const id = `enjoying-${randomUUID().slice(0, 8)}`;
+    const words = (zhHans: string) => ({ zhHans, en: zhHans, zhHant: zhHans });
+    const message = {
+      version: 1,
+      card: {
+        line: words('喜欢外卡吗？'),
+        stars: true,
+        buttons: [{ id: 'constructor', label: words('喜欢'), tap: [{ close: true }] }],
+        thanks: words('收到，谢谢你。'),
+      },
+      // Only the admin, in a year no other test's message runs in.
+      members: [admin.userId],
+      startsAt: '2091-11-20T00:00:00Z',
+      endsAt: '2091-11-27T00:00:00Z',
+    };
+    const put = await call('put_coach_message', { id, message });
+    expect(put.isError).toBe(false);
+    expect(JSON.parse(put.text)).toMatchObject({
+      version: 1,
+      changed: true,
+      message: { id, ...message, running: true, by: admin.userId },
+    });
+    expect(JSON.parse((await call('put_coach_message', { id, message })).text)).toMatchObject({
+      changed: false,
+    });
+    const listed = z
+      .object({ messages: z.array(z.object({ id: z.string() }).loose()) })
+      .parse(JSON.parse((await call('list_coach_messages')).text));
+    expect(listed.messages.filter((each) => each.id === id)).toHaveLength(1);
+    // A `feedback` step sends the box's words, so its card needs one.
+    expect(
+      (
+        await call('put_coach_message', {
+          id,
+          message: {
+            ...message,
+            card: {
+              ...message.card,
+              buttons: [{ id: 'yes', label: words('喜欢'), tap: [{ feedback: 'idea' }] }],
+            },
+          },
+        })
+      ).isError,
+    ).toBe(true);
+
+    const messages = createCoachMessages({
+      store: createPostgresMessageStore(db),
+      clock: () => new Date('2091-11-21T00:00:00Z'),
+    });
+    const reader = MessageMember.parse(admin.userId);
+    const squad = MessageSquad.parse(randomUUID());
+    await messages.cardsFor({
+      member: reader,
+      squad,
+      coach: 'maotou',
+    });
+    await messages.answer({
+      member: reader,
+      squad,
+      message: MessageId.parse(id),
+      path: CardPath.parse(''),
+      part: { part: 'stars', stars: 4 },
+    });
+    await messages.answer({
+      member: reader,
+      squad,
+      message: MessageId.parse(id),
+      path: CardPath.parse(''),
+      part: { part: 'tap', button: 'constructor' },
+    });
+    expect(JSON.parse((await call('get_coach_message_answers', { id })).text)).toStrictEqual({
+      version: 1,
+      id,
+      cards: [{ path: '', taps: { constructor: 1 }, stars: { count: 1, average: 4 }, texts: [] }],
+    });
+    const rows = await sql<{ action: unknown }>`
+      select action from public.admin_actions where admin_id = ${admin.userId} order by at
+    `.execute(db);
+    expect(rows.rows.map(({ action }) => action)).toStrictEqual([
+      { version: 1, tool: 'put_coach_message', arguments: { id, message } },
+      { version: 1, tool: 'put_coach_message', arguments: { id, message } },
     ]);
     await client.close();
   });

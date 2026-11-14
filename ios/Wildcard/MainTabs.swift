@@ -161,7 +161,11 @@ struct MainTabs: View {
         }
         .placesZones(from: profile, in: today.health)
         .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
-            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
+            if let story = recap.open {
+                // 地点页 from the story's places, pushed over it, with a tile's post over that.
+                RecapView(model: story, autoAdvances: !LaunchOptions.recapManual)
+                    .environment(\.placePage, composePlacePage)
+            }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
         .onChange(of: recap.picks) {
@@ -242,7 +246,11 @@ struct MainTabs: View {
         NavigationStack(path: $feedPages) {
             FeedView(
                 model: feed, header: AnyView(RecapTile(recap: recap)),
-                accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
+                accessory: AnyView(
+                    HStack(spacing: Space.xs) {
+                        SquadMapButton { feedPages.append(.squadMap) }
+                        NoticeBell(inbox: inbox) { showsNotices = true }
+                    })
             ) { selection = .today }
             .navigationRoot()
             .task { await recap.refresh() }
@@ -265,6 +273,8 @@ struct MainTabs: View {
                     }
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+                case .squadMap:
+                    squadMapPage
                 }
             }
         }
