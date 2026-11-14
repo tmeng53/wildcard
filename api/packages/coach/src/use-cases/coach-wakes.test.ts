@@ -194,11 +194,19 @@ interface Step {
  * An agent that calls tools as a model would, by name and with JSON arguments, from a script
  * per task, and records every task and every answer.
  */
-/** The day's challenge for 队员1, as the run setting challenges sets it. */
+/** The day's challenge for 米亚 (队员1), as the run setting challenges sets it, by her name. */
 const water = (): readonly Step[] => [
   {
     tool: 'set_challenge',
-    input: { member: '队员1', title: '喝水', amount: 8, unit: '杯', line: '天干' },
+    input: {
+      member: '米亚',
+      recent: '这周练得少',
+      needs: '补水',
+      title: '喝水',
+      amount: 8,
+      unit: '杯',
+      line: '天干',
+    },
   },
 ];
 
@@ -1910,20 +1918,39 @@ describe('the coach', () => {
                 },
               ]
             : [],
-        // The day's challenges, set before the notes: only 队员1 gets one.
+        // The day's challenges, set before the notes: only 米亚 (队员1) gets one, by her name, and
+        // the run asked again about 队员2 sets nothing.
         () => [
           {
             tool: 'set_challenge',
-            input: { member: '队员1', title: '喝水', amount: 0, unit: '杯', line: '天干' },
-          },
-          {
-            tool: 'set_challenge',
-            input: { member: '队员1', title: '喝'.repeat(9), amount: 8, unit: '杯', line: '天干' },
+            input: {
+              member: '米亚',
+              recent: '这周练得少',
+              needs: '补水',
+              title: '喝水',
+              amount: 0,
+              unit: '杯',
+              line: '天干',
+            },
           },
           {
             tool: 'set_challenge',
             input: {
-              member: '队员1',
+              member: '米亚',
+              recent: '这周练得少',
+              needs: '补水',
+              title: '喝'.repeat(9),
+              amount: 8,
+              unit: '杯',
+              line: '天干',
+            },
+          },
+          {
+            tool: 'set_challenge',
+            input: {
+              member: '米亚',
+              recent: '这周练得少',
+              needs: '补水',
               title: '喝水',
               amount: 8,
               unit: '杯',
@@ -1932,7 +1959,15 @@ describe('the coach', () => {
           },
           {
             tool: 'set_challenge',
-            input: { member: '队员9', title: '跑步', amount: 5, unit: '公里', line: '' },
+            input: {
+              member: '队员9',
+              recent: '这周练得少',
+              needs: '补水',
+              title: '跑步',
+              amount: 5,
+              unit: '公里',
+              line: '',
+            },
           },
         ],
       );
@@ -1941,16 +1976,27 @@ describe('the coach', () => {
       expect(daily?.tools).toContain('give_gift');
       expect(daily?.task).toContain('## 礼物清单\n- gift-scarf：红围巾\n- gift-cap');
       expect(daily?.task).toContain('## 这周还能收礼物的\n- 队员1（已有：gift-cap）');
-      // Set on the challenge model, with the shared rules and what makes a good challenge.
-      expect(picks).toHaveLength(1);
-      expect(picks[0]?.tools).toStrictEqual(['set_challenge']);
-      expect(picks[0]?.task).toContain('# 新的一天');
+      // Set on the challenge model, with only what makes a good challenge: the shared rules,
+      // which open every coach's instructions, are for what it says.
+      // Its own task, by name: no squad talk, no 队员N for a member with a nickname. Asked once
+      // more about whom the first run left out.
+      expect(picks).toHaveLength(2);
+      const sharedRulesStart = daily?.instructions.split('\n')[0] ?? '';
+      expect(sharedRulesStart).not.toBe('');
+      expect(picks[0]?.instructions).not.toContain(sharedRulesStart);
+      expect(picks[0]?.tools).toStrictEqual(['set_challenge', 'post_comments']);
+      expect(picks[0]?.task).toMatch(/^今天是 \d{4}-\d{2}-\d{2}，周.。\n\n## 米亚\n- 今天的计划：/);
+      expect(picks[0]?.task).toContain('\n\n## 队员2\n');
+      expect(picks[0]?.task).not.toContain('# 新的一天');
       expect(picks[0]?.answers).toStrictEqual([
         '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
         '挑战不对：title 不超过 8 字，英文不超过 16 个字符；amount 是 1 到 9999 的整数；unit 不超过 4 字，英文不超过 8 个字符；line 不超过 24 字，英文不超过 48 个字符。',
-        '定好了：队员1「喝水 8 杯」。',
-        '不能给 队员9 定挑战；能定的是：队员1、队员2。',
+        '定好了：米亚「喝水 8 杯」。',
+        '不能给 队员9 定挑战；能定的是：米亚、队员2。',
       ]);
+      expect(picks[1]?.task).toContain(
+        '\n\n## 还没定\n还没给队员2定挑战。请假或身体不舒服的不用给，其余的给他们定。',
+      );
       expect(daily?.task).toContain(
         '## 今天的挑战（已经定好，单独一张卡给他）\n- 队员1「喝水 8 杯」，小字：天干，别等口渴',
       );
