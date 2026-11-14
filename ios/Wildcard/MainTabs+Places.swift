@@ -76,6 +76,7 @@ private struct ComposedPlacePage: View {
         page(place) { opened = OpenedPost(id: $0, model: post($0)) }
             .navigationDestination(item: $opened) { opened in
                 PostDetailView(model: opened.model, post: opened.id) { self.opened = nil }
+                    .readsNotices(about: .place(.post(opened.id)))
             }
     }
 }

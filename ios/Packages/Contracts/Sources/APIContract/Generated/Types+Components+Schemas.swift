@@ -73,6 +73,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/at`.
             public var at: Foundation.Date
+            /// True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): it is read, even when newer than `seenThrough`. Left out otherwise.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/opened`.
+            public var opened: Swift.Bool?
             /// The squad it is about, if any.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadId`.
@@ -410,6 +414,7 @@ extension Components {
             ///   - id: The order notices were told in: a later one is larger.
             ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
+            ///   - opened: True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): it is read, even when newer than `seenThrough`. Left out otherwise.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
             ///   - weekStart: The Monday of the week whose 战报 is in (`weeklyAwards`).
@@ -447,6 +452,7 @@ extension Components {
                 id: Swift.Int,
                 kind: Swift.String,
                 at: Foundation.Date,
+                opened: Swift.Bool? = nil,
                 squadId: Swift.String? = nil,
                 alert: Components.Schemas.NoticeEntry.AlertPayload? = nil,
                 weekStart: Swift.String? = nil,
@@ -484,6 +490,7 @@ extension Components {
                 self.id = id
                 self.kind = kind
                 self.at = at
+                self.opened = opened
                 self.squadId = squadId
                 self.alert = alert
                 self.weekStart = weekStart
@@ -522,6 +529,7 @@ extension Components {
                 case id
                 case kind
                 case at
+                case opened
                 case squadId
                 case alert
                 case weekStart
@@ -10890,6 +10898,35 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case through
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/NoticesOpened`.
+        public struct NoticesOpened: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/NoticesOpened/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/NoticesOpened/version`.
+            public var version: Components.Schemas.NoticesOpened.VersionPayload
+            /// The notices whose place the caller opened (a post, the coach page, a push). Ids that aren’t the caller’s are left out.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticesOpened/notices`.
+            public var notices: [Swift.Int]
+            /// Creates a new `NoticesOpened`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - notices: The notices whose place the caller opened (a post, the coach page, a push). Ids that aren’t the caller’s are left out.
+            public init(
+                version: Components.Schemas.NoticesOpened.VersionPayload,
+                notices: [Swift.Int]
+            ) {
+                self.version = version
+                self.notices = notices
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case notices
             }
         }
         /// - Remark: Generated from `#/components/schemas/DisclaimerDrafts`.

@@ -10,7 +10,8 @@ extension NoticePage {
         self.init(
             notices: wire.notices.compactMap(Notice.init),
             seenThrough: wire.seenThrough.map(NoticeID.init(rawValue:)),
-            next: wire.next.map(NoticeID.init(rawValue:)))
+            next: wire.next.map(NoticeID.init(rawValue:)),
+            opened: Set(wire.notices.filter { $0.opened == true }.map { NoticeID(rawValue: $0.id) }))
     }
 }
 
@@ -159,4 +160,9 @@ extension CatalogNames {
 extension NoticeID {
     /// The body of `PUT /me/notices/seen`: everything up to this one is read.
     public var seen: Components.Schemas.NoticesSeen { .init(version: ._1, through: rawValue) }
+
+    /// The body of `PUT /me/notices/opened`: these were opened somewhere else.
+    public static func opened(_ notices: [NoticeID]) -> Components.Schemas.NoticesOpened {
+        .init(version: ._1, notices: notices.map(\.rawValue))
+    }
 }

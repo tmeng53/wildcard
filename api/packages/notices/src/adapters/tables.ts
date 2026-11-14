@@ -33,6 +33,13 @@ export interface Broadcasts {
   id: Generated<Int8>;
 }
 
+export interface NoticeOpens {
+  at: Generated<Timestamp>;
+  id: Generated<Int8>;
+  member_id: string;
+  notice_id: Int8;
+}
+
 export interface NoticeReads {
   at: Generated<Timestamp>;
   id: Generated<Int8>;
@@ -51,6 +58,7 @@ export interface Notices {
 
 export interface DB {
   broadcasts: Broadcasts;
+  notice_opens: NoticeOpens;
   notice_reads: NoticeReads;
   notices: Notices;
 }

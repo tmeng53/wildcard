@@ -556,7 +556,7 @@ public protocol APIProtocol: Sendable {
     func sendFeedback(_ input: Operations.SendFeedback.Input) async throws -> Operations.SendFeedback.Output
     /// The caller’s notices (通知)
     ///
-    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` and not `opened` is unread, and the bell shows its dot while one is. Names are as they are now.
     ///
     /// - Remark: HTTP `GET /me/notices`.
     /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
@@ -568,6 +568,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /me/notices/seen`.
     /// - Remark: Generated from `#/paths//me/notices/seen/put(markMyNoticesSeen)`.
     func markMyNoticesSeen(_ input: Operations.MarkMyNoticesSeen.Input) async throws -> Operations.MarkMyNoticesSeen.Output
+    /// Mark notices read where they were opened (通知)
+    ///
+    /// The caller opened what these notices are about somewhere else (the post, the coach page, a push or banner), so each is read on every phone, whatever `seenThrough` says. Each is kept once, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/opened`.
+    /// - Remark: Generated from `#/paths//me/notices/opened/put(markMyNoticesOpened)`.
+    func markMyNoticesOpened(_ input: Operations.MarkMyNoticesOpened.Input) async throws -> Operations.MarkMyNoticesOpened.Output
     /// The caller’s live events (Server-Sent Events)
     ///
     /// A `text/event-stream` that stays open while the app is. It starts with a `ready` event (data `LiveReady`); then each `notice` event (data `LiveNotice`, its SSE `id` the notice’s id) is a notice just told to the caller, as `GET /me/notices` will list it, and each `shelf` event (data `LiveShelf`) says the caller’s 商店街 may have changed (a store, piece, rule or switch, or one of their unlocks), so read `GET /me/unlocks` again. A line starting with `:` is a heartbeat, sent while it is quiet; skip it, and skip an event you don’t know. The server ends the stream after at most 50 minutes, or sooner when it restarts: reconnect after `retry`, then read the newest page of `GET /me/notices` and `GET /me/unlocks` again, since events sent while it was closed are not replayed.
@@ -1820,7 +1827,7 @@ extension APIProtocol {
     }
     /// The caller’s notices (通知)
     ///
-    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.
+    /// Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` and not `opened` is unread, and the bell shows its dot while one is. Names are as they are now.
     ///
     /// - Remark: HTTP `GET /me/notices`.
     /// - Remark: Generated from `#/paths//me/notices/get(listMyNotices)`.
@@ -1844,6 +1851,21 @@ extension APIProtocol {
         body: Operations.MarkMyNoticesSeen.Input.Body
     ) async throws -> Operations.MarkMyNoticesSeen.Output {
         try await markMyNoticesSeen(Operations.MarkMyNoticesSeen.Input(
+            headers: headers,
+            body: body
+        ))
+    }
+    /// Mark notices read where they were opened (通知)
+    ///
+    /// The caller opened what these notices are about somewhere else (the post, the coach page, a push or banner), so each is read on every phone, whatever `seenThrough` says. Each is kept once, so it is safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/notices/opened`.
+    /// - Remark: Generated from `#/paths//me/notices/opened/put(markMyNoticesOpened)`.
+    public func markMyNoticesOpened(
+        headers: Operations.MarkMyNoticesOpened.Input.Headers = .init(),
+        body: Operations.MarkMyNoticesOpened.Input.Body
+    ) async throws -> Operations.MarkMyNoticesOpened.Output {
+        try await markMyNoticesOpened(Operations.MarkMyNoticesOpened.Input(
             headers: headers,
             body: body
         ))

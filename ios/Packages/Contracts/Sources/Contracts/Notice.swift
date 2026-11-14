@@ -92,9 +92,11 @@ public struct NoticePage: Hashable, Sendable {
     public let seenThrough: NoticeID?
     /// Where the next, older page starts; nil on the last.
     public let next: NoticeID?
+    /// The ones on it the member already opened somewhere else: read, whatever `seenThrough` says.
+    public let opened: Set<NoticeID>
 
-    public init(notices: [Notice], seenThrough: NoticeID?, next: NoticeID?) {
-        (self.notices, self.seenThrough, self.next) = (notices, seenThrough, next)
+    public init(notices: [Notice], seenThrough: NoticeID?, next: NoticeID?, opened: Set<NoticeID> = []) {
+        (self.notices, self.seenThrough, self.next, self.opened) = (notices, seenThrough, next, opened)
     }
 }
 

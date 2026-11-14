@@ -7,6 +7,7 @@ import NotificationsDomain
 public actor InMemoryNoticeSource: NoticeSource {
     private var all: [Notice]
     private var seen: NoticeID?
+    private var opened: Set<NoticeID> = []
     private let size: Int
     /// Told live once, `liveAfter` after the first stream is ready, as a teammate's comment is.
     private var live: [Notice]
@@ -29,11 +30,17 @@ public actor InMemoryNoticeSource: NoticeSource {
     public func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage {
         let older = all.filter { notice in before.map { notice.id < $0 } ?? true }
         let page = Array(older.prefix(size))
-        return NoticePage(notices: page, seenThrough: seen, next: older.count > size ? page.last?.id : nil)
+        return NoticePage(
+            notices: page, seenThrough: seen, next: older.count > size ? page.last?.id : nil,
+            opened: opened.intersection(page.map(\.id)))
     }
 
     public func markSeen(through: NoticeID) async throws(NotificationsError) {
         seen = max(seen ?? through, through)
+    }
+
+    public func markOpened(_ notices: [NoticeID]) async throws(NotificationsError) {
+        opened.formUnion(notices)
     }
 
     /// It says it is ready, as the server's stream does on connecting, so the inbox reads its

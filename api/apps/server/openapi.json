@@ -68,6 +68,10 @@
             "format": "date-time",
             "description": "When it was told, in UTC."
           },
+          "opened": {
+            "type": "boolean",
+            "description": "True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): it is read, even when newer than `seenThrough`. Left out otherwise."
+          },
           "squadId": {
             "type": "string",
             "format": "uuid",
@@ -6978,6 +6982,32 @@
         "required": [
           "version",
           "through"
+        ],
+        "additionalProperties": false
+      },
+      "NoticesOpened": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "notices": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "exclusiveMinimum": 0
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "The notices whose place the caller opened (a post, the coach page, a push). Ids that aren’t the caller’s are left out."
+          }
+        },
+        "required": [
+          "version",
+          "notices"
         ],
         "additionalProperties": false
       },
@@ -15388,7 +15418,7 @@
       "get": {
         "operationId": "listMyNotices",
         "summary": "The caller’s notices (通知)",
-        "description": "Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.",
+        "description": "Newest first, a page at a time, with how far the caller has read: a notice newer than `seenThrough` and not `opened` is unread, and the bell shows its dot while one is. Names are as they are now.",
         "security": [
           {
             "bearer": []
@@ -15516,6 +15546,80 @@
           },
           "404": {
             "description": "Not one of the caller’s notices (`NOTICE_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notices/opened": {
+      "put": {
+        "operationId": "markMyNoticesOpened",
+        "summary": "Mark notices read where they were opened (通知)",
+        "description": "The caller opened what these notices are about somewhere else (the post, the coach page, a push or banner), so each is read on every phone, whatever `seenThrough` says. Each is kept once, so it is safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticesOpened"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Marked read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticesOpened"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid body",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
             "content": {
               "application/problem+json": {
                 "schema": {

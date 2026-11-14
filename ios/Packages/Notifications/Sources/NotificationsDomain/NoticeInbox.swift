@@ -10,6 +10,9 @@ public protocol NoticeSource: Sendable {
     func notices(before: NoticeID?) async throws(NotificationsError) -> NoticePage
     /// Everything up to `through` is read. Safe to repeat; never goes back.
     func markSeen(through: NoticeID) async throws(NotificationsError)
+    /// The member opened what `notices` are about somewhere else (the post, the coach page, a push
+    /// or banner): each is read on every phone, whatever `seenThrough` says. Safe to repeat.
+    func markOpened(_ notices: [NoticeID]) async throws(NotificationsError)
     /// Hears notices as they are told, telling `heard` each, until the server ends the stream
     /// (it returns) or it can't be heard (it throws). Nothing told while it wasn't heard is
     /// replayed: each time it starts, `heard` gets `.ready`, and the newest page is read again.
@@ -17,8 +20,10 @@ public protocol NoticeSource: Sendable {
 }
 
 /// 通知's data, behind the bell on 动态: the member's notices a page at a time, newest first, and
-/// whether any is newer than what they have seen (the bell's dot). Opening the page marks every
-/// one read; the ones that were new stay bold while it is open, until their row is tapped.
+/// whether any is newer than what they have seen and not opened elsewhere (the bell's dot).
+/// Opening the page marks every one read; the ones that were new stay bold while it is open,
+/// until their row is tapped. Opening what one is about anywhere else (its post, the coach page, a
+/// push) marks that one read on every phone.
 @MainActor @Observable
 public final class NoticeInbox {
     /// Where loading stands.
@@ -43,7 +48,7 @@ public final class NoticeInbox {
     /// Whether the last try at the next page didn't reach the server.
     public private(set) var moreFailed = false
     /// The bell's dot: a notice newer than the newest the member has seen that they haven't
-    /// already opened from its banner.
+    /// already opened somewhere else.
     public var hasUnread: Bool {
         notices.contains { isNewerThanSeen($0) && !opened.contains($0.id) }
     }
@@ -55,8 +60,11 @@ public final class NoticeInbox {
     private var unsentSeen: NoticeID?
     /// What had been seen when the page last opened: newer ones show as new until it opens again.
     private var seenWhenOpened: NoticeID?
-    /// Notices the member opened from the home's banner (its button) or their row in 通知.
+    /// Notices the member opened somewhere else (their post, the coach page, a banner, a push, or
+    /// their row in 通知): as the server said and as this phone marked.
     private var opened: Set<NoticeID> = []
+    /// Opened here, and not yet taken by the server (the network failed): sent again on each load.
+    private var unsentOpened: Set<NoticeID> = []
     /// 通知 is open on screen, from `open()` until `close()`.
     public private(set) var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
@@ -117,15 +125,62 @@ public final class NoticeInbox {
             if case .broadcast(let other) = notice.subject { other.id == broadcast.id } else { false }
         }
         guard !told.isEmpty else { return }
-        opened.formUnion(told.map(\.id))
+        markOpened(told.map(\.id))
+        await sendOpened()
         guard !hasUnread else { return }
         await markNewestSeen()
     }
 
     /// The member tapped the row of `notices` in 通知: it isn't new any more, so back on the page
-    /// it shows read. The page already marked them read on the server when it opened.
+    /// it shows read, and on every phone.
     public func opened(_ notices: [Notice]) {
-        opened.formUnion(notices.map(\.id))
+        markOpened(notices.map(\.id))
+        Task { await sendOpened() }
+    }
+
+    /// The member opened `place` (a post's page, a push, a banner): every notice that opens there
+    /// is read, on every phone.
+    public func visited(_ place: AppDestination) async {
+        await visited { $0.destination == place }
+    }
+
+    /// The member opened a place the notices `about` are about (the coach page for its morning
+    /// notes): each is read, on every phone.
+    public func visited(where about: (Notice) -> Bool) async {
+        let fresh = notices.filter { notice in
+            about(notice) && !opened.contains(notice.id)
+                && (isNewerThanSeen(notice) || seenWhenOpened.map { notice.id > $0 } == true)
+        }
+        guard !fresh.isEmpty else { return }
+        markOpened(fresh.map(\.id))
+        await sendOpened()
+    }
+
+    private func markOpened(_ ids: [NoticeID]) {
+        let fresh = ids.filter { !opened.contains($0) }
+        opened.formUnion(fresh)
+        unsentOpened.formUnion(fresh)
+    }
+
+    /// The most notices one mark sends; the rest go on the next load.
+    static let openedAtOnce = 100
+
+    /// Tells the server what was opened here and not yet taken, in a task of its own, as
+    /// `sendSeen` does, so leaving the page doesn't cancel it.
+    private func sendOpened() async {
+        let sending = Array(unsentOpened.sorted().suffix(Self.openedAtOnce))
+        guard !sending.isEmpty else { return }
+        let source = source
+        let done = await Task { () -> Bool in
+            do throws(NotificationsError) {
+                try await source.markOpened(sending)
+                return true
+            } catch {
+                return error == .signedOut
+            }
+        }.value
+        guard done else { return }
+        unsentOpened.subtract(sending)
     }
 
     private func isNewerThanSeen(_ notice: Notice) -> Bool {
@@ -142,11 +197,13 @@ public final class NoticeInbox {
         do {
             var page = try await source.notices(before: nil)
             var found = page.notices
+            var openedFound = page.opened
             var read = 1
             // A page of kinds this build can't show still goes on past them.
             while found.isEmpty, let before = page.next, read < Self.pagesAtOnce {
                 page = try await source.notices(before: before)
                 found = page.notices
+                openedFound.formUnion(page.opened)
                 read += 1
             }
             guard mine == generation else { return }
@@ -156,9 +213,11 @@ public final class NoticeInbox {
             next = page.next
             // Never goes back, as on the server: an older answer must not light the dot again.
             seenThrough = [seenThrough, page.seenThrough].compactMap(\.self).max()
+            opened.formUnion(openedFound)
             moreFailed = false
             phase = .current
             await sendSeen()
+            await sendOpened()
         } catch {
             // A read cut short (the page closed, the app went to the background) didn't fail.
             guard mine == generation, !Task.isCancelled else { return }
@@ -300,6 +359,7 @@ public final class NoticeInbox {
                 let page = try await source.notices(before: before)
                 guard mine == generation else { return }
                 found = page.notices
+                opened.formUnion(page.opened)
                 next = page.next
                 read += 1
             }

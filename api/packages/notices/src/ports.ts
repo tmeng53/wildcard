@@ -24,7 +24,12 @@ export interface NoticeStore {
     readonly member: MemberId;
     readonly before?: NoticeId;
     readonly limit: number;
-  }): Promise<{ readonly notices: Notice[]; readonly next?: NoticeId }>;
+  }): Promise<{
+    readonly notices: Notice[];
+    readonly next?: NoticeId;
+    /** Which of those the member already opened somewhere else. */
+    readonly opened: ReadonlySet<NoticeId>;
+  }>;
   /** The newest notice the member has seen, or `undefined` before they open the page. */
   seenThrough(member: MemberId): Promise<NoticeId | undefined>;
   /**
@@ -32,6 +37,11 @@ export interface NoticeStore {
    * `unknown` when `through` isn't one of their notices.
    */
   markSeen(member: MemberId, through: NoticeId): Promise<'moved' | 'unchanged' | 'unknown'>;
+  /**
+   * Records that the member opened `notices` somewhere else, each once; ids that aren't theirs
+   * are left out. Answers with how many this call recorded.
+   */
+  markOpened(member: MemberId, notices: readonly NoticeId[]): Promise<number>;
 }
 
 /** Where broadcasts are kept: each save a new row, the newest for an id what it says now. */

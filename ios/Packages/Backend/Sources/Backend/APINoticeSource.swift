@@ -17,6 +17,10 @@ public struct APINoticeSource: NoticeSource {
         do { try await api.markNoticesSeen(through: through) } catch { throw Self.reason(error) }
     }
 
+    public func markOpened(_ notices: [NoticeID]) async throws(NotificationsError) {
+        do { try await api.markNoticesOpened(notices) } catch { throw Self.reason(error) }
+    }
+
     public func listen(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(NotificationsError) {
         do { try await api.listenForNotices(heard) } catch { throw Self.reason(error) }
     }
