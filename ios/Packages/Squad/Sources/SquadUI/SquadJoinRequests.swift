@@ -23,6 +23,8 @@ struct SquadJoinRequests: View {
                     row(request)
                 }
             }
+            // One container, so the identifier names the section rather than each of its rows.
+            .accessibilityElement(children: .contain)
             .accessibilityIdentifier("squad.joinRequests")
         }
     }
