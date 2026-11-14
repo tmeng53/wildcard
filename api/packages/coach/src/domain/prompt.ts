@@ -1,11 +1,12 @@
 import { writeIn } from '@wildcard/language-model';
 
 import {
+  challengeHow,
   challengeSection,
   challengeText,
   type Challenge,
-  type ChallengeAnswer,
   type ChallengeCompletion,
+  type DayChallengeFacts,
   type DeliveredNote,
 } from './challenge.js';
 import type { Coach } from './coach.js';
@@ -252,11 +253,9 @@ export function taskOf({
   readonly backAgain?: boolean;
   /** On a waking task, whom the coach took over from and the letter it was left, if any. */
   readonly handover?: TookOver;
-  /** On a check-in's wake, the challenge the coach set its author today and their answer. */
+  /** On a check-in's wake, the challenge its author took up today, and whether they did it. */
   readonly challenge?: {
     readonly challenge: Challenge;
-    readonly answer?: ChallengeAnswer;
-    readonly reason?: string;
     readonly completion?: ChallengeCompletion;
   };
   /** On a daily wake, the gift pool and who may get one this week. */
@@ -389,7 +388,6 @@ function setChallengesBlock(
       ([member, challenge]) =>
         `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
     ),
-    '便条别和他的挑战拧着，也不用把挑战再说一遍。',
   ].join('\n');
 }
 
@@ -473,14 +471,7 @@ export interface YesterdayFacts {
    * The challenges the coach set over the last week up to that day, oldest first, and what each
    * member said to them: so it sees what it gave before and sets something else (Tracy, 2026-11-12).
    */
-  readonly challenges?: readonly {
-    readonly day: string;
-    readonly member: string;
-    readonly challenge: Challenge;
-    readonly answer: ChallengeAnswer | undefined;
-    readonly reason: string | undefined;
-    readonly completion: ChallengeCompletion | undefined;
-  }[];
+  readonly challenges?: readonly DayChallengeFacts[];
 }
 
 /** The squad's posts of the day before, and how that day's challenges went. */
@@ -508,24 +499,6 @@ function yesterdayBlocks(
       `- ${dayWords(each.day)} ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
   );
   return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
-}
-
-/** How a challenge went, in the coach's words. */
-function challengeHow({
-  answer,
-  reason,
-  completion,
-}: {
-  readonly answer: ChallengeAnswer | undefined;
-  readonly reason: string | undefined;
-  readonly completion: ChallengeCompletion | undefined;
-}): string {
-  if (completion !== undefined) return '完成了';
-  if (answer === 'accepted') return '接了，没记完成';
-  if (answer === 'declined') {
-    return reason === undefined ? '没接' : `没接，理由：「${reason}」（只告诉了你）`;
-  }
-  return '没回应';
 }
 
 /** What the night's dream looks back over: the squad's days, and what the coach did in them. */

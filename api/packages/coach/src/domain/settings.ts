@@ -104,7 +104,7 @@ const fields = {
     .min(1)
     .max(20_000)
     .describe(
-      'What makes a good day challenge, Chinese: the instructions of the run that sets them, after the shared rules.',
+      'What makes a good day challenge, Chinese: the whole instructions of the run that sets them (never the shared rules).',
     ),
   noteHour: z
     .int()
