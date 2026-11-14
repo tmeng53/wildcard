@@ -65,6 +65,19 @@ extension WildcardAPI {
         return CoachChallengeAnswer(rawValue: wire.answer.rawValue) ?? answer
     }
 
+    /// Keeps one part of the caller's answer on one card of a coach message they got in `squad`;
+    /// the first of each part stands. Gives back everything they answered on it so far.
+    public func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
+        async throws(APIError) -> [String: CoachMessage.Answered]
+    {
+        let wire = try await call {
+            try await client.answerCoachMessage(
+                path: .init(squadId: squad.description, messageId: message), body: .json(part.wire(on: path))
+            ).ok.body.json
+        }
+        return CoachMessage.answered(wire.answered)
+    }
+
     /// The challenge in the caller's morning note today in `squad`, answered or not; nil when
     /// there is none.
     public func todayChallenge(in squad: SquadID) async throws(APIError) -> DayChallenge? {

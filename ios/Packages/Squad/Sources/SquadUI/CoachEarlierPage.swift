@@ -166,6 +166,7 @@ public struct CoachEarlierPage: View {
         case .note: "text.bubble"
         case .challenge: "flag"
         case .gift: "gift"
+        case .message: "bubble.left"
         }
     }
 
@@ -183,6 +184,8 @@ public struct CoachEarlierPage: View {
             } else if let gift = card.gift {
                 (gift.isOpen ? places.giftName(gift.piece) : Text(copy: "送你一样东西", bundle: .module))
                     .typeStyle(TypeRamp.calloutEmphasis)
+            } else if let message = card.message, let first = message.card(at: "") {
+                Text(verbatim: CoachMessageWords.text(first.line)).typeStyle(TypeRamp.callout)
             } else {
                 Text(verbatim: card.text ?? "").typeStyle(TypeRamp.callout)
             }

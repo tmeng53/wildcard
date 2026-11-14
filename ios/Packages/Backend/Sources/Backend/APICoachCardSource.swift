@@ -40,6 +40,12 @@ public struct APICoachCardSource: CoachCardSource {
         }
     }
 
+    public func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
+        async throws(SquadError) -> [String: CoachMessage.Answered]
+    {
+        try await coach { () throws(APIError) in try await api.answerMessage(message, in: squad, on: path, part) }
+    }
+
     private func coach<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {
         do {
             return try await call()
