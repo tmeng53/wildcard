@@ -1,6 +1,5 @@
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
-import { challengeText, type Challenge, type ChallengeCompletion } from './challenge.js';
 import type { Coach } from './coach.js';
 import { planIndexOf, type NoteBrief, type PlanDayFacts } from './member-facts.js';
 import { dayWords, postWhat, timeLines, type SquadWeek, type WeekCheckIn } from './squad-week.js';
@@ -89,8 +88,6 @@ export interface ReplyFacts {
   readonly brief?: NoteBrief;
   /** Today, `YYYY-MM-DD`, on the member's own day. */
   readonly day: string;
-  /** Today's challenge, only once the member took it up. */
-  readonly challenge?: { readonly challenge: Challenge; readonly completion?: ChallengeCompletion };
   /** Posts other than this one under which the member and the coach talked over the last day. */
   readonly talkedUnder: readonly WeekCheckIn[];
   /** On a 请假条, the streaks it keeps going. */
@@ -183,11 +180,6 @@ function personBlock(facts: ReplyFacts, name: (member: string) => string): strin
             `${numbers.of(each)} ${WEEKDAYS[planIndexOf(each.day)] ?? ''}${kindWords(each)}`,
         )
         .join('；')}`,
-    );
-  }
-  if (facts.challenge !== undefined) {
-    lines.push(
-      `- 今天的挑战：「${challengeText(facts.challenge.challenge)}」，${facts.challenge.completion === undefined ? '接了，还没完成' : '已经完成了'}`,
     );
   }
   const streaks = [

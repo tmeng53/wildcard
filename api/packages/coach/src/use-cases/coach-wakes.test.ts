@@ -2110,7 +2110,9 @@ describe('the coach', () => {
         ],
       };
       await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: later, squads: [squad] });
-      expect(runs.at(-1)?.task).toContain('\n- 今天的挑战：「喝水 8 杯」，接了，还没完成\n');
+      // A reply isn't told the day's challenge, taken up or not: told it, the coach brought it
+      // up under every post (Tracy, 2026-11-14).
+      expect(runs.at(-1)?.task).not.toContain('今天的挑战');
       // Only the member marks it done (我完成了): the coach has no way to.
       expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
       const done = await sql<{ note_id: string }>`
@@ -2123,34 +2125,6 @@ describe('the coach', () => {
         note: mine ?? 0,
         today: '2026-11-01',
       });
-      // The next check-in's wake knows they did it.
-      const again = randomUUID();
-      await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
-        values (${again}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
-        trx,
-      );
-      await wakes(
-        {
-          ...fixture,
-          week: {
-            ...week,
-            checkIns: [
-              ...week.checkIns,
-              {
-                id: again,
-                member: mia,
-                day: '2026-11-01',
-                createdAt: now,
-                kind: 'healthyMeal',
-                reactedBy: [],
-                comments: [],
-              },
-            ],
-          },
-        },
-        { agent },
-      ).checkedIn({ checkIn: again, squads: [squad] });
-      expect(runs.at(-1)?.task).toContain('\n- 今天的挑战：「喝水 8 杯」，已经完成了\n');
     });
   });
 
