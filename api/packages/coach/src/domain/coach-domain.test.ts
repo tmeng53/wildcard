@@ -231,25 +231,24 @@ describe('the squad’s week, as the model reads it', () => {
 });
 
 describe('the memory files', () => {
-  it('stores members named in a file by id, and shows them by their name now', () => {
+  it('keeps names in a file as written, and stores only a 队员N by id', () => {
     const roster = rosterOf(week);
     const stored = storedBody('米亚爱跑步，队员2 怕雨，队员12 不存在', roster);
-    expect(stored).toBe(`{队员:${mia}}爱跑步，{队员:${leo}} 怕雨，队员12 不存在`);
+    expect(stored).toBe(`米亚爱跑步，{队员:${leo}} 怕雨，队员12 不存在`);
     expect(shownBody(stored, roster)).toBe('米亚爱跑步，队员2 怕雨，队员12 不存在');
-    // 米亚 left, and 里奥 took a nickname: each shows as they are now.
+    // 里奥 took a nickname: the id shows as the name now. An id of one who left reads as such.
     const after = rosterOf({ ...week, members: [{ member: leo, nickname: '里奥' }] });
-    expect(shownBody(stored, after)).toBe('一位已离队的队员爱跑步，里奥 怕雨，队员12 不存在');
-    // A one-character name stays as written, since it turns up inside other words.
-    const short = rosterOf({ ...week, members: [{ member: mia, nickname: '美' }] });
-    expect(storedBody('美食很美', short)).toBe('美食很美');
-    // A Latin name, or one ending in a digit, counts only on its own, never inside a word.
-    const latin = rosterOf({
+    expect(shownBody(stored, after)).toBe('米亚爱跑步，里奥 怕雨，队员12 不存在');
+    expect(shownBody(`{队员:${mia}}爱跑步`, after)).toBe('一位已离队的队员爱跑步');
+    // A nickname that is an ordinary word is never taken out of the text.
+    const words = rosterOf({
       ...week,
-      members: [{ member: mia, nickname: 'Al' }, { member: leo }],
+      members: [
+        { member: mia, nickname: '跑步' },
+        { member: leo, nickname: 'Al' },
+      ],
     });
-    expect(storedBody('Al also ran; Al跑了，队员23 不是队员2', latin)).toBe(
-      `{队员:${mia}} also ran; {队员:${mia}}跑了，队员23 不是{队员:${leo}}`,
-    );
+    expect(storedBody('都爱跑步；Al also ran', words)).toBe('都爱跑步；Al also ran');
   });
 
   const roster = rosterOf(week);

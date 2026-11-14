@@ -600,8 +600,8 @@ describe('the coach', () => {
           body: '# 小队',
           member_id: null,
         },
-        // Members named in a file are stored by id, so a name follows them when 队员N shifts.
-        { path: 'memory.md', body: `- {队员:${fixture.mia}} 周日跑步`, member_id: null },
+        // A name in a file is kept as written.
+        { path: 'memory.md', body: '- 米亚 周日跑步', member_id: null },
         { path: `people/${leo}.md`, body: '还没打卡过', member_id: leo },
       ]);
       const notes = await sql<{ day: string; text: string; coach_id: string }>`

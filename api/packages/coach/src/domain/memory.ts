@@ -84,31 +84,22 @@ export function shownPathOf(stored: StoredPath, { roster, coach }: MemoryView): 
   return name === undefined ? undefined : `people/${name}.md`;
 }
 
-// In a file's text, the model names members by name too, but a name changes (a new nickname, a
-// number when two share one), so a body is stored with each name as the member's id
-// (`{队员:<id>}`) and shown with each id as the member's name now. A member who left is shown as
-// 一位已离队的队员.
+// In a file's text, the model names members by their name and it is kept as written: a name can be
+// an ordinary word (跑步, Al), so guessing names in free text would rewrite the coach's memory
+// wherever that word appears. Only a 队员N the model was shown for someone without a nickname or
+// AI consent is stored as the member's id (`{队员:<id>}`), since that number changes from run to
+// run, and shown again as the name they have now; older files keep their ids the same way. A
+// member who left is shown as 一位已离队的队员.
 
-/**
- * A body as stored: each roster name in it as its member's id, the longest names first. A
- * one-character name is left as written, since it turns up inside other words, and a name that
- * starts or ends with a Latin letter or digit counts only where no other one touches it there, so
- * 「Al」 is never taken out of 「also」.
- */
+/** A body as stored: each roster 队员N in it as its member's id; every other word as written. */
 export function storedBody(shown: string, roster: ReadonlyMap<string, string>): string {
   const members = new Map(
-    [...roster].flatMap(([member, name]) => (name.length > 1 ? [[name, member] as const] : [])),
+    [...roster].flatMap(([member, name]) =>
+      /^队员\d+$/.test(name) ? [[name, member] as const] : [],
+    ),
   );
   if (members.size === 0) return shown;
-  const names = [...members.keys()]
-    .toSorted((a, b) => b.length - a.length)
-    .map(
-      (name) =>
-        (/^[A-Za-z0-9]/.test(name) ? '(?<![A-Za-z0-9])' : '') +
-        name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
-        (/[A-Za-z0-9]$/.test(name) ? '(?![A-Za-z0-9])' : ''),
-    );
-  return shown.replace(new RegExp(names.join('|'), 'g'), (name) => {
+  return shown.replace(/队员\d+/g, (name) => {
     const member = members.get(name);
     return member === undefined ? name : `{队员:${member}}`;
   });
