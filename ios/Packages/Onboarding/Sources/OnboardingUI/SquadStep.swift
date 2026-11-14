@@ -187,7 +187,7 @@ private struct SquadFound: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .card()
         case .found(let squad):
-            SquadCard(name: squad.name, heads: heads) {
+            SquadSummaryCard(name: squad.name, heads: heads) {
                 if squad.isFull {
                     Text(copy: "\(squad.memberCount) 人 · 满员了", bundle: .module)
                 } else {
@@ -204,7 +204,7 @@ private struct SquadFound: View {
 
 /// A squad on a white card with a hairline like the rows around it (Tracy, 2026-11-08): its name,
 /// its members' heads and a line about it. Greyed with a graphite 未通过 when a captain said no.
-struct SquadCard<Line: View>: View {
+struct SquadSummaryCard<Line: View>: View {
     let name: String
     let heads: [CastMember]
     var isDeclined = false

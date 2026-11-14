@@ -21,7 +21,7 @@ struct WaitingStep: View {
         StepPage(step: .waiting, title: title, character: model.myCharacter, onBack: nil) {
             if let request = model.request {
                 VStack(alignment: .leading, spacing: Space.s) {
-                    SquadCard(name: request.squadName, heads: model.requestHeads, isDeclined: isDeclined) {
+                    SquadSummaryCard(name: request.squadName, heads: model.requestHeads, isDeclined: isDeclined) {
                         Text(copy: "\(request.memberCount) 人", bundle: .module)
                     }
                     .accessibilityIdentifier("waiting.squad")
