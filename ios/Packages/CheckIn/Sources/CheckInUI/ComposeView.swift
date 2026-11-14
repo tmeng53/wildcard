@@ -233,7 +233,8 @@ private struct SportRow: View {
 
 /// When it started and how long it took, if the member wants to say: the start on its clock
 /// pill, then the usual lengths one tap each (tap again to clear), and 其他 for any other length
-/// on a ruler, which starts on the length last picked.
+/// on a ruler, which starts on the length last picked. Once a length is ruled the pill shows it
+/// (「45 分钟」), and tapping it folds the ruler away and keeps the length.
 private struct MinutesRow: View {
     @Environment(\.sceneTheme) private var theme
     @Binding var startTime: StartTime?
@@ -260,10 +261,9 @@ private struct MinutesRow: View {
                         .accessibilityLabel(Text(copy: "\(value) 分钟", bundle: .module))
                         .accessibilityIdentifier("compose.minutes.\(value)")
                     }
-                    PickPill(Text(copy: "其他", bundle: .module), look: .solid, isSelected: isRuling) {
+                    PickPill(otherLabel, look: .solid, isSelected: isRuling || ruledLength != nil) {
                         if isRuling {
                             isRuling = false
-                            minutes = nil
                         } else {
                             ruled = Self.scale.snapped(minutes?.value ?? Self.rulerStart)
                             minutes = try? WorkoutMinutes(ruled)
@@ -285,6 +285,17 @@ private struct MinutesRow: View {
                 .accessibilityIdentifier("compose.minutes.ruler")
             }
         }
+    }
+
+    /// A length none of the usual picks shows, so 其他 carries it.
+    private var ruledLength: Int? {
+        guard let value = minutes?.value, isRuling || !Self.quickPicks.contains(value) else { return nil }
+        return value
+    }
+
+    private var otherLabel: Text {
+        guard let value = ruledLength else { return Text(copy: "其他", bundle: .module) }
+        return Text(copy: "\(value) 分钟", bundle: .module)
     }
 
     /// Any minute from 1 to 6 hours; the API takes up to 600, but a ruler that long is hard to slide.
