@@ -296,7 +296,8 @@ final class TodayUITests: XCTestCase {
 
 extension TodayUITests {
     /// The 练了 page's sport starts on the last one used; 其他 opens a ruler for any other number
-    /// of minutes, which a swipe moves, then one tap on a usual length closes it.
+    /// of minutes, which a swipe moves and the pill then shows; tapping the pill folds the ruler
+    /// and keeps the length, and one tap on a usual length picks that instead.
     fileprivate func checkSportAndPickMinutes(in app: XCUIApplication) {
         XCTAssertTrue(app.buttons["compose.sport.run"].isSelected, "the last sport used (跑步) isn't picked")
         app.buttons["compose.minutes.other"].tap()
@@ -309,9 +310,20 @@ extension TodayUITests {
         keepScreenshot(named: "15-compose-minutes-other")
         let window = app.windows.firstMatch.frame
         XCTAssertTrue(window.contains(ruler.frame), "the minutes ruler is cut off: \(ruler.frame)")
+        let other = app.buttons["compose.minutes.other"]
+        let ruled = ruler.value as? String ?? "?"
+        XCTAssertTrue(other.label.contains(ruled), "the 其他 pill doesn't show the ruled length: \(other.label)")
+        other.tap()
+        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "tapping the pill didn't fold the ruler")
+        // A swipe that stops on a usual length hands it back to that pill.
+        let usual = app.buttons["compose.minutes.\(ruled)"]
+        XCTAssertTrue(
+            usual.exists ? usual.isSelected : other.isSelected && other.label.contains(ruled),
+            "folding the ruler dropped the ruled length (\(ruled)): \(other.label)"
+        )
         app.buttons["compose.minutes.60"].tap()
         XCTAssertTrue(app.buttons["compose.minutes.60"].isSelected, "60 minutes isn't picked")
-        XCTAssertTrue(ruler.waitForNonExistence(timeout: Self.wait), "the ruler stayed open after picking 60")
+        XCTAssertFalse(other.isSelected, "其他 stayed picked after picking 60")
     }
 }
 
