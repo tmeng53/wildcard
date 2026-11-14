@@ -5,7 +5,7 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes three of them for about
-# 40 minutes, so no PR runs the UI tests (Tracy, 2026-11-08): PRs merge on the Linux checks plus
+# 65 to 80 minutes, so no PR runs the UI tests (Tracy, 2026-11-08): PRs merge on the Linux checks plus
 # `ios-build`, one Mac compiling the app for about ten minutes (Tracy, 2026-11-14), and `ios`
 # runs on main only, on a schedule every 3 hours for what main changed since the last scheduled
 # run (nothing when main didn't change) and on a manual run (Actions -> verify -> Run workflow),
