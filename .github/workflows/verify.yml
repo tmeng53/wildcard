@@ -5,17 +5,19 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes three of them for about
-# 40 minutes, so no PR uses a Mac (Tracy, 2026-11-08): PRs merge on the Linux checks, and `ios`
+# 40 minutes, so no PR runs the UI tests (Tracy, 2026-11-08): PRs merge on the Linux checks plus
+# `ios-build`, one Mac compiling the app for about ten minutes (Tracy, 2026-11-14), and `ios`
 # runs on main only, on a schedule every 3 hours for what main changed since the last scheduled
 # run (nothing when main didn't change) and on a manual run (Actions -> verify -> Run workflow),
 # which the merge queue starts before each TestFlight and whose breaks are fixed forward. The
 # macOS `verify` and `avatar-preview` (GIFs for reviewers, no checks of its own) run on manual
-# runs only: a scheduled run checks what main's pushes already ran on Linux. Pushes to main and every PR run the Linux checks only (`verify`
-# on Linux builds and tests the Swift packages).
+# runs only: a scheduled run checks what main's pushes already ran on Linux. Pushes to main run
+# the Linux checks only, and every PR those plus `ios-build` (`verify` on Linux builds and tests
+# the Swift packages).
 # Every job runs only when the files a change touches can break what it checks: `verify` for the
 # app's Swift (and the OpenAPI file its generated types come from), `supabase` for the database,
-# the API and the app's Backend adapters, `web` for the site; `ios` and `avatar-preview` only
-# when the change touches what they build. A skipped job counts as passing for branch protection.
+# the API and the app's Backend adapters, `web` for the site, `ios-build` for the app; `ios` and
+# `avatar-preview` only when the change touches what they build. A skipped job counts as passing for branch protection.
 # Pushes to main diff against the commit before the push (the PR already ran the full merge);
 # a scheduled run diffs against the commit the last scheduled run checked.
 name: verify
@@ -107,7 +109,7 @@ jobs:
           # web: the website, the app art and font its generated files come from, and the arm bends both players share.
           echo "web=$(touches '^(web/|ios/Packages/Avatar/Sources/AvatarArt/|ios/Packages/Avatar/Tests/arm-bend-cases\.json$|ios/Packages/DesignSystem/Sources/DesignSystemUI/Resources/Fonts/|scripts/verify\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           # app: anything the macOS `verify` runs, so a change to it is tested on a Mac before main.
-          echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
+          echo "app=$(touches '^(ios/|scripts/(verify|install-swiftlint|swift-openapi|ios-build)\.sh$|scripts/swiftlint-version$|\.swift-format$|\.swiftlint\.yml$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "ios=$(touches '^(ios/|scripts/ios-test\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
           echo "avatar=$(touches '^(ios/Packages/(Avatar|DesignSystem)/|scripts/avatar-preview\.sh$|\.github/workflows/verify\.yml$)')" >> "$GITHUB_OUTPUT"
 
@@ -156,6 +158,42 @@ jobs:
           scripts/install-swiftlint.sh "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: scripts/verify.sh swift
+
+  # A ready PR that changes the app compiles it on one Mac, without running anything: the app
+  # target, its extensions, the UI tests and the packages' SwiftUI code compile only on macOS, and
+  # SwiftLint's custom rules need SourceKit, so the Linux `verify` can't catch these. Before this
+  # job, such a break first showed on main's `ios` run (four times on 2026-11-14) and held
+  # TestFlight. About ten minutes of one Mac, and only for a PR that changes what it checks.
+  # If `changes` failed, it runs rather than skips, like `verify`. It builds Debug, as the UI
+  # tests do; Release-only code first compiles in TestFlight's archive.
+  ios-build:
+    needs: changes
+    if: >-
+      !cancelled() && github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      needs.changes.result != 'skipped' &&
+      (needs.changes.result != 'success' || needs.changes.outputs.app == 'true')
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - run: xcodebuild -version
+      # main's `ios` runs save the cloned packages; a PR only reads them, so it doesn't fill the
+      # cache with copies.
+      - name: Restore Swift packages
+        uses: actions/cache/restore@v4
+        with:
+          path: build/spm
+          key: spm-xcode-${{ hashFiles('ios/**/Package.swift', 'ios/**/Package.resolved') }}
+          restore-keys: spm-xcode-
+      - name: Install the pinned SwiftLint
+        run: |
+          scripts/install-swiftlint.sh "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      # With SourceKit, so the custom rules run too.
+      - run: swiftlint lint --strict --quiet
+      - run: scripts/ios-build.sh
 
   # The website's checks (generated files current, ESLint, Prettier, the Playwright layout tests),
   # on Linux, for a change to web/ or to what it is generated from.
