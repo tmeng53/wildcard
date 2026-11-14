@@ -91,7 +91,7 @@ struct MainTabs: View {
     /// 收藏, pushed over 我 from its bookmark.
     @State var showsSavedPlaces = false
     /// A place opened from 收藏, pushed over it.
-    @State var savedPlace: Place?
+    @State var savedPlace: SavedPlaceRoute?
     /// A player's card, opened from the home or 小队, popped up over every tab and the tab bar.
     @State var teammate: SquadmateCardModel?
     /// The card was opened from the home, so 今天 and 拍一拍 go over it (小队 hides the scene).

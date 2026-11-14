@@ -15,12 +15,13 @@ import SwiftUI
 /// from Maps, the squad's numbers (score first, then the star), its 运动 or 吃的 rows and the
 /// squad's posts there as picture tiles. A place the squad never tagged shows the same card with
 /// 「—」 and 0. Pushed on a tab's NavigationStack; `trailing` goes at the bar's right (收藏's
-/// bookmark).
-public struct PlacePageView<Trailing: View>: View {
+/// bookmark) and `note` under the name (收藏's note).
+public struct PlacePageView<Trailing: View, Note: View>: View {
     private let store: PlacePageStore
     private let today: LocalDay
     private let openPost: (CheckInID) -> Void
     private let trailing: Trailing
+    private let note: Note
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -28,12 +29,13 @@ public struct PlacePageView<Trailing: View>: View {
     ///   - today: the reader's today, which the posts' days are said from (今天, 周三).
     ///   - openPost: a tile was tapped: its post's own page.
     ///   - trailing: the bar's right, for 收藏's bookmark.
+    ///   - note: under the place's name, for 收藏's note.
     public init(
         store: PlacePageStore, today: LocalDay, openPost: @escaping (CheckInID) -> Void,
-        @ViewBuilder trailing: () -> Trailing
+        @ViewBuilder trailing: () -> Trailing, @ViewBuilder note: () -> Note
     ) {
         (self.store, self.today, self.openPost) = (store, today, openPost)
-        self.trailing = trailing()
+        (self.trailing, self.note) = (trailing(), note())
     }
 
     public var body: some View {
@@ -42,7 +44,7 @@ public struct PlacePageView<Trailing: View>: View {
                 PlaceMap(place: store.place, kind: store.kind)
                     .frame(height: Self.mapHeight)
                     .overlay(alignment: .bottomTrailing) { openInMaps }
-                PlaceCard(store: store, today: today, openPost: openPost)
+                PlaceCard(store: store, today: today, openPost: openPost, note: note)
                     .padding(.top, -Self.sheetOverlap)
             }
         }
@@ -87,10 +89,10 @@ public struct PlacePageView<Trailing: View>: View {
     private static var sheetOverlap: Double { 50 }
 }
 
-extension PlacePageView where Trailing == EmptyView {
-    /// A page with nothing at the bar's right.
+extension PlacePageView where Trailing == EmptyView, Note == EmptyView {
+    /// A page with nothing at the bar's right or under the name.
     public init(store: PlacePageStore, today: LocalDay, openPost: @escaping (CheckInID) -> Void) {
-        self.init(store: store, today: today, openPost: openPost) { EmptyView() }
+        self.init(store: store, today: today, openPost: openPost, trailing: EmptyView.init, note: EmptyView.init)
     }
 }
 
@@ -146,16 +148,18 @@ private struct PlacePin: View {
 }
 
 /// The white card over the map's foot.
-private struct PlaceCard: View {
+private struct PlaceCard<Note: View>: View {
     let store: PlacePageStore
     let today: LocalDay
     let openPost: (CheckInID) -> Void
+    let note: Note
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         let numbers = store.numbers
         VStack(alignment: .leading, spacing: Space.m + Space.xxs / 2) {
             heading
+            note
             ContactCapsules(facts: store.facts)
             if store.showsSquad { squad(numbers) }
         }

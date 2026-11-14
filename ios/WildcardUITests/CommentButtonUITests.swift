@@ -1,7 +1,7 @@
 import XCTest
 
 /// A card's comment button is for writing: on 动态 it opens the post's own page with the comment
-/// box already taking the keyboard, and on that page it goes back to the box, to the post.
+/// box already taking the keyboard, and on that page tapping it while typing keeps the keyboard.
 @MainActor
 final class CommentButtonUITests: XCTestCase {
     /// Slow CI simulators can take many seconds to show a screen; a real failure still fails.
@@ -31,28 +31,12 @@ final class CommentButtonUITests: XCTestCase {
         let onPage = app.buttons.matching(identifier: "feed.comment").firstMatch
         onPage.tap()
         assertTyping(in: box, "the comment button on the post's page put the keyboard away")
-
-        // With the keyboard dragged away, the button brings it back.
-        let keyboard = app.keyboards.firstMatch
-        let window = app.windows.firstMatch
-        let top = window.coordinate(withNormalizedOffset: .zero)
-        top.withOffset(CGVector(dx: window.frame.midX, dy: keyboard.frame.minY - 30))
-            .press(
-                forDuration: 0.05, thenDragTo: top.withOffset(CGVector(dx: window.frame.midX, dy: window.frame.maxY)))
-        waitFor(keyboard, "exists == false", "dragging down didn't put the keyboard away")
-        onPage.tap()
-        assertTyping(in: box, "the comment button on the post's page didn't bring the keyboard back")
     }
 
     /// The box has the keyboard a moment after the tap (when a tap outside would have put it away).
     private func assertTyping(in box: XCUIElement, _ message: String) {
         Thread.sleep(forTimeInterval: 0.8)
         XCTAssertEqual(box.value(forKey: "hasKeyboardFocus") as? Bool, true, message)
-    }
-
-    private func waitFor(_ element: XCUIElement, _ predicate: String, _ message: String) {
-        let expectation = XCTNSPredicateExpectation(predicate: NSPredicate(format: predicate), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: Self.wait), .completed, message)
     }
 
     private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {

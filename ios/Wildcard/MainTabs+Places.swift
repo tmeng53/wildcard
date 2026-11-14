@@ -27,11 +27,15 @@ extension MainTabs {
     }
 
     /// The place's page on the member's squad (动态's, while 今天 hasn't loaded: a launch into 动态
-    /// or a push opens a tag before it), with 收藏's bookmark; `openPost` pushes a tapped tile's post.
-    func placePage(_ place: Place, openPost: @escaping (CheckInID) -> Void) -> some View {
+    /// or a push opens a tag before it), with 收藏's bookmark and note (its field up for
+    /// `writesNote`); `openPost` pushes a tapped tile's post.
+    func placePage(
+        _ place: Place, writesNote: Bool = false, openPost: @escaping (CheckInID) -> Void
+    ) -> some View {
         SavablePlaceScreen(
             place: place, squad: today.squadID ?? feed.squad, source: places, saved: savedPlaces,
-            today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), openPost: openPost
+            today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), writesNote: writesNote,
+            openPost: openPost
         )
         .environment(\.sceneTheme, today.scene)
     }
@@ -78,4 +82,10 @@ private struct ComposedPlacePage: View {
                 PostDetailView(model: opened.model, post: opened.id) { self.opened = nil }
             }
     }
+}
+
+/// A place opened from 收藏: its page, with the note's field up when 写备注 opened it.
+struct SavedPlaceRoute: Hashable {
+    let place: Place
+    let writesNote: Bool
 }
