@@ -216,6 +216,9 @@ public final class TodayModel {
     var myDoze = 0.0
     /// My wake-up or doze still waiting for its turn; the next pull cancels it.
     @ObservationIgnored var myLightsMove: Task<Void, Never>?
+    /// The challenge I had accepted when the coach last looked, by its note; nil before it first
+    /// looks. A newly accepted one makes it pump its fist.
+    @ObservationIgnored private var challengeSeen: String??
 
     /// Puts everyone where they belong after the home changed.
     func placeSquad() {
@@ -232,6 +235,11 @@ public final class TodayModel {
         cast.update(
             home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach,
             handover: store.handover)
+        let accepted = myChallenge?.note
+        if case .some(let before) = challengeSeen, let accepted, accepted != before {
+            cast.coachCheersTheChallenge()
+        }
+        challengeSeen = .some(accepted)
         if opening != nil { standOpeningSquad() }
     }
 

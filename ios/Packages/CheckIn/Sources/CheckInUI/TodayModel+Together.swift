@@ -48,6 +48,7 @@ extension TodayModel {
         {
             defaults.set(day.description, forKey: Self.stretchKey(for: home.member))
             try? player.play(clip)
+            cast.coachStretches()
             try? await Task.sleep(for: .seconds(clip.duration))
             guard isScenePlain else { return }
         }
@@ -59,6 +60,7 @@ extension TodayModel {
                 shown: shown),
             together.play(celebration, myself: home.member, figures: togetherFigures())
         else { return }
+        cast.coachClapsAlong()
         let kinds = (shown.map(\.rawValue) + [celebration.kind.rawValue]).sorted()
         defaults.set([day.description] + kinds, forKey: Self.togetherKey(for: home.member))
     }

@@ -35,6 +35,12 @@ extension TodayModel {
         cast.coachWhistlesForNews()
     }
 
+    /// The coach does one of its habits, by day on a plain scene.
+    func coachDoesAHabit() {
+        guard stagePhase == .day, step == .scene, !isBurstOpen, arrival == nil else { return }
+        cast.coachDoesAHabit()
+    }
+
     /// The coach was tapped: it gives its pep talk and its page opens.
     func tapCoach() {
         guard arrival == nil else { return }

@@ -100,6 +100,15 @@ public struct TodayView: View {
                 model.coachWhistlesForNews()
             }
         }
+        // While nothing happens, the coach does one of its habits now and then.
+        .task(id: !model.coachHasNews && !reduceMotion) {
+            guard !model.coachHasNews, !reduceMotion else { return }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Double.random(in: CoachCue.habitWait)))
+                guard !Task.isCancelled else { return }
+                model.coachDoesAHabit()
+            }
+        }
         .rereadsEachMinute(model)
         // A workout that ends with 今天 open shows on its card as Health saves it.
         .task(id: model.health?.isConnected) { await model.health?.followChanges() }
