@@ -46,6 +46,7 @@ struct ScheduleCoach: View {
 }
 
 /// A coach on the widgets, drawn still: a widget is a picture, so nothing plays.
+@MainActor
 enum WidgetCoach {
     /// The coach standing still; nil for a coach this build has no art for.
     static func player(of coach: CoachID) -> CharacterPlayer? {
