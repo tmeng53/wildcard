@@ -61,8 +61,6 @@ struct MainTabs: View {
     @State var feedPages: [FeedPage] = []
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
-    /// Opens an https page a coach message's button names.
-    @Environment(\.openURL) var openURL
     /// 商店街 and the character editor, open from 我.
     @State var wardrobe: Wardrobe
     /// 出赛表, pushed over 我.

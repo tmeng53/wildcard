@@ -6,6 +6,7 @@ import MeUI
 import SquadDomain
 import SquadUI
 import SwiftUI
+import UIKit
 
 /// The coach's page (Tracy, 2026-11-08), pushed over 今天 from a tap on the coach, a morning
 /// note's 通知 row or its push: its cards for the member, 以前 and a card opened from there.
@@ -123,7 +124,7 @@ extension MainTabs {
         if let destination = AppDestination(address: address) {
             open(destination)
         } else if let url = URL(string: address), url.scheme == "https" {
-            openURL(url)
+            UIApplication.shared.open(url)
         }
     }
 

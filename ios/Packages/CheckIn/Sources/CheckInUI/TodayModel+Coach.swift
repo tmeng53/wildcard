@@ -62,6 +62,8 @@ extension TodayModel {
         for member in home.today.members {
             characters[member.member] = (SquadCast.look(of: member), SquadCast.persona(of: member))
         }
+        // Mine as I'm dressed now, as the coach's page stands me beside the coach.
+        characters[home.member] = myCharacter
         return characters
     }
 
