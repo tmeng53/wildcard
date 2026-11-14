@@ -153,6 +153,20 @@ private func point(_ across: Double, _ y: Double) -> StagePoint { StagePoint(x: 
     }
 }
 
+@Test func aSquadBiggerThanTheFloorStillAllStandsOnIt() {
+    // One row of four spots, 76 apart, the middle one mine.
+    let layout = StageLayout(
+        stations: [], stationsBySport: [:], standing: [StageRect(x: 0...390, y: 600...650)], props: [])
+    #expect(layout.floor.count == 4)
+    var stage = SquadStage(layout: layout)
+    stage.arrange((1...5).map { member($0, .notYet, shy: $0 == 5) })
+    let spots = stage.placements.values.compactMap { placement -> StagePoint? in
+        if case .floor(let spot) = placement { spot } else { nil }
+    }
+    #expect(spots.count == 5)
+    #expect(Set(spots).count == 4)
+}
+
 @Test func theSquadScattersOverTheSceneEarliestCheckInsPickingFirst() {
     var stage = SquadStage(layout: .of(.track))
     stage.arrange([
