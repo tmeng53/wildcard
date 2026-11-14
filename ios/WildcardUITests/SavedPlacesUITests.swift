@@ -63,7 +63,8 @@ final class SavedPlacesUITests: XCTestCase {
 
         // A row opens the place's page, saved.
         row.tap()
-        XCTAssertTrue(app.staticTexts["place.name"].waitForExistence(timeout: Self.wait), "the row didn't open the place")
+        XCTAssertTrue(
+            app.staticTexts["place.name"].waitForExistence(timeout: Self.wait), "the row didn't open the place")
         waitFor(app.buttons["place.save"], "label == '已收藏'", "the place opened from 收藏 isn't saved")
         backButton(in: app).tap()
 
