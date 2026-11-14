@@ -23,9 +23,11 @@ public struct DeckCast: Hashable, Sendable {
     public let member: DeckCharacter
     /// Everyone else in the squad, in the order they joined.
     public let mates: [DeckCharacter]
+    /// Everyone in the squad by id, the member too, for a coach message naming who stands there.
+    public let byMember: [MemberID: DeckCharacter]
 
-    public init(member: DeckCharacter, mates: [DeckCharacter]) {
-        (self.member, self.mates) = (member, mates)
+    public init(member: DeckCharacter, mates: [DeckCharacter], byMember: [MemberID: DeckCharacter] = [:]) {
+        (self.member, self.mates, self.byMember) = (member, mates, byMember)
     }
 }
 
@@ -40,7 +42,9 @@ enum GiftMoment: Hashable {
 
 /// A card's stage: the squad's scene with the coach and the member standing on it (the coach and
 /// the whole squad for a line to everyone). A gift's box pops out of the coach's hand; a challenge
-/// has the coach blow its whistle.
+/// has the coach blow its whistle. A coach message says who stands there (the coach alone, with
+/// the member, with the squad in two rows of four past four, or with members it names), the move
+/// the coach plays and the scene behind them.
 struct CoachDeckStage: View {
     let card: CoachPageCard?
     let coachLook: String
@@ -56,12 +60,14 @@ struct CoachDeckStage: View {
             let size = proxy.size
             let figure = size.height * 0.62
             ZStack(alignment: .bottom) {
-                SceneArt(scene: theme, layer: .day)
+                SceneArt(scene: scene, layer: .day)
                     .frame(width: size.width, height: size.width * SceneArt.designHeight / StageMetrics.designWidth)
                     .frame(width: size.width, height: size.height, alignment: .bottom)
                     .clipped()
-                if card?.kind == .board {
-                    squadLine(figure: min(figure, size.width / squadLineWidth))
+                if let messageStage {
+                    message(messageStage, figure: figure, width: size.width)
+                } else if card?.kind == .board {
+                    squadLine(figure: min(figure, size.width / lineWidth(of: 1 + cast.mates.count)))
                 } else {
                     pair(figure: figure, width: size.width)
                 }
@@ -72,17 +78,75 @@ struct CoachDeckStage: View {
         .accessibilityHidden(true)
     }
 
-    /// How wide the line to everyone is, in figure heights: the coach, then each of the squad on
+    /// How wide a line of the coach and `people` is, in figure heights: the coach, then each on
     /// stage, overlapping; on the smallest phone it is wider than the card, so the figures shrink.
-    private var squadLineWidth: Double {
-        let onStage = Double(min(1 + cast.mates.count, StageMetrics.squadOnStage))
+    private func lineWidth(of people: Int) -> Double {
+        let onStage = Double(min(people, StageMetrics.squadOnStage))
         return 0.75 + onStage * (0.48 - 0.14) + StageMetrics.squadLineMargin
     }
 
+    /// The stage of a coach message's card as it stands now; nil for any other card.
+    private var messageStage: CoachMessage.Stage? {
+        guard let message = card?.message else { return nil }
+        return message.card(at: message.place.path)?.stage
+    }
+
+    /// The scene a coach message names, else the squad's.
+    private var scene: SceneTheme {
+        messageStage?.scene.flatMap(SceneTheme.init(rawValue:)) ?? theme
+    }
+
+    /// A coach message's stage: who it says stands with the coach, the coach playing its move.
+    @ViewBuilder private func message(_ stage: CoachMessage.Stage, figure: Double, width: Double) -> some View {
+        let move = stage.move.flatMap(CoachCharacter.Move.init(rawValue:))
+        switch stage.cast {
+        case .coach:
+            DeckCoach(look: coachLook, whistles: false, move: move)
+                .frame(width: figure * 0.75, height: figure)
+                .padding(.bottom, figure * 0.08)
+        case .coachAndMe:
+            pair(figure: figure, width: width, move: move)
+        case .coachAndSquad:
+            crowd([cast.member] + cast.mates, figure: figure, width: width, move: move)
+        case .members(let members):
+            crowd(members.compactMap { cast.byMember[$0] }, figure: figure, width: width, move: move)
+        }
+    }
+
+    /// The coach and `people`: in a line up to four, else four in front and the rest, up to four,
+    /// smaller and higher behind them (Tracy, 2026-11-12).
+    @ViewBuilder private func crowd(
+        _ people: [DeckCharacter], figure: Double, width: Double, move: CoachCharacter.Move?
+    ) -> some View {
+        if people.count <= StageMetrics.frontRow {
+            squadLine(figure: min(figure, width / lineWidth(of: 1 + people.count)), people: people, move: move)
+        } else {
+            rows(people, figure: min(figure, width / lineWidth(of: 1 + StageMetrics.frontRow)), move: move)
+        }
+    }
+
+    /// Two rows: the coach and four in front, up to four more behind, smaller and raised so their
+    /// heads show over the front row.
+    private func rows(_ people: [DeckCharacter], figure: Double, move: CoachCharacter.Move?) -> some View {
+        let front = Array(people.prefix(StageMetrics.frontRow))
+        let back = Array(people.dropFirst(StageMetrics.frontRow).prefix(StageMetrics.frontRow))
+        return ZStack(alignment: .bottom) {
+            HStack(alignment: .bottom, spacing: -figure * 0.1) {
+                ForEach(back.indices, id: \.self) { index in
+                    DeckMember(character: back[index], wearing: nil)
+                        .frame(width: figure * 0.4, height: figure * 0.53)
+                }
+            }
+            .padding(.leading, figure * 0.6)
+            .padding(.bottom, figure * 0.24)
+            squadLine(figure: figure, people: front, move: move)
+        }
+    }
+
     /// The coach and the member side by side, a gift's box between them.
-    private func pair(figure: Double, width: Double) -> some View {
+    private func pair(figure: Double, width: Double, move: CoachCharacter.Move? = nil) -> some View {
         HStack(alignment: .bottom, spacing: -figure * 0.12) {
-            DeckCoach(look: coachLook, whistles: card?.kind == .challenge)
+            DeckCoach(look: coachLook, whistles: card?.kind == .challenge, move: move)
                 .frame(width: figure * 0.75, height: figure)
             if card?.kind == .gift {
                 GiftBox(moment: gift, picture: giftPicture, size: figure * 0.26)
@@ -95,12 +159,14 @@ struct CoachDeckStage: View {
         .padding(.bottom, figure * 0.08)
     }
 
-    /// The coach and the whole squad, for a line to everyone.
-    private func squadLine(figure: Double) -> some View {
+    /// The coach and the whole squad, for a line to everyone; or the coach and `people`.
+    private func squadLine(
+        figure: Double, people: [DeckCharacter]? = nil, move: CoachCharacter.Move? = nil
+    ) -> some View {
         HStack(alignment: .bottom, spacing: -figure * 0.14) {
-            DeckCoach(look: coachLook, whistles: false)
+            DeckCoach(look: coachLook, whistles: false, move: move)
                 .frame(width: figure * 0.75, height: figure)
-            let onStage = Array(([cast.member] + cast.mates).prefix(StageMetrics.squadOnStage))
+            let onStage = Array((people ?? [cast.member] + cast.mates).prefix(StageMetrics.squadOnStage))
             ForEach(onStage.indices, id: \.self) { index in
                 DeckMember(character: onStage[index], wearing: nil)
                     .frame(width: figure * 0.48, height: figure * 0.64)
@@ -115,15 +181,19 @@ enum StageMetrics {
     static let designWidth: Double = 390
     /// The most of the squad on a card's stage beside the coach: more don't fit the smallest phone.
     static let squadOnStage = 5
+    /// How many stand in a coach message's front row; the rest stand behind.
+    static let frontRow = 4
     /// Room left at the line's two ends, in figure heights.
     static let squadLineMargin: Double = 0.15
 }
 
-/// The coach standing, idling; on a challenge, blowing its whistle now and then. A coach this
-/// build has no character for stands in as a silhouette.
+/// The coach standing, idling; on a challenge, blowing its whistle now and then; with a `move`,
+/// playing it once (a move that loops, such as crying, instead of its idle). A coach this build
+/// has no character for stands in as a silhouette.
 struct DeckCoach: View {
     let look: String
     let whistles: Bool
+    var move: CoachCharacter.Move?
     @State private var player: CharacterPlayer?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -138,13 +208,17 @@ struct DeckCoach: View {
                 Color.clear
             }
         }
-        .task(id: look) {
+        .task(id: "\(look)/\(move?.rawValue ?? "")") {
             guard CoachCharacter.exists(look) else { return }
+            let rest = move.flatMap { $0.loops ? $0 : nil } ?? .idle
             guard
                 let made = try? CharacterPlayer(
-                    figure: CoachCharacter.figure(look), idle: CoachCharacter.clip(.idle, coach: look))
+                    figure: CoachCharacter.figure(look), idle: CoachCharacter.clip(rest, coach: look))
             else { return }
             player = made
+            if let move, !move.loops, !reduceMotion, let clip = try? CoachCharacter.clip(move, coach: look) {
+                try? made.play(clip)
+            }
             guard whistles, !reduceMotion, let whistle = try? CoachCharacter.clip(.whistle, coach: look) else {
                 return
             }
@@ -190,144 +264,6 @@ struct DeckMember: View {
             let wave = try? PlaceholderCharacter.clip(for: Move.wave, persona: character.persona)
         {
             try? made.play(wave)
-        }
-    }
-}
-
-/// A gift's box, as the approved deck draws it: it pops out of the coach's hand with its dot;
-/// 拆开 throws its lid off and the gift floats up out of it; 立刻穿上 flies the gift onto the
-/// member as the box goes, and 一会儿再说 shrinks it back in and puts the lid back on.
-struct GiftBox: View {
-    let moment: GiftMoment
-    let picture: AnyView?
-    let size: Double
-    @State private var popped = false
-    @State private var bob = false
-    /// The gift reached the member or the box, and fades.
-    @State private var landed = false
-    @Environment(\.sceneTheme) private var theme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        ZStack {
-            BoxBody(ink: ink, ribbon: ribbon)
-                .frame(width: size, height: size)
-                .opacity(moment == .worn ? 0 : 1)
-                .overlay(alignment: .topTrailing) {
-                    if moment == .boxed {
-                        Circle()
-                            .fill(ink)
-                            .overlay { Circle().strokeBorder(ribbon, lineWidth: 2) }
-                            .frame(width: size * 0.3, height: size * 0.3)
-                            .offset(x: -size * 0.04, y: size * 0.12)
-                    }
-                }
-            BoxLid(ink: ink, ribbon: ribbon)
-                .frame(width: size, height: size)
-                .rotationEffect(.degrees(lidOpen ? 60 : 0))
-                .offset(x: lidOpen ? size * 0.31 : 0, y: lidOpen ? -size * 1.38 : 0)
-                .opacity(lidOpen ? 0 : 1)
-            if let picture, moment != .boxed {
-                picture
-                    .frame(width: size, height: size)
-                    .scaleEffect(giftScale)
-                    .offset(giftOffset)
-                    .opacity(landed ? 0 : 1)
-            }
-        }
-        .scaleEffect(popped || reduceMotion ? 1 : 0.15, anchor: .bottom)
-        .offset(x: popped || reduceMotion ? 0 : -size * 0.8, y: popped || reduceMotion ? 0 : size * 0.7)
-        .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: moment)
-        .onAppear {
-            landed = moment == .worn || moment == .stowed
-            withAnimation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion)) { popped = true }
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: StageTiming.bob).repeatForever(autoreverses: true)) { bob = true }
-        }
-        .onChange(of: moment) { _, now in
-            guard now == .worn || now == .stowed else { return }
-            // Once there, it fades into the member or the box.
-            Task {
-                try? await Task.sleep(for: .seconds(reduceMotion ? 0 : StageTiming.landing))
-                withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { landed = true }
-            }
-        }
-    }
-
-    private var ink: Color { Color(role: .bgInk, in: theme) }
-    private var ribbon: Color { Color(role: .bgCanvas, in: theme) }
-    /// The lid is off from 拆开 until the gift is back in the box.
-    private var lidOpen: Bool { moment == .floating || moment == .worn }
-
-    private var giftScale: Double {
-        switch moment {
-        case .boxed: 0.2
-        case .floating: 1.7
-        case .worn: 0.9
-        case .stowed: 0.3
-        }
-    }
-
-    private var giftOffset: CGSize {
-        switch moment {
-        case .boxed: CGSize(width: 0, height: size * 0.17)
-        case .floating: CGSize(width: 0, height: -size * 2.07 + (bob ? -size * 0.08 : size * 0.08))
-        case .worn: CGSize(width: size * 1.48, height: -size)
-        case .stowed: CGSize(width: 0, height: size * 0.14)
-        }
-    }
-}
-
-/// The box's body, with its ribbon: the deck's drawing on a 40-point square.
-private struct BoxBody: View {
-    let ink: Color
-    let ribbon: Color
-
-    var body: some View {
-        Canvas { context, size in
-            let unit = size.width / 40
-            let corner = 3 * unit
-            context.fill(
-                Path(
-                    roundedRect: CGRect(x: 6 * unit, y: 16 * unit, width: 28 * unit, height: 20 * unit),
-                    cornerRadius: corner),
-                with: .color(ink))
-            context.fill(
-                Path(CGRect(x: 18 * unit, y: 16 * unit, width: 4 * unit, height: 20 * unit)), with: .color(ribbon))
-        }
-    }
-}
-
-/// The box's lid with its bow, which comes off on 拆开.
-private struct BoxLid: View {
-    let ink: Color
-    let ribbon: Color
-
-    var body: some View {
-        Canvas { context, size in
-            let unit = size.width / 40
-            let corner = 2 * unit
-            context.fill(
-                Path(
-                    roundedRect: CGRect(x: 4 * unit, y: 10 * unit, width: 32 * unit, height: 8 * unit),
-                    cornerRadius: corner),
-                with: .color(ink))
-            context.fill(
-                Path(CGRect(x: 18 * unit, y: 10 * unit, width: 4 * unit, height: 8 * unit)), with: .color(ribbon))
-            var bow = Path()
-            for side in [-1.0, 1.0] {
-                bow.move(to: CGPoint(x: 20 * unit, y: 10 * unit))
-                bow.addCurve(
-                    to: CGPoint(x: (20 + side * 10) * unit, y: 7 * unit),
-                    control1: CGPoint(x: (20 + side * 4) * unit, y: 3 * unit),
-                    control2: CGPoint(x: (20 + side * 11) * unit, y: 3 * unit))
-                bow.addCurve(
-                    to: CGPoint(x: 20 * unit, y: 10 * unit),
-                    control1: CGPoint(x: (20 + side * 9.4) * unit, y: 9 * unit),
-                    control2: CGPoint(x: (20 + side * 5) * unit, y: 10 * unit))
-            }
-            context.fill(bow, with: .color(ribbon))
-            context.stroke(bow, with: .color(ink), lineWidth: 1.5 * unit)
         }
     }
 }

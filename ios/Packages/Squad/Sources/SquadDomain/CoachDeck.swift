@@ -24,6 +24,23 @@ public protocol CoachCardSource: Sendable {
     func answerChallenge(
         _ note: String, in squad: SquadID, with answer: CoachChallengeAnswer, reason: String?
     ) async throws(SquadError) -> CoachChallengeAnswer
+    /// Keeps one part of the member's answer on one card of a coach message they got in `squad`:
+    /// a button tapped, stars given or words typed, once a card; the first stands. Gives back
+    /// everything they answered on the message so far.
+    func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
+        async throws(SquadError) -> [String: CoachMessage.Answered]
+}
+
+/// What a coach message's `feedback` step sends as 意见反馈: the kind its step names and what the
+/// member typed in the card's box.
+public struct MessageFeedback: Hashable, Sendable {
+    /// `problem` or `idea`, as the step names it.
+    public let kind: String
+    public let text: String
+
+    public init(kind: String, text: String) {
+        (self.kind, self.text) = (kind, text)
+    }
 }
 
 /// The coach page (Tracy, 2026-11-08): the coach's cards the member hasn't seen, one at a time in
@@ -63,6 +80,11 @@ public final class CoachDeck {
     @ObservationIgnored private let source: any CoachCardSource
     @ObservationIgnored private let wear: @MainActor (String) async -> Void
     @ObservationIgnored private let changed: @MainActor () -> Void
+    @ObservationIgnored private let openAddress: @MainActor (String) -> Void
+    @ObservationIgnored private let sendFeedback: @MainActor (MessageFeedback) async -> Bool
+    /// The message cards whose words already went as 意见反馈, so a tap tried again doesn't send
+    /// them twice.
+    @ObservationIgnored private var feedbackSent: Set<String> = []
     /// Cards swiped away whose seen mark didn't reach the server yet; the next read sends them again.
     @ObservationIgnored private var unmarked: [CoachPageCard.Key] = []
     /// The cards swiped away on this page, newest first, which a read already on its way doesn't
@@ -71,12 +93,17 @@ public final class CoachDeck {
     @ObservationIgnored private var earlierNext: String?
 
     /// `wear` puts a gift on the member's character (立刻穿上) once it is opened; `changed` is
-    /// called after a gift is opened or a card seen, so 我's wardrobe and 今天 read again.
+    /// called after a gift is opened or a card seen, so 我's wardrobe and 今天 read again. A coach
+    /// message's buttons `open` a place by its address and send the card's words as 意见反馈 with
+    /// `sendFeedback`, true once they went.
     public init(
         squad: SquadID, source: any CoachCardSource, wear: @escaping @MainActor (String) async -> Void = { _ in },
-        changed: @escaping @MainActor () -> Void = {}
+        changed: @escaping @MainActor () -> Void = {},
+        open: @escaping @MainActor (String) -> Void = { _ in },
+        sendFeedback: @escaping @MainActor (MessageFeedback) async -> Bool = { _ in false }
     ) {
         (self.squad, self.source, self.wear, self.changed) = (squad, source, wear, changed)
+        (self.openAddress, self.sendFeedback) = (open, sendFeedback)
     }
 
     /// The card on top, or nil once everything is seen (「暂时没有新消息」).
@@ -202,6 +229,61 @@ public final class CoachDeck {
         } catch {
             failed = card.key
         }
+    }
+
+    /// Stars given on a message's card, once; they show at once and stand once the server has them.
+    public func give(_ stars: Int, on card: CoachPageCard, at path: String) async {
+        guard let message = current(card).message, message.card(at: path)?.stars == true,
+            message.answered[path]?.stars == nil, (1...5).contains(stars), !sending.contains(card.key)
+        else { return }
+        var shown = message.answered
+        let before = shown[path]
+        shown[path] = CoachMessage.Answered(tap: before?.tap, stars: stars, text: before?.text)
+        replace(card.with(message: message.with(answered: shown)))
+        sending.insert(card.key)
+        defer { sending.remove(card.key) }
+        do {
+            let answered = try await source.answerMessage(card.id, in: squad, on: path, .stars(stars))
+            failed = nil
+            replace(card.with(message: message.with(answered: answered)))
+        } catch {
+            failed = card.key
+            replace(card.with(message: message))
+        }
+    }
+
+    /// A button tapped on a message's card, with what was typed in its box: its words go as
+    /// 意见反馈 first when a step says so (and the button waits for something typed), then the
+    /// words and the tap are kept, which turns the card or folds it to its thanks, and last a
+    /// place it opens. A step that fails leaves the card as it was, to tap again.
+    public func tap(_ button: CoachMessage.Button, on card: CoachPageCard, at path: String, typed: String = "") async {
+        guard let message = current(card).message, let shown = message.card(at: path),
+            shown.buttons.contains(button), !sending.contains(card.key)
+        else { return }
+        let words = shown.input == nil ? nil : CoachMessage.text(typed)
+        if button.sendsFeedback, words == nil { return }
+        sending.insert(card.key)
+        defer { sending.remove(card.key) }
+        let sent = "\(card.id):\(path)"
+        for case .feedback(let kind) in button.tap where !feedbackSent.contains(sent) {
+            guard let words, await sendFeedback(MessageFeedback(kind: kind, text: words)) else {
+                failed = card.key
+                return
+            }
+            feedbackSent.insert(sent)
+        }
+        do {
+            if let words, message.answered[path]?.text == nil {
+                _ = try await source.answerMessage(card.id, in: squad, on: path, .text(words))
+            }
+            let answered = try await source.answerMessage(card.id, in: squad, on: path, .tap(button.id))
+            failed = nil
+            replace(card.with(message: message.with(answered: answered)))
+        } catch {
+            failed = card.key
+            return
+        }
+        for case .open(let address) in button.tap { openAddress(address) }
     }
 
     /// The card of the challenge `note` set (a challenge's card has its note's id), as it stands

@@ -41,6 +41,10 @@ public struct FeedbackMessage: Hashable, Sendable {
     public let text: FeedbackText
     public let screenshots: [Data]
     public let app: FeedbackApp
+
+    public init(id: UUID, kind: FeedbackKind, text: FeedbackText, screenshots: [Data], app: FeedbackApp) {
+        (self.id, self.kind, self.text, self.screenshots, self.app) = (id, kind, text, screenshots, app)
+    }
 }
 
 /// Why a message didn't go, by what the member can do about it.

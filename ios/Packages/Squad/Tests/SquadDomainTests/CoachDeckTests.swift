@@ -29,6 +29,9 @@ private final class CardsInMemory: CoachCardSource {
         var down = false
         /// The challenges' day is over on the server.
         var dayOver = false
+        /// What the member answered on coach messages, by path; the first part stands.
+        var messageAnswers: [String: CoachMessage.Answered] = [:]
+        var parts: [(path: String, part: CoachMessage.Part)] = []
     }
 
     let state: Mutex<State>
@@ -84,6 +87,23 @@ private final class CardsInMemory: CoachCardSource {
             let standing = state.answers[note] ?? answer
             state.answers[note] = standing
             return standing
+        }
+    }
+
+    func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
+        async throws(SquadError) -> [String: CoachMessage.Answered]
+    {
+        try state.withLock { state throws(SquadError) in
+            if state.down { throw .unavailable }
+            state.parts.append((path, part))
+            let was = state.messageAnswers[path] ?? CoachMessage.Answered()
+            state.messageAnswers[path] =
+                switch part {
+                case .tap(let button): CoachMessage.Answered(tap: was.tap ?? button, stars: was.stars, text: was.text)
+                case .stars(let stars): CoachMessage.Answered(tap: was.tap, stars: was.stars ?? stars, text: was.text)
+                case .text(let text): CoachMessage.Answered(tap: was.tap, stars: was.stars, text: was.text ?? text)
+                }
+            return state.messageAnswers
         }
     }
 }
