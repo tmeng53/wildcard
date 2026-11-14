@@ -60,7 +60,7 @@ extension Figure {
         return painted
     }
 
-    /// Paints every layer held in a hand the colors of that hand.
+    /// Paints every layer held in a hand the colors of that hand, and marks it as a hand.
     static func paintHands(
         _ built: inout [Part], held: [(part: Int, layer: Int, hand: PartID)],
         bodies: [PartID: Artwork], skin: Rig.Skin?
@@ -68,6 +68,7 @@ extension Figure {
         for (part, layer, hand) in held {
             guard let skin, let paint = Self.hand(bodies[hand]) else { throw .noHand(hand) }
             built[part].art[layer] = Self.painted(built[part].art[layer], from: skin, to: paint)
+            built[part].hands.insert(layer)
         }
     }
 }
