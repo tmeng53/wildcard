@@ -96,6 +96,13 @@ const fields = {
     .describe(
       'How each kind of wake goes (a check-in, a reply or @ to the coach, a new day) and how the coach keeps its memory, Chinese; after each coach’s soul. `{replyLimit}` and `{noteLimit}` stand for the longest reply and the longest 战术板 line or 便条 in Chinese (English has its own, longer limits, which each tool states), which the API puts in.',
     ),
+  replyRules: z
+    .string()
+    .min(1)
+    .max(20_000)
+    .describe(
+      'How the coach answers a post or a comment written to it, Chinese: the instructions of a reply, after the coach’s soul. Only a reply reads them, never the shared rules or wakes.',
+    ),
   challengeModel: CoachModel.describe(
     'The model that sets each member’s day challenge on the daily wake, before the coach writes its notes in its own voice (openai/model). Without a price in the AI usage settings, the coach’s own model sets them.',
   ),

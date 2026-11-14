@@ -24,6 +24,7 @@ const settings = EvalSettings.parse({
     dreamReasoning: 'high',
     rules: '规矩',
     wakes: '醒来',
+    replyRules: '回复',
     challengeModel: 'openai/gpt-6-luna',
     challengeRules: '挑战',
     noteHour: 8,
@@ -149,7 +150,7 @@ describe('the coach eval harness', () => {
   it('runs the real check-in wake: its task, its tools and what it saves', async () => {
     const agent = scripted([
       ['react', { emoji: '😂' }],
-      ['reply', { text: '商场逛 20 分钟，腿也算动过了' }],
+      ['reply', { point: '逛商场也算动了', text: '商场逛 20 分钟，腿也算动过了' }],
     ]);
     const outcome = await runTrial(squats, { settings, agent });
 
@@ -178,7 +179,7 @@ describe('the coach eval harness', () => {
       replies: [{ checkIn: 'basketball', text: '深蹲 50 个还等你收尾呢' }],
       wake: { kind: 'comment', checkIn: 'basketball', comment: 'oops' },
     });
-    const agent = scripted([['answer', { text: '行，深蹲那页我撕了' }]]);
+    const agent = scripted([['reply', { point: '不做深蹲了', text: '行，深蹲那页我撕了' }]]);
     const outcome = await runTrial(commentCase, { settings, agent });
 
     expect(agent.seen.task).toContain('oops不准备做了');
@@ -199,7 +200,7 @@ describe('the coach eval harness', () => {
     const run = await runEval({
       cases: [squats],
       settings,
-      agent: scripted([['reply', { text: '商场也是赛道' }]]),
+      agent: scripted([['reply', { point: '逛商场', text: '商场也是赛道' }]]),
       trials: 2,
     });
     expect(run.cases[0]?.trials.map(({ pass }) => pass)).toEqual([true, true]);
@@ -216,7 +217,7 @@ describe('the coach eval harness', () => {
     const run = await runEval({
       cases: [judged],
       settings,
-      agent: scripted([['reply', { text: '商场也是赛道' }]]),
+      agent: scripted([['reply', { point: '逛商场', text: '商场也是赛道' }]]),
       trials: 1,
     });
     expect(run.cases[0]?.trials.map(({ pass, skipped }) => [pass, skipped])).toEqual([

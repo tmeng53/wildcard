@@ -13,6 +13,7 @@ import {
 import { Challenge, CHALLENGE_AMOUNT_MAX, challengeText } from '../../domain/challenge.js';
 import { fitsLine, limitWords } from '../../domain/line-limits.js';
 import type { GiftOptions } from '../../domain/prompt.js';
+import { PostNumbers } from '../../domain/reply-task.js';
 import { CoachEmoji, lineProblem } from '../../domain/reply.js';
 import {
   checkInBlock,
@@ -100,7 +101,7 @@ function defineTool<Shape extends z.ZodObject>(
 }
 
 /**
- * A line that @s teammates (队员N, as the model names them): each gets 「@昵称」 at the front
+ * A line that @s teammates (by name, as the model knows them): each gets 「@昵称」 at the front
  * unless the line already has it, and their ids, or why it can't be said.
  */
 export function mentioning(
@@ -168,7 +169,7 @@ const atParameter = z
   .max(3)
   .optional()
   .describe(
-    '要 @ 的队友，填 队员N（评论区里谁都能 @；你回的那个人不用 @）；对方会收到推送，句首自动加上「@昵称」',
+    '要 @ 的队友，填名字（评论区里谁都能 @；你回的那个人不用 @）；对方会收到推送，句首自动加上「@名字」',
   );
 
 /**
@@ -191,7 +192,10 @@ export function toolbox({
   gifting,
   to,
   relaying = 'nothing',
+  numbers = new PostNumbers(),
 }: {
+  /** Each post's number for the run, the same as the task's. */
+  readonly numbers?: PostNumbers;
   readonly week: SquadWeek;
   readonly roster: ReadonlyMap<string, string>;
   /** The coach at work, by id: its own page is `me.md`. */
@@ -240,7 +244,7 @@ export function toolbox({
       }),
       run: async ({ weeks_ago: weeksAgo = 0 }) => weekText(await weekAgo(weeksAgo)),
     }),
-    ...postTools(draft.steps, { roster, weekAgo, commentsOf }),
+    ...postTools(draft.steps, { roster, weekAgo, commentsOf, numbers }),
     defineTool(draft.steps, {
       name: 'recall',
       reads: true,
@@ -250,7 +254,7 @@ export function toolbox({
         path: z
           .string()
           .optional()
-          .describe('只查一个文件，如 people/队员1.md、memory.md、squad.md、me.md；不填查全部'),
+          .describe('只查一个文件，如 people/名字.md、memory.md、squad.md、me.md；不填查全部'),
         query: z
           .string()
           .optional()
@@ -278,9 +282,9 @@ export function toolbox({
         path: z
           .string()
           .describe(
-            `记到哪：${['squad.md', 'memory.md', 'me.md', 'people/队员N.md'].map((path) => `${path}（${fileRole(path)}）`).join('，')}`,
+            `记到哪：${['squad.md', 'memory.md', 'me.md', 'people/名字.md'].map((path) => `${path}（${fileRole(path)}）`).join('，')}`,
           ),
-        fact: z.string().describe('要记的这件事，一句话，用队员N称呼人'),
+        fact: z.string().describe('要记的这件事，一句话，用名字称呼人'),
       }),
       kept: ({ path, fact }) => ({ path, fact: `（${String(fact.length)} 字）` }),
       run: ({ path, fact }) => {
@@ -300,7 +304,7 @@ export function toolbox({
       description:
         '改记性，让它保持准确、不重复：把一个文件里 find 的原文换成 replace，replace 为空就是删。find 照抄原文（先用 recall 查出来），必须正好出现一次。',
       parameters: z.object({
-        path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
+        path: z.string().describe('文件路径，如 memory.md、me.md、people/名字.md'),
         find: z.string().describe('要换掉的原文，照抄'),
         replace: z.string().describe('换成的新内容'),
       }),
@@ -321,7 +325,15 @@ export function toolbox({
       },
     }),
   ];
-  if (facts !== undefined) {
+  // A reply reads the posts it needs by number and remembers as it goes; the week's whole list,
+  // the stats and tidying the files are the morning's and the night's (Tracy, 2026-11-14).
+  const replying = kind === 'checkIn' || kind === 'comment';
+  if (replying) {
+    const kept = tools.filter(({ name }) => name !== 'squad_week' && name !== 'edit_file');
+    tools.length = 0;
+    tools.push(...kept);
+  }
+  if (facts !== undefined && !replying) {
     tools.push(
       defineTool(draft.steps, {
         name: 'member_stats',
@@ -401,8 +413,8 @@ export function toolbox({
         name: 'rewrite_file',
         description: `把记性里的一个文件整个换成新写的内容：留下的照写，删掉的不写。body 为空就是清空。不超过 ${String(FILE_LIMIT)} 字。`,
         parameters: z.object({
-          path: z.string().describe('文件路径，如 memory.md、me.md、people/队员1.md'),
-          body: z.string().describe('这个文件的全部新内容，用队员N称呼人'),
+          path: z.string().describe('文件路径，如 memory.md、me.md、people/名字.md'),
+          body: z.string().describe('这个文件的全部新内容，用名字称呼人'),
         }),
         kept: ({ path, body }) => ({ path, body: `（${String(body.length)} 字）` }),
         run: ({ path, body }) => {
@@ -419,50 +431,49 @@ export function toolbox({
       }),
     );
   }
-  if (kind === 'checkIn') {
+  if (replying) {
     tools.push(
       defineTool(draft.steps, {
         name: 'reply',
-        description: `回这条打卡一句：显示在这条动态的评论里，带「教练」标志，全队都看得到。一条打卡只回一句，再回会换掉这句。${limitWords('reply')}。`,
-        parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
+        description: `${kind === 'checkIn' ? '在这条动态下回一句' : '回复对方写给你的这句'}：显示在评论区，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。${limitWords('reply')}。`,
+        parameters: z.object({
+          point: z
+            .string()
+            .describe(
+              '先想清楚：他这条最在意的是什么，你要接住的是哪件事。只记在你自己这里，谁都看不到',
+            ),
+          text: z.string().describe('回的这一句'),
+          at: atParameter,
+        }),
         run: ({ text, at = [] }) => {
           const said = mentioning({ line: text.trim(), at, to }, { week, roster });
           if (typeof said === 'string') return said;
           const problem = lineProblem(said.line, 'reply');
           if (problem !== undefined) return problem;
-          const replaced = draft.reply !== undefined;
-          draft.reply = said.line;
-          draft.replyMentions = said.mentions;
+          if (kind === 'checkIn') {
+            const replaced = draft.reply !== undefined;
+            draft.reply = said.line;
+            draft.replyMentions = said.mentions;
+            return replaced ? '已换成这句。' : '已回复。';
+          }
+          const replaced = draft.answer !== undefined;
+          draft.answer = said.line;
+          draft.answerMentions = said.mentions;
           return replaced ? '已换成这句。' : '已回复。';
         },
       }),
+    );
+  }
+  if (kind === 'checkIn') {
+    tools.push(
       defineTool(draft.steps, {
         name: 'react',
-        description: '给这条打卡点一个表情，带「教练」标志。一条打卡只点一个，再点会换掉。',
+        description: '给这条动态点一个表情，带「教练」标志。一条只点一个，再点会换掉。',
         parameters: z.object({ emoji: CoachEmoji.describe('点的表情') }),
         run: ({ emoji }) => {
           const replaced = draft.reaction !== undefined;
           draft.reaction = emoji;
           return replaced ? `已换成 ${emoji}。` : `已点 ${emoji}。`;
-        },
-      }),
-    );
-  }
-  if (kind === 'comment') {
-    tools.push(
-      defineTool(draft.steps, {
-        name: 'answer',
-        description: `回复这位队员回你的这句：显示在评论里，是你回复对方，带「教练」标志，全队都看得到，对方会收到推送。只回一句，再回会换掉这句。${limitWords('reply')}。`,
-        parameters: z.object({ text: z.string().describe('回的这一句'), at: atParameter }),
-        run: ({ text, at = [] }) => {
-          const said = mentioning({ line: text.trim(), at, to }, { week, roster });
-          if (typeof said === 'string') return said;
-          const problem = lineProblem(said.line, 'reply');
-          if (problem !== undefined) return problem;
-          const replaced = draft.answer !== undefined;
-          draft.answer = said.line;
-          draft.answerMentions = said.mentions;
-          return replaced ? '已换成这句。' : '已回复。';
         },
       }),
     );
@@ -520,16 +531,17 @@ function postTools(
     roster,
     weekAgo,
     commentsOf,
+    numbers,
   }: {
     readonly roster: ReadonlyMap<string, string>;
     readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
     readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
+    readonly numbers: PostNumbers;
   },
 ): CoachTool[] {
-  const listed = new Map<string, WeekCheckIn>();
   return [
-    memberPostsTool(steps, { roster, weekAgo, listed }),
-    postCommentsTool(steps, { listed, commentsOf }),
+    memberPostsTool(steps, { roster, weekAgo, numbers }),
+    postCommentsTool(steps, { numbers, commentsOf }),
   ];
 }
 
@@ -553,37 +565,31 @@ export function challengeTools(
 ): CoachTool[] {
   return [
     challengeTool(draft, { roster: names, noteTo }),
-    postCommentsTool(draft.steps, { listed: new Map(numbered), commentsOf }),
+    postCommentsTool(draft.steps, { numbers: PostNumbers.numbered(numbered), commentsOf }),
   ];
 }
 
-/** `member_posts`: a member's posts, each numbered (动态N) into `listed` for `post_comments`. */
+/** `member_posts`: a member's posts, each numbered (动态N) for `post_comments`. */
 function memberPostsTool(
   steps: WakeStep[],
   {
     roster,
     weekAgo,
-    listed,
+    numbers,
   }: {
     readonly roster: ReadonlyMap<string, string>;
     readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
-    readonly listed: Map<string, WeekCheckIn>;
+    readonly numbers: PostNumbers;
   },
 ): CoachTool {
-  const numberOf = (checkIn: WeekCheckIn): string => {
-    const known = [...listed].find(([, each]) => each.id === checkIn.id)?.[0];
-    if (known !== undefined) return known;
-    const number = `动态${String(listed.size + 1)}`;
-    listed.set(number, checkIn);
-    return number;
-  };
+  const numberOf = (checkIn: WeekCheckIn): string => numbers.of(checkIn);
   return defineTool(steps, {
     name: 'member_posts',
     reads: true,
     description:
       '看一个队员最近发的动态，新的在前：每条是什么、写了什么、几张照片、几条评论。评论里有人问到某个人、要拿人比较，或者你想知道一个人最近怎么样，就先看他的动态再说，别猜。',
     parameters: z.object({
-      member: z.string().describe('看谁：队员N'),
+      member: z.string().describe('看谁：名字'),
       weeks: z
         .number()
         .int()
@@ -622,14 +628,14 @@ function memberPostsTool(
   });
 }
 
-/** `post_comments`: the comment section under a post `listed` numbered. */
+/** `post_comments`: the comment section under a post by its number. */
 function postCommentsTool(
   steps: WakeStep[],
   {
-    listed,
+    numbers,
     commentsOf,
   }: {
-    readonly listed: ReadonlyMap<string, WeekCheckIn>;
+    readonly numbers: PostNumbers;
     readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   },
 ): CoachTool {
@@ -640,11 +646,11 @@ function postCommentsTool(
       '看一条动态下面的评论区，先后顺序，你自己说过的也在里面。动态的编号在任务里，或者从 member_posts 来。',
     parameters: z.object({ post: z.string().describe('哪条：动态N') }),
     run: async ({ post }) => {
-      const checkIn = listed.get(post.trim());
+      const checkIn = numbers.find(post);
       if (checkIn === undefined) {
-        return listed.size === 0
+        return numbers.size === 0
           ? `没有 ${post}；先找到那条动态的编号。`
-          : `没有 ${post}；能看的是：${[...listed.keys()].join('、')}。`;
+          : `没有 ${post}；能看的是：${numbers.numbers().join('、')}。`;
       }
       if (checkIn.unposted === true) return `${post} 只记录，没发动态，没有评论。`;
       let said: readonly string[];
@@ -714,7 +720,7 @@ function giveGift(
     name: 'give_gift',
     description: `送一个队员一件衣服，配一句话，只有他看得到。每人一周最多一件，而且只在真有理由的时候送，大多数周谁都不送。理由要是一段时间的样子，只练了一次不算。一次醒来一人最多一件，再送会换掉。话${limitWords('gift')}。`,
     parameters: z.object({
-      member: z.string().describe('送给谁：队员N'),
+      member: z.string().describe('送给谁：名字'),
       piece: z.string().describe('送哪件：任务里礼物清单的 id'),
       line: z.string().describe('送的时候说的一句'),
     }),
@@ -755,7 +761,7 @@ function challengeFits({ title, unit, line }: Challenge): boolean {
  * keeps its own voice in the note). What makes a good one is the settings' `challengeRules`. It
  * first says how the member has been and what they need today (Tracy, 2026-11-14: force a
  * structured thought), which only the wake's steps keep: the member never sees it. Members go by
- * their names here (`challengeNames`), not 队员N.
+ * their names here (`rosterOf`), not 队员N.
  */
 export function challengeTool(
   draft: WakeDraft,
@@ -842,7 +848,7 @@ function noteTool(
     const done = replaced ? `已换成这张，给 ${member}` : `便条写好了，给 ${member}`;
     return set === undefined ? `${done}。` : `${done}，下面附着挑战「${challengeText(set)}」。`;
   };
-  const member = z.string().describe('写给谁：队员N');
+  const member = z.string().describe('写给谁：名字');
   // Kept by length: it is about the member, and stays in its own table.
   const kept = ({ text, ...rest }: { readonly text: string }) => ({
     ...rest,

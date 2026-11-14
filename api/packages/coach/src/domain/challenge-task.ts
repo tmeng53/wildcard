@@ -2,7 +2,7 @@ import { writeIn } from '@wildcard/language-model';
 
 import { challengeHow, challengeText, type DayChallengeFacts } from './challenge.js';
 import { planDayWords, planIndexOf, type NoteBrief } from './member-facts.js';
-import { dayWords, postWhat, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import { dayWords, postWhat, type WeekCheckIn } from './squad-week.js';
 
 // The task of the run that sets each member's day challenge (Tracy, 2026-11-14: start from first
 // principles). It reads only what a challenge is set from, member by member under their names:
@@ -17,19 +17,6 @@ export interface ChallengeMember {
   readonly brief: NoteBrief;
   /** Their page in the coach's memory, with names, when it has one. */
   readonly about?: string;
-}
-
-/** The members' names for this run: each one's nickname, numbered when two share one. */
-export function challengeNames(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, string> {
-  const names = new Map<string, string>();
-  const taken = new Map<string, number>();
-  week.members.forEach(({ member, nickname }, index) => {
-    const name = nickname ?? `队员${String(index + 1)}`;
-    const seen = (taken.get(name) ?? 0) + 1;
-    taken.set(name, seen);
-    names.set(member, seen === 1 ? name : `${name}（${String(seen)}）`);
-  });
-  return names;
 }
 
 /**

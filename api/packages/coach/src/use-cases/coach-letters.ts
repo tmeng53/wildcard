@@ -144,13 +144,8 @@ async function taskFor(
 ): Promise<string> {
   const week = await deps.squadWeek({ squad, weekStart: mondayOf(day) });
   const consented = new Set(await deps.aiConsented(week.members.map(({ member }) => member)));
-  const roster = rosterOf(week);
-  const nicknames = new Map(
-    consentedOnly(week, consented).members.flatMap(({ member, nickname }) => {
-      const name = roster.get(member);
-      return name === undefined || nickname === undefined ? [] : [[name, nickname] as const];
-    }),
-  );
+  // Members without a current AI consent stay 队员N, their nicknames unread.
+  const roster = rosterOf(consentedOnly(week, consented));
   const files = new Map<string, string>();
   for (const [path, body] of await deps.memory.files(squad)) {
     const member = memberOfPath(path);
@@ -171,7 +166,7 @@ async function taskFor(
     to,
     history,
     names: new Map([...coaches].map(([id, coach]) => [id, coach.name])),
-    nicknames,
+    members: [...roster.values()],
     memory: memoryBlock(files),
   });
 }

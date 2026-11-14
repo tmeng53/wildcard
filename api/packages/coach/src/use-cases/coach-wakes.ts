@@ -1,6 +1,6 @@
 import type { TokenUsage } from '@wildcard/language-model';
 import type { Challenge } from '../domain/challenge.js';
-import { challengeNames, challengeTaskOf } from '../domain/challenge-task.js';
+import { challengeTaskOf } from '../domain/challenge-task.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   memberOfPath,
@@ -12,9 +12,16 @@ import {
   type StoredPath,
 } from '../domain/memory.js';
 import {
+  PostNumbers,
+  replyInstructionsOf,
+  replyTaskOf,
+  type ReplyFacts,
+} from '../domain/reply-task.js';
+import {
   instructionsOf,
   saidLines,
   taskOf,
+  todayLines,
   type CoachThread,
   type DayTalk,
   type PastDays,
@@ -666,27 +673,9 @@ async function think(
         ),
       })
     : undefined;
-  // On a check-in's wake, the challenge its author got on today's note, only once they took it up:
-  // told one they let go or never answered, the coach brought it up under every post they made
-  // (Tracy, 2026-11-14).
+  // Whom a line on this wake is for, and what they said here the coach may pass on.
   const author = addresseeOf(week, wake.reason);
   const heard = heardOf(week, wake.reason);
-  const dayChallenge =
-    wake.reason.kind === 'checkIn' && author !== undefined
-      ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: author, day })
-      : undefined;
-  const challenge =
-    dayChallenge?.answer === 'accepted' || dayChallenge?.completion !== undefined
-      ? dayChallenge
-      : undefined;
-  // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
-  const { reason } = wake;
-  const leave =
-    reason.kind === 'checkIn' ? week.checkIns.find(({ id }) => id === reason.checkIn) : undefined;
-  const keptStreaks =
-    leave?.kind === 'disclaimer'
-      ? await deps.streaks({ squad: wake.squad, member: leave.member })
-      : undefined;
   const facts = {
     reason: wake.reason,
     week,
@@ -702,25 +691,7 @@ async function think(
     recentNotes: daily
       ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
       : [],
-    ...(thread === undefined ? {} : { thread: thread.thread }),
-    ...(challenge === undefined
-      ? {}
-      : {
-          challenge: {
-            challenge: challenge.challenge,
-            ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
-          },
-        }),
     ...(gifting === undefined ? {} : { gifting }),
-    ...(keptStreaks === undefined ? {} : { keptStreaks }),
-    recentEmoji:
-      wake.reason.kind === 'checkIn'
-        ? await deps.stores.replies.recent({
-            squad: wake.squad,
-            coach: coach.id,
-            limit: RECENT_EMOJI,
-          })
-        : [],
     talks: looksBack
       ? await talksOf(deps, {
           squad: wake.squad,
@@ -729,22 +700,6 @@ async function think(
           since: new Date(now.getTime() - (dream ? DREAM_DAYS : 1) * DAY_MS),
         })
       : [],
-    // On a check-in's or a reply's wake, what this member and the coach said to each other under
-    // other posts over the last day, so a line here follows from what was said there.
-    ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') && author !== undefined
-      ? {
-          talkWith: {
-            member: author,
-            talks: await talksOf(deps, {
-              squad: wake.squad,
-              week,
-              coach,
-              since: new Date(now.getTime() - DAY_MS),
-              between: { member: author, except: wake.reason.checkIn },
-            }),
-          },
-        }
-      : {}),
     ...(wake.reason.kind === 'daily' || wake.reason.kind === 'joined'
       ? {
           noteTo: await briefsOf(deps, {
@@ -798,13 +753,42 @@ async function think(
       author,
     });
   }
-  const task = taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) });
+  // A reply (to a post, or to a line written to the coach) has its own instructions and a task
+  // of only what it needs, its posts by number (Tracy, 2026-11-14).
+  const numbers = new PostNumbers(week.checkIns);
+  const replying =
+    wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment'
+      ? await replyFactsOf(deps, {
+          wake,
+          week,
+          roster,
+          numbers,
+          files,
+          coach,
+          today: todayLines(facts),
+          to: author,
+          day,
+          now,
+          zone,
+          thread,
+        })
+      : undefined;
+  if ((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') && replying === undefined)
+    return undefined;
+  const task =
+    replying === undefined
+      ? taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) })
+      : replyTaskOf(replying);
   if (task === undefined) return undefined;
   const runsOn = modelOf(settings, wake.reason.kind);
+  // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
+  const speaking = coachIn(coach, week.language ?? 'zh-Hans');
   const run = await deps.agent.run({
     ...runsOn,
-    // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
-    instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
+    instructions:
+      replying === undefined
+        ? instructionsOf(settings, speaking)
+        : replyInstructionsOf(settings, speaking),
     task,
     tools: toolbox({
       week,
@@ -812,6 +796,7 @@ async function think(
       coach: coach.id,
       draft,
       kind: wake.reason.kind,
+      numbers,
       to: author,
       relaying: heard !== undefined ? 'heard' : 'nothing',
       ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') &&
@@ -998,8 +983,11 @@ async function briefsOf(
     members,
     day,
     record = false,
+    weather: withWeather = true,
   }: {
     readonly record?: boolean;
+    /** Whether to read the weather, which only the day's notes use. */
+    readonly weather?: boolean;
     readonly squad: string;
     readonly week: SquadWeek;
     readonly roster: ReadonlyMap<string, string>;
@@ -1013,7 +1001,7 @@ async function briefsOf(
       : await deps.memberFacts({ squad, members, weekStart: week.weekStart }).catch(() => []);
   // The weather is a nice-to-have: a morning note goes out without it.
   const weather =
-    members.length === 0
+    members.length === 0 || !withWeather
       ? new Map<string, WeatherWords>()
       : await deps.weatherOf({ members, day }).catch(() => new Map<string, WeatherWords>());
   return members.flatMap((member): NoteBrief[] => {
@@ -1031,11 +1019,9 @@ async function briefsOf(
         (a, b) => a.day.localeCompare(b.day) || a.createdAt.getTime() - b.createdAt.getTime(),
       )
       .map((each) => ({ day: each.day, what: postWhat(each) }));
-    const nickname = week.members.find((each) => each.member === member)?.nickname;
     return [
       {
         name,
-        ...(nickname === undefined ? {} : { nickname }),
         ...(record && mine !== undefined
           ? {
               record: {
@@ -1094,7 +1080,7 @@ async function setChallenges(
     readonly author: string | undefined;
   },
 ): Promise<number> {
-  const names = challengeNames(week);
+  const names = rosterOf(week);
   const briefOf = new Map(briefs.map((brief) => [brief.name, brief]));
   // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
   const posts = [
@@ -1518,6 +1504,127 @@ async function threadOf(
   });
   // Without the time now and each comment's, the coach takes an old @ for one just written.
   return { thread: { now: clockWords(now, zone), said }, commenter: answering.member };
+}
+
+/**
+ * What a reply's task needs: the post, the member it answers with their day and week, what the
+ * coach knows of them, and, on a comment's wake, what was said under the post. `undefined` when
+ * the post or the member is gone.
+ */
+async function replyFactsOf(
+  deps: CoachWakesDependencies,
+  {
+    wake,
+    week,
+    roster,
+    numbers,
+    files,
+    coach,
+    today,
+    to,
+    day,
+    now,
+    zone,
+    thread,
+  }: {
+    readonly wake: Thought;
+    readonly week: SquadWeek;
+    readonly roster: ReadonlyMap<string, string>;
+    readonly numbers: PostNumbers;
+    readonly files: ReadonlyMap<string, string | undefined>;
+    readonly coach: Coach;
+    /** What is special about today: a holiday, a coach back again, a handover. */
+    readonly today: readonly string[];
+    readonly to: string | undefined;
+    readonly day: string;
+    readonly now: Date;
+    readonly zone: string;
+    readonly thread: { readonly thread: CoachThread } | undefined;
+  },
+): Promise<ReplyFacts | undefined> {
+  const { reason } = wake;
+  if ((reason.kind !== 'checkIn' && reason.kind !== 'comment') || to === undefined) {
+    return undefined;
+  }
+  const post = week.checkIns.find(({ id }) => id === reason.checkIn);
+  if (post === undefined) return undefined;
+  const answering =
+    reason.kind === 'comment' ? post.comments.find(({ id }) => id === reason.comment) : undefined;
+  if (reason.kind === 'comment' && (answering === undefined || thread === undefined)) {
+    return undefined;
+  }
+  const [brief] = await briefsOf(deps, {
+    squad: wake.squad,
+    week,
+    roster,
+    members: [to],
+    day,
+    weather: false,
+  });
+  const name = roster.get(to);
+  const pagePath = name === undefined ? undefined : `people/${name}.md`;
+  // The challenge its author got on today's note, told only once they took it up.
+  const challenge =
+    reason.kind === 'checkIn'
+      ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: to, day })
+      : undefined;
+  // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
+  const keptStreaks =
+    reason.kind === 'checkIn' && post.kind === 'disclaimer'
+      ? await deps.streaks({ squad: wake.squad, member: post.member })
+      : undefined;
+  // The posts where this member and the coach talked over the last day, by number, to look up.
+  const talks = await talksOf(deps, {
+    squad: wake.squad,
+    week,
+    coach,
+    since: new Date(now.getTime() - DAY_MS),
+    between: { member: to, except: reason.checkIn },
+  });
+  const recentEmoji =
+    reason.kind === 'checkIn'
+      ? await deps.stores.replies.recent({
+          squad: wake.squad,
+          coach: coach.id,
+          limit: RECENT_EMOJI,
+        })
+      : [];
+  return {
+    kind: reason.kind,
+    week,
+    roster,
+    numbers,
+    post,
+    to,
+    now: clockWords(now, zone),
+    at: answering?.at ?? post.createdAt,
+    ...(thread === undefined
+      ? {}
+      : {
+          thread: {
+            lines: saidLines(thread.thread.said, roster),
+            mention: answering?.toCoach === undefined && answering?.mentionsCoach !== undefined,
+          },
+        }),
+    ...(brief === undefined ? {} : { brief }),
+    day,
+    // Only a challenge the member took up: one let go or unanswered isn't the post's business.
+    ...(challenge !== undefined &&
+    (challenge.answer === 'accepted' || challenge.completion !== undefined)
+      ? {
+          challenge: {
+            challenge: challenge.challenge,
+            ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
+          },
+        }
+      : {}),
+    talkedUnder: talks.map(({ checkIn }) => checkIn),
+    ...(keptStreaks === undefined ? {} : { keptStreaks }),
+    ...(pagePath === undefined ? {} : { page: { path: pagePath, body: files.get(pagePath) } }),
+    today,
+    recentEmoji,
+    language: languageOf(week, to),
+  };
 }
 
 /** Every coach's name in the squad's language, as members read them, by id. */

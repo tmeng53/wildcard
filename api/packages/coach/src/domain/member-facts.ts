@@ -1,6 +1,6 @@
 // What the coach can look up about each member beyond this week: their counts since they joined,
 // the sport they train most, the weekly titles they won, this week's plan (出赛表) and its
-// 饮食小目标. The model sees each member as 队员N.
+// 饮食小目标. The model sees each member by name.
 
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
@@ -74,10 +74,8 @@ export interface WeekPost {
 
 /** What the daily wake tells the coach about one member it writes a morning note to. */
 export interface NoteBrief {
-  /** The member as the model knows them: 队员N. */
+  /** The member as the model knows them: their name. */
   readonly name: string;
-  /** The nickname squadmates know them by, if they gave one. */
-  readonly nickname?: string;
   /** What they did before, ever: for a member who just joined, whom the coach knows nothing of. */
   readonly record?: {
     readonly trainedDays: number;
@@ -124,7 +122,7 @@ function postsWords(posts: readonly WeekPost[]): string {
  * fact a line under their name.
  */
 export function briefBlock(brief: NoteBrief): string {
-  const lines = [`### ${brief.name}${brief.nickname === undefined ? '' : `（${brief.nickname}）`}`];
+  const lines = [`### ${brief.name}`];
   if (brief.record !== undefined) {
     const top = brief.record.topSport;
     lines.push(
