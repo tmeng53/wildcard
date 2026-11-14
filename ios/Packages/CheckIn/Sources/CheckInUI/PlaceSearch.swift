@@ -21,9 +21,11 @@ struct FoundPlace: Identifiable, Hashable, Sendable {
 /// A suggestion Apple Maps makes for what the member is typing: a place, an address or a kind of
 /// place ("餐厅"), as its search box makes them.
 struct Suggestion: Identifiable {
-    let id: Int
     let title: String
     let subtitle: String?
+
+    /// Its words, so a tap finds the same suggestion after the list changed under it.
+    var id: String { "\(title)\n\(subtitle ?? "")" }
 }
 
 /// The places around the phone, then, as the member types, Apple Maps' suggestions near the phone
@@ -90,21 +92,22 @@ final class PlaceSearch {
             return
         }
         isSuggesting = true
+        completions = []
+        suggestions = []
         completer.queryFragment = typed
     }
 
     /// The places a suggestion stands for: the one place it names, or every place a kind of place
     /// finds near the phone.
-    func places(forSuggestion id: Int) async -> [FoundPlace] {
-        guard completions.indices.contains(id) else { return [] }
-        let completion = completions[id]
+    func places(forSuggestion id: Suggestion.ID) async -> [FoundPlace] {
+        guard let completion = completions.first(where: { Self.suggestion($0).id == id }) else { return [] }
         typed = completion.title
         return await show(MKLocalSearch.Request(completion: completion))
     }
 
     /// Every place what is typed finds, as the keyboard's 搜索 asks.
     func placesForTyped() async -> [FoundPlace] {
-        guard !typed.isEmpty else { return found }
+        guard !typed.isEmpty else { return [] }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = typed
         return await show(request)
@@ -113,9 +116,11 @@ final class PlaceSearch {
     private func show(_ request: MKLocalSearch.Request) async -> [FoundPlace] {
         request.resultTypes = [.pointOfInterest, .address]
         if let region { request.region = region }
+        asked += 1
         let asking = asked
         let results = await places(MKLocalSearch(request: request), byDistance: false)
-        guard asking == asked else { return [] }
+        // Dropped once the member typed on or asked again; nothing found, the suggestions stay.
+        guard asking == asked, !results.isEmpty else { return [] }
         isSuggesting = false
         found = results
         return results
@@ -135,10 +140,12 @@ final class PlaceSearch {
     private func suggested() {
         guard isSuggesting else { return }
         completions = completer.results
-        suggestions = completions.enumerated().map { index, completion in
-            Suggestion(
-                id: index, title: completion.title, subtitle: completion.subtitle.isEmpty ? nil : completion.subtitle)
-        }
+        var seen = Set<Suggestion.ID>()
+        suggestions = completions.map(Self.suggestion).filter { seen.insert($0.id).inserted }
+    }
+
+    private static func suggestion(_ completion: MKLocalSearchCompletion) -> Suggestion {
+        Suggestion(title: completion.title, subtitle: completion.subtitle.isEmpty ? nil : completion.subtitle)
     }
 
     /// Through the completion handler on the main queue, as `RouteSnapshot` does, so nothing
