@@ -50,6 +50,8 @@ struct PageTitle: View {
     let label: Text
     var systemImage: String?
     let title: Text
+    /// Over a map, not the scene: in ink.
+    var onMap = false
     @Environment(\.sceneTheme) private var theme
 
     var body: some View {
@@ -65,7 +67,7 @@ struct PageTitle: View {
                 .typeStyle(TypeRamp.largeTitle)
                 .accessibilityAddTraits(.isHeader)
         }
-        .foregroundStyle(Color(role: .fgOnScene, in: theme))
+        .foregroundStyle(Color(role: onMap ? .fgDefault : .fgOnScene, in: theme))
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, Space.l)
         .padding(.top, StoryLayout.titleTop)

@@ -85,7 +85,8 @@ extension WeekStory {
                     members: ready.members,
                     podium: ready.podium, myWeek: ready.myWeek, squadWeek: ready.squadWeek, hottest: ready.hottest,
                     meals: ready.meals,
-                    bestDisclaimer: ready.bestDisclaimer, ending: ready.ending))
+                    bestDisclaimer: ready.bestDisclaimer, menu: ready.menu, places: ready.places,
+                    ending: ready.ending))
         case .case2(let pending):
             self.init(
                 status: .pending, stuck: pending.stuck == true, titles: [],
@@ -94,7 +95,7 @@ extension WeekStory {
                     sceneId: pending.sceneId,
                     members: pending.members, podium: pending.podium, myWeek: pending.myWeek,
                     squadWeek: pending.squadWeek, hottest: pending.hottest, meals: pending.meals,
-                    bestDisclaimer: pending.bestDisclaimer,
+                    bestDisclaimer: pending.bestDisclaimer, menu: pending.menu, places: pending.places,
                     ending: pending.ending))
         }
     }
@@ -113,6 +114,9 @@ extension WeekStory {
         let hottest: Components.Schemas.StoryHottest?
         let meals: Components.Schemas.StoryMeals?
         let bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
+        /// Absent from a story frozen before 小队菜单 and the places were.
+        let menu: [Components.Schemas.StoryMenuDish]?
+        let places: [Components.Schemas.StoryPlace]?
         let ending: Components.Schemas.StoryEnding?
     }
 
@@ -153,12 +157,19 @@ extension WeekStory {
         if hottest == .some(nil) || myWeek == .some(nil) || squadWeek == .some(nil) || meals == .some(nil) {
             return nil
         }
+        var menu: [MenuDish] = []
+        for wire in frozen.menu ?? [] {
+            guard let dish = MenuDish(wire) else { return nil }
+            menu.append(dish)
+        }
+        // A place whose name the app's rule no longer takes is left off the map, not the story.
+        let places = (frozen.places ?? []).compactMap(PlaceWeek.init)
         self.init(
             status: status, stuck: stuck, squad: SquadID(squad), squadName: frozen.squad.name,
             week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
             titles: titles, myWeek: myWeek ?? nil, squadWeek: squadWeek ?? nil, hottest: hottest ?? nil,
             meals: meals ?? nil,
-            bestDisclaimer: bestDisclaimer,
+            bestDisclaimer: bestDisclaimer, menu: menu, places: places,
             ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan, headline: $0.headline, line: $0.line) })
     }
 
@@ -239,5 +250,39 @@ extension Hottest {
             checkIn: CheckInID(checkIn), day: day, kind: kind, sport: sport, words: wire.text ?? wire.caption,
             photos: wire.photos.compactMap { URL(string: $0.url) },
             reactions: wire.reactions.map { ReactionCount(emoji: $0.emoji, count: $0.count) })
+    }
+}
+
+extension MenuDish {
+    init?(_ wire: Components.Schemas.StoryMenuDish) {
+        guard let checkIn = UUID(uuidString: wire.checkIn), let author = UUID(uuidString: wire.author),
+            let day = try? LocalDay(wire.day)
+        else { return nil }
+        // A place the app's rule no longer takes is left off the dish, not the dish off the menu.
+        let place = wire.place.flatMap {
+            try? Place(
+                name: $0.name, appleID: $0.appleId, category: $0.category, latitude: $0.latitude,
+                longitude: $0.longitude)
+        }
+        self.init(
+            checkIn: CheckInID(checkIn), author: MemberID(author), day: day, healthy: wire.rating.healthy,
+            tasty: wire.rating.tasty, caption: wire.caption, photo: wire.photo.flatMap { URL(string: $0.url) },
+            place: place)
+    }
+}
+
+extension PlaceWeek {
+    init?(_ wire: Components.Schemas.StoryPlace) {
+        guard
+            let place = try? Place(
+                name: wire.place.name, appleID: wire.place.appleId, category: wire.place.category,
+                latitude: wire.place.latitude, longitude: wire.place.longitude)
+        else { return nil }
+        var visits: [Visit] = []
+        for visit in wire.visits {
+            guard let member = UUID(uuidString: visit.member), let day = try? LocalDay(visit.day) else { return nil }
+            visits.append(Visit(member: MemberID(member), day: day))
+        }
+        self.init(key: wire.key, place: place, firstTime: wire.firstTime, visits: visits)
     }
 }

@@ -1,5 +1,6 @@
 #if os(iOS)
 import CheckInUI
+import Contracts
 import DesignSystem
 import DesignSystemUI
 import RecapDomain
@@ -26,7 +27,14 @@ public struct RecapView: View {
     @State private var picture: UIImage?
     @State private var dragDown = 0.0
     @State private var touchedAt: Date?
+    /// Where the touch under way began, to tell a new touch from one a page's own gesture took.
+    @State private var touchStart: CGPoint?
+    /// When the reader last played with the page (turned a card, dragged the map).
+    @State private var stayedAt: Date?
     @State private var reveal: Reveal?
+    /// 地点页s pushed over the story from its places; the story waits while one is open.
+    @State private var places: [Place] = []
+    @Environment(\.placePage) private var placePage
 
     private let autoAdvances: Bool
 
@@ -42,6 +50,18 @@ public struct RecapView: View {
     }
 
     public var body: some View {
+        NavigationStack(path: $places) {
+            content
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: Place.self) { place in
+                    if let page = placePage.view(of: place) { page }
+                }
+        }
+        // Back from a place, the page still waits for the reader's tap, as after any play with it.
+        .onChange(of: places.isEmpty) { _, isEmpty in if !isEmpty { model.hold(true) } }
+    }
+
+    private var content: some View {
         ZStack {
             story
                 // Under the reveal the page is a picture: no taps, nothing for VoiceOver.
@@ -95,17 +115,22 @@ public struct RecapView: View {
     private var touch: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { drag in
-                if touchedAt == nil {
+                if touchedAt == nil || touchStart != drag.startLocation {
                     touchedAt = drag.time
+                    touchStart = drag.startLocation
                     model.hold(true)
                 }
-                dragDown = drag.translation.height
+                dragDown = touchStayed ? 0 : drag.translation.height
             }
             .onEnded { drag in
                 let held = drag.time.timeIntervalSince(touchedAt ?? drag.time)
+                let stayed = touchStayed
                 touchedAt = nil
-                model.hold(false)
+                touchStart = nil
                 withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { dragDown = 0 }
+                // The page took this touch (a card turned, the map dragged): it stays up.
+                guard !stayed else { return }
+                model.hold(false)
                 if drag.translation.height > Self.closeDistance {
                     model.dismiss()
                 } else if held < Self.tapLength, abs(drag.translation.width) < Space.s,
@@ -114,6 +139,12 @@ public struct RecapView: View {
                     if drag.location.x < Self.backZone { model.previous() } else { model.next() }
                 }
             }
+    }
+
+    /// Whether the reader played with the page during the touch under way.
+    private var touchStayed: Bool {
+        guard let stayedAt, let touchedAt else { return false }
+        return stayedAt >= touchedAt
     }
 
     private func chrome(segments: [Double]) -> some View {
@@ -152,12 +183,42 @@ public struct RecapView: View {
         case .meals(let meals): MealsPage(meals: meals, page: context).storyPage("meals")
         case .bestDisclaimer(let note):
             BestDisclaimerPage(note: note, page: context).storyPage("bestDisclaimer")
+        case .menu, .favoritePlace, .discovery: placesPage(page, context: context)
         case .ending(let ending):
             self.ending(
                 ending, context: context, actions: EndingActions(picture: picture, planNextWeek: model.planNextWeek)
             )
             .storyPage("ending")
         }
+    }
+
+    /// 小队菜单, 小队最爱去 and 新发现, whose places open 地点页 over the story.
+    @ViewBuilder
+    private func placesPage(_ page: StoryPage, context: PageContext) -> some View {
+        switch page {
+        case .menu(let dishes):
+            MenuPage(dishes: dishes, page: context, openPlace: open, stay: stay).storyPage("menu")
+        case .favoritePlace(let spotlight):
+            PlaceMapPage(kind: .favorite, spotlight: spotlight, page: context, openPlace: open, stay: stay)
+                .storyPage("favoritePlace")
+        case .discovery(let spotlight):
+            PlaceMapPage(kind: .discovery, spotlight: spotlight, page: context, openPlace: open, stay: stay)
+                .storyPage("discovery")
+        default: EmptyView()
+        }
+    }
+
+    /// Pushes a place's 地点页 over the story, where the app gave one.
+    private func open(_ place: Place) {
+        guard placePage.isWired else { return }
+        places.append(place)
+    }
+
+    /// The reader played with the page (turned a card, fanned the heads, dragged the map): it
+    /// stays up until their next tap moves on.
+    private func stay() {
+        stayedAt = .now
+        model.hold(true)
     }
 
     /// The last page, with 冠军专属's sticker for whoever picks next week's scene.

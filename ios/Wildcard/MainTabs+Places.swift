@@ -39,7 +39,7 @@ extension MainTabs {
 
 extension MainTabs {
     /// 地点页 from the compose page's place pill, pushed on the stack the compose page is on: 今天's,
-    /// or the editing page's own over a post.
+    /// or the editing page's own over a post; and from the 战报's places, pushed over the story.
     var composePlacePage: PlacePageRoute {
         PlacePageRoute { place in
             AnyView(
