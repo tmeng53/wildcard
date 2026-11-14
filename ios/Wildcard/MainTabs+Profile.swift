@@ -12,6 +12,7 @@ import MeUI
 import NotificationsDomain
 import NotificationsUI
 import PlacesDomain
+import PlacesUI
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -29,6 +30,7 @@ extension MainTabs {
                 destinations: MeDestinations(
                     editCharacter: wardrobe.editCharacter, schedule: { showsSchedule = true },
                     street: wardrobe.openShop, streetHasNews: wardrobe.hasNews,
+                    savedPlaces: { showsSavedPlaces = true },
                     openPost: {
                         post = OpenedPost(id: $0, model: feed.page(of: $0))
                         (profilePlace, profilePlacePost) = (nil, nil)
@@ -56,6 +58,11 @@ extension MainTabs {
                 }
             }
             .navigationDestination(isPresented: showsEditor(overShop: false)) { profileEditor }
+            // 收藏, and a place opened from it pushed over it.
+            .navigationDestination(isPresented: $showsSavedPlaces) {
+                SavedPlacesPage(store: savedPlaces) { savedPlace = $0 }
+                    .navigationDestination(item: $savedPlace) { place in profilePlacePage(place, over: nil) }
+            }
             .navigationDestination(isPresented: showsWall) {
                 if let wall {
                     PostWallView(

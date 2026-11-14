@@ -58,6 +58,8 @@ struct WildcardApp: App {
     @State private var myPosts: any MyPostsSource
     /// Places' squad numbers, counted from the sample squad's 动态.
     @State private var places: any PlaceSource
+    /// 收藏, kept on the phone for the sample squad.
+    @State private var savedPlaces: any SavedPlaceSource = InMemorySavedPlaceSource { Timestamp(LaunchOptions.now()) }
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     /// Where a tapped push goes, kept until the tabs open it.
     @State private var pushDestination: AppDestination?
@@ -315,7 +317,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, places: places, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards,
+                myPosts: myPosts, places: places, savedPlaces: savedPlaces, notices: LaunchOptions.notices,
+                coachCards: LaunchOptions.coachCards,
                 selection: $tab,
                 destination: $pushDestination, location: Self.sampleLocation
             )

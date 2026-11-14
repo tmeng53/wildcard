@@ -40,6 +40,8 @@ struct MainTabs: View {
     let myPosts: any MyPostsSource
     /// What the squad did at a place, for its page.
     let places: any PlaceSource
+    /// 收藏: one for as long as the tabs are up, so a place's bookmark and 我's list agree.
+    @State var savedPlaces: SavedPlacesStore
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
     let squadmateCards: (any SquadmateCards)?
     @Binding var selection: Tab
@@ -86,6 +88,10 @@ struct MainTabs: View {
     @State var profilePlacePost: OpenedPost?
     /// 设置, pushed over 我.
     @State var showsSettings = false
+    /// 收藏, pushed over 我 from its bookmark.
+    @State var showsSavedPlaces = false
+    /// A place opened from 收藏, pushed over it.
+    @State var savedPlace: Place?
     /// A player's card, opened from the home or 小队, popped up over every tab and the tab bar.
     @State var teammate: SquadmateCardModel?
     /// The card was opened from the home, so 今天 and 拍一拍 go over it (小队 hides the scene).
@@ -93,7 +99,8 @@ struct MainTabs: View {
 
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
-        recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, notices: any NoticeSource,
+        recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, savedPlaces: any SavedPlaceSource,
+        notices: any NoticeSource,
         coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), admin: AdminTools = AdminTools(),
@@ -110,6 +117,7 @@ struct MainTabs: View {
         _destination = destination
         self.leftSquad = leftSquad
         _inbox = State(initialValue: NoticeInbox(source: notices))
+        _savedPlaces = State(initialValue: SavedPlacesStore(source: savedPlaces))
         _newestPosts = State(initialValue: PostWallStore(source: myPosts))
         _wardrobe = State(initialValue: Wardrobe(profile: profile) { today.home?.member.description })
     }
