@@ -158,6 +158,7 @@ describe('the coach eval harness', () => {
           said: '逛商场也算动了',
           facts: '有',
           voice: '我的',
+          plain: '大白话',
           text: '商场逛 20 分钟，腿也算动过了',
         },
       ],
@@ -192,7 +193,14 @@ describe('the coach eval harness', () => {
     const agent = scripted([
       [
         'reply',
-        { who: '她', said: '不做深蹲了', facts: '有', voice: '我的', text: '行，深蹲那页我撕了' },
+        {
+          who: '她',
+          said: '不做深蹲了',
+          facts: '有',
+          voice: '我的',
+          plain: '大白话',
+          text: '行，深蹲那页我撕了',
+        },
       ],
     ]);
     const outcome = await runTrial(commentCase, { settings, agent });
@@ -216,7 +224,17 @@ describe('the coach eval harness', () => {
       cases: [squats],
       settings,
       agent: scripted([
-        ['reply', { who: '她', said: '逛商场', facts: '有', voice: '我的', text: '商场也是赛道' }],
+        [
+          'reply',
+          {
+            who: '她',
+            said: '逛商场',
+            facts: '有',
+            voice: '我的',
+            plain: '大白话',
+            text: '商场也是赛道',
+          },
+        ],
       ]),
       trials: 2,
     });
@@ -235,7 +253,17 @@ describe('the coach eval harness', () => {
       cases: [judged],
       settings,
       agent: scripted([
-        ['reply', { who: '她', said: '逛商场', facts: '有', voice: '我的', text: '商场也是赛道' }],
+        [
+          'reply',
+          {
+            who: '她',
+            said: '逛商场',
+            facts: '有',
+            voice: '我的',
+            plain: '大白话',
+            text: '商场也是赛道',
+          },
+        ],
       ]),
       trials: 1,
     });

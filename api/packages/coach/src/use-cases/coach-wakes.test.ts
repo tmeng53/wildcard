@@ -434,7 +434,14 @@ describe('the coach', () => {
       const { agent, runs } = scriptedAgent(() => [
         {
           tool: 'note_to',
-          input: { member: '队员2', point: '想好了', facts: '有', voice: '我的', text: '今天走走' },
+          input: {
+            member: '队员2',
+            point: '想好了',
+            facts: '有',
+            voice: '我的',
+            plain: '大白话',
+            text: '今天走走',
+          },
         },
       ]);
       const asked: (readonly string[])[] = [];
@@ -464,7 +471,13 @@ describe('the coach', () => {
               { tool: 'squad_week', input: {} },
               {
                 tool: 'post_note',
-                input: { point: '想好了', facts: '有', voice: '我的', text: '队员1 周日也跑了' },
+                input: {
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  plain: '大白话',
+                  text: '队员1 周日也跑了',
+                },
               },
               {
                 tool: 'post_note',
@@ -472,6 +485,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '  周日也跑了，米亚是认真的  ',
                 },
               },
@@ -482,6 +496,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '周日那趟我看见了',
                 },
               },
@@ -492,6 +507,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '你好',
                 },
               },
@@ -502,6 +518,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '队员2 今天动一动？',
                 },
               },
@@ -512,6 +529,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '今天动一动？走走也算',
                 },
               },
@@ -522,6 +540,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: ' 周日那趟跑得真稳 ',
                 },
               },
@@ -533,7 +552,13 @@ describe('the coach', () => {
               { tool: 'edit_file', input: { path: 'memory.md', find: '', replace: '没这个工具' } },
               {
                 tool: 'post_note',
-                input: { point: '想好了', facts: '有', voice: '我的', text: '不该有这个工具' },
+                input: {
+                  point: '想好了',
+                  facts: '有',
+                  voice: '我的',
+                  plain: '大白话',
+                  text: '不该有这个工具',
+                },
               },
               {
                 tool: 'reply',
@@ -542,6 +567,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '队员1 周日还跑',
                 },
               },
@@ -552,12 +578,9 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '跑'.repeat(101),
                 },
-              },
-              {
-                tool: 'reply',
-                input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '周日也跑？' },
               },
               {
                 tool: 'reply',
@@ -566,6 +589,18 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
+                  text: '周日也跑？',
+                },
+              },
+              {
+                tool: 'reply',
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  plain: '大白话',
                   text: '  周日也跑，腿还在吗  ',
                 },
               },
@@ -1121,6 +1156,7 @@ describe('the coach', () => {
                   point: '想好了',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '我是小混，欢迎你来',
                 },
               },
@@ -1229,6 +1265,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '下雨就练核心',
                 },
               },
@@ -1305,7 +1342,14 @@ describe('the coach', () => {
           return [
             {
               tool: 'reply',
-              input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '周日也跑？' },
+              input: {
+                who: '他',
+                said: '接住',
+                facts: '有',
+                voice: '我的',
+                plain: '大白话',
+                text: '周日也跑？',
+              },
             },
           ];
         if (task.includes('要回的这句')) {
@@ -1313,7 +1357,14 @@ describe('the coach', () => {
             { tool: 'react', input: { emoji: '🔥' } },
             {
               tool: 'reply',
-              input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员2 你也来' },
+              input: {
+                who: '他',
+                said: '接住',
+                facts: '有',
+                voice: '我的',
+                plain: '大白话',
+                text: '队员2 你也来',
+              },
             },
             {
               tool: 'reply',
@@ -1322,6 +1373,7 @@ describe('the coach', () => {
                 said: '接住',
                 facts: '有',
                 voice: '我的',
+                plain: '大白话',
                 text: task.includes('你喊') ? '喊破嗓子' : '你也来跑',
               },
             },
@@ -1638,7 +1690,14 @@ describe('the coach', () => {
               { tool: 'react', input: { emoji: '🔥' } },
               {
                 tool: 'reply',
-                input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员1 好' },
+                input: {
+                  who: '他',
+                  said: '接住',
+                  facts: '有',
+                  voice: '我的',
+                  plain: '大白话',
+                  text: '队员1 好',
+                },
               },
               { tool: 'remember', input: { path: 'memory.md', fact: '米亚怕下雨' } },
             ]
@@ -1685,7 +1744,14 @@ describe('the coach', () => {
         { tool: 'react', input: { emoji: '🔥' }, output: '已点 🔥。' },
         {
           tool: 'reply',
-          input: { who: '他', said: '接住', facts: '有', voice: '我的', text: '队员1 好' },
+          input: {
+            who: '他',
+            said: '接住',
+            facts: '有',
+            voice: '我的',
+            plain: '大白话',
+            text: '队员1 好',
+          },
           output: '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。',
         },
         // A fact by its length: it may be a member's words.
@@ -1720,6 +1786,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '这碗面看着不错',
                 },
               },
@@ -2044,6 +2111,7 @@ describe('the coach', () => {
                     point: '想好了',
                     facts: '有',
                     voice: '我的',
+                    plain: '大白话',
                     text: '今天多喝水',
                   },
                 },
@@ -2054,6 +2122,7 @@ describe('the coach', () => {
                     point: '想好了',
                     facts: '有',
                     voice: '我的',
+                    plain: '大白话',
                     text: '今天走走',
                   },
                 },
@@ -2410,6 +2479,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '一起跑',
                   at: ['队员3'],
                 },
@@ -2422,6 +2492,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '一起跑',
                   at: ['米亚', '小乐'],
                 },
@@ -2465,6 +2536,7 @@ describe('the coach', () => {
                   said: '接住',
                   facts: '有',
                   voice: '我的',
+                  plain: '大白话',
                   text: '帮你转给团队了',
                 },
               },
@@ -3032,7 +3104,13 @@ describe('the coach', () => {
         () => [
           {
             tool: 'post_note',
-            input: { point: '想好了', facts: '有', voice: '我的', text: '周日歇好' },
+            input: {
+              point: '想好了',
+              facts: '有',
+              voice: '我的',
+              plain: '大白话',
+              text: '周日歇好',
+            },
           },
           {
             tool: 'note_to',
@@ -3041,13 +3119,21 @@ describe('the coach', () => {
               point: '想好了',
               facts: '有',
               voice: '我的',
+              plain: '大白话',
               text: '今天多喝水',
             },
           },
           // Only the member previewed gets a note or a gift.
           {
             tool: 'note_to',
-            input: { member: '队员2', point: '想好了', facts: '有', voice: '我的', text: '走走' },
+            input: {
+              member: '队员2',
+              point: '想好了',
+              facts: '有',
+              voice: '我的',
+              plain: '大白话',
+              text: '走走',
+            },
           },
           { tool: 'give_gift', input: { member: '米亚', piece: 'gift-scarf', line: '天冷了' } },
           { tool: 'remember', input: { path: 'people/米亚.md', fact: '米亚爱喝水' } },
@@ -3107,7 +3193,13 @@ describe('the coach', () => {
         () => [
           {
             tool: 'post_note',
-            input: { point: '想好了', facts: '有', voice: '我的', text: '周日歇好' },
+            input: {
+              point: '想好了',
+              facts: '有',
+              voice: '我的',
+              plain: '大白话',
+              text: '周日歇好',
+            },
           },
           {
             tool: 'note_to',
@@ -3116,6 +3208,7 @@ describe('the coach', () => {
               point: '想好了',
               facts: '有',
               voice: '我的',
+              plain: '大白话',
               text: '今天多喝水',
             },
           },

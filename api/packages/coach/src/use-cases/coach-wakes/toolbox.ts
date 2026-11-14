@@ -32,6 +32,9 @@ const voiceOf = z
   .describe(
     `按你的人设，这句该用什么语气、怎么说才像你。人设是你说话的方式，不用把人设里的东西写进这句。${privately}`,
   );
+const plainly = z
+  .string()
+  .describe(`用大白话把这句要说的意思写一遍，像发微信给朋友，不用比喻。${privately}`);
 const factsUsed = z
   .string()
   .describe(
@@ -416,9 +419,12 @@ export function toolbox({
           point: z.string().describe(`今天全队一起看的是哪件事，为什么是这件。${privately}`),
           facts: factsUsed,
           voice: voiceOf,
-          text: z.string().describe('今天的一句'),
+          plain: plainly,
+          text: z
+            .string()
+            .describe('今天的一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
         }),
-        kept: (input) => thoughtLengths(input, ['point', 'facts', 'voice']),
+        kept: (input) => thoughtLengths(input, ['point', 'facts', 'voice', 'plain']),
         run: ({ text }) => {
           const line = text.trim();
           const problem = lineProblem(line, 'note');
@@ -478,7 +484,10 @@ export function toolbox({
           said: z.string().describe(`他这条实际在说什么、问什么，你要接住的是哪件事。${privately}`),
           facts: factsUsed,
           voice: voiceOf,
-          text: z.string().describe('回的这一句'),
+          plain: plainly,
+          text: z
+            .string()
+            .describe('回的这一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
           at: atParameter,
         }),
         run: ({ text, at = [] }) => {
@@ -887,7 +896,7 @@ function noteTool(
   const member = z.string().describe('写给谁：名字');
   // Kept by length: it is about the member, and stays in its own table.
   const kept = (input: Readonly<Record<string, unknown>>): unknown =>
-    thoughtLengths(input, ['point', 'facts', 'voice', 'text']);
+    thoughtLengths(input, ['point', 'facts', 'voice', 'plain', 'text']);
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
@@ -905,7 +914,10 @@ function noteTool(
       point: z.string().describe(`今天对他说哪一件事，为什么是这件。${privately}`),
       facts: factsUsed,
       voice: voiceOf,
-      text: z.string().describe('便条上的这一句'),
+      plain: plainly,
+      text: z
+        .string()
+        .describe('便条上的这一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
     }),
     kept,
     run: write,
