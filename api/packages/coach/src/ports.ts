@@ -2,12 +2,7 @@ import type { TokenUsage } from '@wildcard/language-model';
 import type { z } from 'zod';
 
 import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
-import type {
-  Challenge,
-  ChallengeAnswer,
-  ChallengeCompletion,
-  ChallengeDoneBy,
-} from './domain/challenge.js';
+import type { Challenge, ChallengeAnswer, ChallengeCompletion } from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
 import type { CoachGiven, DeliveredNote } from './domain/prompt.js';
@@ -244,15 +239,6 @@ export interface CoachMemberNoteStore {
     readonly member: string;
     readonly day: string;
   }): Promise<DayChallenge | undefined>;
-  /**
-   * Marks the challenge on a note done, by the coach from the day's check-ins; false when it
-   * set none, isn't for `day` (the squad's), was let go or was done already (the first stands).
-   */
-  complete(input: {
-    readonly note: number;
-    readonly by: ChallengeDoneBy;
-    readonly day: string;
-  }): Promise<boolean>;
   /**
    * The notes this coach wrote the squad's members for the days `from` to `to` (the squad's days,
    * both included) that reached them, oldest first, each with how its challenge went.
