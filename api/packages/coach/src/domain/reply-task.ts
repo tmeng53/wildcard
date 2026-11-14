@@ -32,6 +32,16 @@ export class PostNumbers {
     }
   }
 
+  /** Posts already numbered, keeping their numbers (the challenge run's task numbers its own). */
+  static numbered(numbered: ReadonlyMap<string, WeekCheckIn>): PostNumbers {
+    const numbers = new PostNumbers();
+    for (const [number, post] of numbered) {
+      numbers.#byNumber.set(number, post);
+      numbers.#byId.set(post.id, number);
+    }
+    return numbers;
+  }
+
   /** The post's number, given it now if it has none. */
   of(post: WeekCheckIn): string {
     const known = this.#byId.get(post.id);

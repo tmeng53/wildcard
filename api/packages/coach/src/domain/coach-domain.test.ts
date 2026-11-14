@@ -91,6 +91,17 @@ describe('the squad’s week, as the model reads it', () => {
       ].join('\n'),
     );
     expect(weekText(week)).not.toContain(mia);
+    // Two who share a nickname, and one whose nickname is another's 队员N, stay apart.
+    expect([
+      ...rosterOf({
+        members: [
+          { member: 'a', nickname: '安' },
+          { member: 'b', nickname: '安' },
+          { member: 'c' },
+          { member: 'd', nickname: '队员3' },
+        ],
+      }).values(),
+    ]).toStrictEqual(['安', '安（2）', '队员3', '队员3（2）']);
   });
 
   it('names the place a post was tagged with', () => {

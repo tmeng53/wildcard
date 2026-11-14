@@ -154,10 +154,19 @@ export const EvalCase = z.strictObject({
   handover: z
     .strictObject({ from: z.string(), at: Moment, letter: z.string().optional() })
     .optional(),
-  /** The wake: a check-in just posted, or a comment to the coach. */
+  /**
+   * Each member's plan this week, Monday first: a sport's name, `练` for any, or `休息`; read by
+   * the day's challenges.
+   */
+  plans: z.record(z.string(), z.array(z.string().min(1)).length(7)).default({}),
+  /**
+   * The wake: a check-in just posted, a comment to the coach, or the morning's run that sets the
+   * day's challenges (only that run: the notes after it are not written).
+   */
   wake: z.discriminatedUnion('kind', [
     z.strictObject({ kind: z.literal('checkIn'), checkIn: z.string() }),
     z.strictObject({ kind: z.literal('comment'), checkIn: z.string(), comment: z.string() }),
+    z.strictObject({ kind: z.literal('challenges') }),
   ]),
   expect: z.array(Expectation).min(1),
 });

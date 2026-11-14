@@ -8,6 +8,7 @@ import {
   type CoachSettings,
   type CoachStores,
   type CoachWakesDependencies,
+  type PlanDayFacts,
   type SquadWeek,
 } from '@wildcard/coach';
 import type { TokenUsage } from '@wildcard/language-model';
@@ -19,12 +20,19 @@ import type { EvalCase, EvalSettings } from './eval-case.js';
 // wake would have saved and told is kept as the trial's outcome; nothing leaves this process but
 // the model's requests.
 //
-// Not yet held by a case, so told to the model empty: streaks, member facts (birthday and the
-// like), memes, weather and holidays, and the coach's hire date (the epoch). A case about one of
-// them needs it added here first.
+// Not yet held by a case, so told to the model empty: streaks, members' counts and 饮食小目标
+// (only their plans are held), memes, weather and holidays, and the coach's hire date (the
+// epoch). A case about one of them needs it added here first.
 
 /** The squad every case runs in: cases name members and check-ins, never their squad. */
 const SQUAD = SquadId.parse('00000000-0000-4000-8000-000000000001');
+
+const NO_TOKENS: TokenUsage = {
+  requests: 0,
+  inputTokens: 0,
+  cachedInputTokens: 0,
+  outputTokens: 0,
+};
 
 /** One tool call of the run, as `coach_wake_steps` keeps it. */
 export interface TrialStep {
@@ -112,10 +120,14 @@ export async function runTrial(
         return Promise.resolve(wakes.length);
       },
       claim: () => {
-        // The case's own wake, once; any other the code queues (none on these kinds) waits.
+        // The case's own wake, once: the day's, among those due then, for the challenges; any
+        // other the code queues waits.
         if (run.claimed) return Promise.resolve([]);
         run.claimed = true;
-        return Promise.resolve(queued.slice(0, 1).map((wake) => ({ ...wake, id: 1 })));
+        const own = queued.filter(
+          ({ reason }) => testCase.wake.kind !== 'challenges' || reason.kind === 'daily',
+        );
+        return Promise.resolve(own.slice(0, 1).map((wake) => ({ ...wake, id: 1 })));
       },
       finish: () => Promise.resolve(),
       fail: (_wake, error) => {
@@ -139,7 +151,21 @@ export async function runTrial(
       save: nothing,
       challengeOf,
       deliveredBetween: () => Promise.resolve([]),
-      challengesOn: () => Promise.resolve([]),
+      challengesOn: ({ day }) =>
+        Promise.resolve(
+          testCase.challenges
+            .filter((each) => each.day === day)
+            .map((each, index) => ({
+              note: index + 1,
+              day: each.day,
+              challenge: each.challenge,
+              coach: { id: coach, name: coach, look: coach },
+              answer: each.answer,
+              reason: each.reason,
+              completion: each.completion,
+              member: each.member,
+            })),
+        ),
     },
     replies: {
       save: ({ text, emoji }) => {
@@ -213,6 +239,14 @@ export async function runTrial(
     transaction: (work) => work(stores),
     agent: {
       run: (request) => {
+        // On the challenges' case only the run that sets them is the model's; the notes after
+        // it are not written.
+        if (
+          testCase.wake.kind === 'challenges' &&
+          !request.tools.some(({ name }) => name === 'set_challenge')
+        ) {
+          return Promise.resolve({ ok: true, usage: NO_TOKENS });
+        }
         run.thought = true;
         return agent.run(request);
       },
@@ -259,7 +293,32 @@ export async function runTrial(
     clock: () => testCase.now,
     // The model is told how many photos a post has; it never sees the case's pictures.
     photoUrls: () => Promise.resolve([]),
-    memberFacts: () => Promise.resolve([]),
+    memberFacts: ({ members }) =>
+      Promise.resolve(
+        members.flatMap((member) => {
+          const plan = testCase.plans[member];
+          return plan === undefined
+            ? []
+            : [
+                {
+                  member,
+                  trainedDays: 0,
+                  healthyMeals: 0,
+                  cheatMeals: 0,
+                  disclaimers: 0,
+                  titles: 0,
+                  plan: plan.map((day): PlanDayFacts =>
+                    day === '休息'
+                      ? { kind: 'rest' }
+                      : day === '练'
+                        ? { kind: 'train' }
+                        : { kind: 'train', sport: day },
+                  ),
+                  fuelGoals: [],
+                },
+              ];
+        }),
+      ),
     streaks: () => Promise.resolve({}),
     timeZonesAt: () => Promise.resolve(() => testCase.timeZone),
     ended: () => Promise.resolve(new Set()),
@@ -287,8 +346,10 @@ export async function runTrial(
   const { wake } = testCase;
   if (wake.kind === 'checkIn') {
     await wakes.checkedIn({ checkIn: wake.checkIn, squads: [SQUAD] });
-  } else {
+  } else if (wake.kind === 'comment') {
     await wakes.answer({ checkIn: wake.checkIn, comment: wake.comment, coach, squads: [SQUAD] });
+  } else {
+    await wakes.run();
   }
   return {
     ...(run.failed !== undefined

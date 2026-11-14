@@ -73,3 +73,31 @@ export interface DeliveredNote {
     readonly completion: ChallengeCompletion | undefined;
   };
 }
+
+/** A challenge the coach set on a day, and what its member said to it. */
+export interface DayChallengeFacts {
+  readonly day: string;
+  readonly member: string;
+  readonly challenge: Challenge;
+  readonly answer: ChallengeAnswer | undefined;
+  readonly reason: string | undefined;
+  readonly completion: ChallengeCompletion | undefined;
+}
+
+/** How a challenge went, in the coach's words. */
+export function challengeHow({
+  answer,
+  reason,
+  completion,
+}: {
+  readonly answer: ChallengeAnswer | undefined;
+  readonly reason: string | undefined;
+  readonly completion: ChallengeCompletion | undefined;
+}): string {
+  if (completion !== undefined) return '完成了';
+  if (answer === 'accepted') return '接了，没记完成';
+  if (answer === 'declined') {
+    return reason === undefined ? '没接' : `没接，理由：「${reason}」（只告诉了你）`;
+  }
+  return '没回应';
+}

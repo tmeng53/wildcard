@@ -110,7 +110,7 @@ export interface SquadWeek {
 /**
  * Each member's name for the model: their nickname, as their squadmates read it (Tracy,
  * 2026-11-14: real names, never 队员N), numbered from the second on when two share one
- * (`Mia`, `Mia2`). A member the model may not know by name (no nickname, or no AI consent) is
+ * (`Mia`, `Mia（2）`). A member the model may not know by name (no nickname, or no AI consent) is
  * 队员N by the order they joined.
  */
 export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, string> {
@@ -119,7 +119,9 @@ export function rosterOf(week: Pick<SquadWeek, 'members'>): ReadonlyMap<string, 
     week.members.map(({ member, nickname }, index) => {
       const base = nickname?.trim() ?? '';
       let name = base === '' ? `队员${String(index + 1)}` : base;
-      for (let count = 2; taken.has(name); count += 1) name = `${base || '队员'}${String(count)}`;
+      for (let count = 2; taken.has(name); count += 1) {
+        name = `${base === '' ? `队员${String(index + 1)}` : base}（${String(count)}）`;
+      }
       taken.add(name);
       return [member, name];
     }),

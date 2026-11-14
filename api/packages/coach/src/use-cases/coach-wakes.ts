@@ -1,4 +1,6 @@
+import type { TokenUsage } from '@wildcard/language-model';
 import type { Challenge } from '../domain/challenge.js';
+import { challengeTaskOf } from '../domain/challenge-task.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   memberOfPath,
@@ -37,6 +39,7 @@ import {
   saidTo,
   postWhat,
   type SquadWeek,
+  type WeekCheckIn,
   type WeekComment,
 } from '../domain/squad-week.js';
 import { wakesDue, weeksAround, type NewWake, type Wake, type WakeStep } from '../domain/wake.js';
@@ -63,7 +66,7 @@ import type {
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
-import { challengeTool, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
+import { challengeTools, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
 import { mondayOf, wallClockAt } from '@wildcard/time-zones';
 
 /**
@@ -718,18 +721,35 @@ async function think(
   // On a daily wake, the day's challenges are set first, by a run of their own on the settings'
   // challenge model, from the same task; the coach then writes its notes around them (Tracy,
   // 2026-11-12).
+  // What was said under a post, one line each, the coach's own too, with members by `names`.
+  const commentsOf = async (
+    checkIn: WeekCheckIn,
+    names: ReadonlyMap<string, string>,
+  ): Promise<readonly string[]> => {
+    const [reply, answers, coaches] = await Promise.all([
+      deps.stores.replies.find(wake.squad, checkIn.id),
+      deps.stores.answers.ofCheckIn(wake.squad, checkIn.id),
+      coachNames(deps, week),
+    ]);
+    return saidLines(
+      saidOf({ comments: checkIn.comments, reply, answers, names: coaches, coach: coach.id, zone }),
+      names,
+    );
+  };
   const setting = daily && noteTo.length > 0;
   let settingCost = 0;
   if (setting) {
-    const pickTask = taskOf(facts);
-    if (pickTask === undefined) return undefined;
     settingCost = await setChallenges(deps, {
       wake,
       settings,
+      week,
+      day,
       roster,
       noteTo,
+      briefs: facts.noteTo ?? [],
+      yesterday: facts.yesterday,
       draft,
-      task: pickTask,
+      commentsOf,
       author,
     });
   }
@@ -793,17 +813,7 @@ async function think(
           squad: wake.squad,
           weekStart: mondayOf(dayBefore(week.weekStart, weeksAgo * 7)),
         }),
-      commentsOf: async (checkIn) => {
-        const [reply, answers, names] = await Promise.all([
-          deps.stores.replies.find(wake.squad, checkIn.id),
-          deps.stores.answers.ofCheckIn(wake.squad, checkIn.id),
-          coachNames(deps, week),
-        ]);
-        return saidLines(
-          saidOf({ comments: checkIn.comments, reply, answers, names, coach: coach.id, zone }),
-          roster,
-        );
-      },
+      commentsOf: (checkIn) => commentsOf(checkIn, roster),
     }),
     // Every wake of a coach begins with its same instructions, then its tools (each kind's own
     // last: the daily wake's post_note, a check-in's reply and react, a reply's answer), so
@@ -1030,50 +1040,109 @@ async function briefsOf(
 }
 
 /**
- * Sets each member's challenge for the day into the draft, by a run of its own: the shared rules
- * and the settings' `challengeRules`, on the challenge model, or on the coach's own while that
- * one has no price to count it at. Its tokens are counted to the squad like the wake's.
+ * Sets each member's challenge for the day into the draft, by a run of its own (Tracy,
+ * 2026-11-14: from first principles): the settings' `challengeRules` alone, never the shared
+ * rules, which are for what the coach says, and a task of its own (`challengeTaskOf`), the
+ * members by their names. On the challenge model, or on the coach's own while that one has no
+ * price to count it at. Its tokens are counted to the squad like the wake's.
  */
 async function setChallenges(
   deps: CoachWakesDependencies,
   {
     wake,
     settings,
+    week,
+    day,
     roster,
     noteTo,
+    briefs,
+    yesterday,
     draft,
-    task,
+    commentsOf,
     author,
   }: {
     readonly wake: Thought;
     readonly settings: CoachSettings;
+    readonly week: SquadWeek;
+    readonly day: string;
     readonly roster: ReadonlyMap<string, string>;
     readonly noteTo: readonly string[];
+    readonly briefs: readonly NoteBrief[];
+    readonly yesterday: YesterdayFacts | undefined;
     readonly draft: WakeDraft;
-    readonly task: string;
+    readonly commentsOf: (
+      checkIn: WeekCheckIn,
+      names: ReadonlyMap<string, string>,
+    ) => Promise<readonly string[]>;
     readonly author: string | undefined;
   },
 ): Promise<number> {
+  const names = rosterOf(week);
+  const briefOf = new Map(briefs.map((brief) => [brief.name, brief]));
+  // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
+  const posts = [
+    ...(yesterday?.checkIns ?? []).filter(
+      (each) => !week.checkIns.some(({ id }) => id === each.id),
+    ),
+    ...week.checkIns,
+  ];
+  const { task, numbered } = challengeTaskOf({
+    day,
+    names,
+    members: noteTo.flatMap((member) => {
+      const brief = briefOf.get(roster.get(member) ?? '');
+      if (brief === undefined) return [];
+      const page = draft.files.get(`people/${member}.md`);
+      return [
+        {
+          member,
+          brief,
+          ...(page === undefined ? {} : { about: shownBody(page, names) }),
+        },
+      ];
+    }),
+    posts,
+    challenges: yesterday?.challenges ?? [],
+  });
   const model =
     (await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.challengeModel })) ===
     undefined
       ? settings.challengeModel
       : settings.model;
-  const run = await deps.agent.run({
-    model,
-    reasoning: settings.reasoning,
-    instructions: `${settings.rules}\n\n${settings.challengeRules}`,
-    task,
-    tools: [challengeTool(draft, { roster, noteTo })],
-    cacheKey: 'coach:challenges',
-  });
-  return deps.usage.record({
-    squad: wake.squad,
-    ...(author === undefined ? {} : { member: author }),
-    kind: wake.id === undefined ? 'preview' : 'wake',
-    model,
-    usage: run.usage,
-  });
+  const pick = (more: string) =>
+    deps.agent.run({
+      model,
+      reasoning: settings.reasoning,
+      instructions: settings.challengeRules,
+      task: `${task}${more}`,
+      tools: challengeTools(draft, {
+        names,
+        noteTo,
+        numbered,
+        commentsOf: (checkIn) => commentsOf(checkIn, names),
+      }),
+      cacheKey: 'coach:challenges',
+    });
+  const record = (usage: TokenUsage) =>
+    deps.usage.record({
+      squad: wake.squad,
+      ...(author === undefined ? {} : { member: author }),
+      kind: wake.id === undefined ? 'preview' : 'wake',
+      model,
+      usage,
+    });
+  const run = await pick('');
+  let cost = await record(run.usage);
+  // A run sometimes stops before everyone has one: it is asked once more about whom it left out
+  // (one that set none at all failed, and is not asked again).
+  const left = noteTo.filter((member) => !draft.challenges.has(member));
+  if (run.ok && left.length > 0 && left.length < noteTo.length) {
+    const again = await pick(
+      `\n\n## 还没定\n还没给${left.map((member) => names.get(member) ?? '队员').join('、')}定挑战。请假或身体不舒服的不用给，其余的给他们定。`,
+    );
+    cost += await record(again.usage);
+  }
+  return cost;
 }
 
 /** How many days of challenges the daily and dream wakes see, up to the day before. */
