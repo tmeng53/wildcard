@@ -12,6 +12,8 @@ final class SquadJoinRequestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-squad-seat", "asked",
+            // Open, whatever an earlier test on this simulator left it as: folded, the squad's name isn't shown.
+            "-today.cardCollapsed", "0",
         ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
