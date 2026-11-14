@@ -3,7 +3,14 @@ import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 import { challengeText, type Challenge, type ChallengeCompletion } from './challenge.js';
 import type { Coach } from './coach.js';
 import { planIndexOf, type NoteBrief, type PlanDayFacts } from './member-facts.js';
-import { dayWords, postWhat, timeLines, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import {
+  dayWords,
+  postWhat,
+  ratingWords,
+  timeLines,
+  type SquadWeek,
+  type WeekCheckIn,
+} from './squad-week.js';
 
 // The reply step (Tracy, 2026-11-14: one prompt for answering a post and answering a comment,
 // written from first principles): the coach's soul and what a good reply is, then a task with
@@ -145,6 +152,7 @@ function postBlock(
   ];
   if (post.place !== undefined) lines.push(`- 地点：${post.place}`);
   if (post.text !== undefined) lines.push(`- 写的：「${post.text}」`);
+  if (post.rating !== undefined) lines.push(`- 打分：${ratingWords(post.rating)}`);
   const photos = post.photos?.length ?? 0;
   if (photos > 0) lines.push(`- 照片 ${String(photos)} 张，你还没看过（look_at_photos）`);
   return lines.join('\n');

@@ -157,7 +157,7 @@ function clockWords({ hour, minute }: { readonly hour: number; readonly minute: 
 
 /** An entry without its member's line or place. */
 function withoutWords(
-  entry: Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place'>,
+  entry: Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place' | 'rating'>,
 ): Pick<WeekCheckIn, 'sport' | 'minutes' | 'restDay'> {
   const { sport, minutes, restDay } = entry;
   return {
@@ -171,7 +171,7 @@ function withoutWords(
 function entryOf(
   record: CheckInRecord,
   sportNames: ReadonlyMap<string, string>,
-): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place'> {
+): Pick<WeekCheckIn, 'sport' | 'minutes' | 'text' | 'restDay' | 'place' | 'rating'> {
   switch (record.kind) {
     case 'trained': {
       const { sport, customSport, minutes, caption, place } = record.training;
@@ -186,10 +186,11 @@ function entryOf(
     }
     case 'healthyMeal':
     case 'cheatMeal': {
-      const { caption, place } = record.meal;
+      const { caption, place, rating } = record.meal;
       return {
         ...(caption === undefined ? {} : { text: caption }),
         ...(place === undefined ? {} : { place: place.name }),
+        ...(rating === undefined ? {} : { rating }),
       };
     }
     case 'disclaimer':

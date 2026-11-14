@@ -203,4 +203,12 @@ describe('the reply step', () => {
       '## 他 App 的语言\nWrite in English.',
     );
   });
+
+  it('tells a meal’s rating out of 5, with what 卡价比 means', () => {
+    const rated = { ...meal, rating: { healthy: 2, tasty: 4 } };
+    const task = replyTaskOf(facts({ post: rated, week: { ...week, checkIns: [rated, run] } }));
+    expect(task).toContain(
+      '- 打分：健康 2/5，好吃 4/5，卡价比 1.6/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）',
+    );
+  });
 });

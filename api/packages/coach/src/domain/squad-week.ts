@@ -36,6 +36,8 @@ export interface WeekCheckIn {
   readonly place?: string;
   /** For a 请假条: true when it is a planned rest (休息), not leave. */
   readonly restDay?: true;
+  /** For a meal: how its author rated it, 健康 and 好吃, each 1 to 5. */
+  readonly rating?: MealRating;
   /** Its photos' storage paths, the cover first; the model sees only how many. */
   readonly photos?: readonly string[];
   /** The teammates who reacted to it, by member id, in the order they reacted. */
@@ -47,6 +49,12 @@ export interface WeekCheckIn {
    * words and photos stay with its author and the coach never answers under it.
    */
   readonly unposted?: true;
+}
+
+/** How a member rated a meal they posted: 健康 and 好吃, each 1 to 5. */
+export interface MealRating {
+  readonly healthy: number;
+  readonly tasty: number;
 }
 
 /** When a 训练 was done, on the member's own clock. */
@@ -209,6 +217,15 @@ export function checkInTitle(checkIn: WeekCheckIn, roster: ReadonlyMap<string, s
   return `${dayWords(checkIn.day)} · ${roster.get(checkIn.member) ?? '队员'} · ${what}`;
 }
 
+/**
+ * A meal's rating as the model reads it (Tracy, 2026-11-14: the coach couldn't see it, and out of 5
+ * so it knows the full marks): `健康 2/5，好吃 4/5，卡价比 1.6/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）`.
+ */
+export function ratingWords(rating: MealRating): string {
+  const value = Math.round(((rating.tasty * rating.healthy) / 5) * 10) / 10;
+  return `健康 ${String(rating.healthy)}/5，好吃 ${String(rating.tasty)}/5，卡价比 ${String(value)}/5（卡路里性价比：好吃 × 健康 ÷ 5，不是热量）`;
+}
+
 /** One comment as a list item: `- 队员2（回复队员1）：「其实是牛奶」`. */
 function commentItem(comment: WeekComment, roster: ReadonlyMap<string, string>): string {
   return `- ${roster.get(comment.member) ?? '队员'}${addressedWords(comment, { roster, coach: () => '你' })}：「${comment.text}」`;
@@ -235,6 +252,7 @@ export function checkInBlock(
   if (checkIn.unposted === true) lines.push('- 只记录，没发动态');
   if (checkIn.place !== undefined) lines.push(`- 地点：「${checkIn.place}」`);
   if (checkIn.text !== undefined) lines.push(`- 写的：「${checkIn.text}」`);
+  if (checkIn.rating !== undefined) lines.push(`- 打分：${ratingWords(checkIn.rating)}`);
   if (checkIn.photos !== undefined && checkIn.photos.length > 0) {
     lines.push(`- 照片：${String(checkIn.photos.length)} 张`);
   }
