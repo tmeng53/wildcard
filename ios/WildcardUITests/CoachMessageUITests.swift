@@ -49,7 +49,7 @@ final class CoachMessageUITests: XCTestCase {
         keepScreenshot(named: "152-coach-message-thanks")
 
         // Swiped away, the next message: the squad on its stage, 软糖星 and a box.
-        card.swipeRight(velocity: .fast)
+        swipeTopCoachCard(in: app)
         XCTAssertTrue(
             text("周四去的 Equinox，打个分？", in: app).waitForExistence(timeout: Self.wait), "the next message isn't up")
         let stars = element("coachDeck.stars", in: app)
