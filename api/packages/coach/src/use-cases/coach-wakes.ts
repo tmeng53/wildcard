@@ -1563,11 +1563,6 @@ async function replyFactsOf(
   });
   const name = roster.get(to);
   const pagePath = name === undefined ? undefined : `people/${name}.md`;
-  // The challenge its author got on today's note, told only once they took it up.
-  const challenge =
-    reason.kind === 'checkIn'
-      ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: to, day })
-      : undefined;
   // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
   const keptStreaks =
     reason.kind === 'checkIn' && post.kind === 'disclaimer'
@@ -1608,16 +1603,6 @@ async function replyFactsOf(
         }),
     ...(brief === undefined ? {} : { brief }),
     day,
-    // Only a challenge the member took up: one let go or unanswered isn't the post's business.
-    ...(challenge !== undefined &&
-    (challenge.answer === 'accepted' || challenge.completion !== undefined)
-      ? {
-          challenge: {
-            challenge: challenge.challenge,
-            ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
-          },
-        }
-      : {}),
     talkedUnder: talks.map(({ checkIn }) => checkIn),
     ...(keptStreaks === undefined ? {} : { keptStreaks }),
     ...(pagePath === undefined ? {} : { page: { path: pagePath, body: files.get(pagePath) } }),

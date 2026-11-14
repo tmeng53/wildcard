@@ -157,7 +157,8 @@ describe('the coach eval harness', () => {
     expect(agent.seen.tools).toContain('reply');
     expect(agent.seen.tools).not.toContain('complete_challenge');
     expect(agent.seen.task).toContain('逛商场是我唯一的运动');
-    expect(agent.seen.task).toContain('做深蹲 50 个');
+    // A reply isn't told the day's challenge.
+    expect(agent.seen.task).not.toContain('做深蹲 50 个');
     expect(outcome).toMatchObject({
       reply: '商场逛 20 分钟，腿也算动过了',
       emoji: '😂',
