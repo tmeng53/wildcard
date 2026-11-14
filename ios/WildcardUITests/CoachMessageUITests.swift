@@ -62,7 +62,7 @@ final class CoachMessageUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments += [
             "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
-            "-today.cardPage", "0", "-uitest-coach-message", "-uitest-card-folded",
+            "-today.cardPage", "0", "-uitest-coach", "-uitest-coach-message", "-uitest-card-folded",
         ]
         app.launch()
         addTeardownBlock { @MainActor in XCUIApplication().terminate() }
