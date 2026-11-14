@@ -65,6 +65,9 @@ public final class NoticeInbox {
     private var opened: Set<NoticeID> = []
     /// Opened here, and not yet taken by the server (the network failed): sent again on each load.
     private var unsentOpened: Set<NoticeID> = []
+    /// Places opened since the last load, applied again once it comes: a push tapped at launch
+    /// opens its post before the page that holds its notice is here.
+    private var pendingVisits: [(Notice) -> Bool] = []
     /// 通知 is open on screen, from `open()` until `close()`.
     public private(set) var isOpen = false
     /// Whether the stream being heard got as far as `.ready`.
@@ -146,7 +149,12 @@ public final class NoticeInbox {
 
     /// The member opened a place the notices `about` are about (the coach page for its morning
     /// notes): each is read, on every phone.
-    public func visited(where about: (Notice) -> Bool) async {
+    public func visited(where about: @escaping (Notice) -> Bool) async {
+        pendingVisits.append(about)
+        await markVisited(about)
+    }
+
+    private func markVisited(_ about: (Notice) -> Bool) async {
         let fresh = notices.filter { notice in
             about(notice) && !opened.contains(notice.id)
                 && (isNewerThanSeen(notice) || seenWhenOpened.map { notice.id > $0 } == true)
@@ -216,6 +224,9 @@ public final class NoticeInbox {
             opened.formUnion(openedFound)
             moreFailed = false
             phase = .current
+            let visits = pendingVisits
+            pendingVisits = []
+            for about in visits { await markVisited(about) }
             await sendSeen()
             await sendOpened()
         } catch {

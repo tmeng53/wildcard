@@ -82,3 +82,32 @@ private let otherPost = CheckInID(UUID(uuidString: "00000000-0000-4000-8000-0000
     await inbox.visited(.post(post))
     #expect(await server.openMarks.isEmpty)
 }
+
+@Test @MainActor func aPostOpenedBeforeItsNoticeLoadedStillReadsIt() async {
+    // A comment's push tapped at launch: its post opens before the first page is here.
+    let server = FakeNotices([comment(1, on: post), comment(2, on: otherPost)])
+    let inbox = NoticeInbox(source: server)
+    await inbox.visited(.post(post))
+    #expect(await server.openMarks.isEmpty)
+
+    await inbox.load()
+    #expect(await server.openMarks == [[NoticeID(rawValue: 1)]])
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [true, false])
+
+    // Only once: a comment on it that comes later is new.
+    await server.add(comment(3, on: post))
+    await inbox.load()
+    #expect(inbox.notices.map { inbox.isUnread($0) } == [true, true, false])
+}
+
+@Test @MainActor func aTappedPushForANoticeNotYetHeardIsReadOnceThePageLoads() async {
+    let server = FakeNotices([comment(1, on: post)])
+    let inbox = NoticeInbox(source: server)
+    await inbox.load()
+    // The push for 2 was told while the app was away; its tap opens the post first.
+    await server.add(comment(2, on: post))
+    await inbox.visited(.post(post))
+    await inbox.load()
+    #expect(await server.openMarks == [[NoticeID(rawValue: 1)], [NoticeID(rawValue: 2)]])
+    #expect(!inbox.hasUnread)
+}
