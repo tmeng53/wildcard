@@ -67,16 +67,21 @@ struct ScheduleChallengeCard: View {
             return board.planToday?.status == .restDay
                 ? Text(copy: "今天", bundle: .module) : Text(copy: "今日挑战", bundle: .module)
         }
-        if challenge.completedBy != nil { return Text(copy: "今日挑战 · 完成", bundle: .module) }
+        // The small card is too narrow for 「今日挑战 · …」, so it says only the state.
+        if challenge.completedBy != nil {
+            return compact ? Text(copy: "已完成", bundle: .module) : Text(copy: "今日挑战 · 完成", bundle: .module)
+        }
         switch challenge.answer {
-        case .accepted: return Text(copy: "今日挑战 · 已接受", bundle: .module)
-        case .declined: return Text(copy: "今日挑战 · 没接", bundle: .module)
+        case .accepted:
+            return compact ? Text(copy: "已接受", bundle: .module) : Text(copy: "今日挑战 · 已接受", bundle: .module)
+        case .declined:
+            return compact ? Text(copy: "没接", bundle: .module) : Text(copy: "今日挑战 · 没接", bundle: .module)
         case nil: return Text(copy: "今日挑战", bundle: .module)
         }
     }
 
     private var cardTitle: Text {
-        if board.coach == nil { return Text(copy: "请个教练，每天出挑战", bundle: .module) }
+        if board.coach == nil { return Text(copy: "还没有教练", bundle: .module) }
         if let challenge { return Text(verbatim: challenge.title) }
         guard board.planToday?.status == .restDay else { return Text(copy: "等教练出题", bundle: .module) }
         if let tomorrow = board.planTomorrow, tomorrow.status == .open, let activity = tomorrow.activity {
