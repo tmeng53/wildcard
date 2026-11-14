@@ -61,10 +61,13 @@ final class SquadMapUITests: XCTestCase {
         XCTAssertGreaterThan(spots.count, 0, "常去 shows no stack on the map")
         let before = names.count
         for index in 0..<spots.count {
-            spots.element(boundBy: index).tap()
+            // The heads, at the stack's top: a named stack's middle is the gap above its name.
+            spots.element(boundBy: index).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
             let opened = XCTNSPredicateExpectation(
                 predicate: NSPredicate(format: "count > %d", before), object: names)
-            if XCTWaiter().wait(for: [opened], timeout: 3) == .completed { return }
+            let result = XCTWaiter().wait(for: [opened], timeout: 3)
+            keepScreenshot(named: "squad-map-tapped-\(index)")
+            if result == .completed { return }
         }
         XCTFail("tapping a stack didn't open it with its place's name")
     }
