@@ -770,6 +770,22 @@
         }
       }
     },
+    "卡路里性价比": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calorie value for money"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡路里性價比"
+          }
+        }
+      }
+    },
     "卡价比": {
       "localizations": {
         "en": {
