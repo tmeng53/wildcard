@@ -33,6 +33,8 @@ actor FakeNotices: NoticeSource {
     }
 
     func markSeen(through: NoticeID) async throws(NotificationsError) {
+        // As URLSession does, a request from a cancelled task is cancelled and never arrives.
+        if Task.isCancelled || refusesMarks { throw .unavailable }
         marked.append(through)
         seen = max(seen ?? through, through)
     }
@@ -55,6 +57,9 @@ actor FakeNotices: NoticeSource {
     }
 
     func set(unreachable: Bool) { self.unreachable = unreachable }
+    /// The mark request fails (the network dropped) while reads still work.
+    var refusesMarks = false
+    func set(refusesMarks: Bool) { self.refusesMarks = refusesMarks }
     func set(streams: [[LiveNotice]]) { self.streams = streams }
     func set(refusals: [NotificationsError]) { self.refusals = refusals }
     func hide(_ ids: Set<NoticeID>) { unknown = ids }
