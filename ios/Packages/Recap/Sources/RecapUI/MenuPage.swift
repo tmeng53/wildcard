@@ -164,7 +164,9 @@ private struct MenuCard: View {
                 .clipped()
                 .accessibilityLabel(Text(copy: "照片", bundle: .module))
         } else {
-            PostBlock(kind: .healthyMeal, words: dish.caption, layout: .tile)
+            // The meal's colour alone: its words are the name under the card, and a tile's corner
+            // label would sit under the 卡价比 chip.
+            PostBlock(kind: .healthyMeal, layout: .thumbnail)
         }
     }
 
