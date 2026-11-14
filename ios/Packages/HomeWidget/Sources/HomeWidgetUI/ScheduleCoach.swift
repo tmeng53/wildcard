@@ -17,7 +17,7 @@ struct ScheduleCoach: View {
     let height: Double
 
     /// The see-through white of the empty spot's +, and of a rest day's or a 请假条 day's disc.
-    static let wash: Double = 0.16
+    nonisolated static let wash: Double = 0.16
 
     private var onScene: Color { Color(role: .fgOnAccent, in: theme) }
 
