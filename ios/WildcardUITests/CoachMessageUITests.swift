@@ -36,6 +36,8 @@ final class CoachMessageUITests: XCTestCase {
         // The keyboard is up: the box and 发送 stay above it.
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: Self.wait), "the keyboard didn't come up")
+        // The stage folds away as the keyboard comes up; let it finish.
+        Thread.sleep(forTimeInterval: 1)
         XCTAssertLessThanOrEqual(send.frame.maxY, keyboard.frame.minY, "发送 is under the keyboard")
         XCTAssertLessThanOrEqual(box.frame.maxY, keyboard.frame.minY, "the box is under the keyboard")
         keepScreenshot(named: "151-coach-message-box")
