@@ -1,6 +1,7 @@
 import AvatarDomain
 import Contracts
 import Foundation
+import Synchronization
 
 /// The names art carries (`avatar/names.json`), in each of the app's languages, so a piece or
 /// store is named, and renamed, without an app release. The bundled file names every store this
@@ -120,19 +121,27 @@ private struct ArtWords: Decodable {
 }
 
 extension PlaceholderCharacter {
-    /// The bundled names with the uploaded ones in front. Read once per launch, as the scene
-    /// pictures are, so a view body never reads the disk; a newer download names from the next
-    /// launch.
-    public static func names() -> ArtNames { allNames }
+    /// The bundled names with the downloaded ones in front, read again whenever a download
+    /// changed the file, so a piece that arrives while the app is open (a prop on the editor's
+    /// 道具 rack) is named at once, as `editorChoices()` lists it at once.
+    public static func names() -> ArtNames {
+        names(downloaded: ArtTree.downloadedFile("names.json", in: tree).flatMap { try? Data(contentsOf: $0) })
+    }
+
+    /// `downloaded`'s names in front of the bundled ones, decoded once per file's bytes; the
+    /// bundled ones alone when nothing was downloaded or this build can't read it.
+    static func names(downloaded bytes: Data?) -> ArtNames {
+        guard let bytes else { return bundledNames }
+        if let kept = keptNames.withLock({ $0 }), kept.bytes == bytes { return kept.names }
+        guard let uploaded = try? ArtNames.decode(bytes) else { return bundledNames }
+        let names = bundledNames.overlaid(by: uploaded)
+        keptNames.withLock { $0 = (bytes, names) }
+        return names
+    }
 
     /// The names this build ships with.
     static let bundledNames: ArtNames =
         (try? ArtNames.decode(Data(contentsOf: folder.appending(path: "names.json")))) ?? .none
 
-    private static let allNames: ArtNames = {
-        guard let url = ArtTree.downloadedFile("names.json", in: tree),
-            let uploaded = try? ArtNames.decode(Data(contentsOf: url))
-        else { return bundledNames }
-        return bundledNames.overlaid(by: uploaded)
-    }()
+    private static let keptNames = Mutex<(bytes: Data, names: ArtNames)?>(nil)
 }
