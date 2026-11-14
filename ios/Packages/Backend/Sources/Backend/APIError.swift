@@ -43,6 +43,8 @@ public enum Refusal: Equatable, Sendable {
     case inviteCodeUnknown
     /// The squad has its 8 members.
     case squadFull
+    /// The request to join no longer waits: answered another way, withdrawn, or never sent here.
+    case joinRequestClosed
     /// The member is in as many squads as they may be.
     case squadLimitReached
     /// The squad id is already another squad's.
@@ -93,6 +95,8 @@ public enum Refusal: Equatable, Sendable {
         "WEEK_STORY_NOT_READY": .weekStoryNotReady,
         "INVITE_CODE_UNKNOWN": .inviteCodeUnknown,
         "SQUAD_FULL": .squadFull,
+        "JOIN_REQUEST_ANSWERED": .joinRequestClosed,
+        "JOIN_REQUEST_UNKNOWN": .joinRequestClosed,
         "SQUAD_LIMIT_REACHED": .squadLimitReached,
         "SQUAD_ID_CONFLICT": .squadIDConflict,
         "AI_CONSENT_REQUIRED": .aiConsentRequired,

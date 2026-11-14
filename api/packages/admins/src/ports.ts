@@ -10,6 +10,16 @@ export interface AdminStore {
   log(entry: LoggedAdminAction): Promise<void>;
   /** An admin's logged changes, newest first, at most `limit`. */
   listLog(query: { readonly admin: AdminId; readonly limit: number }): Promise<LoggedAdminAction[]>;
+  /** Records a demo account an admin made. */
+  addDemoAccount(account: {
+    readonly admin: AdminId;
+    readonly member: string;
+    readonly at: Date;
+  }): Promise<void>;
+  /** An admin's demo accounts, the oldest first. */
+  demoAccounts(admin: AdminId): Promise<string[]>;
+  /** The admin who made this demo account; undefined for any other member. */
+  demoAccountOwner(member: string): Promise<AdminId | undefined>;
 }
 
 /** The current time. */

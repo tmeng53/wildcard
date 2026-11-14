@@ -53,8 +53,11 @@ struct CoachDeckCard: View {
     @State private var stamped = false
     /// What the member is telling the coach about 不接挑战.
     @State private var reason = ""
-    /// The reason's field has the keyboard: the stage gives up its height so the field and its
-    /// button stay above the keyboard.
+    /// What the member typed in a coach message's box.
+    @State private var typed = ""
+    /// A field on the card has the keyboard: the stage folds away so the field and its buttons
+    /// stay above the keyboard. Folded outright: given only the height left over, a message's
+    /// stage kept all of it and pushed 发送 under the keyboard.
     @FocusState private var typing: Bool
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -66,12 +69,8 @@ struct CoachDeckCard: View {
                 giftPicture: shown?.gift.map { places.giftPicture($0.piece) }
             )
             .frame(maxWidth: .infinity)
-            .frame(
-                minHeight: typing ? 0 : DeckMetrics.stageHeight, maxHeight: DeckMetrics.stageHeight,
-                alignment: .bottom
-            )
+            .frame(height: typing ? 0 : DeckMetrics.stageHeight, alignment: .bottom)
             .clipped()
-            .layoutPriority(typing ? -1 : 0)
             VStack(alignment: .leading, spacing: Space.xs) {
                 kindLine
                 content
@@ -125,7 +124,9 @@ struct CoachDeckCard: View {
                     .accessibilityHidden(true)
             }
             Group {
-                if let shown {
+                if let shown, shown.kind == .message {
+                    Text(verbatim: Self.time(of: shown.time))
+                } else if let shown {
                     Self.kind(shown.kind)
                     Text(verbatim: "· \(Self.time(of: shown.time))")
                 } else {
@@ -147,6 +148,11 @@ struct CoachDeckCard: View {
                 if let gift = shown.gift { giftFace(gift) }
             case .board, .note:
                 big(Text(verbatim: shown.text ?? ""))
+            case .message:
+                if let message = shown.message {
+                    MessageFace(
+                        deck: deck, card: shown, message: message, isTop: isTop, typed: $typed, typing: $typing)
+                }
             }
         } else {
             big(Text(copy: "暂时没有新消息", bundle: .module))
@@ -206,7 +212,7 @@ struct CoachDeckCard: View {
                 // taken up any more.
                 if stamped || shown.challenge?.isOpen == true {
                     ChallengeAnswers(
-                        deck: deck, card: shown, coachName: coach.name, stamped: $stamped, reason: $reason,
+                        deck: deck, card: shown, stamped: $stamped, reason: $reason,
                         typing: $typing, putAway: putAway)
                 } else if let challenge = shown.challenge, challenge.answer == nil, challenge.isExpired {
                     Text(copy: "已过期", bundle: .module)
@@ -215,6 +221,8 @@ struct CoachDeckCard: View {
                         .frame(maxWidth: .infinity, minHeight: Sizing.control)
                         .accessibilityIdentifier("coachDeck.expired")
                 }
+            } else if let shown, let message = shown.message {
+                MessageButtons(deck: deck, card: shown, message: message, typed: $typed, typing: $typing)
             } else {
                 HStack(spacing: Space.s) { rowButtons }
             }
@@ -235,7 +243,7 @@ struct CoachDeckCard: View {
                 primary(Text(copy: "去动态看看", bundle: .module), id: "coachDeck.feed", action: places.feed)
             case .gift:
                 giftButtons(shown)
-            case .note, .challenge:
+            case .note, .challenge, .message:
                 EmptyView()
             }
         } else {
@@ -286,6 +294,8 @@ struct CoachDeckCard: View {
         case .note: Text(copy: "今天对你说", bundle: .module)
         case .challenge: Text(copy: "今日挑战", bundle: .module)
         case .gift: Text(copy: "送你的", bundle: .module)
+        // A coach message has no label of its own (Tracy, 2026-11-12): only its time.
+        case .message: Text(verbatim: "")
         }
     }
 
@@ -295,6 +305,7 @@ struct CoachDeckCard: View {
         case .note: nil
         case .challenge: "flag.fill"
         case .gift: "gift.fill"
+        case .message: nil
         }
     }
 

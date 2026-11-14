@@ -43,6 +43,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -75,6 +76,7 @@ const app = createApp({
   publicRoutes: unlimitedPublicRoutes,
   photos,
   checkIns: createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: squads,
@@ -119,6 +121,7 @@ const app = createApp({
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   ...unusedFeedback,
@@ -212,6 +215,7 @@ describe('what needs a current AI consent', () => {
     const { id, inviteCode } = SquadBody.parse(made.body);
 
     expect((await call('GET', `/squad-invites/${inviteCode}`, bo.token)).status).toBe(200);
+    await call('PUT', `/squads/${id}/join-approval`, ann.token, { version: 1, required: false });
     const notYet = await call('POST', `/squad-invites/${inviteCode}/accept`, bo.token);
     expect([notYet.status, reasonOf(notYet.body)]).toStrictEqual([400, 'AI_CONSENT_REQUIRED']);
     await agree(bo.token);

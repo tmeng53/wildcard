@@ -53,6 +53,27 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /me/birthday`.
     /// - Remark: Generated from `#/paths//me/birthday/delete(deleteMyBirthday)`.
     func deleteMyBirthday(_ input: Operations.DeleteMyBirthday.Input) async throws -> Operations.DeleteMyBirthday.Output
+    /// The admin’s demo accounts
+    ///
+    /// The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.
+    ///
+    /// - Remark: HTTP `GET /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/get(listDemoAccounts)`.
+    func listDemoAccounts(_ input: Operations.ListDemoAccounts.Input) async throws -> Operations.ListDemoAccounts.Output
+    /// Make a demo account
+    ///
+    /// A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/post(createDemoAccount)`.
+    func createDemoAccount(_ input: Operations.CreateDemoAccount.Input) async throws -> Operations.CreateDemoAccount.Output
+    /// Switch to a demo account
+    ///
+    /// Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts/{memberId}/hand-off`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/{memberId}/hand-off/post(handOffDemoAccount)`.
+    func handOffDemoAccount(_ input: Operations.HandOffDemoAccount.Input) async throws -> Operations.HandOffDemoAccount.Output
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -76,7 +97,7 @@ public protocol APIProtocol: Sendable {
     func getPost(_ input: Operations.GetPost.Input) async throws -> Operations.GetPost.Output
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
@@ -259,7 +280,7 @@ public protocol APIProtocol: Sendable {
     func getSquadInvite(_ input: Operations.GetSquadInvite.Input) async throws -> Operations.GetSquadInvite.Output
     /// Join a squad by invite code
     ///
-    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
@@ -271,6 +292,48 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /public/squad-invites/{inviteCode}`.
     /// - Remark: Generated from `#/paths//public/squad-invites/{inviteCode}/get(getPublicSquadInvite)`.
     func getPublicSquadInvite(_ input: Operations.GetPublicSquadInvite.Input) async throws -> Operations.GetPublicSquadInvite.Output
+    /// Whether joining the squad needs the captain’s OK
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/get(getSquadJoinApproval)`.
+    func getSquadJoinApproval(_ input: Operations.GetSquadJoinApproval.Input) async throws -> Operations.GetSquadJoinApproval.Output
+    /// Turn the captain’s OK to join on or off
+    ///
+    /// For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/put(setSquadJoinApproval)`.
+    func setSquadJoinApproval(_ input: Operations.SetSquadJoinApproval.Input) async throws -> Operations.SetSquadJoinApproval.Output
+    /// The requests waiting for the captain
+    ///
+    /// For the captain: who asked, their character and note, the earliest first.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-requests`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/get(listSquadJoinRequests)`.
+    func listSquadJoinRequests(_ input: Operations.ListSquadJoinRequests.Input) async throws -> Operations.ListSquadJoinRequests.Output
+    /// Let a member in, or turn them away
+    ///
+    /// For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-requests/{requestId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/{requestId}/put(answerSquadJoinRequest)`.
+    func answerSquadJoinRequest(_ input: Operations.AnswerSquadJoinRequest.Input) async throws -> Operations.AnswerSquadJoinRequest.Output
+    /// The member’s newest request to join a squad
+    ///
+    /// Waiting or ended, for the 等队长同意 page while they are in no squad.
+    ///
+    /// - Remark: HTTP `GET /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/get(getMyJoinRequest)`.
+    func getMyJoinRequest(_ input: Operations.GetMyJoinRequest.Input) async throws -> Operations.GetMyJoinRequest.Output
+    /// Withdraw the member’s waiting request
+    ///
+    /// Safe to repeat: with none waiting, nothing changes.
+    ///
+    /// - Remark: HTTP `DELETE /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/delete(withdrawMyJoinRequest)`.
+    func withdrawMyJoinRequest(_ input: Operations.WithdrawMyJoinRequest.Input) async throws -> Operations.WithdrawMyJoinRequest.Output
     /// Where a squad’s day and week stand
     ///
     /// Each member’s today and this week’s counts, as the home screen shows them. Every member’s day and week are their own, in their time zone; weeks start on Monday, and a member who hasn’t saved a weekly plan has the default one. A member who hasn’t saved a profile yet is read on the signed-in member’s clock. Only for members of the squad.
@@ -350,7 +413,7 @@ public protocol APIProtocol: Sendable {
     func getSquadTimeZone(_ input: Operations.GetSquadTimeZone.Input) async throws -> Operations.GetSquadTimeZone.Output
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -399,7 +462,7 @@ public protocol APIProtocol: Sendable {
     func getSquadCoachActivity(_ input: Operations.GetSquadCoachActivity.Input) async throws -> Operations.GetSquadCoachActivity.Output
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -418,6 +481,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/cards/{kind}/{cardId}/seen`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/{kind}/{cardId}/seen/put(markCoachCardSeen)`.
     func markCoachCardSeen(_ input: Operations.MarkCoachCardSeen.Input) async throws -> Operations.MarkCoachCardSeen.Output
+    /// Keep what the caller did on one card of a coach message
+    ///
+    /// One part of the caller’s answer on one card of a coach message they got (a `message` card on the coach page): the button they tapped, the stars they gave or what they typed. Each part once a card; the first stands, and sending it again gets the answers back. A follow-up card takes answers once the button that turns into it was tapped. Sending 意见反馈 is the app’s own `POST /feedback`.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/messages/{messageId}/answer/put(answerCoachMessage)`.
+    func answerCoachMessage(_ input: Operations.AnswerCoachMessage.Input) async throws -> Operations.AnswerCoachMessage.Output
     /// The caller’s pokes in a squad (拍一拍)
     ///
     /// What the home shows: whom the caller sent one to today (so it can’t be sent again), and who sent the caller one in the last 24 hours (they pat the caller on the home). Only current squadmates count.
@@ -458,13 +528,6 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `GET /squads/{squadId}/places/{key}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/places/{key}/get(getSquadPlace)`.
     func getSquadPlace(_ input: Operations.GetSquadPlace.Input) async throws -> Operations.GetSquadPlace.Output
-    /// Give the caller’s score for a place (我的评分)
-    ///
-    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
-    ///
-    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
-    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
-    func ratePlace(_ input: Operations.RatePlace.Input) async throws -> Operations.RatePlace.Output
     /// The places the signed-in member saved (收藏)
     ///
     /// - Remark: HTTP `GET /me/saved-places`.
@@ -700,6 +763,39 @@ extension APIProtocol {
     public func deleteMyBirthday(headers: Operations.DeleteMyBirthday.Input.Headers = .init()) async throws -> Operations.DeleteMyBirthday.Output {
         try await deleteMyBirthday(Operations.DeleteMyBirthday.Input(headers: headers))
     }
+    /// The admin’s demo accounts
+    ///
+    /// The admin’s own account, then each demo account they made, with its character. Signed in on a demo account, its admin’s.
+    ///
+    /// - Remark: HTTP `GET /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/get(listDemoAccounts)`.
+    public func listDemoAccounts(headers: Operations.ListDemoAccounts.Input.Headers = .init()) async throws -> Operations.ListDemoAccounts.Output {
+        try await listDemoAccounts(Operations.ListDemoAccounts.Input(headers: headers))
+    }
+    /// Make a demo account
+    ///
+    /// A new, empty account for the admin to switch to: it signs up like anyone (character, squad) and signs in only through a hand-off. Each call makes another.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/post(createDemoAccount)`.
+    public func createDemoAccount(headers: Operations.CreateDemoAccount.Input.Headers = .init()) async throws -> Operations.CreateDemoAccount.Output {
+        try await createDemoAccount(Operations.CreateDemoAccount.Input(headers: headers))
+    }
+    /// Switch to a demo account
+    ///
+    /// Starts a session on one of the admin’s demo accounts and returns its refresh token. Never for the admin’s own account, which the app keeps its own session for.
+    ///
+    /// - Remark: HTTP `POST /me/demo-accounts/{memberId}/hand-off`.
+    /// - Remark: Generated from `#/paths//me/demo-accounts/{memberId}/hand-off/post(handOffDemoAccount)`.
+    public func handOffDemoAccount(
+        path: Operations.HandOffDemoAccount.Input.Path,
+        headers: Operations.HandOffDemoAccount.Input.Headers = .init()
+    ) async throws -> Operations.HandOffDemoAccount.Output {
+        try await handOffDemoAccount(Operations.HandOffDemoAccount.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// The signed-in member’s AI consent
     ///
     /// Whether they have agreed to the current copy, so a returning member isn’t asked again.
@@ -741,7 +837,7 @@ extension APIProtocol {
     }
     /// Edit one of the member’s own check-ins
     ///
-    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay.
+    /// Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, day, time and audience stay as posted. The same edit again changes nothing, so a retry is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves `trainedWith` out keeps the squadmates it named; `[]` names none.
     ///
     /// - Remark: HTTP `PATCH /check-ins/{id}`.
     /// - Remark: Generated from `#/paths//check-ins/{id}/patch(editCheckIn)`.
@@ -1120,17 +1216,19 @@ extension APIProtocol {
     }
     /// Join a squad by invite code
     ///
-    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it.
+    /// The member needs a current AI consent (`GET /me/ai-consent`). Safe to repeat: joining a squad the member is in answers 200 with it. Where joining needs the captain’s OK (入队需要审核), it asks instead and answers 202 with the request, which the captain is told of; asking again finds it, and asking another squad withdraws it.
     ///
     /// - Remark: HTTP `POST /squad-invites/{inviteCode}/accept`.
     /// - Remark: Generated from `#/paths//squad-invites/{inviteCode}/accept/post(joinSquad)`.
     public func joinSquad(
         path: Operations.JoinSquad.Input.Path,
-        headers: Operations.JoinSquad.Input.Headers = .init()
+        headers: Operations.JoinSquad.Input.Headers = .init(),
+        body: Operations.JoinSquad.Input.Body? = nil
     ) async throws -> Operations.JoinSquad.Output {
         try await joinSquad(Operations.JoinSquad.Input(
             path: path,
-            headers: headers
+            headers: headers,
+            body: body
         ))
     }
     /// The squad an invite code belongs to, for anyone
@@ -1147,6 +1245,88 @@ extension APIProtocol {
             path: path,
             headers: headers
         ))
+    }
+    /// Whether joining the squad needs the captain’s OK
+    ///
+    /// For its members.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/get(getSquadJoinApproval)`.
+    public func getSquadJoinApproval(
+        path: Operations.GetSquadJoinApproval.Input.Path,
+        headers: Operations.GetSquadJoinApproval.Input.Headers = .init()
+    ) async throws -> Operations.GetSquadJoinApproval.Output {
+        try await getSquadJoinApproval(Operations.GetSquadJoinApproval.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Turn the captain’s OK to join on or off
+    ///
+    /// For the captain. Counts at once for the next invite opened; requests already waiting still wait for an answer. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-approval`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-approval/put(setSquadJoinApproval)`.
+    public func setSquadJoinApproval(
+        path: Operations.SetSquadJoinApproval.Input.Path,
+        headers: Operations.SetSquadJoinApproval.Input.Headers = .init(),
+        body: Operations.SetSquadJoinApproval.Input.Body
+    ) async throws -> Operations.SetSquadJoinApproval.Output {
+        try await setSquadJoinApproval(Operations.SetSquadJoinApproval.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The requests waiting for the captain
+    ///
+    /// For the captain: who asked, their character and note, the earliest first.
+    ///
+    /// - Remark: HTTP `GET /squads/{squadId}/join-requests`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/get(listSquadJoinRequests)`.
+    public func listSquadJoinRequests(
+        path: Operations.ListSquadJoinRequests.Input.Path,
+        headers: Operations.ListSquadJoinRequests.Input.Headers = .init()
+    ) async throws -> Operations.ListSquadJoinRequests.Output {
+        try await listSquadJoinRequests(Operations.ListSquadJoinRequests.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Let a member in, or turn them away
+    ///
+    /// For the captain. Letting them in joins them to the squad as a join by its captain, and tells them by push. Answering again the same way is a success.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/join-requests/{requestId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/join-requests/{requestId}/put(answerSquadJoinRequest)`.
+    public func answerSquadJoinRequest(
+        path: Operations.AnswerSquadJoinRequest.Input.Path,
+        headers: Operations.AnswerSquadJoinRequest.Input.Headers = .init(),
+        body: Operations.AnswerSquadJoinRequest.Input.Body
+    ) async throws -> Operations.AnswerSquadJoinRequest.Output {
+        try await answerSquadJoinRequest(Operations.AnswerSquadJoinRequest.Input(
+            path: path,
+            headers: headers,
+            body: body
+        ))
+    }
+    /// The member’s newest request to join a squad
+    ///
+    /// Waiting or ended, for the 等队长同意 page while they are in no squad.
+    ///
+    /// - Remark: HTTP `GET /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/get(getMyJoinRequest)`.
+    public func getMyJoinRequest(headers: Operations.GetMyJoinRequest.Input.Headers = .init()) async throws -> Operations.GetMyJoinRequest.Output {
+        try await getMyJoinRequest(Operations.GetMyJoinRequest.Input(headers: headers))
+    }
+    /// Withdraw the member’s waiting request
+    ///
+    /// Safe to repeat: with none waiting, nothing changes.
+    ///
+    /// - Remark: HTTP `DELETE /me/join-request`.
+    /// - Remark: Generated from `#/paths//me/join-request/delete(withdrawMyJoinRequest)`.
+    public func withdrawMyJoinRequest(headers: Operations.WithdrawMyJoinRequest.Input.Headers = .init()) async throws -> Operations.WithdrawMyJoinRequest.Output {
+        try await withdrawMyJoinRequest(Operations.WithdrawMyJoinRequest.Input(headers: headers))
     }
     /// Where a squad’s day and week stand
     ///
@@ -1315,7 +1495,7 @@ extension APIProtocol {
     }
     /// Set the squad’s time zone
     ///
-    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock. Safe to repeat.
+    /// For the captain. It counts at once, from the squad’s week on its own clock, so this week’s 战报 freezes Sunday 8pm on the new clock, unless Sunday 8pm has already passed on the old clock or the new one: then it counts from next week (`nextTimeZone`), so a change never freezes a week early or reopens a frozen one. Safe to repeat.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/time-zone`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/time-zone/put(setSquadTimeZone)`.
@@ -1430,7 +1610,7 @@ extension APIProtocol {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.
@@ -1473,6 +1653,23 @@ extension APIProtocol {
         try await markCoachCardSeen(Operations.MarkCoachCardSeen.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// Keep what the caller did on one card of a coach message
+    ///
+    /// One part of the caller’s answer on one card of a coach message they got (a `message` card on the coach page): the button they tapped, the stars they gave or what they typed. Each part once a card; the first stands, and sending it again gets the answers back. A follow-up card takes answers once the button that turns into it was tapped. Sending 意见反馈 is the app’s own `POST /feedback`.
+    ///
+    /// - Remark: HTTP `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/coach/messages/{messageId}/answer/put(answerCoachMessage)`.
+    public func answerCoachMessage(
+        path: Operations.AnswerCoachMessage.Input.Path,
+        headers: Operations.AnswerCoachMessage.Input.Headers = .init(),
+        body: Operations.AnswerCoachMessage.Input.Body
+    ) async throws -> Operations.AnswerCoachMessage.Output {
+        try await answerCoachMessage(Operations.AnswerCoachMessage.Input(
+            path: path,
+            headers: headers,
+            body: body
         ))
     }
     /// The caller’s pokes in a squad (拍一拍)
@@ -1567,23 +1764,6 @@ extension APIProtocol {
         try await getSquadPlace(Operations.GetSquadPlace.Input(
             path: path,
             headers: headers
-        ))
-    }
-    /// Give the caller’s score for a place (我的评分)
-    ///
-    /// One score a member and place, standing over any earlier one; the same again changes nothing, so it is safe to repeat. Squadmates see the average over their squad.
-    ///
-    /// - Remark: HTTP `PUT /me/place-ratings/{key}`.
-    /// - Remark: Generated from `#/paths//me/place-ratings/{key}/put(ratePlace)`.
-    public func ratePlace(
-        path: Operations.RatePlace.Input.Path,
-        headers: Operations.RatePlace.Input.Headers = .init(),
-        body: Operations.RatePlace.Input.Body
-    ) async throws -> Operations.RatePlace.Output {
-        try await ratePlace(Operations.RatePlace.Input(
-            path: path,
-            headers: headers,
-            body: body
         ))
     }
     /// The places the signed-in member saved (收藏)

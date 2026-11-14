@@ -30,6 +30,8 @@ struct PlacePageStoreTests {
             return detail
         }
 
+        func map(of squad: SquadID) async throws(PlacesError) -> SquadMapData { .empty }
+
         func characters(in squad: SquadID) async throws(PlacesError) -> [MemberID: MemberCharacter] {
             guard let nickname = try? Nickname("小鱼") else { return [:] }
             return [
@@ -55,16 +57,16 @@ struct PlacePageStoreTests {
         #expect(store.showsSquad)
         #expect(store.detail == nil)
         #expect(store.facts?.address == "897 Broadway")
-        #expect(store.numbers.cells == [.squadScore(nil), .visits(0), .people(0)])
+        #expect(store.numbers.cells == [.visits(0), .people(0)])
         #expect(await source.asked.map(\.rawValue) == ["apple:I1"])
     }
 
     @Test func theSquadsPostsAndAuthorsLoad() async throws {
         let visit = PlaceVisit(
             id: CheckInID(UUID()), author: Self.member, kind: .trained, activity: .sport("cycling"),
-            day: try LocalDay("2026-11-12"), minutes: 45, score: .stars(5))
+            day: try LocalDay("2026-11-12"), minutes: 45)
         let detail = PlaceDetail(
-            place: gym, visits: 1, people: 1, stars: 5, sports: [SportCount(.sport("cycling"), count: 1)],
+            place: gym, visits: 1, people: 1, sports: [SportCount(.sport("cycling"), count: 1)],
             meals: .none, posts: [visit])
         let store = PlacePageStore(
             place: gym, squad: Self.squad, source: Source(detail: detail), directory: Directory())

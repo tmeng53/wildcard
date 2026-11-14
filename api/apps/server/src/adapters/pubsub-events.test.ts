@@ -49,15 +49,11 @@ afterAll(() => {
 });
 
 describe('events through Pub/Sub', () => {
-  it('publish to their kind’s topic with the server’s token, fetched once, or run in the request when Pub/Sub refuses', async () => {
-    const fellBack: ServerEvent[] = [];
+  it('publish to their kind’s topic with the server’s token, fetched once, and when Pub/Sub refuses twice log an error, never running the work in the request', async () => {
+    const logged: string[] = [];
     const publish = pubSubEvents({
       project: 'wildcard-test',
-      fallback: (each) => {
-        fellBack.push(each);
-        return Promise.resolve();
-      },
-      log: createLog(() => undefined),
+      log: createLog((line) => logged.push(line)),
       tokenUrl: `${base}/token`,
       pubSubUrl: base,
     });
@@ -79,10 +75,18 @@ describe('events through Pub/Sub', () => {
     expect(
       JSON.parse(Buffer.from(sent.messages[0]?.data ?? '', 'base64').toString()),
     ).toStrictEqual(event);
-    expect(fellBack).toStrictEqual([]);
+    expect(logged).toStrictEqual([]);
 
     down = true;
     await publish(event);
-    expect(fellBack).toStrictEqual([event]);
+    expect(seen).toHaveLength(4);
+    const entries = logged.map((line) =>
+      z
+        .object({ severity: z.string(), message: z.string(), topic: z.string() })
+        .parse(JSON.parse(line)),
+    );
+    expect(entries).toStrictEqual([
+      { severity: 'ERROR', message: 'event not published', topic: 'check-in-created' },
+    ]);
   });
 });

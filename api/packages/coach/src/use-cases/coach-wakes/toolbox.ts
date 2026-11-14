@@ -53,8 +53,6 @@ export interface WakeDraft {
   answer: string | undefined;
   /** Whom that answer @s, by member id. */
   answerMentions: readonly string[];
-  /** Whether the run marked the check-in's author's challenge today done, on its wake. */
-  challengeDone: boolean;
   /**
    * What the member the wake answers asked of the app, which the run passes on to the team, on a
    * check-in's or a reply's wake.
@@ -192,7 +190,6 @@ export function toolbox({
   noteTo = [],
   gifting,
   to,
-  openChallenge = false,
   relaying = 'nothing',
 }: {
   readonly week: SquadWeek;
@@ -206,9 +203,9 @@ export function toolbox({
   /** The members' stats and this week's plans, as the model reads them. */
   readonly facts?: () => Promise<string>;
   /** A week before this one, as the model may read it. */
-  readonly pastWeek?: (weeksAgo: number) => Promise<SquadWeek>;
+  readonly pastWeek: (weeksAgo: number) => Promise<SquadWeek>;
   /** What was said under a post, one line each, the coach's own lines too. */
-  readonly commentsOf?: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
+  readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   /** The memes in use now, for humour. */
   readonly memes?: CoachMemes;
   /** On a daily wake, the members the coach may write a morning note to, by id. */
@@ -217,8 +214,6 @@ export function toolbox({
   readonly gifting?: GiftOptions;
   /** Whom a line on this wake answers, by member id: the post's author or the replier. */
   readonly to?: string | undefined;
-  /** On a check-in's wake, whether its author has a challenge today that can still be done. */
-  readonly openChallenge?: boolean;
   /**
    * On a check-in's or a reply's wake, whether the member it answers said something there in
    * their own words, which the coach may pass on to the team (`heard`), said nothing
@@ -230,8 +225,7 @@ export function toolbox({
   // Each week is read at most once a run, however many tools ask for it.
   const weeks = new Map<number, Promise<SquadWeek>>([[0, Promise.resolve(week)]]);
   const weekAgo = (weeksAgo: number): Promise<SquadWeek> => {
-    const read =
-      weeks.get(weeksAgo) ?? (pastWeek === undefined ? Promise.resolve(week) : pastWeek(weeksAgo));
+    const read = weeks.get(weeksAgo) ?? pastWeek(weeksAgo);
     weeks.set(weeksAgo, read);
     return read;
   };
@@ -454,21 +448,6 @@ export function toolbox({
       }),
     );
   }
-  if (kind === 'checkIn' && openChallenge) {
-    tools.push(
-      defineTool(draft.steps, {
-        name: 'complete_challenge',
-        description:
-          '这条打卡做到了你今天给他的挑战，就记他完成：他自己的页面上会显示「已完成」。没做到就不用。',
-        parameters: z.object({}),
-        run: () => {
-          const again = draft.challengeDone;
-          draft.challengeDone = true;
-          return again ? '已经记过了。' : '已记他完成。';
-        },
-      }),
-    );
-  }
   if (kind === 'comment') {
     tools.push(
       defineTool(draft.steps, {
@@ -544,7 +523,7 @@ function postTools(
   }: {
     readonly roster: ReadonlyMap<string, string>;
     readonly weekAgo: (weeksAgo: number) => Promise<SquadWeek>;
-    readonly commentsOf: ((checkIn: WeekCheckIn) => Promise<readonly string[]>) | undefined;
+    readonly commentsOf: (checkIn: WeekCheckIn) => Promise<readonly string[]>;
   },
 ): CoachTool[] {
   const listed = new Map<string, WeekCheckIn>();
@@ -598,7 +577,6 @@ function postTools(
       ].join('\n\n');
     },
   });
-  if (commentsOf === undefined) return [memberPosts];
   const postComments = defineTool(steps, {
     name: 'post_comments',
     reads: true,

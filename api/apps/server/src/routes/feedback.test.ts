@@ -40,6 +40,7 @@ import { catalogOn, unlimitedPublicRoutes } from '../test-kit/public-routes.js';
 import {
   ignoredNotices,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachHiring,
   unusedCoachLetters,
   unusedGifts,
@@ -119,6 +120,7 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports,
       store: createPostgresCheckInStore(db),
       membership: squads,
@@ -147,6 +149,7 @@ function appWith(issues: IssueTracker, clock: () => Date = () => new Date()) {
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     feedback,

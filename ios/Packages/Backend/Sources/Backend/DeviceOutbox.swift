@@ -60,8 +60,8 @@ public actor DeviceOutbox: Outbox {
         let postedDay: LocalDay?
         let createdAt: Timestamp
         let audience: [SquadID]
-        /// 发布到动态; missing on posts kept before it, where an empty audience meant not posted
-        /// (the server takes it the same way).
+        /// 发布到动态. Optional only so a post kept before it (days ago, never sent) is left out
+        /// alone instead of failing the whole list.
         let inFeed: Bool?
         let kind: String
         let sport: String?
@@ -76,6 +76,8 @@ public actor DeviceOutbox: Outbox {
         let photos: [StoredPhoto]
         /// A 训练's workout from Health, as posted; missing on the rest and on posts kept before it.
         let workout: Workout?
+        /// The squadmates a 训练 was done with (一起练); missing on the rest and on posts kept before it.
+        let trainedWith: [MemberID]?
         /// The place tagged on a 训练 or a meal; missing on the rest and on posts kept before it.
         let place: StoredPlace?
         /// A meal's 健康 and 好吃; missing on the rest and on posts kept before it.
@@ -90,6 +92,7 @@ public actor DeviceOutbox: Outbox {
             audience = post.audience.squads
             inFeed = post.inFeed
             photos = Self.photos(of: post)
+            trainedWith = Self.mates(of: post)
             var sport: String?
             var customSport: String?
             var minutes: Int?
@@ -133,6 +136,12 @@ public actor DeviceOutbox: Outbox {
             )
         }
 
+        /// Whom a 训练 names, nil when it names no one.
+        private static func mates(of post: PendingCheckIn) -> [MemberID]? {
+            guard case .trained(_, _, let body) = post.draft, !body.trainedWith.isEmpty else { return nil }
+            return body.trainedWith.members
+        }
+
         private static func photos(of post: PendingCheckIn) -> [StoredPhoto] {
             post.draft.photos.map {
                 StoredPhoto(
@@ -141,6 +150,7 @@ public actor DeviceOutbox: Outbox {
         }
 
         func pending(photos directory: URL) throws -> PendingCheckIn? {
+            guard let inFeed else { return nil }
             var prepared: [PreparedPhoto] = []
             var uploaded: [UUID: PhotoRef] = [:]
             for photo in photos {
@@ -158,29 +168,32 @@ public actor DeviceOutbox: Outbox {
             let body = PostBody(
                 photos: prepared, caption: caption ?? "", workout: trained ? workout : nil,
                 startTime: trained ? start : nil, place: place.flatMap(\.place),
-                rating: trained ? nil : rating.flatMap(\.rating))
-            let draft: CheckInDraft
+                rating: trained ? nil : rating.flatMap(\.rating),
+                trainedWith: trained ? ((try? TrainedWith(trainedWith ?? [])) ?? .none) : .none)
+            guard let draft = try draft(body: body, photos: prepared) else { return nil }
+            return PendingCheckIn(
+                id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
+                audience: try Audience(audience), inFeed: inFeed, draft: draft,
+                uploaded: uploaded)
+        }
+        /// The draft this kept post stands for, nil for a kind or sport this build can't read.
+        private func draft(body: PostBody, photos prepared: [PreparedPhoto]) throws -> CheckInDraft? {
             switch kind {
             case "trained":
                 let minutes = try minutes.map(WorkoutMinutes.init)
                 if let sport, let listed = Sport(rawValue: sport) {
-                    draft = .trained(.sport(listed), minutes, body)
+                    return .trained(.sport(listed), minutes, body)
                 } else if let customSport {
-                    draft = .trained(.custom(try CustomSport(customSport)), minutes, body)
-                } else {
-                    return nil
+                    return .trained(.custom(try CustomSport(customSport)), minutes, body)
                 }
-            case "healthyMeal": draft = .healthyMeal(body)
-            case "cheatMeal": draft = .cheatMeal(body)
+                return nil
+            case "healthyMeal": return .healthyMeal(body)
+            case "cheatMeal": return .cheatMeal(body)
             case "disclaimer":
                 guard let text else { return nil }
-                draft = .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
+                return .disclaimer(try Disclaimer(text, restDay: restDay ?? false), photos: prepared)
             default: return nil
             }
-            return PendingCheckIn(
-                id: id, member: member, day: day, postedDay: postedDay, createdAt: createdAt,
-                audience: try Audience(audience), inFeed: inFeed ?? !audience.isEmpty, draft: draft,
-                uploaded: uploaded)
         }
     }
 

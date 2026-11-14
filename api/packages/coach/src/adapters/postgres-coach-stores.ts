@@ -306,21 +306,62 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
 
       challengeOf: (input) => dayChallenge(db, input),
 
-      async complete({ note, by, day }) {
-        // Only a challenge, on its own day, not let go, and only the first time: the member may
-        // have said 算了 while the run thought.
-        const done = await sql`
-          insert into public.coach_challenge_completions (note_id, by)
-          select m.id, ${by} from public.coach_member_notes m
-          where m.id = ${String(note)}::bigint and m.challenge_title is not null
-            and m.day = ${day}::date
-            and not exists (
-              select 1 from public.coach_challenge_answers a
-              where a.note_id = m.id and a.answer = 'declined'
-            )
-          on conflict (note_id) do nothing
-          returning note_id`.execute(db);
-        return done.rows.length > 0;
+      async deliveredBetween({ squad, coach, from, to }) {
+        const rows = await db
+          .selectFrom('coach_member_notes')
+          .innerJoin(
+            'coach_member_note_deliveries',
+            'coach_member_note_deliveries.note_id',
+            'coach_member_notes.id',
+          )
+          .leftJoin(
+            'coach_challenge_answers',
+            'coach_challenge_answers.note_id',
+            'coach_member_notes.id',
+          )
+          .leftJoin(
+            'coach_challenge_completions',
+            'coach_challenge_completions.note_id',
+            'coach_member_notes.id',
+          )
+          .select([
+            'coach_member_notes.member_id',
+            sql<string>`to_char(coach_member_notes.day, 'YYYY-MM-DD')`.as('day'),
+            'coach_member_notes.text',
+            'coach_member_notes.challenge_title',
+            'coach_member_notes.challenge_amount',
+            'coach_member_notes.challenge_unit',
+            'coach_member_notes.challenge_line',
+            'coach_challenge_answers.answer',
+            'coach_challenge_answers.reason',
+            'coach_challenge_completions.by as done_by',
+            'coach_challenge_completions.at as done_at',
+          ])
+          .where('coach_member_notes.squad_id', '=', squad)
+          .where('coach_member_notes.coach_id', '=', coach)
+          .where('coach_member_notes.day', '>=', from)
+          .where('coach_member_notes.day', '<=', to)
+          .orderBy('coach_member_notes.day')
+          .orderBy('coach_member_notes.id')
+          .execute();
+        return rows.map((row) => {
+          const challenge = challengeOfRow(row);
+          return {
+            member: row.member_id,
+            day: row.day,
+            text: row.text,
+            ...(challenge === undefined
+              ? {}
+              : {
+                  challenge: {
+                    challenge,
+                    answer: row.answer === null ? undefined : ChallengeAnswer.parse(row.answer),
+                    reason: row.reason ?? undefined,
+                    completion: completionOfRow(row),
+                  },
+                }),
+          };
+        });
       },
 
       async challengesOn({ squad, day }) {

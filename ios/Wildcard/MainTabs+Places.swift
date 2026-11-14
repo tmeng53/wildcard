@@ -35,11 +35,26 @@ extension MainTabs {
         )
         .environment(\.sceneTheme, today.scene)
     }
+
+    /// The squad 小队地图 shows: none, and no map button, for a member in no squad.
+    var mapSquad: SquadID? { today.squadID ?? feed.squad }
+
+    /// 小队地图 over 动态: a name opens its place, a member's post its own page, both pushed over it.
+    @ViewBuilder var squadMapPage: some View {
+        if let squad = mapSquad {
+            SquadMapScreen(
+                squad: squad, today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent),
+                source: places, openPlace: { feedPages.append(.place($0)) },
+                openPost: { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+            )
+            .environment(\.sceneTheme, today.scene)
+        }
+    }
 }
 
 extension MainTabs {
     /// 地点页 from the compose page's place pill, pushed on the stack the compose page is on: 今天's,
-    /// or the editing page's own over a post.
+    /// or the editing page's own over a post; and from the 战报's places, pushed over the story.
     var composePlacePage: PlacePageRoute {
         PlacePageRoute { place in
             AnyView(

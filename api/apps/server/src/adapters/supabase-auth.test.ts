@@ -4,6 +4,7 @@ import { randomUUID, webcrypto, type JsonWebKey } from 'node:crypto';
 import { sign } from 'hono/jwt';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { UserId } from '../ports.js';
 import { config, signOut, signUp } from '../test-kit/local-supabase.js';
@@ -214,6 +215,23 @@ describe('createSupabaseAccounts', () => {
       true,
       false,
     ]);
+  });
+
+  it('makes a user who signs in only by a hand-off, whose refresh token starts their session', async () => {
+    const userId = await accounts.createUser(`demo-${randomUUID()}@demo.wildcardsquad.com`);
+    const { refreshToken } = await accounts.handOff(userId);
+    // The app exchanges the refresh token for the session, as SupabaseAuth.refresh does.
+    const response = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: config.supabaseSecretKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const { access_token: token } = z
+      .object({ access_token: z.string() })
+      .parse(await response.json());
+    expect(await accounts.verifySession(token)).toStrictEqual({ userId });
+    await accounts.deleteUser(userId);
+    expect(await reasonOf(accounts.handOff(userId))).toBe('AUTH_UNAVAILABLE');
   });
 
   it('says Auth is unavailable when it can’t be reached or refuses the secret key', async () => {

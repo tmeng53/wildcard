@@ -172,11 +172,11 @@ extension WildcardAPI {
         _ = try await call { try await client.claimPiece(path: .init(pieceId: piece)).ok }
     }
 
-    /// Whether the one daily push at 6pm and the coach's pushes are on; each is until the member
-    /// turns it off.
-    public func pushSwitches() async throws(APIError) -> (dailyProgress: Bool, coach: Bool) {
+    /// Whether the one daily push at 6pm, the coach's pushes and the push for a squadmate's 训练 are
+    /// on; each is until the member turns it off.
+    public func pushSwitches() async throws(APIError) -> (dailyProgress: Bool, coach: Bool, teammate: Bool) {
         let settings = try await call { try await client.getMyPushSettings().ok.body.json }.settings
-        return (settings.dailyProgress ?? true, settings.coach ?? true)
+        return (settings.dailyProgress ?? true, settings.coach ?? true, settings.teammate ?? true)
     }
 
     /// Turns the daily push on or off, leaving the coach's as it is. Safe to repeat.
@@ -187,6 +187,11 @@ extension WildcardAPI {
     /// Turns the coach's pushes on or off, leaving the daily push as it is. Safe to repeat.
     public func setCoachPush(_ isOn: Bool) async throws(APIError) {
         try await savePushSwitches(.init(coach: isOn))
+    }
+
+    /// Turns the push for a squadmate's 训练 on or off, leaving the others as they are. Safe to repeat.
+    public func setTeammatePush(_ isOn: Bool) async throws(APIError) {
+        try await savePushSwitches(.init(teammate: isOn))
     }
 
     private func savePushSwitches(_ settings: Components.Schemas.PushSettings.SettingsPayload) async throws(APIError) {
@@ -226,14 +231,14 @@ public struct CheckInTotals: Hashable, Sendable {
     public let disclaimers: Int
     /// The sport with the most 练了 (最常练); nil before the first.
     public let topSport: TopSport?
-    /// The streaks still going; none from an older server.
+    /// The streaks still going.
     public let streaks: CardStreaks
 }
 
 extension CardStreaks {
-    /// The API's streaks still going, a left-out one (broken, or an older server) as 0.
-    init(_ streaks: Components.Schemas.CurrentStreaks?) {
-        self.init(training: streaks?.training?.days ?? 0, meals: streaks?.meals?.days ?? 0)
+    /// The API's streaks still going, a left-out (broken) one as 0.
+    init(_ streaks: Components.Schemas.CurrentStreaks) {
+        self.init(training: streaks.training?.days ?? 0, meals: streaks.meals?.days ?? 0)
     }
 }
 

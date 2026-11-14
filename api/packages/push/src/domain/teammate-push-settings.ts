@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // The teammate push for everyone (a squadmate's 训练, told as it is posted), kept in the database
 // so it changes without a deploy: whether it goes out at all, and how many may ring on one
-// member's phone in 24 hours. Each member's own switch (PushTopic `dailyProgress`) still applies.
+// member's phone in 24 hours. Each member's own switch (PushTopic `teammate`) still applies.
 
 export const TeammatePushSettings = z.strictObject({
   version: z.literal(1),

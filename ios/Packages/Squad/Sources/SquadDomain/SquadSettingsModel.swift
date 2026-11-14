@@ -161,19 +161,21 @@ public final class SquadSettingsModel {
     /// The captain sets the zone; everyone else reads it.
     public var canChangeTimeZone: Bool { isCaptain && settings?.matchTimeZone.canChange == true }
 
-    /// The captain picks the squad's zone, which counts at once (Tracy, 2026-11-08). The row shows
-    /// it at once and goes back if the change doesn't go through.
+    /// The captain picks the squad's zone, which counts at once (Tracy, 2026-11-08), or from next
+    /// week once this week's Sunday 8pm has passed on the old clock or the new one (Tracy,
+    /// 2026-11-13). The row shows the pick, `nextTimeZone`, at once either way, and goes back if the
+    /// change doesn't go through.
     public func setTimeZone(_ identifier: String) async {
         guard let settings, canChangeTimeZone, TimeZone(identifier: identifier) != nil,
-            identifier != settings.matchTimeZone.timeZone
+            identifier != settings.matchTimeZone.nextTimeZone
         else { return }
         let before = settings.matchTimeZone
-        update { $0.matchTimeZone.timeZone = identifier }
+        update { $0.matchTimeZone.nextTimeZone = identifier }
         await change { service throws(SquadError) in
             let zone = try await service.setTimeZone(of: settings.squad.id, to: identifier)
             self.update { $0.matchTimeZone = zone }
         }
-        if changeFailed, case .loaded(let now) = load, now.matchTimeZone.timeZone == identifier {
+        if changeFailed, case .loaded(let now) = load, now.matchTimeZone.nextTimeZone == identifier {
             update { $0.matchTimeZone = before }
         }
     }
@@ -342,14 +344,14 @@ public final class SquadSettingsModel {
         }
     }
 
-    private func update(_ edit: (inout SquadSettings) -> Void) {
+    func update(_ edit: (inout SquadSettings) -> Void) {
         guard case .loaded(var settings) = load else { return }
         edit(&settings)
         load = .loaded(settings)
         changed()
     }
 
-    private func change(_ body: (any SquadSettingsService) async throws(SquadError) -> Void) async {
+    func change(_ body: (any SquadSettingsService) async throws(SquadError) -> Void) async {
         guard !isSaving else { return }
         isSaving = true
         changeFailed = false

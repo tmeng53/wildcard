@@ -41,7 +41,7 @@ public final class FeedCoach {
         self.now = now
     }
 
-    /// The 战术板 line while it is still its day (New York's, as every coach's).
+    /// The 战术板 line while it is still its day, on the squad's clock (`CoachNote.timeZone`).
     public var todaysNote: CoachNote? {
         guard let note, note.isCurrent(at: now()) else { return nil }
         return note

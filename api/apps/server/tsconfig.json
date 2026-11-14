@@ -14,6 +14,9 @@
       "path": "../../packages/app-copy"
     },
     {
+      "path": "../../packages/app-routes"
+    },
+    {
       "path": "../../packages/language-model"
     },
     {
@@ -84,6 +87,9 @@
     },
     {
       "path": "../../packages/coach"
+    },
+    {
+      "path": "../../packages/coach-messages"
     },
     {
       "path": "../../packages/unlocks"

@@ -8,9 +8,10 @@ import { DisclaimerWriterOffError, type DisclaimerDrafts } from '@wildcard/discl
 import { HTTP_STATUS, isAppError } from '@wildcard/errors';
 import type { Members } from '@wildcard/members';
 import type { Notices } from '@wildcard/notices';
+import type { CoachMessages } from '@wildcard/coach-messages';
 import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
-import type { PlaceRatings, SquadPlaces } from '@wildcard/places';
+import type { SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
@@ -27,7 +28,7 @@ import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
-import { inProcessEvents, type EventHandlers, type PublishEvent } from './events.js';
+import { inProcessEvents, type PublishEvent } from './events.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import { eventHandlers } from './flows/event-handlers.js';
 import type { TeammatePushDependencies } from './flows/teammate-push.js';
@@ -58,6 +59,7 @@ import { devices } from './routes/devices.js';
 import { health } from './routes/health.js';
 import { eventPushes, jobs } from './routes/jobs.js';
 import { me } from './routes/me.js';
+import { demoAccounts } from './routes/demo-accounts.js';
 import type { CoachNames } from './flows/coach-names.js';
 import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
@@ -71,11 +73,13 @@ import { comments } from './routes/comments.js';
 import { reactions } from './routes/reactions.js';
 import { squads, type PublicRoutes } from './routes/squads.js';
 import { squadCoach } from './routes/squad-coach.js';
+import { squadJoinRequests } from './routes/squad-join-requests.js';
 import { squadLanguage } from './routes/squad-language.js';
 import { squadTimeZone } from './routes/squad-time-zone.js';
 import { squadWeeklyGoal } from './routes/squad-weekly-goal.js';
 import { coachActivity } from './routes/coach-activity.js';
 import { coachCards } from './routes/coach-cards.js';
+import { coachMessageAnswers } from './routes/coach-messages.js';
 import { squadScene } from './routes/squad-scene.js';
 import { squadToday } from './routes/squad-today.js';
 import { titles } from './routes/titles.js';
@@ -102,10 +106,10 @@ export interface AppDependencies {
   readonly coachLetters: CoachLetters;
   /** What each squad's coach said: its 战术板 line and its replies to check-ins. */
   readonly coachActivity: CoachActivity;
+  /** 教练消息卡: cards admins put on members' coach pages. */
+  readonly coachMessages: Pick<CoachMessages, 'cardsFor' | 'answer'>;
   /** Squadmates' pokes, which the daily push counts. */
   readonly nudges: Nudges;
-  /** Members' scores for the places they train at (地点页). */
-  readonly placeRatings: PlaceRatings;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
   readonly squadPlaces: SquadPlaces;
@@ -154,10 +158,10 @@ export interface AppDependencies {
     /** The coach's morning notes to deliver, and how to tell them in the bell. */
     readonly coachNotes: Pick<CoachNotesDependencies, 'notes' | 'noteHour' | 'tell' | 'clock'>;
     /**
-     * How events reach their subscribers (`events.ts`): through Pub/Sub on the hosted server;
-     * left out, they run in the request.
+     * How events reach their subscribers (`events.ts`): only through Pub/Sub on the hosted
+     * server; left out (locally, in tests), they run in the request.
      */
-    readonly publishEvents?: (handlers: EventHandlers, log: Log) => PublishEvent;
+    readonly publishEvents?: (log: Log) => PublishEvent;
   };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -198,14 +202,16 @@ export function createApp(deps: AppDependencies) {
   app.route('/', health(deps));
   app.route('/', catalog({ ...deps.catalog, publicRoutes: deps.publicRoutes }));
   app.route('/', me({ ...deps, admins: deps.admin.admins(deps.db) }));
+  app.route('/', demoAccounts({ ...deps, admins: deps.admin.admins(deps.db) }));
   app.route('/', aiConsent(deps));
   // What follows a new check-in or comment runs after the request saved it.
   const handlers = eventHandlers({
     coach: deps.jobs.coach,
     commentPush: deps,
+    trainedWithPush: deps,
     teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
   });
-  const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
+  const publish = deps.jobs.publishEvents?.(deps.log) ?? inProcessEvents(handlers, deps.log);
   app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
@@ -214,6 +220,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', pushSettings(deps));
   app.route('/', location(deps));
   app.route('/', squads({ ...deps, publish }));
+  app.route('/', squadJoinRequests({ ...deps, publish }));
   app.route('/', squadToday({ ...deps, awards: deps.weeklyAwards.awards }));
   app.route(
     '/',
@@ -231,10 +238,11 @@ export function createApp(deps: AppDependencies) {
   );
   app.route('/', squadCoach(deps));
   app.route('/', squadWeeklyGoal(deps));
-  app.route('/', squadTimeZone(deps));
+  app.route('/', squadTimeZone({ ...deps, clock: deps.weeklyAwards.clock }));
   app.route('/', squadLanguage(deps));
   app.route('/', coachActivity(deps));
   app.route('/', coachCards(deps));
+  app.route('/', coachMessageAnswers(deps));
   app.route('/', nudges(deps));
   app.route('/', places(deps));
   app.route('/', savedPlaces(deps));

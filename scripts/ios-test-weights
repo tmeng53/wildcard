@@ -10,6 +10,7 @@ CoachDeckUITests 80
 CoachFeedUITests 111
 CoachHireUITests 175
 CoachLetterUITests 110
+CoachMessageUITests 45
 CoachSidelineUITests 55
 ComposePhotoUITests 87
 DailyPushUITests 55
@@ -27,7 +28,7 @@ OpeningUITests 37
 PatUITests 93
 PostManageUITests 185
 PushBannerUITests 174
-PushLongPressUITests 46
+PushLongPressUITests 64
 RecapUITests 152
 ScenePickUITests 202
 ScheduleUITests 283

@@ -27,7 +27,7 @@ private func row(_ member: MemberID, _ training: TrainingStatus, on day: LocalDa
 }
 
 /// Mate trained, I haven't checked in, the third rests by plan; I trained once this week.
-private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) -> Home {
+private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = [], firstWeek: LocalDay? = nil) -> Home {
     let today = SquadToday(
         squad: squadID,
         members: members ?? [row(mate, .trained), row(viewer, .notCheckedIn), row(resting, .notCheckedIn, rest: true)],
@@ -43,7 +43,8 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
         member: viewer, timeZone: losAngeles,
         squad: Squad(
             id: squadID, name: "周三不练腿俱乐部", inviteCode: "K7M2QX9P", members: [mate, viewer, resting], captain: viewer),
-        today: today, plan: plan ?? { fatalError("a seven-day plan") }(), checkIns: checkIns)
+        today: today, plan: plan ?? { fatalError("a seven-day plan") }(), checkIns: checkIns,
+        squadFirstWeek: firstWeek)
 }
 
 @Test func countsTheWeeksLikeTheSquadCard() {
@@ -74,11 +75,46 @@ private func home(members: [SquadmateToday]? = nil, checkIns: [CheckIn] = []) ->
     #expect(board.plan.map(\.status) == board.week.days)
     #expect(board.plan.map(\.activity) == board.week.activities)
     #expect(board.plan.map(\.isToday) == [false, true, false, false, false, false, false])
-    // Tuesday and the three days after it.
-    #expect(board.planAhead(4).map(\.weekday) == [1, 2, 3, 4])
-    // Sunday: only today is left.
+    #expect(board.planToday?.weekday == 1)
+    #expect(board.planTomorrow?.weekday == 2)
+    // Sunday: no tomorrow this week.
     let sunday = tuesday.adding(days: 5)
-    #expect(WidgetBoard(home: home(), day: sunday).planAhead(4).map(\.weekday) == [6])
+    #expect(WidgetBoard(home: home(), day: sunday).planTomorrow == nil)
+}
+
+private let coach = CoachID(rawValue: "xiaohun")
+
+private func challenge(expired: Bool = false) -> DayChallenge? {
+    coach.map {
+        DayChallenge(
+            note: "note", day: tuesday,
+            challenge: CoachPageCard.Challenge(title: "慢跑", amount: 3, unit: "公里", isExpired: expired),
+            coach: CoachSpeaker(id: $0, name: "毛头"))
+    }
+}
+
+@Test func showsTodaysChallengeOnlyWhileTheSquadHasACoach() {
+    let set = WidgetBoard(home: home(), day: tuesday, coach: coach, challenge: challenge())
+    #expect(set.challenge?.challenge.title == "慢跑")
+    #expect(set.challenge?.challenge.amount == 3)
+    // Fired since: the challenge goes with the coach.
+    #expect(WidgetBoard(home: home(), day: tuesday, challenge: challenge()).challenge == nil)
+    // Its day over.
+    #expect(WidgetBoard(home: home(), day: tuesday, coach: coach, challenge: challenge(expired: true)).challenge == nil)
+}
+
+@Test func countsTheSquadsWeekFromTheWeekItWasMade() {
+    // Made six weeks before this one: W7.
+    let made = tuesday.weekStart.adding(days: -42).adding(days: 3)
+    #expect(WidgetBoard(home: home(firstWeek: made), day: tuesday).weekNumber == 7)
+    // An older server sends none.
+    #expect(WidgetBoard(home: home(), day: tuesday).weekNumber == nil)
+}
+
+@Test func wearsTheSquadsScene() {
+    let pool = SceneID(rawValue: "pool")
+    #expect(WidgetBoard(home: home(), day: tuesday, scene: pool).scene == pool)
+    #expect(WidgetBoard(home: home(), day: tuesday).scene == nil)
 }
 
 @Test func theCapsulesTapOpensTheTrainingPageForItsWorkout() {

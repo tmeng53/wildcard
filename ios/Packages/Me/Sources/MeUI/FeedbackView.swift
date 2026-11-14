@@ -106,9 +106,6 @@ struct FeedbackView: View {
                     .typeStyle(TypeRamp.largeTitle)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                Text(copy: "每一条我们都会看", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
                 // Only while the beta's reward runs: its switch is turned off on the server.
                 if Switchboard.shared.isOn(.feedbackReward, at: .now) {
                     Text(copy: "公测期间提出反馈，领取神秘奖励", bundle: .module)

@@ -56,6 +56,9 @@ public struct Figure: Hashable, Sendable {
         public internal(set) var art: [Artwork]
         /// The slot each of `art` is worn in, nil for the rig's own art.
         public internal(set) var slots: [Slot?]
+        /// Which of `art` is a hand around a held thing, such as the fist on a racket's handle
+        /// (`Rig.Layer.hand`), by index.
+        public internal(set) var hands: Set<Int> = []
 
         /// The seam this arm passes behind its body's cloth at (`Tuck`).
         public var tuck: Tuck? { seam.flatMap { Tuck(pivot: pivot, seam: $0) } }
@@ -193,19 +196,6 @@ public struct Figure: Hashable, Sendable {
         let artwork = try Artwork.read(svg: svg, path: path)
         guard artwork.width == rig.width, artwork.height == rig.height else { throw .canvasMismatch(art: path) }
         return artwork
-    }
-
-    /// The figure with nothing but what `slot` wears, as on a shop's rack: no body, face or
-    /// other clothes, each piece still where the rig puts it.
-    public func wearing(only slot: Slot) -> Figure {
-        var figure = self
-        for index in figure.parts.indices {
-            let part = figure.parts[index]
-            let kept = part.slots.indices.filter { part.slots[$0] == slot }
-            figure.parts[index].art = kept.map { part.art[$0] }
-            figure.parts[index].slots = kept.map { part.slots[$0] }
-        }
-        return figure
     }
 
     /// Every part at rest.
@@ -347,5 +337,22 @@ extension Figure {
     struct Level: Hashable, Sendable {
         let variant: String
         let parts: [Int]
+    }
+}
+
+extension Figure {
+    /// The figure with nothing but what `slot` wears, as on a shop's rack: no body, face or
+    /// other clothes, each piece still where the rig puts it.
+    public func wearing(only slot: Slot) -> Figure {
+        var figure = self
+        for index in figure.parts.indices {
+            let part = figure.parts[index]
+            // A held thing shows without the hand around it, which is its holder's.
+            let kept = part.slots.indices.filter { part.slots[$0] == slot && !part.hands.contains($0) }
+            figure.parts[index].art = kept.map { part.art[$0] }
+            figure.parts[index].slots = kept.map { part.slots[$0] }
+            figure.parts[index].hands = []
+        }
+        return figure
     }
 }

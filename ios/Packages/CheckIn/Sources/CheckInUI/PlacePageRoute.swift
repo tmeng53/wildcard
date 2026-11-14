@@ -18,6 +18,12 @@ public struct PlacePageRoute: Sendable {
 
     /// No place's page (the sign-up preview, the style guide): the pill's name does nothing.
     public static let unwired = PlacePageRoute()
+
+    /// Whether a place's page is there to open.
+    public var isWired: Bool { page != nil }
+
+    /// The place's page, for a stack in another package to push (the 战报's places); nil unwired.
+    @MainActor public func view(of place: Place) -> AnyView? { page?(place) }
 }
 
 extension EnvironmentValues {

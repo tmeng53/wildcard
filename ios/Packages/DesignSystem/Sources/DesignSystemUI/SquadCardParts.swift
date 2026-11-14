@@ -107,6 +107,7 @@ struct Grabber: View {
 /// `open`, the title is a button with a chevron after it.
 struct PageHeader: View {
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.squadCardNews) private var hasNews
     let label: Text
     let title: String
     let count: Int
@@ -126,20 +127,22 @@ struct PageHeader: View {
                                 .font(.system(size: Sizing.smallIcon - 2, weight: .semibold))
                                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                                 .accessibilityHidden(true)
+                            if hasNews { NewsDotMark() }
                         }
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityIdentifier("squadcard.squad")
+                    .accessibilityValue(hasNews ? Text(copy: "有新消息", bundle: .module) : Text(verbatim: ""))
                 } else {
                     titleText
                 }
             }
             Spacer(minLength: 0)
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
-                Score(count: count, goal: goal, size: .hero)
+                Score(count: count, goal: goal, size: .goal)
                 unit
-                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreHero))
+                    .typeStyle(TypeRamp.denominator(of: TypeRamp.scoreGoal))
                     .foregroundStyle(Color(role: .fgSubtle, in: theme))
                 if count > goal {  // 训练 past the goal as a small 「+N」 tag after the score.
                     InkTag(Text(verbatim: "+\(count - goal)"), height: CoachTag.Size.regular.height)

@@ -64,7 +64,8 @@ final class SignUpUITests: XCTestCase {
         // The found squad is one combined element, which reads as text rather than a group.
         let found = app.descendants(matching: .any)["squad.found"]
         XCTAssertTrue(found.waitForExistence(timeout: Self.wait), "the squad wasn't found")
-        XCTAssertTrue(found.label.contains("人均每周 3 次"), "the squad found doesn't say its goal: \(found.label)")
+        // How many are in it; the goal left the card in #851.
+        XCTAssertTrue(found.label.contains("4 人"), "the squad found doesn't say its size: \(found.label)")
         settle()
         let squadDone = app.buttons["squad.done"]
         XCTAssertTrue(

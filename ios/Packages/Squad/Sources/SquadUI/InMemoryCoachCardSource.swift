@@ -48,6 +48,72 @@ public actor InMemoryCoachCardSource: CoachCardSource {
             : InMemoryCoachCardSource(stack: cards)
     }
 
+    /// Two coach messages, as an admin would write them (their words are data, in three languages,
+    /// as the API sends them): 喜欢外卡吗？, whose answers turn it into a request for a review or a
+    /// box for what doesn't work, and a rating of a place with the squad on its stage, 软糖星 and
+    /// a box.
+    public static func sampleMessages(
+        now: Date, coach: CoachSpeaker = CoachSpeaker(id: "xiaohun", name: "毛头")
+    ) -> InMemoryCoachCardSource {
+        let morning = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: now) ?? now
+        return InMemoryCoachCardSource(stack: [
+            CoachPageCard(
+                kind: .message, id: "enjoying-wildcard", coach: coach, look: coach.id.rawValue, time: morning,
+                message: enjoying),
+            CoachPageCard(
+                kind: .message, id: "rate-equinox", coach: coach, look: coach.id.rawValue,
+                time: morning.addingTimeInterval(60), message: rating),
+        ])
+    }
+
+    private static func words(_ zhHans: String, _ english: String, _ zhHant: String) -> CatalogNames {
+        CatalogNames(simplifiedChinese: zhHans, english: english, traditionalChinese: zhHant)
+    }
+
+    /// 喜欢外卡吗？ 喜欢 → 给外卡写个评价？ | 不太喜欢 → 哪里不好用？ with a box sent as 意见反馈.
+    private static let enjoying = CoachMessage(cards: [
+        CoachMessage.Card(
+            path: "", line: words("喜欢外卡吗？", "Enjoying Wildcard?", "喜歡外卡嗎？"),
+            buttons: [
+                CoachMessage.Button(
+                    id: "no", label: words("不太喜欢", "Not really", "不太喜歡"), tap: [.next("no")]),
+                CoachMessage.Button(
+                    id: "yes", label: words("喜欢", "Yes", "喜歡"), style: .primary, tap: [.next("yes")]),
+            ]),
+        CoachMessage.Card(
+            path: "yes", line: words("给外卡写个评价？", "Leave us a review?", "給外卡寫個評價？"),
+            stage: CoachMessage.Stage(cast: .coachAndMe, move: "cheer"),
+            buttons: [
+                CoachMessage.Button(id: "later", label: words("下次吧", "Later", "下次吧"), tap: [.close]),
+                CoachMessage.Button(
+                    id: "review", label: words("写评价", "Write one", "寫評價"), style: .primary,
+                    tap: [.open("https://apps.apple.com/app/id6826015677?action=write-review"), .close]),
+            ], thanks: words("谢谢你！", "Thank you!", "謝謝你！")),
+        CoachMessage.Card(
+            path: "no", line: words("哪里不好用？", "What isn't working?", "哪裡不好用？"),
+            input: CoachMessage.Input(placeholder: words("说说看", "Tell us", "說說看")),
+            buttons: [
+                CoachMessage.Button(
+                    id: "send", label: words("发送", "Send", "發送"), style: .primary,
+                    tap: [.feedback("problem"), .close])
+            ], thanks: words("收到，谢谢你。", "Got it, thanks.", "收到，謝謝你。")),
+    ])
+
+    /// A place to rate, the squad on its stage, with 软糖星 and a box.
+    private static let rating = CoachMessage(cards: [
+        CoachMessage.Card(
+            path: "", line: words("周四去的 Equinox，打个分？", "Rate Thursday's Equinox?", "週四去的 Equinox，打個分？"),
+            about: CoachMessage.About(
+                icon: "dumbbell.fill", name: words("Equinox", "Equinox", "Equinox"),
+                detail: words("小队去了 3 次", "The squad went 3 times", "小隊去了 3 次")),
+            stage: CoachMessage.Stage(cast: .coachAndSquad, move: "clap"), stars: true,
+            input: CoachMessage.Input(placeholder: words("还想说点什么（可选）", "Anything else (optional)", "還想說點什麼（可選）")),
+            buttons: [
+                CoachMessage.Button(id: "done", label: words("好了", "Done", "好了"), style: .primary, tap: [.close])
+            ],
+            thanks: words("收到，谢谢你。", "Got it, thanks.", "收到，謝謝你。"))
+    ])
+
     /// A sample's words in the app's language.
     private static func word(_ key: String) -> String {
         String(copyKey: key, bundle: Bundle.module)
@@ -106,5 +172,24 @@ public actor InMemoryCoachCardSource: CoachCardSource {
         stack = stack.map { isIt($0) ? $0.with(challenge: answered) : $0 }
         earlier = earlier.map { isIt($0) ? $0.with(challenge: answered) : $0 }
         return answered.answer ?? answer
+    }
+
+    public func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
+        async throws(SquadError) -> [String: CoachMessage.Answered]
+    {
+        let isIt = { (card: CoachPageCard) in card.kind == .message && card.id == message }
+        guard let kept = (stack + earlier).first(where: isIt)?.message else { throw .outdated }
+        var answered = kept.answered
+        let was = answered[path] ?? CoachMessage.Answered()
+        answered[path] =
+            switch part {
+            case .tap(let button): CoachMessage.Answered(tap: was.tap ?? button, stars: was.stars, text: was.text)
+            case .stars(let stars): CoachMessage.Answered(tap: was.tap, stars: was.stars ?? stars, text: was.text)
+            case .text(let text): CoachMessage.Answered(tap: was.tap, stars: was.stars, text: was.text ?? text)
+            }
+        let now = kept.with(answered: answered)
+        stack = stack.map { isIt($0) ? $0.with(message: now) : $0 }
+        earlier = earlier.map { isIt($0) ? $0.with(message: now) : $0 }
+        return answered
     }
 }

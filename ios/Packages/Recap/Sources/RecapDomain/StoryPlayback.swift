@@ -92,6 +92,9 @@ extension StoryPage {
         case .hottest: 5.5
         case .meals: 6
         case .bestDisclaimer: 6.5
+        case .menu: 6
+        case .favoritePlace: 5.5
+        case .discovery: 5.5
         case .ending: 4.5
         }
     }

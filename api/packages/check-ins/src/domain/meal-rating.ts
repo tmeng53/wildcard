@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 // How a member rated one meal they posted (Tracy, 2026-11-12): 健康 and 好吃, each 1 to 5
-// tickets, both or neither. Any meal can carry it, with or without a place; a restaurant's
-// scores will be the average of the meals posted there. 卡价比 is worked out from it, never stored.
+// tickets, both or neither. Any meal can carry it, with or without a place; places show no
+// average of it (Tracy, 2026-11-13). 卡价比 is worked out from it, never stored.
 
 const Score = z.int().min(1).max(5);
 

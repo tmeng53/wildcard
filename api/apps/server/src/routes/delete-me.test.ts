@@ -46,6 +46,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -75,6 +76,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     publicRoutes: unlimitedPublicRoutes,
     photos,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
@@ -116,6 +118,7 @@ function appWith(revokeAppleSignIn: RevokeAppleSignIn | undefined) {
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     ...unusedFeedback,
@@ -159,6 +162,8 @@ async function squadOf(
   });
   expect(made.status).toBe(201);
   const { inviteCode } = z.object({ inviteCode: z.string() }).parse(made.body);
+  // The friend joins straight in, without the captain's OK (入队需要审核 off).
+  await call('PUT', `/squads/${id}/join-approval`, creator.token, { version: 1, required: false });
   const joined = await call('POST', `/squad-invites/${inviteCode}/accept`, friend.token);
   expect(joined.status).toBe(201);
   return id;
@@ -486,5 +491,66 @@ describe('DELETE /me', () => {
     const response = await call('DELETE', '/me', me.token, body);
     expect([response.status, reasonOf(response.body)]).toStrictEqual([400, 'REQUEST_INVALID']);
     expect((await whatIsLeftOf(me.userId)).user).toBe(1);
+  });
+
+  it('takes the demo accounts an admin made with the admin', async () => {
+    const { call } = appWith(undefined);
+    const admin = await signUp();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const made = await call('POST', '/me/demo-accounts', admin.token, undefined);
+    const demo = z.object({ memberId: z.uuid() }).parse(made.body).memberId;
+
+    expect((await call('DELETE', '/me', admin.token, { version: 1 })).status).toBe(204);
+    const users = await sql<{ id: string }>`select id from auth.users
+      where id in (${admin.userId}, ${demo})`.execute(db);
+    expect(users.rows).toStrictEqual([]);
+  });
+
+  it('deletes a demo account without touching the Apple grant its admin’s phone sends', async () => {
+    const codes: string[] = [];
+    const { call } = appWith((code) => {
+      codes.push(code);
+      return Promise.resolve();
+    });
+    const admin = await signUp();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const made = await call('POST', '/me/demo-accounts', admin.token, undefined);
+    const demo = z.object({ memberId: z.uuid() }).parse(made.body).memberId;
+    const handOff = await call(
+      'POST',
+      `/me/demo-accounts/${demo}/hand-off`,
+      admin.token,
+      undefined,
+    );
+    const { refreshToken } = z.object({ refreshToken: z.string() }).parse(handOff.body);
+    const refreshed = await fetch(`${config.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { apikey: config.supabaseSecretKey, 'content-type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const demoToken = z
+      .object({ access_token: z.string() })
+      .parse(await refreshed.json()).access_token;
+
+    const response = await call('DELETE', '/me', demoToken, {
+      version: 1,
+      appleAuthorizationCode: 'admins-own',
+    });
+    expect([response.status, codes, (await whatIsLeftOf(demo)).user]).toStrictEqual([204, [], 0]);
+    expect((await whatIsLeftOf(admin.userId)).user).toBe(1);
+  });
+
+  it('takes the demo accounts along after their maker is taken off the admins list', async () => {
+    const { call } = appWith(undefined);
+    const admin = await signUp();
+    await sql`insert into public.admins (member_id) values (${admin.userId})`.execute(db);
+    const made = await call('POST', '/me/demo-accounts', admin.token, undefined);
+    const demo = z.object({ memberId: z.uuid() }).parse(made.body).memberId;
+    await sql`delete from public.admins where member_id = ${admin.userId}`.execute(db);
+
+    expect((await call('DELETE', '/me', admin.token, { version: 1 })).status).toBe(204);
+    const users = await sql<{ id: string }>`select id from auth.users
+      where id in (${admin.userId}, ${demo})`.execute(db);
+    expect(users.rows).toStrictEqual([]);
   });
 });

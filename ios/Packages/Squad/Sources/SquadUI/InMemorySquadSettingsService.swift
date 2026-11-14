@@ -19,10 +19,12 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
         case coached
         /// Mia, on a squad that has hired 毛头: she reads its 简历 and hires nobody.
         case coachedMember
+        /// 小林, the captain, with 小橘 asking to join (入队申请).
+        case asked
     }
 
-    private var current: SquadSettings
-    private let failsSaving: Bool
+    var current: SquadSettings
+    let failsSaving: Bool
 
     public init(settings: SquadSettings, failsSaving: Bool = false) {
         current = settings
@@ -51,7 +53,7 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
             : String(copyKey: "晨跑五人组", bundle: Bundle.module)
         let viewer: MemberID =
             switch seat {
-            case .captain, .noWinner, .coached: ids[0]
+            case .captain, .noWinner, .coached, .asked: ids[0]
             case .winner: ids[1]
             case .member, .coachedMember: ids[2]
             }
@@ -80,7 +82,8 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
                     recent: SquadWeeklyGoal.Recent(weeks: 4, daysPerMember: 3.4)),
                 matchTimeZone: SquadTimeZone(
                     timeZone: "Asia/Taipei", canChange: viewer == ids[0]),
-                language: SquadLanguage(language: .simplifiedChinese, canChange: viewer == ids[0])))
+                language: SquadLanguage(language: .simplifiedChinese, canChange: viewer == ids[0]),
+                joining: seat == .asked ? askedJoining(at: now) : nil))
     }
 
     public func settings() async throws(SquadError) -> SquadSettings {
@@ -149,7 +152,7 @@ extension InMemorySquadSettingsService {
     public func setTimeZone(of squad: SquadID, to timeZone: String) async throws(SquadError) -> SquadTimeZone {
         if failsSaving { throw .unavailable }
         guard current.matchTimeZone.canChange, TimeZone(identifier: timeZone) != nil else { throw .outdated }
-        current.matchTimeZone.timeZone = timeZone
+        current.matchTimeZone = SquadTimeZone(timeZone: timeZone, canChange: true)
         return current.matchTimeZone
     }
 
@@ -188,12 +191,12 @@ private let sampleCoaches = [
 ]
 
 extension Squad {
-    fileprivate func with(name: String? = nil, members: [MemberID]? = nil) -> Squad {
+    func with(name: String? = nil, members: [MemberID]? = nil) -> Squad {
         Squad(
             id: id, name: name ?? self.name, inviteCode: inviteCode, members: members ?? self.members, captain: captain)
     }
 
-    fileprivate func with(captain: MemberID?) -> Squad {
+    func with(captain: MemberID?) -> Squad {
         Squad(id: id, name: name, inviteCode: inviteCode, members: members, captain: captain)
     }
 }

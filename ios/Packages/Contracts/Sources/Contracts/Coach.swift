@@ -94,8 +94,7 @@ public struct CoachNote: Hashable, Sendable {
     public let timeZone: TimeZone
 
     public init(
-        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date,
-        timeZone: TimeZone = SquadTimeZone.newYorkClock
+        day: LocalDay, text: String, coach: CoachSpeaker, writtenAt: Date, timeZone: TimeZone
     ) {
         (self.day, self.text, self.coach, self.writtenAt) = (day, text, coach, writtenAt)
         self.timeZone = timeZone
@@ -152,13 +151,13 @@ public struct CoachAnswer: Hashable, Sendable, Identifiable {
     }
 }
 
-/// The coach's morning note (便条) to one member: a line only they see, once a day, which 今天
-/// shows on the first open after it arrived until they put it away (收下), and 通知 keeps.
+/// The coach's morning note (便条) to one member: a line only they see, once a day, which the
+/// coach's page shows until they have seen it, and 通知 keeps.
 public struct CoachMemberNote: Hashable, Sendable, Identifiable {
     public let id: Int
     /// The squad whose coach wrote it.
     public let squad: SquadID
-    /// The day (New York's) it was written for.
+    /// The day, on the squad's clock, it was written for.
     public let day: LocalDay
     public let text: String
     public let coach: CoachSpeaker
@@ -195,26 +194,22 @@ public struct CoachLetter: Hashable, Sendable, Identifiable {
 }
 
 /// What the squad's coach said: its newest 战术板 line, its replies to the check-ins asked
-/// about, its answers to members' replies to it there, the reader's own morning note, and the
-/// letter it was left when it took over.
+/// about, its answers to members' replies to it there, and the letter it was left when it took
+/// over.
 public struct CoachActivity: Hashable, Sendable {
     public let note: CoachNote?
     public let replies: [CoachReply]
     /// Oldest first.
     public let answers: [CoachAnswer]
-    /// The reader's morning note waiting on 今天, if any.
-    public let memberNote: CoachMemberNote?
     /// The letter the squad's coach now was left by the one before it, if any.
     public let letter: CoachLetter?
 
     public init(
-        note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = [], memberNote: CoachMemberNote? = nil,
-        letter: CoachLetter? = nil
+        note: CoachNote?, replies: [CoachReply], answers: [CoachAnswer] = [], letter: CoachLetter? = nil
     ) {
         self.note = note
         self.replies = replies
         self.answers = answers
-        self.memberNote = memberNote
         self.letter = letter
     }
 }

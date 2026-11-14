@@ -86,13 +86,17 @@ export function challengeSection({
   return ['## 你今天给他的挑战', `- 挑战：${challengeText(challenge)}`, `- 他：${said}`].join('\n');
 }
 
-/** Whether a challenge can still be marked done: not let go (算了) and not done yet. */
-export function challengeOpen({
-  answer,
-  completion,
-}: {
-  readonly answer?: ChallengeAnswer | undefined;
-  readonly completion?: ChallengeCompletion | undefined;
-}): boolean {
-  return answer !== 'declined' && completion === undefined;
+/** A note that reached its member, with how its challenge went if it set one. */
+export interface DeliveredNote {
+  readonly member: string;
+  /** The squad's day it was for, `YYYY-MM-DD`. */
+  readonly day: string;
+  readonly text: string;
+  readonly challenge?: {
+    readonly challenge: Challenge;
+    readonly answer: ChallengeAnswer | undefined;
+    /** Why they let it go, if they said. */
+    readonly reason: string | undefined;
+    readonly completion: ChallengeCompletion | undefined;
+  };
 }

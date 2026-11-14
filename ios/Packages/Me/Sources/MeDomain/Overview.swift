@@ -21,8 +21,9 @@ public struct LifetimeCounts: Hashable, Sendable {
 }
 
 /// The streaks still going that the player card's 外卡 show (Tracy, 2026-11-10): days trained in
-/// a row, a planned rest day neither breaking nor adding, and days in a row with a meal checked
-/// in (健康餐 or 坦白放纵餐). A broken one is 0, and its 外卡 isn't shown.
+/// a row, a planned rest day neither breaking nor adding, and days in a row with a 健康餐, a
+/// 坦白放纵餐 neither breaking nor adding (Tracy, 2026-11-13). A broken one is 0, and its 外卡
+/// isn't shown.
 public struct CardStreaks: Hashable, Sendable {
     public var training: Int
     public var meals: Int
@@ -124,6 +125,8 @@ public struct MeOverview: Hashable, Sendable {
     public var dailyPushOn: Bool
     /// The coach's pushes (教练消息): its morning note and its replies, all silent.
     public var coachPushOn: Bool
+    /// The push that tells the member a squadmate just trained (队友练完提醒).
+    public var teammatePushOn: Bool
     /// The number the member picked for their card; nil until they pick one.
     public var jerseyNumber: JerseyNumber?
     /// The birthday the member chose to give, for the heart rate chart's zones; nil without one.
@@ -146,7 +149,8 @@ public struct MeOverview: Hashable, Sendable {
 
     public init(
         character: MeCharacter, joinedAt: Date?, counts: LifetimeCounts, week: WeekCount?, squadName: String?,
-        dailyPushOn: Bool, coachPushOn: Bool = true, jerseyNumber: JerseyNumber? = nil, squadPlace: Int? = nil,
+        dailyPushOn: Bool, coachPushOn: Bool = true, teammatePushOn: Bool = true, jerseyNumber: JerseyNumber? = nil,
+        squadPlace: Int? = nil,
         board: TitleBoard = .empty,
         unlocks: [Unlock] = [], stock: StreetStock? = nil, claimed: Set<String> = [], gifts: [String] = [],
         weekGlance: WeekGlance? = nil, record: TrainingRecord? = nil, birthday: Birthday? = nil,
@@ -164,6 +168,7 @@ public struct MeOverview: Hashable, Sendable {
         self.squadName = squadName
         self.dailyPushOn = dailyPushOn
         self.coachPushOn = coachPushOn
+        self.teammatePushOn = teammatePushOn
         self.jerseyNumber = jerseyNumber
         self.squadPlace = squadPlace
         self.board = board

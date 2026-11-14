@@ -25,6 +25,7 @@ public struct StatusRing<Avatar: View>: View {
     private let status: RingStatus
     private let avatarSize: Double
     private let playsHaptics: Bool
+    private let badge: String?
     private let avatar: Avatar
     @State private var drawn: Double
     @State private var pops = 0
@@ -35,11 +36,12 @@ public struct StatusRing<Avatar: View>: View {
 
     public init(
         status: RingStatus, avatarSize: Double = Sizing.characterHead, playsHaptics: Bool = false,
-        @ViewBuilder avatar: () -> Avatar
+        badge: String? = nil, @ViewBuilder avatar: () -> Avatar
     ) {
         self.status = status
         self.avatarSize = avatarSize
         self.playsHaptics = playsHaptics
+        self.badge = badge
         self.avatar = avatar()
         _drawn = State(initialValue: status == .done ? 1 : 0)
     }
@@ -83,6 +85,10 @@ public struct StatusRing<Avatar: View>: View {
         .overlay(alignment: .bottomTrailing) {
             if status == .restDay {
                 Moon(size: diameter * 0.42)
+                    .offset(x: Sizing.ringWidth, y: Sizing.ringWidth)
+                    .transition(.scale.combined(with: .opacity))
+            } else if status == .done, let badge {
+                RingBadge(symbol: badge, size: diameter * 0.42)
                     .offset(x: Sizing.ringWidth, y: Sizing.ringWidth)
                     .transition(.scale.combined(with: .opacity))
             }
@@ -132,6 +138,24 @@ public struct StatusRing<Avatar: View>: View {
         case .done: Text(copy: "打卡了", bundle: .module)
         case .restDay: Text(copy: "休息日", bundle: .module)
         }
+    }
+}
+
+/// What someone did today on their closed ring: the symbol in white on an ink disc, edged in the
+/// page's colour so it reads over the ring.
+private struct RingBadge: View {
+    @Environment(\.sceneTheme) private var theme
+    let symbol: String
+    let size: Double
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: size * 0.55, weight: .semibold))
+            .foregroundStyle(Color(role: .fgOnInk, in: theme))
+            .frame(width: size, height: size)
+            .background(Color(role: .bgInk, in: theme), in: Circle())
+            .overlay(Circle().stroke(Color(role: .bgCanvas, in: theme), lineWidth: Sizing.ringWidth / 2))
+            .accessibilityHidden(true)
     }
 }
 

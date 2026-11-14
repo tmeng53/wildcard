@@ -2,14 +2,11 @@ import type { TokenUsage } from '@wildcard/language-model';
 import type { z } from 'zod';
 
 import type { CoachCardKind, CoachOwnCard } from './domain/cards.js';
-import type {
-  Challenge,
-  ChallengeAnswer,
-  ChallengeCompletion,
-  ChallengeDoneBy,
-} from './domain/challenge.js';
+import type { Challenge, ChallengeAnswer, ChallengeCompletion } from './domain/challenge.js';
 import type { Coach, CoachId } from './domain/coach.js';
 import type { StoredPath } from './domain/memory.js';
+import type { CoachGiven, DeliveredNote } from './domain/prompt.js';
+export type { CoachGiven, DeliveredNote } from './domain/prompt.js';
 import type {
   CoachModel,
   CoachReasoning,
@@ -79,7 +76,8 @@ export type CoachMemberFacts = (input: {
 
 /**
  * A member's streaks still going, as their squad sees them: days trained in a row and days in a
- * row with a meal, each left out when none is going. A 请假条 day neither breaks nor adds to one.
+ * row with a 健康餐, each left out when none is going. A 请假条 day (and, for meals, a 坦白放纵餐 day)
+ * neither breaks nor adds to one.
  */
 export type CoachStreaks = (input: {
   readonly squad: string;
@@ -242,14 +240,15 @@ export interface CoachMemberNoteStore {
     readonly day: string;
   }): Promise<DayChallenge | undefined>;
   /**
-   * Marks the challenge on a note done, by the coach from the day's check-ins; false when it
-   * set none, isn't for `day` (the squad's), was let go or was done already (the first stands).
+   * The notes this coach wrote the squad's members for the days `from` to `to` (the squad's days,
+   * both included) that reached them, oldest first, each with how its challenge went.
    */
-  complete(input: {
-    readonly note: number;
-    readonly by: ChallengeDoneBy;
-    readonly day: string;
-  }): Promise<boolean>;
+  deliveredBetween(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly from: string;
+    readonly to: string;
+  }): Promise<readonly DeliveredNote[]>;
   /** The challenges on the squad's notes of `day` that reached their members, by member. */
   challengesOn(input: {
     readonly squad: SquadId;
@@ -640,6 +639,13 @@ export interface CoachGifting {
     readonly pool: readonly { readonly id: string; readonly description?: string }[];
     readonly open: ReadonlyMap<string, readonly string[]>;
   }>;
+  /** What this coach gave these members in the squad since `since`, oldest first. */
+  given(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly members: readonly string[];
+    readonly since: Date;
+  }): Promise<readonly CoachGiven[]>;
   /** Gives the piece with the coach's line; why not, when it was refused. */
   give(input: {
     readonly squad: SquadId;

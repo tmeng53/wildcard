@@ -5,17 +5,22 @@ import { z } from 'zod';
  * push, at the hour its settings name (6pm to begin with), with the squad's week and what
  * teammates sent them, and also the pushes for comments, replies and @s on their posts; `coach`
  * is everything the squad's coach says to the member (its replies, its answers and its morning
- * note), sent silently but for the morning note, which rings. A new kind of push adds a topic here; every
- * switch starts on.
+ * note), sent silently but for the morning note, which rings; `teammate` is the push that tells a
+ * member a squadmate just posted a 训练. A new kind of push adds a topic here; every switch starts
+ * on.
  */
-export const PushTopic = z.enum(['dailyProgress', 'coach']);
+export const PushTopic = z.enum(['dailyProgress', 'coach', 'teammate']);
 export type PushTopic = z.infer<typeof PushTopic>;
 
 /** Which kinds of push a member gets: every topic, on or off. */
 export type PushSettings = Readonly<Record<PushTopic, boolean>>;
 
 /** The settings of a member who never changed one: everything on. */
-export const DEFAULT_PUSH_SETTINGS: PushSettings = { dailyProgress: true, coach: true };
+export const DEFAULT_PUSH_SETTINGS: PushSettings = {
+  dailyProgress: true,
+  coach: true,
+  teammate: true,
+};
 
 /** Some switches, as a change names them: the rest keep what they were. */
 export type PushSettingsChange = Readonly<Partial<Record<PushTopic, boolean>>>;

@@ -53,3 +53,27 @@ import Testing
         try await APIPlaceSource(api: outsider.api).detail(of: key, in: squad)
     }
 }
+
+@Test func aTeammateReadsTheSquadMap() async throws {
+    let stack = try LocalStack()
+    let author = try await stack.signedInMember()
+    let mate = try await stack.signedInMember()
+    let squad = try await stack.squad(of: author, mate)
+    let place = try Place(
+        name: "Sweetgreen", appleID: "I\(UUID().uuidString.prefix(8))", category: "restaurant",
+        latitude: 40.7448, longitude: -73.9881)
+    let meal = try checkIn(by: author, to: squad, .healthyMeal(Meal(place: place)))
+    _ = try await author.api.save(meal)
+
+    let map = try await APIPlaceSource(api: mate.api).map(of: squad)
+
+    let key = try #require(place.key)
+    #expect(map.places.map(\.key) == [key])
+    #expect(map.places.first?.place.name == "Sweetgreen")
+    #expect(map.places.first?.visits == 1)
+    #expect(map.places.first?.members == [MemberVisits(author.id, visits: 1)])
+    #expect(map.places.first?.meals.healthyMeals == 1)
+    #expect(map.recent.map(\.id) == [meal.id])
+    #expect(map.recent.map(\.key) == [key])
+    #expect(map.recent.map(\.day) == [meal.day])
+}

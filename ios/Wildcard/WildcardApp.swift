@@ -143,12 +143,13 @@ struct WildcardApp: App {
         AppModel.show(CatalogClient.bundled, keepsCopy: false)
     }
 
-    /// Sign-up on the sample squad; with `-onboarding-rejoin`, for a member back in no squad, who
-    /// made their character and agreed to AI before.
+    /// Sign-up on the sample squad; `-onboarding-rejoin`: a member back in no squad, character and
+    /// AI consent kept; `-onboarding-ask`: the captain lets members in, so joining waits.
     private static func sampleSignUp() -> SignUpModel {
         SignUpModel(
             service: InMemorySignUpService.sampleSquad(
-                character: LaunchOptions.rejoins ? InMemorySignUpService.sampleCharacter : nil),
+                character: LaunchOptions.rejoins ? InMemorySignUpService.sampleCharacter : nil,
+                asksCaptain: LaunchOptions.asksCaptain),
             nickname: "", now: LaunchOptions.signUpTime, hasAgreedToAI: LaunchOptions.rejoins,
             health: sampleHealth(), location: sampleLocation)
     }
@@ -337,12 +338,8 @@ struct WildcardApp: App {
                     Self.open(link, today: today, tab: $tab, place: $pushDestination)
                 }
             }
-            // A home screen widget's tap, as `AppRoot` opens it on the real backend.
-            .onOpenURL { url in
-                if let link = WidgetLink(url: url) {
-                    Self.open(link, today: today, tab: $tab, place: $pushDestination)
-                }
-            }
+            // A home screen widget's tap or a place by its address, as `AppRoot` opens them.
+            .onOpenURL { Self.open($0, today: today, tab: $tab, place: $pushDestination) }
             .task { await Self.moveSampleSquad(today: today) }
         }
     }
@@ -359,41 +356,5 @@ struct WildcardApp: App {
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
         await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
-    }
-}
-
-/// Where a tapped notification or home screen widget opens.
-extension WildcardApp {
-    /// A tapped notification: 今天, or where the 6pm push's view asked to go (动态, or 今天 with
-    /// the check-in kinds open).
-    static func open(_ destination: PushDestination?, today: TodayModel, tab: Binding<MainTabs.Tab>) {
-        switch destination {
-        case .feed:
-            tab.wrappedValue = .feed
-        case .checkIn:
-            tab.wrappedValue = .today
-            today.openCheckIn()
-        case nil:
-            tab.wrappedValue = .today
-        }
-    }
-
-    /// Opens the place a home screen widget asked for: 今天, 打卡 over it, the 训练 page started
-    /// from the workout the widget's capsule offered, or 出赛表, which `MainTabs` opens as a
-    /// notice's place.
-    static func open(
-        _ link: WidgetLink, today: TodayModel, tab: Binding<MainTabs.Tab>, place: Binding<AppDestination?>
-    ) {
-        switch link {
-        case .schedule:
-            place.wrappedValue = .schedule
-        case .today:
-            open(nil, today: today, tab: tab)
-        case .checkIn:
-            open(.checkIn, today: today, tab: tab)
-        case .postWorkout(let source):
-            tab.wrappedValue = .today
-            Task { await today.openCheckIn(posting: source) }
-        }
     }
 }

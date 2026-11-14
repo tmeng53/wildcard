@@ -36,6 +36,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -52,6 +53,7 @@ const photos = {
 };
 const checkInsOn = (db: Database) =>
   createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
@@ -72,7 +74,13 @@ async function getHealth(db: Database) {
   const app = createApp({
     db,
     verifyToken: notCalled,
-    accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
+    accounts: {
+      verifySession: notCalled,
+      deleteUser: notCalled,
+      signsInWithApple: notCalled,
+      createUser: notCalled,
+      handOff: notCalled,
+    },
     revokeAppleSignIn: undefined,
     catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
@@ -100,6 +108,7 @@ async function getHealth(db: Database) {
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     ...unusedFeedback,
@@ -172,7 +181,13 @@ describe('an unknown route', () => {
     const app = createApp({
       db,
       verifyToken: notCalled,
-      accounts: { verifySession: notCalled, deleteUser: notCalled, signsInWithApple: notCalled },
+      accounts: {
+        verifySession: notCalled,
+        deleteUser: notCalled,
+        signsInWithApple: notCalled,
+        createUser: notCalled,
+        handOff: notCalled,
+      },
       revokeAppleSignIn: undefined,
       catalog: catalogOn(db),
       publicRoutes: unlimitedPublicRoutes,
@@ -198,6 +213,7 @@ describe('an unknown route', () => {
       rewards: noRewards,
       coachHiring: unusedCoachHiring,
       coachActivity: unusedCoachActivity,
+      coachMessages: unusedCoachMessages,
       coachLetters: unusedCoachLetters,
       scenes: scenesOn(db),
       switches: switchesOn(db),

@@ -15,6 +15,20 @@ func aPieceOnItsOwnDrawsNothingElse(slot: Slot) throws {
     #expect(piece.parts.map(\.id) == figure.parts.map(\.id))
 }
 
+/// A held prop on its own shows the prop alone: the fist around its handle is the holder's,
+/// so a rack, a gift or an unlock never shows a hand with nobody attached.
+@Test(arguments: ["racket", "skis", "shopping"])
+func aHeldPropOnItsOwnDrawsNoHand(prop: String) throws {
+    var look = PlaceholderCharacter.lifter
+    look.variants["prop"] = prop
+    let figure = try PlaceholderCharacter.figure(wearing: look)
+    #expect(figure.parts.contains { !$0.hands.isEmpty })
+    let piece = figure.wearing(only: "prop")
+    #expect(piece.parts.allSatisfy { $0.hands.isEmpty })
+    #expect(!piece.parts.flatMap(\.art).isEmpty)
+    for id: PartID in ["gripL", "gripR"] { #expect(try piece.part(id).art.isEmpty) }
+}
+
 /// The body's arm starts in a round shoulder that stays put while the arm turns, so a sleeve
 /// covers that whole circle: with the arms up, a sleeve that didn't would show the shoulder
 /// under it as a hole of skin.

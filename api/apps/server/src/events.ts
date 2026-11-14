@@ -25,6 +25,20 @@ export const CheckInCreated = z.strictObject({
 });
 export type CheckInCreated = z.infer<typeof CheckInCreated>;
 
+/**
+ * A 训练 saved or edited naming squadmates it was done with (一起练): each is told once a post,
+ * so an edit sends them all again and only those new to it hear.
+ */
+export const TrainedWithNamed = z.strictObject({
+  version: z.literal(1),
+  kind: z.literal('check-in.trained-with'),
+  checkIn: Id,
+  /** Who posted it. */
+  author: Id,
+  members: z.array(Id).min(1).max(7),
+});
+export type TrainedWithNamed = z.infer<typeof TrainedWithNamed>;
+
 /** A comment just written, with whom it concerns. */
 export const CommentCreated = z.strictObject({
   version: z.literal(1),
@@ -58,6 +72,7 @@ export const ServerEvent = z.discriminatedUnion('kind', [
   CheckInCreated,
   CommentCreated,
   SquadJoined,
+  TrainedWithNamed,
 ]);
 export type ServerEvent = z.infer<typeof ServerEvent>;
 
@@ -74,6 +89,7 @@ export const Subscriber = z.enum([
   'comment-push',
   'coach-answer',
   'coach-welcome',
+  'trained-with-push',
 ]);
 export type Subscriber = z.infer<typeof Subscriber>;
 
@@ -83,6 +99,7 @@ export const SUBSCRIBERS = {
   'teammate-push': 'check-in.created',
   'comment-push': 'comment.created',
   'coach-answer': 'comment.created',
+  'trained-with-push': 'check-in.trained-with',
   'coach-welcome': 'squad.joined',
 } as const satisfies Record<Subscriber, ServerEvent['kind']>;
 
@@ -93,8 +110,8 @@ export type EventHandlers = {
   ) => Promise<void>;
 };
 
-/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`, `squad.joined` `squad-joined`. */
-export const topicOf = (kind: ServerEvent['kind']): string => kind.replace('.', '-');
+/** The Pub/Sub topic of a kind of event: `check-in.created` is `check-in-created`. */
+export const topicOf = (kind: ServerEvent['kind']): string => kind.replaceAll('.', '-');
 
 /** Runs one subscriber on an event; false when the event isn't of its kind. */
 export async function deliver(
@@ -113,6 +130,9 @@ export async function deliver(
         ? handlers['coach-answer'](event)
         : handlers['comment-push'](event));
       return true;
+    case 'check-in.trained-with':
+      await handlers['trained-with-push'](event);
+      return true;
     case 'squad.joined':
       await handlers['coach-welcome'](event);
       return true;
@@ -126,10 +146,9 @@ export async function deliver(
 const IN_REQUEST_WAIT_MS = 8_000;
 
 /**
- * Events without Pub/Sub (local stacks, tests, and the hosted server when Pub/Sub can't be
- * reached): every subscriber of the event runs in the request, side by side, which waits at most
- * `IN_REQUEST_WAIT_MS`, since Cloud Run gives the server CPU only while a request runs. A failure
- * is logged; what the request saved stays saved.
+ * Events without Pub/Sub (local stacks and tests; never the hosted server): every subscriber of
+ * the event runs in the request, side by side, which waits at most `IN_REQUEST_WAIT_MS`. A
+ * failure is logged; what the request saved stays saved.
  */
 export function inProcessEvents(handlers: EventHandlers, log: Log): PublishEvent {
   return async (event) => {

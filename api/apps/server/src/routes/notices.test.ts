@@ -55,6 +55,7 @@ import {
   unusedWeeklyAwards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -69,6 +70,7 @@ const photos = createSupabasePhotoStorage({
 });
 const sports = createSports({ store: createPostgresSportStore(db) });
 const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
   sports,
   store: createPostgresCheckInStore(db),
   membership: createSquads({
@@ -140,6 +142,7 @@ const app = createApp({
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   ...unusedFeedback,

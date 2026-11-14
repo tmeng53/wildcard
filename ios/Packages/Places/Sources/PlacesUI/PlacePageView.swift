@@ -229,7 +229,9 @@ private struct PlaceCard: View {
 }
 
 /// The place's phone and website from Maps as two white capsules side by side; only what Maps
-/// has, and no row without either (Tracy, 2026-11-12: on every place's card).
+/// has, and no row without either (Tracy, 2026-11-12: on every place's card). The phone number
+/// always shows whole, and the website takes the room left (Tracy, 2026-11-14: a cut number is
+/// no use).
 private struct ContactCapsules: View {
     let facts: PlaceFacts?
     @Environment(\.openURL) private var openURL
@@ -240,11 +242,13 @@ private struct ContactCapsules: View {
         if phone != nil || site != nil {
             HStack(spacing: Space.s) {
                 if let phone {
-                    ContactCapsule(symbol: "phone.fill", text: phone.0) { openURL(phone.1) }
-                        .accessibilityIdentifier("place.phone")
+                    ContactCapsule(symbol: "phone.fill", text: phone.0, whole: true, fills: site == nil) {
+                        openURL(phone.1)
+                    }
+                    .accessibilityIdentifier("place.phone")
                 }
                 if let site {
-                    ContactCapsule(symbol: "globe", text: site.0) { openURL(site.1) }
+                    ContactCapsule(symbol: "globe", text: site.0, whole: false, fills: true) { openURL(site.1) }
                         .accessibilityIdentifier("place.website")
                 }
             }
@@ -255,6 +259,10 @@ private struct ContactCapsules: View {
 private struct ContactCapsule: View {
     let symbol: String
     let text: String
+    /// Never cut: the capsule is as wide as its text.
+    let whole: Bool
+    /// Takes the width left in the row.
+    let fills: Bool
     let action: () -> Void
     @Environment(\.sceneTheme) private var theme
 
@@ -267,11 +275,12 @@ private struct ContactCapsule: View {
                 Text(verbatim: text)
                     .lineLimit(1)
                     .truncationMode(.middle)
+                    .fixedSize(horizontal: whole, vertical: false)
             }
             .typeStyle(TypeRamp.calloutEmphasis)
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .padding(.horizontal, Space.s)
-            .frame(maxWidth: .infinity, minHeight: Sizing.control)
+            .frame(maxWidth: fills ? .infinity : nil, minHeight: Sizing.control)
             .background(Color(role: .bgCanvas, in: theme), in: Capsule())
             .overlay(Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline))
             .contentShape(Capsule())
@@ -280,8 +289,8 @@ private struct ContactCapsule: View {
     }
 }
 
-/// The squad's numbers in a row, on white: each a big number with its star or unit, its label
-/// under it, grey while there is none.
+/// The squad's numbers in a row, on white: each a big number with its unit, its label under it,
+/// grey while it is 0.
 private struct PlaceStats: View {
     let cells: [PlaceNumbers.Cell]
     @Environment(\.sceneTheme) private var theme
@@ -308,6 +317,8 @@ private struct PlaceStats: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityElement(children: .combine)
             }
+            // The page's grid has three columns; the third stays empty (Tracy, 2026-11-13).
+            Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("place.stats")
@@ -315,26 +326,19 @@ private struct PlaceStats: View {
 
     private func value(_ cell: PlaceNumbers.Cell) -> String {
         switch cell {
-        case .squadScore(let stars), .healthy(let stars), .tasty(let stars): ScoreText.average(stars)
-        case .calorieValue(let value): ScoreText.average(value)
         case .visits(let count), .people(let count): String(count)
         }
     }
 
     private func isEmpty(_ cell: PlaceNumbers.Cell) -> Bool {
         switch cell {
-        case .squadScore(let value), .healthy(let value), .tasty(let value), .calorieValue(let value): value == nil
         case .visits(let count), .people(let count): count == 0
         }
     }
 
-    /// After the number: the star (6 points off it, Tracy 2026-11-12) or the unit.
+    /// After the number: its unit.
     @ViewBuilder private func unit(_ cell: PlaceNumbers.Cell) -> some View {
         switch cell {
-        case .squadScore(let stars), .healthy(let stars), .tasty(let stars):
-            JellyStar(lit: stars != nil, size: 20).padding(.leading, Space.xs - 2)
-        case .calorieValue:
-            EmptyView()
         case .visits:
             Text(copy: "次", bundle: .module).typeStyle(TypeRamp.footnoteEmphasis).padding(.leading, Space.xxs)
         case .people:
@@ -344,10 +348,6 @@ private struct PlaceStats: View {
 
     private func label(_ cell: PlaceNumbers.Cell) -> Text {
         switch cell {
-        case .squadScore: Text(copy: "小队评分", bundle: .module)
-        case .healthy: Text(copy: "健康", bundle: .module)
-        case .tasty: Text(copy: "好吃", bundle: .module)
-        case .calorieValue: Text(copy: "卡价比", bundle: .module)
         case .visits: Text(copy: "小队来过", bundle: .module)
         case .people: Text(copy: "来过的队友", bundle: .module)
         }

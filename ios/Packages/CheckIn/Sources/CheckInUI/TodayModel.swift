@@ -232,6 +232,7 @@ public final class TodayModel {
         cast.update(
             home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach,
             handover: store.handover)
+        cheerAcceptedChallenge()
         if opening != nil { standOpeningSquad() }
     }
 
@@ -252,11 +253,16 @@ public final class TodayModel {
 
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
     public func load() async {
+        // Health is read on the phone alongside the server's round trips, so a workout Health
+        // already has is on the card as soon as the home is in hand.
+        async let healthRead: Void = readHealth()
         await store.load()
         showLoaded()
-        await health?.refresh()
+        await healthRead
         openAskedWorkout(finally: true)
     }
+
+    private func readHealth() async { await health?.refresh() }
 
     /// How often the home is read again while 今天 is on screen, so teammates' posts show up.
     static let rereadEvery = Duration.seconds(60)

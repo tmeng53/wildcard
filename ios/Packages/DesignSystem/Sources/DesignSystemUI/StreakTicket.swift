@@ -4,7 +4,7 @@ import SwiftUI
 
 /// A 外卡 for a streak still going (Tracy, 2026-11-10): the logo's front ticket, upright, with the
 /// days written where its W is and the streak's mark on the stub under the tear: a dumbbell for
-/// days trained, a bowl for days with a meal. The player card shows one per streak going and none
+/// days trained, a bowl for days with a 健康餐. The player card shows one per streak going and none
 /// for a broken one.
 public struct StreakTicket: View {
     public enum Streak: Sendable {

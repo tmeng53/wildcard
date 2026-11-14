@@ -59,7 +59,6 @@ describe('recall', () => {
       reaction: undefined,
       answer: undefined,
       answerMentions: [],
-      challengeDone: false,
       feedback: undefined,
       steps: [],
     };
@@ -69,6 +68,8 @@ describe('recall', () => {
       coach: 'qifei',
       draft,
       kind: 'checkIn',
+      pastWeek: () => Promise.reject(new Error('not read')),
+      commentsOf: () => Promise.reject(new Error('not read')),
     }).find(({ name }) => name === 'recall');
     expect(await recall?.run({ query: '半马 歌' })).toBe(
       '【me.md】- 半马那天我去加油\n【people/队员1.md】- 想跑半马',

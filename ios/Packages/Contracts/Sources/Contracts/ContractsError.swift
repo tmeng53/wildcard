@@ -12,6 +12,8 @@ public enum ContractsError: Error, Equatable, Sendable {
     case workoutMinutes(Int)
     /// A start time that isn't a time of day (`HH:mm`, 00:00 to 23:59).
     case startTime(String)
+    /// More squadmates named as trained with (一起练) than `TrainedWith.limit`, or one twice.
+    case trainedWith(Int)
     /// A tagged place whose name is empty, longer than `Place.maxNameLength` or not one line.
     case placeName(Int)
     /// A tagged place outside the world's latitudes and longitudes.
@@ -66,6 +68,12 @@ public enum ContractsError: Error, Equatable, Sendable {
     case multilineSquadName
     /// A squad name with nothing visible in it, or with a text-direction control.
     case invisibleSquadName
+    /// A 备注 to the captain that is empty or longer than `JoinNote.maxLength` characters.
+    case joinNoteLength(Int)
+    /// A 备注 with a line break, tab or other control character.
+    case multilineJoinNote
+    /// A 备注 with nothing visible in it, or with a text-direction control.
+    case invisibleJoinNote
     /// Text that can't be an invite code: not 8 letters from `InviteCode.alphabet`.
     case invalidInviteCode(String)
     /// A timestamp that isn't ISO 8601.

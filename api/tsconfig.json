@@ -2,6 +2,9 @@
   "files": [],
   "references": [
     {
+      "path": "packages/app-routes"
+    },
+    {
       "path": "packages/errors"
     },
     {
@@ -84,6 +87,9 @@
     },
     {
       "path": "packages/coach"
+    },
+    {
+      "path": "packages/coach-messages"
     },
     {
       "path": "apps/server"

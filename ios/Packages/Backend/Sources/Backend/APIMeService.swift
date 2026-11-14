@@ -52,6 +52,7 @@ public struct APIMeService: MeService {
                     trainedDays: totals.trainedDays, healthyMeals: totals.healthyMeals, cheatMeals: totals.cheatMeals,
                     disclaimers: totals.disclaimers),
                 week: week, squadName: squad?.name, dailyPushOn: push.dailyProgress, coachPushOn: push.coach,
+                teammatePushOn: push.teammate,
                 jerseyNumber: member.profile?.jerseyNumber,
                 // Members are listed in the order they joined.
                 squadPlace: squad?.members.firstIndex(of: member.id).map { $0 + 1 },
@@ -166,6 +167,10 @@ public struct APIMeService: MeService {
         try await me { () throws(APIError) in try await api.setCoachPush(isOn) }
     }
 
+    public func setTeammatePush(_ isOn: Bool) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.setTeammatePush(isOn) }
+    }
+
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         await beforeDeleting()
         let code: String? =
@@ -211,7 +216,7 @@ public struct APISquadmateCards: SquadmateCards {
 }
 
 /// Our API's failures as 我's.
-private func meCall<T>(_ call: () async throws(APIError) -> T) async throws(MeError) -> T {
+func meCall<T>(_ call: () async throws(APIError) -> T) async throws(MeError) -> T {
     do {
         return try await call()
     } catch .account(.signedOut), .account(.credentialRejected) {

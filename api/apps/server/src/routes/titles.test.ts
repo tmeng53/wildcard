@@ -62,6 +62,7 @@ import {
 import {
   ignoredNotices,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   unusedUnlocks,
   unusedGifts,
@@ -97,6 +98,7 @@ const app = createApp({
   },
   photos,
   checkIns: createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
@@ -149,6 +151,7 @@ const app = createApp({
   gifts: unusedGifts,
   rewards,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),
@@ -215,6 +218,13 @@ async function squadIn(
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
+  // Friends join straight in, without the captain's OK (入队需要审核 off).
+  await call({
+    method: 'PUT',
+    path: `/squads/${squad.id}/join-approval`,
+    token: captain.token,
+    body: { version: 1, required: false },
+  });
   for (const other of others) {
     const joined = await call({
       method: 'POST',

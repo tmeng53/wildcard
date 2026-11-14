@@ -122,6 +122,12 @@ export function createSupabaseTokenVerifier(options: {
 const User = z.object({ id: UserId });
 // The sign-in methods linked to a user, each an identity naming its provider.
 const Identities = z.object({ identities: z.array(z.object({ provider: z.string() })).nullish() });
+// A user's email, which a magic link is made for.
+const Email = z.object({ email: z.email() });
+// A magic link made without mailing it: the hash its link carries and the kind to verify it as.
+const Link = z.object({ hashed_token: z.string().min(1), verification_type: z.string().min(1) });
+// The session a verified link starts.
+const Tokens = z.object({ refresh_token: z.string().min(1) });
 
 /**
  * The accounts port on Supabase Auth's HTTP API. Sessions are checked with the member's own
@@ -178,6 +184,38 @@ export function createSupabaseAccounts(options: {
       if (!response.ok) throw await unavailable(response);
       const { identities } = Identities.parse(await response.json());
       return (identities ?? []).some(({ provider }) => provider === 'apple');
+    },
+    async createUser(email) {
+      const response = await call('/admin/users', {
+        method: 'POST',
+        headers: { apikey: options.secretKey, 'content-type': 'application/json' },
+        body: JSON.stringify({ email, email_confirm: true }),
+      });
+      if (!response.ok) throw await unavailable(response);
+      return User.parse(await response.json()).id;
+    },
+    // A magic link made with the secret key and verified at once, so nothing is mailed:
+    // https://supabase.com/docs/reference/javascript/auth-admin-generatelink
+    // https://supabase.com/docs/reference/javascript/auth-verifyotp
+    async handOff(userId) {
+      const json = { apikey: options.secretKey, 'content-type': 'application/json' };
+      const user = await call(`/admin/users/${userId}`, { headers: { apikey: options.secretKey } });
+      if (!user.ok) throw await unavailable(user);
+      const { email } = Email.parse(await user.json());
+      const link = await call('/admin/generate_link', {
+        method: 'POST',
+        headers: json,
+        body: JSON.stringify({ type: 'magiclink', email }),
+      });
+      if (!link.ok) throw await unavailable(link);
+      const { hashed_token, verification_type } = Link.parse(await link.json());
+      const verified = await call('/verify', {
+        method: 'POST',
+        headers: json,
+        body: JSON.stringify({ type: verification_type, token_hash: hashed_token }),
+      });
+      if (!verified.ok) throw await unavailable(verified);
+      return { refreshToken: Tokens.parse(await verified.json()).refresh_token };
     },
   };
 }

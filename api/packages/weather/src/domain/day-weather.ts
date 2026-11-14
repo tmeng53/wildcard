@@ -135,10 +135,7 @@ function parts(weather: DayWeather): string[] {
  */
 export function weatherWords(
   weather: DayWeather,
-  {
-    yesterday,
-    timeZone = 'UTC',
-  }: { readonly yesterday?: DayWeather; readonly timeZone?: string } = {},
+  { yesterday, timeZone }: { readonly yesterday?: DayWeather; readonly timeZone: string },
 ): string {
   const today = [
     ...base(weather),

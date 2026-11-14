@@ -1,6 +1,8 @@
 import Contracts
 import FeedDomain
 import FeedUI
+import MeDomain
+import MeUI
 import NotificationsUI
 import SwiftUI
 
@@ -28,6 +30,12 @@ extension MainTabs {
             selection = .profile
             closeProfilePages()
             wardrobe.openShop()
+        case .trainAlong(let post):
+            // 我也发: the member's own 训练, started from the squadmate's, over 今天.
+            showsNotices = false
+            selection = .today
+            todayPages = []
+            Task { await today.trainAlong(post) }
         case .wardrobe(let piece):
             showCloset(trying: piece.map { [$0] } ?? [])
         case .place(let place):
@@ -45,7 +53,8 @@ extension MainTabs {
     }
 
     /// 今天 itself, with today's pats on me again; a morning note opens the coach's page, where
-    /// it is one of its cards.
+    /// it is one of its cards; `coach` opens it too (教练招聘会 without a coach), `checkIn` the
+    /// check-in kinds.
     private func openToday(_ destination: AppDestination) {
         selection = .today
         todayPages = []
@@ -54,6 +63,8 @@ extension MainTabs {
         case .coachNote, .waitingCoachNote: openCoachDeck()
         case .coachLetter(let letter): today.showAgain(letter)
         case .teamLetter(let broadcast): today.showAgain(broadcast)
+        case .coach: openCoachOrHiring()
+        case .checkIn: today.openCheckIn()
         default: break
         }
     }
@@ -85,15 +96,17 @@ extension MainTabs {
                 await recap.refresh()
                 await recap.open(week: week, of: squad)
             }
-        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .teamLetter:
+        case .today, .pats, .coachNote, .coachLetter, .waitingCoachNote, .teamLetter, .coach, .checkIn:
             openToday(destination)
-        case .schedule:
-            selection = .profile
-            closeProfilePages()
-            showsSchedule = true
+        case .schedule, .settings, .feedback, .myPosts:
+            openOnMe(destination)
         case .squad:
             selection = .today
             todayPages = [.squad]
+        case .squadPreferences:
+            selection = .today
+            todayPages = [.squad, .squadPreferences]
+            Task { await squad.reload() }
         case .coaches:
             selection = .today
             todayPages = [.coach(.market)]
@@ -102,8 +115,23 @@ extension MainTabs {
         case .notices:
             selection = .feed
             showsNotices = true
-        case .post, .place, .unlock, .stores, .store, .wardrobe, .badges:
+        case .post, .place, .unlock, .stores, .store, .wardrobe, .badges, .trainAlong:
             break
+        }
+    }
+
+    /// A page over 我, with every other one closed: 出赛表, 设置, 意见反馈 over 设置, or 我的动态.
+    private func openOnMe(_ destination: AppDestination) {
+        selection = .profile
+        closeProfilePages()
+        switch destination {
+        case .schedule: showsSchedule = true
+        case .settings: showsSettings = true
+        case .feedback:
+            showsSettings = true
+            profile.feedbackPage = FeedbackModel(service: profile.feedback, app: .current, newID: UUID.init)
+        case .myPosts: wall = PostWallStore(source: myPosts)
+        default: break
         }
     }
 
@@ -167,10 +195,12 @@ extension MainTabs {
         Task { await wardrobe.open(kind, item: item) }
     }
 
-    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队.
+    /// A broadcast's button opens what its 通知 row opens; a goal suggestion's opens 小队, and a
+    /// join request's 小队设置.
     func tellWaiting() {
         tellBroadcasts()
         tellGoalSuggestions()
+        tellJoinRequests()
     }
 
     /// The broadcasts not yet seen in 通知 that this phone hasn't shown, each in a banner on 今天.
@@ -191,13 +221,16 @@ extension MainTabs {
             switch notice.subject {
             case .broadcast, .goalSuggestion:
                 continue
+            case .joinRequest:
+                // 小队 reads who waits again: its banner (`tellJoinRequests`) and dots follow.
+                Task { await squad.reload() }
             case .unlocked:
                 Task { await today.checkUnlocks() }
             case .sceneMoved:
                 sceneMoved()
             case .comment(_, let post), .coachReply(let post, _, _, _, _):
                 if !isOnScreen(post) { tell(notice) }
-            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter:
+            case .dailyProgress, .weeklyAwards, .coachNote, .coachLetter, .trainedWith, .joinAnswered:
                 tell(notice)
             }
         }
@@ -224,7 +257,7 @@ extension MainTabs {
     /// What drops in on 今天 from 通知, with whose phone it is: told again when any changes.
     var bannerNotices: [String] {
         inbox.unseenBroadcasts.map(\.id) + inbox.unseenGoalSuggestions.map(\.id.rawValue.description)
-            + [today.home?.member.description ?? ""]
+            + (squad.joining?.requests ?? []).map(\.id.description) + [today.home?.member.description ?? ""]
     }
 
     /// The higher squad goals suggested to the captain not yet seen in 通知 that this phone hasn't

@@ -154,6 +154,13 @@ struct NoticeWords {
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
                     ?? Text(copy: "队友评论了你的动态", bundle: .module),
                 detail: nil, icon: AnyView(NoticeSymbol(systemImage: "bubble.left.fill")))
+        case .trainedWith(let alert, _):
+            // 「阿杰 @了你」 over 「一起练了 · 也发一条」, like a comment's @; the row opens their own 训练.
+            return Words(
+                title: alert.args.first.map { Text(copy: "\($0) @了你", bundle: .module) }
+                    ?? Text(copy: "队友 @了你", bundle: .module),
+                detail: Text(copy: "一起练了 · 也发一条", bundle: .module),
+                icon: AnyView(NoticeSymbol(systemImage: "figure.2")))
         case .broadcast(let broadcast):
             return Words(
                 title: Text(verbatim: broadcast.title.localized(in: [AppLanguage.current.rawValue])),
@@ -168,6 +175,17 @@ struct NoticeWords {
                 title: Text(copy: "连续 \(suggestion.weeks) 周超过小队目标", bundle: .module),
                 detail: Text(copy: "改成人均 \(suggestion.daysPerMember) 次？", bundle: .module),
                 icon: AnyView(NoticeSymbol(systemImage: "chart.line.uptrend.xyaxis")))
+        case .joinRequest(let alert, _):
+            // 「小橘 申请加入小队」, which opens 小队设置, where the captain answers.
+            return Words(
+                title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
+                    ?? Text(copy: "有人申请加入小队", bundle: .module),
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.badge.plus")))
+        case .joinAnswered(let alert, _):
+            return Words(
+                title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
+                    ?? Text(copy: "队长同意了你的申请", bundle: .module),
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.crop.circle.badge.checkmark")))
         }
     }
 
@@ -253,6 +271,7 @@ public struct ToldNoticeBanner: View {
     private var action: Text {
         switch notice.subject {
         case .unlocked, .sceneMoved: Text(copy: "去看看", bundle: .module)
+        case .trainedWith: Text(copy: "我也发", bundle: .module)
         default: Text(copy: "查看", bundle: .module)
         }
     }

@@ -48,6 +48,7 @@ import {
   postgresCoachTransaction,
   SquadId as CoachSquadId,
 } from '@wildcard/coach';
+import { createCoachMessages, createPostgresMessageStore } from '@wildcard/coach-messages';
 import { createAppCopy, createPostgresAppCopy } from '@wildcard/app-copy';
 import {
   DisclaimerWriterOffError,
@@ -73,14 +74,9 @@ import {
   type NewNotice,
 } from '@wildcard/notices';
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
-import {
-  createPlaceRatings,
-  createPostgresPlaceRatingStore,
-  createPostgresSquadPlaceStore,
-  createSquadPlaces,
-} from '@wildcard/places';
+import { createPostgresSquadPlaceStore, createSquadPlaces } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
-import { NEW_YORK, wallClockAt } from '@wildcard/time-zones';
+import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
   createPostgresWeatherDayStore,
@@ -165,6 +161,7 @@ import { listAdminLog } from './admin-mcp/tools/admin-log.js';
 import { aiUsageTools } from './admin-mcp/tools/ai-usage.js';
 import { aiWritingTools } from './admin-mcp/tools/ai-writing.js';
 import { appCopyTools } from './admin-mcp/tools/app-copy.js';
+import { appRouteTools } from './admin-mcp/tools/app-routes.js';
 import { coachTools } from './admin-mcp/tools/coach.js';
 import { previewCoachDaily } from './admin-mcp/tools/coach-preview.js';
 import { dailyPushTools } from './admin-mcp/tools/daily-push.js';
@@ -188,6 +185,7 @@ import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
+import { coachMessageTools } from './admin-mcp/tools/coach-messages.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
@@ -208,7 +206,6 @@ import {
   reactionsSection,
 } from './routes/catalog.js';
 import { readConfig } from './config.js';
-import { inProcessEvents, type EventHandlers } from './events.js';
 import { createLog, redactText, reportingErrors, type Log } from './log.js';
 import { memberCalendar } from './member-calendar.js';
 import type { Database } from './ports.js';
@@ -365,6 +362,7 @@ const squads = createSquads({
   store: createPostgresSquadStore(db),
   inviteCodes: randomInviteCodes,
   aiConsent: hasAiConsent,
+  joinApprovalOn: joinApprovalOn(),
 });
 // A coach's gift week runs on its squad's clock, as the coach's day does.
 // Each squad's zone (小队时区) for the modules that name squads by plain ids.
@@ -384,6 +382,14 @@ const giftWeekStart = squadWeekStart(squadZonesAt);
 // Global on/off switches (a winter theme, a holiday) that limited scenes, stores and pieces follow.
 const switchesOn = (scope: Database) => createSwitches({ store: createPostgresSwitchStore(scope) });
 const switches = switchesOn(db);
+/**
+ * Whether squads may ask for the captain's OK to join (入队需要审核, the switch `joinApproval`):
+ * off until the builds that show a request are the minimum, since older ones can't read one.
+ */
+function joinApprovalOn() {
+  return async () =>
+    (await switches.states())('joinApproval', wallClockAt(new Date(), NEW_YORK).day);
+}
 const minimumBuildsOn = (scope: Database) =>
   createMinimumBuilds({ store: createPostgresMinimumBuild(scope) });
 const quickReactionsOn = (scope: Database) =>
@@ -479,6 +485,9 @@ const noticesOn = (scope: Database) =>
     giveGifts: giveBroadcastGifts(scope),
   });
 const notices = noticesOn(db);
+// 教练消息卡: cards admins put on members' coach pages, said by the squad's coach.
+const coachMessagesOn = (scope: Database) =>
+  createCoachMessages({ store: createPostgresMessageStore(scope), clock: () => new Date() });
 /**
  * Keeps notices after what they tell of happened: a failure is logged, never the event's, even
  * inside an admin tool's transaction.
@@ -520,10 +529,6 @@ const nudges = createNudges({
   // Who is in which squad is the squads module's to keep: nudges ask it.
   membership: squads,
   timeZoneOf: async (member) => (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
-  clock: () => new Date(),
-});
-const placeRatings = createPlaceRatings({
-  store: createPostgresPlaceRatingStore(db),
   clock: () => new Date(),
 });
 // The places each member saved (收藏).
@@ -637,6 +642,7 @@ const coachWakes =
         squadWeek: coachWeek,
         aiConsented: coachConsented,
         hiring: createPostgresCoachHiring(db),
+        letters: createPostgresCoachLetters(db),
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
         timeZonesAt: squadZonesAt,
@@ -651,7 +657,8 @@ const coachWakes =
             ids.map(async (member) => ({
               member: WeatherMember.parse(member),
               timeZone:
-                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ?? NEW_YORK,
+                (await members.findProfile(ProfileMember.parse(member)))?.timeZone ??
+                UNSAVED_MEMBER_ZONE,
             })),
           );
           const days = await weather.dayFor({ members: zoned, day });
@@ -662,7 +669,7 @@ const coachWakes =
               {
                 words: weatherWords(today, {
                   ...(yesterday === undefined ? {} : { yesterday }),
-                  timeZone: zones.get(member) ?? NEW_YORK,
+                  timeZone: zones.get(member) ?? UNSAVED_MEMBER_ZONE,
                 }),
                 ...(city === undefined ? {} : { city }),
               },
@@ -798,7 +805,6 @@ const app = createApp({
   scenes,
   switches,
   nudges,
-  placeRatings,
   savedPlaces,
   squadPlaces,
   weather,
@@ -892,6 +898,7 @@ const app = createApp({
     },
   }),
   coachActivity,
+  coachMessages: coachMessagesOn(db),
   weeklyAwards: { awards, clock: () => new Date() },
   unlocks: unlocksOn(db),
   gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
@@ -916,17 +923,17 @@ const app = createApp({
           store: createPostgresSquadStore(scope),
           inviteCodes: randomInviteCodes,
           aiConsent: hasAiConsent,
+          joinApprovalOn: joinApprovalOn(),
         }),
       notices: noticesOn,
     }),
-    // Events go through Pub/Sub once it is set up, and run in the request when it can't take one.
+    // Hosted, events go only through Pub/Sub; locally and in tests they run in the request.
     ...(pubSubProject === undefined
       ? {}
       : {
-          publishEvents: (handlers: EventHandlers, eventLog: Log) =>
+          publishEvents: (eventLog: Log) =>
             pubSubEvents({
               project: pubSubProject,
-              fallback: inProcessEvents(handlers, eventLog),
               log: eventLog,
             }),
         }),
@@ -967,6 +974,7 @@ const app = createApp({
       ...sportTools({ sports: createSports({ store: createPostgresSportStore(scope) }) }),
       ...switchTools({ switches: switchesOn(scope) }),
       ...minimumBuildTools({ minimum: minimumBuildsOn(scope) }),
+      ...appRouteTools(),
       ...quickReactionTools({ reactions: quickReactionsOn(scope) }),
       ...sceneTools({
         scenes: createScenes({
@@ -996,6 +1004,7 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         clock: () => new Date(),
       }),
+      ...coachMessageTools({ messages: coachMessagesOn(scope), clock: () => new Date() }),
       ...artTools({ art: artOn(scope) }),
       ...campaignTools({
         campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),

@@ -29,10 +29,13 @@ extension CoachPageCard {
         let gift = wire.gift.map {
             Gift(piece: $0.pieceId, line: $0.line, openedAt: $0.openedAt, worn: $0.worn)
         }
+        let message = wire.message.map(CoachMessage.init)
+        // A message card says nothing without its message.
+        if kind == .message, message?.cards.first?.path != "" { throw .invalidID(wire.id) }
         self.init(
             kind: kind, id: wire.id, coach: try CoachSpeaker(wire.coach), look: wire.coach.look, time: wire.at,
             day: try wire.day.map { day throws(ContractsError) in try LocalDay(day) }, text: wire.text,
-            challenge: challenge, gift: gift, isSeen: isSeen)
+            challenge: challenge, gift: gift, message: message, isSeen: isSeen)
     }
 }
 

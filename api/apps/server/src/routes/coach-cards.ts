@@ -10,6 +10,11 @@ import {
   type CoachHiring,
   type CoachOwnCard,
 } from '@wildcard/coach';
+import {
+  MemberId as MessageMember,
+  SquadId as MessageSquad,
+  type CoachMessages,
+} from '@wildcard/coach-messages';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 import { wallClockAt } from '@wildcard/time-zones';
@@ -26,6 +31,7 @@ import {
   speakerIn,
   wireChallenge,
 } from './coach-activity.js';
+import { CoachMessageBody, wireMessage } from './coach-messages.js';
 
 // The coach page (Tracy, 2026-11-08): what the squad's coach said to the caller, a card a thing,
 // stacked in the order it came; a card swiped away is seen and goes to 以前. The cards span
@@ -39,14 +45,14 @@ const CoachCardBody = z
       description:
         '`board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), ' +
         '`challengeDone` (the coach marked that challenge done from the caller’s check-ins), ' +
-        'or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. ' +
+        '`gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. ' +
         'More kinds may come: an app skips a kind it doesn’t know.',
       example: 'challenge',
     }),
     id: z.string().meta({
       description:
         'The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a ' +
-        'note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.',
+        'note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.',
       example: '42',
     }),
     coach: CoachSpeakerBody,
@@ -84,6 +90,11 @@ const CoachCardBody = z
       })
       .optional()
       .meta({ description: 'A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.' }),
+    message: CoachMessageBody.optional().meta({
+      description:
+        'A `message`’s cards and what the caller answered; answer one with ' +
+        '`PUT /squads/{squadId}/coach/messages/{messageId}/answer`.',
+    }),
   })
   .openapi('CoachPageCard');
 
@@ -199,6 +210,8 @@ export function coachCards(deps: {
   readonly coachNames: CoachNames;
   /** The caller's `coach` switch: switched off, no morning note or challenge shows (Tracy, 2026-11-07). */
   readonly push: Pick<Push, 'settingsOf'>;
+  /** Coach message cards: given to the caller on their read while one runs for them. */
+  readonly coachMessages: Pick<CoachMessages, 'cardsFor'>;
 }) {
   const read = createRoute({
     method: 'get',
@@ -208,7 +221,8 @@ export function coachCards(deps: {
     description:
       'A card for each thing the squad’s coach said to the caller since they joined, up to ' +
       `${String(CARDS_DAYS)} days back: its 战术板 lines, their morning notes and challenges once ` +
-      'delivered (while their `coach` switch is on) and its gifts. Its lines to their check-ins ' +
+      'delivered (while their `coach` switch is on), its gifts and coach messages (given to ' +
+      'the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins ' +
       'and replies show only under the posts. The unseen ones from ' +
       'today (on the squad’s clock) from the coach the squad has now are the stack; ' +
       'the rest, a coach’s that left too, are 以前.',
@@ -336,8 +350,20 @@ export function coachCards(deps: {
             card.kind !== 'note' && card.kind !== 'challenge' && card.kind !== 'challengeDone',
         );
     const gifts = allGifts.filter((gift) => gift.squad === squadId && gift.givenAt >= since);
+    // A message is said by a coach: a squad without one gets none yet.
+    const messages = (
+      await deps.coachMessages.cardsFor({
+        member: MessageMember.parse(member),
+        squad: MessageSquad.parse(squadId),
+        coach: hired?.coach.id,
+      })
+    ).filter((message) => message.at >= since);
     const named = await deps.coachNames(
-      [...cards.map((card) => card.coach.id), ...gifts.map((gift) => gift.coach)].map((coach) => ({
+      [
+        ...cards.map((card) => card.coach.id),
+        ...gifts.map((gift) => gift.coach),
+        ...messages.map((message) => message.coach),
+      ].map((coach) => ({
         coach,
         squad: squadId,
       })),
@@ -364,6 +390,25 @@ export function coachCards(deps: {
           coach: gift.coach,
           wire: wireGift(gift, { coach: byId.get(gift.coach), speaker }),
         })),
+        ...messages.map((message) => {
+          const coach = byId.get(message.coach);
+          return {
+            at: message.at,
+            day: wallClockAt(message.at, zone).day,
+            coach: message.coach,
+            wire: {
+              kind: 'message',
+              id: message.id,
+              coach: speaker({
+                id: message.coach,
+                name: coach?.name ?? message.coach,
+                look: coach?.look ?? '',
+              }),
+              at: message.at.toISOString(),
+              message: wireMessage(message.value, message.answered),
+            },
+          };
+        }),
       ]
         .map((card) => {
           const key = cardKey(CoachCardKind.parse(card.wire.kind), card.wire.id);

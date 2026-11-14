@@ -1,9 +1,12 @@
 import CharacterEditorUI
 import CheckInUI
 import Contracts
+import MeDomain
+import MeUI
 import SquadDomain
 import SquadUI
 import SwiftUI
+import UIKit
 
 /// The coach's page (Tracy, 2026-11-08), pushed over 今天 from a tap on the coach, a morning
 /// note's 通知 row or its push: its cards for the member, 以前 and a card opened from there.
@@ -29,6 +32,20 @@ extension MainTabs {
             // A coach fired since keeps its card, though the squad has no page for it.
             let page: [TodayPage] = deckCoach == nil ? [] : [.coachDeck]
             todayPages = page + (card.map { [.coachCard($0)] } ?? [])
+        }
+    }
+
+    /// A link to the coach (`wildcard://coach`): its page, or 教练招聘会 for a squad without a
+    /// coach, which has no page to show; the home is read first if it wasn't yet.
+    func openCoachOrHiring() {
+        selection = .today
+        Task {
+            if today.home == nil { await today.load() }
+            if deckCoach == nil {
+                todayPages = [.coach(.market)]
+            } else {
+                openCoachDeck()
+            }
         }
     }
 
@@ -60,7 +77,9 @@ extension MainTabs {
                     await profile.reload()
                     await today.reloadCoach()
                 }
-            })
+            },
+            open: { address in openMessageAddress(address) },
+            sendFeedback: { [profile] sent in await Self.send(sent, through: profile.feedback) })
         coachDeck = deck
         return deck
     }
@@ -79,7 +98,7 @@ extension MainTabs {
                 CoachEarlierPage(deck: deck, places: deckPlaces) { todayPages.append(.coachCard($0)) }
             case .coachCard(let card):
                 CoachCardPage(deck: deck, card: card, cast: deckCast, places: deckPlaces)
-            case .squad, .coach, .place, .post:
+            case .squad, .squadPreferences, .coach, .place, .post:
                 EmptyView()
             }
         }
@@ -95,7 +114,33 @@ extension MainTabs {
         let mine = today.myCharacter
         return DeckCast(
             member: DeckCharacter(look: mine.look, persona: mine.persona),
-            mates: today.squadmateCharacters.map { DeckCharacter(look: $0.look, persona: $0.persona) })
+            mates: today.squadmateCharacters.map { DeckCharacter(look: $0.look, persona: $0.persona) },
+            byMember: today.squadCharactersByMember.mapValues { DeckCharacter(look: $0.look, persona: $0.persona) })
+    }
+
+    /// A coach message's `open` step: a place in the app by its address, or an https page; an
+    /// address this build doesn't know opens nothing.
+    private func openMessageAddress(_ address: String) {
+        if let destination = AppDestination(address: address) {
+            open(destination)
+        } else if let url = URL(string: address), url.scheme == "https" {
+            UIApplication.shared.open(url)
+        }
+    }
+
+    /// A coach message's `feedback` step: the box's words as 意见反馈, of the kind it names (an
+    /// idea unless it says `problem`); true once they went.
+    @MainActor private static func send(_ sent: MessageFeedback, through feedback: any FeedbackService) async -> Bool {
+        guard let words = try? FeedbackText(sent.text) else { return false }
+        let message = FeedbackMessage(
+            id: sent.id, kind: FeedbackKind(rawValue: sent.kind) ?? .idea, text: words, screenshots: [],
+            app: FeedbackApp.current)
+        do {
+            try await feedback.send(message)
+            return true
+        } catch {
+            return false
+        }
     }
 
     private var deckPlaces: CoachDeckPlaces {

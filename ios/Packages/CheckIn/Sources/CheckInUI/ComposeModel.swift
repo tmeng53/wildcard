@@ -35,6 +35,11 @@ public final class ComposeModel {
     /// picks another on the flip clock (Tracy, 2026-11-11: every 训练 has a start). A workout from
     /// Apple Health carries its own; only an edit of an older post may have none.
     var startTime: StartTime?
+    /// The squadmates picked for 一起练, in the order picked.
+    var trainedWith: [MemberID]
+    /// What 一起练 offers for the post's day, workout and start; none where the page can't name
+    /// anyone.
+    @ObservationIgnored let offer: @MainActor (LocalDay?, Workout?, StartTime?) -> TrainingTogether
     /// Where a new 训练 made by hand starts, and starts again when its Health workout is let go:
     /// the phone's time as the page opened, then the last start picked before a workout.
     @ObservationIgnored private var handStart: StartTime?
@@ -86,6 +91,7 @@ public final class ComposeModel {
         kind: CheckInKind, purpose: Purpose, photos: [ComposedPhoto] = [], postableDays: [LocalDay] = [],
         suggestedActivity: Activity, recentActivities: [Activity], healthWorkouts: [TodaysWorkout] = [],
         sharing: HealthSharing = HealthSharing(), startingAt: StartTime? = .phoneNow,
+        together: @escaping @MainActor (LocalDay?, Workout?, StartTime?) -> TrainingTogether = { _, _, _ in .none },
         loadPhoto: @escaping @Sendable (PhotoRef) async -> Data? = { _ in nil },
         save: @escaping @MainActor (ComposeModel) async -> Bool, close: @escaping @MainActor () -> Void
     ) {
@@ -96,13 +102,15 @@ public final class ComposeModel {
         self.recentActivities = recentActivities
         self.healthWorkouts = healthWorkouts
         self.sharing = sharing
+        self.offer = together
         self.loadPhoto = loadPhoto
         self.save = save
         self.close = close
         // Locals first: an @Observable model can't read its own properties until all are set.
         var start = Snapshot(
             tiles: Array(photos.prefix(Photos.maxCount)).map(ComposedTile.photo), line: "", activity: nil,
-            minutes: nil, startTime: kind == .trained ? startingAt : nil, place: nil, healthy: nil, tasty: nil)
+            minutes: nil, startTime: kind == .trained ? startingAt : nil, place: nil, healthy: nil, tasty: nil,
+            trainedWith: [])
         var posted: Workout?
         if case .edit(let checkIn) = purpose {
             start.tiles = ComposedTile.of(checkIn)
@@ -114,6 +122,7 @@ public final class ComposeModel {
                 start.activity = training.activity
                 start.minutes = training.minutes
                 start.startTime = training.startTime
+                start.trainedWith = training.trainedWith.members
                 posted = training.workout
             }
         }
@@ -122,6 +131,7 @@ public final class ComposeModel {
         activity = start.activity
         minutes = start.minutes
         startTime = start.startTime
+        trainedWith = start.trainedWith
         place = start.place
         healthy = start.healthy
         tasty = start.tasty
@@ -139,7 +149,11 @@ public final class ComposeModel {
             if case .trained(let training) = checkIn.entry { training.activity } else { .sport("run") }
         self.init(
             kind: checkIn.entry.kind, purpose: .edit(checkIn), suggestedActivity: activity,
-            recentActivities: editor.recentActivities, loadPhoto: loadPhoto,
+            recentActivities: editor.recentActivities,
+            together: { [weak editor] _, workout, startTime in
+                editor?.together(on: checkIn.day, workout: workout, startTime: startTime) ?? .none
+            },
+            loadPhoto: loadPhoto,
             save: { model in
                 guard let edit = model.edit else { return false }
                 do throws(CheckInError) {
@@ -181,12 +195,12 @@ public final class ComposeModel {
         if isEditing {
             return Snapshot(
                 tiles: tiles, line: line, activity: activity, minutes: minutes, startTime: startTime, place: place,
-                healthy: healthy, tasty: tasty)
+                healthy: healthy, tasty: tasty, trainedWith: trainedWith)
                 != initial
                 || !struck.isEmpty
         }
         return !photos.isEmpty || !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            || day != nil || workout != nil || place != nil || healthy != nil || tasty != nil
+            || day != nil || workout != nil || place != nil || healthy != nil || tasty != nil || !trainedWith.isEmpty
     }
 
     /// Whether the page asks 这顿怎么样: on a meal, new or edited.
@@ -299,6 +313,7 @@ public final class ComposeModel {
         tiles = ComposedTile.of(body)
         line = body.caption ?? ""
         workout = body.workout
+        trainedWith = body.trainedWith.members
         place = body.place
         healthy = body.rating?.healthy
         tasty = body.rating?.tasty
@@ -318,13 +333,28 @@ public final class ComposeModel {
         sendFailed = !saved
     }
 
+    private struct Snapshot: Equatable {
+        var tiles: [ComposedTile]
+        var line: String
+        var activity: Activity?
+        var minutes: WorkoutMinutes?
+        var startTime: StartTime?
+        var place: Place?
+        var healthy: Int?
+        var tasty: Int?
+        var trainedWith: [MemberID]
+    }
+}
+
+extension ComposeModel {
     /// A new post as drafted, its photos all just picked.
     var draft: CheckInDraft {
         let picked = photos.compactMap { if case .new(let photo) = $0 { photo } else { nil } }
         let trained = kind == .trained
         let body = PostBody(
             photos: picked, caption: line, workout: trained ? postedWorkout : nil,
-            startTime: trained && workout == nil ? startTime : nil, place: place, rating: mealRating)
+            startTime: trained && workout == nil ? startTime : nil, place: place, rating: mealRating,
+            trainedWith: trained && goesToFeed ? (try? TrainedWith(pickedMates)) ?? .none : .none)
         return switch kind {
         case .trained: .trained(currentActivity, postedMinutes, body)
         case .healthyMeal: .healthyMeal(body)
@@ -338,34 +368,7 @@ public final class ComposeModel {
         return PostEdit(
             original: checkIn, activity: currentActivity, minutes: postedMinutes, line: line, photos: photos,
             workout: postedWorkout, startTime: workout == nil ? startTime : nil, place: place,
-            rating: mealRating ?? checkIn.entry.mealRating)
-    }
-
-    private struct Snapshot: Equatable {
-        var tiles: [ComposedTile]
-        var line: String
-        var activity: Activity?
-        var minutes: WorkoutMinutes?
-        var startTime: StartTime?
-        var place: Place?
-        var healthy: Int?
-        var tasty: Int?
-    }
-}
-
-/// Saves edits of the member's own posts and deletes them. The app passes the home's store, so
-/// the home counts again; previews pass the sample squad.
-@MainActor
-public protocol PostEditing: AnyObject {
-    /// The sports a 训练's picker offers first.
-    var recentActivities: [Activity] { get }
-    func save(_ edit: PostEdit) async throws(CheckInError) -> CheckIn
-    func delete(_ checkIn: CheckInID) async throws(CheckInError)
-}
-
-extension TodayStore: PostEditing {
-    public func save(_ edit: PostEdit) async throws(CheckInError) -> CheckIn {
-        try await self.edit(edit)
+            rating: mealRating ?? checkIn.entry.mealRating, trainedWith: (try? TrainedWith(pickedMates)) ?? .none)
     }
 }
 

@@ -17,6 +17,15 @@ struct SquadRulesTests {
         #expect(throws: ContractsError.invisibleSquadName) { try SquadName("小\u{202E}队") }
     }
 
+    @Test func joinNoteIsOneTrimmedLineOfThirtyCharacters() throws {
+        #expect(try JoinNote(" 我是小橘，阿杰拉我来的 ").text == "我是小橘，阿杰拉我来的")
+        #expect(try JoinNote(String(repeating: "备", count: 30)).text.count == 30)
+        #expect(throws: ContractsError.joinNoteLength(31)) { try JoinNote(String(repeating: "备", count: 31)) }
+        #expect(throws: ContractsError.joinNoteLength(0)) { try JoinNote("  ") }
+        #expect(throws: ContractsError.multilineJoinNote) { try JoinNote("我是\n小橘") }
+        #expect(throws: ContractsError.invisibleJoinNote) { try JoinNote("小\u{202E}橘") }
+    }
+
     @Test func inviteCodeIsReadAsTheAPIReadsIt() throws {
         #expect(try InviteCode("k7m2-qx9p").text == "K7M2QX9P")
         #expect(try InviteCode(" K7M2 QX9P ").text == "K7M2QX9P")

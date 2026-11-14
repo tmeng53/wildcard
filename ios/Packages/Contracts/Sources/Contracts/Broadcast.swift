@@ -85,6 +85,8 @@ public enum AppDestination: Hashable, Sendable {
     case schedule
     /// 小队.
     case squad
+    /// 小队设置, over 小队: where the captain answers who asked to join.
+    case squadPreferences
     /// 教练招聘会, over 今天.
     case coaches
     /// 动态.
@@ -96,6 +98,9 @@ public enum AppDestination: Hashable, Sendable {
     /// A place's own page (地点页), pushed over the tab it opened from: every place in the app
     /// opens it.
     case place(Place)
+    /// A new 训练, filled from a teammate's that named the member as one it was done with
+    /// (一起练): its sport, start, minutes and the teammate.
+    case trainAlong(CheckInID)
     /// 今天.
     case today
     /// 今天, where today's pats on the member play again, even ones this phone already showed.
@@ -114,6 +119,16 @@ public enum AppDestination: Hashable, Sendable {
     case badges
     /// 通知, behind the bell on 动态.
     case notices
+    /// The coach's own page (its cards for the member), over 今天.
+    case coach
+    /// 今天 with the check-in kinds open (打卡).
+    case checkIn
+    /// 我's 设置.
+    case settings
+    /// 意见反馈, over 我's 设置.
+    case feedback
+    /// 我的动态, the member's own posts, over 我.
+    case myPosts
     /// 今天, with a letter from the team (感谢信) opened over it again.
     indirect case teamLetter(Broadcast)
 }
@@ -129,11 +144,14 @@ extension Notice {
         case .coachReply(let checkIn, _, _, _, _): .post(checkIn)
         case .unlocked(let kind, let item): .unlock(kind, item: item)
         case .comment(_, let checkIn): .post(checkIn)
+        case .trainedWith(_, let checkIn): .trainAlong(checkIn)
         case .coachNote(let note): .coachNote(note)
         case .coachLetter(let letter): .coachLetter(letter)
         case .broadcast(let broadcast): broadcast.letter == nil ? broadcast.action?.destination : .teamLetter(broadcast)
         // 小队, whose first card is the weekly goal.
         case .goalSuggestion: .squad
+        case .joinRequest: .squadPreferences
+        case .joinAnswered: .squad
         }
     }
 }

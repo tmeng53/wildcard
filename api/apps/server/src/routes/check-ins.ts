@@ -15,6 +15,7 @@ import {
   MemberId,
   SquadId,
   photosOf,
+  trainedWithOf,
   storedDisclaimerFields,
   storedMealFields,
   storedTrainingFields,
@@ -209,15 +210,15 @@ const CurrentStreaks = z
     description:
       'Streaks still going on the member’s clock, the player card’s 外卡: `training`, days ' +
       'trained in a row, a planned rest day or a 请假条 between them neither breaking nor ' +
-      'adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 ' +
-      'between them neither breaking nor adding. Each ends today, or ' +
+      'adding; `meals`, days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them ' +
+      'neither breaking nor adding. Each ends today, or ' +
       'yesterday while today has none yet, and is left out once broken.',
   })
   .openapi('CurrentStreaks');
 
 /** A member's lifetime counts by kind, wherever the API shows them. */
 export const checkInTotalsFields = {
-  streaks: CurrentStreaks.optional(),
+  streaks: CurrentStreaks,
   trainedDays: count('Days with a 训练; several 训练 on one day count once.'),
   healthyMeals: count('健康餐 check-ins.'),
   cheatMeals: count('坦白放纵餐 check-ins.'),
@@ -354,7 +355,7 @@ const MemberRecords = z
     description:
       '外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 ' +
       'between them neither breaking nor adding; `mealStreak`: most days in a row with a ' +
-      '健康餐, a 请假条 between them neither breaking nor adding; each left ' +
+      '健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding; each left ' +
       'out before the first. `currentStreak` and `currentMealStreak`: the same runs still ' +
       'going on the member’s clock (today not counted against them until it is over; a week ' +
       'of rest days in a row breaks training), left out once broken; one is the record when ' +
@@ -478,8 +479,10 @@ export function checkIns(deps: {
       400: problem(
         'Not a valid check-in, made more than 48 hours ago or ahead of the server’s clock, ' +
           'counted for the wrong day (after the day it was posted on or more than 7 before it), ' +
-          'a 请假条 for a day the member trained on (`ALREADY_TRAINED`), or with a photo that ' +
-          'isn’t uploaded',
+          'a 请假条 for a day the member trained on (`ALREADY_TRAINED`), naming someone it was ' +
+          'done with who isn’t a squadmate it is shared to, or on one off the 动态 ' +
+          '(`TRAINED_WITH_NOT_SQUADMATE`), or ' +
+          'with a photo that isn’t uploaded',
       ),
       403: problem('Sent to a squad the member isn’t in, or with someone else’s photo'),
       409: problem(
@@ -500,7 +503,8 @@ export function checkIns(deps: {
       'Replaces the kind’s fields and the photos, all of them, as they are to be; the kind, ' +
       'day, time and audience stay as posted. The same edit again changes nothing, so a retry ' +
       'is safe. New photos are uploaded first, through `POST /photo-uploads`; photos the edit ' +
-      'leaves out are deleted. Teammates’ reactions and comments stay.',
+      'leaves out are deleted. Teammates’ reactions and comments stay. A 训练 that leaves ' +
+      '`trainedWith` out keeps the squadmates it named; `[]` names none.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -513,8 +517,9 @@ export function checkIns(deps: {
     responses: {
       200: { description: 'Saved', content: { 'application/json': { schema: CheckIn } } },
       400: problem(
-        'Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), or ' +
-          'with a photo that isn’t uploaded',
+        'Not a valid edit, of another kind than the check-in (`CHECK_IN_KIND_CHANGED`), ' +
+          'newly naming someone it was done with who isn’t a squadmate it is shared to ' +
+          '(`TRAINED_WITH_NOT_SQUADMATE`), or with a photo that isn’t uploaded',
       ),
       403: problem('A teammate’s check-in (`NOT_YOUR_CHECK_IN`), or someone else’s photo'),
       404: problem('No check-in with this id that the member can see (`CHECK_IN_NOT_FOUND`)'),
@@ -704,6 +709,7 @@ export function checkIns(deps: {
           checkIn: checkIn.id,
           squads: [...checkIn.audience],
         });
+        await publishTrainedWith(deps.publish, checkIn);
       }
       return created ? c.json(body, 201) : c.json(body, 200);
     })
@@ -713,6 +719,8 @@ export function checkIns(deps: {
         member: MemberId.parse(c.var.caller.userId),
         edit: c.req.valid('json'),
       });
+      // Everyone it names: those told of this post before are not told again.
+      await publishTrainedWith(deps.publish, checkIn);
       return c.json(wire(checkIn, await viewUrls(deps, [checkIn])), 200);
     })
     .openapi(remove, async (c) => {
@@ -852,4 +860,17 @@ export function checkIns(deps: {
       });
       return c.json({ version: 1 as const, trainings: list }, 200);
     });
+}
+
+/** Tells the squadmates a 训练 names it was done with (一起练), when it names any. */
+async function publishTrainedWith(publish: PublishEvent, checkIn: CheckInRecord): Promise<void> {
+  const members = trainedWithOf(checkIn);
+  if (members.length === 0) return;
+  await publish({
+    version: 1,
+    kind: 'check-in.trained-with',
+    checkIn: checkIn.id,
+    author: checkIn.member,
+    members: [...members],
+  });
 }

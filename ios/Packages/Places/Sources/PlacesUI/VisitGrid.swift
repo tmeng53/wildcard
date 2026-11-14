@@ -42,7 +42,7 @@ struct VisitGrid: View {
 }
 
 /// One post at the place: its cover photo or its colour with its sport's icons (the shared
-/// `PostBlock` tile), its score bottom right, and the author's head, name and day under it.
+/// `PostBlock` tile), and the author's head, name and day under it.
 private struct VisitTile: View {
     let store: PlacePageStore
     let visit: PlaceVisit
@@ -58,9 +58,6 @@ private struct VisitTile: View {
                 kind: visit.kind, activity: visit.activity, minutes: visit.minutes,
                 photo: cover.map { Image(decorative: $0, scale: 1) }, layout: .tile
             )
-            .overlay(alignment: .bottomTrailing) {
-                if let score = visit.score { ScoreCapsule(score: score) }
-            }
             .aspectRatio(1, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             HStack(spacing: Space.xs - 2) {
@@ -89,30 +86,9 @@ private struct VisitTile: View {
     }
 }
 
-/// The tile's small score: a white capsule with the number and a lit star, as the approved
-/// design draws it for a 训练's score and a meal's 卡价比 alike.
-private struct ScoreCapsule: View {
-    let score: VisitScore
-
-    var body: some View {
-        HStack(spacing: Space.xxs - 1) {
-            Text(verbatim: ScoreText.visit(score))
-                .typeStyle(TypeRamp.scoreCaption)
-                .monospacedDigit()
-            JellyStar(size: 14)
-        }
-        .foregroundStyle(Color(role: .fgDefault, in: .gym))
-        .padding(.leading, Space.xs)
-        .padding(.trailing, Space.xs - 1)
-        .frame(height: Space.l)
-        .background(Color(role: .bgCanvas, in: .gym), in: Capsule())
-        .padding(Space.xs)
-    }
-}
-
 /// The authors' heads, made once a look: a character player is too costly to make each frame.
 @MainActor
-private final class AuthorHeads {
+final class AuthorHeads {
     private var players: [CharacterLook: CharacterPlayer] = [:]
 
     func player(for look: CharacterLook?) -> CharacterPlayer? {

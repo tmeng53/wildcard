@@ -14,10 +14,17 @@ import {
   createPostgresNoticeStore,
   createPostgresBroadcastStore,
 } from '@wildcard/notices';
-import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
+import {
+  MemberId,
+  SquadId,
+  SquadName,
+  createPostgresSquadStore,
+  createSquads,
+  randomInviteCodes,
+} from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { createMemoryRateLimit } from '../adapters/memory-rate-limit.js';
@@ -48,6 +55,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -70,6 +78,8 @@ const photos = createSupabasePhotoStorage({
 const members = createMembers({ store: createPostgresProfileStore(db) });
 /** Whom the coach was asked to welcome, as each join's event reaches it. */
 const welcomes: { readonly squad: string; readonly member: string }[] = [];
+/** The moment a test fixes the app's week clock at; the real time otherwise. */
+let fixedNow: Date | undefined;
 
 const app = createApp({
   db,
@@ -87,6 +97,7 @@ const app = createApp({
   },
   photos,
   checkIns: createCheckIns({
+    squadPlaceOf: () => Promise.resolve(false),
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresCheckInStore(db),
     membership: createSquads({
@@ -123,12 +134,13 @@ const app = createApp({
   ...unusedFeedback,
   scenes: scenesOn(db),
   switches: switchesOn(db),
-  weeklyAwards: unusedWeeklyAwards,
+  weeklyAwards: { ...unusedWeeklyAwards, clock: () => fixedNow ?? new Date() },
   unlocks: unusedUnlocks,
   gifts: unusedGifts,
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
   coachActivity: unusedCoachActivity,
+  coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   notices: createNotices({
     store: createPostgresNoticeStore(db),
@@ -207,10 +219,24 @@ const SquadListBody = z.object({
 });
 
 /** A squad the member creates; its body. */
-async function newSquad(token: string, name = '早八跑团') {
+/** Turns the captain's OK to join off (入队需要审核), so friends join straight in. */
+async function openToJoin(token: string, squad: string) {
+  const turned = await call({
+    method: 'PUT',
+    path: `/squads/${squad}/join-approval`,
+    token,
+    body: { version: 1, required: false },
+  });
+  expect(turned.status).toBe(200);
+}
+
+/** A squad `token`'s member makes, which friends join without the captain's OK unless `needsOk`. */
+async function newSquad(token: string, { name = '早八跑团', needsOk = false } = {}) {
   const { status, body } = await create(token, { name });
   expect(status).toBe(201);
-  return SquadBody.parse(body);
+  const squad = SquadBody.parse(body);
+  if (!needsOk) await openToJoin(token, squad.id);
+  return squad;
 }
 
 const reason = (response: { readonly body?: unknown }) =>
@@ -283,7 +309,7 @@ describe('PUT /squads/{squadId}', () => {
 describe('joining by invite code', () => {
   it('previews, joins, and joining again changes nothing', async () => {
     const [me, friend] = [await signUp(), await signUp()];
-    const squad = await newSquad(me.token, '周末网球');
+    const squad = await newSquad(me.token, { name: '周末网球' });
     const typed = `${squad.inviteCode.slice(0, 4).toLowerCase()}-${squad.inviteCode.slice(4)}`;
 
     const preview = await call({
@@ -299,6 +325,7 @@ describe('joining by invite code', () => {
         memberCount: 1,
         full: false,
         joined: false,
+        needsApproval: false,
         daysPerMember: 3,
         looks: [],
       },
@@ -359,11 +386,288 @@ describe('joining by invite code', () => {
   });
 });
 
+describe('asking the captain to join (入队申请)', () => {
+  const RequestBody = z.strictObject({
+    version: z.literal(1),
+    id: z.uuid(),
+    squadId: z.uuid(),
+    squadName: z.string(),
+    note: z.string().optional(),
+    askedAt: z.iso.datetime(),
+    status: z.string(),
+    answeredAt: z.iso.datetime().optional(),
+    memberCount: z.int(),
+    looks: z.array(z.object({ persona: z.string() }).loose()),
+    captain: z.object({ nickname: z.string(), look: z.unknown() }).optional(),
+  });
+  const ask = (token: string, { inviteCode, note }: { inviteCode: string; note?: string }) =>
+    call({
+      method: 'POST',
+      path: `/squad-invites/${inviteCode}/accept`,
+      token,
+      ...(note === undefined ? {} : { body: { version: 1, note } }),
+    });
+  const answer = (
+    token: string,
+    { squad, request, approve }: { squad: string; request: string; approve: boolean },
+  ) =>
+    call({
+      method: 'PUT',
+      path: `/squads/${squad}/join-requests/${request}`,
+      token,
+      body: { version: 1, approve },
+    });
+  const mine = async (token: string) => {
+    const read = await call({ method: 'GET', path: '/me/join-request', token });
+    expect(read.status).toBe(200);
+    return z
+      .strictObject({ version: z.literal(1), request: RequestBody.optional() })
+      .parse(read.body).request;
+  };
+  const waiting = async (token: string, squad: string) => {
+    const read = await call({ method: 'GET', path: `/squads/${squad}/join-requests`, token });
+    return { status: read.status, body: read.body };
+  };
+  const membersOf = async (token: string, squad: string) =>
+    memberIds((await call({ method: 'GET', path: `/squads/${squad}`, token })).body);
+  const noticesOf = async (token: string, kind: string) =>
+    z
+      .object({ notices: z.array(z.object({ kind: z.string() }).loose()) })
+      .parse((await call({ method: 'GET', path: '/me/notices', token })).body)
+      .notices.filter((notice) => notice.kind === kind);
+  const withCharacter = async (token: string, nickname: string) => {
+    const saved = await call({
+      method: 'PUT',
+      path: '/me/profile',
+      token,
+      body: {
+        version: 1,
+        timeZone: 'UTC',
+        character: { nickname, look: { persona: 'shy', variants: { body: 'lop' }, colors: {} } },
+      },
+    });
+    expect(saved.status).toBe(200);
+  };
+
+  it('needs the captain’s OK by default, and the captain lets the member in', async () => {
+    const [captain, asker] = [await signUp(), await signUp()];
+    await withCharacter(asker.token, '小橘');
+    const squad = await newSquad(captain.token, { name: '周三不练腿', needsOk: true });
+    const setting = await call({
+      method: 'GET',
+      path: `/squads/${squad.id}/join-approval`,
+      token: captain.token,
+    });
+    expect(setting.body).toStrictEqual({ version: 1, required: true });
+
+    const preview = await call({
+      method: 'GET',
+      path: `/squad-invites/${squad.inviteCode}`,
+      token: asker.token,
+    });
+    expect(preview.body).toMatchObject({ needsApproval: true, joined: false });
+    const asked = await ask(asker.token, { inviteCode: squad.inviteCode, note: ' 我是小橘 ' });
+    expect(asked.status).toBe(202);
+    const request = RequestBody.parse(asked.body);
+    expect(request).toMatchObject({
+      squadId: squad.id,
+      squadName: '周三不练腿',
+      note: '我是小橘',
+      status: 'waiting',
+      memberCount: 1,
+      looks: [],
+    });
+    // The captain made no character yet: none to show.
+    expect([request.answeredAt, request.captain]).toStrictEqual([undefined, undefined]);
+    // Asking again with the same note is the same request; the captain is told once.
+    const again = await ask(asker.token, { inviteCode: squad.inviteCode, note: '我是小橘' });
+    expect([again.status, RequestBody.parse(again.body).id]).toStrictEqual([202, request.id]);
+    expect(await membersOf(captain.token, squad.id)).toStrictEqual([captain.userId]);
+    expect(await mine(asker.token)).toStrictEqual(request);
+    expect(await noticesOf(captain.token, 'joinRequest')).toMatchObject([
+      { kind: 'joinRequest', joinRequest: request.id },
+    ]);
+
+    expect(await waiting(captain.token, squad.id)).toMatchObject({
+      status: 200,
+      body: {
+        version: 1,
+        requests: [
+          {
+            id: request.id,
+            member: asker.userId,
+            nickname: '小橘',
+            look: { persona: 'shy' },
+            note: '我是小橘',
+          },
+        ],
+      },
+    });
+
+    const approved = await answer(captain.token, {
+      squad: squad.id,
+      request: request.id,
+      approve: true,
+    });
+    expect(approved.status).toBe(200);
+    expect(RequestBody.parse(approved.body)).toMatchObject({ id: request.id, status: 'approved' });
+    expect(await membersOf(captain.token, squad.id)).toStrictEqual([captain.userId, asker.userId]);
+    expect(welcomes.filter((each) => each.squad === squad.id)).toStrictEqual([
+      { squad: squad.id, member: asker.userId },
+    ]);
+    expect(await noticesOf(asker.token, 'joinAnswered')).toMatchObject([
+      { kind: 'joinAnswered', joinRequest: request.id, approved: true },
+    ]);
+    // Answering again the same way changes nothing; the other way is refused.
+    expect(
+      (await answer(captain.token, { squad: squad.id, request: request.id, approve: true })).status,
+    ).toBe(200);
+    const flipped = await answer(captain.token, {
+      squad: squad.id,
+      request: request.id,
+      approve: false,
+    });
+    expect([flipped.status, reason(flipped)]).toStrictEqual([400, 'JOIN_REQUEST_ANSWERED']);
+    expect(welcomes.filter((each) => each.squad === squad.id)).toHaveLength(1);
+    expect((await waiting(captain.token, squad.id)).body).toMatchObject({ requests: [] });
+    // Once in, opening the invite again is the squad.
+    expect((await ask(asker.token, { inviteCode: squad.inviteCode })).status).toBe(200);
+  });
+
+  it('lets only the captain read and answer, and turns a member away', async () => {
+    const [captain, mate, asker] = [await signUp(), await signUp(), await signUp()];
+    await withCharacter(captain.token, '毛毛');
+    const squad = await newSquad(captain.token);
+    expect((await ask(mate.token, { inviteCode: squad.inviteCode })).status).toBe(201);
+    const switched = await call({
+      method: 'PUT',
+      path: `/squads/${squad.id}/join-approval`,
+      token: mate.token,
+      body: { version: 1, required: true },
+    });
+    expect([switched.status, reason(switched)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const turnedOn = await call({
+      method: 'PUT',
+      path: `/squads/${squad.id}/join-approval`,
+      token: captain.token,
+      body: { version: 1, required: true },
+    });
+    expect(turnedOn.body).toStrictEqual({ version: 1, required: true });
+
+    const asked = await ask(asker.token, { inviteCode: squad.inviteCode });
+    expect(asked.status).toBe(202);
+    const request = RequestBody.parse(asked.body);
+    expect(request).toMatchObject({
+      memberCount: 2,
+      looks: [{ persona: 'shy' }],
+      captain: { nickname: '毛毛', look: { persona: 'shy' } },
+    });
+    expect(request.note).toBeUndefined();
+    const byMate = await waiting(mate.token, squad.id);
+    expect([byMate.status, reason(byMate)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const answeredByMate = await answer(mate.token, {
+      squad: squad.id,
+      request: request.id,
+      approve: true,
+    });
+    expect([answeredByMate.status, reason(answeredByMate)]).toStrictEqual([
+      403,
+      'NOT_SQUAD_CAPTAIN',
+    ]);
+    const unknown = await answer(captain.token, {
+      squad: squad.id,
+      request: randomUUID(),
+      approve: true,
+    });
+    expect([unknown.status, reason(unknown)]).toStrictEqual([404, 'JOIN_REQUEST_UNKNOWN']);
+
+    const declined = await answer(captain.token, {
+      squad: squad.id,
+      request: request.id,
+      approve: false,
+    });
+    expect(RequestBody.parse(declined.body)).toMatchObject({ status: 'declined' });
+    expect(await mine(asker.token)).toMatchObject({ id: request.id, status: 'declined' });
+    expect(await membersOf(captain.token, squad.id)).toStrictEqual([captain.userId, mate.userId]);
+    // A decline is told only in the app.
+    expect(await noticesOf(asker.token, 'joinAnswered')).toStrictEqual([]);
+    // They may ask again: a new request.
+    const retry = await ask(asker.token, { inviteCode: squad.inviteCode });
+    expect(RequestBody.parse(retry.body).id).not.toBe(request.id);
+  });
+
+  it('keeps one request waiting, withdrawn by the member or cancelled by joining elsewhere', async () => {
+    const [ann, bo, asker] = [await signUp(), await signUp(), await signUp()];
+    const first = await newSquad(ann.token, { name: '一', needsOk: true });
+    const second = await newSquad(bo.token, { name: '二', needsOk: true });
+    const tooLong = await ask(asker.token, { inviteCode: first.inviteCode, note: '长'.repeat(31) });
+    expect([tooLong.status, reason(tooLong)]).toStrictEqual([400, 'REQUEST_INVALID']);
+
+    const toFirst = RequestBody.parse(
+      (await ask(asker.token, { inviteCode: first.inviteCode })).body,
+    );
+    const toSecond = RequestBody.parse(
+      (await ask(asker.token, { inviteCode: second.inviteCode, note: '你好' })).body,
+    );
+    expect(await mine(asker.token)).toMatchObject({ id: toSecond.id, status: 'waiting' });
+    expect((await waiting(ann.token, first.id)).body).toMatchObject({ requests: [] });
+    const late = await answer(ann.token, { squad: first.id, request: toFirst.id, approve: true });
+    expect([late.status, reason(late)]).toStrictEqual([400, 'JOIN_REQUEST_ANSWERED']);
+
+    const withdrawn = await call({
+      method: 'DELETE',
+      path: '/me/join-request',
+      token: asker.token,
+    });
+    expect(withdrawn.status).toBe(204);
+    expect(
+      (await call({ method: 'DELETE', path: '/me/join-request', token: asker.token })).status,
+    ).toBe(204);
+    expect(await mine(asker.token)).toMatchObject({ id: toSecond.id, status: 'withdrawn' });
+
+    const third = RequestBody.parse(
+      (await ask(asker.token, { inviteCode: second.inviteCode })).body,
+    );
+    await newSquad(asker.token, { name: '自己的' });
+    expect(await mine(asker.token)).toMatchObject({ id: third.id, status: 'cancelled' });
+    expect((await waiting(bo.token, second.id)).body).toMatchObject({ requests: [] });
+  });
+
+  it('cancels a waiting request once its squad ends', async () => {
+    const [captain, asker] = [await signUp(), await signUp()];
+    const squad = await newSquad(captain.token, { name: '散伙', needsOk: true });
+    const asked = RequestBody.parse(
+      (await ask(asker.token, { inviteCode: squad.inviteCode })).body,
+    );
+    const left = await call({
+      method: 'DELETE',
+      path: `/squads/${squad.id}/members/${captain.userId}`,
+      token: captain.token,
+    });
+    expect(left.status).toBe(204);
+    expect(await mine(asker.token)).toMatchObject({ id: asked.id, status: 'cancelled' });
+  });
+
+  it('lets a squad turn the OK off, so friends join straight in', async () => {
+    const [captain, friend] = [await signUp(), await signUp()];
+    const squad = await newSquad(captain.token, { name: '早八跑团', needsOk: true });
+    const asked = RequestBody.parse(
+      (await ask(friend.token, { inviteCode: squad.inviteCode })).body,
+    );
+    await openToJoin(captain.token, squad.id);
+    // A request already waiting still waits for an answer.
+    expect(await mine(friend.token)).toMatchObject({ id: asked.id, status: 'waiting' });
+    const other = await signUp();
+    expect((await ask(other.token, { inviteCode: squad.inviteCode })).status).toBe(201);
+    expect(await mine(other.token)).toBeUndefined();
+  });
+});
+
 describe('reading and leaving squads', () => {
   it('lists my squads, shows one only to its members, and leaving takes me out', async () => {
     const [me, friend] = [await signUp(), await signUp()];
-    const mine = await newSquad(me.token, '一');
-    const theirs = await newSquad(friend.token, '二');
+    const mine = await newSquad(me.token, { name: '一' });
+    const theirs = await newSquad(friend.token, { name: '二' });
 
     const list = await call({ method: 'GET', path: '/me/squads', token: me.token });
     expect(list.status).toBe(200);
@@ -495,7 +799,7 @@ describe('the captain’s settings', () => {
       squads: [],
       lastSquad: { id: squad.id, name: squad.name, how: 'removed' },
     });
-    const elsewhere = await newSquad(cy.token, '新队');
+    const elsewhere = await newSquad(cy.token, { name: '新队' });
     const rejoined = SquadListBody.parse(
       (await call({ method: 'GET', path: '/me/squads', token: cy.token })).body,
     );
@@ -681,7 +985,7 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
       });
       expect(saved.status).toBe(200);
     }
-    const squad = await newSquad(creator.token, '周末网球');
+    const squad = await newSquad(creator.token, { name: '周末网球' });
     for (const member of [notYet, joiner]) {
       const joined = await call({
         method: 'POST',
@@ -713,6 +1017,7 @@ describe('GET /public/squad-invites/{inviteCode}', () => {
         memberCount: 3,
         full: false,
         joined: false,
+        needsApproval: false,
         daysPerMember: 3,
         looks,
       },
@@ -786,6 +1091,7 @@ describe('the squad’s weekly goal', () => {
     const { inviteCode } = SquadBody.parse(created.body);
     const invite = await call({ method: 'GET', path: `/public/squad-invites/${inviteCode}` });
     expect(invite.body).toMatchObject({ memberCount: 1, daysPerMember: 5 });
+    await openToJoin(me.token, id);
     await call({
       method: 'POST',
       path: `/squad-invites/${inviteCode}/accept`,
@@ -918,7 +1224,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, timeZone: change.timeZone },
     });
 
-  it('takes the creator’s pick, and lets only the captain change it, at once', async () => {
+  it('takes the creator’s pick, and lets only the captain change it', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const id = randomUUID();
     const created = await call({
@@ -928,6 +1234,7 @@ describe('the squad’s time zone', () => {
       body: { version: 1, name: '台北队', timeZone: 'Asia/Taipei' },
     });
     expect(created.status).toBe(201);
+    await openToJoin(me.token, id);
     await call({
       method: 'POST',
       path: `/squad-invites/${SquadBody.parse(created.body).inviteCode}/accept`,
@@ -956,15 +1263,63 @@ describe('the squad’s time zone', () => {
       400,
       'TIME_ZONE_UNKNOWN',
     ]);
-    const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
-    // At once, whatever the day on either clock.
-    expect(changed.body).toStrictEqual({
-      version: 1,
-      timeZone: 'America/Los_Angeles',
-      nextTimeZone: 'America/Los_Angeles',
-      canChange: true,
+  });
+
+  describe('on a fixed clock', () => {
+    afterEach(() => {
+      fixedNow = undefined;
     });
-    expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
+    const squadModule = createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    });
+    async function taipeiSquad() {
+      const me = await signUp();
+      const { squad } = await squadModule.create({
+        week: '2026-11-02',
+        id: SquadId.parse(randomUUID()),
+        creator: MemberId.parse(me.userId),
+        name: SquadName.parse('台北队'),
+        timeZone: 'Asia/Taipei',
+      });
+      return { me, id: squad.id };
+    }
+
+    it('counts a change at once before this week’s Sunday 8pm on either clock', async () => {
+      const { me, id } = await taipeiSquad();
+      // Sunday 2026-11-08 19:59:59.999 in Taipei, 03:59 in Los Angeles.
+      fixedNow = new Date('2026-11-08T11:59:59.999Z');
+      const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+      expect(changed.body).toStrictEqual({
+        version: 1,
+        timeZone: 'America/Los_Angeles',
+        nextTimeZone: 'America/Los_Angeles',
+        canChange: true,
+      });
+      expect((await zoneOf(me.token, id)).body).toStrictEqual(changed.body);
+    });
+
+    it('counts a change from next week once the week froze on the old clock', async () => {
+      const { me, id } = await taipeiSquad();
+      // Sunday 2026-11-08 20:00 in Taipei: the week froze there; 04:00 in Los Angeles.
+      fixedNow = new Date('2026-11-08T12:00:00Z');
+      const waiting = {
+        version: 1,
+        timeZone: 'Asia/Taipei',
+        nextTimeZone: 'America/Los_Angeles',
+        canChange: true,
+      };
+      const changed = await setZone(me.token, { squad: id, timeZone: 'America/Los_Angeles' });
+      expect(changed.body).toStrictEqual(waiting);
+      expect((await zoneOf(me.token, id)).body).toStrictEqual(waiting);
+      // Once Los Angeles's Monday begins, the new zone is this week's.
+      fixedNow = new Date('2026-11-09T08:00:00Z');
+      expect((await zoneOf(me.token, id)).body).toStrictEqual({
+        ...waiting,
+        timeZone: 'America/Los_Angeles',
+      });
+    });
   });
 
   it('refuses a squad made without a time zone', async () => {

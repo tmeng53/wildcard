@@ -45,16 +45,6 @@ extension ScoreCell.Unit {
     }
 }
 
-extension MealScoreCell.Label {
-    public var text: Text {
-        switch self {
-        case .healthy: Text(copy: "健康", bundle: .module)
-        case .tasty: Text(copy: "好吃", bundle: .module)
-        case .calorieValue: Text(copy: "卡价比", bundle: .module)
-        }
-    }
-}
-
 extension ScoreCell.Label {
     public var text: Text {
         switch self {
@@ -212,8 +202,24 @@ public struct ScoreStrip: View {
         }
     }
 
+    /// A meal's cell; 卡价比's says what it is on a tap (Tracy, 2026-11-14).
+    @ViewBuilder
     private func face(_ cell: MealScoreCell) -> some View {
-        face(label: cell.label.text, isStruck: false) {
+        if cell.label == .calorieValue {
+            CalorieValueInfo { mealFace(cell, info: true) }
+        } else {
+            mealFace(cell, info: false)
+        }
+    }
+
+    private func mealFace(_ cell: MealScoreCell, info: Bool) -> some View {
+        let label = HStack(spacing: Space.xxs / 2) {
+            cell.label.text
+            if info {
+                Image(systemName: "info.circle").accessibilityHidden(true)
+            }
+        }
+        return face(label: label, isStruck: false) {
             Text(verbatim: cell.value)
                 .typeStyle(TypeRamp.scoreInline)
             if cell.isStars {
@@ -227,8 +233,8 @@ public struct ScoreStrip: View {
     /// The star beside a meal's 健康 and 好吃, the design's.
     private static let star: CGFloat = 16
 
-    private func face<Number: View>(
-        label: Text, isStruck: Bool, @ViewBuilder number: () -> Number
+    private func face<Caption: View, Number: View>(
+        label: Caption, isStruck: Bool, @ViewBuilder number: () -> Number
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: Space.xxs / 2) {

@@ -56,6 +56,7 @@ import {
   noRewards,
   unusedCoachHiring,
   unusedCoachActivity,
+  unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
   unusedFeedback,
@@ -143,6 +144,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     catalog: catalogOn(db),
     publicRoutes: unlimitedPublicRoutes,
     checkIns: createCheckIns({
+      squadPlaceOf: () => Promise.resolve(false),
       sports: createSports({ store: createPostgresSportStore(db) }),
       store: createPostgresCheckInStore(db),
       membership: createSquads({
@@ -200,6 +202,7 @@ function appWith(model: LanguageModel, modelName?: string) {
     rewards: noRewards,
     coachHiring: unusedCoachHiring,
     coachActivity: unusedCoachActivity,
+    coachMessages: unusedCoachMessages,
     coachLetters: unusedCoachLetters,
     ...ignoredNotices,
     ...unusedFeedback,

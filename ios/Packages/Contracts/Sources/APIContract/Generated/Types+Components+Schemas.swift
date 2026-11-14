@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -198,6 +198,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/adopted`.
             public var adopted: Swift.String?
+            /// The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/joinRequest`.
+            public var joinRequest: Swift.String?
+            /// Whether the captain let the caller in (`joinAnswered`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/approved`.
+            public var approved: Swift.Bool?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -400,7 +408,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one) or `thanks` (we used feedback the caller sent, so they got its thank-you rewards). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - squadId: The squad it is about, if any.
             ///   - alert: A push’s words as it was put (`dailyProgress`, `weeklyAwards`, `comment`).
@@ -426,6 +434,8 @@ extension Components {
             ///   - daysPerMember: The goal suggested, 人均 N 次 (`goalSuggestion`).
             ///   - feedback: The feedback we used (`thanks`): the id the app sent it with.
             ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
+            ///   - joinRequest: The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
+            ///   - approved: Whether the captain let the caller in (`joinAnswered`).
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -461,6 +471,8 @@ extension Components {
                 daysPerMember: Swift.Int? = nil,
                 feedback: Swift.String? = nil,
                 adopted: Swift.String? = nil,
+                joinRequest: Swift.String? = nil,
+                approved: Swift.Bool? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -496,6 +508,8 @@ extension Components {
                 self.daysPerMember = daysPerMember
                 self.feedback = feedback
                 self.adopted = adopted
+                self.joinRequest = joinRequest
+                self.approved = approved
                 self.title = title
                 self.body = body
                 self.action = action
@@ -532,6 +546,8 @@ extension Components {
                 case daysPerMember
                 case feedback
                 case adopted
+                case joinRequest
+                case approved
                 case title
                 case body
                 case action
@@ -2511,6 +2527,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Me/isAdmin`.
             public var isAdmin: Swift.Bool
+            /// Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Me/isDemo`.
+            public var isDemo: Swift.Bool
             /// Creates a new `Me`.
             ///
             /// - Parameters:
@@ -2518,22 +2538,26 @@ extension Components {
             ///   - userId: The signed-in member’s Supabase Auth user id.
             ///   - profile: Null until the member first saves one, right after signing up.
             ///   - isAdmin: Whether the member is on the admin list. The app shows admins tools only they need, such as previewing sign-up; the admin routes check the list again themselves.
+            ///   - isDemo: Whether this is one of an admin’s demo accounts (`/me/demo-accounts`): the app then offers switching back to the admin’s own account and to their other demo accounts.
             public init(
                 version: Components.Schemas.Me.VersionPayload,
                 userId: Swift.String,
                 profile: Components.Schemas.Me.ProfilePayload? = nil,
-                isAdmin: Swift.Bool
+                isAdmin: Swift.Bool,
+                isDemo: Swift.Bool
             ) {
                 self.version = version
                 self.userId = userId
                 self.profile = profile
                 self.isAdmin = isAdmin
+                self.isDemo = isDemo
             }
             public enum CodingKeys: String, CodingKey {
                 case version
                 case userId
                 case profile
                 case isAdmin
+                case isDemo
             }
         }
         /// The member’s character, made in the character editor right after signing in: the nickname squadmates call them and its look. Missing until then.
@@ -2747,6 +2771,130 @@ extension Components {
             public enum CodingKeys: String, CodingKey {
                 case version
                 case appleAuthorizationCode
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoAccounts`.
+        public struct DemoAccounts: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/version`.
+            public var version: Components.Schemas.DemoAccounts.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload`.
+            public struct AccountsPayloadPayload: Codable, Hashable, Sendable {
+                /// The account’s member id.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/memberId`.
+                public var memberId: Swift.String
+                /// Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off.
+                ///
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/owner`.
+                public var owner: Swift.Bool
+                /// - Remark: Generated from `#/components/schemas/DemoAccounts/AccountsPayload/character`.
+                public var character: Components.Schemas.Character?
+                /// Creates a new `AccountsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - memberId: The account’s member id.
+                ///   - owner: Whether this is the admin’s own account, first in the list. The app switches back to it from the session it kept, never through a hand-off.
+                ///   - character:
+                public init(
+                    memberId: Swift.String,
+                    owner: Swift.Bool,
+                    character: Components.Schemas.Character? = nil
+                ) {
+                    self.memberId = memberId
+                    self.owner = owner
+                    self.character = character
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case memberId
+                    case owner
+                    case character
+                }
+            }
+            /// The admin’s own account, then their demo accounts, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/accounts`.
+            public typealias AccountsPayload = [Components.Schemas.DemoAccounts.AccountsPayloadPayload]
+            /// The admin’s own account, then their demo accounts, oldest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccounts/accounts`.
+            public var accounts: Components.Schemas.DemoAccounts.AccountsPayload
+            /// Creates a new `DemoAccounts`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - accounts: The admin’s own account, then their demo accounts, oldest first.
+            public init(
+                version: Components.Schemas.DemoAccounts.VersionPayload,
+                accounts: Components.Schemas.DemoAccounts.AccountsPayload
+            ) {
+                self.version = version
+                self.accounts = accounts
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case accounts
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoAccount`.
+        public struct DemoAccount: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/version`.
+            public var version: Components.Schemas.DemoAccount.VersionPayload
+            /// The account’s member id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoAccount/memberId`.
+            public var memberId: Swift.String
+            /// Creates a new `DemoAccount`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - memberId: The account’s member id.
+            public init(
+                version: Components.Schemas.DemoAccount.VersionPayload,
+                memberId: Swift.String
+            ) {
+                self.version = version
+                self.memberId = memberId
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case memberId
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/DemoHandOff`.
+        public struct DemoHandOff: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/version`.
+            public var version: Components.Schemas.DemoHandOff.VersionPayload
+            /// A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account.
+            ///
+            /// - Remark: Generated from `#/components/schemas/DemoHandOff/refreshToken`.
+            public var refreshToken: Swift.String
+            /// Creates a new `DemoHandOff`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - refreshToken: A refresh token for the demo account’s new session: the app exchanges it with Auth as it renews any session, and is then signed in as that account.
+            public init(
+                version: Components.Schemas.DemoHandOff.VersionPayload,
+                refreshToken: Swift.String
+            ) {
+                self.version = version
+                self.refreshToken = refreshToken
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case refreshToken
             }
         }
         /// - Remark: Generated from `#/components/schemas/AiConsent`.
@@ -3012,6 +3160,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/TrainingView/caption`.
             public var caption: Swift.String?
+            /// Squadmates the member trained with (一起练), in the order picked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/TrainingView/trainedWith`.
+            public var trainedWith: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/TrainingView/place`.
             public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Missing when there are none.
@@ -3028,6 +3180,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
             ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Missing when there are none.
             ///   - workout:
@@ -3037,6 +3190,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                trainedWith: [Swift.String]? = nil,
                 place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoView]? = nil,
                 workout: Components.Schemas.WorkoutView? = nil
@@ -3046,6 +3200,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.trainedWith = trainedWith
                 self.place = place
                 self.photos = photos
                 self.workout = workout
@@ -3056,6 +3211,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case trainedWith
                 case place
                 case photos
                 case workout
@@ -3992,6 +4148,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/Training/caption`.
             public var caption: Swift.String?
+            /// Squadmates the member trained with (一起练), in the order picked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/Training/trainedWith`.
+            public var trainedWith: [Swift.String]?
             /// - Remark: Generated from `#/components/schemas/Training/place`.
             public var place: Components.Schemas.Place?
             /// 1 to 3 photos, the cover first. Leave it out for none.
@@ -4008,6 +4168,7 @@ extension Components {
             ///   - minutes: How long the workout took, in whole minutes.
             ///   - startTime: When it started, on the member's clock on its day, as HH:mm.
             ///   - caption: Trimmed, then 1 to 60 characters as people see them, on one line.
+            ///   - trainedWith: Squadmates the member trained with (一起练), in the order picked.
             ///   - place:
             ///   - photos: 1 to 3 photos, the cover first. Leave it out for none.
             ///   - workout:
@@ -4017,6 +4178,7 @@ extension Components {
                 minutes: Swift.Int? = nil,
                 startTime: Swift.String? = nil,
                 caption: Swift.String? = nil,
+                trainedWith: [Swift.String]? = nil,
                 place: Components.Schemas.Place? = nil,
                 photos: [Components.Schemas.PhotoRef]? = nil,
                 workout: Components.Schemas.Workout? = nil
@@ -4026,6 +4188,7 @@ extension Components {
                 self.minutes = minutes
                 self.startTime = startTime
                 self.caption = caption
+                self.trainedWith = trainedWith
                 self.place = place
                 self.photos = photos
                 self.workout = workout
@@ -4036,6 +4199,7 @@ extension Components {
                 case minutes
                 case startTime
                 case caption
+                case trainedWith
                 case place
                 case photos
                 case workout
@@ -4922,7 +5086,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/version`.
             public var version: Components.Schemas.CheckInTotals.VersionPayload
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/streaks`.
-            public var streaks: Components.Schemas.CurrentStreaks?
+            public var streaks: Components.Schemas.CurrentStreaks
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/CheckInTotals/trainedDays`.
@@ -4953,7 +5117,7 @@ extension Components {
             ///   - topSport:
             public init(
                 version: Components.Schemas.CheckInTotals.VersionPayload,
-                streaks: Components.Schemas.CurrentStreaks? = nil,
+                streaks: Components.Schemas.CurrentStreaks,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,
@@ -4978,7 +5142,7 @@ extension Components {
                 case topSport
             }
         }
-        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a meal checked in (健康餐 or 坦白放纵餐), a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken.
+        /// Streaks still going on the member’s clock, the player card’s 外卡: `training`, days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `meals`, days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding. Each ends today, or yesterday while today has none yet, and is left out once broken.
         ///
         /// - Remark: Generated from `#/components/schemas/CurrentStreaks`.
         public struct CurrentStreaks: Codable, Hashable, Sendable {
@@ -5073,7 +5237,7 @@ extension Components {
                 case checkIns
             }
         }
-        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
+        /// 外卡记录. `longestStreak`: most days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding; `mealStreak`: most days in a row with a 健康餐, a 坦白放纵餐 or a 请假条 between them neither breaking nor adding; each left out before the first. `currentStreak` and `currentMealStreak`: the same runs still going on the member’s clock (today not counted against them until it is over; a week of rest days in a row breaks training), left out once broken; one is the record when its days reach the longest.
         ///
         /// - Remark: Generated from `#/components/schemas/MemberRecords`.
         public struct MemberRecords: Codable, Hashable, Sendable {
@@ -5732,7 +5896,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/PushSettings/version`.
             public var version: Components.Schemas.PushSettings.VersionPayload
-            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public struct SettingsPayload: Codable, Hashable, Sendable {
@@ -5740,24 +5904,30 @@ extension Components {
                 public var dailyProgress: Swift.Bool?
                 /// - Remark: Generated from `#/components/schemas/PushSettings/settings/coach`.
                 public var coach: Swift.Bool?
+                /// - Remark: Generated from `#/components/schemas/PushSettings/settings/teammate`.
+                public var teammate: Swift.Bool?
                 /// Creates a new `SettingsPayload`.
                 ///
                 /// - Parameters:
                 ///   - dailyProgress:
                 ///   - coach:
+                ///   - teammate:
                 public init(
                     dailyProgress: Swift.Bool? = nil,
-                    coach: Swift.Bool? = nil
+                    coach: Swift.Bool? = nil,
+                    teammate: Swift.Bool? = nil
                 ) {
                     self.dailyProgress = dailyProgress
                     self.coach = coach
+                    self.teammate = teammate
                 }
                 public enum CodingKeys: String, CodingKey {
                     case dailyProgress
                     case coach
+                    case teammate
                 }
             }
-            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            /// Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             ///
             /// - Remark: Generated from `#/components/schemas/PushSettings/settings`.
             public var settings: Components.Schemas.PushSettings.SettingsPayload
@@ -5765,7 +5935,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is.
+            ///   - settings: Each kind of push, on or off; all on until the member turns one off. A save may leave switches out, which keep what they were; a read has every one. `dailyProgress`: the one push a day at 6pm with the squad’s week and what teammates sent them. `coach`: what the squad’s coach says to the member (its replies, answers and morning note), sent silently; the bell keeps them whatever this is. `teammate`: the push that tells them a squadmate just posted a 训练.
             public init(
                 version: Components.Schemas.PushSettings.VersionPayload,
                 settings: Components.Schemas.PushSettings.SettingsPayload
@@ -6121,6 +6291,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/joined`.
             public var joined: Swift.Bool
+            /// True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadInvite/needsApproval`.
+            public var needsApproval: Swift.Bool
             /// The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadInvite/daysPerMember`.
@@ -6137,6 +6311,7 @@ extension Components {
             ///   - memberCount: How many members it has now.
             ///   - full: True when it has 8 members and can’t take more.
             ///   - joined: True when the caller is in it already.
+            ///   - needsApproval: True when joining asks the captain first (入队需要审核): accepting answers 202 with the request.
             ///   - daysPerMember: The squad’s weekly goal (人均 N 次) as its captain last set it.
             ///   - looks: The members’ characters, the earliest to join first, for the join screen to show the squad. Members who haven’t made theirs yet are left out. No names or ids.
             public init(
@@ -6145,6 +6320,7 @@ extension Components {
                 memberCount: Swift.Int,
                 full: Swift.Bool,
                 joined: Swift.Bool,
+                needsApproval: Swift.Bool,
                 daysPerMember: Swift.Int,
                 looks: [Components.Schemas.Look]
             ) {
@@ -6153,6 +6329,7 @@ extension Components {
                 self.memberCount = memberCount
                 self.full = full
                 self.joined = joined
+                self.needsApproval = needsApproval
                 self.daysPerMember = daysPerMember
                 self.looks = looks
             }
@@ -6162,8 +6339,160 @@ extension Components {
                 case memberCount
                 case full
                 case joined
+                case needsApproval
                 case daysPerMember
                 case looks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinRequest`.
+        public struct JoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/version`.
+            public var version: Components.Schemas.JoinRequest.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/squadId`.
+            public var squadId: Swift.String
+            /// The squad’s name now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/squadName`.
+            public var squadName: Swift.String
+            /// What the member wrote the captain (备注).
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/note`.
+            public var note: Swift.String?
+            /// When they asked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/askedAt`.
+            public var askedAt: Foundation.Date
+            /// `waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/status`.
+            public var status: Swift.String
+            /// When it ended, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/answeredAt`.
+            public var answeredAt: Foundation.Date?
+            /// How many members the squad has now.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/memberCount`.
+            public var memberCount: Swift.Int
+            /// The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/looks`.
+            public var looks: [Components.Schemas.Look]
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public struct CaptainPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/nickname`.
+                public var nickname: Swift.String
+                /// - Remark: Generated from `#/components/schemas/JoinRequest/captain/look`.
+                public var look: Components.Schemas.Look
+                /// Creates a new `CaptainPayload`.
+                ///
+                /// - Parameters:
+                ///   - nickname:
+                ///   - look:
+                public init(
+                    nickname: Swift.String,
+                    look: Components.Schemas.Look
+                ) {
+                    self.nickname = nickname
+                    self.look = look
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case nickname
+                    case look
+                }
+            }
+            /// The captain who answers it; left out until they made a character.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinRequest/captain`.
+            public var captain: Components.Schemas.JoinRequest.CaptainPayload?
+            /// Creates a new `JoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            ///   - squadId:
+            ///   - squadName: The squad’s name now.
+            ///   - note: What the member wrote the captain (备注).
+            ///   - askedAt: When they asked, in UTC.
+            ///   - status: `waiting` for the captain, `approved` (the member is in the squad), `declined`, `withdrawn` by the member (or by asking another squad) or `cancelled` (they got into a squad another way, or the squad ended). More may come: treat another as over.
+            ///   - answeredAt: When it ended, in UTC.
+            ///   - memberCount: How many members the squad has now.
+            ///   - looks: The members’ characters, the earliest to join first, as the invite showed them. Members who haven’t made theirs yet are left out. No names or ids.
+            ///   - captain: The captain who answers it; left out until they made a character.
+            public init(
+                version: Components.Schemas.JoinRequest.VersionPayload,
+                id: Swift.String,
+                squadId: Swift.String,
+                squadName: Swift.String,
+                note: Swift.String? = nil,
+                askedAt: Foundation.Date,
+                status: Swift.String,
+                answeredAt: Foundation.Date? = nil,
+                memberCount: Swift.Int,
+                looks: [Components.Schemas.Look],
+                captain: Components.Schemas.JoinRequest.CaptainPayload? = nil
+            ) {
+                self.version = version
+                self.id = id
+                self.squadId = squadId
+                self.squadName = squadName
+                self.note = note
+                self.askedAt = askedAt
+                self.status = status
+                self.answeredAt = answeredAt
+                self.memberCount = memberCount
+                self.looks = looks
+                self.captain = captain
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case squadId
+                case squadName
+                case note
+                case askedAt
+                case status
+                case answeredAt
+                case memberCount
+                case looks
+                case captain
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinSquadRequest`.
+        public struct JoinSquadRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/version`.
+            public var version: Components.Schemas.JoinSquadRequest.VersionPayload
+            /// A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinSquadRequest/note`.
+            public var note: Swift.String?
+            /// Creates a new `JoinSquadRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - note: A line to the captain (备注), for a squad whose joining needs their OK; ignored otherwise.
+            public init(
+                version: Components.Schemas.JoinSquadRequest.VersionPayload,
+                note: Swift.String? = nil
+            ) {
+                self.version = version
+                self.note = note
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case note
             }
         }
         /// - Remark: Generated from `#/components/schemas/PublicSquadInvite`.
@@ -6225,6 +6554,204 @@ extension Components {
                 case full
                 case daysPerMember
                 case looks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinApproval`.
+        public struct JoinApproval: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/version`.
+            public var version: Components.Schemas.JoinApproval.VersionPayload
+            /// Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinApproval/required`.
+            public var required: Swift.Bool
+            /// Creates a new `JoinApproval`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - required: Whether joining needs the captain’s OK (入队需要审核): on for a squad that never set it.
+            public init(
+                version: Components.Schemas.JoinApproval.VersionPayload,
+                required: Swift.Bool
+            ) {
+                self.version = version
+                self.required = required
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case required
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests`.
+        public struct WaitingJoinRequests: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/version`.
+            public var version: Components.Schemas.WaitingJoinRequests.VersionPayload
+            /// The requests waiting for the captain, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequests/requests`.
+            public var requests: [Components.Schemas.WaitingJoinRequest]
+            /// Creates a new `WaitingJoinRequests`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - requests: The requests waiting for the captain, the earliest first.
+            public init(
+                version: Components.Schemas.WaitingJoinRequests.VersionPayload,
+                requests: [Components.Schemas.WaitingJoinRequest]
+            ) {
+                self.version = version
+                self.requests = requests
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case requests
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest`.
+        public struct WaitingJoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/id`.
+            public var id: Swift.String
+            /// Who asked: their Supabase Auth user id.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/member`.
+            public var member: Swift.String
+            /// Their nickname, once they made one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/nickname`.
+            public var nickname: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/look`.
+            public var look: Components.Schemas.Look?
+            /// What they wrote the captain (备注).
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/note`.
+            public var note: Swift.String?
+            /// When they asked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/WaitingJoinRequest/askedAt`.
+            public var askedAt: Foundation.Date
+            /// Creates a new `WaitingJoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - id:
+            ///   - member: Who asked: their Supabase Auth user id.
+            ///   - nickname: Their nickname, once they made one.
+            ///   - look:
+            ///   - note: What they wrote the captain (备注).
+            ///   - askedAt: When they asked, in UTC.
+            public init(
+                id: Swift.String,
+                member: Swift.String,
+                nickname: Swift.String? = nil,
+                look: Components.Schemas.Look? = nil,
+                note: Swift.String? = nil,
+                askedAt: Foundation.Date
+            ) {
+                self.id = id
+                self.member = member
+                self.nickname = nickname
+                self.look = look
+                self.note = note
+                self.askedAt = askedAt
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case member
+                case nickname
+                case look
+                case note
+                case askedAt
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/JoinAnswer`.
+        public struct JoinAnswer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/version`.
+            public var version: Components.Schemas.JoinAnswer.VersionPayload
+            /// `true` lets the member in, `false` turns them away.
+            ///
+            /// - Remark: Generated from `#/components/schemas/JoinAnswer/approve`.
+            public var approve: Swift.Bool
+            /// Creates a new `JoinAnswer`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - approve: `true` lets the member in, `false` turns them away.
+            public init(
+                version: Components.Schemas.JoinAnswer.VersionPayload,
+                approve: Swift.Bool
+            ) {
+                self.version = version
+                self.approve = approve
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case approve
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/MyJoinRequest`.
+        public struct MyJoinRequest: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/version`.
+            public var version: Components.Schemas.MyJoinRequest.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request`.
+            public struct RequestPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request/value1`.
+                public var value1: Components.Schemas.JoinRequest
+                /// The member’s newest request to join, waiting or ended; left out if none.
+                ///
+                /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `RequestPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: The member’s newest request to join, waiting or ended; left out if none.
+                public init(
+                    value1: Components.Schemas.JoinRequest,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/MyJoinRequest/request`.
+            public var request: Components.Schemas.MyJoinRequest.RequestPayload?
+            /// Creates a new `MyJoinRequest`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - request:
+            public init(
+                version: Components.Schemas.MyJoinRequest.VersionPayload,
+                request: Components.Schemas.MyJoinRequest.RequestPayload? = nil
+            ) {
+                self.version = version
+                self.request = request
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case request
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadToday`.
@@ -7397,7 +7924,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/timeZone`.
             public var timeZone: Swift.String
-            /// Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
+            /// Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadTimeZone/nextTimeZone`.
             public var nextTimeZone: Swift.String
@@ -7410,7 +7937,7 @@ extension Components {
             /// - Parameters:
             ///   - version:
             ///   - timeZone: This week’s zone.
-            ///   - nextTimeZone: Always the same as `timeZone`, since a change counts at once. Kept for builds that showed a change waiting for next week.
+            ///   - nextTimeZone: Next week’s zone: the same as `timeZone` unless the captain changed it once this week’s Sunday 8pm had passed on the old clock or the new one, when the change counts from next week.
             ///   - canChange: True for the captain, the only one who sets it.
             public init(
                 version: Components.Schemas.SquadTimeZone.VersionPayload,
@@ -8254,11 +8781,11 @@ extension Components {
         }
         /// - Remark: Generated from `#/components/schemas/CoachPageCard`.
         public struct CoachPageCard: Codable, Hashable, Sendable {
-            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
+            /// `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/kind`.
             public var kind: Swift.String
-            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
+            /// The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/id`.
             public var id: Swift.String
@@ -8360,11 +8887,13 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/gift`.
             public var gift: Components.Schemas.CoachPageCard.GiftPayload?
+            /// - Remark: Generated from `#/components/schemas/CoachPageCard/message`.
+            public var message: Components.Schemas.CoachMessage?
             /// Creates a new `CoachPageCard`.
             ///
             /// - Parameters:
-            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), or `gift`. Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
-            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too) or a gift’s piece.
+            ///   - kind: `board` (its 战术板 line), `note` (the morning note), `challenge` (今日挑战), `challengeDone` (the coach marked that challenge done from the caller’s check-ins), `gift` or `message` (a coach message card, `message`). Its lines to the caller’s check-ins and replies show only under the posts. More kinds may come: an app skips a kind it doesn’t know.
+            ///   - id: The card’s id within its kind, which marking it seen names: a 战术板 line’s day, a note’s id (its challenge’s and `challengeDone`’s too), a gift’s piece or a message’s id.
             ///   - coach:
             ///   - at: When it came: a note when it was delivered, a `challengeDone` when marked.
             ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
@@ -8372,6 +8901,7 @@ extension Components {
             ///   - challenge:
             ///   - expired: `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
             ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
+            ///   - message:
             public init(
                 kind: Swift.String,
                 id: Swift.String,
@@ -8381,7 +8911,8 @@ extension Components {
                 text: Swift.String? = nil,
                 challenge: Components.Schemas.CoachPageCard.ChallengePayload? = nil,
                 expired: Swift.Bool? = nil,
-                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil
+                gift: Components.Schemas.CoachPageCard.GiftPayload? = nil,
+                message: Components.Schemas.CoachMessage? = nil
             ) {
                 self.kind = kind
                 self.id = id
@@ -8392,6 +8923,7 @@ extension Components {
                 self.challenge = challenge
                 self.expired = expired
                 self.gift = gift
+                self.message = message
             }
             public enum CodingKeys: String, CodingKey {
                 case kind
@@ -8403,6 +8935,372 @@ extension Components {
                 case challenge
                 case expired
                 case gift
+                case message
+            }
+        }
+        /// A `message`’s cards and what the caller answered; answer one with `PUT /squads/{squadId}/coach/messages/{messageId}/answer`.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMessage`.
+        public struct CoachMessage: Codable, Hashable, Sendable {
+            /// Every card of the message, the first (path ``) first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessage/cards`.
+            public var cards: [Components.Schemas.CoachMessageCard]
+            /// What the caller did on each card so far; the first answer to each part stands. A card whose tap closed it or turned it shows that on every phone.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessage/answered`.
+            public var answered: [Components.Schemas.CoachMessageAnswered]
+            /// Creates a new `CoachMessage`.
+            ///
+            /// - Parameters:
+            ///   - cards: Every card of the message, the first (path ``) first.
+            ///   - answered: What the caller did on each card so far; the first answer to each part stands. A card whose tap closed it or turned it shows that on every phone.
+            public init(
+                cards: [Components.Schemas.CoachMessageCard],
+                answered: [Components.Schemas.CoachMessageAnswered]
+            ) {
+                self.cards = cards
+                self.answered = answered
+            }
+            public enum CodingKeys: String, CodingKey {
+                case cards
+                case answered
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageCard`.
+        public struct CoachMessageCard: Codable, Hashable, Sendable {
+            /// Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/path`.
+            public var path: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/line`.
+            public var line: Components.Schemas.LocalizedWords
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/body`.
+            public var body: Components.Schemas.LocalizedWords?
+            /// What it is about: a symbol, a name and a line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about`.
+            public struct AboutPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/icon`.
+                public var icon: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/name`.
+                public var name: Components.Schemas.LocalizedWords
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about/detail`.
+                public var detail: Components.Schemas.LocalizedWords?
+                /// Creates a new `AboutPayload`.
+                ///
+                /// - Parameters:
+                ///   - icon:
+                ///   - name:
+                ///   - detail:
+                public init(
+                    icon: Swift.String? = nil,
+                    name: Components.Schemas.LocalizedWords,
+                    detail: Components.Schemas.LocalizedWords? = nil
+                ) {
+                    self.icon = icon
+                    self.name = name
+                    self.detail = detail
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case icon
+                    case name
+                    case detail
+                }
+            }
+            /// What it is about: a symbol, a name and a line.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/about`.
+            public var about: Components.Schemas.CoachMessageCard.AboutPayload?
+            /// The picture on top.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage`.
+            public struct StagePayload: Codable, Hashable, Sendable {
+                /// Who stands with the coach: `coach`, `coachAndMe` (the reader), `coachAndSquad` (the squad, in two rows of four past four) or `members` (`members`); more may come.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/cast`.
+                public var cast: Swift.String
+                /// With `members`, these members by id, beside the coach.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/members`.
+                public var members: [Swift.String]?
+                /// The move the coach plays, by the art’s id; left out, its idle.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/move`.
+                public var move: Swift.String?
+                /// The scene behind them, by id; left out, the squad’s scene this week.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage/scene`.
+                public var scene: Swift.String?
+                /// Creates a new `StagePayload`.
+                ///
+                /// - Parameters:
+                ///   - cast: Who stands with the coach: `coach`, `coachAndMe` (the reader), `coachAndSquad` (the squad, in two rows of four past four) or `members` (`members`); more may come.
+                ///   - members: With `members`, these members by id, beside the coach.
+                ///   - move: The move the coach plays, by the art’s id; left out, its idle.
+                ///   - scene: The scene behind them, by id; left out, the squad’s scene this week.
+                public init(
+                    cast: Swift.String,
+                    members: [Swift.String]? = nil,
+                    move: Swift.String? = nil,
+                    scene: Swift.String? = nil
+                ) {
+                    self.cast = cast
+                    self.members = members
+                    self.move = move
+                    self.scene = scene
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case cast
+                    case members
+                    case move
+                    case scene
+                }
+            }
+            /// The picture on top.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stage`.
+            public var stage: Components.Schemas.CoachMessageCard.StagePayload
+            /// `true`: five stars to tap (`stars` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/stars`.
+            public var stars: Swift.Bool
+            /// A box to type in (`text` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input`.
+            public struct InputPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input/placeholder`.
+                public var placeholder: Components.Schemas.LocalizedWords?
+                /// Creates a new `InputPayload`.
+                ///
+                /// - Parameters:
+                ///   - placeholder:
+                public init(placeholder: Components.Schemas.LocalizedWords? = nil) {
+                    self.placeholder = placeholder
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case placeholder
+                }
+            }
+            /// A box to type in (`text` answers).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/input`.
+            public var input: Components.Schemas.CoachMessageCard.InputPayload?
+            /// 0 to 3 buttons, left to right.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/buttons`.
+            public var buttons: [Components.Schemas.CoachMessageButton]
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks`.
+            public struct ThanksPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks/value1`.
+                public var value1: Components.Schemas.LocalizedWords
+                /// What the card says once a button `close`s it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks/value2`.
+                public var value2: OpenAPIRuntime.OpenAPIValueContainer
+                /// Creates a new `ThanksPayload`.
+                ///
+                /// - Parameters:
+                ///   - value1:
+                ///   - value2: What the card says once a button `close`s it.
+                public init(
+                    value1: Components.Schemas.LocalizedWords,
+                    value2: OpenAPIRuntime.OpenAPIValueContainer
+                ) {
+                    self.value1 = value1
+                    self.value2 = value2
+                }
+                public init(from decoder: any Swift.Decoder) throws {
+                    self.value1 = try .init(from: decoder)
+                    self.value2 = try .init(from: decoder)
+                }
+                public func encode(to encoder: any Swift.Encoder) throws {
+                    try self.value1.encode(to: encoder)
+                    try self.value2.encode(to: encoder)
+                }
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageCard/thanks`.
+            public var thanks: Components.Schemas.CoachMessageCard.ThanksPayload?
+            /// Creates a new `CoachMessageCard`.
+            ///
+            /// - Parameters:
+            ///   - path: Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///   - line:
+            ///   - body:
+            ///   - about: What it is about: a symbol, a name and a line.
+            ///   - stage: The picture on top.
+            ///   - stars: `true`: five stars to tap (`stars` answers).
+            ///   - input: A box to type in (`text` answers).
+            ///   - buttons: 0 to 3 buttons, left to right.
+            ///   - thanks:
+            public init(
+                path: Swift.String,
+                line: Components.Schemas.LocalizedWords,
+                body: Components.Schemas.LocalizedWords? = nil,
+                about: Components.Schemas.CoachMessageCard.AboutPayload? = nil,
+                stage: Components.Schemas.CoachMessageCard.StagePayload,
+                stars: Swift.Bool,
+                input: Components.Schemas.CoachMessageCard.InputPayload? = nil,
+                buttons: [Components.Schemas.CoachMessageButton],
+                thanks: Components.Schemas.CoachMessageCard.ThanksPayload? = nil
+            ) {
+                self.path = path
+                self.line = line
+                self.body = body
+                self.about = about
+                self.stage = stage
+                self.stars = stars
+                self.input = input
+                self.buttons = buttons
+                self.thanks = thanks
+            }
+            public enum CodingKeys: String, CodingKey {
+                case path
+                case line
+                case body
+                case about
+                case stage
+                case stars
+                case input
+                case buttons
+                case thanks
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageButton`.
+        public struct CoachMessageButton: Codable, Hashable, Sendable {
+            /// Its id within its card.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/label`.
+            public var label: Components.Schemas.LocalizedWords
+            /// An SF Symbol before the words.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/icon`.
+            public var icon: Swift.String?
+            /// `primary` (graphite), `outline` or `plain` (words only); more may come.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/style`.
+            public var style: Swift.String
+            /// What a tap does, step by step.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageButton/tap`.
+            public var tap: [Components.Schemas.CoachMessageStep]
+            /// Creates a new `CoachMessageButton`.
+            ///
+            /// - Parameters:
+            ///   - id: Its id within its card.
+            ///   - label:
+            ///   - icon: An SF Symbol before the words.
+            ///   - style: `primary` (graphite), `outline` or `plain` (words only); more may come.
+            ///   - tap: What a tap does, step by step.
+            public init(
+                id: Swift.String,
+                label: Components.Schemas.LocalizedWords,
+                icon: Swift.String? = nil,
+                style: Swift.String,
+                tap: [Components.Schemas.CoachMessageStep]
+            ) {
+                self.id = id
+                self.label = label
+                self.icon = icon
+                self.style = style
+                self.tap = tap
+            }
+            public enum CodingKeys: String, CodingKey {
+                case id
+                case label
+                case icon
+                case style
+                case tap
+            }
+        }
+        /// One step, exactly one of its fields set; skip a step you don’t know.
+        ///
+        /// - Remark: Generated from `#/components/schemas/CoachMessageStep`.
+        public struct CoachMessageStep: Codable, Hashable, Sendable {
+            /// Opens this: a page in the app by its address (as a `wildcard://` link would) or an https web page.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/open`.
+            public var open: Swift.String?
+            /// Sends what was typed in the card’s box as 意见反馈 (`POST /feedback`), as this kind: `problem` or `idea`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/feedback`.
+            public var feedback: Swift.String?
+            /// `true`: folds the card to its `thanks`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/close`.
+            public var close: Swift.Bool?
+            /// Turns the card into the card at this path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageStep/next`.
+            public var next: Swift.String?
+            /// Creates a new `CoachMessageStep`.
+            ///
+            /// - Parameters:
+            ///   - open: Opens this: a page in the app by its address (as a `wildcard://` link would) or an https web page.
+            ///   - feedback: Sends what was typed in the card’s box as 意见反馈 (`POST /feedback`), as this kind: `problem` or `idea`.
+            ///   - close: `true`: folds the card to its `thanks`.
+            ///   - next: Turns the card into the card at this path.
+            public init(
+                open: Swift.String? = nil,
+                feedback: Swift.String? = nil,
+                close: Swift.Bool? = nil,
+                next: Swift.String? = nil
+            ) {
+                self.open = open
+                self.feedback = feedback
+                self.close = close
+                self.next = next
+            }
+            public enum CodingKeys: String, CodingKey {
+                case open
+                case feedback
+                case close
+                case next
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered`.
+        public struct CoachMessageAnswered: Codable, Hashable, Sendable {
+            /// Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/path`.
+            public var path: Swift.String
+            /// The button the caller tapped.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/tap`.
+            public var tap: Swift.String?
+            /// The stars they gave.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/stars`.
+            public var stars: Swift.Int?
+            /// What they typed.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswered/text`.
+            public var text: Swift.String?
+            /// Creates a new `CoachMessageAnswered`.
+            ///
+            /// - Parameters:
+            ///   - path: Which card of the message: `` for the first, else the ids of the buttons tapped to reach it, joined by `.` (`no`, `no.send`).
+            ///   - tap: The button the caller tapped.
+            ///   - stars: The stars they gave.
+            ///   - text: What they typed.
+            public init(
+                path: Swift.String,
+                tap: Swift.String? = nil,
+                stars: Swift.Int? = nil,
+                text: Swift.String? = nil
+            ) {
+                self.path = path
+                self.tap = tap
+                self.stars = stars
+                self.text = text
+            }
+            public enum CodingKeys: String, CodingKey {
+                case path
+                case tap
+                case stars
+                case text
             }
         }
         /// - Remark: Generated from `#/components/schemas/EarlierCoachCards`.
@@ -8521,6 +9419,94 @@ extension Components {
                 case version
                 case kind
                 case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers`.
+        public struct CoachMessageAnswers: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/version`.
+            public var version: Components.Schemas.CoachMessageAnswers.VersionPayload
+            /// The message.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/id`.
+            public var id: Swift.String
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswers/answered`.
+            public var answered: [Components.Schemas.CoachMessageAnswered]
+            /// Creates a new `CoachMessageAnswers`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: The message.
+            ///   - answered:
+            public init(
+                version: Components.Schemas.CoachMessageAnswers.VersionPayload,
+                id: Swift.String,
+                answered: [Components.Schemas.CoachMessageAnswered]
+            ) {
+                self.version = version
+                self.id = id
+                self.answered = answered
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case answered
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer`.
+        public struct CoachMessageAnswer: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/version`.
+            public var version: Components.Schemas.CoachMessageAnswer.VersionPayload
+            /// The card answered, by its path.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/path`.
+            public var path: Swift.String
+            /// The button tapped.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/tap`.
+            public var tap: Swift.String?
+            /// The stars given.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/stars`.
+            public var stars: Swift.Int?
+            /// What was typed; kept trimmed, up to 500 characters.
+            ///
+            /// - Remark: Generated from `#/components/schemas/CoachMessageAnswer/text`.
+            public var text: Swift.String?
+            /// Creates a new `CoachMessageAnswer`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - path: The card answered, by its path.
+            ///   - tap: The button tapped.
+            ///   - stars: The stars given.
+            ///   - text: What was typed; kept trimmed, up to 500 characters.
+            public init(
+                version: Components.Schemas.CoachMessageAnswer.VersionPayload,
+                path: Swift.String,
+                tap: Swift.String? = nil,
+                stars: Swift.Int? = nil,
+                text: Swift.String? = nil
+            ) {
+                self.version = version
+                self.path = path
+                self.tap = tap
+                self.stars = stars
+                self.text = text
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case path
+                case tap
+                case stars
+                case text
             }
         }
         /// - Remark: Generated from `#/components/schemas/SquadNudges`.
@@ -8985,11 +9971,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/people`.
             public var people: Swift.Int
-            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            /// No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/stars`.
             public var stars: Swift.Double?
-            /// How many of the squad’s members gave a score.
+            /// No longer given: always 0.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/raters`.
             public var raters: Swift.Int
@@ -8997,6 +9983,105 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceSummary/lastAt`.
             public var lastAt: Foundation.Date
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload`.
+            public struct MembersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload/member`.
+                public var member: Swift.String
+                /// How many of the posts there are theirs.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/MembersPayload/visits`.
+                public var visits: Swift.Int
+                /// Creates a new `MembersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - visits: How many of the posts there are theirs.
+                public init(
+                    member: Swift.String,
+                    visits: Swift.Int
+                ) {
+                    self.member = member
+                    self.visits = visits
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case visits
+                }
+            }
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/members`.
+            public typealias MembersPayload = [Components.Schemas.PlaceSummary.MembersPayloadPayload]
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/members`.
+            public var members: Components.Schemas.PlaceSummary.MembersPayload
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload`.
+            public struct SportsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/sport`.
+                public var sport: Components.Schemas.Sport
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/customSport`.
+                public var customSport: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/SportsPayload/count`.
+                public var count: Swift.Int
+                /// Creates a new `SportsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - sport:
+                ///   - customSport:
+                ///   - count:
+                public init(
+                    sport: Components.Schemas.Sport,
+                    customSport: Swift.String? = nil,
+                    count: Swift.Int
+                ) {
+                    self.sport = sport
+                    self.customSport = customSport
+                    self.count = count
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case sport
+                    case customSport
+                    case count
+                }
+            }
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/sports`.
+            public typealias SportsPayload = [Components.Schemas.PlaceSummary.SportsPayloadPayload]
+            /// 大家在这里练: each sport its 训练 named, most first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/sports`.
+            public var sports: Components.Schemas.PlaceSummary.SportsPayload
+            /// 大家在这里吃: how many of its posts were each kind of meal.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
+            public struct MealsPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/healthyMeal`.
+                public var healthyMeal: Swift.Int
+                /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals/cheatMeal`.
+                public var cheatMeal: Swift.Int
+                /// Creates a new `MealsPayload`.
+                ///
+                /// - Parameters:
+                ///   - healthyMeal:
+                ///   - cheatMeal:
+                public init(
+                    healthyMeal: Swift.Int,
+                    cheatMeal: Swift.Int
+                ) {
+                    self.healthyMeal = healthyMeal
+                    self.cheatMeal = cheatMeal
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case healthyMeal
+                    case cheatMeal
+                }
+            }
+            /// 大家在这里吃: how many of its posts were each kind of meal.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceSummary/meals`.
+            public var meals: Components.Schemas.PlaceSummary.MealsPayload
             /// Creates a new `PlaceSummary`.
             ///
             /// - Parameters:
@@ -9004,9 +10089,12 @@ extension Components {
             ///   - place: The place as the newest post there tagged it.
             ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
             ///   - people: 来过的队友 N 人: how many people posted them.
-            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
-            ///   - raters: How many of the squad’s members gave a score.
+            ///   - stars: No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
+            ///   - raters: No longer given: always 0.
             ///   - lastAt: When the newest post there was made, in UTC.
+            ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///   - sports: 大家在这里练: each sport its 训练 named, most first.
+            ///   - meals: 大家在这里吃: how many of its posts were each kind of meal.
             public init(
                 key: Swift.String,
                 place: Components.Schemas.PlaceSummary.PlacePayload,
@@ -9014,7 +10102,10 @@ extension Components {
                 people: Swift.Int,
                 stars: Swift.Double? = nil,
                 raters: Swift.Int,
-                lastAt: Foundation.Date
+                lastAt: Foundation.Date,
+                members: Components.Schemas.PlaceSummary.MembersPayload,
+                sports: Components.Schemas.PlaceSummary.SportsPayload,
+                meals: Components.Schemas.PlaceSummary.MealsPayload
             ) {
                 self.key = key
                 self.place = place
@@ -9023,6 +10114,9 @@ extension Components {
                 self.stars = stars
                 self.raters = raters
                 self.lastAt = lastAt
+                self.members = members
+                self.sports = sports
+                self.meals = meals
             }
             public enum CodingKeys: String, CodingKey {
                 case key
@@ -9032,6 +10126,9 @@ extension Components {
                 case stars
                 case raters
                 case lastAt
+                case members
+                case sports
+                case meals
             }
         }
         /// - Remark: Generated from `#/components/schemas/PlaceVisit`.
@@ -9101,11 +10198,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
             public var minutes: Swift.Int?
-            /// A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
+            /// No longer given: always null (places have no score, Tracy 2026-11-13).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
             public var stars: Swift.Int?
-            /// A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            /// No longer given: always null (a place’s tiles show no score).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/calorieValue`.
             public var calorieValue: Swift.Double?
@@ -9122,8 +10219,8 @@ extension Components {
             ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
             ///   - cover:
             ///   - minutes: A 训练’s minutes, when it has them.
-            ///   - stars: A 训练’s tile score: the poster’s standing score for this place; null if they gave none, and for a meal.
-            ///   - calorieValue: A meal’s tile score: its 卡价比; null if it wasn’t rated, and for a 训练.
+            ///   - stars: No longer given: always null (places have no score, Tracy 2026-11-13).
+            ///   - calorieValue: No longer given: always null (a place’s tiles show no score).
             public init(
                 checkIn: Swift.String,
                 member: Swift.String,
@@ -9247,11 +10344,11 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/people`.
             public var people: Swift.Int
-            /// 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
+            /// No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/stars`.
             public var stars: Swift.Double?
-            /// How many of the squad’s members gave a score.
+            /// No longer given: always 0.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/raters`.
             public var raters: Swift.Int
@@ -9259,10 +10356,39 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/lastAt`.
             public var lastAt: Foundation.Date
-            /// The viewer’s own score; null before one.
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload`.
+            public struct MembersPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload/member`.
+                public var member: Swift.String
+                /// How many of the posts there are theirs.
+                ///
+                /// - Remark: Generated from `#/components/schemas/PlaceDetail/MembersPayload/visits`.
+                public var visits: Swift.Int
+                /// Creates a new `MembersPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - visits: How many of the posts there are theirs.
+                public init(
+                    member: Swift.String,
+                    visits: Swift.Int
+                ) {
+                    self.member = member
+                    self.visits = visits
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case visits
+                }
+            }
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///
-            /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
-            public var myStars: Swift.Int?
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/members`.
+            public typealias MembersPayload = [Components.Schemas.PlaceDetail.MembersPayloadPayload]
+            /// 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/members`.
+            public var members: Components.Schemas.PlaceDetail.MembersPayload
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload`.
             public struct SportsPayloadPayload: Codable, Hashable, Sendable {
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/SportsPayload/sport`.
@@ -9300,7 +10426,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/sports`.
             public var sports: Components.Schemas.PlaceDetail.SportsPayload
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
             public struct MealsPayload: Codable, Hashable, Sendable {
@@ -9308,15 +10434,15 @@ extension Components {
                 public var healthyMeal: Swift.Int
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/cheatMeal`.
                 public var cheatMeal: Swift.Int
-                /// Rated meals’ 健康, averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/healthy`.
                 public var healthy: Swift.Double?
-                /// Rated meals’ 好吃, averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/tasty`.
                 public var tasty: Swift.Double?
-                /// Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                /// No longer given: always null.
                 ///
                 /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals/calorieValue`.
                 public var calorieValue: Swift.Double?
@@ -9325,9 +10451,9 @@ extension Components {
                 /// - Parameters:
                 ///   - healthyMeal:
                 ///   - cheatMeal:
-                ///   - healthy: Rated meals’ 健康, averaged.
-                ///   - tasty: Rated meals’ 好吃, averaged.
-                ///   - calorieValue: Rated meals’ 卡价比 (好吃 × 健康 ÷ 5), averaged.
+                ///   - healthy: No longer given: always null.
+                ///   - tasty: No longer given: always null.
+                ///   - calorieValue: No longer given: always null.
                 public init(
                     healthyMeal: Swift.Int,
                     cheatMeal: Swift.Int,
@@ -9349,10 +10475,14 @@ extension Components {
                     case calorieValue
                 }
             }
-            /// 大家在这里吃: meals by kind, and what rated ones scored.
+            /// 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/meals`.
             public var meals: Components.Schemas.PlaceDetail.MealsPayload
+            /// No longer given: always null.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceDetail/myStars`.
+            public var myStars: Swift.Int?
             /// 动态: the posts tagged with it, newest first.
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceDetail/posts`.
@@ -9365,12 +10495,13 @@ extension Components {
             ///   - place: The place as the newest post there tagged it.
             ///   - visits: 小队来过 N 次: posts in the squad’s 动态 tagged with it.
             ///   - people: 来过的队友 N 人: how many people posted them.
-            ///   - stars: 小队评分: the squad’s members’ standing scores, averaged to one decimal; null before any of them gave one.
-            ///   - raters: How many of the squad’s members gave a score.
+            ///   - stars: No longer given: places have no score (Tracy, 2026-11-13). Always null, kept for builds that read it.
+            ///   - raters: No longer given: always 0.
             ///   - lastAt: When the newest post there was made, in UTC.
-            ///   - myStars: The viewer’s own score; null before one.
+            ///   - members: 小队地图’s heads: who posted there, most posts first; one who left the squad is still listed, for the app to grey.
             ///   - sports: 大家在这里练: each sport its 训练 named, most first.
-            ///   - meals: 大家在这里吃: meals by kind, and what rated ones scored.
+            ///   - meals: 大家在这里吃: meals by kind. Places show no averages of meals’ scores (Tracy, 2026-11-13); a meal keeps its own 健康 and 好吃.
+            ///   - myStars: No longer given: always null.
             ///   - posts: 动态: the posts tagged with it, newest first.
             public init(
                 version: Components.Schemas.PlaceDetail.VersionPayload,
@@ -9381,9 +10512,10 @@ extension Components {
                 stars: Swift.Double? = nil,
                 raters: Swift.Int,
                 lastAt: Foundation.Date,
-                myStars: Swift.Int? = nil,
+                members: Components.Schemas.PlaceDetail.MembersPayload,
                 sports: Components.Schemas.PlaceDetail.SportsPayload,
                 meals: Components.Schemas.PlaceDetail.MealsPayload,
+                myStars: Swift.Int? = nil,
                 posts: [Components.Schemas.PlaceVisit]
             ) {
                 self.version = version
@@ -9394,9 +10526,10 @@ extension Components {
                 self.stars = stars
                 self.raters = raters
                 self.lastAt = lastAt
-                self.myStars = myStars
+                self.members = members
                 self.sports = sports
                 self.meals = meals
+                self.myStars = myStars
                 self.posts = posts
             }
             public enum CodingKeys: String, CodingKey {
@@ -9408,76 +10541,11 @@ extension Components {
                 case stars
                 case raters
                 case lastAt
-                case myStars
+                case members
                 case sports
                 case meals
+                case myStars
                 case posts
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/PlaceRatingView`.
-        public struct PlaceRatingView: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/version`.
-            public var version: Components.Schemas.PlaceRatingView.VersionPayload
-            /// Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/key`.
-            public var key: Swift.String
-            /// The score, 1 to 5.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingView/stars`.
-            public var stars: Swift.Int
-            /// Creates a new `PlaceRatingView`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
-            ///   - stars: The score, 1 to 5.
-            public init(
-                version: Components.Schemas.PlaceRatingView.VersionPayload,
-                key: Swift.String,
-                stars: Swift.Int
-            ) {
-                self.version = version
-                self.key = key
-                self.stars = stars
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case key
-                case stars
-            }
-        }
-        /// - Remark: Generated from `#/components/schemas/PlaceRatingChange`.
-        public struct PlaceRatingChange: Codable, Hashable, Sendable {
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
-            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
-                case _1 = 1
-            }
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/version`.
-            public var version: Components.Schemas.PlaceRatingChange.VersionPayload
-            /// The score, 1 to 5.
-            ///
-            /// - Remark: Generated from `#/components/schemas/PlaceRatingChange/stars`.
-            public var stars: Swift.Int
-            /// Creates a new `PlaceRatingChange`.
-            ///
-            /// - Parameters:
-            ///   - version:
-            ///   - stars: The score, 1 to 5.
-            public init(
-                version: Components.Schemas.PlaceRatingChange.VersionPayload,
-                stars: Swift.Int
-            ) {
-                self.version = version
-                self.stars = stars
-            }
-            public enum CodingKeys: String, CodingKey {
-                case version
-                case stars
             }
         }
         /// - Remark: Generated from `#/components/schemas/SavedPlaceList`.
@@ -10531,6 +11599,14 @@ extension Components {
                 public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/ending`.
                 public var ending: Components.Schemas.StoryEnding?
+                /// 小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/menu`.
+                public var menu: [Components.Schemas.StoryMenuDish]?
+                /// The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case1/places`.
+                public var places: [Components.Schemas.StoryPlace]?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case1/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case ready = "ready"
@@ -10586,6 +11662,8 @@ extension Components {
                 ///   - meals:
                 ///   - bestDisclaimer:
                 ///   - ending:
+                ///   - menu: 小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it.
+                ///   - places: The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it.
                 ///   - status:
                 ///   - titles: Every member in the squad at the awards who checked in before them and agreed to AI use, in the order they joined, with 1 to 3 titles. Empty when nobody checked in. The weekly poster’s stickers read these too.
                 public init(
@@ -10602,6 +11680,8 @@ extension Components {
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
                     ending: Components.Schemas.StoryEnding? = nil,
+                    menu: [Components.Schemas.StoryMenuDish]? = nil,
+                    places: [Components.Schemas.StoryPlace]? = nil,
                     status: Components.Schemas.WeekStory.Case1Payload.StatusPayload,
                     titles: Components.Schemas.WeekStory.Case1Payload.TitlesPayload
                 ) {
@@ -10618,6 +11698,8 @@ extension Components {
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
                     self.ending = ending
+                    self.menu = menu
+                    self.places = places
                     self.status = status
                     self.titles = titles
                 }
@@ -10635,6 +11717,8 @@ extension Components {
                     case meals
                     case bestDisclaimer
                     case ending
+                    case menu
+                    case places
                     case status
                     case titles
                 }
@@ -10693,6 +11777,14 @@ extension Components {
                 public var bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/ending`.
                 public var ending: Components.Schemas.StoryEnding?
+                /// 小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/menu`.
+                public var menu: [Components.Schemas.StoryMenuDish]?
+                /// The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it.
+                ///
+                /// - Remark: Generated from `#/components/schemas/WeekStory/case2/places`.
+                public var places: [Components.Schemas.StoryPlace]?
                 /// - Remark: Generated from `#/components/schemas/WeekStory/case2/status`.
                 @frozen public enum StatusPayload: String, Codable, Hashable, Sendable, CaseIterable {
                     case pending = "pending"
@@ -10719,6 +11811,8 @@ extension Components {
                 ///   - meals:
                 ///   - bestDisclaimer:
                 ///   - ending:
+                ///   - menu: 小队菜单: up to 3 rated meals the squad posted that week, best 卡价比 (好吃 × 健康 ÷ 5) first, then the better 健康, then the latest. A menu to try, not a ranking. Missing when none was rated, and for weeks frozen before it.
+                ///   - places: The places the squad’s 训练 posts were tagged with that week, the most 训练 first, then the most people, then the one first trained at: the first is 小队最爱去, those with `firstTime` are 新发现. A deleted account’s 训练 are left out. Missing when none, and for weeks frozen before it.
                 ///   - status:
                 ///   - stuck: Present when a try at the titles has failed since the awards: the titles page then says the organisers are out of funds, with a button that nudges them (`POST …/story/nudge`). Left out while the titles are only waiting for the hourly run to reach the squad: the page just says they are on their way.
                 public init(
@@ -10735,6 +11829,8 @@ extension Components {
                     meals: Components.Schemas.StoryMeals? = nil,
                     bestDisclaimer: Components.Schemas.StoryBestDisclaimer? = nil,
                     ending: Components.Schemas.StoryEnding? = nil,
+                    menu: [Components.Schemas.StoryMenuDish]? = nil,
+                    places: [Components.Schemas.StoryPlace]? = nil,
                     status: Components.Schemas.WeekStory.Case2Payload.StatusPayload,
                     stuck: Swift.Bool? = nil
                 ) {
@@ -10751,6 +11847,8 @@ extension Components {
                     self.meals = meals
                     self.bestDisclaimer = bestDisclaimer
                     self.ending = ending
+                    self.menu = menu
+                    self.places = places
                     self.status = status
                     self.stuck = stuck
                 }
@@ -10768,6 +11866,8 @@ extension Components {
                     case meals
                     case bestDisclaimer
                     case ending
+                    case menu
+                    case places
                     case status
                     case stuck
                 }
@@ -11357,6 +12457,274 @@ extension Components {
                 case line
             }
         }
+        /// - Remark: Generated from `#/components/schemas/StoryMenuDish`.
+        public struct StoryMenuDish: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/checkIn`.
+            public var checkIn: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/author`.
+            public var author: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/day`.
+            public var day: Swift.String
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/rating`.
+            public var rating: Components.Schemas.MealRating
+            /// The meal’s line, naming the dish.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/caption`.
+            public var caption: Swift.String?
+            /// Its first photo, while the meal still has it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/photo`.
+            public struct PhotoPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/photo/path`.
+                public var path: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/photo/url`.
+                public var url: Swift.String
+                /// Creates a new `PhotoPayload`.
+                ///
+                /// - Parameters:
+                ///   - path:
+                ///   - url:
+                public init(
+                    path: Swift.String,
+                    url: Swift.String
+                ) {
+                    self.path = path
+                    self.url = url
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case path
+                    case url
+                }
+            }
+            /// Its first photo, while the meal still has it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/photo`.
+            public var photo: Components.Schemas.StoryMenuDish.PhotoPayload?
+            /// Where it was eaten, when tagged.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place`.
+            public struct PlacePayload: Codable, Hashable, Sendable {
+                /// Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/name`.
+                public var name: Swift.String
+                /// Apple Maps' identifier for the place, when Maps gave one.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/appleId`.
+                public var appleId: Swift.String?
+                /// The id of the place a squad's member added, when it is one (and not Maps').
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/squadPlaceId`.
+                public var squadPlaceId: Swift.String?
+                /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/category`.
+                public var category: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/latitude`.
+                public var latitude: Swift.Double
+                /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place/longitude`.
+                public var longitude: Swift.Double
+                /// Creates a new `PlacePayload`.
+                ///
+                /// - Parameters:
+                ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - squadPlaceId: The id of the place a squad's member added, when it is one (and not Maps').
+                ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///   - latitude:
+                ///   - longitude:
+                public init(
+                    name: Swift.String,
+                    appleId: Swift.String? = nil,
+                    squadPlaceId: Swift.String? = nil,
+                    category: Swift.String? = nil,
+                    latitude: Swift.Double,
+                    longitude: Swift.Double
+                ) {
+                    self.name = name
+                    self.appleId = appleId
+                    self.squadPlaceId = squadPlaceId
+                    self.category = category
+                    self.latitude = latitude
+                    self.longitude = longitude
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case name
+                    case appleId
+                    case squadPlaceId
+                    case category
+                    case latitude
+                    case longitude
+                }
+            }
+            /// Where it was eaten, when tagged.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryMenuDish/place`.
+            public var place: Components.Schemas.StoryMenuDish.PlacePayload?
+            /// Creates a new `StoryMenuDish`.
+            ///
+            /// - Parameters:
+            ///   - checkIn:
+            ///   - author:
+            ///   - day:
+            ///   - rating:
+            ///   - caption: The meal’s line, naming the dish.
+            ///   - photo: Its first photo, while the meal still has it.
+            ///   - place: Where it was eaten, when tagged.
+            public init(
+                checkIn: Swift.String,
+                author: Swift.String,
+                day: Swift.String,
+                rating: Components.Schemas.MealRating,
+                caption: Swift.String? = nil,
+                photo: Components.Schemas.StoryMenuDish.PhotoPayload? = nil,
+                place: Components.Schemas.StoryMenuDish.PlacePayload? = nil
+            ) {
+                self.checkIn = checkIn
+                self.author = author
+                self.day = day
+                self.rating = rating
+                self.caption = caption
+                self.photo = photo
+                self.place = place
+            }
+            public enum CodingKeys: String, CodingKey {
+                case checkIn
+                case author
+                case day
+                case rating
+                case caption
+                case photo
+                case place
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/StoryPlace`.
+        public struct StoryPlace: Codable, Hashable, Sendable {
+            /// Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/key`.
+            public var key: Swift.String
+            /// The place as its latest 训练 there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/place`.
+            public struct PlacePayload: Codable, Hashable, Sendable {
+                /// Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/name`.
+                public var name: Swift.String
+                /// Apple Maps' identifier for the place, when Maps gave one.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/appleId`.
+                public var appleId: Swift.String?
+                /// The id of the place a squad's member added, when it is one (and not Maps').
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/squadPlaceId`.
+                public var squadPlaceId: Swift.String?
+                /// Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/category`.
+                public var category: Swift.String?
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/latitude`.
+                public var latitude: Swift.Double
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/place/longitude`.
+                public var longitude: Swift.Double
+                /// Creates a new `PlacePayload`.
+                ///
+                /// - Parameters:
+                ///   - name: Trimmed, then 1 to 100 characters as people see them, on one line.
+                ///   - appleId: Apple Maps' identifier for the place, when Maps gave one.
+                ///   - squadPlaceId: The id of the place a squad's member added, when it is one (and not Maps').
+                ///   - category: Apple Maps' point-of-interest category, such as `fitnessCenter`.
+                ///   - latitude:
+                ///   - longitude:
+                public init(
+                    name: Swift.String,
+                    appleId: Swift.String? = nil,
+                    squadPlaceId: Swift.String? = nil,
+                    category: Swift.String? = nil,
+                    latitude: Swift.Double,
+                    longitude: Swift.Double
+                ) {
+                    self.name = name
+                    self.appleId = appleId
+                    self.squadPlaceId = squadPlaceId
+                    self.category = category
+                    self.latitude = latitude
+                    self.longitude = longitude
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case name
+                    case appleId
+                    case squadPlaceId
+                    case category
+                    case latitude
+                    case longitude
+                }
+            }
+            /// The place as its latest 训练 there tagged it.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/place`.
+            public var place: Components.Schemas.StoryPlace.PlacePayload
+            /// 新发现: no member of the squad had posted a 训练 there to it before that week.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/firstTime`.
+            public var firstTime: Swift.Bool
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/VisitsPayload`.
+            public struct VisitsPayloadPayload: Codable, Hashable, Sendable {
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/VisitsPayload/member`.
+                public var member: Swift.String
+                /// - Remark: Generated from `#/components/schemas/StoryPlace/VisitsPayload/day`.
+                public var day: Swift.String
+                /// Creates a new `VisitsPayloadPayload`.
+                ///
+                /// - Parameters:
+                ///   - member:
+                ///   - day:
+                public init(
+                    member: Swift.String,
+                    day: Swift.String
+                ) {
+                    self.member = member
+                    self.day = day
+                }
+                public enum CodingKeys: String, CodingKey {
+                    case member
+                    case day
+                }
+            }
+            /// Each 训练 posted there, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/visits`.
+            public typealias VisitsPayload = [Components.Schemas.StoryPlace.VisitsPayloadPayload]
+            /// Each 训练 posted there, the earliest first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/StoryPlace/visits`.
+            public var visits: Components.Schemas.StoryPlace.VisitsPayload
+            /// Creates a new `StoryPlace`.
+            ///
+            /// - Parameters:
+            ///   - key: Which place: `apple:` and Apple Maps' identifier, or `squad:` and the id of a place a squad's member added.
+            ///   - place: The place as its latest 训练 there tagged it.
+            ///   - firstTime: 新发现: no member of the squad had posted a 训练 there to it before that week.
+            ///   - visits: Each 训练 posted there, the earliest first.
+            public init(
+                key: Swift.String,
+                place: Components.Schemas.StoryPlace.PlacePayload,
+                firstTime: Swift.Bool,
+                visits: Components.Schemas.StoryPlace.VisitsPayload
+            ) {
+                self.key = key
+                self.place = place
+                self.firstTime = firstTime
+                self.visits = visits
+            }
+            public enum CodingKeys: String, CodingKey {
+                case key
+                case place
+                case firstTime
+                case visits
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/StoryTitle`.
         public struct StoryTitle: Codable, Hashable, Sendable {
             /// The title (头衔), at most 6 characters.
@@ -11685,7 +13053,7 @@ extension Components {
             /// - Remark: Generated from `#/components/schemas/PlayerCard/joinedAt`.
             public var joinedAt: Foundation.Date?
             /// - Remark: Generated from `#/components/schemas/PlayerCard/streaks`.
-            public var streaks: Components.Schemas.CurrentStreaks?
+            public var streaks: Components.Schemas.CurrentStreaks
             /// Days with a 训练; several 训练 on one day count once.
             ///
             /// - Remark: Generated from `#/components/schemas/PlayerCard/trainedDays`.
@@ -11832,7 +13200,7 @@ extension Components {
                 jerseyNumber: Swift.Int? = nil,
                 squadPlace: Swift.Int,
                 joinedAt: Foundation.Date? = nil,
-                streaks: Components.Schemas.CurrentStreaks? = nil,
+                streaks: Components.Schemas.CurrentStreaks,
                 trainedDays: Swift.Int,
                 healthyMeals: Swift.Int,
                 cheatMeals: Swift.Int,

@@ -1,4 +1,4 @@
-import { challengeOpen, type Challenge } from '../domain/challenge.js';
+import type { Challenge } from '../domain/challenge.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   memberOfPath,
@@ -15,10 +15,12 @@ import {
   taskOf,
   type CoachThread,
   type DayTalk,
+  type PastDays,
+  type TookOver,
   type YesterdayFacts,
 } from '../domain/prompt.js';
 import type { CoachEmoji } from '../domain/reply.js';
-import { holidaysOn, SquadId, type CoachSettings } from '../domain/settings.js';
+import { holidaysOn, modelOf, SquadId, type CoachSettings } from '../domain/settings.js';
 import { factsText, type NoteBrief } from '../domain/member-facts.js';
 import {
   consentedOnly,
@@ -38,6 +40,7 @@ import type {
   CoachFeedback,
   CoachGifting,
   CoachHiringStore,
+  CoachLetterStore,
   CoachMemberFacts,
   CoachStreaks,
   CoachMemes,
@@ -72,7 +75,10 @@ const RECENT_NOTES = 7;
 const RECENT_EMOJI = 8;
 
 /** How far back the daily wake reads the talk under check-ins, to remember from it. */
-const TALK_WINDOW_MS = 24 * 60 * 60_000;
+const DAY_MS = 24 * 60 * 60_000;
+
+/** How many days the night's dream looks back over. */
+const DREAM_DAYS = 7;
 
 /** The file a squad's coach starts from: its name. */
 const SEEDED = 'squad.md';
@@ -180,6 +186,8 @@ export interface CoachWakesDependencies {
   readonly squadWeek: SquadWeekSource;
   readonly aiConsented: AiConsented;
   readonly hiring: CoachHiringStore;
+  /** The change of coach that brought the coach now and the letter left with it, if any. */
+  readonly letters: Pick<CoachLetterStore, 'handover' | 'ofHandover'>;
   readonly clock: () => Date;
   readonly photoUrls: CoachPhotoUrls;
   /** Member stats and plans the coach looks up. */
@@ -497,8 +505,6 @@ interface Thinking {
   readonly roster: ReturnType<typeof rosterOf>;
   readonly thread: Awaited<ReturnType<typeof threadOf>>;
   readonly author: string | undefined;
-  readonly challenge: Awaited<ReturnType<CoachStores['memberNotes']['challengeOf']>>;
-  readonly day: string;
   /** The words of the member the wake answers there, which the coach may pass on to the team. */
   readonly heard: string | undefined;
   /** What the run cost, in US dollars' millionths. */
@@ -513,6 +519,35 @@ interface Thinking {
 async function backAgain(deps: CoachWakesDependencies, squad: SquadId): Promise<boolean> {
   const since = await deps.hiring.hiredBackAt(squad);
   return since !== undefined && (await deps.usage.total({ squad, since })).wakes === 0;
+}
+
+/**
+ * Whom the coach took over from on the squad's last change of coach (换教练), on which day, and
+ * the letter the outgoing coach left the squad, so the new one can speak of it when asked (Tracy,
+ * 2026-11-13). `undefined` for a coach hired with none before it.
+ */
+async function handoverOf(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    coach,
+    week,
+    zone,
+  }: {
+    readonly squad: SquadId;
+    readonly coach: Coach;
+    readonly week: SquadWeek;
+    readonly zone: string;
+  },
+): Promise<TookOver | undefined> {
+  const handover = await deps.letters.handover(squad);
+  if (handover?.to !== coach.id) return undefined;
+  const letter = await deps.letters.ofHandover(handover.hireEvent);
+  return {
+    from: (await coachNames(deps, week)).get(handover.from) ?? handover.from,
+    day: wallClockAt(handover.at, zone).day,
+    ...(letter === undefined ? {} : { letter: letter.text }),
+  };
 }
 
 /** These members, or only `only` of them when it is given. */
@@ -577,7 +612,6 @@ async function think(
     reaction: undefined,
     answer: undefined,
     answerMentions: [],
-    challengeDone: false,
     feedback: undefined,
     steps: [],
   };
@@ -588,8 +622,10 @@ async function think(
     draft.changed.add(SEEDED);
   }
   const daily = wake.reason.kind === 'daily';
-  // The daily wake and the night's dream both look back at the day before.
-  const looksBack = daily || wake.reason.kind === 'dream';
+  // The daily wake looks back at the day before; the night's dream at the week before it, since
+  // what lasts shows over days (Tracy, 2026-11-12).
+  const dream = wake.reason.kind === 'dream';
+  const looksBack = daily || dream;
   // Who the daily wake writes a morning note to: every member who agreed to AI use and keeps
   // the coach's messages on (Tracy, 2026-11-07: switched off, the note stops altogether).
   const noteTo = daily
@@ -651,6 +687,9 @@ async function think(
       ...new Set([...holidaysOn(settings.holidays, day), ...(await deps.occasions(day))]),
     ],
     backAgain: await backAgain(deps, wake.squad),
+    ...(wake.reason.kind === 'dream'
+      ? {}
+      : { handover: await handoverOf(deps, { squad: wake.squad, coach, week, zone }) }),
     recentNotes: daily
       ? await deps.stores.notes.recent({ squad: wake.squad, coach: coach.id, limit: RECENT_NOTES })
       : [],
@@ -675,7 +714,30 @@ async function think(
             limit: RECENT_EMOJI,
           })
         : [],
-    talks: looksBack ? await talksOf(deps, { squad: wake.squad, week, coach, now }) : [],
+    talks: looksBack
+      ? await talksOf(deps, {
+          squad: wake.squad,
+          week,
+          coach,
+          since: new Date(now.getTime() - (dream ? DREAM_DAYS : 1) * DAY_MS),
+        })
+      : [],
+    // On a check-in's or a reply's wake, what this member and the coach said to each other under
+    // other posts over the last day, so a line here follows from what was said there.
+    ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') && author !== undefined
+      ? {
+          talkWith: {
+            member: author,
+            talks: await talksOf(deps, {
+              squad: wake.squad,
+              week,
+              coach,
+              since: new Date(now.getTime() - DAY_MS),
+              between: { member: author, except: wake.reason.checkIn },
+            }),
+          },
+        }
+      : {}),
     ...(wake.reason.kind === 'daily' || wake.reason.kind === 'joined'
       ? {
           noteTo: await briefsOf(deps, {
@@ -689,7 +751,10 @@ async function think(
           }),
         }
       : {}),
-    ...(looksBack ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
+    ...(daily ? { yesterday: await yesterdayOf(deps, { squad: wake.squad, week, day }) } : {}),
+    ...(dream
+      ? { pastDays: await pastDaysOf(deps, { squad: wake.squad, week, day, coach: coach.id, now }) }
+      : {}),
   };
   // On a daily wake, the day's challenges are set first, by a run of their own on the settings'
   // challenge model, from the same task; the coach then writes its notes around them (Tracy,
@@ -711,9 +776,9 @@ async function think(
   }
   const task = taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) });
   if (task === undefined) return undefined;
+  const runsOn = modelOf(settings, wake.reason.kind);
   const run = await deps.agent.run({
-    model: settings.model,
-    reasoning: settings.reasoning,
+    ...runsOn,
     // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
     instructions: instructionsOf(settings, coachIn(coach, week.language ?? 'zh-Hans')),
     task,
@@ -724,11 +789,6 @@ async function think(
       draft,
       kind: wake.reason.kind,
       to: author,
-      // Only for a post made today: one from before midnight didn't do today's challenge.
-      openChallenge:
-        challenge !== undefined &&
-        challengeOpen(challenge) &&
-        postedOn({ week, reason: wake.reason, day, zone }),
       relaying: heard !== undefined ? 'heard' : 'nothing',
       ...((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') &&
       !(await deps.relayingOn(day))
@@ -768,7 +828,7 @@ async function think(
     squad: wake.squad,
     ...(author === undefined ? {} : { member: author }),
     kind: wake.id === undefined ? 'preview' : 'wake',
-    model: settings.model,
+    model: runsOn.model,
     usage: run.usage,
   });
   return {
@@ -778,8 +838,6 @@ async function think(
     roster,
     thread,
     author,
-    challenge,
-    day,
     heard,
     costMicros: settingCost + cost,
   };
@@ -804,7 +862,10 @@ async function runWake(
   },
 ): Promise<boolean> {
   try {
-    const offDuty = await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.model });
+    const offDuty = await deps.usage.offDutyWhy({
+      squad: wake.squad,
+      model: modelOf(settings, wake.reason.kind).model,
+    });
     if (offDuty !== undefined) {
       await deps.stores.wakes.skip(wake.id, `off duty: ${offDuty}`);
       return true;
@@ -814,7 +875,7 @@ async function runWake(
       await deps.stores.wakes.finish(wake.id);
       return true;
     }
-    const { run, draft, stored, roster, thread, author, challenge, day, heard } = thought;
+    const { run, draft, stored, roster, thread, author, heard } = thought;
     await deps.stores.steps.record({ squad: wake.squad, wake: wake.id, steps: draft.steps });
     if (!run.ok) {
       await deps.stores.wakes.fail(wake.id, run.error);
@@ -825,7 +886,6 @@ async function runWake(
         squad: wake.squad,
         wake,
         draft,
-        ...(challenge === undefined ? {} : { challenge: { note: challenge.note, day } }),
         stored,
         roster,
         coach,
@@ -1060,21 +1120,80 @@ async function yesterdayOf(
   };
 }
 
-/** Whether the check-in a wake is about was posted on `day`, on the squad's clock. */
-function postedOn({
-  week,
-  reason,
-  day,
-  zone,
-}: {
-  readonly week: SquadWeek;
-  readonly reason: Wake['reason'];
-  readonly day: string;
-  readonly zone: string;
-}): boolean {
-  if (reason.kind !== 'checkIn') return false;
-  const posted = week.checkIns.find(({ id }) => id === reason.checkIn)?.createdAt;
-  return posted !== undefined && wallClockAt(posted, zone).day === day;
+/**
+ * What the night's dream looks back over: the squad's posts of the week before `day`, and what
+ * the coach wrote and gave in it, only for members who still agree to AI use.
+ */
+async function pastDaysOf(
+  deps: CoachWakesDependencies,
+  {
+    squad,
+    week,
+    day,
+    coach,
+    now,
+  }: {
+    readonly squad: SquadId;
+    readonly week: SquadWeek;
+    readonly day: string;
+    readonly coach: CoachId;
+    readonly now: Date;
+  },
+): Promise<PastDays> {
+  const from = dayBefore(day, DREAM_DAYS);
+  const to = dayBefore(day, 1);
+  // Seven days span at most this week and the one before.
+  const weeks = await Promise.all(
+    [...new Set([mondayOf(from), mondayOf(to)])].map((weekStart) =>
+      weekStart === week.weekStart ? Promise.resolve(week) : weekOf(deps, { squad, weekStart }),
+    ),
+  );
+  const within = (each: string | undefined) => each !== undefined && each >= from && each <= to;
+  const checkIns = [
+    ...new Map(
+      weeks
+        .flatMap((each) => each.checkIns)
+        .filter((each) => within(each.day) || within(each.postedDay))
+        .map((each) => [each.id, each]),
+    ).values(),
+  ];
+  const members = week.members.map(({ member }) => member);
+  const consented = new Set(await deps.aiConsented(members));
+  const [boards, notes, gifts] = await Promise.all([
+    // More than a line a day: an admin's preview may have added one.
+    deps.stores.notes.recent({ squad, coach, limit: DREAM_DAYS * 3 }),
+    deps.stores.memberNotes.deliveredBetween({ squad, coach, from, to }),
+    deps.gifting.given({
+      squad,
+      coach,
+      members: [...consented],
+      since: new Date(now.getTime() - DREAM_DAYS * DAY_MS),
+    }),
+  ]);
+  const theirs = notes.filter(({ member }) => consented.has(member));
+  // Quiet when the last day brought nothing: no post, no talk, no challenge answered or done.
+  const lastDay = new Date(now.getTime() - DAY_MS);
+  const quiet =
+    !checkIns.some((each) => each.day === to || each.postedDay === to) &&
+    // Talk under any post of those weeks, an older one's too.
+    !weeks.some(({ checkIns: theirs }) =>
+      theirs.some((each) => each.comments.some(({ at }) => at >= lastDay)),
+    ) &&
+    !theirs.some(
+      ({ day: noteDay, challenge }) =>
+        noteDay === to &&
+        challenge !== undefined &&
+        (challenge.answer !== undefined || challenge.completion !== undefined),
+    );
+  return {
+    from,
+    to,
+    quiet,
+    checkIns,
+    boards: boards.filter((each) => within(each.day)).reverse(),
+    notes: theirs,
+    gifts,
+  };
 }
 
 /** A moment on the squad's clock, as the coach reads it: `11-09 周一 22:44`. */
@@ -1113,13 +1232,10 @@ async function saveDraft(
     stored,
     roster,
     coach,
-    challenge,
   }: {
     readonly squad: SquadId;
     readonly wake: Wake;
     readonly draft: WakeDraft;
-    /** On a check-in's wake, the note whose challenge its author has today, and that day. */
-    readonly challenge?: { readonly note: number; readonly day: string };
     /** The files as the run found them, as the model read them. */
     readonly stored: ReadonlyMap<StoredPath, string>;
     readonly roster: ReadonlyMap<string, string>;
@@ -1176,9 +1292,6 @@ async function saveDraft(
       ? {}
       : { welcome: { squad, member, coach: coach.id, note: id, day, text: note.text } };
   }
-  if (wake.reason.kind === 'checkIn' && draft.challengeDone && challenge !== undefined) {
-    await stores.memberNotes.complete({ ...challenge, by: 'coach' });
-  }
   if (
     wake.reason.kind === 'checkIn' &&
     (draft.reply !== undefined || draft.reaction !== undefined)
@@ -1208,9 +1321,11 @@ async function saveDraft(
 }
 
 /**
- * On a daily wake, what was said under check-ins over the last day (members' comments, and the
- * coach's reply and answers), so the coach can remember what it missed while talking. Looks at
- * this week and the one before, since Monday's wake looks back at Sunday.
+ * What was said under check-ins since `since` (members' comments, and the coach's reply and
+ * answers), so the coach can remember what it missed while talking. Looks at this week and the
+ * one before, since Monday's wake looks back at Sunday. With `between`, only the talk between the
+ * coach and that member under every post but `except`: their comments to or @ of the coach, the
+ * coach's answers to them, and the coach's reply to each post they made or answered it under.
  */
 async function talksOf(
   deps: CoachWakesDependencies,
@@ -1218,15 +1333,16 @@ async function talksOf(
     squad,
     week,
     coach,
-    now,
+    since,
+    between,
   }: {
     readonly squad: SquadId;
     readonly week: SquadWeek;
     readonly coach: Coach;
-    readonly now: Date;
+    readonly since: Date;
+    readonly between?: { readonly member: string; readonly except: string };
   },
 ): Promise<readonly DayTalk[]> {
-  const since = now.getTime() - TALK_WINDOW_MS;
   const before = await weekOf(deps, {
     squad,
     weekStart: mondayOf(dayBefore(week.weekStart, 7)),
@@ -1234,9 +1350,18 @@ async function talksOf(
   const talks: DayTalk[] = [];
   const checkIns = new Map([...before.checkIns, ...week.checkIns].map((each) => [each.id, each]));
   for (const checkIn of checkIns.values()) {
-    const lately = checkIn.comments.filter(({ at }) => at.getTime() >= since);
-    if (lately.length === 0) continue;
+    if (checkIn.id === between?.except) continue;
+    const lately = checkIn.comments.filter(
+      ({ at, member, toCoach, mentionsCoach }) =>
+        at >= since &&
+        (between === undefined ||
+          (member === between.member && (toCoach === coach.id || mentionsCoach === coach.id))),
+    );
+    // Their own post of the day, where only the coach may have said something.
+    const theirs = checkIn.member === between?.member && checkIn.createdAt >= since;
+    if (lately.length === 0 && !theirs) continue;
     const reply = await deps.stores.replies.find(squad, checkIn.id);
+    if (lately.length === 0 && (reply?.coach !== coach.id || reply.text === undefined)) continue;
     const answers = new Map(
       (await deps.stores.answers.ofCheckIn(squad, checkIn.id)).map(({ comment, text }) => [
         comment,

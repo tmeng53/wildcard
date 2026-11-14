@@ -97,6 +97,10 @@ func commentLimitIsTheAPIs(schema: String) throws {
     #expect(try property("name", of: "NewSquad")?.maxCharacters == SquadName.maxLength)
 }
 
+@Test func joinNoteLimitIsTheAPIs() throws {
+    #expect(try property("note", of: "JoinSquadRequest")?.maxCharacters == JoinNote.maxLength)
+}
+
 @Test(arguments: ["Training", "Meal", "Disclaimer"])
 func photoCountIsTheAPIs(schema: String) throws {
     #expect(try property("photos", of: schema)?.maxItems == Photos.maxCount)

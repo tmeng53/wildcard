@@ -1713,22 +1713,6 @@
         }
       }
     },
-    "点数字和人物可以换" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap the numbers or the character to change them"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點數字和人物可以換"
-          }
-        }
-      }
-    },
     "纯色" : {
       "localizations" : {
         "en" : {
@@ -1837,6 +1821,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "圖表"
+          }
+        }
+      }
+    },
+    "和 %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %@"
+          }
+        }
+      }
+    },
+    "和 %@、%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %1$@ and %2$@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %1$@、%2$@"
+          }
+        }
+      }
+    },
+    "和 %@ 等 %lld 人" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "With %1$@ and others, %2$lld in all"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和 %1$@ 等 %2$lld 人"
           }
         }
       }

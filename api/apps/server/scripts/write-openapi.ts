@@ -68,7 +68,13 @@ const photos = {
 const app = createApp({
   db,
   verifyToken: unused,
-  accounts: { verifySession: unused, deleteUser: unused, signsInWithApple: unused },
+  accounts: {
+    verifySession: unused,
+    deleteUser: unused,
+    signsInWithApple: unused,
+    createUser: unused,
+    handOff: unused,
+  },
   revokeAppleSignIn: undefined,
   catalog: {
     sections: [
@@ -104,11 +110,11 @@ const app = createApp({
     comments: createPostgresCommentStore(db),
     plans: createPostgresWeeklyPlanStore(db),
     photos,
+    squadPlaceOf: unused,
     calendarOf: unused,
     clock: unused,
   }),
   nudges: { send: unused, received: unused, inSquad: unused },
-  placeRatings: { rate: unused, of: unused, ofAll: unused },
   savedPlaces: { list: unused, save: unused, remove: unused },
   squadPlaces: { add: unused, list: unused, isPlaceOf: unused },
   weather: { savePlace: unused, forgetPlace: unused, dayFor: unused },
@@ -156,6 +162,7 @@ const app = createApp({
     markSeen: unused,
     spoke: unused,
   },
+  coachMessages: { cardsFor: unused, answer: unused },
   coachLetters: { write: unused },
   scenes: createScenes({
     store: createPostgresSceneStore(db),
@@ -201,6 +208,11 @@ const app = createApp({
       list: unused,
       logChange: unused,
       listLog: unused,
+      demoOwner: unused,
+      isDemoAccount: unused,
+      demoAccounts: unused,
+      addDemoAccount: unused,
+      requireDemoAccount: unused,
     }),
     tools: () => [],
     publicUrl: new URL('http://localhost:8080'),

@@ -12,6 +12,7 @@ import MeUI
 import NotificationsDomain
 import NotificationsUI
 import PlacesDomain
+import PlacesUI
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -50,8 +51,8 @@ struct MainTabs: View {
     var sceneMoved: () -> Void = {}
     /// Bumped each time a push arrives while the app is in front, which the app tells itself.
     var pushesInFront = 0
-    /// 设置's 预览注册, for admins; nil for everyone else.
-    var previewSignUp: (() -> Void)?
+    /// 设置 › 管理员's tools, for admins and their demo accounts.
+    var admin: AdminTools
     /// 设置 › 位置: the phone's approximate location for the coach's weather.
     let location: LocationSharing?
     /// 通知, behind the bell on 动态: one for as long as the tabs are up.
@@ -95,12 +96,12 @@ struct MainTabs: View {
         recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, notices: any NoticeSource,
         coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
-        destination: Binding<AppDestination?> = .constant(nil), previewSignUp: (() -> Void)? = nil,
+        destination: Binding<AppDestination?> = .constant(nil), admin: AdminTools = AdminTools(),
         location: LocationSharing? = nil, pushesInFront: Int = 0, sceneMoved: @escaping () -> Void = {},
         leftSquad: @escaping () -> Void = {}
     ) {
         (self.pushesInFront, self.sceneMoved) = (pushesInFront, sceneMoved)
-        self.previewSignUp = previewSignUp
+        self.admin = admin
         self.location = location
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts, self.places) = (squad, recap, myPosts, places)
@@ -161,7 +162,11 @@ struct MainTabs: View {
         }
         .placesZones(from: profile, in: today.health)
         .fullScreenCover(isPresented: showsStory, onDismiss: storyClosed) {
-            if let story = recap.open { RecapView(model: story, autoAdvances: !LaunchOptions.recapManual) }
+            if let story = recap.open {
+                // 地点页 from the story's places, pushed over it, with a tile's post over that.
+                RecapView(model: story, autoAdvances: !LaunchOptions.recapManual)
+                    .environment(\.placePage, composePlacePage)
+            }
         }
         // A scene picked on the story's last page: its reveal ends where home takes over.
         .onChange(of: recap.picks) {
@@ -242,7 +247,11 @@ struct MainTabs: View {
         NavigationStack(path: $feedPages) {
             FeedView(
                 model: feed, header: AnyView(RecapTile(recap: recap)),
-                accessory: AnyView(NoticeBell(inbox: inbox) { showsNotices = true })
+                accessory: AnyView(
+                    HStack(spacing: Space.xs) {
+                        if mapSquad != nil { SquadMapButton { feedPages.append(.squadMap) } }
+                        NoticeBell(inbox: inbox) { showsNotices = true }
+                    })
             ) { selection = .today }
             .navigationRoot()
             .task { await recap.refresh() }
@@ -265,6 +274,8 @@ struct MainTabs: View {
                     }
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
+                case .squadMap:
+                    squadMapPage
                 }
             }
         }
@@ -291,6 +302,7 @@ extension MainTabs {
                 }
             )
             .navigationRoot()
+            .squadCardNews(squad.waitingRequests > 0)
             .onAppear {
                 today.openTeammate = {
                     teammateOnHome = true
@@ -303,12 +315,16 @@ extension MainTabs {
                 case .squad:
                     SquadSettingsView(
                         model: squad, picked: land(on:coveredAt:), openCoach: { todayPages.append(.coach($0)) },
+                        openPreferences: { todayPages.append(.squadPreferences) },
                         revealing: $squadRevealing,
                         openTeammate: { (teammateOnHome, teammate) = (false, squadCard(of: $0)) },
                         pastRecaps: { PastRecaps(shelf: recap) }
                     )
                     .environment(\.sceneTheme, squad.scene)
                     .task { await recap.refreshPast() }
+                case .squadPreferences:
+                    SquadPreferencesView(model: squad)
+                        .environment(\.sceneTheme, squad.scene)
                 case .coach(let route):
                     CoachPage(
                         route: route, model: squad, pages: coachPages, note: today.coachLine,

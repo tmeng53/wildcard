@@ -43,10 +43,12 @@ export const NoticeEntry = z
         'caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that ' +
         'left wrote the next a letter), `unlocked` (a store, prop or piece opened), ' +
         '`comment` (a teammate commented on the caller’s check-in or replied to them), ' +
+        '`trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), ' +
         '`broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
-        'one) or `thanks` (we used feedback the caller sent, so they got its thank-you ' +
-        'rewards). ' +
+        'one), `thanks` (we used feedback the caller sent, so they got its thank-you ' +
+        'rewards), `joinRequest` (someone asked to join the squad the caller captains) or ' +
+        '`joinAnswered` (the captain answered the caller’s request to join). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -153,6 +155,13 @@ export const NoticeEntry = z
           'What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that ' +
           'shipped). Skip another.',
       }),
+    joinRequest: z.uuid().optional().meta({
+      description:
+        'The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.',
+    }),
+    approved: z.boolean().optional().meta({
+      description: 'Whether the captain let the caller in (`joinAnswered`).',
+    }),
     title: LocalizedWords.optional(),
     body: LocalizedWords.optional(),
     action: z
@@ -460,9 +469,19 @@ function wireNotice(
     case 'unlocked':
       return { ...common, unlockKind: notice.subject.kind, item: notice.subject.item };
     case 'comment':
+    case 'trainedWith':
       return { ...common, alert: notice.subject.alert, checkIn: notice.subject.checkIn };
     case 'thanks':
       return { ...common, feedback: notice.subject.feedback, adopted: notice.subject.adopted };
+    case 'joinRequest':
+      return { ...common, alert: notice.subject.alert, joinRequest: notice.subject.request };
+    case 'joinAnswered':
+      return {
+        ...common,
+        alert: notice.subject.alert,
+        joinRequest: notice.subject.request,
+        approved: notice.subject.approved,
+      };
     case 'goalSuggestion':
       return {
         ...common,
