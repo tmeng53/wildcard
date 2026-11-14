@@ -35,6 +35,8 @@ struct CommentComposer: View {
                         isTyping.wrappedValue = true
                     }
                 )
+                // Picking someone goes on typing.
+                .keepsKeyboard()
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             // Only while the box holds the very words the store still has as not gone out.
@@ -89,6 +91,8 @@ struct CommentComposer: View {
                     .contentShape(Rectangle().inset(by: -(Sizing.minimumTapTarget - Space.l) / 2))
             }
             .buttonStyle(.plain)
+            // As far as the tap reaches.
+            .keepsKeyboard(outset: (Sizing.minimumTapTarget - Space.l) / 2)
             .accessibilityLabel(Text(copy: "不回复了", bundle: .module))
             .accessibilityIdentifier("post.cancelReply")
         }
@@ -111,6 +115,7 @@ struct CommentComposer: View {
                 .overlay { Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
         }
         .buttonStyle(PressableButtonStyle())
+        .keepsKeyboard()
         .accessibilityIdentifier("post.mentionCoach")
     }
 
