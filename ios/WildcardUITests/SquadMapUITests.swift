@@ -45,12 +45,28 @@ final class SquadMapUITests: XCTestCase {
         assertOnScreen(place, in: app)
         settle()
         keepScreenshot(named: "squad-map-often")
+        openAStackOnTheMap(in: app)
 
         // A place opens its own page.
         place.tap()
         XCTAssertFalse(
             app.buttons["squadMap.oftenRow"].waitForExistence(timeout: 2) && place.isHittable,
             "the place's page didn't open")
+    }
+
+    /// A tap on a stack of heads opens it through the map's selection, with its place's name.
+    private func openAStackOnTheMap(in app: XCUIApplication) {
+        let spots = app.descendants(matching: .any).matching(identifier: "squadMap.spot")
+        let names = app.buttons.matching(identifier: "squadMap.place")
+        XCTAssertGreaterThan(spots.count, 0, "常去 shows no stack on the map")
+        let before = names.count
+        for index in 0..<spots.count {
+            spots.element(boundBy: index).tap()
+            let opened = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "count > %d", before), object: names)
+            if XCTWaiter().wait(for: [opened], timeout: 3) == .completed { return }
+        }
+        XCTFail("tapping a stack didn't open it with its place's name")
     }
 
     private func launch() -> XCUIApplication {

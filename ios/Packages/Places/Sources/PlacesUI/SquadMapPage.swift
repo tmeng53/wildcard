@@ -91,7 +91,9 @@ struct SquadMapPage: View {
     }
 
     private var map: some View {
-        Map(position: $camera) {
+        // A stack opens through the map's own selection, which answers a tap at once; a button in an
+        // annotation waits for the map's double-tap zoom to fail first, so the name came late.
+        Map(position: $camera, selection: selectedSpot) {
             if store.member == nil {
                 ForEach(store.spots) { spot in
                     Annotation(spot.place.place.name, coordinate: spot.place.place.coordinate, anchor: .top) {
@@ -106,6 +108,7 @@ struct SquadMapPage: View {
                             openPlace: { openPlace(spot.place.place) })
                     }
                     .annotationTitles(.hidden)
+                    .tag(spot.id)
                 }
             } else {
                 // Everyone else's stacks, faded behind the member's day.
@@ -130,6 +133,16 @@ struct SquadMapPage: View {
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
         .frame(maxHeight: .infinity)
+    }
+
+    /// The open stack as the map's selection: picking one opens it, a tap on the map closes it.
+    private var selectedSpot: Binding<PlaceKey?> {
+        Binding(
+            get: { store.expanded },
+            set: { picked in
+                guard picked != store.expanded, let spot = picked ?? store.expanded else { return }
+                withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { store.toggle(spot) }
+            })
     }
 
     private func player(for member: MemberID) -> CharacterPlayer? {
@@ -190,17 +203,17 @@ private struct SpotMarker: View {
                 }
             } else {
                 VStack(spacing: Space.xxs) {
-                    Button(action: toggle) {
-                        HeadPile(
-                            players: spot.heads.map { heads.player(for: store.characters[$0]?.look) },
-                            size: spot.emphasis == .top ? Self.headSize + 8 : Self.headSize,
-                            greyed: spot.heads.map { !store.isInSquad($0) }
-                        )
-                        .overlay(alignment: .topTrailing) {
-                            if mode == .often { VisitBadge(count: spot.place.visits) }
-                        }
+                    // Tapped through the map's selection, never a button (see `SquadMapPage.map`).
+                    HeadPile(
+                        players: spot.heads.map { heads.player(for: store.characters[$0]?.look) },
+                        size: spot.emphasis == .top ? Self.headSize + 8 : Self.headSize,
+                        greyed: spot.heads.map { !store.isInSquad($0) }
+                    )
+                    .overlay(alignment: .topTrailing) {
+                        if mode == .often { VisitBadge(count: spot.place.visits) }
                     }
-                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction(.default, toggle)
                     if spot.emphasis == .top {
                         PlaceCapsule(text: spot.place.place.name, action: openPlace)
                     }
