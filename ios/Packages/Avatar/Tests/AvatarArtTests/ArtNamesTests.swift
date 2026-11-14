@@ -92,3 +92,18 @@ private let trot = Data(
     #expect(names.stores["trot"]?.local.simplifiedChinese == "火鸡全开")
     #expect(names.variant("trot-bib", in: Slot("acc"))?.english == "Turkey Bib")
 }
+
+@Test func aNewerDownloadNamesItsPiecesAtOnce() {
+    let before = Data(#"{"version":1,"variants":{"broom":{"zhHans":"扫帚","en":"Broom","zhHant":"掃帚"}}}"#.utf8)
+    let after = Data(
+        #"""
+        {"version":1,"variants":{"broom":{"zhHans":"扫帚","en":"Broom","zhHant":"掃帚"},
+         "medball":{"zhHans":"药球","en":"Wall ball","zhHant":"藥球"}}}
+        """#.utf8)
+    #expect(PlaceholderCharacter.names(downloaded: before).variant("medball", in: Slot("prop")) == nil)
+    let named = PlaceholderCharacter.names(downloaded: after).variant("medball", in: Slot("prop"))
+    #expect(named?.simplifiedChinese == "药球")
+    #expect(PlaceholderCharacter.names(downloaded: before) == PlaceholderCharacter.names(downloaded: before))
+    #expect(PlaceholderCharacter.names(downloaded: nil) == PlaceholderCharacter.bundledNames)
+    #expect(PlaceholderCharacter.names(downloaded: Data("not json".utf8)) == PlaceholderCharacter.bundledNames)
+}

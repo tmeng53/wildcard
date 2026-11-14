@@ -29,6 +29,18 @@ extension XCTestCase {
         return frame.minX.isFinite && frame.minY.isFinite && !frame.isEmpty
     }
 
+    /// Swipes the coach page's top card right, into 以前. The swipe is drawn on the screen where
+    /// the top card's stage is rather than on the card's element: asking a busy CI simulator for
+    /// the card's snapshot the moment before can come back empty while the card is right there,
+    /// failing the swipe (main, 2026-11-14).
+    @MainActor
+    func swipeTopCoachCard(in app: XCUIApplication) {
+        let window = app.windows.firstMatch
+        let start = window.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.35))
+        let end = window.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.35))
+        start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .fast, thenHoldForDuration: 0)
+    }
+
     /// Taps `element` until `target` meets `predicate`: a busy CI simulator now and then drops a
     /// tap that lands as a page finishes moving (the app did nothing, and the same tap works on the
     /// test's retry), so it taps once more if nothing came of the first within 10 s. Only for taps

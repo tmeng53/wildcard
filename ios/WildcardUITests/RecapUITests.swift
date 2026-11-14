@@ -77,6 +77,9 @@ final class RecapUITests: XCTestCase {
             "the place's name didn't open 地点页")
         keepScreenshot(named: "7m-recap-favorite-place-page")
         app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["place.page"].waitForNonExistence(timeout: Self.wait),
+            "back didn't leave 地点页")
         show("favoritePlace", in: app)
 
         for page in ["favoritePlace", "discovery", "hottest", "meals"] {
@@ -96,7 +99,13 @@ final class RecapUITests: XCTestCase {
             app.descendants(matching: .any)["place.page"].waitForExistence(timeout: Self.wait),
             "the dish's place didn't open 地点页")
         app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(
+            app.descendants(matching: .any)["place.page"].waitForNonExistence(timeout: Self.wait),
+            "back didn't leave 地点页")
         show("menu", in: app)
+        // Back from a place, a tap still moves the story on.
+        next(in: app, from: "menu")
+        show("bestDisclaimer", in: app)
     }
 
     /// Every page of the sample week, in order.
