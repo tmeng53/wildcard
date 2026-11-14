@@ -28,7 +28,7 @@ import { adminMcp } from './admin-mcp/admin-mcp.js';
 import type { AdminTool } from './admin-mcp/admin-tool.js';
 import { consentPage } from './admin-mcp/consent-page.js';
 import { MediaTypeUnsupportedError, RequestInvalidError, RouteNotFoundError } from './errors.js';
-import { inProcessEvents, type EventHandlers, type PublishEvent } from './events.js';
+import { inProcessEvents, type PublishEvent } from './events.js';
 import type { CoachNotesDependencies } from './flows/coach-notes.js';
 import { eventHandlers } from './flows/event-handlers.js';
 import type { TeammatePushDependencies } from './flows/teammate-push.js';
@@ -158,10 +158,10 @@ export interface AppDependencies {
     /** The coach's morning notes to deliver, and how to tell them in the bell. */
     readonly coachNotes: Pick<CoachNotesDependencies, 'notes' | 'noteHour' | 'tell' | 'clock'>;
     /**
-     * How events reach their subscribers (`events.ts`): through Pub/Sub on the hosted server;
-     * left out, they run in the request.
+     * How events reach their subscribers (`events.ts`): only through Pub/Sub on the hosted
+     * server; left out (locally, in tests), they run in the request.
      */
-    readonly publishEvents?: (handlers: EventHandlers, log: Log) => PublishEvent;
+    readonly publishEvents?: (log: Log) => PublishEvent;
   };
   /** The admin MCP server at `/mcp`. */
   readonly admin: {
@@ -211,7 +211,7 @@ export function createApp(deps: AppDependencies) {
     trainedWithPush: deps,
     teammatePush: { ...deps, sportNames: deps.jobs.sportNames, clock: deps.jobs.clock },
   });
-  const publish = (deps.jobs.publishEvents ?? inProcessEvents)(handlers, deps.log);
+  const publish = deps.jobs.publishEvents?.(deps.log) ?? inProcessEvents(handlers, deps.log);
   app.route('/', checkIns({ ...deps, publish }));
   app.route('/', photoUploads(deps));
   app.route('/', reactions(deps));
