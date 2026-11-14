@@ -55,8 +55,9 @@ struct CoachDeckCard: View {
     @State private var reason = ""
     /// What the member typed in a coach message's box.
     @State private var typed = ""
-    /// The reason's field has the keyboard: the stage gives up its height so the field and its
-    /// button stay above the keyboard.
+    /// A field on the card has the keyboard: the stage folds away so the field and its buttons
+    /// stay above the keyboard. Folded outright: given only the height left over, a message's
+    /// stage kept all of it and pushed 发送 under the keyboard.
     @FocusState private var typing: Bool
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -68,12 +69,8 @@ struct CoachDeckCard: View {
                 giftPicture: shown?.gift.map { places.giftPicture($0.piece) }
             )
             .frame(maxWidth: .infinity)
-            .frame(
-                minHeight: typing ? 0 : DeckMetrics.stageHeight, maxHeight: DeckMetrics.stageHeight,
-                alignment: .bottom
-            )
+            .frame(height: typing ? 0 : DeckMetrics.stageHeight, alignment: .bottom)
             .clipped()
-            .layoutPriority(typing ? -1 : 0)
             VStack(alignment: .leading, spacing: Space.xs) {
                 kindLine
                 content

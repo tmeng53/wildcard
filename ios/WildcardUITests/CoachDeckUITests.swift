@@ -200,7 +200,7 @@ final class CoachDeckUITests: XCTestCase {
 
     /// Swipes the top card right, into 以前.
     private func putAway(_ card: XCUIElement, in app: XCUIApplication) {
-        card.swipeRight(velocity: .fast)
+        swipeTopCoachCard(in: app)
         waitFor(card, "exists == false", "the swipe didn't put \(card.identifier) away")
     }
 

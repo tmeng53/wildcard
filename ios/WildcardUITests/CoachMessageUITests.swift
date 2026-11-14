@@ -36,6 +36,8 @@ final class CoachMessageUITests: XCTestCase {
         // The keyboard is up: the box and 发送 stay above it.
         let keyboard = app.keyboards.firstMatch
         XCTAssertTrue(keyboard.waitForExistence(timeout: Self.wait), "the keyboard didn't come up")
+        // The stage folds away as the keyboard comes up; let it finish.
+        Thread.sleep(forTimeInterval: 1)
         XCTAssertLessThanOrEqual(send.frame.maxY, keyboard.frame.minY, "发送 is under the keyboard")
         XCTAssertLessThanOrEqual(box.frame.maxY, keyboard.frame.minY, "the box is under the keyboard")
         keepScreenshot(named: "151-coach-message-box")
@@ -47,7 +49,7 @@ final class CoachMessageUITests: XCTestCase {
         keepScreenshot(named: "152-coach-message-thanks")
 
         // Swiped away, the next message: the squad on its stage, 软糖星 and a box.
-        card.swipeRight(velocity: .fast)
+        swipeTopCoachCard(in: app)
         XCTAssertTrue(
             text("周四去的 Equinox，打个分？", in: app).waitForExistence(timeout: Self.wait), "the next message isn't up")
         let stars = element("coachDeck.stars", in: app)
