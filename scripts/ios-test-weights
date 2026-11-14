@@ -12,6 +12,7 @@ CoachHireUITests 175
 CoachLetterUITests 110
 CoachMessageUITests 45
 CoachSidelineUITests 55
+CommentButtonUITests 40
 ComposePhotoUITests 87
 DailyPushUITests 55
 FeedUITests 430

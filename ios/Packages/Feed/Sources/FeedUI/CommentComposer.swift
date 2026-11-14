@@ -144,6 +144,13 @@ struct CommentComposer: View {
             .foregroundStyle(Color(role: .fgDefault, in: theme))
             .lineLimit(1...4)
             .focused(isTyping)
+            // A card's comment button asked to write: the box takes the keyboard as it shows, or
+            // at once when the page is already open.
+            .onChange(of: model.startsComment, initial: true) { _, asked in
+                guard asked == post.id else { return }
+                model.startsComment = nil
+                isTyping.wrappedValue = true
+            }
             .accessibilityIdentifier("post.field")
             .onChange(of: draft.text) { _, typed in
                 if typed.count > CommentText.maxLength { draft.text = String(typed.prefix(CommentText.maxLength)) }
