@@ -91,24 +91,21 @@ struct SquadMapPage: View {
     }
 
     private var map: some View {
-        // A stack opens through the map's own selection, which answers a tap at once; a button in an
-        // annotation waits for the map's double-tap zoom to fail first, so the name came late.
-        Map(position: $camera, selection: selectedSpot) {
+        Map(position: $camera) {
             if store.member == nil {
-                ForEach(store.spots) { spot in
+                // Keyed by whether it is open too, so opening one makes a new annotation: MapKit sizes an
+                // annotation once, and a stack that grew in place showed its name only when the map
+                // next moved.
+                ForEach(store.spots.map { ShownSpot(spot: $0, isOpen: store.expanded == $0.id) }) { shown in
+                    let spot = shown.spot
                     Annotation(spot.place.place.name, coordinate: spot.place.place.coordinate, anchor: .top) {
                         SpotMarker(
                             spot: spot, mode: store.mode, expanded: store.expanded == spot.id, store: store,
                             heads: heads,
-                            toggle: {
-                                withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) {
-                                    store.toggle(spot.id)
-                                }
-                            },
+                            toggle: { store.toggle(spot.id) },
                             openPlace: { openPlace(spot.place.place) })
                     }
                     .annotationTitles(.hidden)
-                    .tag(spot.id)
                 }
             } else {
                 // Everyone else's stacks, faded behind the member's day.
@@ -133,16 +130,6 @@ struct SquadMapPage: View {
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
         .frame(maxHeight: .infinity)
-    }
-
-    /// The open stack as the map's selection: picking one opens it, a tap on the map closes it.
-    private var selectedSpot: Binding<PlaceKey?> {
-        Binding(
-            get: { store.expanded },
-            set: { picked in
-                guard picked != store.expanded, let spot = picked ?? store.expanded else { return }
-                withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { store.toggle(spot) }
-            })
     }
 
     private func player(for member: MemberID) -> CharacterPlayer? {
@@ -203,17 +190,17 @@ private struct SpotMarker: View {
                 }
             } else {
                 VStack(spacing: Space.xxs) {
-                    // Tapped through the map's selection, never a button (see `SquadMapPage.map`).
-                    HeadPile(
-                        players: spot.heads.map { heads.player(for: store.characters[$0]?.look) },
-                        size: spot.emphasis == .top ? Self.headSize + 8 : Self.headSize,
-                        greyed: spot.heads.map { !store.isInSquad($0) }
-                    )
-                    .overlay(alignment: .topTrailing) {
-                        if mode == .often { VisitBadge(count: spot.place.visits) }
+                    Button(action: toggle) {
+                        HeadPile(
+                            players: spot.heads.map { heads.player(for: store.characters[$0]?.look) },
+                            size: spot.emphasis == .top ? Self.headSize + 8 : Self.headSize,
+                            greyed: spot.heads.map { !store.isInSquad($0) }
+                        )
+                        .overlay(alignment: .topTrailing) {
+                            if mode == .often { VisitBadge(count: spot.place.visits) }
+                        }
                     }
-                    .accessibilityAddTraits(.isButton)
-                    .accessibilityAction(.default, toggle)
+                    .buttonStyle(.plain)
                     if spot.emphasis == .top {
                         PlaceCapsule(text: spot.place.place.name, action: openPlace)
                     }
@@ -357,4 +344,16 @@ extension MKCoordinateRegion {
     }
 }
 
+/// A stack on the map and whether it is open: the annotation's identity, so it is made again, at
+/// its new size, when it opens or closes.
+private struct ShownSpot: Identifiable {
+    struct ID: Hashable {
+        let spot: PlaceKey
+        let isOpen: Bool
+    }
+
+    let spot: MapSpot
+    let isOpen: Bool
+    var id: ID { ID(spot: spot.id, isOpen: isOpen) }
+}
 #endif
