@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { mentioning, toolbox, type WakeDraft } from './toolbox.js';
+import { lineProblemAmong } from '../../domain/reply.js';
+import { namesOf, userIdIn } from '../../domain/roster.js';
+
+import { challengeTool, mentioning, toolbox, type WakeDraft } from './toolbox.js';
 
 const mia = '00000000-0000-4000-8000-000000000001';
 const miao = '00000000-0000-4000-8000-000000000002';
@@ -37,6 +40,20 @@ describe('mentioning', () => {
       line: '@Mia 今天冲',
       mentions: [mia],
     });
+  });
+});
+
+describe('a line members read', () => {
+  it('holds no user_id in any case, and may say a name whatever it holds', () => {
+    const wen = '00000000-0000-4000-8000-000000000003';
+    const roster = new Map([...context.roster, [wen, { name: '稳哥', userId: 'cccc3333' }]]);
+    const among = { kind: 'reply' as const, names: namesOf(roster) };
+    expect(userIdIn(roster, '加油 AAAA1111')).toBe('aaaa1111');
+    expect(userIdIn(roster, '加油 Mia')).toBeUndefined();
+    expect(lineProblemAmong('@稳哥 今天冲', among)).toBeUndefined();
+    expect(lineProblemAmong('@稳哥 稳住', among)).toBe(
+      '这句里有「稳」字，教练都不说这个字，换个说法。',
+    );
   });
 });
 
@@ -136,5 +153,40 @@ describe('day_challenge', () => {
     );
     // The morning sets the challenges itself; it has no such lookup.
     expect(tools('daily').some(({ name }) => name === 'day_challenge')).toBe(false);
+  });
+});
+
+describe('set_challenge', () => {
+  it('keeps a user_id off the card the member reads', async () => {
+    const draft: WakeDraft = {
+      files: new Map(),
+      changed: new Set(),
+      note: undefined,
+      memberNotes: new Map(),
+      challenges: new Map(),
+      gifts: new Map(),
+      reply: undefined,
+      replyMentions: [],
+      reaction: undefined,
+      answer: undefined,
+      answerMentions: [],
+      feedback: undefined,
+      steps: [],
+    };
+    const set = challengeTool(draft, { roster: context.roster, noteTo: [mia] });
+    const input = { user_id: 'aaaa1111', recent: '练了两天', needs: '松一松', amount: 10 };
+    expect(await set.run({ ...input, title: '拉伸', unit: '分钟', line: '和 bbbb2222 一起' })).toBe(
+      '挑战里写了 user_id「bbbb2222」。user_id 只在工具参数里用，给人看的话里只写名字。',
+    );
+    expect(draft.challenges.size).toBe(0);
+    expect(await set.run({ ...input, title: '拉伸', unit: '分钟', line: '昨天你跑得不少' })).toBe(
+      '定好了：Mia（aaaa1111）「拉伸 10 分钟」。',
+    );
+    expect(draft.challenges.get(mia)).toStrictEqual({
+      title: '拉伸',
+      amount: 10,
+      unit: '分钟',
+      line: '昨天你跑得不少',
+    });
   });
 });

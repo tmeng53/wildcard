@@ -68,6 +68,17 @@ export function memberOf(roster: Roster, userId: string): string | undefined {
 
 /** A user_id of the roster that a line members read holds, which it never should. */
 export function userIdIn(roster: Roster, line: string): string | undefined {
-  for (const { userId } of roster.values()) if (line.includes(userId)) return userId;
+  const said = line.toLowerCase();
+  for (const [member, { userId }] of roster) {
+    if (said.includes(userId)) return userId;
+    // Two members who share a short id are told by their whole ids; the short one is still one.
+    const short = member.slice(0, SHORT);
+    if (said.includes(short)) return short;
+  }
   return undefined;
+}
+
+/** The names the squad's members go by, longest first so one inside another is taken whole. */
+export function namesOf(roster: Roster): readonly string[] {
+  return [...roster.values()].map(({ name }) => name).sort((a, b) => b.length - a.length);
 }

@@ -17,10 +17,10 @@ import {
   challengeText,
   type DayChallengeFacts,
 } from '../../domain/challenge.js';
-import { fitsLine, limitWords } from '../../domain/line-limits.js';
+import { fitsLine, limitWords, type LineKind } from '../../domain/line-limits.js';
 import type { GiftOptions } from '../../domain/prompt.js';
 import { PostNumbers } from '../../domain/reply-task.js';
-import { CoachEmoji, lineProblem } from '../../domain/reply.js';
+import { CoachEmoji, lineProblemAmong } from '../../domain/reply.js';
 import {
   checkInBlock,
   weekText,
@@ -29,7 +29,14 @@ import {
 } from '../../domain/squad-week.js';
 import type { WakeReason, WakeStep } from '../../domain/wake.js';
 import type { CoachMemes, CoachTool, ToolAnswer } from '../../ports.js';
-import { memberOf, peopleOf, personOf, userIdIn, type Roster } from '../../domain/roster.js';
+import {
+  memberOf,
+  namesOf,
+  peopleOf,
+  personOf,
+  userIdIn,
+  type Roster,
+} from '../../domain/roster.js';
 
 // What the coach thinks out before a line, as required fields ahead of the line itself (Tracy,
 // 2026-11-14: a structure to think in, so it gets simple things right). Fields are generated in
@@ -73,12 +80,20 @@ function factsProblem(
 /** Why a line members read can't be said: it holds a user_id, or breaks the line's own rules. */
 function sayingProblem(
   line: string,
-  { kind, roster }: { readonly kind: Parameters<typeof lineProblem>[1]; readonly roster: Roster },
+  { kind, roster }: { readonly kind: LineKind; readonly roster: Roster },
 ): string | undefined {
   const leaked = userIdIn(roster, line);
   return leaked === undefined
-    ? lineProblem(line, kind)
+    ? lineProblemAmong(line, { kind, names: namesOf(roster) })
     : `这句里写了 user_id「${leaked}」。user_id 只在工具参数里用，给人看的话里只写名字。`;
+}
+
+/** Arguments a tool refused, which may hold members' words: every text by its length only. */
+function lengthsOf(input: unknown): unknown {
+  if (typeof input === 'string') return `（${String(input.length)} 字）`;
+  if (Array.isArray(input)) return `（${String(input.length)} 条）`;
+  if (typeof input !== 'object' || input === null) return input;
+  return Object.fromEntries(Object.entries(input).map(([key, value]) => [key, lengthsOf(value)]));
 }
 
 /** A line's thinking, kept by its length only. */
@@ -168,7 +183,12 @@ function defineTool<Shape extends z.ZodObject>(
         : `参数不对：${z.prettifyError(parsed.error)}`;
       steps.push({
         tool: tool.name,
-        input: parsed.success && tool.kept !== undefined ? tool.kept(parsed.data) : input,
+        input:
+          tool.kept === undefined
+            ? input
+            : parsed.success
+              ? tool.kept(parsed.data)
+              : lengthsOf(input),
         output: tool.reads === true && parsed.success ? `（${String(output.length)} 字）` : output,
       });
       return output;
@@ -543,6 +563,7 @@ export function toolbox({
             .describe('回的这一句：就是 plain_draft 的意思，带上你的反应，读的人不用想就懂'),
           mention_user_ids: mentionUserIds,
         }),
+        kept: (input) => thoughtLengths(input, ['their_message', 'facts', 'tone', 'plain_draft']),
         run: ({ replying_to_user_id: toUserId, facts, text, mention_user_ids: at }) => {
           if (to !== undefined && memberOf(roster, toUserId) !== to) {
             return `replying_to_user_id 不对：这次要回的是${personOf(roster, to)}。把他的事和别人的事分开，重新填。`;
@@ -968,6 +989,11 @@ export function challengeTool(
       });
       if (!set.success || !challengeFits(set.data)) {
         return `挑战不对：title ${limitWords('challengeTitle')}；amount 是 1 到 ${String(CHALLENGE_AMOUNT_MAX)} 的整数；unit ${limitWords('challengeUnit')}；line ${limitWords('challengeLine')}。`;
+      }
+      // The member reads all three on the card.
+      const leaked = userIdIn(roster, [title, unit, line].join('\n'));
+      if (leaked !== undefined) {
+        return `挑战里写了 user_id「${leaked}」。user_id 只在工具参数里用，给人看的话里只写名字。`;
       }
       const replaced = draft.challenges.has(id);
       draft.challenges.set(id, set.data);

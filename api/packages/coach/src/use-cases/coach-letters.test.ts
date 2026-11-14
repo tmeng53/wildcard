@@ -285,13 +285,20 @@ describe('the outgoing coach’s letter', () => {
 
   it('asks again for a letter too long, and never cuts one', async () => {
     await rolledBack(async (fixture) => {
-      const { squad, by, hiring } = fixture;
+      const { squad, by, hiring, mia } = fixture;
       await hiring.change({ squad, coach: nuannuan, by });
-      const { agent, runs } = writingAgent(['长'.repeat(201), '队员2 交给你了', '短的。']);
+      const userId = mia.slice(0, 8);
+      const { agent, runs } = writingAgent([
+        '长'.repeat(201),
+        '队员2 交给你了',
+        `米亚（${userId}）交给你了`,
+        '短的。',
+      ]);
       expect(await letters(fixture, { agent }).write(squad)).toMatchObject({ text: '短的。' });
       expect(runs[0]?.answers).toStrictEqual([
         '太长了：201 字，最多 200 字。重写一封。',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。重写一封。',
+        `信里写了 user_id「${userId}」，给人看的话里只写名字。重写一封。`,
         '交上了。',
       ]);
     });
