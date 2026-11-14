@@ -29,9 +29,17 @@ export interface Judge {
   readonly spent: (usage: TokenUsage) => void;
 }
 
-/** The lines members read from this trial: the reply to the check-in and the answer. */
+/**
+ * The lines members read from this trial: the reply to the check-in, the answer, and on a
+ * morning the 战术板 line and each note.
+ */
 export function saidLines(outcome: TrialOutcome): string[] {
-  return [outcome.reply, outcome.answer].filter((line) => line !== undefined);
+  return [
+    outcome.reply,
+    outcome.answer,
+    outcome.note,
+    ...(outcome.memberNotes ?? []).map(({ text }) => text),
+  ].filter((line) => line !== undefined);
 }
 
 const HAN = /\p{Script=Han}/gu;

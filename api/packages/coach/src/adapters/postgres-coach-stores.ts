@@ -420,6 +420,21 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           return parsed.success ? [parsed.data] : [];
         });
       },
+
+      async recentLines({ squad, coach, limit }) {
+        const { rows } = await sql<{ text: string }>`
+          select text from (
+            select text, at from public.coach_replies
+              where squad_id = ${squad} and coach_id = ${coach} and text is not null
+            union all
+            select text, at from public.coach_answers
+              where squad_id = ${squad} and coach_id = ${coach}
+          ) said
+          order by at desc
+          limit ${limit}
+        `.execute(db);
+        return rows.map(({ text }) => text);
+      },
     },
 
     answers: {

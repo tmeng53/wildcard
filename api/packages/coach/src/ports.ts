@@ -292,6 +292,15 @@ export interface CoachReplyStore {
     readonly coach: CoachId;
     readonly limit: number;
   }): Promise<readonly CoachEmoji[]>;
+  /**
+   * The lines this coach wrote lately in the squad, to posts and to replies alike, newest first:
+   * a reply reads them so it says something new.
+   */
+  recentLines(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly string[]>;
 }
 
 /** What coaches answered members' replies to them, one a squad a reply. */

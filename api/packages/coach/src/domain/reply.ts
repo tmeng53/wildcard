@@ -15,15 +15,26 @@ export type CoachEmoji = z.infer<typeof CoachEmoji>;
 
 /**
  * Why a line members read (a reply, a 战术板 line, a letter) can't be sent as it is, or
- * `undefined` when it can: it must fit its kind's limit in its language, and, since the model
- * sees members as 队员N, which members never see, may not name anyone that way.
+ * `undefined` when it can: it must fit its kind's limit in its language, and may not call anyone
+ * 队员N, the stand-in name members never see.
  */
 export function lineProblem(text: string, kind: LineKind): string | undefined {
+  return lineProblemAmong(text, { kind, names: [] });
+}
+
+/** The same, in a squad whose names a line may say whatever they hold (a 稳哥 is still @'d). */
+export function lineProblemAmong(
+  text: string,
+  { kind, names }: { readonly kind: LineKind; readonly names: readonly string[] },
+): string | undefined {
   if (text === '') return '这句是空的。';
   const tooLong = lengthProblem(text, kind);
   if (tooLong !== undefined) return tooLong;
   if (/队员\s*[0-9０-９]+/.test(text))
     return '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。';
+  // No coach says it (Tracy, 2026-11-10): held here, so no prompt has to forbid it.
+  if (/[稳穩]/.test(names.reduce((rest, name) => rest.replaceAll(name, ''), text)))
+    return '这句里有「稳」字，教练都不说这个字，换个说法。';
   return undefined;
 }
 

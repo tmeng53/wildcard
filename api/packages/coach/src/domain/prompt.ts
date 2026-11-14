@@ -1,9 +1,6 @@
-import { writeIn } from '@wildcard/language-model';
-
 import {
   challengeHow,
   challengeText,
-  type Challenge,
   type DayChallengeFacts,
   type DeliveredNote,
 } from './challenge.js';
@@ -17,13 +14,13 @@ import {
   checkInBlock,
   checkInTitle,
   dayWords,
-  rosterOf,
   rosterText,
   type SquadWeek,
   type WeekCheckIn,
   type WeekComment,
 } from './squad-week.js';
 import type { WakeReason } from './wake.js';
+import { personOf, rosterOf, type Roster } from './roster.js';
 
 // What the model reads: the standing instructions (the rules every coach follows, this coach's
 // identity and soul, and how each kind of wake goes, each from the settings) and each wake's task. Chinese, as the coach
@@ -90,17 +87,10 @@ export interface CoachThread {
  * A post's comment section as the model reads it, one line each in order: who said it (a name,
  * 你, or another coach by name), when, and whom a member's comment replies to or @s.
  */
-export function saidLines(
-  said: CoachThread['said'],
-  roster: ReadonlyMap<string, string>,
-): string[] {
+export function saidLines(said: CoachThread['said'], roster: Roster): string[] {
   return said.map(({ by, text, when, to, replyTo, mentions, answering }) => {
     const who =
-      by === 'you'
-        ? '你'
-        : 'member' in by
-          ? (roster.get(by.member) ?? '队员')
-          : `${by.coach}（教练）`;
+      by === 'you' ? '你' : 'member' in by ? personOf(roster, by.member) : `${by.coach}（教练）`;
     const toWhom = addressedWords(
       {
         ...(to?.kind === 'reply' ? { toCoach: to.coach } : {}),
@@ -133,12 +123,15 @@ export interface DayTalk {
  * What the coach remembers, as every task shows it: each file with its text, the empty ones
  * named together. The coach forgets everything else between wakes, so it sees this every time.
  */
-export function memoryBlock(files: ReadonlyMap<string, string | undefined>): string {
+export function memoryBlock(
+  files: ReadonlyMap<string, string | undefined>,
+  roster: Roster,
+): string {
   return [
     '## 你的记性（你只记得这些）',
     ...[...files].map(([path, body]) => {
       const text = body?.trim() ?? '';
-      return `### ${path}（${fileRole(path)}）\n${text === '' ? '还是空的。' : `\`\`\`\n${text}\n\`\`\``}`;
+      return `### ${path}（${fileRole(path, roster)}）\n${text === '' ? '还是空的。' : `\`\`\`\n${text}\n\`\`\``}`;
     }),
   ].join('\n\n');
 }
@@ -152,15 +145,18 @@ export const HEAD_LIMIT = 200;
  * when the talk needs it (Tracy, 2026-11-10), so the coach doesn't drag every old line into what
  * it says, or claim to remember what it doesn't.
  */
-export function memoryIndex(files: ReadonlyMap<string, string | undefined>): string {
+export function memoryIndex(
+  files: ReadonlyMap<string, string | undefined>,
+  roster: Roster,
+): string {
   return [
     '## 你的记性（每个文件只列开头几行，其余用 recall 查；查不到的就是不记得）',
     ...[...files].map(([path, body]) => {
       const text = body?.trim() ?? '';
-      if (text === '') return `### ${path}（${fileRole(path)}）\n还是空的。`;
+      if (text === '') return `### ${path}（${fileRole(path, roster)}）\n还是空的。`;
       const head = headOf(text);
       const rest = head.length < text.length ? `\n……（共 ${String(text.length)} 字）` : '';
-      return `### ${path}（${fileRole(path)}）\n\`\`\`\n${head}\n\`\`\`${rest}`;
+      return `### ${path}（${fileRole(path, roster)}）\n\`\`\`\n${head}\n\`\`\`${rest}`;
     }),
   ].join('\n\n');
 }
@@ -185,29 +181,21 @@ export function taskOf({
   reason,
   week,
   files,
-  recentNotes,
   talks = [],
   noteTo = [],
-  yesterday,
   pastDays,
   occasions = [],
   backAgain = false,
   handover,
-  gifting,
-  setChallenges,
 }: {
   readonly reason: WakeReason;
   readonly week: SquadWeek;
   /** Each file the model may use, by the path it sees, with its body when it has one. */
   readonly files: ReadonlyMap<string, string | undefined>;
-  /** The squad's last 战术板 lines, newest first. */
-  readonly recentNotes: readonly { readonly day: string; readonly text: string }[];
   /** On a daily wake, the talk under check-ins over the last day. */
   readonly talks?: readonly DayTalk[];
   /** On a daily wake, who to write a morning note to, with their day's plan; on a welcome, the newcomer. */
   readonly noteTo?: readonly NoteBrief[];
-  /** On a daily wake, the squad's posts of the day before, oldest first. */
-  readonly yesterday?: YesterdayFacts;
   /** On the night's dream, the days it looks back over. */
   readonly pastDays?: PastDays;
   /** What is special about the day, such as a holiday, one line each. */
@@ -216,29 +204,23 @@ export function taskOf({
   readonly backAgain?: boolean;
   /** On a waking task, whom the coach took over from and the letter it was left, if any. */
   readonly handover?: TookOver;
-  /** On a daily wake, the gift pool and who may get one this week. */
-  readonly gifting?: GiftOptions;
-  /**
-   * On a daily wake, the challenge set for each member today, by member id, before the coach
-   * writes its notes: each goes under that member's note (Tracy, 2026-11-12).
-   */
-  readonly setChallenges?: ReadonlyMap<string, Challenge>;
 }): string | undefined {
   // The night tidies the whole memory, so it reads every file in full; a waking task shows each
   // file's beginning and looks the rest up.
-  const filesLine = reason.kind === 'dream' ? memoryBlock(files) : memoryIndex(files);
-  const whoIsWho = rosterText(week);
   const roster = rosterOf(week);
+  const filesLine =
+    reason.kind === 'dream' ? memoryBlock(files, roster) : memoryIndex(files, roster);
+  const whoIsWho = rosterText(week);
   const occasion = [...occasionBlock(occasions, backAgain), ...handoverBlock(handover)];
   if (reason.kind === 'joined') {
-    const name = roster.get(reason.member);
-    const brief = noteTo.find((each) => each.name === name);
-    if (name === undefined || brief === undefined) return undefined;
+    const joined = reason.member;
+    const brief = noteTo.find((each) => each.member === joined);
+    if (!roster.has(joined) || brief === undefined) return undefined;
     return [
-      `# ${name}刚加入小队\n今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
+      `# ${personOf(roster, joined)}刚加入小队\n今天是 ${reason.day}，${weekdayOf(reason.day)}。`,
       ...occasion,
       whoIsWho,
-      `## 新人\n\n${briefBlock(brief)}`,
+      `## 新人\n\n${briefBlock(brief, roster)}`,
       filesLine,
       `## 要做的\n${WELCOME}`,
     ].join('\n\n');
@@ -255,47 +237,8 @@ export function taskOf({
       `## 整理记性\n${DREAM}`,
     ].join('\n\n');
   }
-  // A reply's task is `replyTaskOf`'s.
-  if (reason.kind !== 'daily') return undefined;
-  const notes = [
-    '## 战术板',
-    `- ${writeIn(week.language ?? 'zh-Hans')}`,
-    ...(recentNotes.length === 0
-      ? ['- 你还没写过。']
-      : ['- 你最近写过：', ...recentNotes.map(({ day, text }) => `  - ${day}：${text}`)]),
-  ].join('\n');
-  const noteSection =
-    noteTo.length === 0
-      ? '## 今天的便条\n今天没有要写便条的人。'
-      : ['## 今天的便条（下面每人各写一张）', ...noteTo.map(briefBlock)].join('\n\n');
-  return [
-    `# 新的一天\n${reason.day}，${weekdayOf(reason.day)}。`,
-    ...occasion,
-    whoIsWho,
-    ...(yesterday === undefined ? [] : yesterdayBlocks(yesterday, { roster, talks })),
-    talksBlock(talks, { roster }),
-    filesLine,
-    notes,
-    noteSection,
-    ...(setChallenges === undefined ? [] : [setChallengesBlock(setChallenges, roster)]),
-    ...giftBlock(gifting, roster),
-  ].join('\n\n');
-}
-
-/** Today's challenges, set already, which go under each member's note. */
-function setChallengesBlock(
-  set: ReadonlyMap<string, Challenge>,
-  roster: ReadonlyMap<string, string>,
-): string {
-  const heading = '## 今天的挑战（已经定好，单独一张卡给他）';
-  if (set.size === 0) return `${heading}\n今天没有挑战。`;
-  return [
-    heading,
-    ...[...set].map(
-      ([member, challenge]) =>
-        `- ${roster.get(member) ?? '队员'}「${challengeText(challenge)}」${challenge.line === undefined ? '' : `，小字：${challenge.line}`}`,
-    ),
-  ].join('\n');
+  // A reply's task is `replyTaskOf`'s, the morning's `noteTaskOf`'s.
+  return undefined;
 }
 
 /**
@@ -317,16 +260,13 @@ const DREAM = [
 ].join('\n');
 
 /** The gift pool and who may get one, when anyone may: the give_gift tool's choices. */
-function giftBlock(
-  gifting: GiftOptions | undefined,
-  roster: ReadonlyMap<string, string>,
-): string[] {
+export function giftBlock(gifting: GiftOptions | undefined, roster: Roster): string[] {
   if (gifting === undefined || gifting.open.size === 0 || gifting.pool.length === 0) return [];
   const pool = gifting.pool.map(
     ({ id, description }) => `- ${id}${description === undefined ? '' : `：${description}`}`,
   );
   const who = [...gifting.open].map(([member, owned]) => {
-    const name = roster.get(member) ?? '队员';
+    const name = personOf(roster, member);
     return owned.length === 0 ? `- ${name}` : `- ${name}（已有：${owned.join('、')}）`;
   });
   return [`## 礼物清单\n${pool.join('\n')}`, `## 这周还能收礼物的\n${who.join('\n')}`];
@@ -393,33 +333,6 @@ export interface YesterdayFacts {
   readonly challenges?: readonly DayChallengeFacts[];
 }
 
-/** The squad's posts of the day before, and how that day's challenges went. */
-function yesterdayBlocks(
-  { day, checkIns, challenges = [] }: YesterdayFacts,
-  {
-    roster,
-    talks,
-  }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
-): string[] {
-  const talkedUnder = talkedUnderOf(talks);
-  const heading = `## 昨天（${weekdayOf(day)}）小队的动态`;
-  const posts =
-    checkIns.length === 0
-      ? `${heading}\n没人发动态。`
-      : [
-          heading,
-          ...checkIns.map((each) =>
-            checkInBlock(each, { roster, comments: talkedUnder.has(each.id) ? 'below' : true }),
-          ),
-        ].join('\n\n');
-  if (challenges.length === 0) return [posts];
-  const lines = challenges.map(
-    (each) =>
-      `- ${dayWords(each.day)} ${roster.get(each.member) ?? '队员'}「${challengeText(each.challenge)}」：${challengeHow(each)}`,
-  );
-  return [posts, ['## 最近 7 天的挑战', ...lines].join('\n')];
-}
-
 /** What the night's dream looks back over: the squad's days, and what the coach did in them. */
 export interface PastDays {
   /** The first and last day it covers, `YYYY-MM-DD`. */
@@ -453,10 +366,7 @@ export interface CoachGiven {
 /** The night's look back: the posts, then what the coach wrote and gave. */
 function pastDaysBlocks(
   { from, to, checkIns, boards, notes, gifts }: PastDays,
-  {
-    roster,
-    talks,
-  }: { readonly roster: ReadonlyMap<string, string>; readonly talks: readonly DayTalk[] },
+  { roster, talks }: { readonly roster: Roster; readonly talks: readonly DayTalk[] },
 ): string[] {
   const talkedUnder = talkedUnderOf(talks);
   const heading = `## 过去七天（${dayWords(from)} 到 ${dayWords(to)}）小队的动态`;
@@ -484,7 +394,7 @@ function pastDaysBlocks(
           '## 你写的便条（只有收到的人看得到）',
           ...[...byMember].map(([member, theirs]) =>
             [
-              `### ${roster.get(member) ?? '队员'}`,
+              `### ${personOf(roster, member)}`,
               ...theirs.flatMap(({ day, text, challenge }) => [
                 `- ${dayWords(day)}：「${text}」`,
                 ...(challenge === undefined
@@ -504,7 +414,7 @@ function pastDaysBlocks(
             '## 你送的礼物（只有收到的人知道）',
             ...gifts.map(
               ({ member, piece, line, opened }) =>
-                `- ${roster.get(member) ?? '队员'}：${piece}${line === undefined ? '' : `，你说「${line}」`}；${opened === undefined ? '还没拆' : opened.worn ? '拆开了，当场穿上了' : '拆开了，没穿'}`,
+                `- ${personOf(roster, member)}：${piece}${line === undefined ? '' : `，你说「${line}」`}；${opened === undefined ? '还没拆' : opened.worn ? '拆开了，当场穿上了' : '拆开了，没穿'}`,
             ),
           ].join('\n'),
         ];
@@ -530,10 +440,7 @@ function talkedUnderOf(talks: readonly DayTalk[]): Set<string> {
 /** The last day's talk, for the daily wake to remember from. */
 function talksBlock(
   talks: readonly DayTalk[],
-  {
-    roster,
-    span = '过去一天',
-  }: { readonly roster: ReadonlyMap<string, string>; readonly span?: string },
+  { roster, span = '过去一天' }: { readonly roster: Roster; readonly span?: string },
 ): string {
   const heading = `## 和你的对话（${span}，打卡下面，先后顺序）`;
   if (talks.length === 0) return `${heading}\n没人在打卡下面和你说话。`;
@@ -541,14 +448,14 @@ function talksBlock(
 }
 
 /** Each post's talk: its title, then the coach's reply and what was said, one a line. */
-function talkBlocks(talks: readonly DayTalk[], roster: ReadonlyMap<string, string>): string[] {
+function talkBlocks(talks: readonly DayTalk[], roster: Roster): string[] {
   return talks.map(({ checkIn, reply, said }) =>
     [
       `### ${checkInTitle(checkIn, roster)}`,
       ...(reply === undefined ? [] : [`- 你：「${reply}」`]),
       ...said.map(
         ({ member, text, to }) =>
-          `- ${member === undefined ? '你' : `${roster.get(member) ?? '队员'}${to === undefined ? '' : addressedWords(to, { roster, coach: () => '你' })}`}：「${text}」`,
+          `- ${member === undefined ? '你' : `${personOf(roster, member)}${to === undefined ? '' : addressedWords(to, { roster, coach: () => '你' })}`}：「${text}」`,
       ),
     ].join('\n'),
   );

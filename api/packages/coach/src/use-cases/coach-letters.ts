@@ -6,9 +6,9 @@ import { letterTask, tenuresOf, type CoachLetter } from '../domain/letter.js';
 import { memberOfPath, shownBody, shownPathOf } from '../domain/memory.js';
 import { instructionsOf, memoryBlock } from '../domain/prompt.js';
 import { limitWords } from '../domain/line-limits.js';
-import { lineProblem } from '../domain/reply.js';
+import { lineProblemAmong } from '../domain/reply.js';
 import type { SquadId } from '../domain/settings.js';
-import { consentedOnly, rosterOf } from '../domain/squad-week.js';
+import { consentedOnly } from '../domain/squad-week.js';
 import type {
   AiConsented,
   CoachAgent,
@@ -21,6 +21,7 @@ import type {
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
+import { namesOf, personOf, rosterOf, userIdIn, type Roster } from '../domain/roster.js';
 
 /**
  * How long after a change of coach its letter may still be written: the app asks at once, so a
@@ -77,7 +78,7 @@ export function createCoachLetters(deps: {
       const zone = (await deps.timeZonesAt([squad], now))(squad);
       const day = wallClockAt(now, zone).day;
       // Read before the try is claimed, so a failed read leaves the change one to try again.
-      const task = await taskFor(deps, { squad, from, to, coaches, zone, day });
+      const { task, roster } = await taskFor(deps, { squad, from, to, coaches, zone, day });
       // One try a change: a second tap, or a retry while the first is writing, pays for nothing.
       if (!(await deps.letters.claim(handover))) return undefined;
 
@@ -89,7 +90,7 @@ export function createCoachLetters(deps: {
         instructions: instructionsOf(settings, from),
         task,
         tools: [
-          writeLetter((letter) => {
+          writeLetter(roster, (letter) => {
             text = letter;
           }),
         ],
@@ -141,7 +142,7 @@ async function taskFor(
     readonly zone: string;
     readonly day: string;
   },
-): Promise<string> {
+): Promise<{ readonly task: string; readonly roster: Roster }> {
   const week = await deps.squadWeek({ squad, weekStart: mondayOf(day) });
   const consented = new Set(await deps.aiConsented(week.members.map(({ member }) => member)));
   // Members without a current AI consent stay 队员N, their nicknames unread.
@@ -162,17 +163,18 @@ async function taskFor(
       day: wallClockAt(at, zone).day,
     })),
   );
-  return letterTask({
+  const task = letterTask({
     to,
     history,
     names: new Map([...coaches].map(([id, coach]) => [id, coach.name])),
-    members: [...roster.values()],
-    memory: memoryBlock(files),
+    members: [...roster.keys()].map((member) => personOf(roster, member)),
+    memory: memoryBlock(files, roster),
   });
+  return { task, roster };
 }
 
 /** The one tool the outgoing coach has: handing in its letter, which is checked first. */
-function writeLetter(written: (text: string) => void): CoachTool {
+function writeLetter(roster: Roster, written: (text: string) => void): CoachTool {
   const parameters = z.object({ text: z.string().describe('信的正文') });
   return {
     name: 'write_letter',
@@ -182,7 +184,12 @@ function writeLetter(written: (text: string) => void): CoachTool {
       const parsed = parameters.safeParse(input);
       if (!parsed.success) return Promise.resolve(`参数不对：${z.prettifyError(parsed.error)}`);
       const text = parsed.data.text.trim();
-      const problem = lineProblem(text, 'letter');
+      // The task names members with their user_id; the squad reads the letter, so it holds none.
+      const leaked = userIdIn(roster, text);
+      const problem =
+        leaked === undefined
+          ? lineProblemAmong(text, { kind: 'letter', names: namesOf(roster) })
+          : `信里写了 user_id「${leaked}」，给人看的话里只写名字。`;
       if (problem !== undefined) return Promise.resolve(`${problem}重写一封。`);
       written(text);
       return Promise.resolve('交上了。');

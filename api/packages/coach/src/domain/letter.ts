@@ -55,7 +55,7 @@ export function letterTask({
   readonly history: readonly Tenure[];
   /** Each coach's name, by id. */
   readonly names: ReadonlyMap<string, string>;
-  /** The squad's members, by the names the model knows them by. */
+  /** The squad's members, each by name and user_id, as the memory names their pages. */
   readonly members: readonly string[];
   /** The coach's memory, as every task shows it. */
   readonly memory: string;
@@ -71,7 +71,7 @@ export function letterTask({
     `这个小队换教练了：你被换掉，接手的是${to.name}。走之前给小队和${to.name}留一封告别信，全队都会看到。`,
     `这个小队请过的教练（先后顺序）：\n${tenures.join('\n')}`,
     ...(back ? [`${to.name}以前带过这个小队，这次是回来。`] : []),
-    `小队的人：${members.join('、')}`,
+    `小队的人（括号里是 user_id）：${members.join('、')}`,
     memory,
     [
       '怎么写：',
