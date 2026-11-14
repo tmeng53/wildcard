@@ -18,7 +18,7 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertTrue(bookmark.waitForExistence(timeout: Self.wait), "the place's page has no bookmark")
         XCTAssertEqual(bookmark.label, "收藏")
         settle()
-        keepScreenshot(named: "saved-places-1-bookmark")
+        keepScreenshot(named: "154a-saved-places-bookmark")
         bookmark.tap()
         let note = app.textFields["savePlace.note"]
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "the bookmark didn't pop up the note card")
@@ -29,7 +29,7 @@ final class SavedPlacesUITests: XCTestCase {
         assertClearOfTheKeyboard(app.buttons["savePlace.cancel"], in: app)
         XCTAssertFalse(app.buttons["savePlace.remove"].exists, "a place not saved yet offers 取消收藏")
         settle()
-        keepScreenshot(named: "saved-places-2-card")
+        keepScreenshot(named: "154b-saved-places-card")
         save.tap()
         XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "收藏 didn't close the card")
         waitFor(bookmark, "label == '已收藏'", "the bookmark didn't fill")
@@ -45,7 +45,7 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertEqual(note.value as? String, "周六早上的单车课", "the card lost the note")
         assertClearOfTheKeyboard(app.buttons["savePlace.remove"], in: app)
         settle()
-        keepScreenshot(named: "saved-places-2b-card-saved")
+        keepScreenshot(named: "154c-saved-places-card-saved")
         app.buttons["savePlace.cancel"].tap()
         XCTAssertTrue(note.waitForNonExistence(timeout: Self.wait), "取消 didn't close the card")
 
@@ -62,7 +62,7 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertTrue(open.waitForExistence(timeout: Self.wait), "我 has no 收藏 button")
         assertOnScreen(open, in: app)
         settle()
-        keepScreenshot(named: "saved-places-4-me")
+        keepScreenshot(named: "154d-saved-places-me")
         open.tap()
         let row = app.buttons["savedPlaces.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "收藏 lists nothing")
@@ -71,7 +71,7 @@ final class SavedPlacesUITests: XCTestCase {
                 || row.label.contains("周六早上的单车课"), "the row doesn't show the note")
         assertOnScreen(row, in: app)
         settle()
-        keepScreenshot(named: "saved-places-3-list")
+        keepScreenshot(named: "154e-saved-places-list")
 
         // A row opens the place's page, saved.
         row.tap()
@@ -88,7 +88,7 @@ final class SavedPlacesUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["还没有收藏"].waitForExistence(timeout: Self.wait), "the swiped place is still listed")
         settle()
-        keepScreenshot(named: "saved-places-3b-empty")
+        keepScreenshot(named: "154f-saved-places-empty")
     }
 
     /// 动态's map, 常去, its first place.
