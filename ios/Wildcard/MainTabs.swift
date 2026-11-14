@@ -12,6 +12,7 @@ import MeUI
 import NotificationsDomain
 import NotificationsUI
 import PlacesDomain
+import PlacesUI
 import RecapUI
 import ScheduleUI
 import SquadDomain
@@ -248,7 +249,7 @@ struct MainTabs: View {
                 model: feed, header: AnyView(RecapTile(recap: recap)),
                 accessory: AnyView(
                     HStack(spacing: Space.xs) {
-                        SquadMapButton { feedPages.append(.squadMap) }
+                        if mapSquad != nil { SquadMapButton { feedPages.append(.squadMap) } }
                         NoticeBell(inbox: inbox) { showsNotices = true }
                     })
             ) { selection = .today }
