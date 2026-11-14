@@ -40,6 +40,7 @@ public struct SavablePlaceScreen: View {
                 // Until the list is read, nobody can tell whether it is saved or what its note says.
                 SavePlaceButton(isSaved: saved.saved(place) != nil) { toggle(place) }
                     .disabled(saved.phase != .loaded || saved.isWriting)
+                    .glassConfirm(isPresented: $confirmsRemoval, removal(place))
             }
         } note: { place in
             if let entry = saved.saved(place) {
@@ -51,17 +52,19 @@ public struct SavablePlaceScreen: View {
                 InlineFailure()
             }
         }
-        .confirmationDialog(
-            Text(copy: "备注也会一起删掉", bundle: .module), isPresented: $confirmsRemoval, titleVisibility: .visible
-        ) {
-            Button(role: .destructive) {
-                remove(place)
-            } label: {
-                Text(copy: "取消收藏", bundle: .module)
-            }
-        }
         .haptic(.save, trigger: saves)
         .task { await saved.loadIfNeeded() }
+    }
+
+    /// Taking off a place with a note: asked first, since the note goes too.
+    private func removal(_ place: Place) -> GlassMenuItem {
+        GlassMenuItem(
+            Text(copy: "取消收藏", bundle: .module), systemImage: "bookmark.slash", role: .destructive,
+            id: "place.unsave",
+            confirm: .init(
+                Text(copy: "取消收藏？", bundle: .module), message: Text(copy: "备注也会一起删掉", bundle: .module),
+                label: Text(copy: "取消收藏", bundle: .module), id: "place.unsave.confirm")
+        ) { remove(place) }
     }
 
     private func toggle(_ place: Place) {

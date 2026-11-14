@@ -56,7 +56,7 @@ final class SavedPlacesUITests: XCTestCase {
     /// it again, without a note, for the list.
     private func takeItOffWithTheNote(in app: XCUIApplication, bookmark: XCUIElement) {
         bookmark.tap()
-        let remove = app.buttons["取消收藏"]
+        let remove = app.buttons["place.unsave.confirm"]
         XCTAssertTrue(remove.waitForExistence(timeout: Self.wait), "no confirmation before losing the note")
         settle()
         keepScreenshot(named: "154e-saved-places-confirm")
