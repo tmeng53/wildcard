@@ -30,11 +30,9 @@ const privately = '只记在你自己这里，谁都看不到';
 const voiceOf = z
   .string()
   .describe(
-    `按你的人设，这句该用什么语气、怎么说才像你。人设是你说话的方式，不用把人设里的东西写进这句。${privately}`,
+    `按你的人设，你对这件事是什么反应、什么态度，这句好玩在哪。好玩来自你的反应，不来自比喻和行话。${privately}`,
   );
-const plainly = z
-  .string()
-  .describe(`用大白话把这句要说的意思写一遍，像发微信给朋友，不用比喻。${privately}`);
+const plainly = z.string().describe(`用大白话把这句要说的意思写一遍，像发微信给朋友。${privately}`);
 const factsUsed = z
   .string()
   .describe(
@@ -422,7 +420,7 @@ export function toolbox({
           plain: plainly,
           text: z
             .string()
-            .describe('今天的一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
+            .describe('今天的一句：就是上面那句大白话，带上你的反应和语气，读的人不用想就懂'),
         }),
         kept: (input) => thoughtLengths(input, ['point', 'facts', 'voice', 'plain']),
         run: ({ text }) => {
@@ -487,7 +485,7 @@ export function toolbox({
           plain: plainly,
           text: z
             .string()
-            .describe('回的这一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
+            .describe('回的这一句：就是上面那句大白话，带上你的反应和语气，读的人不用想就懂'),
           at: atParameter,
         }),
         run: ({ text, at = [] }) => {
@@ -917,7 +915,7 @@ function noteTool(
       plain: plainly,
       text: z
         .string()
-        .describe('便条上的这一句：就是上面那句大白话，带上你的语气，读的人不用想就懂'),
+        .describe('便条上的这一句：就是上面那句大白话，带上你的反应和语气，读的人不用想就懂'),
     }),
     kept,
     run: write,
