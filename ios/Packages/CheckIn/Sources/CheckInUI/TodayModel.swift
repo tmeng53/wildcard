@@ -232,6 +232,7 @@ public final class TodayModel {
         cast.update(
             home: home, scene: scene, phase: stagePhase, coach: store.coach?.coach, hiring: store.isHiringCoach,
             handover: store.handover)
+        cheerAcceptedChallenge()
         if opening != nil { standOpeningSquad() }
     }
 

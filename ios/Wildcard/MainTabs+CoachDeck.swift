@@ -98,7 +98,7 @@ extension MainTabs {
                 CoachEarlierPage(deck: deck, places: deckPlaces) { todayPages.append(.coachCard($0)) }
             case .coachCard(let card):
                 CoachCardPage(deck: deck, card: card, cast: deckCast, places: deckPlaces)
-            case .squad, .coach, .place, .post:
+            case .squad, .squadPreferences, .coach, .place, .post:
                 EmptyView()
             }
         }
