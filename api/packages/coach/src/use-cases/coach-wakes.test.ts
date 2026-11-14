@@ -1346,6 +1346,45 @@ describe('the coach', () => {
       expect(runs.at(-1)?.task).toContain(
         '- 你：「周日也跑？」\n- 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n- 队员1（回复你）：「那你喊大声点」\n- 你：「喊破嗓子」',
       );
+      // A post's wake reads what its author and the coach said to each other under other posts
+      // that day, theirs only: so it follows on from there (2026-11-14: it marked a challenge
+      // done that she had said she'd skip under another post).
+      const postBy = async (member: string, minutes: number) => {
+        const id = randomUUID();
+        const createdAt = new Date(now.getTime() + minutes * 60_000);
+        await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
+          values (${id}, ${member}, '2026-11-01', ${createdAt}, 'healthyMeal', '{"version": 1}')`.execute(
+          trx,
+        );
+        const week: SquadWeek = {
+          ...withBoth,
+          checkIns: [
+            ...withBoth.checkIns,
+            {
+              id,
+              member,
+              day: '2026-11-01',
+              createdAt,
+              kind: 'healthyMeal',
+              reactedBy: [],
+              comments: [],
+            },
+          ],
+        };
+        await wakes(
+          { ...fixture, week },
+          { agent, at: new Date(createdAt.getTime() + 60_000) },
+        ).checkedIn({ checkIn: id, squads: [squad] });
+        return runs.at(-1)?.task;
+      };
+      expect(await postBy(mia, 5)).toContain(
+        '## 你和队员1在别的打卡下说过的话（过去一天，先后顺序）\n\n### 11-01 周日 · 队员1 · 训练：跑步\n- 你：「周日也跑？」\n- 队员1（回复你）：「那你喊大声点」\n- 你：「喊破嗓子」\n\n',
+      );
+      const leos = await postBy(leo, 6);
+      expect(leos).toContain(
+        '## 你和队员2在别的打卡下说过的话（过去一天，先后顺序）\n\n### 11-01 周日 · 队员1 · 训练：跑步\n- 你：「周日也跑？」\n- 队员2（回复你）：「你也跑吗」\n- 你：「你也来跑」\n\n',
+      );
+      expect(leos).not.toContain('那你喊大声点');
       const activity = await createCoachActivity({
         store: createPostgresCoachActivity(trx),
       }).squad({ squad, checkIns: [checkIn] });
@@ -1870,9 +1909,7 @@ describe('the coach', () => {
                   input: { member: '队员1', piece: 'gift-scarf', line: '天冷了' },
                 },
               ]
-            : task.includes('你今天给他的挑战')
-              ? [{ tool: 'complete_challenge', input: {} }]
-              : [],
+            : [],
         // The day's challenges, set before the notes: only 队员1 gets one.
         () => [
           {
@@ -2023,14 +2060,19 @@ describe('the coach', () => {
       };
       await wakes({ ...fixture, week }, { agent }).checkedIn({ checkIn: later, squads: [squad] });
       expect(runs.at(-1)?.task).toContain('## 你今天给他的挑战\n- 挑战：喝水 8 杯\n- 他：接受了');
-      // The coach saw it done in the check-in and marked it, once.
-      expect(runs.at(-1)?.tools).toContain('complete_challenge');
-      expect(runs.at(-1)?.answers).toStrictEqual(['已记他完成。']);
-      const done = await sql<{ note_id: string; by: string }>`
-        select note_id, by from public.coach_challenge_completions
+      // Only the member marks it done (我完成了): the coach has no way to.
+      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
+      const done = await sql<{ note_id: string }>`
+        select note_id from public.coach_challenge_completions
         where note_id in (${String(mine)}, ${String(theirs)})`.execute(trx);
-      expect(done.rows).toStrictEqual([{ note_id: String(mine), by: 'coach' }]);
-      // The next check-in's wake knows, with nothing left to mark.
+      expect(done.rows).toStrictEqual([]);
+      await activity.completeChallenge({
+        squad,
+        member: mia,
+        note: mine ?? 0,
+        today: '2026-11-01',
+      });
+      // The next check-in's wake knows they did it.
       const again = randomUUID();
       await sql`insert into public.check_ins (id, member_id, day, created_at, kind, payload)
         values (${again}, ${mia}, '2026-11-01', ${now}, 'healthyMeal', '{"version": 1}')`.execute(
@@ -2058,9 +2100,8 @@ describe('the coach', () => {
         { agent },
       ).checkedIn({ checkIn: again, squads: [squad] });
       expect(runs.at(-1)?.task).toContain(
-        '## 你今天给他的挑战\n- 挑战：喝水 8 杯\n- 他：完成了（你记的）',
+        '## 你今天给他的挑战\n- 挑战：喝水 8 杯\n- 他：说已经完成了',
       );
-      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
     });
   });
 
@@ -2524,13 +2565,6 @@ describe('the coach', () => {
       expect(runs.at(-1)?.task).toContain(
         '## 你今天给他的挑战\n- 挑战：吃鸡蛋\n- 他：没接，理由：「我鸡蛋过敏」（只告诉了你，别在回复里说）',
       );
-      expect(runs.at(-1)?.tools).not.toContain('complete_challenge');
-      // The coach can't mark one let go, or one of another day.
-      const notes = createPostgresCoachStores(trx).memberNotes;
-      const coachDone = (member: string, day: string) =>
-        notes.complete({ note: Number(noteOf(member)), by: 'coach', day });
-      expect(await coachDone(leo, '2026-11-01')).toBe(false);
-      expect(await coachDone(mia, '2026-11-02')).toBe(false);
       await sql`insert into public.coach_challenge_completions (note_id, by)
         values (${noteOf(mia)}, 'member')`.execute(trx);
       await wakes(fixture, { agent, at: new Date(now.getTime() + 86_400_000) }).run();
