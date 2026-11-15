@@ -34,8 +34,9 @@ struct ScheduleChallengeCard: View {
                 cardTitle
                     .typeStyle(compact ? TypeRamp.footnoteEmphasis : TypeRamp.calloutEmphasis)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(compact ? 2 : 1)
-                    .minimumScaleFactor(0.85)
+                    // One line on both sizes, so a long title shrinks instead of growing the card over the coach.
+                    .lineLimit(1)
+                    .minimumScaleFactor(compact ? 0.6 : 0.85)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             cardTrailing(compact: compact)
