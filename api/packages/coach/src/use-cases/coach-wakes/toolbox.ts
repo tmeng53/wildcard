@@ -45,11 +45,14 @@ const privately = '只有你自己看得到';
 const toneOf = z
   .string()
   .describe(
-    `你对这件事的反应和态度，按你的性格来；这句好玩在哪。好玩来自你的反应，不来自比喻和行话。${privately}`,
+    `换成你：以你的性格，这件事里你最在意哪一点，你是什么心情，你想怎么接。要跟 anyone_would_say 那句明显不一样，不是换个说法。看法来自你是谁，不来自比喻和行话。${privately}`,
   );
-const plainDraft = z
+const plainDraft = z.string().describe(`这句要让他知道什么，用大白话写一遍。${privately}`);
+const anyoneWouldSay = z
   .string()
-  .describe(`用大白话把这句要说的意思写一遍，像发微信给朋友。${privately}`);
+  .describe(
+    `随便哪个教练看到这件事都会说的那句话，和谁都会顺手用上的那个说法或玩笑。写出来是为了不说它。${privately}`,
+  );
 const factsUsed = z
   .array(
     z.object({
@@ -485,13 +488,17 @@ export function toolbox({
         parameters: z.object({
           topic: z.string().describe(`今天这句说哪件事，为什么是这件。${privately}`),
           facts: factsUsed,
-          tone: toneOf,
           plain_draft: plainDraft,
+          anyone_would_say: anyoneWouldSay,
+          tone: toneOf,
           text: z
             .string()
-            .describe('战术板上的这一句：就是 plain_draft 的意思，带上你的反应，读的人不用想就懂'),
+            .describe(
+              '战术板上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+            ),
         }),
-        kept: (input) => thoughtLengths(input, ['topic', 'facts', 'tone', 'plain_draft']),
+        kept: (input) =>
+          thoughtLengths(input, ['topic', 'facts', 'plain_draft', 'anyone_would_say', 'tone']),
         run: ({ facts, text }) => {
           const wrong = factsProblem(facts, roster);
           if (wrong !== undefined) return wrong;
@@ -556,14 +563,24 @@ export function toolbox({
             .string()
             .describe(`他这条实际在说什么、问什么，你要接住的是哪件事。${privately}`),
           facts: factsUsed,
-          tone: toneOf,
           plain_draft: plainDraft,
+          anyone_would_say: anyoneWouldSay,
+          tone: toneOf,
           text: z
             .string()
-            .describe('回的这一句：就是 plain_draft 的意思，带上你的反应，读的人不用想就懂'),
+            .describe(
+              '回的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+            ),
           mention_user_ids: mentionUserIds,
         }),
-        kept: (input) => thoughtLengths(input, ['their_message', 'facts', 'tone', 'plain_draft']),
+        kept: (input) =>
+          thoughtLengths(input, [
+            'their_message',
+            'facts',
+            'plain_draft',
+            'anyone_would_say',
+            'tone',
+          ]),
         run: ({ replying_to_user_id: toUserId, facts, text, mention_user_ids: at }) => {
           if (to !== undefined && memberOf(roster, toUserId) !== to) {
             return `replying_to_user_id 不对：这次要回的是${personOf(roster, to)}。把他的事和别人的事分开，重新填。`;
@@ -1048,7 +1065,7 @@ function noteTool(
   const userId = z.string().describe('写给谁：他的 user_id，任务里名字后面括号里的那串');
   // Kept by length: it is about the member, and stays in its own table.
   const kept = (input: Readonly<Record<string, unknown>>): unknown =>
-    thoughtLengths(input, ['topic', 'facts', 'tone', 'plain_draft', 'text']);
+    thoughtLengths(input, ['topic', 'facts', 'plain_draft', 'anyone_would_say', 'tone', 'text']);
   if (welcome) {
     return defineTool(draft.steps, {
       name: 'note_to',
@@ -1065,11 +1082,14 @@ function noteTool(
       user_id: userId,
       topic: z.string().describe(`今天对他说哪一件事，为什么是这件。${privately}`),
       facts: factsUsed,
-      tone: toneOf,
       plain_draft: plainDraft,
+      anyone_would_say: anyoneWouldSay,
+      tone: toneOf,
       text: z
         .string()
-        .describe('便条上的这一句：就是 plain_draft 的意思，带上你的反应，读的人不用想就懂'),
+        .describe(
+          '便条上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+        ),
     }),
     kept,
     run: write,
