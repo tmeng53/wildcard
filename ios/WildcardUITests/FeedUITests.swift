@@ -113,12 +113,7 @@ final class FeedUITests: XCTestCase {
             .containing(.any, identifier: "strip.duration").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
-        var drags = 0
-        while drags < Self.maxSwipes, !(strip.exists && strip.frame.maxY <= tabBarTop) {
-            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
-            drags += 1
-        }
+        drag(feed) { strip.exists && strip.frame.maxY <= tabBarTop }
         XCTAssertTrue(strip.exists, "no 成绩条 on a 训练")
         settle()
         // Kept before the check, so a failure shows where the list stopped.
@@ -140,16 +135,13 @@ final class FeedUITests: XCTestCase {
         let app = launch(language: "zh-Hans")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: Self.wait), "no 动态")
         let blocks = app.descendants(matching: .any).matching(identifier: "post.block")
-        XCTAssertTrue(blocks.firstMatch.waitForExistence(timeout: Self.wait), "a 请假条 has no colour block")
         let serve = blocks.matching(NSPredicate(format: "label CONTAINS '发球终于过网了'")).firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
-        var drags = 0
-        while drags < Self.maxSwipes, !(serve.exists && serve.frame.maxY <= tabBarTop) {
-            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
-            drags += 1
-        }
+        // The 请假条 sits under the run from Apple Health, whose card may fill the first screen.
+        drag(feed) { blocks.firstMatch.exists }
+        XCTAssertTrue(blocks.firstMatch.exists, "a 请假条 has no colour block")
+        drag(feed) { serve.exists && serve.frame.maxY <= tabBarTop }
         XCTAssertTrue(serve.exists, "the tennis serve without a photo has no colour block")
         XCTAssertFalse(serve.label.contains("50′"), "the block still has the minutes: \(serve.label)")
         settle()
@@ -339,12 +331,7 @@ extension FeedUITests {
         let map = app.descendants(matching: .any).matching(identifier: "feed.map").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
-        var drags = 0
-        while drags < Self.maxSwipes, !(map.exists && map.frame.maxY + Self.stripHeight <= tabBarTop) {
-            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
-            drags += 1
-        }
+        drag(feed) { map.exists && map.frame.maxY + Self.stripHeight <= tabBarTop }
         XCTAssertTrue(map.exists, "no map-only cover")
         settle()
         keepScreenshot(named: "44-feed-map-cover-strip")
@@ -363,12 +350,7 @@ extension FeedUITests {
             .containing(.any, identifier: "strip.healthy").firstMatch
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         let feed = app.scrollViews.firstMatch
-        var drags = 0
-        while drags < Self.maxSwipes, !(strip.exists && strip.frame.maxY <= tabBarTop) {
-            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
-            drags += 1
-        }
+        drag(feed) { strip.exists && strip.frame.maxY <= tabBarTop }
         XCTAssertTrue(strip.exists, "no 成绩条 on the rated salad")
         settle()
         keepScreenshot(named: "45-feed-meal-strip")
