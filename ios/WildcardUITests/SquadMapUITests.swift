@@ -45,12 +45,28 @@ final class SquadMapUITests: XCTestCase {
         assertOnScreen(place, in: app)
         settle()
         keepScreenshot(named: "squad-map-often")
+        openAStackOnTheMap(in: app)
 
         // A place opens its own page.
         place.tap()
         XCTAssertFalse(
             app.buttons["squadMap.oftenRow"].waitForExistence(timeout: 2) && place.isHittable,
             "the place's page didn't open")
+    }
+
+    /// A tap on a stack of heads opens it at once into its row of who went, each with how many times
+    /// (「Mia 1次」), above its place's name.
+    private func openAStackOnTheMap(in app: XCUIApplication) {
+        let spot = app.descendants(matching: .any).matching(identifier: "squadMap.spot").firstMatch
+        XCTAssertTrue(spot.exists, "常去 shows no stack on the map")
+        let row = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ".+ [0-9]+次")).firstMatch
+        XCTAssertFalse(row.exists, "a stack is open before any tap")
+        // The heads, at the stack's top: a named stack's middle is the gap above its name.
+        spot.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2)).tap()
+        XCTAssertTrue(row.waitForExistence(timeout: 2), "tapping a stack didn't open it")
+        XCTAssertTrue(app.buttons["squadMap.place"].exists, "the open stack has no place name")
+        settle()
+        keepScreenshot(named: "squad-map-open")
     }
 
     private func launch() -> XCUIApplication {
