@@ -47,13 +47,11 @@ const toneOf = z
   .describe(
     `换成你：以你的性格，这件事里你最在意哪一点，你是什么心情，你想怎么接。要跟 anyone_would_say 那句明显不一样，不是换个说法。看法来自你是谁，不来自比喻和行话。${privately}`,
   );
-const plainDraft = z
-  .string()
-  .describe(`这句要让他知道什么，用大白话写一遍。${privately}`);
+const plainDraft = z.string().describe(`这句要让他知道什么，用大白话写一遍。${privately}`);
 const anyoneWouldSay = z
   .string()
   .describe(
-    `随便哪个教练看到这件事都会说的那句话是什么。写出来是为了不说它。${privately}`,
+    `随便哪个教练看到这件事都会说的那句话，和谁都会顺手用上的那个说法或玩笑。写出来是为了不说它。${privately}`,
   );
 const factsUsed = z
   .array(
@@ -495,9 +493,12 @@ export function toolbox({
           tone: toneOf,
           text: z
             .string()
-            .describe('战术板上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂'),
+            .describe(
+              '战术板上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+            ),
         }),
-        kept: (input) => thoughtLengths(input, ['topic', 'facts', 'plain_draft', 'anyone_would_say', 'tone']),
+        kept: (input) =>
+          thoughtLengths(input, ['topic', 'facts', 'plain_draft', 'anyone_would_say', 'tone']),
         run: ({ facts, text }) => {
           const wrong = factsProblem(facts, roster);
           if (wrong !== undefined) return wrong;
@@ -567,10 +568,19 @@ export function toolbox({
           tone: toneOf,
           text: z
             .string()
-            .describe('回的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂'),
+            .describe(
+              '回的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+            ),
           mention_user_ids: mentionUserIds,
         }),
-        kept: (input) => thoughtLengths(input, ['their_message', 'facts', 'plain_draft', 'anyone_would_say', 'tone']),
+        kept: (input) =>
+          thoughtLengths(input, [
+            'their_message',
+            'facts',
+            'plain_draft',
+            'anyone_would_say',
+            'tone',
+          ]),
         run: ({ replying_to_user_id: toUserId, facts, text, mention_user_ids: at }) => {
           if (to !== undefined && memberOf(roster, toUserId) !== to) {
             return `replying_to_user_id 不对：这次要回的是${personOf(roster, to)}。把他的事和别人的事分开，重新填。`;
@@ -1077,7 +1087,9 @@ function noteTool(
       tone: toneOf,
       text: z
         .string()
-        .describe('便条上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂'),
+        .describe(
+          '便条上的这一句：按 tone 里你的看法来说，是你才会说的话；plain_draft 的意思要在，读的人不用想就懂',
+        ),
     }),
     kept,
     run: write,
