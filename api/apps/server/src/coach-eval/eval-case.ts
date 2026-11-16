@@ -161,6 +161,8 @@ export const EvalCase = z.strictObject({
       }),
     )
     .default([]),
+  /** The coach's 战术板 lines before the wake, by day; a daily wake sees the ones before its day. */
+  boardNotes: z.array(z.strictObject({ day: z.iso.date(), text: z.string().min(1) })).default([]),
   /** The change of coach that brought this one, with the letter left, if any. */
   handover: z
     .strictObject({ from: z.string(), at: Moment, letter: z.string().optional() })
