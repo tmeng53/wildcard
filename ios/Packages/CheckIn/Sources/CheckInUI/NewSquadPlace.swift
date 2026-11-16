@@ -13,7 +13,8 @@ import SwiftUI
 struct NewSquadPlacePage: View {
     @Environment(\.sceneTheme) private var theme
     @State private var name: String
-    @State private var kind: SquadPlaceKind?
+    /// 吃的 to begin with, as the approved design has it.
+    @State private var kind: SquadPlaceKind? = .food
     @State private var camera: MapCameraPosition
     @State private var center: CLLocationCoordinate2D?
     @State private var isAdding = false
@@ -113,6 +114,7 @@ struct NewSquadPlacePage: View {
             UserAnnotation()
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .mapControls { MapUserLocationButton() }
         .onMapCameraChange(frequency: .continuous) { context in center = context.camera.centerCoordinate }
         .overlay {
             // The pin's foot on the map's middle.

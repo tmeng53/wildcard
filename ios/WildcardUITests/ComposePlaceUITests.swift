@@ -82,7 +82,7 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "新建地点 didn't open")
         XCTAssertEqual(name.value as? String, "健身房", "the name isn't what was typed")
         let add = app.buttons["newPlace.add"]
-        XCTAssertFalse(add.isEnabled, "添加 is on before a kind is picked")
+        XCTAssertTrue(app.buttons["newPlace.kind.food"].isSelected, "吃的 isn't picked to begin with")
         let gym = app.buttons["newPlace.kind.gym"]
         gym.tap()
         let window = app.windows.firstMatch.frame

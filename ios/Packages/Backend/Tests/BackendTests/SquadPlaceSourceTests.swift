@@ -15,7 +15,9 @@ import Testing
     let mate = try await stack.signedInMember()
     let squad = try await stack.squad(of: adder, mate)
     let id = UUID()
-    let canteen = try NewSquadPlace(name: "公司食堂", kind: .food, latitude: 40.7466, longitude: -73.9895)
+    // A dragged map's centre, to the last digit: a retry still finds the same place.
+    let canteen = try NewSquadPlace(
+        name: "公司食堂", kind: .food, latitude: 40.746612345678912, longitude: -73.989512345678912)
 
     let added = try await APISquadPlaceSource(api: adder.api).add(canteen, id: id, to: squad)
     // Trying again adds it once.

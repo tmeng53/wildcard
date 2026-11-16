@@ -56,6 +56,8 @@ public struct SquadPlace: Identifiable, Hashable, Sendable {
 
 /// A place a member is adding for the squad: its name, kind and where its pin stands. Fails for
 /// a name the API wouldn't take or coordinates off the globe, so 添加 stays off until it holds.
+/// The pin's coordinates are rounded to 6 decimals (about 10 cm), so the same place sent again
+/// reads back the same from the database and a retry adds it once.
 public struct NewSquadPlace: Hashable, Sendable {
     public let name: String
     public let kind: SquadPlaceKind
@@ -65,7 +67,11 @@ public struct NewSquadPlace: Hashable, Sendable {
     public init(name: String, kind: SquadPlaceKind, latitude: Double, longitude: Double) throws(ContractsError) {
         let checked = try Place(name: name, latitude: latitude, longitude: longitude)
         (self.name, self.kind) = (checked.name, kind)
-        (self.latitude, self.longitude) = (latitude, longitude)
+        (self.latitude, self.longitude) = (Self.rounded(latitude), Self.rounded(longitude))
+    }
+
+    private static func rounded(_ degrees: Double) -> Double {
+        (degrees * 1_000_000).rounded() / 1_000_000
     }
 }
 
