@@ -142,7 +142,13 @@ export async function runTrial(
         note = text;
         return Promise.resolve(true);
       },
-      recent: () => Promise.resolve([]),
+      recent: ({ limit }) =>
+        Promise.resolve(
+          testCase.boardNotes
+            .filter(({ day }) => day < testCase.now.toISOString().slice(0, 10))
+            .toSorted((a, b) => b.day.localeCompare(a.day))
+            .slice(0, limit),
+        ),
     },
     memberNotes: {
       save: ({ member, text }) => {

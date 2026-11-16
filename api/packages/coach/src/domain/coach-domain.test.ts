@@ -470,6 +470,32 @@ describe('when the coach wakes', () => {
     expect(instructions).not.toContain('口头禅');
   });
 
+  it('tells the 战术板 what the whole squad did, a Monday its first day and a quiet day as one', () => {
+    const [first] = week.checkIns;
+    if (first === undefined) throw new Error('no check-in');
+    const morning = (day: string) =>
+      noteTaskOf({
+        day,
+        names: rosterOf(week),
+        members: [],
+        posts: [first],
+        set: new Map(),
+        talks: [],
+        recentNotes: [],
+        language: 'zh-Hans',
+        today: [],
+      });
+    // The day after the run (a Wednesday): yesterday's post by number, the week's 训练 so far.
+    const { task, numbered } = morning('2026-10-28');
+    expect(task).toContain('- 昨天（10-27 周二）全队发的：米亚（11111111） 跑步 30 分钟（动态1）');
+    expect(task).toContain('- 这周到昨天，全队练了 1 次，1 个人练过。');
+    // A post no member's block listed still goes by its number in the tools.
+    expect([...numbered.keys()]).toStrictEqual(['动态1']);
+    // Two days on, nobody posted yesterday; the next Monday starts a new week.
+    expect(morning('2026-10-29').task).toContain('- 昨天（10-28 周三）全队没人发动态。');
+    expect(morning('2026-11-02').task).toContain('- 今天是新一周的第一天。');
+  });
+
   it('writes the morning: the 战术板 in the squad’s language, then each member’s day by name', () => {
     const [first] = week.checkIns;
     if (first === undefined) throw new Error('no check-in');
@@ -512,7 +538,7 @@ describe('when the coach wakes', () => {
       [
         '# 早上\n今天是 2026-10-28，周三。',
         '## 今天\n- 感恩节\n- 你以前带过这个小队，被换掉后，现在又被请回来了。',
-        '## 战术板\n- 用繁體中文寫，照台灣的說法。\n- 你最近写过：\n  - 2026-10-27：周二腿软也算练\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
+        '## 战术板\n- 用繁體中文寫，照台灣的說法。\n- 昨天（10-27 周二）全队发的：米亚（11111111） 跑步 30 分钟（动态1）\n- 这周到昨天，全队练了 1 次，1 个人练过。\n- 你最近写过：\n  - 2026-10-27：周二腿软也算练\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
         '## 便条（下面每人一张）\n小队的人（括号里是 user_id）：米亚（11111111）、队员2（22222222）。',
         // Each member's own day, posts by number, the challenge set for them and where they
         // talked with the coach, in their own language; never reactions or the talk itself.
@@ -540,7 +566,7 @@ describe('when the coach wakes', () => {
       gifting: { pool: [{ id: 'gift-scarf', description: '红围巾' }], open: new Map([[mia, []]]) },
     }).task.split('\n\n');
     expect(quiet.slice(1)).toStrictEqual([
-      '## 战术板\n- 用简体中文写。\n- 你还没写过。\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
+      '## 战术板\n- 用简体中文写。\n- 昨天（10-27 周二）全队没人发动态。\n- 这周到昨天，全队练了 0 次，0 个人练过。\n- 你还没写过。\n- 小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。',
       '## 便条\n今天没有要写便条的人。',
       '## 礼物清单\n- gift-scarf：红围巾',
       '## 这周还能收礼物的\n- 米亚（11111111）',
