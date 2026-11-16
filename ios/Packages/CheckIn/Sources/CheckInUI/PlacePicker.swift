@@ -234,7 +234,7 @@ struct PlacePickerSheet: View {
     }
 
     private func map(_ list: ScrollViewProxy) -> some View {
-        Map(position: $camera) {
+        Map(position: $camera, bounds: MapCameraBounds(minimumDistance: Self.nearest)) {
             UserAnnotation()
             ForEach(pins) { found in
                 Annotation(found.place.name, coordinate: found.coordinate, anchor: .bottom) {
@@ -248,7 +248,6 @@ struct PlacePickerSheet: View {
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
-        .mapCameraBounds(MapCameraBounds(minimumDistance: Self.nearest))
         .onMapCameraChange { context in cameraDistance = context.camera.distance }
         .frame(height: Self.mapHeight)
     }
