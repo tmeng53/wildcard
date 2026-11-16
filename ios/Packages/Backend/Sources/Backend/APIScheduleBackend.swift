@@ -36,10 +36,15 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
             let squad = try await api.mySquad()
-            // The titles and the week's scene show on a week that is over.
+            // The week's scene and titles come from its 战报: a week that is over, and this week
+            // once Sunday's 战报 is out, when the squad's scene is already next week's pick. Before
+            // that this week has no story yet and draws the squad's scene now. Next week wears
+            // its scene once picked.
             let story =
-                if let squad, weekStart < thisWeek {
+                if let squad, weekStart <= thisWeek {
                     try await self.story(of: member.id, in: squad.id, weekStart: weekStart)
+                } else if let squad {
+                    (titles: [AwardTitle](), scene: try await pickedScene(of: squad.id, weekStart: weekStart))
                 } else {
                     (titles: [AwardTitle](), scene: SceneID?.none)
                 }
@@ -97,6 +102,19 @@ public struct APIScheduleBackend: ScheduleBackend {
             )
         case .case2(let pending):
             return ([], SceneID(rawValue: pending.sceneId))
+        }
+    }
+
+    /// The scene picked for a week to come, once its pick is open (from Sunday's 战报) and made.
+    /// Like the story, it only decorates the poster, so one that can't be read leaves it off.
+    private func pickedScene(of squad: SquadID, weekStart: LocalDay) async throws(APIError) -> SceneID? {
+        do {
+            let scene = try await api.scene(of: squad)
+            return scene.week == weekStart ? scene.picked?.scene : nil
+        } catch .account(let error) {
+            throw .account(error)
+        } catch {
+            return nil
         }
     }
 
