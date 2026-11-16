@@ -56,7 +56,7 @@ struct NewSquadPlacePage: View {
                         HStack(spacing: Space.xs) {
                             ForEach(SquadPlaceKind.allCases, id: \.self) { kind in
                                 PickPill(
-                                    kind.title, systemImage: kind.symbol, look: .outlined, isSelected: self.kind == kind
+                                    kind.title, systemImage: kind.symbol, look: .solid, isSelected: self.kind == kind
                                 ) {
                                     self.kind = kind
                                 }
