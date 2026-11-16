@@ -25,9 +25,11 @@ struct PosterContent: Equatable {
     }
 
     enum Paint: Equatable {
-        /// The squad's scene this week.
+        /// The squad's scene now, for this week before its 战报 names the scene it was on.
         case thisWeek
-        /// A week that is over, in its own scene; the gym's for a week the squad has no 战报 of.
+        /// A week in its own scene: a week that is over (the gym's for a week the squad has no
+        /// 战报 of), this week once its 战报 is out, when the squad's scene is already next
+        /// week's, and next week once its scene is picked.
         case scene(SceneTheme)
         case graphite
     }
@@ -54,8 +56,9 @@ struct PosterContent: Equatable {
     /// The 我的每周计划 rather than a week: no number or dates, in the brand's graphite.
     let isTemplate: Bool
     /// What the poster wears (Tracy, 2026-11-08): a week that is over wears the scene the squad
-    /// trained on that week, this week the squad's scene now, and next week and the 我的每周计划,
-    /// whose scene isn't picked yet, the brand's graphite.
+    /// trained on that week, this week its own scene (the squad's scene now until Sunday's 战报,
+    /// after which that is next week's pick), next week its pick once made, and otherwise, like
+    /// the 我的每周计划, the brand's graphite.
     let paint: Paint
     let weekStart: LocalDay
     /// The squad's week, W1 for the week the squad began.
@@ -86,11 +89,13 @@ struct PosterContent: Equatable {
         self.weekNumber = weekNumber
         let days = board?.days ?? sheet.plan
         let tense = board?.tense ?? .past
+        let own = sheet.scene.flatMap { SceneTheme(rawValue: $0.rawValue) }
         paint =
             switch tense {
-            case .current: .thisWeek
-            case .upcoming, .template: .graphite
-            case .past: .scene(sheet.scene.flatMap { SceneTheme(rawValue: $0.rawValue) } ?? .gym)
+            case .current: own.map(Paint.scene) ?? .thisWeek
+            case .upcoming: own.map(Paint.scene) ?? .graphite
+            case .template: .graphite
+            case .past: .scene(own ?? .gym)
             }
         lanes = days.indices.map { index in
             let held = board?.focus == .selected(index)
