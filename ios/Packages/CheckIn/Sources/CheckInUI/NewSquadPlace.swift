@@ -19,8 +19,8 @@ struct NewSquadPlacePage: View {
     @State private var center: CLLocationCoordinate2D?
     @State private var isAdding = false
     @State private var failed = false
-    /// Made once, so trying again after a failure adds the place once.
-    @State private var id = UUID()
+    /// Keeps the id while the same place is tried again, so a retry adds it once.
+    @State private var attempt = SquadPlaceAttempt()
     let source: any SquadPlaceSource
     let squad: SquadID
     let added: (SquadPlace) -> Void
@@ -134,6 +134,7 @@ struct NewSquadPlacePage: View {
 
     private func add() async {
         guard let draft else { return }
+        let id = attempt.id(for: draft, making: UUID.init)
         (isAdding, failed) = (true, false)
         defer { isAdding = false }
         do throws(SquadPlacesError) {

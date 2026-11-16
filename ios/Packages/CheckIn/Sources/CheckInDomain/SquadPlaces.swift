@@ -93,3 +93,19 @@ public protocol SquadPlaceSource: Sendable {
     /// Adds a place for the squad under `id`, which the caller made, so trying again adds it once.
     func add(_ new: NewSquadPlace, id: UUID, to squad: SquadID) async throws(SquadPlacesError) -> SquadPlace
 }
+
+/// The id 添加 sends for a new place: the same while the member tries the same place again, so a
+/// retry after a lost answer adds it once, and a fresh one once they change the name, kind or pin,
+/// since the API refuses other contents under an id it already holds.
+public struct SquadPlaceAttempt: Sendable {
+    private var sent: (draft: NewSquadPlace, id: UUID)?
+
+    public init() {}
+
+    public mutating func id(for draft: NewSquadPlace, making newID: () -> UUID) -> UUID {
+        if let sent, sent.draft == draft { return sent.id }
+        let id = newID()
+        sent = (draft, id)
+        return id
+    }
+}

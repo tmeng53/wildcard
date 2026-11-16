@@ -43,4 +43,19 @@ struct SquadPlaceTests {
         #expect(place.matches(" "))
         #expect(!place.matches("食堂"))
     }
+
+    @Test func aRetryOfTheSamePlaceKeepsItsIdAndAChangedOneGetsANewId() throws {
+        var ids = [
+            UUID(uuidString: "00000000-0000-0000-0000-00000000000A"),
+            UUID(uuidString: "00000000-0000-0000-0000-00000000000B"),
+        ].compactMap(\.self).makeIterator()
+        let next = { ids.next() ?? UUID() }
+        var attempt = SquadPlaceAttempt()
+        let first = try NewSquadPlace(name: "公司食堂", kind: .food, latitude: 40.7466, longitude: -73.9895)
+        let moved = try NewSquadPlace(name: "公司食堂", kind: .food, latitude: 40.7467, longitude: -73.9895)
+        #expect(attempt.id(for: first, making: next).uuidString == "00000000-0000-0000-0000-00000000000A")
+        #expect(attempt.id(for: first, making: next).uuidString == "00000000-0000-0000-0000-00000000000A")
+        #expect(attempt.id(for: moved, making: next).uuidString == "00000000-0000-0000-0000-00000000000B")
+        #expect(attempt.id(for: moved, making: next).uuidString == "00000000-0000-0000-0000-00000000000B")
+    }
 }
