@@ -491,6 +491,22 @@ describe('when the coach wakes', () => {
     expect(task).toContain('- 这周到昨天，全队练了 1 次，1 个人练过。');
     // A post no member's block listed still goes by its number in the tools.
     expect([...numbered.keys()]).toStrictEqual(['动态1']);
+    // A 训练 kept off the 动态 counts in the week but is never listed.
+    const kept = { ...first, id: 'kept', unposted: true as const };
+    const quiet = noteTaskOf({
+      day: '2026-10-28',
+      names: rosterOf(week),
+      members: [],
+      posts: [kept],
+      set: new Map(),
+      talks: [],
+      recentNotes: [],
+      language: 'zh-Hans',
+      today: [],
+    });
+    expect(quiet.task).toContain('- 昨天（10-27 周二）全队没人发动态。');
+    expect(quiet.task).toContain('- 这周到昨天，全队练了 1 次，1 个人练过。');
+    expect(quiet.numbered.size).toBe(0);
     // Two days on, nobody posted yesterday; the next Monday starts a new week.
     expect(morning('2026-10-29').task).toContain('- 昨天（10-28 周三）全队没人发动态。');
     expect(morning('2026-11-02').task).toContain('- 今天是新一周的第一天。');

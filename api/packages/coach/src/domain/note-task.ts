@@ -1,7 +1,12 @@
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
 import { challengeText, type Challenge } from './challenge.js';
-import { memberBlocks, todayHeading, type ChallengeMember } from './challenge-task.js';
+import {
+  memberBlocks,
+  postNumberer,
+  todayHeading,
+  type ChallengeMember,
+} from './challenge-task.js';
 import type { Coach } from './coach.js';
 import { giftBlock, type DayTalk, type GiftOptions } from './prompt.js';
 import { dayWords, postWhat, type WeekCheckIn } from './squad-week.js';
@@ -114,19 +119,14 @@ function squadLines({
   readonly posts: readonly WeekCheckIn[];
   readonly numbered: Map<string, WeekCheckIn>;
 }): readonly string[] {
-  const numberOf = (post: WeekCheckIn): string => {
-    for (const [number, each] of numbered) if (each.id === post.id) return number;
-    const number = `动态${String(numbered.size + 1)}`;
-    numbered.set(number, post);
-    return number;
-  };
+  const numberOf = postNumberer(numbered);
   const yesterday = new Date(Date.parse(`${day}T00:00:00Z`) - 86_400_000)
     .toISOString()
     .slice(0, 10);
-  const listed = posts.filter((post) => post.unposted !== true);
-  const ofYesterday = listed.filter((post) => post.day === yesterday);
+  // A post kept off the 动态 still counts in the week, but is never listed.
+  const ofYesterday = posts.filter((post) => post.day === yesterday && post.unposted !== true);
   const monday = mondayOf(day);
-  const trained = listed.filter(
+  const trained = posts.filter(
     (post) =>
       post.kind === 'trained' && post.restDay !== true && post.day >= monday && post.day < day,
   );

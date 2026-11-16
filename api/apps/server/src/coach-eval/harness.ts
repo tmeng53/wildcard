@@ -12,6 +12,7 @@ import {
   type SquadWeek,
 } from '@wildcard/coach';
 import type { TokenUsage } from '@wildcard/language-model';
+import { wallClockAt } from '@wildcard/time-zones';
 
 import type { EvalCase, EvalSettings } from './eval-case.js';
 
@@ -145,7 +146,7 @@ export async function runTrial(
       recent: ({ limit }) =>
         Promise.resolve(
           testCase.boardNotes
-            .filter(({ day }) => day < testCase.now.toISOString().slice(0, 10))
+            .filter(({ day }) => day < wallClockAt(testCase.now, testCase.timeZone).day)
             .toSorted((a, b) => b.day.localeCompare(a.day))
             .slice(0, limit),
         ),

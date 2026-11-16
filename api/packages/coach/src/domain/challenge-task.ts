@@ -75,12 +75,7 @@ export function memberBlocks({
   readonly more?: (member: string, numberOf: (post: WeekCheckIn) => string) => readonly string[];
 }): { readonly blocks: readonly string[]; readonly numbered: ReadonlyMap<string, WeekCheckIn> } {
   const numbered = new Map<string, WeekCheckIn>();
-  const numberOf = (post: WeekCheckIn): string => {
-    for (const [number, each] of numbered) if (each.id === post.id) return number;
-    const number = `动态${String(numbered.size + 1)}`;
-    numbered.set(number, post);
-    return number;
-  };
+  const numberOf = postNumberer(numbered);
   const blocks = members.map(({ member, brief, about }) => {
     const lines = [`## ${personOf(names, member)}`];
     const plan = brief.plan?.week;
@@ -126,6 +121,19 @@ export function memberBlocks({
     return lines.join('\n');
   });
   return { blocks, numbered };
+}
+
+/**
+ * Numbers posts 动态1, 动态2… in the order asked, adding each new one to `numbered`, so a post
+ * keeps its number however often it is listed and the tools look it up by it.
+ */
+export function postNumberer(numbered: Map<string, WeekCheckIn>): (post: WeekCheckIn) => string {
+  return (post) => {
+    for (const [number, each] of numbered) if (each.id === post.id) return number;
+    const number = `动态${String(numbered.size + 1)}`;
+    numbered.set(number, post);
+    return number;
+  };
 }
 
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
