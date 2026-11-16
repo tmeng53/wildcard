@@ -82,6 +82,9 @@ struct PlacePickerSheet: View {
     private static let mapHeight: Double = 220
     /// The farthest the map stays when it moves to a selected place, so its pin stands apart.
     private static let closeUp: Double = 3000
+    /// The nearest the map comes, so fitting one pin (a lone squad place while typing) shows its
+    /// streets, not a rooftop.
+    private static let nearest: Double = 500
 
     var body: some View {
         NavigationStack {
@@ -245,6 +248,7 @@ struct PlacePickerSheet: View {
             }
         }
         .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .mapCameraBounds(MapCameraBounds(minimumDistance: Self.nearest))
         .onMapCameraChange { context in cameraDistance = context.camera.distance }
         .frame(height: Self.mapHeight)
     }
