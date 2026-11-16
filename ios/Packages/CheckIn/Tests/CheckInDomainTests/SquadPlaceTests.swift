@@ -1,0 +1,39 @@
+import CheckInDomain
+import Contracts
+import Foundation
+import Testing
+
+struct SquadPlaceTests {
+    private static let id = UUID(uuidString: "6F9619FF-8B86-D011-B42D-00C04FC964FF") ?? UUID()
+
+    @Test func aSquadPlaceIsTaggedByItsOwnKeyAndKindsIcon() throws {
+        let place = try SquadPlace(
+            id: Self.id, name: " 公司食堂 ", kind: .food, latitude: 40.75, longitude: -73.99, addedBy: nil)
+        #expect(place.place.name == "公司食堂")
+        #expect(place.place.squadPlaceID == Self.id)
+        #expect(place.place.key?.rawValue == "squad:6f9619ff-8b86-d011-b42d-00c04fc964ff")
+        #expect(place.place.kind == .food)
+        #expect(place.kind.symbol == "fork.knife")
+    }
+
+    @Test func eachKindWearsTheIconOfItsCategory() {
+        #expect(SquadPlaceKind.food.symbol == "fork.knife")
+        #expect(SquadPlaceKind.gym.symbol == "dumbbell.fill")
+        #expect(SquadPlaceKind.outdoor.symbol == "tree.fill")
+    }
+
+    @Test func aNameTheAPIWouldntTakeIsRefused() {
+        #expect(throws: ContractsError.self) {
+            try SquadPlace(id: Self.id, name: "  ", kind: .gym, latitude: 0, longitude: 0, addedBy: nil)
+        }
+    }
+
+    @Test func matchesWhatWasTypedIgnoringCase() throws {
+        let place = try SquadPlace(
+            id: Self.id, name: "WeWork 健身房", kind: .gym, latitude: 0, longitude: 0, addedBy: nil)
+        #expect(place.matches("wework"))
+        #expect(place.matches("健身"))
+        #expect(place.matches(" "))
+        #expect(!place.matches("食堂"))
+    }
+}

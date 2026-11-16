@@ -11,6 +11,9 @@ extension AppModel {
     /// 收藏, the places the member saved, over our API.
     var savedPlaces: any SavedPlaceSource { APISavedPlaceSource(api: api) }
 
+    /// The places the squad's members added (自建地点), over our API.
+    var squadPlaces: any SquadPlaceSource { APISquadPlaceSource(api: api) }
+
     /// 动态 on the member's squad, its days by the member's own clock (the phone's, which the
     /// profile's zone follows once the outbox is empty), with what its coach said. The member's
     /// own posts change through 今天's store (`editor`), which recounts.

@@ -1,3 +1,4 @@
+import CheckInDomain
 import CheckInUI
 import Contracts
 import FeedUI
@@ -57,6 +58,14 @@ extension MainTabs {
 }
 
 extension MainTabs {
+    /// The squad's own places for the compose page's place picker, each with its adder's nickname
+    /// as the squad's today has it.
+    var squadPlaceBook: SquadPlaceBook {
+        SquadPlaceBook(source: squadPlaces, squad: today.squadID) { [today] member in
+            today.home?.today.members.first { $0.member == member }?.character?.nickname.text
+        }
+    }
+
     /// 地点页 from the compose page's place pill, pushed on the stack the compose page is on: 今天's,
     /// or the editing page's own over a post; and from the 战报's places, pushed over the story.
     var composePlacePage: PlacePageRoute {

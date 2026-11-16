@@ -1,3 +1,5 @@
+import Foundation
+
 /// The place a member tagged a 训练 or a meal with (Tracy, 2026-11-12): one they picked in Apple
 /// Maps, never where the phone was. The squad sees its name and opens it in Maps; the coach reads
 /// only its name.
@@ -8,6 +10,8 @@ public struct Place: Hashable, Sendable {
     public let name: String
     /// Apple Maps' identifier for the place, when Maps gave one.
     public let appleID: String?
+    /// The id of a place one of the squad's members added (自建地点), when it is one and not Maps'.
+    public let squadPlaceID: UUID?
     /// Apple Maps' point-of-interest category, such as `fitnessCenter`; nil when Maps gave none.
     public let category: String?
     public let latitude: Double
@@ -16,7 +20,8 @@ public struct Place: Hashable, Sendable {
     /// Trims the name; an id or category the API wouldn't take is left out rather than losing
     /// the place.
     public init(
-        name: String, appleID: String? = nil, category: String? = nil, latitude: Double, longitude: Double
+        name: String, appleID: String? = nil, squadPlaceID: UUID? = nil, category: String? = nil, latitude: Double,
+        longitude: Double
     ) throws(ContractsError) {
         switch NameText.check(name, maxLength: Self.maxNameLength) {
         case .success(let trimmed): self.name = trimmed
@@ -27,6 +32,7 @@ public struct Place: Hashable, Sendable {
             throw .placeCoordinate(latitude: latitude, longitude: longitude)
         }
         self.appleID = appleID.flatMap { (1...200).contains($0.count) ? $0 : nil }
+        self.squadPlaceID = squadPlaceID
         self.category = category.flatMap { Self.isCategory($0) ? $0 : nil }
         (self.latitude, self.longitude) = (latitude, longitude)
     }

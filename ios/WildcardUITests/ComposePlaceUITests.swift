@@ -44,6 +44,63 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(pill.exists, "取消 left a place on the post")
     }
 
+    /// The squad's own places (自建地点) head the list with who added each; typing offers
+    /// 「新建「…」」 first, which pushes 新建地点: the map under a pin, the name typed and the
+    /// kinds, all on screen. 添加 adds the place and puts it on the post.
+    func testANewPlaceIsAddedForTheSquadAndPicked() {
+        let app = launch(extra: ["-today.cardPage", "0"])
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
+        checkIn.tap()
+        let trained = app.buttons["today.capsule.trained"]
+        XCTAssertTrue(trained.waitForExistence(timeout: Self.wait), "no 训练 capsule")
+        trained.tap()
+        let pill = app.buttons["compose.place"]
+        XCTAssertTrue(pill.waitForExistence(timeout: Self.wait), "no 添加位置 on the compose page")
+        pill.tap()
+
+        let squadRows = app.buttons.matching(identifier: "place.squad")
+        XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the squad's places aren't listed")
+        XCTAssertEqual(squadRows.count, 2, "not both of the squad's places are listed")
+        XCTAssertTrue(squadRows.firstMatch.label.contains("公司食堂"), "the first row isn't the canteen")
+        XCTAssertTrue(squadRows.firstMatch.label.contains("添加"), "the row doesn't say who added it")
+        settle()
+        keepScreenshot(named: "15-compose-place-squad")
+
+        let search = app.descendants(matching: .any).matching(identifier: "place.search").firstMatch
+        search.tap()
+        app.typeText("健身房")
+        let new = app.buttons["place.new"]
+        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
+        XCTAssertTrue(new.label.contains("新建「健身房」"), "the new place's row doesn't name what was typed")
+        XCTAssertEqual(squadRows.count, 1, "the squad's places aren't narrowed to what was typed")
+        settle()
+        keepScreenshot(named: "15-compose-place-new-row")
+
+        new.tap()
+        let name = app.textFields["newPlace.name"]
+        XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "新建地点 didn't open")
+        XCTAssertEqual(name.value as? String, "健身房", "the name isn't what was typed")
+        let add = app.buttons["newPlace.add"]
+        XCTAssertFalse(add.isEnabled, "添加 is on before a kind is picked")
+        let gym = app.buttons["newPlace.kind.gym"]
+        gym.tap()
+        let window = app.windows.firstMatch.frame
+        for (element, what) in [(name, "name"), (gym, "kinds"), (app.buttons["newPlace.kind.outdoor"], "last kind")] {
+            XCTAssertTrue(window.contains(element.frame), "the \(what) is cut off")
+        }
+        settle()
+        keepScreenshot(named: "15-compose-place-create")
+
+        XCTAssertTrue(add.isEnabled, "添加 is off with a name and a kind")
+        add.tap()
+        XCTAssertTrue(search.waitForNonExistence(timeout: Self.wait), "添加 didn't close the picker")
+        let picked = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "健身房")).firstMatch
+        XCTAssertTrue(picked.waitForExistence(timeout: Self.wait), "the new place isn't on the post")
+        settle()
+        keepScreenshot(named: "15-compose-place-new-picked")
+    }
+
     /// Mia's salad was tagged at a restaurant: 动态 shows the place's name under her, clear of
     /// the tab bar.
     func testATaggedPlaceShowsOnTheFeed() {

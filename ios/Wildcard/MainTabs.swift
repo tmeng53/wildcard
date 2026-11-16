@@ -1,4 +1,5 @@
 import CharacterEditorUI
+import CheckInDomain
 import CheckInUI
 import Contracts
 import DesignSystem
@@ -40,6 +41,8 @@ struct MainTabs: View {
     let myPosts: any MyPostsSource
     /// What the squad did at a place, for its page.
     let places: any PlaceSource
+    /// The places the squad's members added (自建地点), for the compose page's place picker.
+    let squadPlaces: any SquadPlaceSource
     /// 收藏: one for as long as the tabs are up, so a place's bookmark and 我's list agree.
     @State var savedPlaces: SavedPlacesStore
     /// Squadmates' player cards; nil on the sample squad, whose cards are made from its home.
@@ -100,7 +103,7 @@ struct MainTabs: View {
     init(
         today: TodayModel, profile: MeModel, schedule: ScheduleModel, feed: FeedModel, squad: SquadSettingsModel,
         recap: RecapShelf, myPosts: any MyPostsSource, places: any PlaceSource, savedPlaces: any SavedPlaceSource,
-        notices: any NoticeSource,
+        squadPlaces: any SquadPlaceSource, notices: any NoticeSource,
         coachCards: any CoachCardSource,
         squadmateCards: (any SquadmateCards)? = nil, selection: Binding<Tab>,
         destination: Binding<AppDestination?> = .constant(nil), admin: AdminTools = AdminTools(),
@@ -113,6 +116,7 @@ struct MainTabs: View {
         (self.today, self.profile, self.schedule, self.feed) = (today, profile, schedule, feed)
         (self.squad, self.recap, self.myPosts, self.places) = (squad, recap, myPosts, places)
         (self.squadmateCards, self.coachCards) = (squadmateCards, coachCards)
+        self.squadPlaces = squadPlaces
         _selection = selection
         _destination = destination
         self.leftSquad = leftSquad
@@ -131,6 +135,8 @@ struct MainTabs: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
         .environment(\.placePage, composePlacePage)
+        // The place picker lists the squad's own places and adds new ones.
+        .environment(\.squadPlaces, squadPlaceBook)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
