@@ -71,7 +71,8 @@ struct AppRoot: View {
             case .tabs(let today, let profile, let schedule, let feed, let squad, let recap):
                 MainTabs(
                     today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                    myPosts: app.myPosts, places: app.places, savedPlaces: app.savedPlaces, notices: app.notices,
+                    myPosts: app.myPosts, places: app.places, savedPlaces: app.savedPlaces,
+                    squadPlaces: app.squadPlaces, notices: app.notices,
                     coachCards: app.coachCards,
                     squadmateCards: app.squadmateCards, selection: $tab,
                     destination: $pushDestination,
