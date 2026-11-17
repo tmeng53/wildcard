@@ -77,6 +77,7 @@ extension MainTabs {
                     )
                     .navigationDestination(item: $post) { opened in
                         PostDetailView(model: opened.model, post: opened.id) { post = nil }
+                            .readsNotices(about: .place(.post(opened.id)))
                             .environment(\.sceneTheme, today.scene)
                             .navigationDestination(item: $profilePlace) { place in
                                 profilePlacePage(place, over: wall)
@@ -87,6 +88,7 @@ extension MainTabs {
             // A post from 训练记录 is pushed straight over 我.
             .navigationDestination(item: recordPost) { opened in
                 PostDetailView(model: opened.model, post: opened.id) { post = nil }
+                    .readsNotices(about: .place(.post(opened.id)))
                     .environment(\.sceneTheme, today.scene)
                     .navigationDestination(item: $profilePlace) { place in
                         profilePlacePage(place, over: nil)
@@ -121,6 +123,7 @@ extension MainTabs {
         }
         .navigationDestination(item: $profilePlacePost) { opened in
             PostDetailView(model: opened.model, post: opened.id) { profilePlacePost = nil }
+                .readsNotices(about: .place(.post(opened.id)))
                 .environment(\.sceneTheme, today.scene)
         }
     }

@@ -19,6 +19,11 @@ extension WildcardAPI {
         _ = try await call { try await client.markMyNoticesSeen(body: .json(through.seen)).ok }
     }
 
+    /// `notices` were opened somewhere else: each is read on every phone. Safe to repeat.
+    public func markNoticesOpened(_ notices: [NoticeID]) async throws(APIError) {
+        _ = try await call { try await client.markMyNoticesOpened(body: .json(NoticeID.opened(notices))).ok }
+    }
+
     /// Hears the member's live events (`GET /me/events`) until the server ends the stream,
     /// telling `heard` that it is listening and each notice as it is told.
     public func listenForNotices(_ heard: @escaping @Sendable (LiveNotice) async -> Void) async throws(APIError) {

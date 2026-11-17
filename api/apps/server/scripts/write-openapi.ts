@@ -120,7 +120,7 @@ const app = createApp({
   weather: { savePlace: unused, forgetPlace: unused, dayFor: unused },
   feedback: { send: unused, toFile: unused, filed: unused },
   issues: undefined,
-  notices: { tell: unused, page: unused, markSeen: unused },
+  notices: { tell: unused, page: unused, markSeen: unused, markOpened: unused },
   switches: { list: unused, statesFor: unused },
   coachNames: unused,
   liveEvents: { subscribe: unused, close: unused },

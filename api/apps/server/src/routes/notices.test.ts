@@ -289,3 +289,47 @@ describe('GET /me/notices: thanks', () => {
     expect(told).toMatchObject([{ broadcast: id, style: 'banner', teamLetter: letter }]);
   });
 });
+
+describe('PUT /me/notices/opened', () => {
+  it('marks a notice read on every phone once its place was opened elsewhere, only the caller’s', async () => {
+    const [me, other] = await Promise.all([signUp(), signUp()]);
+    const unlocked = (member: string, item: string) => ({
+      member: NoticeMember.parse(member),
+      kind: 'unlocked' as const,
+      subject: { version: 1 as const, kind: 'store' as const, item },
+    });
+    await notices.tell([
+      unlocked(me.userId, 'deuce'),
+      unlocked(me.userId, 'moss'),
+      unlocked(other.userId, 'lap'),
+    ]);
+    const ids = async (token: string) =>
+      z
+        .object({ notices: z.array(z.object({ id: z.number(), opened: z.boolean().optional() })) })
+        .parse((await get('/me/notices', token)).body).notices;
+    const [moss, deuce] = await ids(me.token);
+    const [theirs] = await ids(other.token);
+    if (moss === undefined || deuce === undefined || theirs === undefined) throw new Error('told');
+    expect(moss.opened).toBeUndefined();
+
+    const open = async (token: string, body: unknown) => {
+      const response = await app.request('/me/notices/opened', {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return response.status;
+    };
+    expect(await open(me.token, { version: 1, notices: [moss.id, theirs.id] })).toBe(200);
+    // Again: safe to repeat.
+    expect(await open(me.token, { version: 1, notices: [moss.id] })).toBe(200);
+    expect(await open(me.token, { version: 1, notices: [] })).toBe(400);
+
+    expect(await ids(me.token)).toEqual([
+      { id: moss.id, opened: true },
+      expect.not.objectContaining({ opened: true }),
+    ]);
+    // Someone else's notice is left as it was.
+    expect((await ids(other.token))[0]?.opened).toBeUndefined();
+  });
+});

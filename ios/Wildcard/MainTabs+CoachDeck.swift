@@ -92,7 +92,9 @@ extension MainTabs {
                 if let coach = deckCoach {
                     CoachDeckPage(
                         deck: deck, coach: coach, coachLook: coach.id.rawValue, cast: deckCast,
-                        places: deckPlaces)
+                        places: deckPlaces
+                    )
+                    .readsNotices(about: .coachPage)
                 }
             case .coachEarlier:
                 CoachEarlierPage(deck: deck, places: deckPlaces) { todayPages.append(.coachCard($0)) }

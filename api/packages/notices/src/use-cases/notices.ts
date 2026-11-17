@@ -16,6 +16,8 @@ export interface NoticePage {
   readonly notices: readonly Notice[];
   /** The newest notice the member has seen, or `undefined` before they open the page. */
   readonly seenThrough?: NoticeId;
+  /** Which notices on the page the member already opened somewhere else: read whatever their id. */
+  readonly opened: ReadonlySet<NoticeId>;
   /**
    * Where the next, older page starts, or `undefined` on the last. A page may hold fewer notices
    * than asked (or none) when it skipped some this build can't read; follow `next` regardless.
@@ -54,6 +56,12 @@ export interface Notices {
    * @throws {NoticeNotFoundError} When `through` isn't one of the member's notices.
    */
   markSeen(member: MemberId, through: NoticeId): Promise<'moved' | 'unchanged'>;
+  /**
+   * Marks `notices` read because the member opened what they are about somewhere else (the post,
+   * the coach page, a push): each once, safe to repeat; ids that aren't theirs change nothing.
+   * Answers with how many this call marked.
+   */
+  markOpened(member: MemberId, notices: readonly NoticeId[]): Promise<number>;
 }
 
 /** Broadcasts, for admins: notices written once for every member (`broadcast.ts`). */
@@ -116,7 +124,7 @@ export function createNotices(deps: {
     async page({ member, before, limit }) {
       if (before === undefined) await tellRunning(member);
       const size = Math.min(Math.max(limit, 1), PAGE_LIMIT);
-      const [{ notices, next }, seenThrough] = await Promise.all([
+      const [{ notices, next, opened }, seenThrough] = await Promise.all([
         deps.store.page({ member, ...(before === undefined ? {} : { before }), limit: size }),
         deps.store.seenThrough(member),
       ]);
@@ -128,6 +136,7 @@ export function createNotices(deps: {
         notices,
         ...(seenThrough === undefined ? {} : { seenThrough }),
         ...(next === undefined ? {} : { next }),
+        opened,
         broadcasts: new Map(broadcasts.map((broadcast) => [broadcast.id, broadcast])),
       };
     },
@@ -137,6 +146,8 @@ export function createNotices(deps: {
       if (outcome === 'unknown') throw new NoticeNotFoundError(through);
       return outcome;
     },
+
+    markOpened: (member, notices) => deps.store.markOpened(member, [...new Set(notices)]),
 
     async put({ id, value, by }) {
       const [now] = await deps.broadcasts.byId([id]);

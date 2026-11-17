@@ -135,6 +135,8 @@ struct MainTabs: View {
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
         .environment(\.placePage, composePlacePage)
+        // A post's page, the coach's page and every place opened read the notices about them.
+        .environment(\.noticeVisits) { [inbox] visit in Task { await inbox.visited(visit) } }
         // The place picker lists the squad's own places and adds new ones.
         .environment(\.squadPlaces, squadPlaceBook)
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
@@ -286,6 +288,7 @@ struct MainTabs: View {
                     PostDetailView(model: opened.model, post: opened.id) {
                         if case .post(let top) = feedPages.last, top.id == opened.id { feedPages.removeLast() }
                     }
+                    .readsNotices(about: .place(.post(opened.id)))
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 case .squadMap:
@@ -359,6 +362,7 @@ extension MainTabs {
                     placePage(place) { todayPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 case .post(let opened):
                     PostDetailView(model: opened.model, post: opened.id) { todayPages.removeLast() }
+                        .readsNotices(about: .place(.post(opened.id)))
                         .environment(\.sceneTheme, today.scene)
                 }
             }

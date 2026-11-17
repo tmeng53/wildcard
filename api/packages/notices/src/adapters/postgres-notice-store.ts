@@ -83,9 +83,22 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
         });
         return notice === undefined ? [] : [notice];
       }) satisfies Notice[];
+      const opened =
+        notices.length === 0
+          ? []
+          : await db
+              .selectFrom('notice_opens')
+              .select('notice_id')
+              .where(
+                'notice_id',
+                'in',
+                notices.map(({ id }) => String(id)),
+              )
+              .execute();
+      const openedIds = new Set(opened.map(({ notice_id }) => NoticeId.parse(Number(notice_id))));
       return found.length > limit && oldest !== undefined
-        ? { notices, next: NoticeId.parse(Number(oldest.id)) }
-        : { notices };
+        ? { notices, next: NoticeId.parse(Number(oldest.id)), opened: openedIds }
+        : { notices, opened: openedIds };
     },
 
     async seenThrough(member) {
@@ -132,6 +145,29 @@ export function createPostgresNoticeStore(db: Kysely<NoticeTables>): NoticeStore
         .returning('id')
         .executeTakeFirst();
       return inserted === undefined ? 'unchanged' : 'moved';
+    },
+
+    async markOpened(member, notices) {
+      if (notices.length === 0) return 0;
+      // Only the member's own notices, each once (notice_opens_notice_id_key).
+      const rows = await db
+        .insertInto('notice_opens')
+        .columns(['member_id', 'notice_id'])
+        .expression(
+          db
+            .selectFrom('notices')
+            .select(['member_id', 'id'])
+            .where('member_id', '=', member)
+            .where(
+              'id',
+              'in',
+              notices.map((id) => String(id)),
+            ),
+        )
+        .onConflict((conflict) => conflict.column('notice_id').doNothing())
+        .returning('id')
+        .execute();
+      return rows.length;
     },
   };
 }

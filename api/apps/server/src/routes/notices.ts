@@ -52,6 +52,14 @@ export const NoticeEntry = z
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
+    opened: z
+      .boolean()
+      .optional()
+      .meta({
+        description:
+          'True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): ' +
+          'it is read, even when newer than `seenThrough`. Left out otherwise.',
+      }),
     squadId: z.uuid().optional().meta({ description: 'The squad it is about, if any.' }),
     alert: z
       .strictObject({
@@ -257,6 +265,24 @@ export const NoticesSeen = z
   })
   .openapi('NoticesSeen');
 
+/** The most notices one `PUT /me/notices/opened` marks. */
+const OPENED_LIMIT = 100;
+
+export const NoticesOpened = z
+  .strictObject({
+    version: bodyVersion(1),
+    notices: z
+      .array(WireNoticeId)
+      .min(1)
+      .max(OPENED_LIMIT)
+      .meta({
+        description:
+          'The notices whose place the caller opened (a post, the coach page, a push). Ids that ' +
+          'aren’t the caller’s are left out.',
+      }),
+  })
+  .openapi('NoticesOpened');
+
 const NoticeQuery = z.strictObject({
   before: z.coerce
     .number()
@@ -292,7 +318,8 @@ export function notices(deps: {
     summary: 'The caller’s notices (通知)',
     description:
       'Newest first, a page at a time, with how far the caller has read: a notice newer than ' +
-      '`seenThrough` is unread, and the bell shows its dot while one is. Names are as they are now.',
+      '`seenThrough` and not `opened` is unread, and the bell shows its dot while one is. Names ' +
+      'are as they are now.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { query: NoticeQuery },
@@ -333,6 +360,32 @@ export function notices(deps: {
     },
   });
 
+  const opened = createRoute({
+    method: 'put',
+    path: '/me/notices/opened',
+    operationId: 'markMyNoticesOpened',
+    summary: 'Mark notices read where they were opened (通知)',
+    description:
+      'The caller opened what these notices are about somewhere else (the post, the coach page, ' +
+      'a push or banner), so each is read on every phone, whatever `seenThrough` says. Each is ' +
+      'kept once, so it is safe to repeat.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: {
+      body: { required: true, content: { 'application/json': { schema: NoticesOpened } } },
+    },
+    responses: {
+      200: {
+        description: 'Marked read',
+        content: { 'application/json': { schema: NoticesOpened } },
+      },
+      400: problem('Not a valid body'),
+      401: problem('No bearer token, or not a valid one'),
+      ...jsonBodyFailures,
+      503: problem('Sign-in can’t be checked right now'),
+    },
+  });
+
   return new OpenAPIHono<SignedIn>()
     .openapi(list, async (c) => {
       const { before, limit } = c.req.valid('query');
@@ -355,13 +408,27 @@ export function notices(deps: {
       const { through } = c.req.valid('json');
       await deps.notices.markSeen(MemberId.parse(c.var.caller.userId), NoticeId.parse(through));
       return c.json({ version: 1 as const, through }, 200);
+    })
+    .openapi(opened, async (c) => {
+      const { notices: ids } = c.req.valid('json');
+      await deps.notices.markOpened(
+        MemberId.parse(c.var.caller.userId),
+        ids.map((id) => NoticeId.parse(id)),
+      );
+      return c.json({ version: 1 as const, notices: ids }, 200);
     });
 }
 
 /** The notices as the app reads them, with the names they show as they are now. */
 export async function noticeEntries(
   deps: { readonly members: Pick<Members, 'squadmates'>; readonly coachNames: CoachNames },
-  { notices: told, broadcasts }: Pick<Page, 'notices' | 'broadcasts'>,
+  {
+    notices: told,
+    broadcasts,
+    opened,
+  }: Pick<Page, 'notices' | 'broadcasts'> & {
+    readonly opened?: Page['opened'];
+  },
 ): Promise<z.infer<typeof NoticeEntry>[]> {
   const movers = [
     ...new Set(
@@ -394,7 +461,8 @@ export async function noticeEntries(
   // A broadcast since lost has nothing to say, so it is left out.
   return told.flatMap((notice) => {
     const entry = wireNotice(notice, names);
-    return entry === undefined ? [] : [entry];
+    if (entry === undefined) return [];
+    return [opened?.has(notice.id) === true ? { ...entry, opened: true } : entry];
   });
 }
 
