@@ -36,12 +36,19 @@ public struct APIScheduleBackend: ScheduleBackend {
             let plan = try api.read { () throws(ContractsError) in try WeeklyPlan(wire) }
             let checkIns = try await api.myCheckIns(from: weekStart, through: weekStart.adding(days: 6))
             let squad = try await api.mySquad()
-            // The titles and the week's scene show on a week that is over.
-            let story =
+            // The week's scene and titles come from its 战报 once the week is over. This week
+            // draws the squad's scene now until Sunday's 战报, after which that is next week's
+            // pick, so it then wears its own (the gym's when it has no 战报, like a past week).
+            // Next week wears its pick once made.
+            let story: (titles: [AwardTitle], scene: SceneID?) =
                 if let squad, weekStart < thisWeek {
                     try await self.story(of: member.id, in: squad.id, weekStart: weekStart)
+                } else if let squad, weekStart == thisWeek {
+                    try await thisWeekStory(of: member.id, in: squad.id, weekStart: weekStart)
+                } else if let squad {
+                    ([], try await pickedScene(of: squad.id, weekStart: weekStart))
                 } else {
-                    (titles: [AwardTitle](), scene: SceneID?.none)
+                    ([], nil)
                 }
             do {
                 return try WeekSheet(
@@ -97,6 +104,34 @@ public struct APIScheduleBackend: ScheduleBackend {
             )
         case .case2(let pending):
             return ([], SceneID(rawValue: pending.sceneId))
+        }
+    }
+
+    /// This week's story: none, so the squad's scene now, while picking is still open for this
+    /// week; once Sunday's 战报 opened next week's pick, the week's own from its story.
+    private func thisWeekStory(of member: MemberID, in squad: SquadID, weekStart: LocalDay) async throws(APIError)
+        -> (titles: [AwardTitle], scene: SceneID?)
+    {
+        guard let open = try await squadScene(of: squad)?.week, open > weekStart else { return ([], nil) }
+        let story = try await self.story(of: member, in: squad, weekStart: weekStart)
+        return (story.titles, story.scene ?? .gym)
+    }
+
+    /// The scene picked for a week to come, once its pick is open (from Sunday's 战报) and made.
+    private func pickedScene(of squad: SquadID, weekStart: LocalDay) async throws(APIError) -> SceneID? {
+        guard let scene = try await squadScene(of: squad), scene.week == weekStart else { return nil }
+        return scene.picked?.scene
+    }
+
+    /// The squad's scene route. Like the story, it only decorates the poster, so one that can't
+    /// be read leaves it off; a signed-out member still fails.
+    private func squadScene(of squad: SquadID) async throws(APIError) -> SquadScene? {
+        do {
+            return try await api.scene(of: squad)
+        } catch .account(let error) {
+            throw .account(error)
+        } catch {
+            return nil
         }
     }
 

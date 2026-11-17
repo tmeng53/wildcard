@@ -85,6 +85,9 @@ public final class CharacterPlayer {
 /// A character that moves. It redraws on every display frame (60 or 120 times a second)
 /// while on screen, and holds still at rest when Reduce Motion is on. Pass `crop`, in canvas
 /// points, to fit another area than the canvas, such as the stage the 上场 entrance crosses.
+/// Without one it is laid out at the canvas's size but drawn with the room a move reaches past
+/// the canvas (`PlaceholderCharacter.moveReachSideways`, `moveReachAbove`) over what is around
+/// it, so a prop swung out or the 药球's target shows whole instead of cut at the canvas's edge.
 public struct CharacterView: View {
     let player: CharacterPlayer
     let crop: CGRect?
@@ -96,15 +99,35 @@ public struct CharacterView: View {
     }
 
     public var body: some View {
-        TimelineView(.animation(minimumInterval: nil, paused: reduceMotion)) { timeline in
-            let frame = reduceMotion ? player.restFrame : player.frame(at: timeline.date)
-            CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: crop)
-        }
-        .aspectRatio(
-            crop.map { $0.width / $0.height } ?? player.drawing.width / player.drawing.height, contentMode: .fit
-        )
-        // The figure is decoration; what it celebrates is said by the screen around it.
-        .accessibilityHidden(true)
+        let area = crop ?? CGRect(x: 0, y: 0, width: player.drawing.width, height: player.drawing.height)
+        let drawn = crop ?? Self.room(around: area)
+        Color.clear
+            .aspectRatio(area.width / area.height, contentMode: .fit)
+            .overlay {
+                GeometryReader { proxy in
+                    let scale = proxy.size.width / area.width
+                    TimelineView(.animation(minimumInterval: nil, paused: reduceMotion)) { timeline in
+                        let frame = reduceMotion ? player.restFrame : player.frame(at: timeline.date)
+                        CharacterCanvas(drawing: frame.drawing, placements: frame.placements, crop: drawn)
+                    }
+                    .frame(width: drawn.width * scale, height: drawn.height * scale)
+                    .position(x: (drawn.midX - area.minX) * scale, y: (drawn.midY - area.minY) * scale)
+                }
+                .allowsHitTesting(false)
+            }
+            // Taps land on the canvas, as before, not on the room around it.
+            .contentShape(Rectangle())
+            // The figure is decoration; what it celebrates is said by the screen around it.
+            .accessibilityHidden(true)
+    }
+
+    /// The canvas with the room a move reaches past it on every side but the floor.
+    static func room(around canvas: CGRect) -> CGRect {
+        CGRect(
+            x: canvas.minX - PlaceholderCharacter.moveReachSideways,
+            y: canvas.minY - PlaceholderCharacter.moveReachAbove,
+            width: canvas.width + 2 * PlaceholderCharacter.moveReachSideways,
+            height: canvas.height + PlaceholderCharacter.moveReachAbove)
     }
 }
 

@@ -231,15 +231,6 @@ export interface CoachMemberNoteStore {
     readonly deliveredNow?: boolean;
   }): Promise<number | undefined>;
   /**
-   * The newest challenge the member's notes of `day` (the squad's day) set, and their answer;
-   * `undefined` when that note set none, there is no note, or it hasn't reached them yet.
-   */
-  challengeOf(input: {
-    readonly squad: SquadId;
-    readonly member: string;
-    readonly day: string;
-  }): Promise<DayChallenge | undefined>;
-  /**
    * The notes this coach wrote the squad's members for the days `from` to `to` (the squad's days,
    * both included) that reached them, oldest first, each with how its challenge went.
    */
@@ -301,6 +292,15 @@ export interface CoachReplyStore {
     readonly coach: CoachId;
     readonly limit: number;
   }): Promise<readonly CoachEmoji[]>;
+  /**
+   * The lines this coach wrote lately in the squad, to posts and to replies alike, newest first:
+   * a reply reads them so it says something new.
+   */
+  recentLines(input: {
+    readonly squad: SquadId;
+    readonly coach: CoachId;
+    readonly limit: number;
+  }): Promise<readonly string[]>;
 }
 
 /** What coaches answered members' replies to them, one a squad a reply. */

@@ -212,19 +212,22 @@ public actor DeviceOutbox: Outbox {
     private struct StoredPlace: Codable {
         let name: String
         let appleID: String?
+        /// Missing on posts kept before squads' own places.
+        let squadPlaceID: UUID?
         let category: String?
         let latitude: Double
         let longitude: Double
 
         init(_ place: Place) {
-            (name, appleID, category) = (place.name, place.appleID, place.category)
+            (name, appleID, squadPlaceID, category) = (place.name, place.appleID, place.squadPlaceID, place.category)
             (latitude, longitude) = (place.latitude, place.longitude)
         }
 
         /// Nil for one this build can no longer read: the post goes out without it.
         var place: Place? {
             try? Place(
-                name: name, appleID: appleID, category: category, latitude: latitude, longitude: longitude)
+                name: name, appleID: appleID, squadPlaceID: squadPlaceID, category: category, latitude: latitude,
+                longitude: longitude)
         }
     }
 }

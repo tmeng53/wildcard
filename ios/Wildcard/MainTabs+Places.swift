@@ -1,3 +1,4 @@
+import CheckInDomain
 import CheckInUI
 import Contracts
 import FeedUI
@@ -27,11 +28,15 @@ extension MainTabs {
     }
 
     /// The place's page on the member's squad (动态's, while 今天 hasn't loaded: a launch into 动态
-    /// or a push opens a tag before it), with 收藏's bookmark; `openPost` pushes a tapped tile's post.
-    func placePage(_ place: Place, openPost: @escaping (CheckInID) -> Void) -> some View {
+    /// or a push opens a tag before it), with 收藏's bookmark and note (its field up for
+    /// `writesNote`); `openPost` pushes a tapped tile's post.
+    func placePage(
+        _ place: Place, writesNote: Bool = false, openPost: @escaping (CheckInID) -> Void
+    ) -> some View {
         SavablePlaceScreen(
             place: place, squad: today.squadID ?? feed.squad, source: places, saved: savedPlaces,
-            today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), openPost: openPost
+            today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), writesNote: writesNote,
+            openPost: openPost
         )
         .environment(\.sceneTheme, today.scene)
     }
@@ -53,6 +58,14 @@ extension MainTabs {
 }
 
 extension MainTabs {
+    /// The squad's own places for the compose page's place picker, each with its adder's nickname
+    /// as the squad's today has it.
+    var squadPlaceBook: SquadPlaceBook {
+        SquadPlaceBook(source: squadPlaces, squad: today.squadID) { [today] member in
+            today.home?.today.members.first { $0.member == member }?.character?.nickname.text
+        }
+    }
+
     /// 地点页 from the compose page's place pill, pushed on the stack the compose page is on: 今天's,
     /// or the editing page's own over a post; and from the 战报's places, pushed over the story.
     var composePlacePage: PlacePageRoute {
@@ -79,4 +92,10 @@ private struct ComposedPlacePage: View {
                     .readsNotices(about: .place(.post(opened.id)))
             }
     }
+}
+
+/// A place opened from 收藏: its page, with the note's field up when 写备注 opened it.
+struct SavedPlaceRoute: Hashable {
+    let place: Place
+    let writesNote: Bool
 }

@@ -3,6 +3,7 @@
 // 饮食小目标. The model sees each member by name.
 
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
+import { personOf, type Roster } from './roster.js';
 
 /** One day of a member's plan: a sport by its name (or any sport), or rest. */
 export type PlanDayFacts =
@@ -39,14 +40,11 @@ function fuelWords(goals: readonly string[]): string {
 }
 
 /** The `member_stats` tool's answer: a few lines a member. */
-export function factsText(
-  facts: readonly MemberFacts[],
-  roster: ReadonlyMap<string, string>,
-): string {
+export function factsText(facts: readonly MemberFacts[], roster: Roster): string {
   if (facts.length === 0) return '还没有队员的数据。';
   return facts
     .map((each) => {
-      const who = roster.get(each.member) ?? '队员';
+      const who = personOf(roster, each.member);
       const counts = `${who}：一共练了 ${String(each.trainedDays)} 天，健康餐 ${String(each.healthyMeals)} 次，坦白放纵餐 ${String(each.cheatMeals)} 次，请假条 ${String(each.disclaimers)} 次。`;
       const top =
         each.topSport === undefined
@@ -74,8 +72,8 @@ export interface WeekPost {
 
 /** What the daily wake tells the coach about one member it writes a morning note to. */
 export interface NoteBrief {
-  /** The member as the model knows them: their name. */
-  readonly name: string;
+  /** The member it is about, by member id. */
+  readonly member: string;
   /** What they did before, ever: for a member who just joined, whom the coach knows nothing of. */
   readonly record?: {
     readonly trainedDays: number;
@@ -121,8 +119,8 @@ function postsWords(posts: readonly WeekPost[]): string {
  * One member's block in a task, for the note written to them: their week, plan and posts, one
  * fact a line under their name.
  */
-export function briefBlock(brief: NoteBrief): string {
-  const lines = [`### ${brief.name}`];
+export function briefBlock(brief: NoteBrief, roster: Roster): string {
+  const lines = [`### ${personOf(roster, brief.member)}`];
   if (brief.record !== undefined) {
     const top = brief.record.topSport;
     lines.push(

@@ -38,7 +38,8 @@ export function getCoachSettings({ settings }: CoachToolDependencies) {
       'hired a coach), the model (openai/…), the rules every coach follows (Chinese; each ' +
       'coach’s soul comes after them), how hard it thinks, how each kind of wake goes, the hour ' +
       'morning notes arrive, the rules a reply to a post or a comment follows (replyRules, after ' +
-      'the coach’s soul and nothing else), the model and rules that set each member’s day ' +
+      'the coach’s soul and nothing else), the rules the morning’s 战术板 line and notes follow ' +
+      '(noteRules, the same way), the model and rules that set each member’s day ' +
       'challenge before the notes, and the holiday calendar. What its calls cost and may spend a day ' +
       'is get_ai_usage_settings’.',
     changes: false,
@@ -145,7 +146,7 @@ export function getSquadCoaching({ report, clock }: CoachToolDependencies) {
     title: 'Read a squad’s coaching',
     description:
       'Shows a squad’s AI coach (null when it hired none) and what it has done: its memory files now (squad.md, memory.md and a ' +
-      'page per member, stored as people/<member id>.md; the model sees each member as 队员N; ' +
+      'page per member, stored as people/<member id>.md; the model reads it as people/<user_id>.md, the first 8 characters of the member id, and each member as 名字（user_id）; ' +
       'and each coach’s own page, coaches/<coach id>.md, which only that coach reads, as me.md), ' +
       'its last 14 战术板 lines, its last 20 wakes (checkIn, comment or daily, state, tries, why ' +
       'the last try failed, and each tool call of its runs in order: the tool, its arguments and ' +

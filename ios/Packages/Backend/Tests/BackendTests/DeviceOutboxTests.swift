@@ -71,6 +71,30 @@ import Testing
     #expect(body.place?.name == "Sweetgreen")
 }
 
+@Test func aWaitingMealKeepsItsSquadsOwnPlaceOnDisk() async throws {
+    let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
+    let squad = SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))
+    let canteen = try #require(UUID(uuidString: "44444444-4444-4444-4444-444444444444"))
+    let place = try Place(
+        name: "公司食堂", squadPlaceID: canteen, category: "restaurant", latitude: 40.7466, longitude: -73.9895)
+    let post = PendingCheckIn(
+        id: CheckInID(try #require(UUID(uuidString: "11111111-1111-1111-1111-111111111111"))),
+        member: MemberID(try #require(UUID(uuidString: "22222222-2222-2222-2222-222222222222"))),
+        day: try LocalDay("2026-11-16"), createdAt: Timestamp(millisecondsSince1970: 1_794_800_000_000),
+        audience: try Audience([squad]), draft: .healthyMeal(PostBody(photos: [], caption: "", place: place)))
+
+    await DeviceOutbox(directory: directory).save([post])
+
+    let loaded = await DeviceOutbox(directory: directory).load()
+    #expect(loaded == [post])
+    guard case .healthyMeal(let body) = try #require(loaded.first).draft else {
+        Issue.record("the waiting post isn't a 健康餐")
+        return
+    }
+    #expect(body.place?.squadPlaceID == canteen)
+    #expect(body.place?.key?.rawValue == "squad:44444444-4444-4444-4444-444444444444")
+}
+
 @Test func aWaitingMealKeepsItsRatingOnDisk() async throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
     let squad = SquadID(try #require(UUID(uuidString: "33333333-3333-3333-3333-333333333333")))

@@ -309,7 +309,9 @@ extension Timestamp {
 extension Place {
     /// The place as the API takes it: on a post, and as a saved place (收藏).
     public var wire: Components.Schemas.Place {
-        .init(name: name, appleId: appleID, category: category, latitude: latitude, longitude: longitude)
+        .init(
+            name: name, appleId: appleID, squadPlaceId: squadPlaceID?.uuidString.lowercased(), category: category,
+            latitude: latitude, longitude: longitude)
     }
 
     /// A place as the API sends it; one this build can't read is left off the post, never the
@@ -317,7 +319,8 @@ extension Place {
     init?(wire: Components.Schemas.Place?) {
         guard let wire else { return nil }
         try? self.init(
-            name: wire.name, appleID: wire.appleId, category: wire.category, latitude: wire.latitude,
+            name: wire.name, appleID: wire.appleId, squadPlaceID: wire.squadPlaceId.flatMap(UUID.init(uuidString:)),
+            category: wire.category, latitude: wire.latitude,
             longitude: wire.longitude)
     }
 }

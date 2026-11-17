@@ -5,7 +5,7 @@
 # macOS runners have no Docker, so the database and API checks run in a Linux job.
 # The `ios` job runs the app's UI tests on a simulator and uploads their screenshots.
 # Free macOS runners are few and shared by every PR, and one iOS run takes three of them for about
-# 40 minutes, so no PR runs the UI tests (Tracy, 2026-11-08): PRs merge on the Linux checks plus
+# 65 to 80 minutes, so no PR runs the UI tests (Tracy, 2026-11-08): PRs merge on the Linux checks plus
 # `ios-build`, one Mac compiling the app for about ten minutes (Tracy, 2026-11-14), and `ios`
 # runs on main only, on a schedule every 3 hours for what main changed since the last scheduled
 # run (nothing when main didn't change) and on a manual run (Actions -> verify -> Run workflow),
@@ -309,7 +309,7 @@ jobs:
   # Builds the app, runs the UI tests on a simulator and uploads the screenshots they keep,
   # so reviewers and verifiers see every visible change without a Mac. The suite runs in three
   # parts on three Macs at once (scripts/ios-test.sh, SHARD), each building the app itself:
-  # about 40 minutes instead of 1h30 one after another (2026-11-07). Reproducing one test
+  # each part 65 to 80 minutes instead of 3h20 one after another (2026-11-14). Reproducing one test
   # (only_testing) uses one Mac.
   ios:
     needs: changes
@@ -320,9 +320,11 @@ jobs:
       fail-fast: false
       matrix:
         shard: ${{ fromJSON(inputs.only_testing && '[1]' || '[1, 2, 3]') }}
-    # One part is about 27 minutes of tests after a 12-minute build; the limit leaves room for a
-    # cold build and the retries.
-    timeout-minutes: 75
+    # One part is about 54 minutes of tests by scripts/ios-test-weights, but a class's time varies
+    # by up to a third from run to run and the build and boot took 13 to 19 minutes: one part
+    # needed about 80 minutes (run 43645151243, 2026-11-14); the limit leaves room for that and a
+    # retry or two.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
         with:

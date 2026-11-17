@@ -42,7 +42,10 @@ public struct PlaceKey: RawRepresentable, Hashable, Sendable {
 }
 
 extension Place {
-    /// How the API names it: by Apple Maps' id. Nil for a place Maps gave no id, which no squad
-    /// numbers can be kept for.
-    public var key: PlaceKey? { appleID.flatMap(PlaceKey.init(appleID:)) }
+    /// How the API names it: a squad's own place by its id, else by Apple Maps' id. Nil for a
+    /// place Maps gave no id, which no squad numbers can be kept for.
+    public var key: PlaceKey? {
+        if let squadPlaceID { return PlaceKey(squadPlace: squadPlaceID) }
+        return appleID.flatMap(PlaceKey.init(appleID:))
+    }
 }

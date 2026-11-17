@@ -206,6 +206,7 @@ struct PostCard: View {
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
                 if !post.checkIn.inFeed { UnpostedTag() }
+                if let time = WorkoutTime(post.checkIn) { WorkoutTimeTag(time: time) }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
                 if !tiles.isEmpty { words.padding(.top, Space.xxs) }
                 if case .trained(let training) = post.checkIn.entry, !training.trainedWith.isEmpty {

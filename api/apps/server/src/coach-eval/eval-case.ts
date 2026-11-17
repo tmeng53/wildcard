@@ -161,6 +161,8 @@ export const EvalCase = z.strictObject({
       }),
     )
     .default([]),
+  /** The coach's 战术板 lines before the wake, by day; a daily wake sees the ones before its day. */
+  boardNotes: z.array(z.strictObject({ day: z.iso.date(), text: z.string().min(1) })).default([]),
   /** The change of coach that brought this one, with the letter left, if any. */
   handover: z
     .strictObject({ from: z.string(), at: Moment, letter: z.string().optional() })
@@ -178,6 +180,8 @@ export const EvalCase = z.strictObject({
     z.strictObject({ kind: z.literal('checkIn'), checkIn: z.string() }),
     z.strictObject({ kind: z.literal('comment'), checkIn: z.string(), comment: z.string() }),
     z.strictObject({ kind: z.literal('challenges') }),
+    /** The whole morning: the challenges set, then the 战术板 line and each member's note. */
+    z.strictObject({ kind: z.literal('daily') }),
   ]),
   expect: z.array(Expectation).min(1),
 });

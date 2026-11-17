@@ -304,8 +304,6 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
         return Number(id);
       },
 
-      challengeOf: (input) => dayChallenge(db, input),
-
       async deliveredBetween({ squad, coach, from, to }) {
         const rows = await db
           .selectFrom('coach_member_notes')
@@ -421,6 +419,21 @@ export function createPostgresCoachStores(db: Kysely<DB>): CoachStores {
           const parsed = CoachEmoji.safeParse(emoji);
           return parsed.success ? [parsed.data] : [];
         });
+      },
+
+      async recentLines({ squad, coach, limit }) {
+        const { rows } = await sql<{ text: string }>`
+          select text from (
+            select text, at from public.coach_replies
+              where squad_id = ${squad} and coach_id = ${coach} and text is not null
+            union all
+            select text, at from public.coach_answers
+              where squad_id = ${squad} and coach_id = ${coach}
+          ) said
+          order by at desc
+          limit ${limit}
+        `.execute(db);
+        return rows.map(({ text }) => text);
       },
     },
 

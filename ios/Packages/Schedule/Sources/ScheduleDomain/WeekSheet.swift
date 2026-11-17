@@ -15,8 +15,9 @@ public struct WeekSheet: Hashable, Sendable {
     public let titles: [AwardTitle]
     /// At most `FuelGoal.maxCount`, in the order picked.
     public var fuel: [FuelGoal]
-    /// The scene the squad trained on that week, from its 战报; nil while the week isn't over,
-    /// and for a week the squad has no 战报 of.
+    /// The week's own scene: for a week that is over, the one its 战报 names (nil without one);
+    /// this week's once Sunday's 战报 opened next week's pick; next week's once picked. Nil
+    /// otherwise.
     public let scene: SceneID?
 
     public init(

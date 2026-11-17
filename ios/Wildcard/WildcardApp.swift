@@ -60,6 +60,8 @@ struct WildcardApp: App {
     @State private var places: any PlaceSource
     /// 收藏, kept on the phone for the sample squad.
     @State private var savedPlaces: any SavedPlaceSource = InMemorySavedPlaceSource { Timestamp(LaunchOptions.now()) }
+    /// The squad's own places (公司食堂, 小区健身房), added by two of the sample squad's teammates.
+    @State private var squadPlaces: any SquadPlaceSource
     @State private var tab: MainTabs.Tab = LaunchOptions.firstTab
     /// Where a tapped push goes, kept until the tabs open it.
     @State private var pushDestination: AppDestination?
@@ -90,13 +92,14 @@ struct WildcardApp: App {
         LaunchOptions.forgetTodayStateIfAsked()
         // The two screens' samples share the member and the squad, so my post opens in 动态.
         let (member, squad) = (MemberID(UUID()), SquadID(UUID()))
+        let backend = InMemoryCheckInBackend.sampleSquad(
+            now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
+            patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
+            coachNote: LaunchOptions.coachNote, coachLetter: LaunchOptions.coachLetter,
+            together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge)
         let today = TodayModel(
             store: TodayStore(
-                backend: InMemoryCheckInBackend.sampleSquad(
-                    now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
-                    patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
-                    coachNote: LaunchOptions.coachNote, coachLetter: LaunchOptions.coachLetter,
-                    together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge),
+                backend: backend,
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
             writer: LaunchOptions.disclaimerWriter,
@@ -109,6 +112,7 @@ struct WildcardApp: App {
             celebratesTogether: LaunchOptions.together != nil,
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
+        _squadPlaces = State(initialValue: Self.sampleSquadPlaces(backend: backend, member: member))
         _profile = State(initialValue: Self.sampleProfile())
         _squad = State(
             initialValue: SquadSettingsModel(
@@ -317,8 +321,8 @@ struct WildcardApp: App {
         } else {
             MainTabs(
                 today: today, profile: profile, schedule: schedule, feed: feed, squad: squad, recap: recap,
-                myPosts: myPosts, places: places, savedPlaces: savedPlaces, notices: LaunchOptions.notices,
-                coachCards: LaunchOptions.coachCards,
+                myPosts: myPosts, places: places, savedPlaces: savedPlaces,
+                squadPlaces: squadPlaces, notices: LaunchOptions.notices, coachCards: LaunchOptions.coachCards,
                 selection: $tab,
                 destination: $pushDestination, location: Self.sampleLocation
             )
@@ -359,5 +363,16 @@ struct WildcardApp: App {
         await today.load()
         let picker = today.home.flatMap { home in home.squad.members.first { $0 != home.member } }
         await today.land(on: scene, move: SceneMove(scene: scene, picker: picker))
+    }
+}
+
+extension WildcardApp {
+    /// The sample squad's own places, added by the first two teammates on its today.
+    fileprivate static func sampleSquadPlaces(
+        backend: InMemoryCheckInBackend, member: MemberID
+    ) -> any SquadPlaceSource {
+        InMemorySquadPlaceSource {
+            ((try? await backend.home())?.today.members ?? []).map(\.member).filter { $0 != member }
+        }
     }
 }

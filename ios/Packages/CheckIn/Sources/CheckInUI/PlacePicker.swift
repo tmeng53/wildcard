@@ -42,8 +42,6 @@ struct PlacePill: View {
             } cancel: {
                 isPicking = false
             }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
         }
     }
 }
@@ -51,10 +49,18 @@ struct PlacePill: View {
 /// 添加位置: a short sheet with the map, its ticket pins, the search field and the places as rows.
 /// A tap on a row or a pin only selects it (Tracy, 2026-11-13: she couldn't tell which pin a row
 /// was): the map moves to it, its pin turns graphite under its name, its row darkens and the list
-/// scrolls to it. 添加 in the header picks the selected place.
+/// scrolls to it. 添加 in the header picks the selected place. The places the squad's members
+/// added (自建地点) come first, with who added each; while typing, the first row adds what was
+/// typed as a new one (Tracy, 2026-11-16), on 新建地点 pushed in the sheet.
 struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.squadPlaces) private var book
+    @State private var squadPlaces: [SquadPlace] = []
+    /// What 新建地点 starts from, while it is pushed.
+    @State private var creating: NewPlace?
+    /// How tall the sheet stands: half the screen to pick, all of it for 新建地点's fields.
+    @State private var detent: PresentationDetent = .medium
     @State private var search = PlaceSearch()
     @State private var query = ""
     @State private var camera: MapCameraPosition = .userLocation(fallback: .automatic)
@@ -76,8 +82,35 @@ struct PlacePickerSheet: View {
     private static let mapHeight: Double = 220
     /// The farthest the map stays when it moves to a selected place, so its pin stands apart.
     private static let closeUp: Double = 3000
+    /// The nearest the map comes, so fitting one pin (a lone squad place while typing) shows its
+    /// streets, not a rooftop.
+    private static let nearest: Double = 500
 
     var body: some View {
+        NavigationStack {
+            picker
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .navigationDestination(item: $creating) { new in
+                    if let wired = book.wired {
+                        NewSquadPlacePage(new, source: wired.source, squad: wired.squad) { place in
+                            squadPlaces.append(place)
+                            pick(place.place)
+                        }
+                    }
+                }
+        }
+        .presentationDetents([.medium, .large], selection: $detent)
+        .presentationDragIndicator(.visible)
+        .onChange(of: creating) { _, new in
+            if new != nil { detent = .large }
+        }
+        .task {
+            guard let wired = book.wired else { return }
+            if let places = try? await wired.source.places(in: wired.squad) { squadPlaces = places }
+        }
+    }
+
+    private var picker: some View {
         VStack(spacing: 0) {
             HStack {
                 HeaderTextButton(Text(copy: "取消", bundle: .module), action: cancel)
@@ -112,6 +145,31 @@ struct PlacePickerSheet: View {
                         .padding(.vertical, Space.s)
                         .accessibilityIdentifier("place.search")
                     List {
+                        if search.isSuggesting, book.wired != nil, let typed = typedName {
+                            Button {
+                                // Where the phone is, else the place selected or the squad's first, so the map
+                                // opens near.
+                                creating = NewPlace(
+                                    name: typed,
+                                    near: search.here?.coordinate ?? selected?.coordinate ?? squadRows.first?.coordinate
+                                )
+                            } label: {
+                                PlaceRow(
+                                    symbol: "plus", name: String(copy: "新建「\(typed)」", bundle: .module), detail: nil,
+                                    distance: nil, isSelected: false)
+                            }
+                            .listRowBackground(Color(role: .bgCanvas, in: theme))
+                            .accessibilityIdentifier("place.new")
+                        }
+                        ForEach(squadRows) { found in
+                            Button {
+                                select(found, list: nil)
+                            } label: {
+                                PlaceRow(found: found, isSelected: isSelected(found))
+                            }
+                            .listRowBackground(Color(role: isSelected(found) ? .bgSubtle : .bgCanvas, in: theme))
+                            .accessibilityIdentifier("place.squad")
+                        }
                         if search.isSuggesting {
                             ForEach(search.suggestions) { suggestion in
                                 Button {
@@ -176,7 +234,7 @@ struct PlacePickerSheet: View {
     }
 
     private func map(_ list: ScrollViewProxy) -> some View {
-        Map(position: $camera) {
+        Map(position: $camera, bounds: MapCameraBounds(minimumDistance: Self.nearest)) {
             UserAnnotation()
             ForEach(pins) { found in
                 Annotation(found.place.name, coordinate: found.coordinate, anchor: .bottom) {
@@ -194,11 +252,30 @@ struct PlacePickerSheet: View {
         .frame(height: Self.mapHeight)
     }
 
-    /// The found places, the selected one last so it draws over its neighbours, and kept on the
-    /// map when a new search no longer finds it.
+    /// The found places and the squad's own, the selected one last so it draws over its
+    /// neighbours, and kept on the map when a new search no longer finds it.
     private var pins: [FoundPlace] {
-        guard let selected else { return search.found }
-        return search.found.filter { $0.id != selected.id } + [selected]
+        let all = squadRows + search.found
+        guard let selected else { return all }
+        return all.filter { $0.id != selected.id } + [selected]
+    }
+
+    /// What was typed, as a new place's name; nil while nothing is.
+    private var typedName: String? {
+        let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return typed.isEmpty ? nil : typed
+    }
+
+    /// The squad's own places that have what was typed in their name, as rows: under each, who
+    /// added it.
+    private var squadRows: [FoundPlace] {
+        squadPlaces.filter { $0.matches(query) }.map { added in
+            let location = CLLocation(latitude: added.place.latitude, longitude: added.place.longitude)
+            return FoundPlace(
+                place: added.place,
+                address: added.addedBy.flatMap(book.name).map { String(copy: "\($0)添加", bundle: .module) },
+                distance: search.here.map { $0.distance(from: location) })
+        }
     }
 
     private func isSelected(_ found: FoundPlace) -> Bool {
@@ -213,139 +290,14 @@ struct PlacePickerSheet: View {
     private func select(_ found: FoundPlace, list: ScrollViewProxy?) {
         if !isSelected(found) { selections += 1 }
         // A row's details (address, distance) win over the bare place a post came in with.
-        selected = search.found.first { $0.id == found.id } ?? found
+        selected = (squadRows + search.found).first { $0.id == found.id } ?? found
         let distance = min(cameraDistance ?? Self.closeUp, Self.closeUp)
         withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
             camera = .camera(MapCamera(centerCoordinate: found.coordinate, distance: distance))
-            if let list, search.found.contains(where: { $0.id == found.id }) {
+            if let list, (squadRows + search.found).contains(where: { $0.id == found.id }) {
                 list.scrollTo(found.id, anchor: .top)
             }
         }
-    }
-}
-
-/// The selected pin's name over it, in graphite like the pin.
-private struct PinName: View {
-    @Environment(\.sceneTheme) private var theme
-    let name: String
-
-    var body: some View {
-        Text(verbatim: name)
-            .typeStyle(TypeRamp.footnoteEmphasis)
-            .foregroundStyle(Color(role: .bgCanvas, in: theme))
-            .lineLimit(1)
-            .padding(.horizontal, Space.s)
-            .padding(.vertical, Space.xxs)
-            .background(Color(role: .fgDefault, in: theme), in: Capsule())
-            .accessibilityHidden(true)
-    }
-}
-
-/// A row in the list: a place (its kind's icon in a circle, its name and address, and how far it
-/// is) or one of Apple Maps' suggestions (a magnifier, its title and its line under it).
-private struct PlaceRow: View {
-    @Environment(\.sceneTheme) private var theme
-    let symbol: String
-    let name: String
-    let detail: String?
-    /// Metres from the phone, when known.
-    let distance: Double?
-    let isSelected: Bool
-
-    private static let disc: Double = 36
-
-    var body: some View {
-        HStack(spacing: Space.s) {
-            Image(systemName: symbol)
-                .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                .foregroundStyle(Color(role: isSelected ? .bgCanvas : .fgDefault, in: theme))
-                .frame(width: Self.disc, height: Self.disc)
-                .background(Color(role: isSelected ? .fgDefault : .bgSubtle, in: theme), in: Circle())
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Space.xxs) {
-                Text(verbatim: name)
-                    .typeStyle(TypeRamp.pick)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                    .lineLimit(1)
-                if let detail {
-                    Text(verbatim: detail)
-                        .typeStyle(TypeRamp.footnote)
-                        .foregroundStyle(Color(role: .fgMuted, in: theme))
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            if let distance {
-                Text(verbatim: Self.distance(distance))
-                    .typeStyle(TypeRamp.scoreCaption)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-                    .monospacedDigit()
-            }
-        }
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    static func distance(_ metres: Double) -> String {
-        Measurement(value: metres, unit: UnitLength.meters)
-            .formatted(
-                .measurement(
-                    width: .abbreviated, usage: .road, numberFormatStyle: .number.precision(.fractionLength(0...1))
-                )
-                .locale(AppLanguage.current.locale))
-    }
-}
-
-extension PlaceRow {
-    init(found: FoundPlace, isSelected: Bool) {
-        self.init(
-            symbol: found.place.kind.symbol, name: found.place.name, detail: found.address, distance: found.distance,
-            isSelected: isSelected)
-    }
-}
-
-/// A map pin shaped as the logo's ticket: a stub under a notched tear line, the place's kind's
-/// icon above it. Graphite once it is the picked place, else white with a hairline.
-struct TicketPin: View {
-    @Environment(\.sceneTheme) private var theme
-    let symbol: String
-    let isPicked: Bool
-
-    private static let size = CGSize(width: 32, height: 46)
-    /// The tear line, from the top: the face is a square above it.
-    private static let tear: Double = 32
-
-    var body: some View {
-        let shape = PinTicket(tear: Self.tear)
-        ZStack(alignment: .top) {
-            shape.fill(Color(role: isPicked ? .fgDefault : .bgCanvas, in: theme))
-            shape.stroke(Color(role: isPicked ? .fgDefault : .borderDefault, in: theme), lineWidth: Sizing.hairline)
-            Image(systemName: symbol)
-                .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                .foregroundStyle(Color(role: isPicked ? .bgCanvas : .fgDefault, in: theme))
-                .frame(width: Self.size.width, height: Self.tear)
-        }
-        .frame(width: Self.size.width, height: Self.size.height)
-        .shadow(color: Color(role: .fgDefault, in: theme).opacity(0.15), radius: 3, y: 1)
-        .accessibilityHidden(true)
-    }
-}
-
-/// The ticket's outline at pin size: rounded corners and a half-round notch in each side.
-private struct PinTicket: Shape {
-    let tear: Double
-    private let notch: Double = 3.5
-    private let corner: Double = 6
-
-    func path(in rect: CGRect) -> Path {
-        let ticket = Path(roundedRect: rect, cornerRadius: corner, style: .continuous)
-        var notches = Path()
-        for side in [rect.minX, rect.maxX] {
-            notches.addEllipse(
-                in: CGRect(x: side - notch, y: rect.minY + tear - notch, width: notch * 2, height: notch * 2))
-        }
-        return ticket.subtracting(notches)
     }
 }
 #endif

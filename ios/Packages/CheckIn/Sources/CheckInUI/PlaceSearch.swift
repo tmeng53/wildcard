@@ -12,7 +12,9 @@ struct FoundPlace: Identifiable, Hashable, Sendable {
     /// Metres from the phone, when the phone's place is known.
     let distance: Double?
 
-    var id: String { place.appleID ?? "\(place.name)|\(place.latitude)|\(place.longitude)" }
+    var id: String {
+        place.squadPlaceID?.uuidString ?? place.appleID ?? "\(place.name)|\(place.latitude)|\(place.longitude)"
+    }
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: place.latitude, longitude: place.longitude)
     }

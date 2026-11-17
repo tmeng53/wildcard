@@ -114,7 +114,11 @@ struct PosterContentTests {
         #expect(try paint(monday.adding(days: -7), scene: .tennis) == .scene(.tennis))
         #expect(try paint(monday.adding(days: -14)) == .scene(.gym), "no 战报: the gym")
         #expect(try paint(monday) == .thisWeek)
-        #expect(try paint(monday.adding(days: 7)) == .graphite)
+        #expect(
+            try paint(monday, scene: .pool) == .scene(.pool),
+            "after Sunday's 战报 this week keeps its scene, not next week's pick")
+        #expect(try paint(monday.adding(days: 7)) == .graphite, "not picked yet")
+        #expect(try paint(monday.adding(days: 7), scene: .climbing) == .scene(.climbing), "next week's pick")
         #expect(
             PosterContent(template: WeekBoard(template: plan, weekStart: monday), nickname: "Tracy").paint == .graphite)
 

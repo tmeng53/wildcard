@@ -1,9 +1,17 @@
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 
-import { challengeText, type Challenge, type ChallengeCompletion } from './challenge.js';
 import type { Coach } from './coach.js';
 import { planIndexOf, type NoteBrief, type PlanDayFacts } from './member-facts.js';
-import { dayWords, postWhat, timeLines, type SquadWeek, type WeekCheckIn } from './squad-week.js';
+import {
+  dayWords,
+  postWhat,
+  ratingWords,
+  trainedWithWords,
+  timeLines,
+  type SquadWeek,
+  type WeekCheckIn,
+} from './squad-week.js';
+import { peopleOf, personOf, type Roster } from './roster.js';
 
 // The reply step (Tracy, 2026-11-14: one prompt for answering a post and answering a comment,
 // written from first principles): the coach's soul and what a good reply is, then a task with
@@ -70,7 +78,7 @@ export class PostNumbers {
 export interface ReplyFacts {
   readonly kind: 'checkIn' | 'comment';
   readonly week: SquadWeek;
-  readonly roster: ReadonlyMap<string, string>;
+  readonly roster: Roster;
   readonly numbers: PostNumbers;
   /** The post the reply goes under. */
   readonly post: WeekCheckIn;
@@ -89,8 +97,6 @@ export interface ReplyFacts {
   readonly brief?: NoteBrief;
   /** Today, `YYYY-MM-DD`, on the member's own day. */
   readonly day: string;
-  /** Today's challenge, only once the member took it up. */
-  readonly challenge?: { readonly challenge: Challenge; readonly completion?: ChallengeCompletion };
   /** Posts other than this one under which the member and the coach talked over the last day. */
   readonly talkedUnder: readonly WeekCheckIn[];
   /** On a 请假条, the streaks it keeps going. */
@@ -99,6 +105,8 @@ export interface ReplyFacts {
   readonly page?: { readonly path: string; readonly body: string | undefined };
   /** What is special about today, one line each (a holiday, a change of coach). */
   readonly today: readonly string[];
+  /** The lines the coach wrote lately in the squad, under any post, newest first. */
+  readonly recentLines: readonly string[];
   /** The emoji the coach reacted with lately, newest first. */
   readonly recentEmoji: readonly string[];
   readonly language: ReaderLanguage;
@@ -107,7 +115,7 @@ export interface ReplyFacts {
 /** The task of one reply: the post, the person, and the little else a reply needs. */
 export function replyTaskOf(facts: ReplyFacts): string {
   const { kind, roster, numbers, post, to } = facts;
-  const name = (member: string): string => roster.get(member) ?? '队员';
+  const name = (member: string): string => personOf(roster, member);
   const number = numbers.of(post);
   const heading =
     kind === 'checkIn'
@@ -125,7 +133,16 @@ export function replyTaskOf(facts: ReplyFacts): string {
     ...(facts.today.length === 0
       ? []
       : [['## 今天', ...facts.today.map((line) => `- ${line}`)].join('\n')]),
-    `## 小队的人\n${[...roster.values()].join('、')}。小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。`,
+    `## 小队的人（括号里是 user_id）\n${peopleOf(roster)}。\n小队的事、你和大家之间的事在 squad.md、memory.md，用 recall 查。`,
+    ...(facts.recentLines.length === 0
+      ? []
+      : [
+          [
+            '## 你最近在小队里说过的话（新的在前）',
+            ...facts.recentLines.map((line) => `- 「${line}」`),
+            '这些大家都看过了：里面有过的说法、梗和招牌，这次不用。',
+          ].join('\n'),
+        ]),
     ...(kind === 'checkIn'
       ? [
           `## 你最近点过的表情\n${facts.recentEmoji.length === 0 ? '还没点过。' : facts.recentEmoji.join(' ')}`,
@@ -145,6 +162,9 @@ function postBlock(
   ];
   if (post.place !== undefined) lines.push(`- 地点：${post.place}`);
   if (post.text !== undefined) lines.push(`- 写的：「${post.text}」`);
+  if (post.rating !== undefined) lines.push(`- 打分：${ratingWords(post.rating)}`);
+  const together = trainedWithWords(post, name);
+  if (together !== undefined) lines.push(`- 和谁一起练：${together}`);
   const photos = post.photos?.length ?? 0;
   if (photos > 0) lines.push(`- 照片 ${String(photos)} 张，你还没看过（look_at_photos）`);
   return lines.join('\n');
@@ -167,7 +187,7 @@ function planDayWords(day: PlanDayFacts | undefined): string {
 /** The member the reply answers: their day, their week, and what the coach knows of them. */
 function personBlock(facts: ReplyFacts, name: (member: string) => string): string {
   const { brief, numbers, post, to } = facts;
-  const lines = [`## ${name(to)}`];
+  const lines = [`## 你在回的人：${name(to)}`];
   if (brief?.plan !== undefined) {
     lines.push(`- 今天的计划：${planDayWords(brief.plan.week[planIndexOf(facts.day)])}`);
   }
@@ -183,11 +203,6 @@ function personBlock(facts: ReplyFacts, name: (member: string) => string): strin
             `${numbers.of(each)} ${WEEKDAYS[planIndexOf(each.day)] ?? ''}${kindWords(each)}`,
         )
         .join('；')}`,
-    );
-  }
-  if (facts.challenge !== undefined) {
-    lines.push(
-      `- 今天的挑战：「${challengeText(facts.challenge.challenge)}」，${facts.challenge.completion === undefined ? '接了，还没完成' : '已经完成了'}`,
     );
   }
   const streaks = [

@@ -261,7 +261,8 @@ extension MenuDish {
         // A place the app's rule no longer takes is left off the dish, not the dish off the menu.
         let place = wire.place.flatMap {
             try? Place(
-                name: $0.name, appleID: $0.appleId, category: $0.category, latitude: $0.latitude,
+                name: $0.name, appleID: $0.appleId, squadPlaceID: $0.squadPlaceId.flatMap(UUID.init(uuidString:)),
+                category: $0.category, latitude: $0.latitude,
                 longitude: $0.longitude)
         }
         self.init(
@@ -275,7 +276,8 @@ extension PlaceWeek {
     init?(_ wire: Components.Schemas.StoryPlace) {
         guard
             let place = try? Place(
-                name: wire.place.name, appleID: wire.place.appleId, category: wire.place.category,
+                name: wire.place.name, appleID: wire.place.appleId,
+                squadPlaceID: wire.place.squadPlaceId.flatMap(UUID.init(uuidString:)), category: wire.place.category,
                 latitude: wire.place.latitude, longitude: wire.place.longitude)
         else { return nil }
         var visits: [Visit] = []

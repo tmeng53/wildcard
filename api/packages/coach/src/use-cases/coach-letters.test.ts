@@ -223,9 +223,13 @@ describe('the outgoing coach’s letter', () => {
       // A goodbye to the squad and the next coach, never a briefing between coaches.
       expect(run?.task).toContain('给小队和暖暖留一封告别信，全队都会看到');
       expect(run?.task).toContain('不写谁住哪、做什么工作、私下说过什么');
-      expect(run?.task).toContain('小队的人：米亚、阿杰');
-      // Its memory, members by the names the model knows them by.
-      expect(run?.task).toContain('### people/米亚.md（米亚这个人）\n```\n米亚 周三雷打不动游泳');
+      expect(run?.task).toContain(
+        `小队的人（括号里是 user_id）：米亚（${mia.slice(0, 8)}）、阿杰（${leo.slice(0, 8)}）`,
+      );
+      // Its memory, members by the user_id the model knows them by.
+      expect(run?.task).toContain(
+        `### people/${mia.slice(0, 8)}.md（米亚这个人）\n\`\`\`\n米亚 周三雷打不动游泳`,
+      );
       expect(run?.task).toContain('### squad.md（这个小队）\n```\n周日晚上最热闹');
       expect(run?.task).not.toContain('回来');
       // The tokens count toward the squad's budget, as a letter's.
@@ -281,13 +285,20 @@ describe('the outgoing coach’s letter', () => {
 
   it('asks again for a letter too long, and never cuts one', async () => {
     await rolledBack(async (fixture) => {
-      const { squad, by, hiring } = fixture;
+      const { squad, by, hiring, mia } = fixture;
       await hiring.change({ squad, coach: nuannuan, by });
-      const { agent, runs } = writingAgent(['长'.repeat(201), '队员2 交给你了', '短的。']);
+      const userId = mia.slice(0, 8);
+      const { agent, runs } = writingAgent([
+        '长'.repeat(201),
+        '队员2 交给你了',
+        `米亚（${userId}）交给你了`,
+        '短的。',
+      ]);
       expect(await letters(fixture, { agent }).write(squad)).toMatchObject({ text: '短的。' });
       expect(runs[0]?.answers).toStrictEqual([
         '太长了：201 字，最多 200 字。重写一封。',
         '队员看不到「队员N」这种叫法：直接说「你」，或者叫昵称。重写一封。',
+        `信里写了 user_id「${userId}」，给人看的话里只写名字。重写一封。`,
         '交上了。',
       ]);
     });

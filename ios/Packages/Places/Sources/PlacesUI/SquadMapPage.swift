@@ -93,16 +93,16 @@ struct SquadMapPage: View {
     private var map: some View {
         Map(position: $camera) {
             if store.member == nil {
-                ForEach(store.spots) { spot in
+                // Keyed by whether it is open too, so opening one makes a new annotation: MapKit sizes an
+                // annotation once, and a stack that grew in place showed its name only when the map
+                // next moved.
+                ForEach(store.spots.map { ShownSpot(spot: $0, isOpen: store.expanded == $0.id) }) { shown in
+                    let spot = shown.spot
                     Annotation(spot.place.place.name, coordinate: spot.place.place.coordinate, anchor: .top) {
                         SpotMarker(
                             spot: spot, mode: store.mode, expanded: store.expanded == spot.id, store: store,
                             heads: heads,
-                            toggle: {
-                                withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) {
-                                    store.toggle(spot.id)
-                                }
-                            },
+                            toggle: { store.toggle(spot.id) },
                             openPlace: { openPlace(spot.place.place) })
                     }
                     .annotationTitles(.hidden)
@@ -344,4 +344,16 @@ extension MKCoordinateRegion {
     }
 }
 
+/// A stack on the map and whether it is open: the annotation's identity, so it is made again, at
+/// its new size, when it opens or closes.
+private struct ShownSpot: Identifiable {
+    struct ID: Hashable {
+        let spot: PlaceKey
+        let isOpen: Bool
+    }
+
+    let spot: MapSpot
+    let isOpen: Bool
+    var id: ID { ID(spot: spot.id, isOpen: isOpen) }
+}
 #endif

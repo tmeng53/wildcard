@@ -13,8 +13,8 @@ const post = (
 describe('the task that sets the day’s challenges', () => {
   it('gives each member their plan, posts by number, recent challenges and what is known', () => {
     const names = new Map([
-      [ANN, '安'],
-      [BO, '波'],
+      [ANN, { name: '安', userId: 'ann00001' }],
+      [BO, { name: '波', userId: 'bo000002' }],
     ]);
     const { task, numbered } = challengeTaskOf({
       day: '2026-11-14',
@@ -23,7 +23,7 @@ describe('the task that sets the day’s challenges', () => {
         {
           member: ANN,
           brief: {
-            name: '队员1',
+            member: ANN,
             trainedDays: 1,
             plan: {
               week: [
@@ -41,7 +41,7 @@ describe('the task that sets the day’s challenges', () => {
           },
           about: '- 安想增肌。',
         },
-        { member: BO, brief: { name: '队员2', trainedDays: 0, language: 'en' } },
+        { member: BO, brief: { member: BO, trainedDays: 0, language: 'en' } },
       ],
       posts: [
         post({
@@ -71,7 +71,7 @@ describe('the task that sets the day’s challenges', () => {
       [
         '今天是 2026-11-14，周六。',
         [
-          '## 安',
+          '## 安（ann00001）',
           '- 今天的计划：匹克球',
           '- 这周出赛表：周一跑步，周二休息，周三休息，周四休息，周五休息，周六匹克球，周日休息',
           '- 这周饮食小目标：多吃蔬菜',
@@ -85,7 +85,7 @@ describe('the task that sets the day’s challenges', () => {
           '- 用简体中文写。',
         ].join('\n'),
         [
-          '## 波',
+          '## 波（bo000002）',
           '- 今天的计划：没填出赛表',
           '- 这周练了：0 天',
           '- 最近发的：',

@@ -1,6 +1,7 @@
 import type { TokenUsage } from '@wildcard/language-model';
-import type { Challenge } from '../domain/challenge.js';
-import { challengeTaskOf } from '../domain/challenge-task.js';
+import type { Challenge, DayChallengeFacts } from '../domain/challenge.js';
+import { challengeTaskOf, type ChallengeMember } from '../domain/challenge-task.js';
+import { noteInstructionsOf, noteTaskOf } from '../domain/note-task.js';
 import { coachIn, type Coach, type CoachId } from '../domain/coach.js';
 import {
   memberOfPath,
@@ -35,7 +36,6 @@ import {
   consentedOnly,
   dayWords,
   languageOf,
-  rosterOf,
   saidTo,
   postWhat,
   type SquadWeek,
@@ -68,6 +68,7 @@ import type {
 } from '../ports.js';
 import { challengeTools, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
 import { mondayOf, wallClockAt } from '@wildcard/time-zones';
+import { personOf, rosterOf, type Roster } from '../domain/roster.js';
 
 /**
  * How long a run keeps claiming wakes, so it ends well inside the scheduler's 5 minutes; the
@@ -81,6 +82,8 @@ const AT_ONCE = 4;
 /** How many of its last 战术板 lines a coach sees, so it doesn't repeat itself. */
 const RECENT_NOTES = 7;
 
+/** How many of its own last lines a reply reads, so it says something new. */
+const RECENT_LINES = 6;
 /** How many of its last reactions a coach sees on a check-in's wake, so it varies them. */
 const RECENT_EMOJI = 8;
 
@@ -722,10 +725,7 @@ async function think(
   // challenge model, from the same task; the coach then writes its notes around them (Tracy,
   // 2026-11-12).
   // What was said under a post, one line each, the coach's own too, with members by `names`.
-  const commentsOf = async (
-    checkIn: WeekCheckIn,
-    names: ReadonlyMap<string, string>,
-  ): Promise<readonly string[]> => {
+  const commentsOf = async (checkIn: WeekCheckIn, names: Roster): Promise<readonly string[]> => {
     const [reply, answers, coaches] = await Promise.all([
       deps.stores.replies.find(wake.squad, checkIn.id),
       deps.stores.answers.ofCheckIn(wake.squad, checkIn.id),
@@ -736,26 +736,50 @@ async function think(
       names,
     );
   };
-  const setting = daily && noteTo.length > 0;
+  // The draft's files are as the model reads them, members by their names now.
+  const morning = daily
+    ? morningOf({
+        week,
+        noteTo,
+        briefs: facts.noteTo ?? [],
+        yesterday: facts.yesterday,
+        files: draft.files,
+      })
+    : undefined;
   let settingCost = 0;
-  if (setting) {
+  if (morning !== undefined && noteTo.length > 0) {
     settingCost = await setChallenges(deps, {
       wake,
       settings,
       week,
       day,
-      roster,
       noteTo,
-      briefs: facts.noteTo ?? [],
-      yesterday: facts.yesterday,
+      morning,
       draft,
       commentsOf,
       author,
     });
   }
+  // The morning's notes have their own instructions and a task of only what they need, the
+  // members as the challenge run read them, with the challenge each was set (Tracy, 2026-11-14).
+  const noting =
+    morning === undefined
+      ? undefined
+      : noteTaskOf({
+          day,
+          names: roster,
+          ...morning,
+          set: draft.challenges,
+          talks: facts.talks,
+          recentNotes: facts.recentNotes,
+          language: week.language ?? 'zh-Hans',
+          today: todayLines(facts),
+          ...(gifting === undefined ? {} : { gifting }),
+        });
   // A reply (to a post, or to a line written to the coach) has its own instructions and a task
   // of only what it needs, its posts by number (Tracy, 2026-11-14).
-  const numbers = new PostNumbers(week.checkIns);
+  const numbers =
+    noting === undefined ? new PostNumbers(week.checkIns) : PostNumbers.numbered(noting.numbered);
   const replying =
     wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment'
       ? await replyFactsOf(deps, {
@@ -776,9 +800,11 @@ async function think(
   if ((wake.reason.kind === 'checkIn' || wake.reason.kind === 'comment') && replying === undefined)
     return undefined;
   const task =
-    replying === undefined
-      ? taskOf({ ...facts, ...(setting ? { setChallenges: draft.challenges } : {}) })
-      : replyTaskOf(replying);
+    replying !== undefined
+      ? replyTaskOf(replying)
+      : noting !== undefined
+        ? noting.task
+        : taskOf(facts);
   if (task === undefined) return undefined;
   const runsOn = modelOf(settings, wake.reason.kind);
   // It goes by its name in the squad's language (Tracy, 2026-11-08: Poki in English).
@@ -786,9 +812,11 @@ async function think(
   const run = await deps.agent.run({
     ...runsOn,
     instructions:
-      replying === undefined
-        ? instructionsOf(settings, speaking)
-        : replyInstructionsOf(settings, speaking),
+      replying !== undefined
+        ? replyInstructionsOf(settings, speaking)
+        : noting !== undefined
+          ? noteInstructionsOf(settings, speaking)
+          : instructionsOf(settings, speaking),
     task,
     tools: toolbox({
       week,
@@ -804,6 +832,7 @@ async function think(
         ? { relaying: 'off' as const }
         : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
+      challenges: () => challengesToday(deps, { squad: wake.squad, day }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
       noteTo,
@@ -954,7 +983,7 @@ function factsFor(
   }: {
     readonly squad: string;
     readonly week: SquadWeek;
-    readonly roster: ReadonlyMap<string, string>;
+    readonly roster: Roster;
   },
 ): { readonly facts: () => Promise<string> } {
   const { memberFacts } = deps;
@@ -990,7 +1019,7 @@ async function briefsOf(
     readonly weather?: boolean;
     readonly squad: string;
     readonly week: SquadWeek;
-    readonly roster: ReadonlyMap<string, string>;
+    readonly roster: Roster;
     readonly members: readonly string[];
     readonly day: string;
   },
@@ -1005,8 +1034,7 @@ async function briefsOf(
       ? new Map<string, WeatherWords>()
       : await deps.weatherOf({ members, day }).catch(() => new Map<string, WeatherWords>());
   return members.flatMap((member): NoteBrief[] => {
-    const name = roster.get(member);
-    if (name === undefined) return [];
+    if (!roster.has(member)) return [];
     const trainedDays = new Set(
       week.checkIns
         .filter((each) => each.member === member && each.kind === 'trained')
@@ -1021,7 +1049,7 @@ async function briefsOf(
       .map((each) => ({ day: each.day, what: postWhat(each) }));
     return [
       {
-        name,
+        member,
         ...(record && mine !== undefined
           ? {
               record: {
@@ -1042,6 +1070,47 @@ async function briefsOf(
   });
 }
 
+/** What the morning's two runs read of each member: the challenge run's and the notes'. */
+interface Morning {
+  readonly members: readonly ChallengeMember[];
+  /** The posts a member's block may list, oldest first. */
+  readonly posts: readonly WeekCheckIn[];
+  readonly challenges: readonly DayChallengeFacts[];
+}
+
+/** Each member a note goes to, with their brief and page, and the posts and challenges they read. */
+function morningOf({
+  week,
+  noteTo,
+  briefs,
+  yesterday,
+  files,
+}: {
+  readonly week: SquadWeek;
+  readonly noteTo: readonly string[];
+  readonly briefs: readonly NoteBrief[];
+  readonly yesterday: YesterdayFacts | undefined;
+  readonly files: ReadonlyMap<string, string>;
+}): Morning {
+  const briefOf = new Map(briefs.map((brief) => [brief.member, brief]));
+  return {
+    members: noteTo.flatMap((member) => {
+      const brief = briefOf.get(member);
+      if (brief === undefined) return [];
+      const page = files.get(`people/${member}.md`);
+      return [{ member, brief, ...(page === undefined ? {} : { about: page }) }];
+    }),
+    // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
+    posts: [
+      ...(yesterday?.checkIns ?? []).filter(
+        (each) => !week.checkIns.some(({ id }) => id === each.id),
+      ),
+      ...week.checkIns,
+    ],
+    challenges: yesterday?.challenges ?? [],
+  };
+}
+
 /**
  * Sets each member's challenge for the day into the draft, by a run of its own (Tracy,
  * 2026-11-14: from first principles): the settings' `challengeRules` alone, never the shared
@@ -1056,10 +1125,8 @@ async function setChallenges(
     settings,
     week,
     day,
-    roster,
     noteTo,
-    briefs,
-    yesterday,
+    morning,
     draft,
     commentsOf,
     author,
@@ -1068,45 +1135,15 @@ async function setChallenges(
     readonly settings: CoachSettings;
     readonly week: SquadWeek;
     readonly day: string;
-    readonly roster: ReadonlyMap<string, string>;
     readonly noteTo: readonly string[];
-    readonly briefs: readonly NoteBrief[];
-    readonly yesterday: YesterdayFacts | undefined;
+    readonly morning: Morning;
     readonly draft: WakeDraft;
-    readonly commentsOf: (
-      checkIn: WeekCheckIn,
-      names: ReadonlyMap<string, string>,
-    ) => Promise<readonly string[]>;
+    readonly commentsOf: (checkIn: WeekCheckIn, names: Roster) => Promise<readonly string[]>;
     readonly author: string | undefined;
   },
 ): Promise<number> {
   const names = rosterOf(week);
-  const briefOf = new Map(briefs.map((brief) => [brief.name, brief]));
-  // Yesterday's posts were last week's on a Monday: listed too, so a Monday reads them.
-  const posts = [
-    ...(yesterday?.checkIns ?? []).filter(
-      (each) => !week.checkIns.some(({ id }) => id === each.id),
-    ),
-    ...week.checkIns,
-  ];
-  const { task, numbered } = challengeTaskOf({
-    day,
-    names,
-    members: noteTo.flatMap((member) => {
-      const brief = briefOf.get(roster.get(member) ?? '');
-      if (brief === undefined) return [];
-      const page = draft.files.get(`people/${member}.md`);
-      return [
-        {
-          member,
-          brief,
-          ...(page === undefined ? {} : { about: shownBody(page, names) }),
-        },
-      ];
-    }),
-    posts,
-    challenges: yesterday?.challenges ?? [],
-  });
+  const { task, numbered } = challengeTaskOf({ day, names, ...morning });
   const model =
     (await deps.usage.offDutyWhy({ squad: wake.squad, model: settings.challengeModel })) ===
     undefined
@@ -1141,7 +1178,7 @@ async function setChallenges(
   const left = noteTo.filter((member) => !draft.challenges.has(member));
   if (run.ok && left.length > 0 && left.length < noteTo.length) {
     const again = await pick(
-      `\n\n## 还没定\n还没给${left.map((member) => names.get(member) ?? '队员').join('、')}定挑战。请假或身体不舒服的不用给，其余的给他们定。`,
+      `\n\n## 还没定\n还没给${left.map((member) => personOf(names, member)).join('、')}定挑战。请假或身体不舒服的不用给，其余的给他们定。`,
     );
     cost += await record(again.usage);
   }
@@ -1267,6 +1304,16 @@ function dayBefore(day: string, days: number): string {
 }
 
 /** The photos of the check-in a wake is about, to look at on demand, when it has any. */
+/** Today's challenges in the squad, only of members who agree to AI use. */
+async function challengesToday(
+  deps: CoachWakesDependencies,
+  { squad, day }: { readonly squad: SquadId; readonly day: string },
+): Promise<readonly DayChallengeFacts[]> {
+  const set = await deps.stores.memberNotes.challengesOn({ squad, day });
+  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
+  return set.filter(({ member }) => consented.has(member));
+}
+
 function photosOf(
   photoUrls: CoachPhotoUrls,
   { week, wake }: { readonly week: SquadWeek; readonly wake: NewWake },
@@ -1297,7 +1344,7 @@ async function saveDraft(
     readonly draft: WakeDraft;
     /** The files as the run found them, as the model read them. */
     readonly stored: ReadonlyMap<StoredPath, string>;
-    readonly roster: ReadonlyMap<string, string>;
+    readonly roster: Roster;
     readonly coach: Coach;
   },
 ): Promise<{
@@ -1529,7 +1576,7 @@ async function replyFactsOf(
   }: {
     readonly wake: Thought;
     readonly week: SquadWeek;
-    readonly roster: ReadonlyMap<string, string>;
+    readonly roster: Roster;
     readonly numbers: PostNumbers;
     readonly files: ReadonlyMap<string, string | undefined>;
     readonly coach: Coach;
@@ -1561,13 +1608,8 @@ async function replyFactsOf(
     day,
     weather: false,
   });
-  const name = roster.get(to);
-  const pagePath = name === undefined ? undefined : `people/${name}.md`;
-  // The challenge its author got on today's note, told only once they took it up.
-  const challenge =
-    reason.kind === 'checkIn'
-      ? await deps.stores.memberNotes.challengeOf({ squad: wake.squad, member: to, day })
-      : undefined;
+  const person = roster.get(to);
+  const pagePath = person === undefined ? undefined : `people/${person.userId}.md`;
   // A 请假条 keeps its author's streaks going (Tracy, 2026-11-13): the coach is told how long.
   const keptStreaks =
     reason.kind === 'checkIn' && post.kind === 'disclaimer'
@@ -1589,6 +1631,11 @@ async function replyFactsOf(
           limit: RECENT_EMOJI,
         })
       : [];
+  const recentLines = await deps.stores.replies.recentLines({
+    squad: wake.squad,
+    coach: coach.id,
+    limit: RECENT_LINES,
+  });
   return {
     kind: reason.kind,
     week,
@@ -1596,6 +1643,7 @@ async function replyFactsOf(
     numbers,
     post,
     to,
+    recentLines,
     now: clockWords(now, zone),
     at: answering?.at ?? post.createdAt,
     ...(thread === undefined
@@ -1608,16 +1656,6 @@ async function replyFactsOf(
         }),
     ...(brief === undefined ? {} : { brief }),
     day,
-    // Only a challenge the member took up: one let go or unanswered isn't the post's business.
-    ...(challenge !== undefined &&
-    (challenge.answer === 'accepted' || challenge.completion !== undefined)
-      ? {
-          challenge: {
-            challenge: challenge.challenge,
-            ...(challenge.completion === undefined ? {} : { completion: challenge.completion }),
-          },
-        }
-      : {}),
     talkedUnder: talks.map(({ checkIn }) => checkIn),
     ...(keptStreaks === undefined ? {} : { keptStreaks }),
     ...(pagePath === undefined ? {} : { page: { path: pagePath, body: files.get(pagePath) } }),
