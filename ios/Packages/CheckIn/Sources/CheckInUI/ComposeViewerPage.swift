@@ -7,8 +7,9 @@ import SportsUI
 import SwiftUI
 
 /// One of the compose page's tiles full screen, opened from its row: a photo as it will be
-/// posted, zoomable; the map or the chart large on ink, in the shapes 动态 gives them, the chart's
-/// heart rate scrubbed by press-and-hold.
+/// posted, zoomable; the map or the chart large on ink, a tall card across the screen (the post's
+/// own wide shape left them a strip in the middle, feedback #70), the chart's heart rate scrubbed
+/// by press-and-hold.
 struct ComposeViewerPage: View {
     let model: ComposeModel
     let index: Int
@@ -29,7 +30,7 @@ struct ComposeViewerPage: View {
             case .workout(.map):
                 if let route = model.workout?.route {
                     WorkoutMap(route: route, activity: model.currentActivity)
-                        .aspectRatio(Self.mapAspect, contentMode: .fit)
+                        .aspectRatio(Self.cardAspect, contentMode: .fit)
                         .modifier(ViewerCard())
                         .accessibilityIdentifier("compose.viewer.map")
                 }
@@ -37,9 +38,9 @@ struct ComposeViewerPage: View {
                 if let series = model.workout?.series {
                     WorkoutChart(
                         series: series, activity: model.currentActivity, showsLabel: true,
-                        startedAt: model.workout?.startedAt.date, shape: Self.chartAspect
+                        startedAt: model.workout?.startedAt.date, shape: Self.cardAspect
                     )
-                    .aspectRatio(Self.chartAspect, contentMode: .fit)
+                    .aspectRatio(Self.cardAspect, contentMode: .fit)
                     .modifier(ViewerCard())
                     .accessibilityIdentifier("compose.viewer.chart")
                 }
@@ -47,9 +48,8 @@ struct ComposeViewerPage: View {
         }
     }
 
-    /// The post's own shapes on 动态: a 358 × 230 map and a 358 × 180 chart.
-    private static let mapAspect = 358.0 / 230
-    private static let chartAspect = 358.0 / 180
+    /// The map's and chart's card: 3:4, as tall as a portrait photo shows here.
+    private static let cardAspect = 3.0 / 4
 }
 
 /// The map or chart rounded as a card, across the screen with the page's margins.

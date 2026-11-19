@@ -74,8 +74,8 @@ final class HealthUITests: XCTestCase {
         putAwayFromTheCard(in: app)
     }
 
-    /// The ride on the compose page; tapping its chart opens it full screen, as a photo does, and
-    /// 关闭 puts it back in the row.
+    /// The ride on the compose page; tapping its chart opens it full screen and large, as a photo
+    /// does, and 关闭 puts it back in the row.
     private func keepTheRideAndOpenItsChart(_ chart: XCUIElement, in app: XCUIApplication) {
         settle()
         keepScreenshot(named: "71-health-compose-ride")
@@ -84,6 +84,10 @@ final class HealthUITests: XCTestCase {
         XCTAssertTrue(bigChart.waitForExistence(timeout: Self.wait), "tapping the chart didn't open it full screen")
         settle()
         assertOnScreen(bigChart, in: app)
+        // Large, not the post's wide strip floating in an empty screen (feedback #70).
+        let face = bigChart.descendants(matching: .any).matching(identifier: "workout.chart").firstMatch
+        XCTAssertGreaterThan(
+            face.frame.height, app.windows.firstMatch.frame.height * 0.4, "the full-screen chart is a small strip")
         keepScreenshot(named: "71b-health-compose-chart-full")
         app.buttons["photoViewer.close"].tap()
         XCTAssertTrue(bigChart.waitForNonExistence(timeout: Self.wait), "关闭 didn't close the chart")
