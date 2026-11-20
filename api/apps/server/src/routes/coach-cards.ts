@@ -15,6 +15,7 @@ import {
   SquadId as MessageSquad,
   type CoachMessages,
 } from '@wildcard/coach-messages';
+import type { Members } from '@wildcard/members';
 import { MemberId as PushMember, type Push } from '@wildcard/push';
 import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 import { wallClockAt } from '@wildcard/time-zones';
@@ -31,6 +32,7 @@ import {
   speakerIn,
   wireChallenge,
 } from './coach-activity.js';
+import { challengeToday } from './challenge-day.js';
 import { CoachMessageBody, wireMessage } from './coach-messages.js';
 
 // The coach page (Tracy, 2026-11-08): what the squad's coach said to the caller, a card a thing,
@@ -74,7 +76,7 @@ const CoachCardBody = z
       .optional()
       .meta({
         description:
-          '`true` on a `challenge` whose day is over on the squad’s clock: it can no longer be ' +
+          '`true` on a `challenge` whose day is over on the caller’s own clock: it can no longer be ' +
           'answered or marked done (已过期).',
       }),
     gift: z
@@ -103,7 +105,7 @@ const CoachCardsBody = z
     version: bodyVersion(1),
     stack: z.array(CoachCardBody).meta({
       description:
-        'The cards not seen yet from today on the squad’s clock, oldest first: the stack.',
+        'The cards not seen yet from today on the caller’s own clock, oldest first: the stack.',
     }),
     earlier: z.array(CoachCardBody).meta({
       description: `Every other card from the last ${String(CARDS_DAYS)} days, newest first: 以前.`,
@@ -212,6 +214,8 @@ export function coachCards(deps: {
   readonly push: Pick<Push, 'settingsOf'>;
   /** Coach message cards: given to the caller on their read while one runs for them. */
   readonly coachMessages: Pick<CoachMessages, 'cardsFor'>;
+  /** The caller's own time zone: their today, the stack's and their challenge's. */
+  readonly members: Pick<Members, 'findProfile'>;
 }) {
   const read = createRoute({
     method: 'get',
@@ -224,7 +228,7 @@ export function coachCards(deps: {
       'delivered (while their `coach` switch is on), its gifts and coach messages (given to ' +
       'the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins ' +
       'and replies show only under the posts. The unseen ones from ' +
-      'today (on the squad’s clock) from the coach the squad has now are the stack; ' +
+      'today (on the caller’s own clock) from the coach the squad has now are the stack; ' +
       'the rest, a coach’s that left too, are 以前.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -371,11 +375,11 @@ export function coachCards(deps: {
     const speaker = speakerIn((coach) => named(coach, squadId));
     const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
     // Only today's stack (Tracy, 2026-11-12): a card left unseen yesterday waits in 以前, so the
-    // stack never piles up. A card is today's by the squad day it is for, as the coach wrote it:
-    // a morning note reaches a member on their own clock, which may still be the squad's
-    // yesterday or already its tomorrow.
+    // stack never piles up. A card is today's by the day it is for, as the coach wrote it, and
+    // today is the member's own (Tracy, 2026-11-20): their challenge stays theirs to take up
+    // until their own midnight, however far the squad's clock is ahead of it.
     const zone = (await deps.squads.timeZonesAt([squad.id], now))(squad.id);
-    const today = wallClockAt(now, zone).day;
+    const today = await challengeToday(deps, { squad: squad.id, member, now });
     return (
       [
         ...cards.map((card) => ({

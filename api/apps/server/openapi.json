@@ -5513,7 +5513,7 @@
             "items": {
               "$ref": "#/components/schemas/CoachPageCard"
             },
-            "description": "The cards not seen yet from today on the squad’s clock, oldest first: the stack."
+            "description": "The cards not seen yet from today on the caller’s own clock, oldest first: the stack."
           },
           "earlier": {
             "type": "array",
@@ -5573,7 +5573,7 @@
           },
           "expired": {
             "type": "boolean",
-            "description": "`true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期)."
+            "description": "`true` on a `challenge` whose day is over on the caller’s own clock: it can no longer be answered or marked done (已过期)."
           },
           "gift": {
             "type": "object",
@@ -13763,7 +13763,7 @@
       "get": {
         "operationId": "getCoachChallenge",
         "summary": "The caller’s challenge today (今日挑战)",
-        "description": "The day’s challenge the squad’s coach set the caller on today’s morning note (today on the squad’s clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.",
+        "description": "The day’s challenge the squad’s coach set the caller on today’s morning note (today on the caller’s own clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.",
         "security": [
           {
             "bearer": []
@@ -13838,7 +13838,7 @@
       "put": {
         "operationId": "completeCoachChallenge",
         "summary": "Mark the challenge on the caller’s morning note done (我完成了)",
-        "description": "The caller did the day’s challenge their morning note sets. Only on its own day, on the squad’s clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.",
+        "description": "The caller did the day’s challenge their morning note sets. Only on its own day, on the caller’s own clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.",
         "security": [
           {
             "bearer": []
@@ -13951,7 +13951,7 @@
       "put": {
         "operationId": "answerCoachChallenge",
         "summary": "Accept or decline the challenge on the caller’s morning note",
-        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the squad’s clock. The coach sees it when the member next checks in.",
+        "description": "接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the caller’s own clock. The coach sees it when the member next checks in.",
         "security": [
           {
             "bearer": []
@@ -13998,7 +13998,7 @@
             }
           },
           "400": {
-            "description": "Not a valid squad or note id, not an answer, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the squad’s clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)",
+            "description": "Not a valid squad or note id, not an answer, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the caller’s own clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -14150,7 +14150,7 @@
       "get": {
         "operationId": "getCoachCards",
         "summary": "What the squad’s coach said to the caller, as cards (the coach page)",
-        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the squad’s clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
+        "description": "A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the caller’s own clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.",
         "security": [
           {
             "bearer": []
