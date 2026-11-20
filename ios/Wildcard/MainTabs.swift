@@ -139,6 +139,9 @@ struct MainTabs: View {
         .environment(\.noticeVisits) { [inbox] visit in Task { await inbox.visited(visit) } }
         // The place picker lists the squad's own places and adds new ones.
         .environment(\.squadPlaces, squadPlaceBook)
+        // `-uitest-no-maps`: Apple Maps answers differently each run, so the place picker's UI tests
+        // list only the squad's places and 新建.
+        .environment(\.asksAppleMaps, !ProcessInfo.processInfo.arguments.contains("-uitest-no-maps"))
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.

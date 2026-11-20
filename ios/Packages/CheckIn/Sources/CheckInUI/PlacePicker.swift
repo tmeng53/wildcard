@@ -60,6 +60,7 @@ struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.squadPlaces) private var book
+    @Environment(\.asksAppleMaps) private var asksAppleMaps
     @State private var squadPlaces: [SquadPlace] = []
     /// What 新建地点 starts from, while it is pushed.
     @State private var creating: NewPlace?
@@ -136,7 +137,6 @@ struct PlacePickerSheet: View {
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("place.title")
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.xs)
@@ -211,7 +211,10 @@ struct PlacePickerSheet: View {
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .haptic(.pick, trigger: selections)
-        .task { await search.lookAround() }
+        .task {
+            search.asksAppleMaps = asksAppleMaps
+            await search.lookAround()
+        }
         .onChange(of: query) { _, query in
             // A suggestion's title put in the field is no new typing.
             guard query != chosen else { return }
@@ -317,5 +320,11 @@ struct PlacePickerSheet: View {
             }
         }
     }
+}
+
+extension EnvironmentValues {
+    /// Whether the place picker asks Apple Maps; the app turns it off for UI tests
+    /// (`-uitest-no-maps`).
+    @Entry public var asksAppleMaps = true
 }
 #endif
