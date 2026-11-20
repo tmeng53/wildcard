@@ -29,7 +29,7 @@ public final class FeedStore {
 
     public private(set) var phase = Phase.loading
     /// The latest response that couldn't go out, until `dismissFailure()`.
-    public private(set) var failure: FeedError?
+    public internal(set) var failure: FeedError?
     /// Whether scrolling further back can still find posts.
     public private(set) var hasEarlier = true
     /// Whether the week before the earliest loaded is being read.
@@ -38,7 +38,7 @@ public final class FeedStore {
     public private(set) var characters: [MemberID: MemberCharacter] = [:]
 
     /// The posts as the server last sent them, with the responses the server took since.
-    private var loaded: [CheckInID: FeedPost] = [:]
+    var loaded: [CheckInID: FeedPost] = [:]
     /// The member's responses not yet taken by the server, latest wish per post.
     private var wishes: [CheckInID: Wish] = [:]
     private var sending: Set<CheckInID> = []
@@ -305,7 +305,7 @@ public final class FeedStore {
 
     /// The server says the post is gone: it leaves, unless it is the member's own that the server
     /// hasn't saved yet.
-    private func forget(_ id: CheckInID) {
+    func forget(_ id: CheckInID) {
         loaded[id] = ownNotYetListed[id]
     }
 

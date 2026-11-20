@@ -104,6 +104,8 @@ struct PostCard: View {
         .overlay(alignment: .topTrailing) {
             if model.canManage(post) {
                 manageMenu.padding(Space.s)
+            } else if model.canModerate(post) {
+                ModerationMenu(model: model, post: post).padding(Space.s)
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))

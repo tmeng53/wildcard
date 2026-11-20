@@ -10,8 +10,9 @@ import UIKit
 /// A post's own page: its card, the coach's line first, every comment oldest first with the
 /// coach's answers among them, and the box to write one at the bottom. Tapping a teammate's
 /// comment replies to them (回复 Mia), and tapping the coach's line or answer replies to the
-/// coach (回复 毛头), which answers; holding a comment copies it, or deletes it when it is the
-/// member's own. It is pushed on a NavigationStack, so the system's back button and swipe go back;
+/// coach (回复 毛头), which answers; holding a comment copies it, deletes it when it is the
+/// member's own, or reports it or blocks its writer when it is a teammate's (the coach's: 举报).
+/// It is pushed on a NavigationStack, so the system's back button and swipe go back;
 /// the tab bar is away while it is up. 动态 opens it from a card, and any screen with a
 /// `FeedModel` over a store of one post (the member's past posts) shows the same page. `close`
 /// goes back once the post is deleted here.
@@ -25,6 +26,8 @@ public struct PostDetailView: View {
     @Environment(\.scenePhase) private var scenePhase
     /// The comment held, lifted under its glass menu.
     @State private var holding: Comment.ID?
+    /// The coach's line held, lifted under its glass menu.
+    @State private var holdingCoach: CoachLine?
 
     private static let faceSize: Double = 32
     /// A held comment's lift.
@@ -127,7 +130,7 @@ public struct PostDetailView: View {
                 let count = thread.count + (coach == nil ? 0 : 1)
                 SectionLabel(Text(copy: "评论 \(count)", bundle: .module))
                 if let coach, let text = coach.text {
-                    replyToCoach(coach.coach) {
+                    replyToCoach(coach.coach, holding: .reply(coach.coach.id), text: text, on: post.id) {
                         CoachCommentRow(
                             model: model, coach: coach.coach, text: text, mentions: coach.mentions,
                             writtenAt: coach.writtenAt)
@@ -139,7 +142,9 @@ public struct PostDetailView: View {
                     case .comment(let comment):
                         row(comment, on: post)
                     case .answer(let answer, let member):
-                        replyToCoach(answer.coach) {
+                        replyToCoach(
+                            answer.coach, holding: .answer(answer.comment), text: answer.text, on: post.id
+                        ) {
                             CoachCommentRow(
                                 model: model, coach: answer.coach, text: answer.text, mentions: answer.mentions,
                                 writtenAt: answer.writtenAt, recipient: model.displayName(of: member))
@@ -152,12 +157,27 @@ public struct PostDetailView: View {
         }
     }
 
-    /// The coach's line or answer, which a tap replies to (回复 毛头), as a teammate's comment.
-    private func replyToCoach(_ coach: CoachSpeaker, @ViewBuilder label: () -> some View) -> some View {
+    /// The coach's line or answer, which a tap replies to (回复 毛头), as a teammate's comment;
+    /// holding it lifts it under 复制 and 举报.
+    private func replyToCoach(
+        _ coach: CoachSpeaker, holding line: CoachLine, text: String, on post: CheckInID,
+        @ViewBuilder label: () -> some View
+    ) -> some View {
+        let items = model.coachItems(line, text: text, on: post)
         // A tap, not a button, so a tap on an @ tag in it opens that teammate's card instead.
-        label()
+        return label()
             .contentShape(Rectangle())
+            .scaleEffect(holdingCoach == line ? Self.liftScale : 1)
+            .animation(.wildcard(Motion.press, reduceMotion: reduceMotion), value: holdingCoach)
             .onTapGesture { replyToCoach(coach) }
+            .onLongPressGesture { holdingCoach = line }
+            .haptic(.pick, trigger: holdingCoach) { _, new in new == line }
+            .glassMenu(isPresented: isHolding(line), items: items)
+            .accessibilityActions {
+                ForEach(items) { item in
+                    Button(action: item.action) { item.title }
+                }
+            }
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { replyToCoach(coach) }
             .accessibilityHint(Text(copy: "回复", bundle: .module))
@@ -238,8 +258,14 @@ public struct PostDetailView: View {
                 ) {
                     Task { await model.store.deleteComment(comment.id, on: post.id) }
                 })
+        } else {
+            items += model.moderationItems(for: comment, on: post.id)
         }
         return items
+    }
+
+    private func isHolding(_ line: CoachLine) -> Binding<Bool> {
+        Binding(get: { holdingCoach == line }, set: { if !$0, holdingCoach == line { holdingCoach = nil } })
     }
 
     /// 回复 Mia：the words, with 回复 and the name in grey.

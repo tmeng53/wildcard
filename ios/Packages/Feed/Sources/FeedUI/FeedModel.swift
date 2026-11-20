@@ -101,8 +101,8 @@ public final class FeedModel {
     var editing: ComposeModel?
     /// The member's post they confirmed deleting, for the surface on top to delete.
     var deleting: CheckInID?
-    /// The last delete didn't go through.
-    var deleteFailed = false
+    /// What last didn't go through (deleting, 举报, 拉黑), until its alert is answered.
+    var failed: FailedAction?
     /// The 成绩卡's sheet, over one of the member's 训练.
     var scoreCard: ScoreCardModel?
     /// The squad's name as it is now, which the 成绩卡 shows; the app sets it.

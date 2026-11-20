@@ -91,6 +91,16 @@ actor FakeService: MeService {
         if let failing { throw failing }
         deletedWith = confirmation
     }
+    var blockedList: [BlockedMember] = []
+    func setBlocked(_ list: [BlockedMember]) { blockedList = list }
+    func blocked() async throws(MeError) -> [BlockedMember] {
+        if let failing { throw failing }
+        return blockedList
+    }
+    func unblock(_ member: MemberID) async throws(MeError) {
+        if let failing { throw failing }
+        blockedList.removeAll { $0.id == member }
+    }
 }
 
 /// Counts sign-outs on this phone.

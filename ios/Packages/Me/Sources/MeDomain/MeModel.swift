@@ -47,6 +47,11 @@ public final class MeModel {
         self.signOutHere = signOut
     }
 
+    /// 设置 › 已拉黑, read through the same service.
+    public func blockedMembersModel() -> BlockedMembersModel {
+        BlockedMembersModel(service: service)
+    }
+
     /// 外卡记录's model, reading through the same service.
     public func recordsModel() -> RecordsModel {
         RecordsModel(service: service)

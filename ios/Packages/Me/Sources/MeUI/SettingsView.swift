@@ -24,6 +24,9 @@ struct SettingsView: View {
     @State private var isWidgetGuideOpen = false
     @State private var isSquadSettingsOpen = false
     @State private var isDemoAccountsOpen = false
+    @State private var isBlockedOpen = false
+    /// 已拉黑, read as 设置 opens so its row shows only once someone is on it.
+    @State private var blocked: BlockedMembersModel?
     @Environment(\.openURL) private var openURL
     @Environment(\.sceneTheme) private var theme
 
@@ -41,6 +44,13 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $isSquadSettingsOpen) {
                 if let squadSettings = destinations.squadSettings { squadSettings }
+            }
+            .navigationDestination(isPresented: $isBlockedOpen) {
+                if let blocked { BlockedMembersView(model: blocked) }
+            }
+            .task {
+                if blocked == nil { blocked = model.blockedMembersModel() }
+                await blocked?.load()
             }
             .navigationDestination(isPresented: $isDemoAccountsOpen) {
                 if let demoAccounts = destinations.admin.demoAccounts { DemoAccountsView(model: demoAccounts) }
@@ -239,6 +249,13 @@ struct SettingsView: View {
 
     private var accountGroup: some View {
         MenuGroup(Text(copy: "账号", bundle: .module)) {
+            // Only once the member blocked someone (App Review 1.2: 拉黑 can be undone here).
+            if let blocked, !blocked.blocked.isEmpty {
+                ListRow(Text(copy: "已拉黑", bundle: .module), value: Text(verbatim: "\(blocked.blocked.count)")) {
+                    isBlockedOpen = true
+                }
+                .accessibilityIdentifier("me.blocked")
+            }
             ListRow(Text(copy: "退出登录", bundle: .module), showsChevron: false) {
                 isSigningOut = true
             }

@@ -165,6 +165,13 @@ public actor InMemoryMeService: MeService {
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if failsSaving { throw .unavailable }
     }
+
+    /// Nobody: the sample squad blocks no one.
+    public func blocked() async throws(MeError) -> [BlockedMember] { [] }
+
+    public func unblock(_ member: MemberID) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+    }
 }
 
 /// Squadmates' cards kept in memory, for the sample squad: every teammate shows the same sample

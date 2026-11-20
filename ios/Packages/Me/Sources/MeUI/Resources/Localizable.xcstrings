@@ -2880,6 +2880,54 @@
           }
         }
       }
+    },
+    "已拉黑" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocked"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已封鎖"
+          }
+        }
+      }
+    },
+    "解除" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unblock"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "解除封鎖"
+          }
+        }
+      }
+    },
+    "没解除成功，再试一次" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Didn't unblock. Try again."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒解除成功，再試一次"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

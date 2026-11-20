@@ -140,3 +140,29 @@ extension APIFeedSource: CoachSource {
         }
     }
 }
+
+// 举报 and 拉黑.
+extension APIFeedSource {
+    public func report(_ target: ReportTarget) async throws(FeedError) {
+        let reported: WildcardAPI.Reported =
+            switch target {
+            case .post: .checkIn
+            case .comment(let comment, _): .comment(comment)
+            case .coachReply(let coach, _, let squad): .coachReply(coach, squad: squad)
+            case .coachAnswer(let comment, _, let squad): .coachAnswer(answering: comment, squad: squad)
+            }
+        do throws(APIError) {
+            try await api.report(reported, on: target.checkIn)
+        } catch {
+            throw FeedError(error)
+        }
+    }
+
+    public func block(_ member: MemberID) async throws(FeedError) {
+        do throws(APIError) {
+            try await api.block(member)
+        } catch {
+            throw FeedError(error)
+        }
+    }
+}

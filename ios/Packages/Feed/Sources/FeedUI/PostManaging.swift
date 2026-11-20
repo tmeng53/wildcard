@@ -41,7 +41,7 @@ struct PostManaging: ViewModifier {
                     if await model.delete(post) { deleted(post) }
                 }
             }
-            .alert(Text(copy: "没删掉，再试一次", bundle: .module), isPresented: deleteFailed) {
+            .alert(failedTitle, isPresented: failedShown) {
                 Button(role: .cancel) {
                 } label: {
                     Text(copy: "好", bundle: .module)
@@ -65,11 +65,19 @@ struct PostManaging: ViewModifier {
         }
     }
 
-    private var deleteFailed: Binding<Bool> {
+    private var failedShown: Binding<Bool> {
         Binding {
-            isActive && model.deleteFailed
+            isActive && model.failed != nil
         } set: {
-            if !$0 { model.deleteFailed = false }
+            if !$0 { model.failed = nil }
+        }
+    }
+
+    private var failedTitle: Text {
+        switch model.failed {
+        case .report: Text(copy: "没举报成功，再试一次", bundle: .module)
+        case .block: Text(copy: "没拉黑成功，再试一次", bundle: .module)
+        case .delete, nil: Text(copy: "没删掉，再试一次", bundle: .module)
         }
     }
 }
@@ -99,7 +107,7 @@ extension FeedModel {
         do throws(CheckInError) {
             try await editor.delete(post)
         } catch {
-            deleteFailed = true
+            failed = .delete
             return false
         }
         apply(.deleted(post))
