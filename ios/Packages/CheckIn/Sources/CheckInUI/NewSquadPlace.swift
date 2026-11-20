@@ -13,8 +13,8 @@ import SwiftUI
 struct NewSquadPlacePage: View {
     @Environment(\.sceneTheme) private var theme
     @State private var name: String
-    /// 吃的 to begin with, as the approved design has it.
-    @State private var kind: SquadPlaceKind? = .food
+    /// 健身 to begin with from a 训练, else 吃的 (Tracy, 2026-11-20).
+    @State private var kind: SquadPlaceKind?
     @State private var camera: MapCameraPosition
     @State private var center: CLLocationCoordinate2D?
     @State private var isAdding = false
@@ -30,6 +30,7 @@ struct NewSquadPlacePage: View {
     ) {
         let start = new.near
         _name = State(initialValue: new.name)
+        _kind = State(initialValue: new.kind)
         _center = State(initialValue: start)
         _camera = State(
             initialValue: start.map { .camera(MapCamera(centerCoordinate: $0, distance: Self.distance)) }

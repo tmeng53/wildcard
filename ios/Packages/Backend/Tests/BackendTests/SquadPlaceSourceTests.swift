@@ -15,7 +15,7 @@ import Testing
     let mate = try await stack.signedInMember()
     let squad = try await stack.squad(of: adder, mate)
     let id = UUID()
-    // A dragged map's centre, to the last digit: a retry still finds the same place.
+    // A dragged map's centre, kept to 4 decimals: a retry still finds the same place.
     let canteen = try NewSquadPlace(
         name: "公司食堂", kind: .food, latitude: 40.746612345678912, longitude: -73.989512345678912)
 

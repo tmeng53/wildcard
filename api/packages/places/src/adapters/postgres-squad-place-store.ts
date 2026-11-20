@@ -12,7 +12,7 @@ function placeOf(row: Selectable<DB['squad_places']>): SquadPlace {
   return {
     id: SquadPlaceId.parse(row.id),
     squad: SquadId.parse(row.squad_id),
-    addedBy: row.added_by === null ? undefined : MemberId.parse(row.added_by),
+    addedBy: MemberId.parse(row.added_by),
     name: row.name,
     kind: SquadPlaceKind.parse(row.kind),
     latitude: row.latitude,
@@ -30,7 +30,7 @@ export function createPostgresSquadPlaceStore(db: Kysely<SquadPlaceTables>): Squ
         .values({
           id: place.id,
           squad_id: place.squad,
-          added_by: place.addedBy ?? null,
+          added_by: place.addedBy,
           name: place.name,
           kind: place.kind,
           latitude: place.latitude,

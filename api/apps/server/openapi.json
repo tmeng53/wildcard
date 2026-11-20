@@ -6149,7 +6149,7 @@
               "null"
             ],
             "format": "uuid",
-            "description": "Who added it; null once they deleted their account."
+            "description": "Who added it; the place goes when they delete their account."
           },
           "addedAt": {
             "type": "string",

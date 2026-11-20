@@ -12,6 +12,8 @@ import SwiftUI
 /// name opening the place's page.
 struct PlacePill: View {
     @Binding var place: Place?
+    /// The kind a new squad place starts as: 健身 from a 训练, else 吃的.
+    let newKind: SquadPlaceKind
     /// Opens the picked place's page (地点页).
     let open: (Place) -> Void
     @State private var isPicking = false
@@ -36,7 +38,7 @@ struct PlacePill: View {
             }
         }
         .sheet(isPresented: $isPicking) {
-            PlacePickerSheet(current: place) { picked in
+            PlacePickerSheet(current: place, newKind: newKind) { picked in
                 place = picked
                 isPicking = false
             } cancel: {
@@ -50,8 +52,9 @@ struct PlacePill: View {
 /// A tap on a row or a pin only selects it (Tracy, 2026-11-13: she couldn't tell which pin a row
 /// was): the map moves to it, its pin turns graphite under its name, its row darkens and the list
 /// scrolls to it. 添加 in the header picks the selected place. The places the squad's members
-/// added (自建地点) come first, with who added each; while typing, the first row adds what was
-/// typed as a new one (Tracy, 2026-11-16), on 新建地点 pushed in the sheet.
+/// added (自建地点) come first, with who added each; while typing, the last row adds what was
+/// typed as a new one (Tracy, 2026-11-16; last, and only when no row has that name, 2026-11-20),
+/// on 新建地点 pushed in the sheet.
 struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -70,10 +73,14 @@ struct PlacePickerSheet: View {
     @State private var selections = 0
     /// The suggestion's title last put in the search field, so it doesn't ask for suggestions again.
     @State private var chosen: String?
+    let newKind: SquadPlaceKind
     let pick: (Place) -> Void
     let cancel: () -> Void
 
-    init(current: Place?, pick: @escaping (Place) -> Void, cancel: @escaping () -> Void) {
+    init(
+        current: Place?, newKind: SquadPlaceKind, pick: @escaping (Place) -> Void, cancel: @escaping () -> Void
+    ) {
+        self.newKind = newKind
         self.pick = pick
         self.cancel = cancel
         _selected = State(initialValue: current.map { FoundPlace(place: $0, address: nil, distance: nil) })
@@ -145,22 +152,6 @@ struct PlacePickerSheet: View {
                         .padding(.vertical, Space.s)
                         .accessibilityIdentifier("place.search")
                     List {
-                        if search.isSuggesting, book.wired != nil, let typed = typedName {
-                            Button {
-                                // Where the phone is, else the place selected or the squad's first, so the map
-                                // opens near.
-                                creating = NewPlace(
-                                    name: typed,
-                                    near: search.here?.coordinate ?? selected?.coordinate ?? squadRows.first?.coordinate
-                                )
-                            } label: {
-                                PlaceRow(
-                                    symbol: "plus", name: String(copy: "新建「\(typed)」", bundle: .module), detail: nil,
-                                    distance: nil, isSelected: false)
-                            }
-                            .listRowBackground(Color(role: .bgCanvas, in: theme))
-                            .accessibilityIdentifier("place.new")
-                        }
                         ForEach(squadRows) { found in
                             Button {
                                 select(found, list: nil)
@@ -192,6 +183,23 @@ struct PlacePickerSheet: View {
                                 .listRowBackground(Color(role: isSelected(found) ? .bgSubtle : .bgCanvas, in: theme))
                                 .accessibilityIdentifier("place.row")
                             }
+                        }
+                        if search.isSuggesting, book.wired != nil, let typed = newName {
+                            Button {
+                                // Where the phone is, else the place selected or the squad's first, so the map
+                                // opens near.
+                                creating = NewPlace(
+                                    name: typed,
+                                    kind: newKind,
+                                    near: search.here?.coordinate ?? selected?.coordinate ?? squadRows.first?.coordinate
+                                )
+                            } label: {
+                                PlaceRow(
+                                    symbol: "plus", name: String(copy: "新建「\(typed)」", bundle: .module), detail: nil,
+                                    distance: nil, isSelected: false)
+                            }
+                            .listRowBackground(Color(role: .bgCanvas, in: theme))
+                            .accessibilityIdentifier("place.new")
                         }
                     }
                     .listStyle(.plain)
@@ -260,10 +268,17 @@ struct PlacePickerSheet: View {
         return all.filter { $0.id != selected.id } + [selected]
     }
 
-    /// What was typed, as a new place's name; nil while nothing is.
-    private var typedName: String? {
+    /// What was typed, as a new place's name; nil while nothing is, or while a row above already
+    /// has that name (a squad place or a suggestion).
+    private var newName: String? {
         let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        return typed.isEmpty ? nil : typed
+        guard !typed.isEmpty else { return nil }
+        let listed = squadRows.map(\.place.name) + search.suggestions.map(\.title)
+        let taken = listed.contains {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+                .compare(typed, options: [.caseInsensitive, .widthInsensitive]) == .orderedSame
+        }
+        return taken ? nil : typed
     }
 
     /// The squad's own places that have what was typed in their name, as rows: under each, who

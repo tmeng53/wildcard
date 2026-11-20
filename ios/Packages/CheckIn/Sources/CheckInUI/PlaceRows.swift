@@ -135,6 +135,8 @@ private struct PinTicket: Shape {
 /// What 新建地点 starts from: the name typed and where the phone is.
 struct NewPlace: Hashable, Identifiable {
     let name: String
+    /// The kind it starts as.
+    let kind: SquadPlaceKind
     let near: CLLocationCoordinate2D?
 
     var id: String { name }
