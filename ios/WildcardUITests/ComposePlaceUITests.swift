@@ -123,15 +123,17 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertFalse(app.buttons["place.new"].waitForExistence(timeout: 3), "a place the squad has is offered again")
     }
 
-    /// Drags the place list until `row`, its last row (under what Maps suggests), can be tapped. The
-    /// list's middle is under the keyboard, so it is dragged from near its top, which also puts
-    /// the keyboard away.
+    /// Scrolls the place list until `row`, its last row (under what Maps suggests), can be tapped.
+    /// The keyboard goes first, by a tap on the sheet's title: while it is up, its prediction bar
+    /// is a collection view too, and a drag can land on it or on the keys instead of the list.
     private func scrollToLastRow(_ row: XCUIElement, in app: XCUIApplication) {
+        app.staticTexts["place.title"].tap()
+        let keyboardGone = expectation(
+            for: NSPredicate(format: "exists == false"), evaluatedWith: app.keyboards.firstMatch)
+        wait(for: [keyboardGone], timeout: Self.wait)
         let list = app.collectionViews.firstMatch
-        let top = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
-        let above = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: -0.4))
         for _ in 0..<6 where !(row.waitForExistence(timeout: 2) && row.isHittable) {
-            top.press(forDuration: 0.05, thenDragTo: above)
+            list.swipeUp()
         }
     }
 
