@@ -72,7 +72,7 @@ final class ComposePlaceUITests: XCTestCase {
         app.typeText("健身房")
         let new = app.buttons["place.new"]
         // The new place's row comes last, under what Maps suggests.
-        for _ in 0..<4 where !new.waitForExistence(timeout: Self.wait) {
+        for _ in 0..<4 where !(new.waitForExistence(timeout: Self.wait) && new.isHittable) {
             app.collectionViews.firstMatch.swipeUp()
         }
         XCTAssertTrue(new.exists, "typing doesn't offer a new place")
