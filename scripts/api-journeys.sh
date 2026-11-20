@@ -716,7 +716,7 @@ if want coach; then
   # The journeys' server has no OpenAI key, so the coach never wakes, whatever the settings say.
   call POST /jobs/coach "$jobs_token"
   expect 200
-  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0,"notes":{"waiting":0,"delivered":0,"pushed":0}}' ] ||
+  [ "$(jq -c . <<<"$body")" = '{"version":1,"coaching":false,"squads":0,"queued":0,"done":0,"failed":0,"notes":{"waiting":0,"delivered":0,"pushed":0},"reports":{"filed":0,"waiting":0}}' ] ||
     fail "without an OpenAI key the coach run does nothing: $body"
   # What the coach said, as 今天 and 动态 read it: nothing yet, for a squad's member only.
   squad_of "$coach_member_token"

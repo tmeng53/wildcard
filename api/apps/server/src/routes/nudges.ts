@@ -1,4 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { MemberId, NudgeKind, SquadId, type Nudges } from '@wildcard/nudges';
 
 import { bodyVersion } from '../body-version.js';
@@ -42,7 +43,12 @@ export const SquadNudges = z
  * Squadmates nudging each other: `POST /squads/{squadId}/nudges`. A nudge isn't pushed on its
  * own; the receiver's 6pm daily push counts it and names who sent it.
  */
-export function nudges(deps: { readonly verifyToken: VerifyToken; readonly nudges: Nudges }) {
+export function nudges(deps: {
+  readonly verifyToken: VerifyToken;
+  readonly nudges: Nudges;
+  /** A member blocked either way is left out of whom the member nudged and who nudged them. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
+}) {
   const send = createRoute({
     method: 'post',
     path: '/squads/{squadId}/nudges',
@@ -103,17 +109,22 @@ export function nudges(deps: { readonly verifyToken: VerifyToken; readonly nudge
   return new OpenAPIHono<SignedIn>()
     .openapi(list, async (c) => {
       const { kind } = c.req.valid('query');
-      const { sent, received } = await deps.nudges.inSquad({
-        member: MemberId.parse(c.var.caller.userId),
-        squad: c.req.valid('param').squadId,
-        kind,
-      });
+      const [{ sent, received }, hidden] = await Promise.all([
+        deps.nudges.inSquad({
+          member: MemberId.parse(c.var.caller.userId),
+          squad: c.req.valid('param').squadId,
+          kind,
+        }),
+        deps.moderation.hiddenFor(ModerationMember.parse(c.var.caller.userId)),
+      ]);
       return c.json(
         {
           version: 1 as const,
           kind,
-          sent: [...sent],
-          received: received.map(({ from, at }) => ({ from, at: at.toISOString() })),
+          sent: [...sent].filter((each) => !hidden.members.has(each)),
+          received: received
+            .filter(({ from }) => !hidden.members.has(from))
+            .map(({ from, at }) => ({ from, at: at.toISOString() })),
         },
         200,
       );

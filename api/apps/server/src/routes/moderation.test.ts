@@ -263,6 +263,40 @@ describe('blocking a teammate', () => {
     );
   });
 
+  it('leaves the other out of 拍一拍 both ways', async () => {
+    const [mia, jay, coco] = [await member(), await member(), await member()];
+    const squad = await squadOf(mia, jay, coco);
+    for (const [from, to] of [
+      [jay, mia],
+      [coco, mia],
+      [mia, jay],
+    ] as const) {
+      const poked = await call('POST', {
+        path: `/squads/${squad}/nudges`,
+        token: from.token,
+        body: { version: 1, to: to.userId, kind: 'poke' },
+      });
+      expect(poked.status).toBe(201);
+    }
+    expect((await call('PUT', { path: `/me/blocks/${jay.userId}`, token: mia.token })).status).toBe(
+      204,
+    );
+
+    const pokes = z.object({
+      sent: z.array(z.string()),
+      received: z.array(z.object({ from: z.string() })),
+    });
+    const miaSees = pokes.parse(
+      (await call('GET', { path: `/squads/${squad}/nudges?kind=poke`, token: mia.token })).body,
+    );
+    expect(miaSees.sent).toStrictEqual([]);
+    expect(miaSees.received.map((each) => each.from)).toStrictEqual([coco.userId]);
+    const jaySees = pokes.parse(
+      (await call('GET', { path: `/squads/${squad}/nudges?kind=poke`, token: jay.token })).body,
+    );
+    expect(jaySees).toMatchObject({ sent: [], received: [] });
+  });
+
   it('refuses oneself and someone who isn’t a member', async () => {
     const mia = await member();
     const self = await call('PUT', { path: `/me/blocks/${mia.userId}`, token: mia.token });

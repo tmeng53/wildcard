@@ -4,6 +4,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { CheckInId, MemberId as CheckInMember, type CheckIns } from '@wildcard/check-ins';
 import { SquadId as CoachSquadId, type CoachActivity } from '@wildcard/coach';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
+import { MemberId as SquadMember, SquadId, type Squads } from '@wildcard/squads';
 import {
   BlockedMemberMissingError,
   MemberId,
@@ -91,6 +92,7 @@ export function moderation(
     readonly members: Pick<Members, 'squadmates'>;
     readonly checkIns: Pick<CheckIns, 'post'>;
     readonly coachActivity: Pick<CoachActivity, 'squad'>;
+    readonly squads: Pick<Squads, 'find'>;
   } & Omit<ReportIssueDependencies, 'moderation'>,
 ) {
   const list = createRoute({
@@ -214,6 +216,11 @@ export function moderation(
     if (draft.squad === undefined || !post.checkIn.audience.some((each) => each === draft.squad)) {
       throw missing();
     }
+    // Throws `SquadNotJoinedError` for a squad the reporter isn't in.
+    await deps.squads.find({
+      squad: SquadId.parse(draft.squad),
+      viewer: SquadMember.parse(viewer),
+    });
     const activity = await deps.coachActivity.squad({
       squad: CoachSquadId.parse(draft.squad),
       checkIns: [draft.checkIn],
