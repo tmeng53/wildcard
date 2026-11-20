@@ -8,7 +8,14 @@ import {
   createPostgresWeeklyPlanStore,
   createWeeklyPlans,
 } from '@wildcard/check-ins';
+import {
+  createCoachActivity,
+  createPostgresCoachActivity,
+  createPostgresCoachCatalog,
+} from '@wildcard/coach';
 import { createMembers, createPostgresProfileStore } from '@wildcard/members';
+import { AdminId } from '@wildcard/admins';
+import { CheckInId, CommentId } from '@wildcard/check-ins';
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
@@ -18,7 +25,9 @@ import { z } from 'zod';
 import { createDatabase } from '../adapters/postgres.js';
 import { createSupabaseAccounts, createSupabaseTokenVerifier } from '../adapters/supabase-auth.js';
 import { createSupabasePhotoStorage } from '../adapters/supabase-storage.js';
+import { removeContent } from '../admin-mcp/tools/moderation.js';
 import { createApp } from '../app.js';
+import { coachNamesIn } from '../flows/coach-names.js';
 import { createLog } from '../log.js';
 import { memberCalendar } from '../member-calendar.js';
 import {
@@ -43,7 +52,6 @@ import {
   unusedGifts,
   noRewards,
   unusedCoachHiring,
-  unusedCoachActivity,
   unusedCoachMessages,
   unusedCoachLetters,
   ignoredNotices,
@@ -59,6 +67,22 @@ const photos = createSupabasePhotoStorage({
   secretKey: config.supabaseSecretKey,
 });
 const members = createMembers({ store: createPostgresProfileStore(db) });
+const checkIns = createCheckIns({
+  squadPlaceOf: () => Promise.resolve(false),
+  sports: createSports({ store: createPostgresSportStore(db) }),
+  store: createPostgresCheckInStore(db),
+  membership: createSquads({
+    store: createPostgresSquadStore(db),
+    inviteCodes: randomInviteCodes,
+    aiConsent: () => Promise.resolve(true),
+  }),
+  reactions: createPostgresReactionStore(db),
+  comments: createPostgresCommentStore(db),
+  plans: createPostgresWeeklyPlanStore(db),
+  photos,
+  calendarOf: memberCalendar(members),
+  clock: () => new Date(),
+});
 const app = createApp({
   db,
   verifyToken: createSupabaseTokenVerifier({ supabaseUrl: config.supabaseUrl }),
@@ -70,22 +94,7 @@ const app = createApp({
   catalog: catalogOn(db),
   publicRoutes: unlimitedPublicRoutes,
   photos,
-  checkIns: createCheckIns({
-    squadPlaceOf: () => Promise.resolve(false),
-    sports: createSports({ store: createPostgresSportStore(db) }),
-    store: createPostgresCheckInStore(db),
-    membership: createSquads({
-      store: createPostgresSquadStore(db),
-      inviteCodes: randomInviteCodes,
-      aiConsent: () => Promise.resolve(true),
-    }),
-    reactions: createPostgresReactionStore(db),
-    comments: createPostgresCommentStore(db),
-    plans: createPostgresWeeklyPlanStore(db),
-    photos,
-    calendarOf: memberCalendar(members),
-    clock: () => new Date(),
-  }),
+  checkIns,
   weeklyPlans: createWeeklyPlans({
     sports: createSports({ store: createPostgresSportStore(db) }),
     store: createPostgresWeeklyPlanStore(db),
@@ -113,11 +122,20 @@ const app = createApp({
   gifts: unusedGifts,
   rewards: noRewards,
   coachHiring: unusedCoachHiring,
-  coachActivity: unusedCoachActivity,
+  coachActivity: createCoachActivity({ store: createPostgresCoachActivity(db) }),
   coachMessages: unusedCoachMessages,
   coachLetters: unusedCoachLetters,
   ...ignoredNotices,
   ...unusedFeedback,
+  coachNames: coachNamesIn({
+    coaches: createPostgresCoachCatalog(db),
+    members,
+    squads: createSquads({
+      store: createPostgresSquadStore(db),
+      inviteCodes: randomInviteCodes,
+      aiConsent: () => Promise.resolve(true),
+    }),
+  }),
   log: createLog(() => undefined),
   jobs: noJobs,
   admin: adminOn(),
@@ -125,7 +143,7 @@ const app = createApp({
 
 async function squadOf(...members: readonly { readonly userId: string }[]) {
   const id = randomUUID();
-  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${id})`.execute(
+  await sql`insert into public.squads (id, name, invite_code) values (${id}, 'squad', ${randomInviteCodes()})`.execute(
     db,
   );
   for (const member of members) {
@@ -371,5 +389,116 @@ describe('POST /reports', () => {
       body: { version: 1, id: randomUUID(), kind: 'comment', checkIn: mine, item: randomUUID() },
     });
     expect(noComment).toMatchObject({ status: 404, body: { reason: 'REPORTED_ITEM_NOT_FOUND' } });
+  });
+});
+
+describe('reporting the coach', () => {
+  it('hides its line or answer from the reporter only, and only in a squad they are in', async () => {
+    const [mia, jay, stranger] = [await member(), await member(), await member()];
+    const squad = await squadOf(mia, jay);
+    await squadOf(stranger);
+    const run = await checkIn(jay.token, squad);
+    await sql`insert into public.coach_replies (squad_id, check_in_id, coach_id, text)
+      values (${squad}, ${run}, 'xiaohun', '腿还在吗')`.execute(db);
+    const asked = await comment(jay.token, { on: run, text: '在呢' });
+    await sql`insert into public.coach_answers (squad_id, check_in_id, comment_id, coach_id, text)
+      values (${squad}, ${run}, ${asked}, 'xiaohun', '那就再跑一圈')`.execute(db);
+    const activityOf = async (token: string) =>
+      z
+        .object({
+          replies: z.array(z.object({ checkInId: z.string() })),
+          answers: z.array(z.object({ text: z.string() })),
+        })
+        .parse(
+          (await call('GET', { path: `/squads/${squad}/coach/activity?checkIns=${run}`, token }))
+            .body,
+        );
+    const report = (token: string, body: Record<string, unknown>) =>
+      call('POST', {
+        path: '/reports',
+        token,
+        body: { version: 1, id: randomUUID(), checkIn: run, squad, ...body },
+      });
+
+    expect((await report(mia.token, { kind: 'coachReply', item: 'xiaohun' })).status).toBe(201);
+    expect((await report(mia.token, { kind: 'coachAnswer', item: asked })).status).toBe(201);
+    expect(await activityOf(mia.token)).toStrictEqual({ replies: [], answers: [] });
+    expect(await activityOf(jay.token)).toMatchObject({
+      replies: [{ checkInId: run }],
+      answers: [{ text: '那就再跑一圈' }],
+    });
+    const { rows } = await sql<{ kind: string; snapshot: unknown; author_id: string | null }>`
+      select kind, snapshot, author_id from public.content_reports
+      where member_id = ${mia.userId} order by kind
+    `.execute(db);
+    expect(rows).toStrictEqual([
+      { kind: 'coachAnswer', snapshot: { version: 1, words: '那就再跑一圈' }, author_id: null },
+      { kind: 'coachReply', snapshot: { version: 1, words: '腿还在吗' }, author_id: null },
+    ]);
+
+    // Someone outside the squad can't see the post, so can't report its coach either.
+    expect(await report(stranger.token, { kind: 'coachReply', item: 'xiaohun' })).toMatchObject({
+      status: 404,
+      body: { reason: 'CHECK_IN_NOT_FOUND' },
+    });
+    // A coach that said nothing there.
+    expect(await report(jay.token, { kind: 'coachReply', item: 'maotou' })).toMatchObject({
+      status: 404,
+      body: { reason: 'REPORTED_ITEM_NOT_FOUND' },
+    });
+  });
+});
+
+describe('remove_content', () => {
+  const tool = removeContent({ checkIns });
+  const context = { admin: AdminId.parse(randomUUID()) };
+
+  it('removes a whole post with its reactions and comments, or one comment under it', async () => {
+    const [mia, jay] = [await member(), await member()];
+    const squad = await squadOf(mia, jay);
+    const post = await checkIn(jay.token, squad);
+    const kept = await comment(mia.token, { on: post, text: '加油' });
+    const rude = await comment(jay.token, { on: post, text: '不该说的话' });
+    const reacted = await call('PUT', {
+      path: `/check-ins/${post}/reactions/mine`,
+      token: mia.token,
+      body: { version: 1, emoji: '🔥' },
+    });
+    expect(reacted.status).toBeLessThan(300);
+
+    expect(
+      await tool.run({ checkIn: CheckInId.parse(post), comment: CommentId.parse(rude) }, context),
+    ).toStrictEqual({ version: 1, removed: true, checkIn: post, comment: rude });
+    expect((await feedOf(mia.token, squad))[0]?.comments.map((each) => each.id)).toStrictEqual([
+      kept,
+    ]);
+
+    expect(await tool.run({ checkIn: CheckInId.parse(post) }, context)).toStrictEqual({
+      version: 1,
+      removed: true,
+      checkIn: post,
+    });
+    expect(await feedOf(mia.token, squad)).toStrictEqual([]);
+    const { rows } = await sql<{ left: number }>`
+      select (select count(*) from public.check_in_comments where check_in_id = ${post})::int
+        + (select count(*) from public.check_in_reactions where check_in_id = ${post})::int as left
+    `.execute(db);
+    expect(rows).toStrictEqual([{ left: 0 }]);
+  });
+
+  it('says when the post or comment is already gone', async () => {
+    const jay = await member();
+    const post = await checkIn(jay.token, await squadOf(jay));
+    expect(await tool.run({ checkIn: CheckInId.parse(randomUUID()) }, context)).toStrictEqual({
+      version: 1,
+      removed: false,
+      reason: 'no such post',
+    });
+    expect(
+      await tool.run(
+        { checkIn: CheckInId.parse(post), comment: CommentId.parse(randomUUID()) },
+        context,
+      ),
+    ).toStrictEqual({ version: 1, removed: false, reason: 'no such comment' });
   });
 });
