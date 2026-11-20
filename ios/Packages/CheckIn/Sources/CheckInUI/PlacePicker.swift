@@ -136,6 +136,7 @@ struct PlacePickerSheet: View {
                     .typeStyle(TypeRamp.headline)
                     .foregroundStyle(Color(role: .fgDefault, in: theme))
                     .accessibilityAddTraits(.isHeader)
+                    .accessibilityIdentifier("place.title")
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.vertical, Space.xs)
