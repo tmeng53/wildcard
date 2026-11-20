@@ -75,8 +75,7 @@ extension FeedModel {
         GlassMenuItem(
             Text(copy: "举报", bundle: .module), systemImage: "exclamationmark.bubble", id: id,
             confirm: .init(
-                question, message: Text(copy: "我们会在 24 小时内处理。这条先不再给你看。", bundle: .module),
-                label: Text(copy: "举报", bundle: .module), id: "\(id).confirm"),
+                question, label: Text(copy: "举报", bundle: .module), id: "\(id).confirm"),
             action: action)
     }
 

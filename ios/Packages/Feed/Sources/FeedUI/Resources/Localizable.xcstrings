@@ -1921,22 +1921,6 @@
         }
       }
     },
-    "我们会在 24 小时内处理。这条先不再给你看。" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We'll look at it within 24 hours. You won't see it in the meantime."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "我們會在 24 小時內處理。這則先不再顯示給你。"
-          }
-        }
-      }
-    },
     "拉黑 %@" : {
       "localizations" : {
         "en" : {
