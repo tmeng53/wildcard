@@ -176,6 +176,19 @@ async function call(
 
 /** A 练了 the member posts to these squads now; its id. */
 async function checkIn(token: string, ...audience: string[]) {
+  return checkInAt({ token, audience });
+}
+
+/** A 训练 to these squads, tagged with a place when one is given. */
+async function checkInAt({
+  token,
+  audience,
+  place,
+}: {
+  readonly token: string;
+  readonly audience: readonly string[];
+  readonly place?: Record<string, unknown>;
+}) {
   const now = new Date(Date.now() - 60_000);
   const id = randomUUID();
   const { status } = await call('PUT', {
@@ -187,7 +200,7 @@ async function checkIn(token: string, ...audience: string[]) {
       createdAt: now.toISOString(),
       audience,
       kind: 'trained',
-      training: { sport: 'run' },
+      training: { sport: 'run', ...(place === undefined ? {} : { place }) },
     },
   });
   expect(status).toBe(201);
@@ -313,6 +326,52 @@ describe('blocking a teammate', () => {
       (await call('GET', { path: `/squads/${squad}/nudges?kind=poke`, token: jay.token })).body,
     );
     expect(jaySees).toMatchObject({ sent: [], received: [] });
+  });
+
+  it('leaves the other out of the squad’s places and a place’s page both ways', async () => {
+    const [mia, jay, coco] = [await member(), await member(), await member()];
+    const squad = await squadOf(mia, jay, coco);
+    const park = {
+      name: 'Central Park',
+      appleId: 'I0PARK',
+      category: 'park',
+      latitude: 40.78,
+      longitude: -73.96,
+    };
+    for (const { token } of [jay, coco, mia]) {
+      await checkInAt({ token, audience: [squad], place: park });
+    }
+    expect((await call('PUT', { path: `/me/blocks/${jay.userId}`, token: mia.token })).status).toBe(
+      204,
+    );
+
+    const page = z.object({
+      visits: z.int(),
+      people: z.int(),
+      members: z.array(z.object({ member: z.string() })),
+    });
+    const placesOf = z.object({ places: z.array(z.object({ visits: z.int(), people: z.int() })) });
+    const seenBy = async (token: string) => ({
+      page: page.parse(
+        (await call('GET', { path: `/squads/${squad}/places/apple:I0PARK`, token })).body,
+      ),
+      places: placesOf.parse((await call('GET', { path: `/squads/${squad}/places`, token })).body)
+        .places,
+    });
+
+    const miaSees = await seenBy(mia.token);
+    expect(miaSees.page.visits).toBe(2);
+    expect(miaSees.page.members.map((each) => each.member).sort()).toStrictEqual(
+      [mia.userId, coco.userId].sort(),
+    );
+    expect(miaSees.places).toMatchObject([{ visits: 2, people: 2 }]);
+    const jaySees = await seenBy(jay.token);
+    expect(jaySees.page.members.map((each) => each.member).sort()).toStrictEqual(
+      [jay.userId, coco.userId].sort(),
+    );
+    expect(jaySees.places).toMatchObject([{ visits: 2, people: 2 }]);
+    // Coco sees everyone.
+    expect((await seenBy(coco.token)).places).toMatchObject([{ visits: 3, people: 3 }]);
   });
 
   it('refuses oneself and someone who isn’t a member', async () => {
