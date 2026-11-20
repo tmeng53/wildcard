@@ -45,10 +45,11 @@ final class ComposePlaceUITests: XCTestCase {
     }
 
     /// The squad's own places (自建地点) head the list with who added each; typing offers
-    /// 「新建「…」」 first, which pushes 新建地点: the map under a pin, the name typed and the
-    /// kinds, all on screen. 添加 adds the place and puts it on the post.
+    /// 「新建「…」」 last, which pushes 新建地点: the map under a pin, the name typed and the
+    /// kinds, all on screen. 添加 adds the place and puts it on the post. Apple Maps is left out
+    /// (`-uitest-no-maps`): how many rows it adds above 新建 changes from run to run.
     func testANewPlaceIsAddedForTheSquadAndPicked() {
-        let app = launch(extra: ["-today.cardPage", "0"])
+        let app = launch(extra: ["-today.cardPage", "0", "-uitest-no-maps"])
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
         checkIn.tap()
@@ -73,8 +74,7 @@ final class ComposePlaceUITests: XCTestCase {
         let new = app.buttons["place.new"]
         XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the squad's place isn't found")
         XCTAssertEqual(squadRows.count, 1, "the squad's places aren't narrowed to what was typed")
-        scrollToLastRow(new, in: app)
-        XCTAssertTrue(new.exists, "typing doesn't offer a new place")
+        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
         XCTAssertTrue(new.label.contains("新建「健身房」"), "the new place's row doesn't name what was typed")
         settle()
         keepScreenshot(named: "15-compose-place-new-row")
@@ -104,7 +104,7 @@ final class ComposePlaceUITests: XCTestCase {
 
     /// Typing the name of a place the squad already has offers no new one.
     func testANameTheSquadHasOffersNoNewPlace() {
-        let app = launch(extra: ["-today.cardPage", "0"])
+        let app = launch(extra: ["-today.cardPage", "0", "-uitest-no-maps"])
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
         checkIn.tap()
@@ -121,20 +121,6 @@ final class ComposePlaceUITests: XCTestCase {
         let squadRows = app.buttons.matching(identifier: "place.squad")
         XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the canteen isn't found")
         XCTAssertFalse(app.buttons["place.new"].waitForExistence(timeout: 3), "a place the squad has is offered again")
-    }
-
-    /// Scrolls the place list until `row`, its last row (under what Maps suggests), can be tapped.
-    /// The keyboard goes first, by a tap on the sheet's title: while it is up, its prediction bar
-    /// is a collection view too, and a drag can land on it or on the keys instead of the list.
-    private func scrollToLastRow(_ row: XCUIElement, in app: XCUIApplication) {
-        app.staticTexts["place.title"].tap()
-        let keyboardGone = expectation(
-            for: NSPredicate(format: "exists == false"), evaluatedWith: app.keyboards.firstMatch)
-        wait(for: [keyboardGone], timeout: Self.wait)
-        let list = app.collectionViews.firstMatch
-        for _ in 0..<6 where !(row.waitForExistence(timeout: 2) && row.isHittable) {
-            list.swipeUp()
-        }
     }
 
     /// Mia's salad was tagged at a restaurant: 动态 shows the place's name under her, clear of

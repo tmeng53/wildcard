@@ -49,6 +49,9 @@ final class PlaceSearch {
     private var typed = ""
     /// Counts what was typed, so a search that answers after the member typed on is dropped.
     private var asked = 0
+    /// Whether Apple Maps is asked at all; off, the list holds only the squad's places and 新建, as
+    /// the UI tests need it to, since what Maps answers changes from run to run.
+    var asksAppleMaps = true
     private let completer = MKLocalSearchCompleter()
     @ObservationIgnored private var completions: [MKLocalSearchCompletion] = []
     @ObservationIgnored private var listener: CompleterListener?
@@ -67,6 +70,7 @@ final class PlaceSearch {
     }
 
     func lookAround() async {
+        guard asksAppleMaps else { return }
         let reader = CoreLocationReader(locale: { AppLanguage.current.locale })
         // The approximate place first, so suggestions lean near the phone while iOS asks for the
         // precise one.
@@ -96,6 +100,7 @@ final class PlaceSearch {
         isSuggesting = true
         completions = []
         suggestions = []
+        guard asksAppleMaps else { return }
         completer.queryFragment = typed
     }
 
@@ -109,7 +114,7 @@ final class PlaceSearch {
 
     /// Every place what is typed finds, as the keyboard's 搜索 asks.
     func placesForTyped() async -> [FoundPlace] {
-        guard !typed.isEmpty else { return [] }
+        guard asksAppleMaps, !typed.isEmpty else { return [] }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = typed
         return await show(request)
