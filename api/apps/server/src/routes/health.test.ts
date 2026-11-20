@@ -25,6 +25,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
 } from '../test-kit/local-supabase.js';
@@ -116,6 +117,7 @@ async function getHealth(db: Database) {
     nudges: nudgesOn(db),
     ...placesOn(db),
     savedPlaces: savedPlacesOn(db),
+    moderation: moderationOn(db),
     weather: weatherOn(db),
     log: createLog((line) => lines.push(line)),
     jobs: noJobs,
@@ -223,6 +225,7 @@ describe('an unknown route', () => {
       nudges: nudgesOn(db),
       ...placesOn(db),
       savedPlaces: savedPlacesOn(db),
+      moderation: moderationOn(db),
       weather: weatherOn(db),
       log: createLog(() => undefined),
       jobs: noJobs,

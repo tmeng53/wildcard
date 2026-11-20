@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   CheckInDraft,
@@ -19,6 +20,7 @@ import {
   storedDisclaimerFields,
   storedMealFields,
   storedTrainingFields,
+  CheckInNotFoundError,
   type CheckInRecord,
   type CheckIns,
   PhotoSize,
@@ -33,6 +35,7 @@ import type { PublishEvent } from '../events.js';
 import type { PhotoStorage, VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
+import { isHiddenPost, visiblePosts, withoutHidden } from '../flows/hidden-content.js';
 import { CommentEntry, wireComment } from './comments.js';
 import { ReactionEntry, wireReaction } from './reactions.js';
 
@@ -451,6 +454,8 @@ export function checkIns(deps: {
   readonly log: Log;
   /** Tells what follows a new check-in (its squads' coaches look at it). */
   readonly publish: PublishEvent;
+  /** What each member blocked or reported, which they no longer see. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
 }) {
   const save = createRoute({
     method: 'put',
@@ -731,11 +736,16 @@ export function checkIns(deps: {
       return c.body(null, 204);
     })
     .openapi(listForSquad, async (c) => {
-      const posts = await deps.checkIns.listForSquad({
-        viewer: MemberId.parse(c.var.caller.userId),
-        squad: c.req.valid('param').squadId,
-        days: c.req.valid('query'),
-      });
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const [all, hidden] = await Promise.all([
+        deps.checkIns.listForSquad({
+          viewer,
+          squad: c.req.valid('param').squadId,
+          days: c.req.valid('query'),
+        }),
+        deps.moderation.hiddenFor(ModerationMember.parse(viewer)),
+      ]);
+      const posts = visiblePosts(hidden, all);
       const urls = await viewUrls(
         deps,
         posts.map(({ checkIn }) => checkIn),
@@ -753,10 +763,15 @@ export function checkIns(deps: {
       );
     })
     .openapi(findPost, async (c) => {
-      const { checkIn, reactions, comments } = await deps.checkIns.post({
-        id: c.req.valid('param').id,
-        viewer: MemberId.parse(c.var.caller.userId),
-      });
+      const { id } = c.req.valid('param');
+      const viewer = MemberId.parse(c.var.caller.userId);
+      const [post, hidden] = await Promise.all([
+        deps.checkIns.post({ id, viewer }),
+        deps.moderation.hiddenFor(ModerationMember.parse(viewer)),
+      ]);
+      // One by a member blocked either way, or one they reported, is gone for them.
+      if (isHiddenPost(hidden, post)) throw new CheckInNotFoundError(id);
+      const { checkIn, reactions, comments } = withoutHidden(hidden, post);
       const urls = await viewUrls(deps, [checkIn]);
       return c.json(
         {
@@ -783,12 +798,16 @@ export function checkIns(deps: {
     })
     .openapi(myPosts, async (c) => {
       const { kind, after, limit } = c.req.valid('query');
-      const page = await deps.checkIns.listMyPosts({
-        member: MemberId.parse(c.var.caller.userId),
-        kind,
-        after: after === undefined ? undefined : decodeCursor(after),
-        limit: limit ?? DEFAULT_PAGE,
-      });
+      const member = MemberId.parse(c.var.caller.userId);
+      const [page, hidden] = await Promise.all([
+        deps.checkIns.listMyPosts({
+          member,
+          kind,
+          after: after === undefined ? undefined : decodeCursor(after),
+          limit: limit ?? DEFAULT_PAGE,
+        }),
+        deps.moderation.hiddenFor(ModerationMember.parse(member)),
+      ]);
       const urls = await viewUrls(
         deps,
         page.posts.map(({ checkIn }) => checkIn),
@@ -796,11 +815,14 @@ export function checkIns(deps: {
       return c.json(
         {
           version: 1 as const,
-          posts: page.posts.map(({ checkIn, reactions, comments }) => ({
-            checkIn: wire(checkIn, urls),
-            reactions: reactions.map(wireReaction),
-            comments: comments.map(wireComment),
-          })),
+          // The member's own posts, without what blocked members said on them.
+          posts: page.posts
+            .map((post) => withoutHidden(hidden, post))
+            .map(({ checkIn, reactions, comments }) => ({
+              checkIn: wire(checkIn, urls),
+              reactions: reactions.map(wireReaction),
+              comments: comments.map(wireComment),
+            })),
           ...(page.next === undefined ? {} : { next: encodeCursor(page.next) }),
           ...(page.counts === undefined ? {} : { counts: page.counts }),
         },

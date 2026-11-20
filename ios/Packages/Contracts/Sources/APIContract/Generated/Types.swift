@@ -547,6 +547,32 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `DELETE /me/saved-places/{placeKey}`.
     /// - Remark: Generated from `#/paths//me/saved-places/{placeKey}/delete(removeMySavedPlace)`.
     func removeMySavedPlace(_ input: Operations.RemoveMySavedPlace.Input) async throws -> Operations.RemoveMySavedPlace.Output
+    /// The members the signed-in member blocked (已拉黑)
+    ///
+    /// - Remark: HTTP `GET /me/blocks`.
+    /// - Remark: Generated from `#/paths//me/blocks/get(listMyBlocks)`.
+    func listMyBlocks(_ input: Operations.ListMyBlocks.Input) async throws -> Operations.ListMyBlocks.Output
+    /// Block a member (拉黑)
+    ///
+    /// Two-way: neither sees the other’s posts, comments or reactions, nor is pushed about them. Both stay in their squads. The blocked member isn’t told. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/blocks/{memberId}`.
+    /// - Remark: Generated from `#/paths//me/blocks/{memberId}/put(blockMember)`.
+    func blockMember(_ input: Operations.BlockMember.Input) async throws -> Operations.BlockMember.Output
+    /// Unblock a member (解除拉黑)
+    ///
+    /// One not blocked answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /me/blocks/{memberId}`.
+    /// - Remark: Generated from `#/paths//me/blocks/{memberId}/delete(unblockMember)`.
+    func unblockMember(_ input: Operations.UnblockMember.Input) async throws -> Operations.UnblockMember.Output
+    /// Report a post, a comment or a coach’s line (举报)
+    ///
+    /// Hides it from the reporter at once (a post leaves their feed, a comment or line its post) and files it for an admin to look at within 24 hours. Reporting the same thing again keeps the first report.
+    ///
+    /// - Remark: HTTP `POST /reports`.
+    /// - Remark: Generated from `#/paths//reports/post(report)`.
+    func report(_ input: Operations.Report.Input) async throws -> Operations.Report.Output
     /// Send us feedback (意见反馈)
     ///
     /// Up to 10 a day; the same id again saves nothing new, so it is safe to repeat. Needs no squad.
@@ -1808,6 +1834,58 @@ extension APIProtocol {
         try await removeMySavedPlace(Operations.RemoveMySavedPlace.Input(
             path: path,
             headers: headers
+        ))
+    }
+    /// The members the signed-in member blocked (已拉黑)
+    ///
+    /// - Remark: HTTP `GET /me/blocks`.
+    /// - Remark: Generated from `#/paths//me/blocks/get(listMyBlocks)`.
+    public func listMyBlocks(headers: Operations.ListMyBlocks.Input.Headers = .init()) async throws -> Operations.ListMyBlocks.Output {
+        try await listMyBlocks(Operations.ListMyBlocks.Input(headers: headers))
+    }
+    /// Block a member (拉黑)
+    ///
+    /// Two-way: neither sees the other’s posts, comments or reactions, nor is pushed about them. Both stay in their squads. The blocked member isn’t told. Safe to repeat.
+    ///
+    /// - Remark: HTTP `PUT /me/blocks/{memberId}`.
+    /// - Remark: Generated from `#/paths//me/blocks/{memberId}/put(blockMember)`.
+    public func blockMember(
+        path: Operations.BlockMember.Input.Path,
+        headers: Operations.BlockMember.Input.Headers = .init()
+    ) async throws -> Operations.BlockMember.Output {
+        try await blockMember(Operations.BlockMember.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Unblock a member (解除拉黑)
+    ///
+    /// One not blocked answers 204 too, so a retry is safe.
+    ///
+    /// - Remark: HTTP `DELETE /me/blocks/{memberId}`.
+    /// - Remark: Generated from `#/paths//me/blocks/{memberId}/delete(unblockMember)`.
+    public func unblockMember(
+        path: Operations.UnblockMember.Input.Path,
+        headers: Operations.UnblockMember.Input.Headers = .init()
+    ) async throws -> Operations.UnblockMember.Output {
+        try await unblockMember(Operations.UnblockMember.Input(
+            path: path,
+            headers: headers
+        ))
+    }
+    /// Report a post, a comment or a coach’s line (举报)
+    ///
+    /// Hides it from the reporter at once (a post leaves their feed, a comment or line its post) and files it for an admin to look at within 24 hours. Reporting the same thing again keeps the first report.
+    ///
+    /// - Remark: HTTP `POST /reports`.
+    /// - Remark: Generated from `#/paths//reports/post(report)`.
+    public func report(
+        headers: Operations.Report.Input.Headers = .init(),
+        body: Operations.Report.Input.Body
+    ) async throws -> Operations.Report.Output {
+        try await report(Operations.Report.Input(
+            headers: headers,
+            body: body
         ))
     }
     /// Send us feedback (意见反馈)

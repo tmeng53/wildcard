@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import { MemberId as NoticeMember, type Notices } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
@@ -12,6 +13,8 @@ export interface TrainedWithPushDependencies {
   readonly push: Pick<Push, 'settingsOf' | 'notifyMembers'>;
   readonly notices: Pick<Notices, 'tell'>;
   readonly log: Log;
+  /** Members blocked either way with the author are never told they were named. */
+  readonly moderation: Pick<Moderation, 'blockedAmong'>;
 }
 
 /**
@@ -33,7 +36,13 @@ export async function notifyTrainedWith(
   deps: TrainedWithPushDependencies,
   { checkIn, author, members }: Pick<TrainedWithNamed, 'checkIn' | 'author' | 'members'>,
 ): Promise<void> {
-  const told = members.filter((member) => member !== author);
+  const named = members.filter((member) => member !== author);
+  if (named.length === 0) return;
+  const blocked = await deps.moderation.blockedAmong(
+    ModerationMember.parse(author),
+    named.map((member) => ModerationMember.parse(member)),
+  );
+  const told = named.filter((member) => !blocked.has(member));
   if (told.length === 0) return;
   const profiles = await deps.members.squadmates([ProfileMember.parse(author)]);
   const nickname = profiles.get(ProfileMember.parse(author))?.character?.nickname;

@@ -43,6 +43,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -155,6 +156,7 @@ const deps = {
   nudges,
   ...placesOn(db),
   savedPlaces: savedPlacesOn(db),
+  moderation: moderationOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
 };
@@ -162,6 +164,7 @@ const app = createApp(deps);
 
 const run = () =>
   sendDailyProgress({
+    moderation: moderationOn(db),
     members,
     squads,
     checkIns,

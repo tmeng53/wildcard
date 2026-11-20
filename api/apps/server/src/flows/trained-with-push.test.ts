@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createLog } from '../log.js';
 import { notifyTrainedWith } from './trained-with-push.js';
+import { nothingHidden } from '../test-kit/nothing-hidden.js';
 
 const [author, mia, coco, post] = [
   '00000000-0000-4000-8000-00000000000a',
@@ -31,6 +32,7 @@ function flow({ pushOff = new Set<string>() } = {}) {
   const kept: NewNotice[] = [];
   const told = new Set<string>();
   const deps = {
+    moderation: nothingHidden,
     members: { squadmates: () => Promise.resolve(new Map([[MemberId.parse(author), profile]])) },
     push: {
       settingsOf: (member: string) =>

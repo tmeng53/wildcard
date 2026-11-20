@@ -38,6 +38,7 @@
     "@wildcard/place-ids": "workspace:*",
     "@wildcard/places": "workspace:*",
     "@wildcard/push": "workspace:*",
+    "@wildcard/moderation": "workspace:*",
     "@wildcard/saved-places": "workspace:*",
     "@wildcard/scenes": "workspace:*",
     "@wildcard/sport-ids": "workspace:*",

@@ -6824,6 +6824,125 @@
         ],
         "additionalProperties": false
       },
+      "BlockedMemberList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "blocked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockedMember"
+            },
+            "description": "Newest blocked first."
+          }
+        },
+        "required": [
+          "version",
+          "blocked"
+        ],
+        "additionalProperties": false
+      },
+      "BlockedMember": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who is blocked."
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Their nickname; left out without one."
+          },
+          "look": {
+            "$ref": "#/components/schemas/Look"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they were blocked, in UTC."
+          }
+        },
+        "required": [
+          "member",
+          "since"
+        ],
+        "additionalProperties": false
+      },
+      "ReportSent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "version",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "ReportDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Made by the app, so sending again reports once."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "checkIn",
+              "comment",
+              "coachReply",
+              "coachAnswer"
+            ],
+            "description": "A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The post, or the post it is under."
+          },
+          "item": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`."
+          },
+          "squad": {
+            "type": "string",
+            "format": "uuid",
+            "description": "For a coach’s line, the squad whose coach said it. Left out otherwise."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "kind",
+          "checkIn"
+        ],
+        "additionalProperties": false
+      },
       "FeedbackSent": {
         "type": "object",
         "properties": {
@@ -15279,6 +15398,277 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/blocks": {
+      "get": {
+        "operationId": "listMyBlocks",
+        "summary": "The members the signed-in member blocked (已拉黑)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Who they blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockedMemberList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/blocks/{memberId}": {
+      "put": {
+        "operationId": "blockMember",
+        "summary": "Block a member (拉黑)",
+        "description": "Two-way: neither sees the other’s posts, comments or reactions, nor is pushed about them. Both stay in their squads. The blocked member isn’t told. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Blocked"
+          },
+          "400": {
+            "description": "Not a member id, or the member’s own (`BLOCK_SELF`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such member (`MEMBER_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unblockMember",
+        "summary": "Unblock a member (解除拉黑)",
+        "description": "One not blocked answers 204 too, so a retry is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Unblocked, or not blocked"
+          },
+          "400": {
+            "description": "Not a member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "operationId": "report",
+        "summary": "Report a post, a comment or a coach’s line (举报)",
+        "description": "Hides it from the reporter at once (a post leaves their feed, a comment or line its post) and files it for an admin to look at within 24 hours. Reporting the same thing again keeps the first report.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reported before",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSent"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Reported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid report",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nothing like it the member can see (`CHECK_IN_NOT_FOUND`, `REPORTED_ITEM_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another member’s report has this id (`REPORT_ID_TAKEN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

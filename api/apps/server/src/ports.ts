@@ -6,6 +6,7 @@ import type { NoticeTables } from '@wildcard/notices';
 import type { NudgeTables } from '@wildcard/nudges';
 import type { SquadPlaceTables } from '@wildcard/places';
 import type { SavedPlaceTables } from '@wildcard/saved-places';
+import type { ModerationTables } from '@wildcard/moderation';
 import type { WeatherTables } from '@wildcard/weather';
 import type { CheckInTables, PhotoPath } from '@wildcard/check-ins';
 import type { CoachTables } from '@wildcard/coach';
@@ -189,6 +190,7 @@ export type Tables = CheckInTables &
   NudgeTables &
   SquadPlaceTables &
   SavedPlaceTables &
+  ModerationTables &
   WeatherTables &
   WeeklyAwardTables &
   SportTables &

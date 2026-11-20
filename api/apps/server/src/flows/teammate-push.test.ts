@@ -26,6 +26,7 @@ import {
   teammateNotification,
   type TeammatePushDependencies,
 } from './teammate-push.js';
+import { nothingHidden } from '../test-kit/nothing-hidden.js';
 
 // Who is told of a 训练 and how, without a database: the stores' own tests cover the claim.
 const day = '2026-11-13';
@@ -97,6 +98,7 @@ function world({
   const sent: { readonly member: string; readonly notification: PushNotification }[] = [];
   const settings: PushSettings = { dailyProgress: true, coach: true, teammate: true };
   const deps: TeammatePushDependencies = {
+    moderation: nothingHidden,
     checkIns: {
       current: () => Promise.resolve(record === 'deleted' ? undefined : record),
       squadToday: () => Promise.resolve(today),

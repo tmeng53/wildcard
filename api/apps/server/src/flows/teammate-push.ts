@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import {
   CheckInId,
   MemberId as CheckInMember,
@@ -31,6 +32,8 @@ export interface TeammatePushDependencies {
   readonly push: Pick<Push, 'teammateSettings' | 'claimTeammate' | 'settingsOf' | 'notifyMembers'>;
   readonly clock: () => Date;
   readonly log: Log;
+  /** Squadmates blocked either way with the author are never told of their posts. */
+  readonly moderation: Pick<Moderation, 'blockedAmong' | 'hiddenFor'>;
 }
 
 /**
@@ -103,6 +106,11 @@ export async function notifyTeammates(
       }
     }
   }
+  const blocked = await deps.moderation.blockedAmong(
+    ModerationMember.parse(author),
+    [...through.keys()].map((each) => ModerationMember.parse(each)),
+  );
+  for (const member of blocked) through.delete(member);
   if (through.size === 0) return;
   const [languages, sportNames] = await Promise.all([
     deps.members.languages([...through.keys()].map((each) => ProfileMember.parse(each))),

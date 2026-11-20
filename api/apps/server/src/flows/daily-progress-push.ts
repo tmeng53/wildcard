@@ -1,3 +1,4 @@
+import type { Moderation } from '@wildcard/moderation';
 import { MemberId as CheckInMember, SquadId, type CheckIns } from '@wildcard/check-ins';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import {
@@ -82,6 +83,8 @@ export interface DailyProgressDependencies {
   readonly notices: Notices;
   readonly clock: () => Date;
   readonly log: Log;
+  /** What each member blocked or reported, left out of what their push carries. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
 }
 
 /** What a run did, member by member. */

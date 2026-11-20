@@ -76,6 +76,7 @@ import {
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import { createPostgresSquadPlaceStore, createSquadPlaces } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
+import { createModeration, createPostgresModerationStore } from '@wildcard/moderation';
 import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
@@ -188,6 +189,7 @@ import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
 import { coachMessageTools } from './admin-mcp/tools/coach-messages.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
+import { moderationTools } from './admin-mcp/tools/moderation.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createGitHubIssueTracker } from './adapters/github-issues.js';
 import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
@@ -532,6 +534,10 @@ const nudges = createNudges({
   clock: () => new Date(),
 });
 // The places each member saved (收藏).
+const moderation = createModeration({
+  store: createPostgresModerationStore(db),
+  clock: () => new Date(),
+});
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
   clock: () => new Date(),
@@ -806,6 +812,7 @@ const app = createApp({
   switches,
   nudges,
   savedPlaces,
+  moderation,
   squadPlaces,
   weather,
   feedback: feedbackInbox,
@@ -1028,7 +1035,8 @@ const app = createApp({
         memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
         clock: () => new Date(),
       }),
-      ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),
+      ...testPushTools({ push, squads, checkIns, members, moderation, clock: () => new Date() }),
+      ...moderationTools({ checkIns }),
       // Only with OpenAI's key, as the coach itself.
       ...(coachWakes === undefined
         ? []
