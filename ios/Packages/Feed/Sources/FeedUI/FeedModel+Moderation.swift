@@ -120,7 +120,7 @@ struct ModerationMenu: View {
                 model.blockItem(post.author, id: "post.block"),
             ]
         )
-        .accessibilityIdentifier("post.moderate")
+        .accessibilityIdentifier("post.moderate.\(post.id)")
     }
 }
 #endif

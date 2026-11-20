@@ -9,8 +9,7 @@ final class ModerationUITests: XCTestCase {
     /// 举报 asks 举报这条动态？ in the menu, then the post leaves 动态.
     func testReportATeammatesPost() {
         let app = launch(["-tab", "feed"])
-        openTeammateMenu(in: app)
-        let posts = teammatePosts(in: app)
+        let post = openTeammateMenu(in: app)
         app.buttons["post.report"].tap()
         let confirm = app.buttons["post.report.confirm"].firstMatch
         XCTAssertTrue(confirm.waitForExistence(timeout: Self.wait), "举报 didn't ask first")
@@ -19,16 +18,15 @@ final class ModerationUITests: XCTestCase {
                 .exists, "the menu doesn't ask 举报这条动态？")
         assertOnScreen(confirm, in: app)
         settle()
-        keepScreenshot(named: "120-feed-report-confirm")
+        keepScreenshot(named: "161-feed-report-confirm")
         confirm.tap()
-        waitForFewer(than: posts, in: app, "the reported post is still in 动态")
+        waitFor(post, "exists == false", "the reported post is still in 动态")
     }
 
     /// 拉黑 asks with what it does, then the teammate's posts leave 动态.
     func testBlockATeammate() {
         let app = launch(["-tab", "feed"])
-        openTeammateMenu(in: app)
-        let posts = teammatePosts(in: app)
+        let post = openTeammateMenu(in: app)
         let block = app.buttons["post.block"]
         XCTAssertTrue(block.label.hasPrefix("拉黑 "), "拉黑 doesn't name the teammate: \(block.label)")
         block.tap()
@@ -39,11 +37,11 @@ final class ModerationUITests: XCTestCase {
                 .firstMatch.exists, "the menu doesn't say what 拉黑 does")
         assertOnScreen(confirm, in: app)
         settle()
-        keepScreenshot(named: "121-feed-block-confirm")
+        keepScreenshot(named: "162-feed-block-confirm")
         confirm.tap()
-        waitForFewer(than: posts, in: app, "the blocked teammate's posts are still in 动态")
+        waitFor(post, "exists == false", "the blocked teammate's post is still in 动态")
         settle()
-        keepScreenshot(named: "122-feed-after-block")
+        keepScreenshot(named: "163-feed-after-block")
     }
 
     /// 设置 › 已拉黑 lists Coco; 解除 takes her off.
@@ -62,36 +60,24 @@ final class ModerationUITests: XCTestCase {
         }
         XCTAssertTrue(row.isHittable, "no 已拉黑 in 设置")
         settle()
-        keepScreenshot(named: "123-settings-blocked-row")
+        keepScreenshot(named: "164-settings-blocked-row")
         row.tap()
         let member = app.descendants(matching: .any).matching(identifier: "blocked.member").firstMatch
         XCTAssertTrue(member.waitForExistence(timeout: Self.wait), "已拉黑 doesn't list Coco")
         let unblock = app.buttons["blocked.unblock"].firstMatch
         assertOnScreen(unblock, in: app)
         settle()
-        keepScreenshot(named: "124-settings-blocked")
+        keepScreenshot(named: "165-settings-blocked")
         unblock.tap()
         waitFor(member, "exists == false", "解除 didn't take Coco off the list")
     }
 
-    /// How many teammates' posts 动态 has laid out.
-    private func teammatePosts(in app: XCUIApplication) -> Int {
-        app.descendants(matching: .any).matching(identifier: "post.moderate").count
-    }
-
-    /// Asked afresh each time, since a query's first match moves on to the next card.
-    private func waitForFewer(than count: Int, in app: XCUIApplication, _ message: String) {
-        let deadline = Date.now.addingTimeInterval(Self.wait)
-        while teammatePosts(in: app) >= count, Date.now < deadline {
-            RunLoop.current.run(until: Date.now.addingTimeInterval(0.5))
-        }
-        XCTAssertLessThan(teammatePosts(in: app), count, message)
-    }
-
-    /// Scrolls to a teammate's 「…」 and opens 举报 and 拉黑.
-    private func openTeammateMenu(in app: XCUIApplication) {
+    /// Scrolls to a teammate's 「…」, opens 举报 and 拉黑, and gives back that post's 「…」, found by its
+    /// post id, since the lazy feed lays out more cards as one leaves.
+    private func openTeammateMenu(in app: XCUIApplication) -> XCUIElement {
         continueAfterFailure = false
-        let moderate = app.descendants(matching: .any).matching(identifier: "post.moderate").firstMatch
+        let moderate = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier BEGINSWITH 'post.moderate.'")).firstMatch
         let feed = app.scrollViews.firstMatch
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
@@ -102,11 +88,13 @@ final class ModerationUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(moderate.isHittable, "a teammate's post shows no 「…」")
+        let post = app.descendants(matching: .any).matching(identifier: moderate.identifier).firstMatch
         moderate.tap()
         XCTAssertTrue(app.buttons["post.report"].waitForExistence(timeout: Self.wait), "「…」 has no 举报")
         XCTAssertTrue(app.buttons["post.block"].exists, "「…」 has no 拉黑")
         settle()
-        keepScreenshot(named: "119-feed-moderation-menu")
+        keepScreenshot(named: "160-feed-moderation-menu")
+        return post
     }
 
     private func launch(_ extra: [String]) -> XCUIApplication {
