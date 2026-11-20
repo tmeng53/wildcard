@@ -8758,7 +8758,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachCards/version`.
             public var version: Components.Schemas.CoachCards.VersionPayload
-            /// The cards not seen yet from today on the squad’s clock, oldest first: the stack.
+            /// The cards not seen yet from today on the caller’s own clock, oldest first: the stack.
             ///
             /// - Remark: Generated from `#/components/schemas/CoachCards/stack`.
             public var stack: [Components.Schemas.CoachPageCard]
@@ -8770,7 +8770,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - version:
-            ///   - stack: The cards not seen yet from today on the squad’s clock, oldest first: the stack.
+            ///   - stack: The cards not seen yet from today on the caller’s own clock, oldest first: the stack.
             ///   - earlier: Every other card from the last 30 days, newest first: 以前.
             public init(
                 version: Components.Schemas.CoachCards.VersionPayload,
@@ -8842,7 +8842,7 @@ extension Components {
             }
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/challenge`.
             public var challenge: Components.Schemas.CoachPageCard.ChallengePayload?
-            /// `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
+            /// `true` on a `challenge` whose day is over on the caller’s own clock: it can no longer be answered or marked done (已过期).
             ///
             /// - Remark: Generated from `#/components/schemas/CoachPageCard/expired`.
             public var expired: Swift.Bool?
@@ -8907,7 +8907,7 @@ extension Components {
             ///   - day: The squad’s day a `board`, `note`, `challenge` or `challengeDone` is for.
             ///   - text: What the coach said, on a `board` or `note`.
             ///   - challenge:
-            ///   - expired: `true` on a `challenge` whose day is over on the squad’s clock: it can no longer be answered or marked done (已过期).
+            ///   - expired: `true` on a `challenge` whose day is over on the caller’s own clock: it can no longer be answered or marked done (已过期).
             ///   - gift: A `gift`’s piece; open it with `PUT /me/gifts/{pieceId}/open`.
             ///   - message:
             public init(
