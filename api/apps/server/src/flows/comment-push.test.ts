@@ -138,6 +138,38 @@ describe('a comment push', () => {
     expect(sent).toStrictEqual([other]);
   });
 
+  it('never tells a member blocked either way with the post’s author, whose post they can’t open', async () => {
+    const told: string[] = [];
+    await notifyComment(
+      {
+        moderation: {
+          blockedAmong: (who, members) =>
+            Promise.resolve(
+              new Set<string>(who === author ? members.filter((member) => member === other) : []),
+            ),
+        },
+        members: {
+          squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
+        },
+        push: {
+          settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true, teammate: true }),
+          notifyMembers: ({ members }) =>
+            Promise.resolve({ sent: members.length, gone: 0, off: 0, failures: [] }),
+        },
+        notices: {
+          tell: (notices) => {
+            told.push(...notices.map(({ member }) => member));
+            return Promise.resolve(notices.map(({ member }) => member));
+          },
+        },
+        log: createLog(() => undefined),
+      },
+      { ...comment, mentions: [other] },
+    );
+
+    expect(told).toStrictEqual([author]);
+  });
+
   it('throws when it can’t read the commenter, so the event comes again', async () => {
     await expect(
       notifyComment(
