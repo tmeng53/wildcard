@@ -1,3 +1,4 @@
+import type { Moderation } from '@wildcard/moderation';
 import {
   MemberId as CheckInMember,
   SquadId as CheckInSquad,
@@ -24,6 +25,7 @@ interface TestPushToolDependencies {
   /** The squad's real day, for the long-press view, as the 6pm push carries it. */
   readonly checkIns: Pick<CheckIns, 'squadToday' | 'listForSquad'>;
   readonly members: Pick<Members, 'squadmates'>;
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
   readonly clock: () => Date;
 }
 
@@ -34,7 +36,14 @@ const TestPushKind = z.enum(['dailyProgress', 'poke', 'weeklyAwards']);
 const SAMPLE_POKER = '测试队友';
 
 /** `send_test_push`: sends the admin one push of a kind, to their own phones only. */
-export function sendTestPush({ push, squads, checkIns, members, clock }: TestPushToolDependencies) {
+export function sendTestPush({
+  push,
+  squads,
+  checkIns,
+  members,
+  moderation,
+  clock,
+}: TestPushToolDependencies) {
   return adminTool({
     name: 'send_test_push',
     title: 'Send yourself a test push',
@@ -101,7 +110,7 @@ export function sendTestPush({ push, squads, checkIns, members, clock }: TestPus
       ...told,
       // Without it the long-press view has nothing to show; a failure still sends the words.
       today: await pushToday(
-        { checkIns, members },
+        { checkIns, members, moderation },
         { viewer: admin, squad: squadId, today, pokers: [], bytes: roomForToday(told) },
       ).catch(() => undefined),
     });

@@ -6,6 +6,7 @@ import { JobTokenInvalidError, JobsOffError, RouteNotFoundError } from '../error
 import { deliver, ServerEvent, Subscriber, type EventHandlers } from '../events.js';
 import { deliverCoachNotes, type CoachNotesDependencies } from '../flows/coach-notes.js';
 import { fileWaitingFeedback, type FeedbackIssueDependencies } from '../flows/feedback-issues.js';
+import { fileWaitingReports, type ReportIssueDependencies } from '../flows/report-issues.js';
 import { sendDailyProgress, type DailyProgressDependencies } from '../flows/daily-progress-push.js';
 import { suggestSquadGoals, type SuggestGoal } from '../flows/squad-goal-suggestion.js';
 import { giveWeeklyAwards, type WeeklyAwardsDependencies } from '../flows/weekly-awards.js';
@@ -54,6 +55,8 @@ export function jobs(deps: {
   readonly dailyProgress: DailyProgressDependencies;
   /** Files members' feedback that couldn't be filed as it was sent. */
   readonly feedbackIssues: FeedbackIssueDependencies;
+  /** Files members' reports that couldn't be filed as they were made, every 10 minutes. */
+  readonly reportIssues: ReportIssueDependencies;
   readonly weeklyAwards: WeeklyAwardsDependencies;
   /** Keeps a higher squad goal suggested to a captain with its notice, after the awards. */
   readonly suggestGoal: SuggestGoal;
@@ -96,7 +99,9 @@ export function jobs(deps: {
       if (run.failed > 0) deps.weeklyAwards.log.warn('some coach wakes failed', { ...run });
       else deps.weeklyAwards.log.info('coach run', { ...run });
       deps.weeklyAwards.log.info('coach notes run', { ...notes });
-      return c.json({ version: 1, ...run, notes }, 200);
+      const reports = await fileWaitingReports(deps.reportIssues);
+      if (reports.waiting > 0) deps.weeklyAwards.log.warn('reports still waiting', reports);
+      return c.json({ version: 1, ...run, notes, reports }, 200);
     });
 }
 

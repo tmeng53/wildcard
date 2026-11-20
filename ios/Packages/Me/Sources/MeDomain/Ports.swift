@@ -25,6 +25,10 @@ public protocol MeService: Sendable {
     /// Deletes the account and everything that is the member's, for good. Signing out on this phone
     /// is the app's to do after.
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError)
+    /// The teammates the member blocked (已拉黑), newest first.
+    func blocked() async throws(MeError) -> [BlockedMember]
+    /// 解除拉黑: they see each other's posts, comments and reactions again. Safe to repeat.
+    func unblock(_ member: MemberID) async throws(MeError)
 }
 
 /// How a squadmate's player card is read, for the sheet a teammate's name opens.

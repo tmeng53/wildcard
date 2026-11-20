@@ -13,6 +13,7 @@ import type { FeedbackInbox } from '@wildcard/feedback';
 import type { Nudges } from '@wildcard/nudges';
 import type { SquadPlaces } from '@wildcard/places';
 import type { SavedPlaces } from '@wildcard/saved-places';
+import type { Moderation } from '@wildcard/moderation';
 import type { Push } from '@wildcard/push';
 import type { Scenes } from '@wildcard/scenes';
 import type { Switches } from '@wildcard/switches';
@@ -65,6 +66,7 @@ import { notices } from './routes/notices.js';
 import { nudges } from './routes/nudges.js';
 import { places } from './routes/places.js';
 import { savedPlaces } from './routes/saved-places.js';
+import { moderation } from './routes/moderation.js';
 import { feedback } from './routes/feedback.js';
 import { photoUploads } from './routes/photo-uploads.js';
 import { pushSettings } from './routes/push-settings.js';
@@ -112,6 +114,8 @@ export interface AppDependencies {
   readonly nudges: Nudges;
   /** The places each member saved (收藏), with their notes. */
   readonly savedPlaces: SavedPlaces;
+  /** What each member blocked or reported (App Review 1.2), which they no longer see. */
+  readonly moderation: Moderation;
   readonly squadPlaces: SquadPlaces;
   /** 意见反馈: members' messages to us. */
   readonly feedback: FeedbackInbox;
@@ -246,6 +250,7 @@ export function createApp(deps: AppDependencies) {
   app.route('/', nudges(deps));
   app.route('/', places(deps));
   app.route('/', savedPlaces(deps));
+  app.route('/', moderation(deps));
   app.route('/', feedback(deps));
   app.route('/', notices(deps));
   app.route('/', events(deps));
@@ -261,6 +266,7 @@ export function createApp(deps: AppDependencies) {
       isScheduler: deps.jobs.isScheduler,
       dailyProgress: { ...deps, interactions: deps.jobs.interactions, clock: deps.jobs.clock },
       feedbackIssues: deps,
+      reportIssues: deps,
       weeklyAwards: { ...deps, ...deps.weeklyAwards, admins: deps.admin.admins(deps.db) },
       suggestGoal: deps.jobs.suggestGoal,
       ...(deps.jobs.coach === undefined ? {} : { coach: deps.jobs.coach }),

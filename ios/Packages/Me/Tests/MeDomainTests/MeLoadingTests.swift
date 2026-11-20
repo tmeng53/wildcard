@@ -19,6 +19,8 @@ private struct Unreachable: MeService {
     func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard { throw .unavailable }
     func claim(piece: String) async throws(MeError) { throw .unavailable }
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) { throw .unavailable }
+    func blocked() async throws(MeError) -> [BlockedMember] { throw .unavailable }
+    func unblock(_ member: MemberID) async throws(MeError) { throw .unavailable }
 }
 
 @MainActor private func page() -> MeModel {

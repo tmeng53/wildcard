@@ -171,6 +171,22 @@ public struct APIMeService: MeService {
         try await me { () throws(APIError) in try await api.setTeammatePush(isOn) }
     }
 
+    public func blocked() async throws(MeError) -> [BlockedMember] {
+        try await me { () throws(APIError) in
+            try await api.blocked().map { blocked in
+                BlockedMember(
+                    id: blocked.member,
+                    character: blocked.character.map {
+                        MeCharacter(nickname: $0.nickname.text, outfit: Outfit($0.look), persona: Persona($0.look))
+                    }, since: blocked.since)
+            }
+        }
+    }
+
+    public func unblock(_ member: MemberID) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.unblock(member) }
+    }
+
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         await beforeDeleting()
         let code: String? =

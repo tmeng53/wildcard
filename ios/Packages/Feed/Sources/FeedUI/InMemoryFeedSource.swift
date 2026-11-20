@@ -107,6 +107,43 @@ public actor InMemoryFeedSource: FeedSource, MyPostsSource, CoachSource {
 }
 
 extension InMemoryFeedSource {
+    /// Hides it from the viewer, as the server does once it took the report.
+    public func report(_ target: ReportTarget) async throws(FeedError) {
+        guard !offline else { throw .notSent }
+        switch target {
+        case .post(let id):
+            posts.removeAll { $0.id == id }
+        case .comment(let comment, post: let id):
+            posts = posts.map { post in
+                guard post.id == id else { return post }
+                return FeedPost(
+                    checkIn: post.checkIn, reactions: post.reactions,
+                    comments: post.comments.filter { $0.id != comment })
+            }
+        case .coachReply(_, post: let id, _):
+            coach = coach.map {
+                CoachActivity(note: $0.note, replies: $0.replies.filter { $0.checkIn != id }, answers: $0.answers)
+            }
+        case .coachAnswer(answering: let comment, _, _):
+            coach = coach.map {
+                CoachActivity(note: $0.note, replies: $0.replies, answers: $0.answers.filter { $0.comment != comment })
+            }
+        }
+    }
+
+    /// Hides the member's posts, comments and reactions from the viewer, as the server does.
+    public func block(_ member: MemberID) async throws(FeedError) {
+        guard !offline else { throw .notSent }
+        guard member != viewer else { throw .refused }
+        posts = posts.filter { $0.author != member }.map { post in
+            FeedPost(
+                checkIn: post.checkIn, reactions: post.reactions.setting(nil, for: member, at: post.checkIn.createdAt),
+                comments: post.comments.filter { $0.member != member })
+        }
+    }
+}
+
+extension InMemoryFeedSource {
     /// Puts the viewer's edited post in place of what it was, with any photo just added, by path.
     func replace(_ checkIn: CheckIn, adding added: [String: Data]) throws(FeedError) {
         guard let index = posts.firstIndex(where: { $0.id == checkIn.id }) else { throw .postGone }

@@ -26,4 +26,10 @@ public protocol FeedSource: Sendable {
         async throws(FeedError) -> Comment
     /// Deletes the member's own comment. Safe to repeat.
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError)
+    /// Reports a post, a comment or the coach's line for an admin to look at (举报); the server
+    /// hides it from the member at once. Safe to repeat.
+    func report(_ target: ReportTarget) async throws(FeedError)
+    /// Blocks a teammate both ways (拉黑): neither sees the other's posts, comments or reactions.
+    /// Safe to repeat.
+    func block(_ member: MemberID) async throws(FeedError)
 }

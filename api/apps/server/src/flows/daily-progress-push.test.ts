@@ -23,6 +23,7 @@ import {
 import { createPostgresSquadStore, createSquads, randomInviteCodes } from '@wildcard/squads';
 import { createPostgresSportStore, createSports } from '@wildcard/sports';
 import { sql } from 'kysely';
+import { MemberId as ModerationMember } from '@wildcard/moderation';
 import { afterAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -43,6 +44,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -155,6 +157,7 @@ const deps = {
   nudges,
   ...placesOn(db),
   savedPlaces: savedPlacesOn(db),
+  moderation: moderationOn(db),
   weather: weatherOn(db),
   ...unusedFeedback,
 };
@@ -162,6 +165,7 @@ const app = createApp(deps);
 
 const run = () =>
   sendDailyProgress({
+    moderation: moderationOn(db),
     members,
     squads,
     checkIns,
@@ -524,6 +528,29 @@ describe('the daily progress push', () => {
           args: ['1', '12', '小美', '1'],
         },
         event: { received: { reaction: 1, poke: 2 } },
+      },
+    ]);
+  });
+
+  it('leaves out a poke from a member blocked either way', async () => {
+    const [eve, mate, fan] = [
+      await member(evening),
+      await member(morning, '小美'),
+      await member(morning),
+    ];
+    const squad = await squadOf(eve, mate, fan);
+    await nudge(mate, { squad, to: eve, kind: 'poke' });
+    await nudge(fan, { squad, to: eve, kind: 'poke' });
+    await moderationOn(db).block({
+      member: ModerationMember.parse(mate.userId),
+      other: ModerationMember.parse(eve.userId),
+    });
+    await run();
+    // 小美 isn't named or counted: only the fan's poke is.
+    expect(sentTo.get(eve.phone)).toMatchObject([
+      {
+        alert: { key: 'push.dailyProgress.received', args: ['0', '9', '1'] },
+        event: { received: { poke: 1 } },
       },
     ]);
   });

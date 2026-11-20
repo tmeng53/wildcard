@@ -14,6 +14,7 @@ import { describe, expect, it } from 'vitest';
 
 import { APNS_BYTES, dailyProgressNotification, roomForToday } from './daily-progress-push.js';
 import { POKERS, POST_REACTIONS, TODAY_POSTS, pushToday } from './daily-push-today.js';
+import { nothingHidden } from '../test-kit/nothing-hidden.js';
 
 // The size of the push at its fullest, without a database: the most squad, names, words and
 // reactions the rules allow.
@@ -74,6 +75,7 @@ const posts = mates.flatMap((mate, at) => [post(mate, at * 2), post(mate, at * 2
 
 // Every member named at the longest a name can be.
 const everyoneNamed = {
+  moderation: nothingHidden,
   checkIns: { listForSquad: () => Promise.resolve(posts) },
   members: {
     squadmates: (members: readonly ProfileMember[]) =>
@@ -167,6 +169,7 @@ describe('the push’s today', () => {
     };
     const carried = await pushToday(
       {
+        moderation: nothingHidden,
         checkIns: { listForSquad: () => Promise.resolve([reacted]) },
         members: { squadmates: () => Promise.resolve(new Map<ProfileMember, Squadmate>()) },
       },

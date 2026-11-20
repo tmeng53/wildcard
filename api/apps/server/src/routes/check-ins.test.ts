@@ -31,6 +31,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -115,6 +116,7 @@ const app = createApp({
   nudges: nudgesOn(db),
   ...places,
   savedPlaces: savedPlacesOn(db),
+  moderation: moderationOn(db),
   weather: weatherOn(db),
   log: createLog(() => undefined),
   jobs: {

@@ -10688,6 +10688,173 @@ extension Components {
                 case note
             }
         }
+        /// - Remark: Generated from `#/components/schemas/BlockedMemberList`.
+        public struct BlockedMemberList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/version`.
+            public var version: Components.Schemas.BlockedMemberList.VersionPayload
+            /// Newest blocked first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/blocked`.
+            public var blocked: [Components.Schemas.BlockedMember]
+            /// Creates a new `BlockedMemberList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - blocked: Newest blocked first.
+            public init(
+                version: Components.Schemas.BlockedMemberList.VersionPayload,
+                blocked: [Components.Schemas.BlockedMember]
+            ) {
+                self.version = version
+                self.blocked = blocked
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case blocked
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/BlockedMember`.
+        public struct BlockedMember: Codable, Hashable, Sendable {
+            /// Who is blocked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/member`.
+            public var member: Swift.String
+            /// Their nickname; left out without one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/nickname`.
+            public var nickname: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/look`.
+            public var look: Components.Schemas.Look?
+            /// When they were blocked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/since`.
+            public var since: Foundation.Date
+            /// Creates a new `BlockedMember`.
+            ///
+            /// - Parameters:
+            ///   - member: Who is blocked.
+            ///   - nickname: Their nickname; left out without one.
+            ///   - look:
+            ///   - since: When they were blocked, in UTC.
+            public init(
+                member: Swift.String,
+                nickname: Swift.String? = nil,
+                look: Components.Schemas.Look? = nil,
+                since: Foundation.Date
+            ) {
+                self.member = member
+                self.nickname = nickname
+                self.look = look
+                self.since = since
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case nickname
+                case look
+                case since
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReportSent`.
+        public struct ReportSent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReportSent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReportSent/version`.
+            public var version: Components.Schemas.ReportSent.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ReportSent/id`.
+            public var id: Swift.String
+            /// Creates a new `ReportSent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            public init(
+                version: Components.Schemas.ReportSent.VersionPayload,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReportDraft`.
+        public struct ReportDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/version`.
+            public var version: Components.Schemas.ReportDraft.VersionPayload
+            /// Made by the app, so sending again reports once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/id`.
+            public var id: Swift.String
+            /// A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case checkIn = "checkIn"
+                case comment = "comment"
+                case coachReply = "coachReply"
+                case coachAnswer = "coachAnswer"
+            }
+            /// A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/kind`.
+            public var kind: Components.Schemas.ReportDraft.KindPayload
+            /// The post, or the post it is under.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/checkIn`.
+            public var checkIn: Swift.String
+            /// For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/item`.
+            public var item: Swift.String?
+            /// For a coach’s line, the squad whose coach said it. Left out otherwise.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/squad`.
+            public var squad: Swift.String?
+            /// Creates a new `ReportDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: Made by the app, so sending again reports once.
+            ///   - kind: A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///   - checkIn: The post, or the post it is under.
+            ///   - item: For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`.
+            ///   - squad: For a coach’s line, the squad whose coach said it. Left out otherwise.
+            public init(
+                version: Components.Schemas.ReportDraft.VersionPayload,
+                id: Swift.String,
+                kind: Components.Schemas.ReportDraft.KindPayload,
+                checkIn: Swift.String,
+                item: Swift.String? = nil,
+                squad: Swift.String? = nil
+            ) {
+                self.version = version
+                self.id = id
+                self.kind = kind
+                self.checkIn = checkIn
+                self.item = item
+                self.squad = squad
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case kind
+                case checkIn
+                case item
+                case squad
+            }
+        }
         /// - Remark: Generated from `#/components/schemas/FeedbackSent`.
         public struct FeedbackSent: Codable, Hashable, Sendable {
             /// - Remark: Generated from `#/components/schemas/FeedbackSent/version`.
