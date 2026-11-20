@@ -53,7 +53,8 @@ struct PlacePill: View {
 /// was): the map moves to it, its pin turns graphite under its name, its row darkens and the list
 /// scrolls to it. 添加 in the header picks the selected place. The places the squad's members
 /// added (自建地点) come first, with who added each; while typing, the last row adds what was
-/// typed as a new one (Tracy, 2026-11-16; last, and only when no row has that name, 2026-11-20),
+/// typed as a new one (Tracy, 2026-11-16; last, and only when no squad place has that name,
+/// 2026-11-20),
 /// on 新建地点 pushed in the sheet.
 struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
@@ -268,14 +269,15 @@ struct PlacePickerSheet: View {
         return all.filter { $0.id != selected.id } + [selected]
     }
 
-    /// What was typed, as a new place's name; nil while nothing is, or while a row above already
-    /// has that name (a squad place or a suggestion).
+    /// What was typed, as a new place's name; nil while nothing is, or while one of the squad's
+    /// places has that name. Maps' suggestions don't count: its autocomplete offers what was
+    /// typed back as a search term (「健身房」 → 健身房 · 搜索附近), which would hide 新建 for
+    /// almost any word.
     private var newName: String? {
         let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else { return nil }
-        let listed = squadRows.map(\.place.name) + search.suggestions.map(\.title)
-        let taken = listed.contains {
-            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        let taken = squadRows.contains {
+            $0.place.name.trimmingCharacters(in: .whitespacesAndNewlines)
                 .compare(typed, options: [.caseInsensitive, .widthInsensitive]) == .orderedSame
         }
         return taken ? nil : typed
