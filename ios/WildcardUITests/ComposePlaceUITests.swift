@@ -71,13 +71,11 @@ final class ComposePlaceUITests: XCTestCase {
         search.tap()
         app.typeText("健身房")
         let new = app.buttons["place.new"]
-        // The new place's row comes last, under what Maps suggests.
-        for _ in 0..<4 where !(new.waitForExistence(timeout: Self.wait) && new.isHittable) {
-            app.collectionViews.firstMatch.swipeUp()
-        }
+        XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the squad's place isn't found")
+        XCTAssertEqual(squadRows.count, 1, "the squad's places aren't narrowed to what was typed")
+        scrollToLastRow(new, in: app)
         XCTAssertTrue(new.exists, "typing doesn't offer a new place")
         XCTAssertTrue(new.label.contains("新建「健身房」"), "the new place's row doesn't name what was typed")
-        XCTAssertEqual(squadRows.count, 1, "the squad's places aren't narrowed to what was typed")
         settle()
         keepScreenshot(named: "15-compose-place-new-row")
 
@@ -123,6 +121,18 @@ final class ComposePlaceUITests: XCTestCase {
         let squadRows = app.buttons.matching(identifier: "place.squad")
         XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the canteen isn't found")
         XCTAssertFalse(app.buttons["place.new"].waitForExistence(timeout: 3), "a place the squad has is offered again")
+    }
+
+    /// Drags the place list until `row`, its last row (under what Maps suggests), can be tapped. The
+    /// list's middle is under the keyboard, so it is dragged from near its top, which also puts
+    /// the keyboard away.
+    private func scrollToLastRow(_ row: XCUIElement, in app: XCUIApplication) {
+        let list = app.collectionViews.firstMatch
+        let top = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+        let above = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: -0.4))
+        for _ in 0..<6 where !(row.waitForExistence(timeout: 2) && row.isHittable) {
+            top.press(forDuration: 0.05, thenDragTo: above)
+        }
     }
 
     /// Mia's salad was tagged at a restaurant: 动态 shows the place's name under her, clear of
