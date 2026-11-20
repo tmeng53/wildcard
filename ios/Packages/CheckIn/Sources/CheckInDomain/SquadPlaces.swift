@@ -30,7 +30,7 @@ public struct SquadPlace: Identifiable, Hashable, Sendable {
     /// The place as a post tags it: its name, coordinates and `squadPlaceID`.
     public let place: Place
     public let kind: SquadPlaceKind
-    /// Who added it; nil once they deleted their account.
+    /// Who added it, when known; the place goes when they delete their account.
     public let addedBy: MemberID?
 
     /// Fails for a name the API wouldn't take or coordinates off the globe.
@@ -56,8 +56,8 @@ public struct SquadPlace: Identifiable, Hashable, Sendable {
 
 /// A place a member is adding for the squad: its name, kind and where its pin stands. Fails for
 /// a name the API wouldn't take or coordinates off the globe, so 添加 stays off until it holds.
-/// The pin's coordinates are rounded to 6 decimals (about 10 cm), so the same place sent again
-/// reads back the same from the database and a retry adds it once.
+/// The pin's coordinates are rounded to 4 decimals (about 11 m), enough to find the place, not
+/// someone's door; the same place sent again reads back the same and a retry adds it once.
 public struct NewSquadPlace: Hashable, Sendable {
     public let name: String
     public let kind: SquadPlaceKind
@@ -71,7 +71,7 @@ public struct NewSquadPlace: Hashable, Sendable {
     }
 
     private static func rounded(_ degrees: Double) -> Double {
-        (degrees * 1_000_000).rounded() / 1_000_000
+        (degrees * 10_000).rounded() / 10_000
     }
 }
 

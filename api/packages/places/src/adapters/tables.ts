@@ -9,7 +9,7 @@ export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export interface SquadPlaces {
   added_at: Timestamp;
-  added_by: string | null;
+  added_by: string;
   id: string;
   kind: string;
   latitude: number;

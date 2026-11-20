@@ -167,7 +167,7 @@ public struct ComposeView: View {
                 .accessibilityIdentifier("compose.caption")
             HStack(spacing: Space.xs) {
                 if model.kind != .disclaimer {
-                    PlacePill(place: $model.place) { place in
+                    PlacePill(place: $model.place, newKind: model.kind == .trained ? .gym : .food) { place in
                         if placePage.page != nil { openedPlace = place }
                     }
                 }

@@ -153,10 +153,11 @@ const SquadPlaceView = z
   .strictObject({
     id: SquadPlaceId,
     ...SquadPlaceFields,
+    // Never null since places go with their adder's account; still nullable for older builds.
     addedBy: z
       .uuid()
       .nullable()
-      .meta({ description: 'Who added it; null once they deleted their account.' }),
+      .meta({ description: 'Who added it; the place goes when they delete their account.' }),
     addedAt: z.iso.datetime(),
   })
   .meta({
@@ -188,7 +189,7 @@ function wireSquadPlace(place: SquadPlace): z.infer<typeof SquadPlaceView> {
     kind: place.kind,
     latitude: place.latitude,
     longitude: place.longitude,
-    addedBy: place.addedBy ?? null,
+    addedBy: place.addedBy,
     addedAt: place.addedAt.toISOString(),
   };
 }

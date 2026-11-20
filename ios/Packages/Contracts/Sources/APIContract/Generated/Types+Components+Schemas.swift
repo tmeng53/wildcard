@@ -9740,7 +9740,7 @@ extension Components {
             public var latitude: Swift.Double
             /// - Remark: Generated from `#/components/schemas/SquadPlace/longitude`.
             public var longitude: Swift.Double
-            /// Who added it; null once they deleted their account.
+            /// Who added it; the place goes when they delete their account.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadPlace/addedBy`.
             public var addedBy: Swift.String?
@@ -9754,7 +9754,7 @@ extension Components {
             ///   - kind: 吃的 (`food`), 健身 (`gym`) or 户外 (`outdoor`).
             ///   - latitude:
             ///   - longitude:
-            ///   - addedBy: Who added it; null once they deleted their account.
+            ///   - addedBy: Who added it; the place goes when they delete their account.
             ///   - addedAt:
             public init(
                 id: Swift.String,

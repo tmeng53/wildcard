@@ -1,5 +1,6 @@
 import type { MemberId } from '../domain/ids.js';
 import {
+  pinDegrees,
   SquadPlaceId,
   type SquadId,
   type SquadPlace,
@@ -11,7 +12,8 @@ import type { Clock, SquadMembership, SquadPlaceStore } from '../ports.js';
 /** Places squads' members add themselves, for the whole squad to tag posts with. */
 export interface SquadPlaces {
   /**
-   * Adds a place to the member's squad under the id the app made, so a retry adds it once.
+   * Adds a place to the member's squad under the id the app made, so a retry adds it once. Its
+   * pin is kept to 4 decimals (`pinDegrees`).
    * Throws `SquadNotJoinedError` outside the squad, and `SquadPlaceIdConflictError` when the id
    * is another place.
    */
@@ -51,7 +53,8 @@ export function createSquadPlaces(deps: {
     }
   }
   return {
-    async add({ member, ...fields }) {
+    async add({ member, latitude, longitude, ...given }) {
+      const fields = { ...given, latitude: pinDegrees(latitude), longitude: pinDegrees(longitude) };
       await joined(member, fields.squad);
       const place: SquadPlace = { ...fields, addedBy: member, addedAt: deps.clock() };
       if ((await deps.store.add(place)) === 'created') return { place, created: true };

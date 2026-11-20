@@ -94,9 +94,31 @@ describe('a squad’s own places', () => {
     await expect(
       db.updateTable('squad_places').set({ name: '改名' }).where('id', '=', id).execute(),
     ).rejects.toThrow();
-    // The adder's account going keeps the place for the squad.
+    // The adder's account going takes the place with it.
     await sql`delete from auth.users where id = ${me}`.execute(db);
-    const [kept] = await places.list({ squad, viewer: friend });
-    expect(kept?.addedBy).toBeUndefined();
+    expect(await places.list({ squad, viewer: friend })).toEqual([]);
+  });
+
+  it('keeps a pin to 4 decimals, and a retry with the same pin adds it once', async () => {
+    const [me, squad] = [await newMember(), await newSquad()];
+    const places = createSquadPlaces({
+      store: createPostgresSquadPlaceStore(db),
+      membership: { squadIdsOf: () => Promise.resolve(new Set([squad])) },
+      clock: () => new Date('2026-11-20T01:00:00Z'),
+    });
+    const fields = {
+      id: SquadPlaceId.parse(randomUUID()),
+      squad,
+      member: me,
+      name: '楼下公园',
+      kind: 'outdoor',
+      latitude: 40.746612345,
+      longitude: -73.989587654,
+    } as const;
+    const added = await places.add(fields);
+    expect([added.place.latitude, added.place.longitude]).toStrictEqual([40.7466, -73.9896]);
+    expect((await places.add(fields)).created).toBe(false);
+    const [kept] = await places.list({ squad, viewer: me });
+    expect([kept?.latitude, kept?.longitude]).toStrictEqual([40.7466, -73.9896]);
   });
 });

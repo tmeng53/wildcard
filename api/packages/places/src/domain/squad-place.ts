@@ -34,11 +34,19 @@ export const SquadPlaceFields = {
 export interface SquadPlace {
   readonly id: SquadPlaceId;
   readonly squad: SquadId;
-  /** Undefined once the adder deleted their account. */
-  readonly addedBy: MemberId | undefined;
+  /** Who added it; the place goes when they delete their account. */
+  readonly addedBy: MemberId;
   readonly name: string;
   readonly kind: SquadPlaceKind;
   readonly latitude: number;
   readonly longitude: number;
   readonly addedAt: Date;
+}
+
+/**
+ * A pin kept to 4 decimals of a degree (about 11 m): enough to find the place, not someone's
+ * door. Halves round away from zero, as the app rounds, so a pin the app rounded reads the same.
+ */
+export function pinDegrees(degrees: number): number {
+  return (Math.sign(degrees) * Math.round(Math.abs(degrees) * 10_000)) / 10_000;
 }

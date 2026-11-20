@@ -28,11 +28,11 @@ struct SquadPlaceTests {
         }
     }
 
-    @Test func aNewPlacesPinIsRoundedSoARetryReadsTheSame() throws {
+    @Test func aNewPlacesPinIsRoundedToAboutElevenMetres() throws {
         let new = try NewSquadPlace(
             name: "公司食堂", kind: .food, latitude: 40.746612345678912, longitude: -73.989512345678912)
-        #expect(new.latitude == 40.746612)
-        #expect(new.longitude == -73.989512)
+        #expect(new.latitude == 40.7466)
+        #expect(new.longitude == -73.9895)
     }
 
     @Test func matchesWhatWasTypedIgnoringCase() throws {

@@ -71,7 +71,11 @@ final class ComposePlaceUITests: XCTestCase {
         search.tap()
         app.typeText("健身房")
         let new = app.buttons["place.new"]
-        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
+        // The new place's row comes last, under what Maps suggests.
+        for _ in 0..<4 where !new.waitForExistence(timeout: Self.wait) {
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        XCTAssertTrue(new.exists, "typing doesn't offer a new place")
         XCTAssertTrue(new.label.contains("新建「健身房」"), "the new place's row doesn't name what was typed")
         XCTAssertEqual(squadRows.count, 1, "the squad's places aren't narrowed to what was typed")
         settle()
@@ -82,9 +86,8 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(name.waitForExistence(timeout: Self.wait), "新建地点 didn't open")
         XCTAssertEqual(name.value as? String, "健身房", "the name isn't what was typed")
         let add = app.buttons["newPlace.add"]
-        XCTAssertTrue(app.buttons["newPlace.kind.food"].isSelected, "吃的 isn't picked to begin with")
+        XCTAssertTrue(app.buttons["newPlace.kind.gym"].isSelected, "健身 isn't picked to begin with from a 训练")
         let gym = app.buttons["newPlace.kind.gym"]
-        gym.tap()
         let window = app.windows.firstMatch.frame
         for (element, what) in [(name, "name"), (gym, "kinds"), (app.buttons["newPlace.kind.outdoor"], "last kind")] {
             XCTAssertTrue(window.contains(element.frame), "the \(what) is cut off")
@@ -99,6 +102,27 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(picked.waitForExistence(timeout: Self.wait), "the new place isn't on the post")
         settle()
         keepScreenshot(named: "15-compose-place-new-picked")
+    }
+
+    /// Typing the name of a place the squad already has offers no new one.
+    func testANameTheSquadHasOffersNoNewPlace() {
+        let app = launch(extra: ["-today.cardPage", "0"])
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
+        checkIn.tap()
+        let trained = app.buttons["today.capsule.trained"]
+        XCTAssertTrue(trained.waitForExistence(timeout: Self.wait), "no 训练 capsule")
+        trained.tap()
+        let pill = app.buttons["compose.place"]
+        XCTAssertTrue(pill.waitForExistence(timeout: Self.wait), "no 添加位置 on the compose page")
+        pill.tap()
+        let search = app.descendants(matching: .any).matching(identifier: "place.search").firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: Self.wait), "no search field")
+        search.tap()
+        app.typeText("公司食堂")
+        let squadRows = app.buttons.matching(identifier: "place.squad")
+        XCTAssertTrue(squadRows.firstMatch.waitForExistence(timeout: Self.wait), "the canteen isn't found")
+        XCTAssertFalse(app.buttons["place.new"].waitForExistence(timeout: 3), "a place the squad has is offered again")
     }
 
     /// Mia's salad was tagged at a restaurant: 动态 shows the place's name under her, clear of
