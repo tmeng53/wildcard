@@ -163,14 +163,15 @@ export function currentRun(
 
 /**
  * The days a meal streak runs through without counting (Tracy, 2026-11-13): a 健康餐 adds a day,
- * while a day with a 坦白放纵餐 or a 请假条 neither breaks the run nor adds to it, as a planned rest
- * day does for training. The one rule for the player card's 外卡 and 外卡记录 alike.
+ * while a day with a 坦白放纵餐, a planned rest day (Tracy, 2026-11-21) or an old 请假条 neither
+ * breaks the run nor adds to it. The one rule for the player card's 外卡 and 外卡记录 alike.
  */
 export function mealBridges(days: {
   readonly cheatMeals: Iterable<LocalDay>;
+  readonly restDays: Iterable<LocalDay>;
   readonly leave: Iterable<LocalDay>;
 }): ReadonlySet<LocalDay> {
-  return new Set([...days.cheatMeals, ...days.leave]);
+  return new Set([...days.cheatMeals, ...days.restDays, ...days.leave]);
 }
 
 export function memberRecords(input: {
@@ -178,7 +179,7 @@ export function memberRecords(input: {
   readonly healthyMealDays: readonly LocalDay[];
   /** Days with a 坦白放纵餐: a meal streak runs through them without counting them. */
   readonly cheatMealDays: readonly LocalDay[];
-  /** Days the member's plans made rest days, over the span of their trainings. */
+  /** Days the member's plans made rest days, over the span of their trainings and 健康餐. */
   readonly restDays: ReadonlySet<LocalDay>;
   /** Days with a 请假条: like a rest day, a streak runs through them without counting them. */
   readonly leaveDays: ReadonlySet<LocalDay>;
@@ -222,7 +223,11 @@ export function memberRecords(input: {
   const longestStreak = longestRun(trainedDays, new Set([...input.restDays, ...input.leaveDays]));
   const mealStreak = longestRun(
     new Set(input.healthyMealDays),
-    mealBridges({ cheatMeals: input.cheatMealDays, leave: input.leaveDays }),
+    mealBridges({
+      cheatMeals: input.cheatMealDays,
+      restDays: input.restDays,
+      leave: input.leaveDays,
+    }),
   );
   return {
     trainedDays: trainedDays.size,
