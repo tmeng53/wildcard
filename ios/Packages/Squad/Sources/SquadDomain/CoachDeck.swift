@@ -56,9 +56,10 @@ public final class CoachDeck {
     }
 
     /// What 以前 lists (Tracy, 2026-11-09): every card, only the ones not seen yet, or every
-    /// challenge since the member joined, those still in the stack too, the done ones marked.
-    public enum EarlierFilter: Hashable, Sendable, CaseIterable {
-        case all, unseen, challenges
+    /// challenge since the member joined, those still in the stack too, the done ones marked;
+    /// `gifts` lists every gift the same way, for the home's gift button, never as a tab.
+    public enum EarlierFilter: Hashable, Sendable {
+        case all, unseen, challenges, gifts
     }
 
     public private(set) var load: Load = .loading
@@ -95,6 +96,9 @@ public final class CoachDeck {
     /// The cards swiped away on this page, newest first, which a read already on its way doesn't
     /// bring back into the stack.
     @ObservationIgnored private var swiped: [CoachPageCard] = []
+    /// Cards read for a page of their own, from outside this page (today's challenge, a boxed gift),
+    /// kept as they change there.
+    private var fetched: [CoachPageCard] = []
     @ObservationIgnored private var earlierNext: String?
 
     /// `wear` puts a gift on the member's character (立刻穿上) once it is opened; `changed` is
@@ -298,20 +302,34 @@ public final class CoachDeck {
     /// now: from this page if it is here, else from the first page of 以前's challenges, where
     /// today's is; nil when neither has it, or the read fails.
     public func challengeCard(note: String) async -> CoachPageCard? {
-        let isIt = { (card: CoachPageCard) in card.kind == .challenge && card.id == note }
-        if let here = (stack + earlier + swiped).first(where: isIt) { return here }
-        let page = try? await source.earlier(in: squad, from: nil, showing: .challenges)
-        return page?.cards.first(where: isIt)
+        await card(of: .challenge, id: note, listed: .challenges)
+    }
+
+    /// The card of the gift of `piece` (a gift's card has its piece's id), as it stands now, for
+    /// the home's gift button: as `challengeCard(note:)` finds a challenge's.
+    public func giftCard(piece: String) async -> CoachPageCard? {
+        await card(of: .gift, id: piece, listed: .gifts)
+    }
+
+    private func card(of kind: CoachPageCard.Kind, id: String, listed filter: EarlierFilter) async -> CoachPageCard? {
+        let isIt = { (card: CoachPageCard) in card.kind == kind && card.id == id }
+        if let here = (stack + earlier + swiped + fetched).first(where: isIt) { return here }
+        let page = try? await source.earlier(in: squad, from: nil, showing: filter)
+        guard let found = page?.cards.first(where: isIt) else { return nil }
+        // Kept, so opening or answering it on its own page shows there.
+        fetched.append(found)
+        return found
     }
 
     /// The card as it stands now, wherever it is.
     public func current(_ card: CoachPageCard) -> CoachPageCard {
-        (stack + earlier + swiped).first { $0.key == card.key } ?? card
+        (stack + earlier + swiped + fetched).first { $0.key == card.key } ?? card
     }
 
     private func replace(_ card: CoachPageCard) {
         if let index = stack.firstIndex(where: { $0.key == card.key }) { stack[index] = card }
         if let index = earlier.firstIndex(where: { $0.key == card.key }) { earlier[index] = card }
         if let index = swiped.firstIndex(where: { $0.key == card.key }) { swiped[index] = card }
+        if let index = fetched.firstIndex(where: { $0.key == card.key }) { fetched[index] = card }
     }
 }

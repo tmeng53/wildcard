@@ -19,7 +19,8 @@ public struct APICoachCardSource: CoachCardSource {
     {
         try await coach { () throws(APIError) in
             try await api.earlierCoachCards(
-                in: squad, from: cursor, unseenOnly: filter == .unseen, challengesOnly: filter == .challenges)
+                in: squad, from: cursor, unseenOnly: filter == .unseen, challengesOnly: filter == .challenges,
+                giftsOnly: filter == .gifts)
         }
     }
 

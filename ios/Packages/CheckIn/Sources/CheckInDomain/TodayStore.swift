@@ -57,6 +57,8 @@ public final class TodayStore {
     /// was loaded for: the dot on the coach's phone and its row on the squad card, until they swipe
     /// them all away there.
     var loadedUnseenCoachCard: (squad: SquadID, card: CoachPageCard?)?
+    /// The newest gift the member hasn't opened, as last loaded, for the squad it was loaded for.
+    var loadedUnopenedGift: (squad: SquadID, card: CoachPageCard?)?
     /// The challenge in today's morning note, as last loaded, for the squad it was loaded for.
     var loadedChallenge: (squad: SquadID, challenge: DayChallenge?)?
     /// 我完成了 is on its way.

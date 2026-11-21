@@ -12,17 +12,19 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     private var squadPokes: SquadPokes
     private var sidelineCoach: SidelineCoach?
     private var unseenCoachCard: CoachPageCard?
+    private var unopenedGift: CoachPageCard?
     private var dayChallenge: DayChallenge?
     private var openedLetterID: Int?
 
     public init(
         home: Home?, pokes: SquadPokes = .none, coach: SidelineCoach? = nil, unseenCoachCard: CoachPageCard? = nil,
-        challenge: DayChallenge? = nil
+        unopenedGift: CoachPageCard? = nil, challenge: DayChallenge? = nil
     ) {
         current = home
         squadPokes = pokes
         sidelineCoach = coach
         self.unseenCoachCard = unseenCoachCard
+        self.unopenedGift = unopenedGift
         dayChallenge = challenge
     }
 
@@ -36,11 +38,12 @@ public actor InMemoryCheckInBackend: CheckInBackend {
     /// the squad has hired 毛头, who wrote today's 战术板 line. With `together`, the home opens on
     /// that celebration: `.wave` reaches the squad's week (22/22), `.stack` has the yoga teammate
     /// run like 小米, and `.bump` has me trained too. With `challenge`, I accepted 毛头's
-    /// challenge for today (拉伸 5 分钟), not yet done.
+    /// challenge for today (拉伸 5 分钟), not yet done. With `gift`, 毛头 gave me a gift I haven't
+    /// opened, the coach page's sample one.
     public static func sampleSquad(
         now: Date, size: Int = 8, member: MemberID = MemberID(UUID()), squad squadID: SquadID = SquadID(UUID()),
         patted: Bool = false, coach: Bool = false, coachNote: Bool = false, coachLetter: Bool = false,
-        together: SquadCelebration.Kind? = nil, meals: Bool = false, challenge: Bool = false
+        together: SquadCelebration.Kind? = nil, meals: Bool = false, challenge: Bool = false, gift: Bool = false
     ) -> InMemoryCheckInBackend {
         let (zone, day) = (TimeZone.current, LocalDay(at: now, in: TimeZone.current))
         let everyone = (0..<7).map { _ in MemberID(UUID()) }
@@ -91,9 +94,9 @@ public actor InMemoryCheckInBackend: CheckInBackend {
                     plan: plan, checkIns: checkIns)
             },
             pokes: patted ? pats(by: [everyone[0], everyone[3]].filter(kept.contains), at: at) : .none,
-            coach: sideline(coach || coachNote || challenge, coachLetter, now, squadID),
+            coach: sideline(coach || coachNote || challenge || gift, coachLetter, now, squadID),
             unseenCoachCard: coachNote ? sampleUnseenNote(now: now) : nil,
-            challenge: challenge ? sampleChallenge(on: day) : nil)
+            unopenedGift: gift ? sampleGift(now: now) : nil, challenge: challenge ? sampleChallenge(on: day) : nil)
     }
 
     /// The sample squad's name, in the app's language.
@@ -268,6 +271,10 @@ public actor InMemoryCheckInBackend: CheckInBackend {
 
     public func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
         unseenCoachCard
+    }
+
+    public func unopenedCoachGift(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
+        unopenedGift
     }
 }
 

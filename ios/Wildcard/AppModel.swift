@@ -299,6 +299,7 @@ final class AppModel {
         let schedule = ScheduleModel(store: ScheduleStore(backend: APIScheduleBackend(api: api), now: { Date() }))
         let recap = RecapShelf(
             service: APIWeekStoryService(api: api), squad: { store.home.map(RecapShelf.Squad.init) },
+            titles: { Self.titleWearing(profile) },
             scenePicker: { [api] story in await Self.scenePicker(api: api, after: story) },
             scenePicked: { [weak self] _ in Task { await self?.squadChanged() } })
         // The home loads after the reveal, which holds the scene meanwhile, so the drop counts
@@ -385,16 +386,5 @@ extension AppModel {
         openingUnderCover = true
         defer { openingUnderCover = false }
         return await work()
-    }
-
-    /// 冠军专属 on a 战报's last page: when the reader picks the scene for the week after the
-    /// story's and nobody has yet. Offline, there is no sticker.
-    private static func scenePicker(api: WildcardAPI, after story: WeekStory) async -> ScenePicker? {
-        guard let scene = try? await api.scene(of: story.squad), scene.canPick, scene.picked == nil,
-            scene.week == story.week.monday.adding(days: 7)
-        else { return nil }
-        return ScenePicker(
-            options: SceneOption.options(from: scene.history),
-            service: APIScenePickService(api: api, squad: story.squad, week: scene.week))
     }
 }

@@ -32,6 +32,11 @@ extension LaunchOptions {
             now: now(), empty: ProcessInfo.processInfo.arguments.contains("-uitest-coach-seen"))
     }
 
+    /// `-uitest-coach-gift`: 毛头 gave me a gift I haven't opened, so the home shows its gift button.
+    static var coachGift: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-coach-gift")
+    }
+
     /// `-uitest-challenge`: I accepted 毛头's challenge for today (拉伸 5 分钟), not yet done, so
     /// 我的一周 shows it with 我完成了.
     static var challenge: Bool {

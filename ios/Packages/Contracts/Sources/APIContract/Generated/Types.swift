@@ -476,7 +476,7 @@ public protocol APIProtocol: Sendable {
     func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button (Tracy, 2026-11-21).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
@@ -1680,7 +1680,7 @@ extension APIProtocol {
     }
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button (Tracy, 2026-11-21).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.

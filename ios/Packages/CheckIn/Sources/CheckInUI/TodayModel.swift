@@ -142,6 +142,8 @@ public final class TodayModel {
     /// Opens the card of a challenge on its coach's page, from a tap on the coach's head on the
     /// squad card's challenge row; the app sets it.
     @ObservationIgnored public var openChallenge: (DayChallenge) -> Void = { _ in }
+    /// Opens a boxed gift's card on its coach's page, from the home's gift button; the app sets it.
+    @ObservationIgnored public var openGift: (CoachPageCard) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?

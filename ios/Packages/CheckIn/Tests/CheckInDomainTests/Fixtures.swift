@@ -180,6 +180,14 @@ actor ScriptedBackend: CheckInBackend {
         return serverUnseenCard
     }
 
+    private var serverUnopenedGift: CoachPageCard?
+    func set(unopenedGift: CoachPageCard?) { serverUnopenedGift = unopenedGift }
+
+    func unopenedCoachGift(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
+        if let failure { throw failure }
+        return serverUnopenedGift
+    }
+
     var serverChallenge: DayChallenge?
     var completionFails = false
     func set(challenge: DayChallenge?) { serverChallenge = challenge }
