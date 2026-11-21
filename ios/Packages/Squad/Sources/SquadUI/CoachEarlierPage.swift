@@ -266,7 +266,7 @@ public struct CoachCardPage: View {
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.xs)
             .padding(.bottom, Space.m)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background(Color(role: .bgCanvas, in: theme))
             .navigationTitle(Text(verbatim: card.coach.name))
             .pushedPage()

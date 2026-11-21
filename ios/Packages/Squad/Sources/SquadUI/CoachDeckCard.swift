@@ -47,6 +47,9 @@ struct CoachDeckCard: View {
     var isTop = true
     /// Swipes the card into 以前, once its challenge is answered; nil on a card opened from 以前.
     var putAway: ((CoachPageCard) -> Void)?
+    /// A card under the top one is cut to the top one's height, so only its edge peeks out; nil
+    /// lets the card be as tall as what it says.
+    var height: Double?
     /// The gift's moment, kept here while it is opened as the member watches.
     @State private var moment: GiftMoment?
     /// 接受挑战 was tapped and went through: the stamp comes down and the button pops.
@@ -77,14 +80,17 @@ struct CoachDeckCard: View {
             }
             .padding(.horizontal, Space.m + Space.xxs)
             .padding(.top, Space.m)
-            if !typing { Spacer(minLength: Space.s) }
+            .padding(.bottom, Space.m)
             if isTop {
                 buttons
                     .padding(.horizontal, Space.s + Space.xxs)
                     .padding(.bottom, Space.s + Space.xxs)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // As tall as what it says (Tracy, 2026-11-21): a short note no longer sits on a card
+        // stretched to the screen's foot.
+        .frame(maxWidth: .infinity, alignment: .top)
+        .frame(height: height, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
         .clipShape(RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous))
         .overlay {

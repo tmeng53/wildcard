@@ -8,9 +8,10 @@ import SwiftUI
 /// The coach's page (the approved deck, 2026-11-08), pushed from a tap on the coach on 今天: what
 /// the coach has for the member that they haven't seen, a stack of cards, one thing each, oldest
 /// on top. Swiped right, a card flies into 以前 (the clock, top right, which gives a nudge);
-/// nothing turns by itself. Under the stack a line says how many are left and that a swipe right
-/// puts the top one away, and on opening the top card leans right and back once to show it
-/// (Tracy, 2026-11-09). Top right, from the left: 招聘会, 简历, 以前. Once all are seen,
+/// nothing turns by itself. Each card is as tall as what it says; under the stack, how many are
+/// left and 下一张, which puts the top one away as the swipe does (Tracy, 2026-11-21), and on
+/// opening the top card leans right and back once to show it (Tracy, 2026-11-09). Top right,
+/// from the left: 招聘会, 简历, 以前. Once all are seen,
 /// the last card says so with 看以前的.
 public struct CoachDeckPage: View {
     private let deck: CoachDeck
@@ -23,6 +24,8 @@ public struct CoachDeckPage: View {
     @State private var flying: CoachPageCard.Key?
     /// The top card has leaned right and back once since the page opened.
     @State private var nudged = false
+    /// The top card's height, which the cards under it take so only their edges peek out.
+    @State private var topHeight: Double?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -84,32 +87,40 @@ public struct CoachDeckPage: View {
         case .failed:
             StateView.offline(retryIdentifier: "coachDeck.retry") { Task { await deck.reload() } }
         default:
-            VStack(spacing: Space.xs) {
-                stack
-                if !deck.stack.isEmpty { hint(left: deck.stack.count - 1) }
-            }
+            stack
         }
     }
 
-    /// 「还有 3 张 · 右滑收起 →」, or 「最后一张 · 右滑收起 →」 on the last one.
-    private func hint(left: Int) -> some View {
-        HStack(spacing: Space.xxs) {
-            if left > 0 {
-                Text(copy: "还有 \(left) 张 · 右滑收起", bundle: .module)
-            } else {
-                Text(copy: "最后一张 · 右滑收起", bundle: .module)
+    /// 「还有 3 张」 or 「最后一张」, and 下一张, which puts the top card away as a swipe right does.
+    private func pager(_ top: CoachPageCard, left: Int) -> some View {
+        HStack(spacing: Space.s) {
+            Group {
+                if left > 0 {
+                    Text(copy: "还有 \(left) 张", bundle: .module)
+                } else {
+                    Text(copy: "最后一张", bundle: .module)
+                }
             }
-            Image(systemName: "arrow.right").accessibilityHidden(true)
+            .typeStyle(TypeRamp.caption)
+            .foregroundStyle(Color(role: .fgMuted, in: theme))
+            .lineLimit(1)
+            .contentTransition(.numericText())
+            .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: left)
+            .accessibilityIdentifier("coachDeck.hint")
+            Button {
+                putAway(top)
+            } label: {
+                HStack(spacing: Space.xxs) {
+                    Text(copy: "下一张", bundle: .module)
+                    Image(systemName: "chevron.right").imageScale(.small).accessibilityHidden(true)
+                }
+            }
+            .buttonStyle(SecondaryButtonStyle(.onInk, size: .compact))
+            .overlay { Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline) }
+            .disabled(flying != nil)
+            .accessibilityIdentifier("coachDeck.next")
         }
-        .typeStyle(TypeRamp.caption)
-        .foregroundStyle(Color(role: .fgMuted, in: theme))
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
         .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("coachDeck.hint")
-        .contentTransition(.numericText())
-        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: left)
     }
 
     /// The top card over the next two, which peek out under it.
@@ -121,8 +132,13 @@ public struct CoachDeckPage: View {
                     let isTop = depth == 0
                     CoachDeckCard(
                         deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
-                        isTop: isTop, putAway: putAway
+                        isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
                     )
+                    .onGeometryChange(for: Double.self) {
+                        $0.size.height
+                    } action: { height in
+                        if isTop { topHeight = height }
+                    }
                     .padding(.horizontal, Double(depth) * DeckMetrics.peek)
                     .offset(y: Double(depth) * DeckMetrics.peek)
                     .offset(isTop ? drag : .zero)
@@ -136,6 +152,13 @@ public struct CoachDeckPage: View {
                 if shown.isEmpty {
                     CoachDeckCard(
                         deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                // Under the stack's lowest edge.
+                if let top = shown.first {
+                    pager(top, left: deck.stack.count - 1)
+                        .alignmentGuide(.bottom) { $0[.top] - DeckMetrics.peek * Double(shown.count - 1) - Space.m }
                 }
             }
             .frame(width: proxy.size.width, height: proxy.size.height - 2 * DeckMetrics.peek, alignment: .top)
