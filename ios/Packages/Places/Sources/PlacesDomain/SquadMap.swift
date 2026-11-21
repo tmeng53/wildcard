@@ -143,7 +143,8 @@ public struct SquadMapLayout: Hashable, Sendable {
         (self.data, self.today) = (data, today)
     }
 
-    /// Today's posts with a place, newest first: 今天's list.
+    /// Today's posts with a place, newest posted first (as 动态 orders them; each shows when it was
+    /// done, `MapVisit.time`): 今天's list.
     public var todayVisits: [MapVisit] {
         data.recent.filter { $0.day == today && place($0.key) != nil }.sorted { $0.createdAt > $1.createdAt }
     }
@@ -180,7 +181,7 @@ public struct SquadMapLayout: Hashable, Sendable {
             .map(\.element)
     }
 
-    /// A member's posts today, each where it was, newest first: the map of their day.
+    /// A member's posts today, each where it was, newest posted first: the map of their day.
     public func stops(of member: MemberID) -> [MapStop] {
         todayVisits.filter { $0.author == member }.compactMap { visit in
             place(visit.key).map { MapStop(visit: visit, place: $0) }
