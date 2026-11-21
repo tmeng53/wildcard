@@ -127,45 +127,46 @@ public struct CoachDeckPage: View {
     private var stack: some View {
         GeometryReader { proxy in
             let shown = Array(deck.stack.prefix(3))
-            ZStack(alignment: .top) {
-                ForEach(Array(shown.enumerated().reversed()), id: \.element.key) { depth, card in
-                    let isTop = depth == 0
-                    CoachDeckCard(
-                        deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
-                        isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
-                    )
-                    // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
-                    .frame(
-                        maxHeight: proxy.size.height - 2 * DeckMetrics.peek - Sizing.control - Space.m, alignment: .top
-                    )
-                    .onGeometryChange(for: Double.self) {
-                        $0.size.height
-                    } action: { height in
-                        if isTop { topHeight = height }
+            // The stack and its pager sit together in the middle of the page, so a short card
+            // leaves even room above and below it (Tracy, 2026-11-21).
+            VStack(spacing: DeckMetrics.peek * Double(max(shown.count - 1, 0)) + Space.m) {
+                ZStack(alignment: .top) {
+                    ForEach(Array(shown.enumerated().reversed()), id: \.element.key) { depth, card in
+                        let isTop = depth == 0
+                        CoachDeckCard(
+                            deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
+                            isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
+                        )
+                        // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
+                        .frame(
+                            maxHeight: proxy.size.height - 2 * DeckMetrics.peek - Sizing.control - Space.m,
+                            alignment: .top
+                        )
+                        .onGeometryChange(for: Double.self) {
+                            $0.size.height
+                        } action: { height in
+                            if isTop { topHeight = height }
+                        }
+                        .padding(.horizontal, Double(depth) * DeckMetrics.peek)
+                        .offset(y: Double(depth) * DeckMetrics.peek)
+                        .offset(isTop ? drag : .zero)
+                        .rotationEffect(.degrees(isTop ? drag.width / proxy.size.width * 8 : 0), anchor: .bottom)
+                        .modifier(FlyIntoClock(isFlying: flying == card.key, size: proxy.size))
+                        .allowsHitTesting(isTop)
+                        .accessibilityHidden(!isTop)
+                        .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
+                        .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
                     }
-                    .padding(.horizontal, Double(depth) * DeckMetrics.peek)
-                    .offset(y: Double(depth) * DeckMetrics.peek)
-                    .offset(isTop ? drag : .zero)
-                    .rotationEffect(.degrees(isTop ? drag.width / proxy.size.width * 8 : 0), anchor: .bottom)
-                    .modifier(FlyIntoClock(isFlying: flying == card.key, size: proxy.size))
-                    .allowsHitTesting(isTop)
-                    .accessibilityHidden(!isTop)
-                    .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
-                    .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
+                    if shown.isEmpty {
+                        CoachDeckCard(
+                            deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
+                    }
                 }
-                if shown.isEmpty {
-                    CoachDeckCard(
-                        deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
-                }
-            }
-            .overlay(alignment: .bottom) {
-                // Under the stack's lowest edge.
                 if let top = shown.first {
                     pager(top, left: deck.stack.count - 1)
-                        .alignmentGuide(.bottom) { $0[.top] - DeckMetrics.peek * Double(shown.count - 1) - Space.m }
                 }
             }
-            .frame(width: proxy.size.width, height: proxy.size.height - 2 * DeckMetrics.peek, alignment: .top)
+            .frame(width: proxy.size.width, height: proxy.size.height - 2 * DeckMetrics.peek)
         }
     }
 
