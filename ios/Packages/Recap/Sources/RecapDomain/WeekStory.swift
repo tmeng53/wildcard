@@ -362,7 +362,7 @@ public struct BestDisclaimer: Hashable, Sendable {
 public struct Ending: Hashable, Sendable {
     public let done: Int
     public let plan: Int
-    /// ≤ 4 characters, such as 稳了 or 差一点.
+    /// ≤ 4 characters, such as 超额完成 or 差一点.
     public let headline: String?
     public let line: String?
     public let move: AwardMove?

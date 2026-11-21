@@ -10,8 +10,14 @@ import SwiftUI
 
 extension View {
     /// The root of a NavigationStack: it draws its own header, so the stack shows no bar over it.
+    /// An empty bar stays pinned at the top safe area, so what scrolls up under the clock and
+    /// battery fades behind iOS's own scroll edge effect instead of running into them, as it does
+    /// under any system bar (动态 and 我 scrolled, 2026-11-21 audit).
     public func navigationRoot() -> some View {
         toolbarVisibility(.hidden, for: .navigationBar)
+            .safeAreaBar(edge: .top, spacing: 0) {
+                Color.clear.frame(height: 0).accessibilityHidden(true)
+            }
     }
 
     /// A page pushed on a NavigationStack: the system's back button, a chevron only, in the glass

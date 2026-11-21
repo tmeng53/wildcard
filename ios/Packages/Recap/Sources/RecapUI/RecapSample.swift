@@ -95,7 +95,7 @@ public enum RecapSample {
                 done: 19, plan: 22, headline: ready ? "差一点" : nil, line: ready ? "下周的腿已经在热身了" : nil,
                 move: ready ? .warmup : nil)
             : Ending(
-                done: 23, plan: 22, headline: ready ? "稳了" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
+                done: 23, plan: 22, headline: ready ? "超额完成" : nil, line: ready ? "超额 1 次，多出来那次算利息" : nil,
                 move: ready ? .stack : nil)
     }
 

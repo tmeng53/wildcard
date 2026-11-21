@@ -68,7 +68,7 @@ export const TITLE_MAX = 6;
 export const SPEECH_MAX = 24;
 /** The most titles a member gets. */
 export const TITLES_MAX = 3;
-/** The longest headline over the 战报's last page (这一周), such as 稳了 or 差一点. */
+/** The longest headline over the 战报's last page (这一周), such as 超额完成 or 差一点. */
 export const ENDING_HEADLINE_MAX = 4;
 /** The longest line on the 战报's last page, under the squad's days against its goal. */
 export const ENDING_LINE_MAX = 24;
