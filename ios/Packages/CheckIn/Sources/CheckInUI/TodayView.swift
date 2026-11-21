@@ -51,17 +51,10 @@ public struct TodayView: View {
 
     public var body: some View {
         let theme = model.scene
-        // The 请假条 composer and the compose page make room for the keyboard. The scene sits in
-        // the background, so it neither sizes this stack nor moves with the keyboard: as a layer
-        // of it, the scene, taller than what the keyboard leaves, would push the composer and the
-        // page up under the status bar.
+        // The compose page makes room for the keyboard. The scene sits in the background, so it
+        // neither sizes this stack nor moves with the keyboard: as a layer of it, the scene,
+        // taller than what the keyboard leaves, would push the page up under the status bar.
         ZStack {
-            if model.step == .disclaimer {
-                DisclaimerComposer(model: model)
-                    .accentTone(.brand)
-                    .transition(.opacity)
-            }
-
             if case .composing = model.step, let compose = model.compose {
                 ComposeView(model: compose)
                     .accentTone(.brand)
@@ -147,9 +140,6 @@ public struct TodayView: View {
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
-                    // Out of the way while the 请假条 composer is up.
-                    .opacity(model.step == .disclaimer ? 0 : 1)
-                    .offset(y: model.step == .disclaimer ? -Space.s : 0)
                 }
                 Spacer()
             }
@@ -162,23 +152,19 @@ public struct TodayView: View {
                     canPat: model.canPat, pat: model.patMate)
             }
             .ignoresSafeArea()
-            .opacity(model.step == .disclaimer ? 0 : 1)
 
-            if model.step != .disclaimer {
-                VStack {
-                    Spacer()
-                    checkInSpot
-                        .padding(.bottom, Space.l)
-                        .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
-                    // Room for the app's tab bar, which floats over this screen, measured from the
-                    // screen's bottom edge.
-                    Color.clear
-                        .frame(height: barRoom)
-                        .accessibilityHidden(true)
-                }
-                .ignoresSafeArea(edges: .bottom)
-                .transition(.opacity)
+            VStack {
+                Spacer()
+                checkInSpot
+                    .padding(.bottom, Space.l)
+                    .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
+                // Room for the app's tab bar, which floats over this screen, measured from the
+                // screen's bottom edge.
+                Color.clear
+                    .frame(height: barRoom)
+                    .accessibilityHidden(true)
             }
+            .ignoresSafeArea(edges: .bottom)
         }
         .overlay { letter }
     }

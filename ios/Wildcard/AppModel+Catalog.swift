@@ -13,7 +13,6 @@ extension AppModel {
     static func show(_ catalog: AppCatalog, keepsCopy: Bool = true) {
         SportList.shared.show(catalog.sports)
         SceneTheme.list(catalog.scenes)
-        DiceLines.shared.show(catalog.diceLines)
         StarterStock.shared.show(catalog.starterStock)
         Switchboard.shared.show(catalog.switches)
         QuickReactions.shared.show(catalog.quickReactions)

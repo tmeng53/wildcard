@@ -48,7 +48,7 @@ struct CheckInMenuCover: ViewModifier {
             .overlay {
                 CheckInMenu(
                     isOpen: Binding(get: { today.isCheckInMenuOpen }, set: { today.isCheckInMenuOpen = $0 }),
-                    unavailable: today.unavailable, identifierPrefix: "today"
+                    identifierPrefix: "today"
                 ) { kind in
                     selection = .today
                     todayPages = []

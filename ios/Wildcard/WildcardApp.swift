@@ -102,7 +102,6 @@ struct WildcardApp: App {
                 backend: backend,
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
-            writer: LaunchOptions.disclaimerWriter,
             photoSource: LaunchOptions.photoSource,
             scene: LaunchOptions.scene,
             health: Self.sampleHealth(),

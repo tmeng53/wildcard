@@ -17,7 +17,7 @@ private let checkIn = CheckInID(UUID())
 
 private func story(
     _ status: WeekStory.Status = .ready, order: [PageID]? = nil, podium: Bool = true, titles: Bool = true,
-    meals: Bool = true, disclaimer: Bool = true, squadWeek: Bool = true
+    meals: Bool = true, squadWeek: Bool = true
 ) throws -> WeekStory {
     WeekStory(
         status: status, squad: SquadID(UUID()), squadName: "晨跑五人组",
@@ -29,8 +29,6 @@ private func story(
         squadWeek: squadWeek ? SquadWeek(members: [.init(member: id(1), days: [.trained("run")])]) : nil,
         hottest: Hottest(checkIn: checkIn, day: try day(16), kind: .trained, reactions: []),
         meals: meals ? Meals(healthy: 14, cheat: 5, eaters: []) : nil,
-        bestDisclaimer: disclaimer
-            ? BestDisclaimer(checkIn: checkIn, author: id(4), text: "教练说要循序渐进", reactions: 6) : nil,
         ending: Ending(done: 23, plan: 22))
 }
 
@@ -42,7 +40,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 @Test func aReadyStoryPlaysTheAwardsFirstAndTheEndingLast() throws {
     #expect(
         ids(try story().pages) == [
-            "podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending",
+            "podium", "titles", "myWeek", "squadWeek", "hottest", "meals", "ending",
         ])
 }
 
@@ -116,7 +114,7 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 
 @Test func aPageWithNoDataIsLeftOut() throws {
     #expect(
-        ids(try story(podium: false, meals: false, disclaimer: false).pages) == [
+        ids(try story(podium: false, meals: false).pages) == [
             "titles", "myWeek", "squadWeek", "hottest", "ending",
         ])
     #expect(ids(try story(titles: false).pages).contains("titles") == false)
@@ -125,14 +123,14 @@ private func ids(_ pages: [StoryPage]) -> [String] {
 @Test func aPendingStoryWaitsOnlyOnItsTitles() throws {
     #expect(
         ids(try story(.pending).pages) == [
-            "podium", "pending", "myWeek", "squadWeek", "hottest", "meals", "bestDisclaimer", "ending",
+            "podium", "pending", "myWeek", "squadWeek", "hottest", "meals", "ending",
         ])
 }
 
 @Test func thePodiumHasAtMostTwoSidesAndTheCastStartsWithIt() throws {
     let story = try story()
     #expect(story.podium?.sides == [id(2), id(3)])
-    #expect(story.cast == [id(1), id(2), id(3), id(4)])
+    #expect(story.cast == [id(1), id(2), id(3)])
     #expect(story.firstTitle(of: id(1)) == "早八战神")
     #expect(story.firstTitle(of: id(2)) == nil)
 }

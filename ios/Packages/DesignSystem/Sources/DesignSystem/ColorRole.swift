@@ -149,8 +149,12 @@ public enum CheckInKind: String, CaseIterable, Sendable {
     case healthyMeal
     /// 坦白放纵餐.
     case cheatMeal
-    /// 今日请假条.
+    /// 今日请假条: no longer posted (Tracy, 2026-11-21: a rest day in 出赛表 replaces it), still
+    /// drawn for the old ones in 动态, 历史动态 and past 战报.
     case disclaimer
+
+    /// The kinds a member can post: every kind but the retired 请假条.
+    public static let postable: [CheckInKind] = [.trained, .healthyMeal, .cheatMeal]
 }
 
 /// What a color is for, named like Primer and Polaris: `bg`, `fg` or `border`, then what it is.

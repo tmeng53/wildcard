@@ -27,7 +27,6 @@ public final class TodayModel {
     enum Step: Equatable {
         case scene
         case composing(CheckInKind)
-        case disclaimer
     }
 
     /// 打卡's ＋ opened into the kinds (`CheckInMenu`, over every tab); opening it closes a
@@ -50,14 +49,11 @@ public final class TodayModel {
     private(set) var step = Step.scene
 
     /// Whether the app's tab bar shows: on the scene, with 打卡's ＋ in it, but not while a
-    /// check-in is being written (the compose and 请假条 pages take the whole screen) or the squad
-    /// is dropping in.
+    /// check-in is being written (the compose page takes the whole screen) or the squad is
+    /// dropping in.
     public var showsTabBar: Bool {
         guard !holdsTabBar, opening == nil, shownLetter == nil, shownTeamLetter == nil else { return false }
-        return switch step {
-        case .scene: true
-        case .composing, .disclaimer: false
-        }
+        return step == .scene
     }
 
     /// The open compose page's state.
@@ -91,7 +87,6 @@ public final class TodayModel {
     public let health: HealthConnection?
     /// The workout a widget's 打卡 asked to start a 训练 from, until it opens (`openAskedWorkout`).
     var askedToPost: WorkoutSource?
-    private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor () -> Void
     let now: () -> Date
@@ -107,7 +102,7 @@ public final class TodayModel {
     ///   - noSquad: called when a load finds the member in no squad any more: the captain
     ///     removed them, or they left on another phone.
     public init(
-        store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
+        store: TodayStore, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
         defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
@@ -122,7 +117,6 @@ public final class TodayModel {
         self.store = store
         self.health = health
         self.now = now
-        self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
         self.noSquad = noSquad
@@ -237,18 +231,6 @@ public final class TodayModel {
         if opening != nil { standOpeningSquad() }
     }
 
-    /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
-    public var unavailable: Set<CheckInKind> {
-        let blocked = blockedForDisclaimer
-        return disclaimerDays.contains { !blocked.contains($0) } ? [] : [.disclaimer]
-    }
-
-    /// The days a 请假条 can count for, today last.
-    var disclaimerDays: [LocalDay] { store.postableDays }
-
-    /// The days a 请假条 can't go on: one with a 练了.
-    var blockedForDisclaimer: Set<LocalDay> { store.disclaimerBlockedDays }
-
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
     public func load() async {
         // Health is read on the phone alongside the server's round trips, so a workout Health
@@ -295,9 +277,9 @@ public final class TodayModel {
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
     func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
-        // Straight to the page: photos are added there, with its 「+ 照片」 (the 请假条's too).
+        // Straight to the page: photos are added there, with its 「+ 照片」.
         compose = newPost(kind, from: workout)
-        step = kind == .disclaimer ? .disclaimer : .composing(kind)
+        step = .composing(kind)
     }
 
     /// The compose page for a post the server refused, with its photos, words, sport, workout and
@@ -315,10 +297,6 @@ public final class TodayModel {
         step = .scene
         compose = nil
         sendFailed = false
-    }
-
-    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
-        await writer.suggestions(for: reason, style: style)
     }
 
     /// Posts `draft` to the squad, in its 动态 unless not `inFeed`, for `day`, today when left out.
@@ -360,12 +338,8 @@ public final class TodayModel {
         _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
     ) {
         posts += 1
-        // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        let cheer =
-            draft.kind == .disclaimer
-            ? nil
-            : try? PlaceholderCharacter.clip(
-                "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
+        let cheer = try? PlaceholderCharacter.clip(
+            "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
         // A clip would stop a hop into the kit halfway, in the clothes on screen.
         if let cheer, !isChanging { try? player?.play(cheer) }
         guard draft.kind == .trained, !isBackfill else { return }

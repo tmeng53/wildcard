@@ -153,14 +153,11 @@ private let lateStory = """
         myWeek.days.map(\.kind) == [.trained("run"), .rest, .disclaimer, .trained(nil), .none, .none, .none])
     let meals = try #require(story.meals)
     #expect(meals == Meals(healthy: 1, cheat: 2, eaters: [.init(member: bea, more: .cheat)]))
-    let note = try #require(story.bestDisclaimer)
-    #expect(note.author == bea)
-    #expect(note.text == "今天进的是被窝")
+    // A story frozen with a 最佳请假条 still plays, without that page.
     let ending = try #require(story.ending)
     #expect(ending == Ending(done: 4, plan: 6))
     #expect(
         story.pages == [
-            .podium(podium), .pending, .myWeek(myWeek), .hottest(hottest), .meals(meals), .bestDisclaimer(note),
-            .ending(ending),
+            .podium(podium), .pending, .myWeek(myWeek), .hottest(hottest), .meals(meals), .ending(ending),
         ])
 }

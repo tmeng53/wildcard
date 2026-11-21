@@ -177,31 +177,6 @@ public struct WildcardAPI: Sendable {
         }
     }
 
-    // MARK: - 请假条 drafts
-
-    /// What the AI writer made of the member's reason, in a style; nil when it doesn't write
-    /// about this reason, and the dice stand in.
-    public func disclaimerDrafts(reason: String, style: DisclaimerStyle) async throws(APIError)
-        -> DisclaimerSuggestions?
-    {
-        let wireStyle: Components.Schemas.DisclaimerDraftRequest.StylePayload =
-            switch style {
-            case .funny: .funny
-            case .unhinged: .unhinged
-            case .heroic: .heroic
-            case .stubborn: .stubborn
-            }
-        let answer = try await call {
-            try await client.writeDisclaimerDrafts(body: .json(.init(version: ._1, reason: reason, style: wireStyle)))
-                .ok.body.json
-        }
-        return switch answer {
-        case .case1(let drafts): .drafts(drafts.drafts)
-        case .case2: .blocked
-        case .case3: nil
-        }
-    }
-
     // MARK: - Wire answers, which the device copy keeps as the API sent them
 
     func meWire() async throws(APIError) -> Components.Schemas.Me {

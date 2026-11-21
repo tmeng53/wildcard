@@ -8,7 +8,7 @@ final class TodayUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
     /// 练了 with three photos: pick the minutes, write a caption, post, and land back on the scene
-    /// with the squad bar ticked up. (请假 stays offered after: it can still go to a day before.)
+    /// with the squad bar ticked up.
     func testTrainedCheckIn() {
         let app = launch(language: "zh-Hans", photos: 3)
         _ = topCard(in: app)
@@ -20,7 +20,7 @@ final class TodayUITests: XCTestCase {
         let checkIn = app.buttons["today.checkin"]
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
-        for (kind, label) in [("trained", "训练"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
+        for (kind, label) in [("trained", "训练"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐")] {
             let capsule = app.buttons["today.capsule.\(kind)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
@@ -68,152 +68,9 @@ final class TodayUITests: XCTestCase {
         XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "打卡 didn't come back after 已发出")
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
+        XCTAssertFalse(app.buttons["today.capsule.disclaimer"].exists, "打卡 still offers a 请假条")
         settle()
         keepScreenshot(named: "17-today-checkin-menu-after-training")
-    }
-
-    /// 请假: type a reason, pick a style, 编一句 puts a line from it up, 换一句 shows the next,
-    /// bring the typed words back, post: back on the scene the line stays off it, the
-    /// squad bar doesn't move, and 动态 has it.
-    func testDisclaimer() {
-        // 已发出 holds a minute, so a slow simulator still finds its 查看.
-        let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-bubble-hold"])
-        _ = topCard(in: app)
-        let field = openDisclaimer(in: app)
-        let close = app.buttons["disclaimer.close"]
-        let post = app.buttons["disclaimer.post"]
-        XCTAssertGreaterThanOrEqual(close.frame.minY, 44, "the header slid under the status bar: \(close.frame)")
-        // The page opens on writing the reason, with nothing to post yet.
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "the keyboard isn't up")
-        XCTAssertEqual(field.placeholderValue, "为什么没练？")
-        XCTAssertFalse(post.isEnabled, "an empty excuse can be posted")
-
-        field.typeText("deadline")
-        settle()
-        // With the keyboard up, the excuse and 发布 stay in view.
-        XCTAssertTrue(field.isHittable, "the excuse is hidden under the keyboard")
-        XCTAssertTrue(post.isHittable, "发布 is hidden under the keyboard")
-        XCTAssertFalse(app.buttons["disclaimer.restore"].exists, "用回我写的 shows before anything replaced the words")
-
-        // Picking a style only picks it; 编一句 puts a line from the typed words up, in place of
-        // them, and the button turns to 换一句.
-        let write = app.buttons["disclaimer.write"]
-        let first = writeFunnyLine(in: app, field: field)
-        XCTAssertNotEqual(first, "deadline", "编一句 didn't put a line up")
-        XCTAssertEqual(write.label, "换一句")
-        XCTAssertFalse(app.buttons["disclaimer.draft.1"].exists, "lines on offer still list under the excuse")
-        keepScreenshot(named: "18-disclaimer-styled")
-
-        // 换一句 shows another line; 用回我写的 brings the typed words back.
-        write.tap()
-        settle()
-        let second = field.value as? String ?? ""
-        XCTAssertNotEqual(second, first, "换一句 showed the same line")
-        XCTAssertNotEqual(second, "deadline")
-        app.buttons["disclaimer.restore"].tap()
-        settle()
-        XCTAssertEqual(field.value as? String, "deadline")
-
-        // The lines still answer the words and style, so the button stays 换一句, and asks the
-        // writer again once its three lines ran out.
-        XCTAssertEqual(write.label, "换一句")
-        write.tap()
-        settle()
-        write.tap()
-        settle()
-        let line = field.value as? String ?? ""
-        XCTAssertNotEqual(line, "deadline", "换一句 left the typed words")
-        // Tapping the excuse starts typing again; the count follows the excuse.
-        editAtEnd(field, in: app)
-        XCTAssertEqual(
-            app.staticTexts["disclaimer.count"].label.split(separator: "/").first, "\(line.count)",
-            "the count doesn't match the excuse")
-        post.tap()
-
-        // The character holds up the 请假条 sign; its words stay in 动态, off the scene.
-        waitFor(field, "exists == false", "the 请假条 page didn't close")
-        let outgoing = app.buttons["today.outgoing"]
-        waitFor(outgoing, "label CONTAINS '已发出'", "the post didn't go out")
-        let words = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
-        XCTAssertFalse(words.exists && words.isHittable, "a 请假条's words showed on the scene")
-        XCTAssertTrue(labeled("14/24", in: app).exists, "a 请假条 moved the squad's score")
-        keepScreenshot(named: "19-today-disclaimer-posted")
-
-        // 已发出's 查看 opens the post in 动态.
-        outgoing.tap()
-        assertInFeed(saying: line, in: app)
-    }
-
-    /// 动态 opened on my post, on screen.
-    private func assertInFeed(saying line: String, in app: XCUIApplication) {
-        // 动态 opens scrolled to the post, so its title may be off screen: the tab says it opened.
-        waitFor(app.buttons["tab.feed"], "isSelected == true", "查看 didn't open 动态")
-        let post = app.staticTexts.matching(NSPredicate(format: "label == %@", line)).firstMatch
-        XCTAssertTrue(post.waitForExistence(timeout: Self.wait), "my post isn't in 动态")
-        waitFor(post, "isHittable == true", "动态 didn't open on my post")
-        if !post.isHittable {
-            XCTFail("my post is at \(post.frame), the tab bar at \(app.buttons["tab.feed"].frame)")
-        }
-        keepScreenshot(named: "48-feed-my-post")
-    }
-
-    /// The excuse shows exactly what will be posted: Return finishes editing, and typing stops
-    /// at the length limit.
-    func testDisclaimerFieldFitsTheLine() {
-        let app = launch(language: "zh-Hans", photos: 0)
-        _ = topCard(in: app)
-        let field = openDisclaimer(in: app)
-        field.typeText(String(repeating: "a", count: 30) + "\n")
-        settle()
-        XCTAssertEqual(field.value as? String, String(repeating: "a", count: 30), "Return went into the excuse")
-        XCTAssertEqual(app.keyboards.count, 0, "Return didn't finish editing")
-        editAtEnd(field, in: app)
-        field.typeText(String(repeating: "b", count: 100))
-        settle()
-        // Typing past the limit leaves a full line: the count reads n/n.
-        let typed = field.value as? String ?? ""
-        XCTAssertTrue(typed.hasPrefix(String(repeating: "a", count: 30) + "b"), "the excuse lost its start: \(typed)")
-        XCTAssertEqual(
-            app.staticTexts["disclaimer.count"].label, "\(typed.count)/\(typed.count)", "typing went past the limit")
-    }
-
-    /// A reason the writer won't joke about: the author sees the care line, and it can't be
-    /// posted until the line changes.
-    func testCareLine() {
-        let app = launch(language: "zh-Hans", photos: 0, extra: ["-uitest-care"])
-        _ = topCard(in: app)
-        let field = openDisclaimer(in: app)
-        field.typeText("不想活了")
-        dismissKeyboard(in: app)
-        app.segmentedControls["disclaimer.style"].buttons["搞笑"].tap()
-        app.buttons["disclaimer.write"].tap()
-
-        XCTAssertTrue(app.buttons["disclaimer.care.call"].waitForExistence(timeout: Self.wait), "no care line")
-        XCTAssertEqual(app.buttons["disclaimer.care.call"].label, "打给 988")
-        XCTAssertEqual(app.buttons["disclaimer.care.text"].label, "发短信给 988")
-        XCTAssertTrue(app.staticTexts["有紧急危险请直接打 911。"].exists)
-        XCTAssertEqual(field.value as? String, "不想活了", "the writer put a joke in anyway")
-        XCTAssertFalse(app.segmentedControls["disclaimer.style"].exists, "the styles still show beside the care line")
-        XCTAssertFalse(app.buttons["disclaimer.write"].exists, "the writer offered jokes anyway")
-        XCTAssertFalse(app.buttons["disclaimer.post"].isEnabled, "a blocked reason can be posted")
-        settle()
-        keepScreenshot(named: "21-disclaimer-care")
-
-        editAtEnd(field, in: app)
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 4) + "好累")
-        waitFor(app.buttons["disclaimer.post"], "isEnabled == true", "a changed line can't be posted")
-        XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
-    }
-
-    /// Opens the 请假条 page from 打卡's ＋ and returns its excuse field.
-    private func openDisclaimer(in app: XCUIApplication) -> XCUIElement {
-        app.buttons["today.checkin"].tap()
-        let capsule = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait))
-        capsule.tap()
-        let field = app.descendants(matching: .any).matching(identifier: "disclaimer.field").firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: Self.wait), "the 请假条 page never opened")
-        return field
     }
 
     /// The squad card's second page: my week, Monday to Sunday.
@@ -343,46 +200,5 @@ extension TodayUITests {
         keepScreenshot(named: "16c-today-tapped-me")
         tapOffPopup(above: today, in: app)
         XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "a tap off my card left it open")
-    }
-}
-
-/// The 请假条 page's steps.
-extension TodayUITests {
-    /// Puts the keyboard away, picks a style, checks that
-    /// picking alone asks nothing, then taps 编一句 and returns the line it put up.
-    private func writeFunnyLine(in app: XCUIApplication, field: XCUIElement) -> String {
-        dismissKeyboard(in: app)
-        let write = app.buttons["disclaimer.write"]
-        XCTAssertTrue(write.waitForExistence(timeout: Self.wait), "no 编一句 once the keyboard went away")
-        let typed = field.value as? String
-        let styles = app.segmentedControls["disclaimer.style"]
-        // The styles share one row with 编一句 on every phone.
-        XCTAssertEqual(styles.frame.midY, write.frame.midY, accuracy: 4, "编一句 dropped under the styles")
-        XCTAssertLessThanOrEqual(write.frame.maxX, app.frame.maxX, "编一句 runs off the screen")
-        styles.buttons["中二"].tap()
-        let funny = styles.buttons["搞笑"]
-        funny.tap()
-        settle()
-        XCTAssertTrue(funny.isSelected, "the picked style isn't marked")
-        XCTAssertEqual(field.value as? String, typed, "picking a style asked the writer")
-        XCTAssertEqual(write.label, "编一句")
-        write.tap()
-        waitFor(write, "label == '换一句'", "编一句 put no line up")
-        settle()
-        return field.value as? String ?? ""
-    }
-
-    /// Return puts the keyboard away (the field's Done).
-    private func dismissKeyboard(in app: XCUIApplication) {
-        guard app.keyboards.firstMatch.exists else { return }
-        app.typeText("\n")
-        settle()
-    }
-
-    /// Taps the excuse at the end of its last line, so typing goes after it.
-    private func editAtEnd(_ field: XCUIElement, in app: XCUIApplication) {
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.99, dy: 0.9)).tap()
-        XCTAssertTrue(
-            app.keyboards.firstMatch.waitForExistence(timeout: Self.wait), "tapping the excuse didn't start typing")
     }
 }

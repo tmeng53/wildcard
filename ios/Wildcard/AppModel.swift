@@ -285,8 +285,7 @@ final class AppModel {
         // Zones wait for this member's own birthday: one signed in before never lends theirs.
         Self.health.birthday = nil
         let today = TodayModel(
-            store: store, writer: APIDisclaimerWriter(api: api, fallback: DiceDisclaimerWriter()),
-            health: Self.health, posted: posted,
+            store: store, health: Self.health, posted: posted,
             noSquad: { [weak self] in Task { await self?.lostSquad() } })
         let profile = MeModel(
             service: APIMeService(api: api, beforeDeleting: { try? await Push.registration.signingOut() }),

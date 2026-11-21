@@ -2,18 +2,16 @@
 import DesignSystem
 import SwiftUI
 
-/// The four check-in kinds 打卡's ＋ opens into (Tracy, 2026-11-21): clear Liquid Glass capsules
-/// stacked above the ＋ at the tab bar's trailing end, the narrowest on top and the widest next to
-/// the ＋. Put it over a tab's screen, under the bar, so the ＋, now a cross, still closes it; the
-/// caller blurs the screen while it is open (`Scrim`). A tap outside closes it; a pick closes it
-/// and calls `onPick`.
+/// The kinds a member can post (`CheckInKind.postable`), which 打卡's ＋ opens into (Tracy,
+/// 2026-11-21): clear Liquid Glass capsules stacked above the ＋ at the tab bar's trailing end, the
+/// narrowest on top and the widest next to the ＋. Put it over a tab's screen, under the bar, so the
+/// ＋, now a cross, still closes it; the caller blurs the screen while it is open (`Scrim`). A tap
+/// outside closes it; a pick closes it and calls `onPick`.
 ///
-/// A kind in `unavailable` is left out: a choice the member can't make isn't shown. Each capsule
-/// is `<identifierPrefix>.capsule.<kind>` for UI tests.
+/// Each capsule is `<identifierPrefix>.capsule.<kind>` for UI tests.
 public struct CheckInMenu: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding private var isOpen: Bool
-    private let unavailable: Set<CheckInKind>
     private let identifierPrefix: String
     private let onPick: (CheckInKind) -> Void
     @State private var picks = 0
@@ -21,11 +19,10 @@ public struct CheckInMenu: View {
     @State private var widths: [CheckInKind: Double] = [:]
 
     public init(
-        isOpen: Binding<Bool>, unavailable: Set<CheckInKind> = [], identifierPrefix: String,
+        isOpen: Binding<Bool>, identifierPrefix: String,
         onPick: @escaping (CheckInKind) -> Void
     ) {
         _isOpen = isOpen
-        self.unavailable = unavailable
         self.identifierPrefix = identifierPrefix
         self.onPick = onPick
     }
@@ -74,7 +71,7 @@ public struct CheckInMenu: View {
     /// The kinds shown, narrowest on top: in the order the stack reads down once all are measured,
     /// else the kinds' own order.
     private var stacked: [CheckInKind] {
-        let kinds = CheckInKind.allCases.filter { !unavailable.contains($0) }
+        let kinds = CheckInKind.postable
         guard kinds.allSatisfy({ widths[$0] != nil }) else { return kinds }
         return kinds.enumerated()
             .sorted { lhs, rhs in
@@ -87,7 +84,7 @@ public struct CheckInMenu: View {
     /// Invisible copies of the capsules, always laid out, to read their widths.
     private var measuring: some View {
         ZStack {
-            ForEach(CheckInKind.allCases, id: \.self) { kind in
+            ForEach(CheckInKind.postable, id: \.self) { kind in
                 MenuCapsuleLabel(kind: kind)
                     .onGeometryChange(for: Double.self, of: { $0.size.width }, action: { widths[kind] = $0 })
             }

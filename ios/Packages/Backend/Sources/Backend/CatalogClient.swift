@@ -39,7 +39,7 @@ public actor CatalogClient {
     /// Whether `catalog` changes what screens show, or the copy kept for the next launch, from
     /// `before`; the art goes to `ArtDownloads`, which reads `kept()`.
     static func shows(_ catalog: AppCatalog, differentlyFrom before: AppCatalog) -> Bool {
-        catalog.sports != before.sports || catalog.diceLines != before.diceLines
+        catalog.sports != before.sports
             || catalog.starterStock != before.starterStock || catalog.scenes != before.scenes
             || catalog.switches != before.switches || catalog.copy != before.copy
             || catalog.minimumBuild != before.minimumBuild

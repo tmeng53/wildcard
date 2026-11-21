@@ -187,8 +187,6 @@ public struct RecapView: View {
         case .hottest(let hottest):
             HottestPage(hottest: hottest, page: context).storyPage("hottest")
         case .meals(let meals): MealsPage(meals: meals, page: context).storyPage("meals")
-        case .bestDisclaimer(let note):
-            BestDisclaimerPage(note: note, page: context).storyPage("bestDisclaimer")
         case .menu, .favoritePlace, .discovery: placesPage(page, context: context)
         case .ending(let ending):
             self.ending(

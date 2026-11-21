@@ -17,7 +17,7 @@ final class RecapUITests: XCTestCase {
 
         let pages = [
             ("podium", 4.0), ("titles", 2.5), ("myWeek", 1.5), ("squadWeek", 1.5), ("favoritePlace", 3.0),
-            ("discovery", 3.0), ("hottest", 2.5), ("meals", 3.0), ("menu", 1.5), ("bestDisclaimer", 3.5),
+            ("discovery", 3.0), ("hottest", 2.5), ("meals", 3.0), ("menu", 1.5),
             ("ending", 3.0),
         ]
         for (index, (page, settle)) in pages.enumerated() {
@@ -105,13 +105,13 @@ final class RecapUITests: XCTestCase {
         show("menu", in: app)
         // Back from a place, a tap still moves the story on.
         next(in: app, from: "menu")
-        show("bestDisclaimer", in: app)
+        show("ending", in: app)
     }
 
     /// Every page of the sample week, in order.
     private static let pages = [
         "podium", "titles", "myWeek", "squadWeek", "favoritePlace", "discovery", "hottest", "meals", "menu",
-        "bestDisclaimer", "ending",
+        "ending",
     ]
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.

@@ -45,7 +45,7 @@ public enum RecapSample {
         return WeekStory(
             status: pending ? .pending : .ready, stuck: pending && stuck, squad: SquadID(uuid(9)), squadName: "晨跑五人组",
             week: week(from: monday ?? day(12)), scene: scene, squadmates: squadmates,
-            order: [.podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .bestDisclaimer, .ending],
+            order: [.podium, .titles, .myWeek, .squadWeek, .hottest, .meals, .ending],
             podium: Podium(
                 champion: coco, sides: [lin, mia], planDone: [coco, mia], speech: ready ? "七天五天八点前打卡，闹钟都怕她" : nil,
                 championMove: ready ? .pose : nil, sideMove: ready ? .pump : nil),
@@ -54,7 +54,7 @@ public enum RecapSample {
                     title(coco, "早八战神", "七天五天八点前打卡，闹钟都怕她", .pose),
                     title(lin, "网球场钉子户", "三次打卡都在同一块场地，球场该发他会员卡", .pump),
                     title(mia, "雨中狠人", "周三下雨照跑 5 公里，伞都没带", .stretch),
-                    title(jay, "请假条文豪", "两张请假条，篇篇有人笑死", .laugh),
+                    title(jay, "汉堡品鉴师", "三顿放纵餐，评分比训练还认真", .laugh),
                     title(reader, "稳定输出", "4 天，不多不少，比上班打卡还准", .wave),
                 ] : [],
             myWeek: RecapDomain.MyWeek(
@@ -81,9 +81,6 @@ public enum RecapSample {
                     .init(member: coco, more: .healthy), .init(member: jay, more: .cheat),
                     .init(member: reader, more: .healthy),
                 ], line: ready ? "健康餐赢了，汉堡不服" : nil),
-            bestDisclaimer: BestDisclaimer(
-                checkIn: CheckInID(uuid(21)), author: jay, text: "教练说要循序渐进，我今天进的是被窝。", reactions: 6,
-                authorMove: ready ? .flat : nil, squadMove: ready ? .laugh : nil),
             menu: menu, places: places,
             ending: ending(missed: missed, ready: ready))
     }

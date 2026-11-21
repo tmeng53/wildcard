@@ -84,8 +84,7 @@ extension WeekStory {
                     squad: ready.squad, week: ready.week, scene: ready.scene.rawValue, sceneId: ready.sceneId,
                     members: ready.members,
                     podium: ready.podium, myWeek: ready.myWeek, squadWeek: ready.squadWeek, hottest: ready.hottest,
-                    meals: ready.meals,
-                    bestDisclaimer: ready.bestDisclaimer, menu: ready.menu, places: ready.places,
+                    meals: ready.meals, menu: ready.menu, places: ready.places,
                     ending: ready.ending))
         case .case2(let pending):
             self.init(
@@ -94,8 +93,8 @@ extension WeekStory {
                     squad: pending.squad, week: pending.week, scene: pending.scene.rawValue,
                     sceneId: pending.sceneId,
                     members: pending.members, podium: pending.podium, myWeek: pending.myWeek,
-                    squadWeek: pending.squadWeek, hottest: pending.hottest, meals: pending.meals,
-                    bestDisclaimer: pending.bestDisclaimer, menu: pending.menu, places: pending.places,
+                    squadWeek: pending.squadWeek, hottest: pending.hottest, meals: pending.meals, menu: pending.menu,
+                    places: pending.places,
                     ending: pending.ending))
         }
     }
@@ -113,7 +112,6 @@ extension WeekStory {
         let squadWeek: Components.Schemas.StorySquadWeek?
         let hottest: Components.Schemas.StoryHottest?
         let meals: Components.Schemas.StoryMeals?
-        let bestDisclaimer: Components.Schemas.StoryBestDisclaimer?
         /// Absent from a story frozen before 小队菜单 and the places were.
         let menu: [Components.Schemas.StoryMenuDish]?
         let places: [Components.Schemas.StoryPlace]?
@@ -141,14 +139,6 @@ extension WeekStory {
                 speech: first(champion)?.speech,
                 championMove: first(champion)?.move, sideMove: sides.first.flatMap(first)?.move)
         }
-        var bestDisclaimer: BestDisclaimer?
-        if let wire = frozen.bestDisclaimer {
-            guard let checkIn = UUID(uuidString: wire.checkIn), let author = Self.member(wire.author) else {
-                return nil
-            }
-            bestDisclaimer = BestDisclaimer(
-                checkIn: CheckInID(checkIn), author: author, text: wire.text, reactions: wire.reactions)
-        }
         let hottest = frozen.hottest.map(Hottest.init)
         let myWeek = frozen.myWeek.map(RecapDomain.MyWeek.init)
         let squadWeek = frozen.squadWeek.map(SquadWeek.init)
@@ -168,8 +158,7 @@ extension WeekStory {
             status: status, stuck: stuck, squad: SquadID(squad), squadName: frozen.squad.name,
             week: Week(monday: monday, sunday: sunday), scene: scene, squadmates: squadmates, podium: podium,
             titles: titles, myWeek: myWeek ?? nil, squadWeek: squadWeek ?? nil, hottest: hottest ?? nil,
-            meals: meals ?? nil,
-            bestDisclaimer: bestDisclaimer, menu: menu, places: places,
+            meals: meals ?? nil, menu: menu, places: places,
             ending: frozen.ending.map { Ending(done: $0.done, plan: $0.plan, headline: $0.headline, line: $0.line) })
     }
 
