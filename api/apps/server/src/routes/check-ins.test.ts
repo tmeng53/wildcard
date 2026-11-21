@@ -1971,6 +1971,59 @@ describe('a squad’s places', () => {
     return id;
   }
 
+  it('gives a 训练 on the map the start picked by hand, never its workout’s', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const started = new Date(Date.now() - 50 * 60 * 1000);
+    started.setUTCMilliseconds(0);
+    const fromHealth = await post({
+      member: me,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: {
+          sport: 'run',
+          place: park,
+          workout: {
+            provider: 'apple_health',
+            providerWorkoutId: randomUUID(),
+            startedAt: started.toISOString(),
+            endedAt: new Date(started.getTime() + 30 * 60 * 1000).toISOString(),
+            summary: { durationSec: 1800 },
+          },
+        },
+      },
+    });
+    const byHand = await post({
+      member: friend,
+      squad,
+      entry: { kind: 'trained', training: { sport: 'run', startTime: '06:45', place: park } },
+    });
+    const meal = await post({
+      member: me,
+      squad,
+      entry: { kind: 'healthyMeal', meal: { place: noodles } },
+    });
+
+    const listed = await call({ method: 'GET', path: `/squads/${squad}/places`, token: me.token });
+    expect(listed.status).toBe(200);
+    const { recent } = z
+      .object({
+        recent: z.array(
+          z.object({
+            checkIn: z.string(),
+            startTime: z.string().optional(),
+          }),
+        ),
+      })
+      .parse(listed.body);
+    const times = new Map(recent.map((visit) => [visit.checkIn, visit.startTime]));
+    expect([...times.keys()].sort()).toStrictEqual([fromHealth, byHand, meal].sort());
+    expect(times.get(fromHealth)).toBeUndefined();
+    expect(times.get(byHand)).toBe('06:45');
+    expect(times.get(meal)).toBeUndefined();
+  });
+
   it('lists the places the squad’s posts were tagged with, with no score', async () => {
     const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(me, friend);

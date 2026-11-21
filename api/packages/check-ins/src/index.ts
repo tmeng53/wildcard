@@ -20,6 +20,7 @@ export {
   Meal,
   MemberId,
   SquadId,
+  StartTime,
   Training,
   TrainedWith,
   photosOf,

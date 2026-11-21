@@ -62,17 +62,29 @@ public struct MapVisit: Hashable, Sendable, Identifiable {
     public let activity: Activity?
     /// The day it counts for, on the author's clock.
     public let day: LocalDay
-    /// When it was posted.
+    /// When it was posted, which orders the map's posts.
     public let createdAt: Timestamp
+    /// When it was done, which the map shows.
+    public let time: Time
     /// Where.
     public let key: PlaceKey
 
+    /// When a post was done, as the map says it.
+    public enum Time: Hashable, Sendable {
+        /// The start the author picked for a 训练, on their own clock.
+        case wallClock(StartTime)
+        /// When it was posted, on the viewer's clock: a post with no start picked.
+        case posted(Timestamp)
+    }
+
+    /// `startTime` is the start picked for a 训练; the map shows it, else `createdAt`.
     public init(
         id: CheckInID, author: MemberID, kind: CheckInKind, activity: Activity? = nil, day: LocalDay,
-        createdAt: Timestamp, key: PlaceKey
+        createdAt: Timestamp, startTime: StartTime? = nil, key: PlaceKey
     ) {
         (self.id, self.author, self.kind, self.activity) = (id, author, kind, activity)
         (self.day, self.createdAt, self.key) = (day, createdAt, key)
+        self.time = startTime.map(Time.wallClock) ?? .posted(createdAt)
     }
 }
 
@@ -125,7 +137,8 @@ public struct SquadMapLayout: Hashable, Sendable {
         (self.data, self.today) = (data, today)
     }
 
-    /// Today's posts with a place, newest first: 今天's list.
+    /// Today's posts with a place, newest posted first (as 动态 orders them; each shows when it was
+    /// done, `MapVisit.time`): 今天's list.
     public var todayVisits: [MapVisit] {
         data.recent.filter { $0.day == today && place($0.key) != nil }.sorted { $0.createdAt > $1.createdAt }
     }
@@ -162,7 +175,7 @@ public struct SquadMapLayout: Hashable, Sendable {
             .map(\.element)
     }
 
-    /// A member's posts today, each where it was, newest first: the map of their day.
+    /// A member's posts today, each where it was, newest posted first: the map of their day.
     public func stops(of member: MemberID) -> [MapStop] {
         todayVisits.filter { $0.author == member }.compactMap { visit in
             place(visit.key).map { MapStop(visit: visit, place: $0) }
