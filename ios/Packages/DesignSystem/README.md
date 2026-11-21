@@ -14,7 +14,7 @@ Like Material 3's reference, system and component tokens, and Atlassian's `color
 
 A screen never names a primitive: it asks for a role (`fgMuted`, `bgAccent`), and the scene decides the color. Check-in kinds have no colors of their own; they use the scene's.
 
-Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand` and `Palette.onBrand`) is its own value and never follows the scene, so it can change in one place. Brand screens (opening, sign-up, 我, the tab bar, writing a post, 请假条, the feed) set `.accentTone(.brand)` once at their root, and the primary button, selection marks, switches and text cursor inside wear the brand. The squad's own turf (home, the check-in burst, the 出赛表 poster, 战报) keeps the default `.scene`; the feed's kind tag still uses the scene's wash (`bgAccentSubtle`, `fgAccent`).
+Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand` and `Palette.onBrand`) is its own value and never follows the scene, so it can change in one place. Brand screens (opening, sign-up, 我, the tab bar, writing a post, 请假条, the feed) set `.accentTone(.brand)` once at their root, and the primary button, selection marks, switches and text cursor inside wear the brand. The squad's own turf (home, the check-in kinds, the 出赛表 poster, 战报) keeps the default `.scene`; the feed's kind tag still uses the scene's wash (`bgAccentSubtle`, `fgAccent`).
 
 ## Components
 
@@ -30,13 +30,13 @@ Brand vs scene: the brand's colour (`bgBrand`, `fgOnBrand`, from `Palette.brand`
 | `swipesBack(isEnabled:perform:)` | Sign-up's steps only, which have no navigation bar: a swipe right from anywhere goes back a step |
 | `.glassMenu(isPresented:title:items:)`, `.glassConfirm(isPresented:_:)`, `GlassMenuItem` | Every popup (approved 2026-11-04): a Liquid Glass panel growing out of a 「···」 button, a held item (lifted 1.03 with one `pick`) or a row; 48-point rows of an icon and a label, destructive ones red (`fgDanger`) in their own group at the bottom; an item with a confirmation asks in place (its question, the confirming row, 取消), and `glassConfirm` opens on the question. Never the system `Menu`, `contextMenu` or `confirmationDialog` |
 | `CategoryBar` | Where am I: switching scenes, tabs in a panel, sport categories (ink capsule) |
-| `AppTabs`, `TabBarItem` | The app's tabs in the system's own Liquid Glass tab bar, the selected tab in ink |
+| `AppTabs`, `TabBarItem`, `TabBarAction` | The app's tabs in the system's own Liquid Glass tab bar, the selected tab in ink, and an action's round button apart at its end (打卡's ＋) |
 | `PickRow`, `PickPill`, `PickTile`, `Swatch`, `CheckBadge` | What did I pick: white with a hairline; picked, a 1.5 stroke and a check in the accent tone; a `.solid` `PickPill` fills with the accent tone instead (发动态's sport) |
 | `DayStrip` | Which day: today and the week before it in one line (补打卡's 日期), each the squad card's day circle with its weekday over it; today is 今天 in an ink ring, the picked day fills with the accent tone, a day that can't be picked is grey |
 | `TickRuler`, `RulerScale` | A number slid under a needle (刻度), snapping to the scale's marks with one `pick` tick per mark (发动态's minutes under 其他) |
 | `InputField`, `SearchField` | Text entry |
 | `dismissesKeyboardOnTapOutside()` | Applied once at the app's root: a tap outside a text input puts the keyboard away on every screen, and still reaches what was tapped |
-| `KindButton`, `CheckInBurst` | The four check-in kinds; the 打卡 button and its capsules |
+| `KindButton`, `CheckInMenu` | The four check-in kinds; the capsules 打卡's ＋ in the tab bar opens into, stacked by width |
 | `Tag`, `Hairline` | A short label on a post, a card or a head: `.accent` (scene or brand fill), `.rest` (grey, 请假 and the moon), `.ink` (on the player card and 小队's statuses), `.regular` or `.small`; one hairline divider, `on: .page` or `.ink` |
 | `ReactionBar`, `EmojiPicker`, `ReactionBarMetrics` | Reacting to a post (动态 and the 6pm push): the floating glass bar of common emoji with the finger's slot raised and a plus, then the glass card of every emoji (recent, all, optional search) |
 | `SquadCard`, `SquadCapsule`, `StatusRing`, `Score`, `ProgressBar`, `PlusOne` | The home card swiped between the squad's week and my week, in light Liquid Glass over the scene; with `collapses`, a grabber or a swipe up folds it into `SquadCapsule` (heads and the squad's score, then my week Monday to Sunday, a grabber at its foot), which a tap or a swipe down opens, the glass morphing between them when both carry the same `GlassMorph` (`morphs`); today's rings; Barlow numbers; the 「+1」 pop |

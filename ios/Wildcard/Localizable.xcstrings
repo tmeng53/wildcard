@@ -49,6 +49,22 @@
         }
       }
     },
+    "打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡"
+          }
+        }
+      }
+    },
     "push.coach.note": {
       "comment": "Push notification (APNs loc-key); the API sends the coach's name and the note, which only the app shows, never the lock screen.",
       "extractionState": "manual",

@@ -76,7 +76,7 @@ extension TodayModel {
 
     /// Nothing else is on the scene: no check-in being made, no pat, the lights not off.
     private var isScenePlain: Bool {
-        step == .scene && !isBurstOpen && arrival == nil && pats.pat == nil && stagePhase != .night
+        step == .scene && !isCheckInMenuOpen && arrival == nil && pats.pat == nil && stagePhase != .night
     }
 
     /// The kinds already played today on this phone.

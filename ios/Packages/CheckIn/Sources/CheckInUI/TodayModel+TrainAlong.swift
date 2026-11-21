@@ -13,7 +13,7 @@ extension TodayModel {
     public func trainAlong(_ post: CheckInID) async {
         if store.home?.hint(along: post) == nil { await store.refresh() }
         guard step == .scene, arrival == nil else { return }
-        isBurstOpen = false
+        isCheckInMenuOpen = false
         pick(.trained)
         guard let model = compose, let hint = store.home?.hint(along: post) else { return }
         if let day = store.home?.checkIns.first(where: { $0.id == post })?.day,

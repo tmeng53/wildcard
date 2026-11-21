@@ -30,9 +30,10 @@ public final class TodayModel {
         case disclaimer
     }
 
-    /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
-    var isBurstOpen = false {
-        didSet { if isBurstOpen { pats.dismissBubble() } }
+    /// 打卡's ＋ opened into the kinds (`CheckInMenu`, over every tab); opening it closes a
+    /// teammate's bubble, which would otherwise stay sharp over the blur.
+    public var isCheckInMenuOpen = false {
+        didSet { if isCheckInMenuOpen { pats.dismissBubble() } }
     }
     /// Everyone else on the scene.
     let cast = SquadCast()
@@ -48,13 +49,13 @@ public final class TodayModel {
     let outgoingHold: Double
     private(set) var step = Step.scene
 
-    /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
-    /// anywhere outside its capsules closes it), a check-in is being written (the compose and
-    /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
+    /// Whether the app's tab bar shows: on the scene, with 打卡's ＋ in it, but not while a
+    /// check-in is being written (the compose and 请假条 pages take the whole screen) or the squad
+    /// is dropping in.
     public var showsTabBar: Bool {
         guard !holdsTabBar, opening == nil, shownLetter == nil, shownTeamLetter == nil else { return false }
         return switch step {
-        case .scene: !isBurstOpen
+        case .scene: true
         case .composing, .disclaimer: false
         }
     }
@@ -237,7 +238,7 @@ public final class TodayModel {
     }
 
     /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
-    var unavailable: Set<CheckInKind> {
+    public var unavailable: Set<CheckInKind> {
         let blocked = blockedForDisclaimer
         return disclaimerDays.contains { !blocked.contains($0) } ? [] : [.disclaimer]
     }
@@ -247,9 +248,6 @@ public final class TodayModel {
 
     /// The days a 请假条 can't go on: one with a 练了.
     var blockedForDisclaimer: Set<LocalDay> { store.disclaimerBlockedDays }
-
-    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member writes on the scene itself.
-    var isSceneDimmed: Bool { isBurstOpen }
 
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
     public func load() async {
@@ -268,9 +266,9 @@ public final class TodayModel {
     static let rereadEvery = Duration.seconds(60)
 
     /// Reads the home again while the scene shows nothing in hand: not while a check-in is being
-    /// made, the burst is open or the squad is dropping in.
+    /// made, the check-in menu is open or the squad is dropping in.
     func reread() async {
-        guard step == .scene, !isBurstOpen, arrival == nil else { return }
+        guard step == .scene, !isCheckInMenuOpen, arrival == nil else { return }
         await store.refresh()
         showLoaded()
     }
@@ -284,6 +282,14 @@ public final class TodayModel {
         }
         placeSquad()
         Task { await playOpening() }
+    }
+
+    /// 打卡's ＋ picked `kind`, from any tab: its page, over the scene. A page already open stays as
+    /// it is.
+    public func startCheckIn(_ kind: CheckInKind) {
+        isCheckInMenuOpen = false
+        guard step == .scene else { return }
+        pick(kind)
     }
 
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.

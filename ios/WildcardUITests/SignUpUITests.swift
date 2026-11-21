@@ -230,7 +230,7 @@ final class SignUpUITests: XCTestCase {
         confirm.tap()
 
         // The carton opens, then home takes over on the pool and the member drops onto it.
-        // Home's own 打卡, there as the drop starts; the tab bar only comes back after it.
+        // 打卡's ＋ comes with the tab bar, once the drop has landed.
         let today = app.buttons["today.checkin"]
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "home never took over")
         // Frames a few times a second, to review the drop against the mockup.

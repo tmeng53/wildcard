@@ -21,31 +21,31 @@ final class TabsUITests: XCTestCase {
             ["小队", "动态", "我"])
         XCTAssertFalse(app.buttons["tab.schedule"].exists, "出赛表 is still a tab")
         XCTAssertFalse(app.buttons["tab.squad"].exists, "小队 is still a tab")
-        // 打卡 sits above the bar, not under it.
+        // 打卡's ＋ is at the bar's end, on every tab (Tracy, 2026-11-21).
         let checkIn = app.buttons["today.checkin"]
         XCTAssertTrue(checkIn.isHittable, "打卡 is covered")
-        XCTAssertLessThan(checkIn.frame.maxY, today.frame.minY, "打卡 overlaps the tab bar")
+        XCTAssertGreaterThan(checkIn.frame.minX, app.buttons["tab.me"].frame.maxX, "the ＋ isn't at the bar's end")
         Thread.sleep(forTimeInterval: 1)
         keepScreenshot(named: "30-tabs-today")
 
         app.buttons["tab.feed"].tap()
         waitFor(app.buttons["tab.feed"], "isSelected == true", "动态 didn't open")
         XCTAssertTrue(app.staticTexts["feed.title"].waitForExistence(timeout: 30), "动态 shows another screen")
-        XCTAssertFalse(checkIn.exists, "今天 still shows under 动态")
+        XCTAssertTrue(checkIn.isHittable, "no ＋ on 动态")
         app.buttons["tab.me"].tap()
         waitFor(app.buttons["tab.me"], "isSelected == true", "tab.me didn't open")
         let mePage = app.descendants(matching: .any).matching(identifier: "me.page").firstMatch
         XCTAssertTrue(mePage.waitForExistence(timeout: 30), "我 didn't show its page")
-        XCTAssertFalse(checkIn.exists, "今天 still shows under tab.me")
+        XCTAssertTrue(checkIn.isHittable, "no ＋ on 我")
         app.buttons["tab.today"].tap()
         waitFor(today, "isSelected == true", "今天 didn't open again")
         XCTAssertFalse(mePage.exists, "the last tab's screen stayed over 今天")
 
-        // The 打卡 burst takes the screen: the bar steps aside until it closes.
+        // The kinds open over the page with the bar still up; the compose page takes the screen.
         checkIn.tap()
         let meal = app.buttons["today.capsule.healthyMeal"]
         XCTAssertTrue(meal.waitForExistence(timeout: 30))
-        waitFor(today, "exists == false", "the tab bar stayed over the open burst")
+        XCTAssertTrue(today.isHittable, "the tab bar stepped aside for the kinds")
         meal.tap()
         XCTAssertTrue(app.buttons["compose.post"].waitForExistence(timeout: 30), "the compose page never opened")
         waitFor(today, "exists == false", "the tab bar stayed over the compose page")
