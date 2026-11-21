@@ -101,8 +101,8 @@ struct PostCard: View {
                 }
             }
         }
-        // The 「…」 at the end of the byline (feedback #74), laid over the whole card as it was
-        // before: inside the stub's rows, the feed slowed to a crawl after 编辑 in UI tests.
+        // The 「…」 at the end of the byline (feedback #74), on the stub, never over the cover or
+        // the block's words; laid over the whole card so its 44-point target sits over the rows.
         .overlayPreferenceValue(BylineEnd.self) { end in
             if let end {
                 GeometryReader { proxy in
