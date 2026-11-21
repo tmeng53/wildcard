@@ -6,7 +6,8 @@ import ScheduleDomain
 import SwiftUI
 
 // 出赛表's top bar, under the navigation bar's back button: the page's title and the week chips
-// with the 我的每周计划 after them. 存图 sits in the navigation bar, across from the back button.
+// (本周, 下周, and 往期, the system menu of the weeks before; Tracy, 2026-11-21: a chip for each
+// past week ran off the screen) with the 我的每周计划 after them. 存图 sits in the navigation bar, across from the back button.
 
 extension ScheduleView {
     // MARK: Top bar
@@ -57,27 +58,33 @@ extension ScheduleView {
     }
 
     private var weekChips: [CategoryBarItem<SchedulePage>] {
-        let thisWeek = store.today?.weekStart
-        // The squad's weeks before the member joined: one greyed chip, never a page.
-        let notYetJoined =
-            store.profile?.startsWithNotYetJoined(store.weeks) == true
-            ? [
+        guard let thisWeek = store.today?.weekStart else { return [] }
+        let now = store.weeks.filter { $0 >= thisWeek }.map { week in
+            CategoryBarItem(
+                id: SchedulePage.week(week),
+                title: week == thisWeek ? Text(copy: "本周", bundle: .module) : Text(copy: "下周", bundle: .module),
+                accessibilityIdentifier: "schedule.week.\(week)")
+        }
+        // The weeks before, newest first, then the squad's weeks before the member joined: one
+        // greyed line, never a page.
+        var past = store.weeks.filter { $0 < thisWeek }.reversed().map { week in
+            CategoryBarItem(
+                id: SchedulePage.week(week),
+                title: Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1)),
+                accessibilityIdentifier: "schedule.week.\(week)")
+        }
+        guard let latest = past.first else { return now }
+        if store.profile?.startsWithNotYetJoined(store.weeks) == true {
+            past.append(
                 CategoryBarItem(
                     id: SchedulePage.notYetJoined, title: Text(copy: "还未入队", bundle: .module),
-                    accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false)
-            ] : []
-        return notYetJoined
-            + store.weeks.map { week in
-                let title: Text =
-                    if week == thisWeek {
-                        Text(copy: "本周", bundle: .module)
-                    } else if let thisWeek, week > thisWeek {
-                        Text(copy: "下周", bundle: .module)
-                    } else {
-                        Text(verbatim: ScheduleLabels.week(store.profile?.weekNumber(of: week) ?? 1))
-                    }
-                return CategoryBarItem(id: .week(week), title: title, accessibilityIdentifier: "schedule.week.\(week)")
-            }
+                    accessibilityIdentifier: "schedule.notYetJoined", isEnabled: false))
+        }
+        return now + [
+            CategoryBarItem(
+                id: latest.id, title: Text(copy: "往期", bundle: .module), accessibilityIdentifier: "schedule.past",
+                options: past)
+        ]
     }
 
     private var pageSelection: Binding<SchedulePage> {

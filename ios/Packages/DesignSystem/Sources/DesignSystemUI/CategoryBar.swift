@@ -14,11 +14,16 @@ public struct CategoryBarItem<ID: Hashable>: Identifiable {
     public let accessibilityIdentifier: String?
     /// False for an item shown greyed that can't be picked (出赛表's 还未入队).
     public let isEnabled: Bool
+    /// Picks behind one item (出赛表's 往期): the item opens the system menu of them, wears the
+    /// one picked as its title while it is the selection, and carries a chevron. Its own `id`
+    /// should be the first option's.
+    public let options: [CategoryBarItem<ID>]
 
     public init(
         id: ID, title: Text, systemImage: String? = nil, startsGroup: Bool = false,
-        accessibilityIdentifier: String? = nil, isEnabled: Bool = true
+        accessibilityIdentifier: String? = nil, isEnabled: Bool = true, options: [CategoryBarItem<ID>] = []
     ) {
+        self.options = options
         self.isEnabled = isEnabled
         self.id = id
         self.title = title
@@ -88,40 +93,95 @@ public struct CategoryBar<ID: Hashable>: View {
         }
     }
 
-    private func itemButton(_ item: CategoryBarItem<ID>) -> some View {
+    @ViewBuilder private func itemButton(_ item: CategoryBarItem<ID>) -> some View {
+        if item.options.isEmpty {
+            plainItem(item)
+        } else {
+            menuItem(item)
+        }
+    }
+
+    private func plainItem(_ item: CategoryBarItem<ID>) -> some View {
         let isSelected = item.id == selection
         return Button {
-            withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { selection = item.id }
+            pick(item.id)
         } label: {
-            HStack(spacing: Space.xxs) {
-                if let symbol = item.systemImage {
-                    Image(systemName: symbol)
-                        .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                        .accessibilityHidden(true)
-                }
-                item.title
-            }
-            .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
-            .foregroundStyle(Color(role: isSelected ? .bgCanvas : item.isEnabled ? .fgMuted : .fgSubtle, in: theme))
-            .lineLimit(1)
-            .fixedSize()
-            .padding(.horizontal, Self.itemInset)
-            // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
-            .frame(minHeight: Sizing.compactControl)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Color(role: .fgDefault, in: theme))
-                        .matchedGeometryEffect(id: "selection", in: indicator)
-                }
-            }
-            .frame(minHeight: Sizing.minimumTapTarget)
-            .contentShape(Rectangle())
+            itemLabel(item.title, symbol: item.systemImage, isSelected: isSelected, isEnabled: item.isEnabled)
         }
         .buttonStyle(.plain)
         .disabled(!item.isEnabled)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(ifPresent: item.accessibilityIdentifier)
+    }
+
+    /// The system's menu of the item's options, under a label like the other items' with a chevron.
+    private func menuItem(_ item: CategoryBarItem<ID>) -> some View {
+        let picked = item.options.first { $0.id == selection }
+        return Menu {
+            ForEach(item.options) { option in
+                Button {
+                    pick(option.id)
+                } label: {
+                    if option.id == selection {
+                        Label {
+                            option.title
+                        } icon: {
+                            Image(systemName: "checkmark")
+                        }
+                    } else {
+                        option.title
+                    }
+                }
+                .disabled(!option.isEnabled)
+                .accessibilityIdentifier(ifPresent: option.accessibilityIdentifier)
+            }
+        } label: {
+            itemLabel(
+                picked?.title ?? item.title, symbol: "chevron.down", trailingSymbol: true, isSelected: picked != nil,
+                isEnabled: item.isEnabled)
+        }
+        .menuIndicator(.hidden)
+        .disabled(!item.isEnabled)
+        .accessibilityAddTraits(picked != nil ? .isSelected : [])
+        .accessibilityIdentifier(ifPresent: item.accessibilityIdentifier)
+    }
+
+    private func pick(_ id: ID) {
+        withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { selection = id }
+    }
+
+    private func itemLabel(
+        _ title: Text, symbol: String?, trailingSymbol: Bool = false, isSelected: Bool, isEnabled: Bool
+    ) -> some View {
+        HStack(spacing: Space.xxs) {
+            if let symbol, !trailingSymbol {
+                Image(systemName: symbol)
+                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                    .accessibilityHidden(true)
+            }
+            title
+            if let symbol, trailingSymbol {
+                Image(systemName: symbol)
+                    .font(.system(size: Sizing.smallIcon * 0.8, weight: .semibold))
+                    .accessibilityHidden(true)
+            }
+        }
+        .typeStyle(isSelected ? TypeRamp.calloutEmphasis : TypeRamp.callout)
+        .foregroundStyle(Color(role: isSelected ? .bgCanvas : isEnabled ? .fgMuted : .fgSubtle, in: theme))
+        .lineLimit(1)
+        .fixedSize()
+        .padding(.horizontal, Self.itemInset)
+        // The pill hugs this box, so it grows with Dynamic Type instead of clipping.
+        .frame(minHeight: Sizing.compactControl)
+        .background {
+            if isSelected {
+                Capsule()
+                    .fill(Color(role: .fgDefault, in: theme))
+                    .matchedGeometryEffect(id: "selection", in: indicator)
+            }
+        }
+        .frame(minHeight: Sizing.minimumTapTarget)
+        .contentShape(Rectangle())
     }
 }
 
