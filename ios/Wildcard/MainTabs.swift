@@ -21,8 +21,8 @@ import SquadUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: the three tabs (小队, 动态, 我) in the
-/// system's Liquid Glass tab bar (`AppTabs`); the squad's settings open inside 小队 from the
-/// home's squad card.
+/// system's Liquid Glass tab bar (`AppTabs`), with 打卡's ＋ at its end on every tab
+/// (`MainTabs+CheckIn`); the squad's settings open inside 小队 from the home's squad card.
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
 /// screen is pushed on it, so going back (the back button, a swipe right) is the system's.
@@ -127,10 +127,16 @@ struct MainTabs: View {
     }
 
     var body: some View {
-        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot) { tab in
+        AppTabs(
+            Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot,
+            action: checkInAction, barTapped: closeCheckInMenu
+        ) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
-            if tab == selection { screen(tab) }
+            if tab == selection {
+                screen(tab)
+                    .modifier(CheckInMenuCover(today: today, selection: $selection, todayPages: $todayPages))
+            }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.

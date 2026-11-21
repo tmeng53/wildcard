@@ -46,7 +46,7 @@ extension TodayModel {
         // Placed now even when the scene stays the same, so a home just opened drops the
         // members as they are, not its stand-ins.
         placeSquad()
-        isBurstOpen = false
+        isCheckInMenuOpen = false
         pats.dismissBubble()
         guard let clip = try? PlaceholderCharacter.drop() else { return }
         let depth = { (mate: SquadCast.Mate) in self.cast.stage.position(of: mate.id, at: 0)?.point.y ?? 0 }

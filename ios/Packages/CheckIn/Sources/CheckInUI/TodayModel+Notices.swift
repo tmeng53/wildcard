@@ -205,7 +205,7 @@ extension TodayModel {
     }
 
     /// The next notice waiting, once the squad has landed: not while a check-in is being written
-    /// or the burst is open, when it waits for the next load. A celebration waits for 今天, and
+    /// or the check-in menu is open, when it waits for the next load. A celebration waits for 今天, and
     /// the banners after it go first.
     func showNextNotice() async {
         await untilArrived()
@@ -225,10 +225,11 @@ extension TodayModel {
         bannerShown.removeValue(forKey: next.id)?()
     }
 
-    /// Whether the next notice can be told: nothing told is on screen, and no check-in, burst,
+    /// Whether the next notice can be told: nothing told is on screen, and no check-in, check-in menu,
     /// opening or screen over the tabs is in front.
     var isFreeForNotices: Bool {
-        notice == nil && celebration == nil && teamLetter == nil && opening == nil && step == .scene && !isBurstOpen
+        notice == nil && celebration == nil && teamLetter == nil && opening == nil && step == .scene
+            && !isCheckInMenuOpen
             && !isCovered
     }
 

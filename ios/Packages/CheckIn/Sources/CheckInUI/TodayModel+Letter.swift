@@ -16,7 +16,7 @@ extension TodayModel {
             // Changed from 小队 before 今天 ever loaded: the squad comes first.
             if home == nil { await load() }
             guard store.beginHandover(from: leaving, to: coming) else { return }
-            isBurstOpen = false
+            isCheckInMenuOpen = false
             placeSquad()
             await store.writeLetter()
             placeSquad()
@@ -30,9 +30,9 @@ extension TodayModel {
     }
 
     /// The letter over 今天 now, once the scene is free for it: not while a check-in is being
-    /// written, the burst is open or the squad is dropping in.
+    /// written, the check-in menu is open or the squad is dropping in.
     var shownLetter: ShownLetter? {
-        guard step == .scene, !isBurstOpen, arrival == nil else { return nil }
+        guard step == .scene, !isCheckInMenuOpen, arrival == nil else { return nil }
         return store.letter
     }
 

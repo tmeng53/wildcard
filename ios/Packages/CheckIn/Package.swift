@@ -3,7 +3,7 @@ import PackageDescription
 
 // Checking in. `CheckInDomain` holds what the screen reads (the squad's week, whether a
 // 请假条 may still be posted, why a check-in was refused); the rules themselves live in the
-// API. It is pure Swift, so it builds and tests on Linux. `CheckInUI` is the 今天 screen: the 打卡 burst,
+// API. It is pure Swift, so it builds and tests on Linux. `CheckInUI` is the 今天 screen: 打卡's spot,
 // the photo and compose steps, the 请假条 card and the payoff on the scene.
 let package = Package(
     name: "CheckIn",

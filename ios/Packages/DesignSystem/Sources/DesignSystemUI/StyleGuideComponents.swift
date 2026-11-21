@@ -248,7 +248,6 @@ struct PickSection: View {
 
 struct KindSection: View {
     @Environment(\.sceneTheme) private var theme
-    @State private var isOpen = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
@@ -271,9 +270,13 @@ struct KindSection: View {
                 }
             }
             GuideGroup(Text(copy: "打卡展开", bundle: .module)) {
-                CheckInBurst(isOpen: $isOpen, unavailable: [.disclaimer], identifierPrefix: "styleguide") { _ in }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, BurstLayout.radius + Sizing.control)
+                // Open as it stands above the tab bar's ＋, over a page of the scene's colour.
+                CheckInMenu(isOpen: .constant(true), unavailable: [.disclaimer], identifierPrefix: "styleguide") { _ in
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 4 * Sizing.control)
+                .background(Color(role: .bgScene, in: theme))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
         }
     }
