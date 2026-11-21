@@ -8,8 +8,8 @@ final class SquadSettingsUITests: XCTestCase {
     func testTheCaptainsPage() {
         let app = launch()
         XCTAssertEqual(app.staticTexts["squad.name"].label, "晨跑五人组")
-        XCTAssertTrue(app.buttons["squad.goal.pick.3"].isSelected, "the goal's pill isn't on 3")
-        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "改动下周生效")
+        XCTAssertFalse(app.buttons["squad.goal.pick.3"].exists, "the goal's picker shows before 修改")
+        XCTAssertFalse(app.staticTexts["squad.goal.note"].exists, "the note shows with nothing to change")
         XCTAssertTrue(
             app.descendants(matching: .any)["squad.member.captain"].exists, "the captain's row has no 队长 tag")
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
@@ -24,10 +24,7 @@ final class SquadSettingsUITests: XCTestCase {
         settle()
         keepScreenshot(named: "60-squad-captain")
 
-        // The captain's change counts from next week: this week's number stays, the line says so.
-        app.buttons["squad.goal.pick.5"].tap()
-        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 次'", "the change didn't wait for next week")
-        XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
+        changeTheGoal(in: app)
 
         app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3).tap()
         let remove = app.buttons["squad.member.remove"]
@@ -270,4 +267,20 @@ final class SquadSettingsUITests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
+
+    /// 修改 opens the picker; the captain's change counts from next week: this week's number
+    /// stays, the line says so, and stays once the picker folds again.
+    private func changeTheGoal(in app: XCUIApplication) {
+        app.buttons["squad.goal.edit"].tap()
+        XCTAssertTrue(app.buttons["squad.goal.pick.3"].waitForExistence(timeout: 5), "修改 didn't open the picker")
+        XCTAssertTrue(app.buttons["squad.goal.pick.3"].isSelected, "the goal's pill isn't on 3")
+        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "改动下周生效")
+        app.buttons["squad.goal.pick.5"].tap()
+        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 次'", "the change didn't wait for next week")
+        XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
+        app.buttons["squad.goal.edit"].tap()
+        waitFor(app.buttons["squad.goal.pick.5"], "exists == false", "完成 didn't fold the picker")
+        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "下周起人均 5 次", "the waiting change went quiet")
+    }
+
 }
