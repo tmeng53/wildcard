@@ -21,6 +21,7 @@ final class ComposeStartTimeUITests: XCTestCase {
         let isTime = shown.range(of: #"^\d{2}:\d{2}$"#, options: .regularExpression) != nil
         XCTAssertTrue(isTime, "the start is \(shown), not the time")
         XCTAssertTrue(app.buttons["compose.minutes.60"].exists, "the lengths aren't beside the start")
+        XCTAssertFalse(app.buttons["compose.day"].exists, "a 训练 made by hand has a 日期 pill of its own")
         settle()
         keepScreenshot(named: "15-compose-start-row")
 
@@ -28,6 +29,11 @@ final class ComposeStartTimeUITests: XCTestCase {
         let hour = app.descendants(matching: .any).matching(identifier: "start.hour").firstMatch
         let minute = app.descendants(matching: .any).matching(identifier: "start.minute").firstMatch
         XCTAssertTrue(hour.waitForExistence(timeout: Self.wait), "the flip clock didn't open")
+        // 补打卡's days sit over the clock, today picked (Tracy, 2026-11-21).
+        let today = app.buttons["dayStrip.7"]
+        XCTAssertTrue(today.exists, "the week's days aren't over the clock")
+        XCTAssertTrue(today.isSelected, "the clock didn't open on today")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(today.frame), "today is cut off: \(today.frame)")
         let opened = Int(hour.value as? String ?? "") ?? -1
         XCTAssertEqual(opened, Int(shown.prefix(2)), "the clock didn't open on the pill's time")
         // The card's up chevron, at the top of the hour column. XCUIElement.increment() is macOS
