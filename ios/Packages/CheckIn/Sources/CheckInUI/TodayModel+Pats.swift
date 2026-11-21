@@ -26,10 +26,17 @@ extension TodayModel {
     /// A teammate on the scene was tapped: they hop, and their card opens with their today and
     /// 「拍一拍」 over it.
     func tapMate(_ id: MemberID) {
-        guard let mate = cast.mates.first(where: { $0.id == id }),
-            pats.tap(mate, cast: cast, phase: stagePhase) != nil
-        else { return }
+        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        pats.tap(mate, cast: cast, phase: stagePhase)
         openTeammate(id)
+    }
+
+    /// A teammate on the scene was tapped twice: I pat them at once, as WeChat's 拍一拍 does,
+    /// with no card (Tracy, 2026-11-21: opening the card first was slow); once they're patted
+    /// today, their card opens instead, saying 「拍过了」.
+    func doubleTapMate(_ id: MemberID) {
+        guard store.canPat(id) else { return tapMate(id) }
+        patMate(id)
     }
 
     /// A ring in the squad card's 今天 row was tapped: that member's card opens (mine too), as from

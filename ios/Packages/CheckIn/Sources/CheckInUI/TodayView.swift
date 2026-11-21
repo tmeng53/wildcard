@@ -127,10 +127,10 @@ public struct TodayView: View {
                 iSleep: model.myPose(at: .night) == .asleep, iHoldSign: model.myPose(at: .day) == .holdingSign,
                 myDoze: model.myDoze, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
-                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
-                tapVacancy: model.tapVacancy, clock: model.now
+                pats: model.pats, together: model.together, canPat: model.canPat,
+                tapMate: model.tapMate, doubleTapMate: model.doubleTapMate, tapMe: model.tapMe, patMate: model.patMate,
+                arrival: model.arrival, tapCoach: model.tapCoach, coachHasNews: model.coachHasNews,
+                coachAt: { coachCenter = $0 }, tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
@@ -352,26 +352,9 @@ private struct Arriving: ViewModifier {
 }
 
 extension TodayView {
-    /// 打卡 and its burst, or, while my post goes out behind the scene, what became of it.
+    /// 打卡 and its burst, or for a moment what became of my post or my pat.
     fileprivate var checkInSpot: some View {
-        Group {
-            if let outgoing = model.outgoing {
-                OutgoingPill(
-                    outgoing: outgoing, progress: model.outgoingProgress, open: { openPost($0) },
-                    dismiss: { model.dismissOutgoing() }
-                )
-                .frame(height: Sizing.primaryControl)
-                .transition(.blurReplace)
-            } else {
-                CheckInBurst(
-                    isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
-                ) { kind in
-                    model.pick(kind)
-                }
-                .transition(.blurReplace)
-            }
-        }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.outgoing == nil)
+        CheckInSpot(model: model) { openPost($0) }
     }
 }
 

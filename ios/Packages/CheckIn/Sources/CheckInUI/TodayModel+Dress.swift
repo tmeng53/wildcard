@@ -98,7 +98,7 @@ extension TodayModel {
     /// drop.
     func tapMe() {
         let pose = myPose(at: stagePhase)
-        if let home, arrival == nil, pats.pat == nil { openTeammate(home.member) }
+        if let home, arrival == nil { openTeammate(home.member) }
         switch pose {
         case .asleep?, .eating?: return
         case .standing?, .sitting?, .holdingSign?, .station?, .inPlace?, nil: break
