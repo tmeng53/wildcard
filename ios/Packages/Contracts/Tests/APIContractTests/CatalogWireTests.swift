@@ -20,9 +20,6 @@ private let newer = #"""
 @Test func aCatalogWithMoreThanThisBuildKnowsStillReads() throws {
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(newer.utf8))
     let catalog = AppCatalog(wire, otherwise: .empty)
-    #expect(
-        catalog.diceLines
-            == [CatalogNames(simplifiedChinese: "腿说休息", english: "Legs said rest", traditionalChinese: "腿說休息")])
     let sports = catalog.sports
     #expect(sports.entry(for: "padel")?.names.english == "Padel")
     #expect(sports.entry(for: "padel")?.category == "racket")
@@ -38,7 +35,7 @@ private let newer = #"""
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(older.utf8))
     let own = AppCatalog(
         sports: SportCatalog(categories: [], signUpCommon: [], checkInQuick: []),
-        diceLines: [CatalogNames(simplifiedChinese: "累了", english: "Tired", traditionalChinese: "累了")])
+        minimumBuild: AppBuild("100"))
     #expect(AppCatalog(wire, otherwise: own) == own)
 }
 
@@ -116,7 +113,7 @@ private let newer = #"""
          "reactions": {"quick": ["🔥", "not an emoji", "👏"]}}
         """#
     let fallback = AppCatalog(
-        sports: .empty, diceLines: [], minimumBuild: AppBuild("100"), quickReactions: [try Emoji("❤️")])
+        sports: .empty, minimumBuild: AppBuild("100"), quickReactions: [try Emoji("❤️")])
     let wire = try JSONDecoder().decode(Components.Schemas.Catalog.self, from: Data(sent.utf8))
     let catalog = AppCatalog(wire, otherwise: fallback)
     #expect(catalog.minimumBuild == AppBuild("190.1"))

@@ -271,7 +271,7 @@ struct KindSection: View {
             }
             GuideGroup(Text(copy: "打卡展开", bundle: .module)) {
                 // Open as it stands above the tab bar's ＋, over a page of the scene's colour.
-                CheckInMenu(isOpen: .constant(true), unavailable: [.disclaimer], identifierPrefix: "styleguide") { _ in
+                CheckInMenu(isOpen: .constant(true), identifierPrefix: "styleguide") { _ in
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 4 * Sizing.control)

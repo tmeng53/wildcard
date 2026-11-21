@@ -24,23 +24,6 @@ import Testing
     #expect(sports.checkInQuick == ["run", "strength", "yoga", "swim", "spin", "hike", "tennis"])
 }
 
-@Test func theBuildShipsTheDiceLines() throws {
-    let lines = CatalogClient.bundled.diceLines
-    #expect(lines.count == 8)
-    #expect(
-        lines.first
-            == .init(
-                simplifiedChinese: "昨天的腿还没回来", english: "My legs haven't come back from yesterday",
-                traditionalChinese: "昨天的腿還沒回來"))
-}
-
-/// A dice line goes into the field as is, so in every language it must fit a 请假条.
-@Test func everyShippedDiceLineFitsADisclaimer() throws {
-    for line in CatalogClient.bundled.diceLines.flatMap(\.all) {
-        #expect(line.count <= Disclaimer.maxLength, "\(line) is \(line.count) characters")
-    }
-}
-
 /// SwiftLint's banned-terms rule can't read the shipped list, so this covers its names.
 @Test func theShippedListAvoidsBannedTerms() throws {
     let url = try #require(Bundle.module.url(forResource: "catalog", withExtension: "json"))
@@ -66,7 +49,7 @@ import Testing
     #expect(await client.refresh() == nil)
     #expect(FileManager.default.fileExists(atPath: directory.appending(path: "catalog.json").path))
     let kept = CatalogClient(api: api, directory: directory).kept()
-    #expect(kept.sports == CatalogClient.bundled.sports && kept.diceLines == CatalogClient.bundled.diceLines)
+    #expect(kept.sports == CatalogClient.bundled.sports)
     #expect(kept.starterStock == CatalogClient.bundled.starterStock)
     // Asked again with the kept ETag: 304, still nothing new.
     #expect(await client.refresh() == nil)
@@ -75,7 +58,7 @@ import Testing
 @Test func aCatalogReadEarlierIsShownAtTheNextLaunch() throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    // As `refresh` keeps it, from a server that has since added a sport, a dice line and a section.
+    // As `refresh` keeps it, from a server that has since added a sport and a section.
     let kept = #"""
         {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1, "stickers": {},
           "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
@@ -92,13 +75,12 @@ import Testing
     let catalog = CatalogClient(api: api, directory: directory).kept()
     #expect(catalog.sports.entry(for: "padel")?.names.english == "Padel")
     #expect(catalog.sports.checkInQuick == ["padel"])
-    #expect(catalog.diceLines.map(\.english) == ["Legs said rest"])
 }
 
-@Test func aCopyKeptBeforeTheDiceLinesKeepsItsSportsAndRollsTheShippedDice() throws {
+@Test func aCopyKeptBeforeCategoryColoursKeepsItsSports() throws {
     let directory = FileManager.default.temporaryDirectory.appending(path: "wildcard-tests-\(UUID().uuidString)")
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    // Read from a server from before the catalog had its dice lines.
+    // Read from a server from before the catalog had category colours.
     let kept = #"""
         {"version": 1, "etag": "\"abc\"", "catalog": {"version": 1,
           "sports": {"categories": [{"id": "racket", "names": {"zhHans": "球拍", "en": "Racket", "zhHant": "球拍"},
@@ -115,7 +97,6 @@ import Testing
     #expect(catalog.sports.entry(for: "padel")?.names.english == "Padel")
     // Kept from before category colours: its sports wear the gym's steel.
     #expect(catalog.sports.color(of: "padel") == nil)
-    #expect(catalog.diceLines == CatalogClient.bundled.diceLines)
 }
 
 @Test func theCopyPutIsKeptForTheExtensions() throws {
@@ -131,7 +112,7 @@ import Testing
     let bundled = CatalogClient.bundled
     let copy = AppCopy(entries: ["练了": AppCopy.Words(simplifiedChinese: "训练")])
     let recopied = AppCatalog(
-        sports: bundled.sports, diceLines: bundled.diceLines, starterStock: bundled.starterStock, art: bundled.art,
+        sports: bundled.sports, starterStock: bundled.starterStock, art: bundled.art,
         scenes: bundled.scenes, switches: bundled.switches, copy: copy)
     #expect(CatalogClient.shows(recopied, differentlyFrom: bundled))
     #expect(!CatalogClient.shows(bundled, differentlyFrom: bundled))

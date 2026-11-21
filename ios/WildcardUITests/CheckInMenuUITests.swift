@@ -4,7 +4,7 @@ import XCTest
 @MainActor
 final class CheckInMenuUITests: XCTestCase {
     private static let wait: TimeInterval = 15
-    private static let kinds = ["trained", "healthyMeal", "cheatMeal", "disclaimer"]
+    private static let kinds = ["trained", "healthyMeal", "cheatMeal"]
 
     /// The kinds stand in one stack above the ＋, on screen, never touching each other or the
     /// bar, the narrowest on top and the widest next to the ＋: in Simplified Chinese at the
@@ -21,7 +21,7 @@ final class CheckInMenuUITests: XCTestCase {
             let plus = app.buttons["today.checkin"]
             XCTAssertTrue(plus.waitForExistence(timeout: Self.wait), "no ＋")
             plus.tap()
-            _ = app.buttons["today.capsule.disclaimer"].waitForExistence(timeout: Self.wait)
+            _ = app.buttons["today.capsule.cheatMeal"].waitForExistence(timeout: Self.wait)
             settle()
             if language == "zh-Hans" { keepScreenshot(named: "14b-checkin-menu") }
             let frames = Self.kinds.map { kind -> CGRect in

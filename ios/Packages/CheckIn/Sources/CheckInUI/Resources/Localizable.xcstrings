@@ -289,38 +289,6 @@
         }
       }
     },
-    "中二": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anime hero"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "中二"
-          }
-        }
-      }
-    },
-    "为什么没练？": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Why no workout today?"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "為什麼沒練？"
-          }
-        }
-      }
-    },
     "今日请假条": {
       "localizations": {
         "en": {
@@ -401,38 +369,6 @@
         }
       }
     },
-    "发疯": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unhinged"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "發瘋"
-          }
-        }
-      }
-    },
-    "发短信给 988": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Text 988"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "傳簡訊給 988"
-          }
-        }
-      }
-    },
     "取消": {
       "localizations": {
         "en": {
@@ -497,22 +433,6 @@
         }
       }
     },
-    "嘴硬": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In denial"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "嘴硬"
-          }
-        }
-      }
-    },
     "坦白从宽…": {
       "localizations": {
         "en": {
@@ -561,38 +481,6 @@
         }
       }
     },
-    "打给 988": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Call 988"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打給 988"
-          }
-        }
-      }
-    },
-    "搞笑": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Funny"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搞笑"
-          }
-        }
-      }
-    },
     "更多": {
       "localizations": {
         "en": {
@@ -605,22 +493,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "更多"
-          }
-        }
-      }
-    },
-    "有紧急危险请直接打 911。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "If you're in immediate danger, call 911."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "有緊急危險請直接撥 911。"
           }
         }
       }
@@ -673,38 +545,6 @@
         }
       }
     },
-    "用回我写的": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use my words"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "改回我寫的"
-          }
-        }
-      }
-    },
-    "美国和加拿大都能拨 988，24 小时，免费。美国的线路可以要中文翻译。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "988 works in the US and Canada, 24 hours a day, for free. The US line can bring in a Chinese interpreter."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "美國和加拿大都能撥 988，24 小時，免費。美國的專線可以要求中文口譯。"
-          }
-        }
-      }
-    },
     "请假条": {
       "localizations": {
         "en": {
@@ -733,22 +573,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "運動"
-          }
-        }
-      }
-    },
-    "这条先不写段子了。最近要是真的很难，找个人聊聊吧。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No joke for this one. If things are really hard lately, talk to someone."
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "這則先不寫梗了。最近如果真的很難受，找個人聊聊吧。"
           }
         }
       }
@@ -1857,38 +1681,6 @@
         }
       }
     },
-    "编一句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write it for me"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "幫我寫一句"
-          }
-        }
-      }
-    },
-    "换一句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Try another"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "換一句"
-          }
-        }
-      }
-    },
     "请假": {
       "localizations": {
         "en": {
@@ -1917,54 +1709,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "休息"
-          }
-        }
-      }
-    },
-    "请假还是休息": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Day off or rest"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "請假還是休息"
-          }
-        }
-      }
-    },
-    "今日休息": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rest day"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今日休息"
-          }
-        }
-      }
-    },
-    "今天怎么歇？": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "What kind of day off?"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天怎麼歇？"
           }
         }
       }
@@ -2125,22 +1869,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "只記錄，不出現在動態裡"
-          }
-        }
-      }
-    },
-    "帮我编一句": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Write one for me"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "幫我編一句"
           }
         }
       }
@@ -2541,22 +2269,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "好吃"
-          }
-        }
-      }
-    },
-    "请假不影响连续天数": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Days off don't break your streak"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "請假不影響連續天數"
           }
         }
       }

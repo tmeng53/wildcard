@@ -3,13 +3,11 @@ import Foundation
 
 extension AppCatalog {
     /// What this build reads of `GET /public/catalog`. A section, list or field it doesn't know is
-    /// passed over, and a section the server didn't send (one from before it was added), or a
-    /// dice section with no lines, is `fallback`'s, so the app never loses its sports or its dice.
+    /// passed over, and a section the server didn't send (one from before it was added) is
+    /// `fallback`'s, so the app never loses its sports.
     public init(_ wire: Components.Schemas.Catalog, otherwise fallback: AppCatalog) {
-        let dice = wire.disclaimerDice?.lines.map(CatalogNames.init) ?? []
         self.init(
             sports: wire.sports.map(SportCatalog.init) ?? fallback.sports,
-            diceLines: dice.isEmpty ? fallback.diceLines : dice,
             starterStock: Self.starterStock(stores: wire.stores, pieces: wire.pieces) ?? fallback.starterStock,
             art: wire.art.map(ArtManifest.init) ?? fallback.art,
             scenes: wire.scenes.map(Self.scenes) ?? fallback.scenes,
