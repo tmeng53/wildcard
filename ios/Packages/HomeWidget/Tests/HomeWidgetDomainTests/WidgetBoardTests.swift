@@ -22,7 +22,7 @@ private func row(_ member: MemberID, _ training: TrainingStatus, on day: LocalDa
     -> SquadmateToday
 {
     SquadmateToday(
-        member: member, catchphrase: nil, character: nil, day: day, training: training, latestMeal: nil,
+        member: member, character: nil, day: day, training: training, latestMeal: nil,
         plannedRest: rest, firstCheckInAt: nil)
 }
 

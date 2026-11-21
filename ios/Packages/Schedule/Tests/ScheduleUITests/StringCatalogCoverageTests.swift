@@ -20,22 +20,9 @@ struct StringCatalogCoverageTests {
         #expect(missing.isEmpty, "not in the String Catalog with English: \(missing.sorted())")
     }
 
-    @Test func everyWeekdayAndFoodGoalHasBothLanguages() throws {
+    @Test func everyWeekdayHasBothLanguages() throws {
         for weekday in ["周一", "周二", "周三", "周四", "周五", "周六", "周日"] {
             #expect(try Self.value(for: weekday, in: "en") != nil, "\(weekday)")
-        }
-        for suggestion in FuelSuggestion.allCases {
-            #expect(try Self.value(for: suggestion.key, in: "zh-Hans") != nil, "\(suggestion)")
-            #expect(try Self.value(for: suggestion.key, in: "en") != nil, "\(suggestion)")
-        }
-        #expect(try Self.value(for: "fuel.water", in: "zh-Hans") == "喝够水")
-    }
-
-    /// A suggested goal fits where a goal of the member's own must.
-    @Test func suggestedGoalsAreShortEnough() throws {
-        for suggestion in FuelSuggestion.allCases {
-            let words = try #require(try Self.value(for: suggestion.key, in: "zh-Hans"))
-            #expect(words.count <= FuelGoal.maxLength, "\(words)")
         }
     }
 

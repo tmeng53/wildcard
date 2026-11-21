@@ -1505,22 +1505,6 @@
         }
       }
     },
-    "球衣号码" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jersey number"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "球衣背號"
-          }
-        }
-      }
-    },
     "保存" : {
       "localizations" : {
         "en" : {
@@ -2199,22 +2183,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "管理員"
-          }
-        }
-      }
-    },
-    "饮食小目标" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Food goals"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "飲食小目標"
           }
         }
       }

@@ -655,7 +655,7 @@ const coachWakes =
         ended: endedSquads,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
-        memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        memberFacts: coachMemberFacts({ checkIns, awards, sports }),
         streaks: coachStreaks(checkIns),
         // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
         weatherOf: async ({ members: ids, day }) => {

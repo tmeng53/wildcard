@@ -62,7 +62,7 @@ public struct APISignUpService: SignUpService {
             let profile = try await api.me().profile
             _ = try await api.save(
                 Profile(
-                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
+                    timeZone: profile?.timeZone ?? .current,
                     character: MemberCharacter(
                         nickname: character.nickname,
                         look: CharacterLook(outfit: character.outfit, persona: character.persona)),

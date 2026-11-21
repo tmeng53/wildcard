@@ -96,7 +96,7 @@ Each file in [`features/`](features/) is one thing a user does: how to drive it,
 | Daily check-in in the app: pick 练了 / 健康餐 / 坦白放纵餐 / 今日请假条 and see it on the squad track | Screen on main against an in-memory squad; no feature file yet |
 | Join a squad from an invite link | Not on main yet |
 | [Weekly AI awards and the Sunday story through the API](features/weekly-awards-api.md): titles, pending, the nudge, the winners' push | **Ready** (the job route over HTTP, CI runs it; the awards themselves through the flow tests, no model key) |
-| 出赛表, the weekly schedule poster (3:4) in the app: plan this week and next, past weeks' titles, 饮食小目标, 存图 | Screen on main against an in-memory member (`ScheduleUITests`, screenshots 60–69 in CI's `ios` job); no feature file yet |
+| 出赛表, the weekly schedule poster (3:4) in the app: plan this week and next, past weeks' titles, 存图 | Screen on main against an in-memory member (`ScheduleUITests`, screenshots 60–69, without 65 and 66, in CI's `ios` job); no feature file yet |
 
 A journey that isn't on main yet but is in the change under test: drive it the way the PR's own docs and tests describe, check the evidence listed in its file, and note in the verdict that its feature file needs filling in.
 

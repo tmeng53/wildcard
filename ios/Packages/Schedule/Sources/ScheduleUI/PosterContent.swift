@@ -65,10 +65,6 @@ struct PosterContent: Equatable {
     let weekNumber: Int
     let lanes: [Lane]
     let titles: [AwardTitle]
-    let fuel: [FuelGoal]
-    let fuelOpen: Bool
-    /// This week's and later weeks' 饮食小目标 open from the poster.
-    let fuelEditable: Bool
     let tally: Tally
 
     var weekEnd: LocalDay { weekStart.adding(days: WeeklyPlan.dayCount - 1) }
@@ -81,7 +77,7 @@ struct PosterContent: Equatable {
 
     /// The week as the member sees it now, with what they have hold of.
     init(
-        sheet: WeekSheet, board: WeekBoard?, nickname: String, weekNumber: Int, fuelOpen: Bool, typingFuel: String = ""
+        sheet: WeekSheet, board: WeekBoard?, nickname: String, weekNumber: Int
     ) {
         self.nickname = nickname
         isTemplate = false
@@ -106,11 +102,6 @@ struct PosterContent: Equatable {
                 mark: sheet.marks[index], look: look)
         }
         titles = tense == .past ? sheet.titles : []
-        // A goal being typed shows on the poster as it is written.
-        let typed = typingFuel.trimmingCharacters(in: .whitespacesAndNewlines)
-        fuel = typed.isEmpty ? sheet.fuel : sheet.fuel + [.own(typed)]
-        fuelEditable = tense != .past
-        self.fuelOpen = fuelOpen && fuelEditable
         let planned = days.count { $0 != .rest }
         switch tense {
         case .upcoming: tally = .planned(train: planned, rest: days.count - planned)
@@ -119,7 +110,7 @@ struct PosterContent: Equatable {
         }
     }
 
-    /// The 我的每周计划 as the member plans it: every day open, nothing checked in, no 饮食小目标.
+    /// The 我的每周计划 as the member plans it: every day open, nothing checked in.
     init(template board: WeekBoard, nickname: String) {
         self.nickname = nickname
         isTemplate = true
@@ -132,13 +123,10 @@ struct PosterContent: Equatable {
                 mark: .none, look: board.focus == .selected(index) ? .held : .plain)
         }
         titles = []
-        fuel = []
-        fuelOpen = false
-        fuelEditable = false
         tally = .typical(train: board.plannedDays)
     }
 
-    /// The same week to save as a picture: nothing held, the goals shut.
+    /// The same week to save as a picture: nothing held.
     var forSaving: PosterContent {
         PosterContent(
             nickname: nickname, isTemplate: isTemplate, paint: paint, weekStart: weekStart, weekNumber: weekNumber,
@@ -147,15 +135,12 @@ struct PosterContent: Equatable {
                     index: $0.index, day: $0.day, isToday: $0.isToday, plan: $0.plan, mark: $0.mark,
                     look: $0.isToday ? .today : .plain)
             },
-            titles: titles, fuel: fuel, fuelOpen: false, fuelEditable: false, tally: tally)
+            titles: titles, tally: tally)
     }
 
     private init(
         nickname: String, isTemplate: Bool, paint: Paint, weekStart: LocalDay, weekNumber: Int, lanes: [Lane],
-        titles: [AwardTitle],
-        fuel: [FuelGoal],
-        fuelOpen: Bool,
-        fuelEditable: Bool, tally: Tally
+        titles: [AwardTitle], tally: Tally
     ) {
         self.nickname = nickname
         self.isTemplate = isTemplate
@@ -164,9 +149,6 @@ struct PosterContent: Equatable {
         self.weekNumber = weekNumber
         self.lanes = lanes
         self.titles = titles
-        self.fuel = fuel
-        self.fuelOpen = fuelOpen
-        self.fuelEditable = fuelEditable
         self.tally = tally
     }
 }

@@ -94,13 +94,12 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     let stack = try LocalStack()
     let member = try await stack.signedInMember()
     let zone = try #require(TimeZone(identifier: "America/Toronto"))
-    _ = try await member.api.save(Profile(timeZone: zone, catchphrase: try Catchphrase("冲就完了")))
+    _ = try await member.api.save(Profile(timeZone: zone))
 
     try await APISignUpService(api: member.api).save(try character("豆豆", body: "bear", persona: .drama))
 
     let profile = try #require(try await member.api.me().profile)
     #expect(profile.timeZone == zone)
-    #expect(profile.catchphrase == (try Catchphrase("冲就完了")))
     #expect(profile.character?.nickname == (try Nickname("豆豆")))
 }
 

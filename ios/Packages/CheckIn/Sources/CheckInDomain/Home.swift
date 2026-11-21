@@ -147,7 +147,7 @@ public struct Home: Hashable, Sendable {
         home.today.members.remove(at: index)
         home.today.members.append(
             SquadmateToday(
-                member: member, catchphrase: old.catchphrase, character: old.character, day: day,
+                member: member, character: old.character, day: day,
                 training: .notCheckedIn, latestMeal: nil,
                 plannedRest: plannedRest, firstCheckInAt: nil, title: old.title))
         if day > today.myWeek.lastDay {

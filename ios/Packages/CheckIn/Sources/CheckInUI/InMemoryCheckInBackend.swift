@@ -54,7 +54,7 @@ public actor InMemoryCheckInBackend: CheckInBackend {
             title: WornTitle? = nil
         ) -> SquadmateToday {
             SquadmateToday(
-                member: id, catchphrase: nil, character: character(of: id, everyone: everyone), day: day,
+                member: id, character: character(of: id, everyone: everyone), day: day,
                 training: training, latestMeal: nil, plannedRest: rest, firstCheckInAt: first, title: title)
         }
         // Two wear a weekly title beside their name, as the approved 头衔徽章 home shows.
