@@ -43,6 +43,8 @@ public struct CategoryBar<ID: Hashable>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var indicator
     @Binding private var selection: ID
+    /// The item whose glass menu of options is open.
+    @State private var openMenu: ID?
     private let items: [CategoryBarItem<ID>]
     private let isPinned: Bool
     /// Every item's padding at each end, so the items space evenly.
@@ -114,36 +116,30 @@ public struct CategoryBar<ID: Hashable>: View {
         .accessibilityIdentifier(ifPresent: item.accessibilityIdentifier)
     }
 
-    /// The system's menu of the item's options, under a label like the other items' with a chevron.
+    /// The app's glass menu of the item's options, from a label like the other items' with a chevron.
     private func menuItem(_ item: CategoryBarItem<ID>) -> some View {
         let picked = item.options.first { $0.id == selection }
-        return Menu {
-            ForEach(item.options) { option in
-                Button {
-                    pick(option.id)
-                } label: {
-                    if option.id == selection {
-                        Label {
-                            option.title
-                        } icon: {
-                            Image(systemName: "checkmark")
-                        }
-                    } else {
-                        option.title
-                    }
-                }
-                .disabled(!option.isEnabled)
-                .accessibilityIdentifier(ifPresent: option.accessibilityIdentifier)
-            }
+        return Button {
+            openMenu = item.id
         } label: {
             itemLabel(
                 picked?.title ?? item.title, symbol: "chevron.down", trailingSymbol: true, isSelected: picked != nil,
                 isEnabled: item.isEnabled)
         }
-        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
         .disabled(!item.isEnabled)
         .accessibilityAddTraits(picked != nil ? .isSelected : [])
         .accessibilityIdentifier(ifPresent: item.accessibilityIdentifier)
+        .glassMenu(
+            isPresented: Binding(get: { openMenu == item.id }, set: { if !$0 { openMenu = nil } }),
+            items: item.options.enumerated().map { index, option in
+                GlassMenuItem(
+                    option.title, isSelected: option.id == selection, isEnabled: option.isEnabled,
+                    id: option.accessibilityIdentifier ?? "categoryBar.option.\(index)"
+                ) {
+                    pick(option.id)
+                }
+            })
     }
 
     private func pick(_ id: ID) {
