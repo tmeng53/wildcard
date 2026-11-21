@@ -62,17 +62,35 @@ public struct MapVisit: Hashable, Sendable, Identifiable {
     public let activity: Activity?
     /// The day it counts for, on the author's clock.
     public let day: LocalDay
-    /// When it was posted.
+    /// When it was posted, which orders the map's posts.
     public let createdAt: Timestamp
+    /// When it was done, which the map shows.
+    public let time: Time
     /// Where.
     public let key: PlaceKey
 
+    /// When a post was done, as the map says it.
+    public enum Time: Hashable, Sendable {
+        /// A moment, on the viewer's clock: a 训练's Apple Health workout start, else when it was
+        /// posted.
+        case moment(Timestamp)
+        /// The start the author picked for a 训练 made by hand, on their own clock.
+        case wallClock(StartTime)
+    }
+
+    /// `workoutStartedAt` is a 训练's Apple Health workout start and `startTime` the start picked
+    /// by hand; the map shows the first there is, else `createdAt`.
     public init(
         id: CheckInID, author: MemberID, kind: CheckInKind, activity: Activity? = nil, day: LocalDay,
-        createdAt: Timestamp, key: PlaceKey
+        createdAt: Timestamp, workoutStartedAt: Timestamp? = nil, startTime: StartTime? = nil,
+        key: PlaceKey
     ) {
         (self.id, self.author, self.kind, self.activity) = (id, author, kind, activity)
         (self.day, self.createdAt, self.key) = (day, createdAt, key)
+        self.time =
+            if let workoutStartedAt { .moment(workoutStartedAt) } else if let startTime {
+                .wallClock(startTime)
+            } else { .moment(createdAt) }
     }
 }
 

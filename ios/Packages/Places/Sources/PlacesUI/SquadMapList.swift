@@ -132,7 +132,7 @@ private struct TodayRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: Space.xs)
-            Text(visit.createdAt.date, format: MapVisit.clock)
+            Text(verbatim: visit.clock)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .monospacedDigit()
@@ -164,7 +164,7 @@ private struct MemberPostRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: Space.xs)
-            Text(visit.createdAt.date, format: MapVisit.clock)
+            Text(verbatim: visit.clock)
                 .typeStyle(TypeRamp.footnote)
                 .foregroundStyle(Color(role: .fgMuted, in: theme))
                 .monospacedDigit()
@@ -219,9 +219,21 @@ private struct OftenRow: View {
 }
 
 extension MapVisit {
-    /// When it was posted, as the map and its list say it: 「18:42」.
-    static var clock: Date.FormatStyle {
-        Date.FormatStyle.dateTime.hour().minute().locale(AppLanguage.current.locale)
+    /// When it was done, as the map and its list say it: 「18:42」. A moment is on the viewer's
+    /// clock; a start picked by hand is the author's own hour and minute, drawn on GMT so no zone
+    /// moves it.
+    var clock: String {
+        let locale = AppLanguage.current.locale
+        switch time {
+        case .moment(let moment):
+            return moment.date.formatted(Date.FormatStyle(locale: locale).hour().minute())
+        case .wallClock(let start):
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = .gmt
+            guard let begun = calendar.date(from: DateComponents(year: 2001, hour: start.hour, minute: start.minute))
+            else { return start.wire }
+            return begun.formatted(Date.FormatStyle(locale: locale, timeZone: .gmt).hour().minute())
+        }
     }
 
     /// What the post was: a 训练's sport, else the meal's kind.

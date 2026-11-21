@@ -220,7 +220,7 @@ private struct SpotMarker: View {
         case .today:
             var seen = Set<MemberID>()
             return spot.visits.filter { seen.insert($0.author).inserted }.map { visit in
-                (visit.author, "\(name(of: visit.author)) \(visit.createdAt.date.formatted(MapVisit.clock))")
+                (visit.author, "\(name(of: visit.author)) \(visit.clock)")
             }
         case .often:
             return spot.place.members.map { each in
@@ -317,7 +317,7 @@ private struct StopMarker: View {
     }
 
     private var line: String {
-        let time = stop.visit.createdAt.date.formatted(MapVisit.clock)
+        let time = stop.visit.clock
         return "\(stop.place.place.name) · \(time) \(stop.visit.doing)"
     }
 }

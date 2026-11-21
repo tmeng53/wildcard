@@ -10206,6 +10206,14 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
             public var minutes: Swift.Int?
+            /// When a 训练 posted from Apple Health began, which the map shows in place of `createdAt`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/workoutStartedAt`.
+            public var workoutStartedAt: Foundation.Date?
+            /// The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the map shows in place of `createdAt`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/startTime`.
+            public var startTime: Swift.String?
             /// No longer given: always null (places have no score, Tracy 2026-11-13).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
@@ -10227,6 +10235,8 @@ extension Components {
             ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
             ///   - cover:
             ///   - minutes: A 训练’s minutes, when it has them.
+            ///   - workoutStartedAt: When a 训练 posted from Apple Health began, which the map shows in place of `createdAt`.
+            ///   - startTime: The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the map shows in place of `createdAt`.
             ///   - stars: No longer given: always null (places have no score, Tracy 2026-11-13).
             ///   - calorieValue: No longer given: always null (a place’s tiles show no score).
             public init(
@@ -10240,6 +10250,8 @@ extension Components {
                 key: Swift.String,
                 cover: Components.Schemas.PlaceVisit.CoverPayload? = nil,
                 minutes: Swift.Int? = nil,
+                workoutStartedAt: Foundation.Date? = nil,
+                startTime: Swift.String? = nil,
                 stars: Swift.Int? = nil,
                 calorieValue: Swift.Double? = nil
             ) {
@@ -10253,6 +10265,8 @@ extension Components {
                 self.key = key
                 self.cover = cover
                 self.minutes = minutes
+                self.workoutStartedAt = workoutStartedAt
+                self.startTime = startTime
                 self.stars = stars
                 self.calorieValue = calorieValue
             }
@@ -10267,6 +10281,8 @@ extension Components {
                 case key
                 case cover
                 case minutes
+                case workoutStartedAt
+                case startTime
                 case stars
                 case calorieValue
             }
