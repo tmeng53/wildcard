@@ -4,11 +4,12 @@ import DesignSystem
 import DesignSystemUI
 import SwiftUI
 
-/// 打卡 and its burst; while my post goes out behind the scene, what became of it; and for a
-/// moment after my pat lands, 「你拍了拍小米」 (Tracy, 2026-11-21), in the same capsule.
+/// Where 打卡 stood before it moved into the tab bar's ＋ (Tracy, 2026-11-21): while my post goes
+/// out behind the scene, what became of it; and for a moment after my pat lands, 「你拍了拍小米」,
+/// in the same capsule. Empty otherwise, so the scene shows.
 struct CheckInSpot: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Bindable var model: TodayModel
+    let model: TodayModel
     let openPost: (CheckIn) -> Void
 
     var body: some View {
@@ -24,13 +25,6 @@ struct CheckInSpot: View {
                 PatToldPill(told: told)
                     .id(told.id)
                     .transition(.blurReplace)
-            } else {
-                CheckInBurst(
-                    isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
-                ) { kind in
-                    model.pick(kind)
-                }
-                .transition(.blurReplace)
             }
         }
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.outgoing == nil)

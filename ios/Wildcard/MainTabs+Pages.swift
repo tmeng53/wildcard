@@ -14,7 +14,7 @@ extension MainTabs {
     /// The tabs as home opens with them, around `content` on 今天, for 上场, whose end hands over
     /// to home: the bar rises once `showsBar`.
     static func entranceTabs(showsBar: Bool, content: AnyView) -> some View {
-        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar) { tab in
+        AppTabs(tabs, selection: .constant(Tab.today), showsBar: showsBar, action: entranceCheckInAction) { tab in
             if tab == .today { content }
         }
     }

@@ -20,14 +20,13 @@ final class TodayUITests: XCTestCase {
         let checkIn = app.buttons["today.checkin"]
         XCTAssertEqual(checkIn.label, "打卡")
         checkIn.tap()
-        waitForLabel(of: checkIn, "label == %@", "收起", "the check-in button didn't turn into 收起")
         for (kind, label) in [("trained", "训练"), ("healthyMeal", "健康餐"), ("cheatMeal", "放纵餐"), ("disclaimer", "请假")] {
             let capsule = app.buttons["today.capsule.\(kind)"]
             XCTAssertTrue(capsule.waitForExistence(timeout: Self.wait), "no \(label) capsule")
             XCTAssertEqual(capsule.label, label)
         }
         settle()
-        keepScreenshot(named: "14-today-burst")
+        keepScreenshot(named: "14-today-checkin-menu")
 
         app.buttons["today.capsule.trained"].tap()
         let post = app.buttons["compose.post"]
@@ -70,7 +69,7 @@ final class TodayUITests: XCTestCase {
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))
         settle()
-        keepScreenshot(named: "17-today-burst-after-training")
+        keepScreenshot(named: "17-today-checkin-menu-after-training")
     }
 
     /// 请假: type a reason, pick a style, 编一句 puts a line from it up, 换一句 shows the next,
@@ -206,7 +205,7 @@ final class TodayUITests: XCTestCase {
         XCTAssertFalse(app.buttons["disclaimer.care.call"].exists, "the care line stayed after a new line")
     }
 
-    /// Opens the 请假条 page from the burst and returns its excuse field.
+    /// Opens the 请假条 page from 打卡's ＋ and returns its excuse field.
     private func openDisclaimer(in app: XCUIApplication) -> XCUIElement {
         app.buttons["today.checkin"].tap()
         let capsule = app.buttons["today.capsule.disclaimer"]
@@ -274,16 +273,6 @@ final class TodayUITests: XCTestCase {
     /// Lets springs and blurs settle before a screenshot.
     private func settle() {
         Thread.sleep(forTimeInterval: 0.8)
-    }
-
-    /// Taps update the UI on the next frames; wait for the label instead of checking at once.
-    private func waitForLabel(
-        of element: XCUIElement, _ format: String, _ text: String, _ message: String,
-        timeout: TimeInterval = TodayUITests.wait
-    ) {
-        let changed = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: format, text), object: element)
-        XCTAssertEqual(XCTWaiter().wait(for: [changed], timeout: timeout), .completed, message)
     }
 
     private func keepScreenshot(named name: String) {

@@ -8,12 +8,12 @@ import Foundation
 extension TodayModel {
     /// The squad's news since the home was last shown, once: who joined walks in with a bubble,
     /// and a member made captain hears 「你现在是队长了」. Leaving says nothing. Kept for the next
-    /// load while the scene is covered (writing a check-in, the burst open).
+    /// load while the scene is covered (writing a check-in, the check-in menu open).
     func tellNews() async {
         guard !store.news.isEmpty else { return }
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
         await untilArrived()
-        guard step == .scene, !isBurstOpen else { return }
+        guard step == .scene, !isCheckInMenuOpen else { return }
         let news = store.takeNews()
         guard !news.isEmpty else { return }
         let joined = news.joined.compactMap { id in cast.mates.first { $0.id == id } }

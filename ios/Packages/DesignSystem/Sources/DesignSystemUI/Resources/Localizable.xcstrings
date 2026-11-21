@@ -1329,22 +1329,6 @@
         }
       }
     },
-    "打卡": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Check in"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打卡"
-          }
-        }
-      }
-    },
     "打卡了": {
       "localizations": {
         "en": {
@@ -1549,22 +1533,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "攀岩館"
-          }
-        }
-      }
-    },
-    "收起": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收起"
           }
         }
       }

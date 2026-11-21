@@ -25,7 +25,7 @@ final class CoachSidelineUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["毛头"].exists, "the page isn't 毛头's")
         // Back goes home.
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "back didn't go home")
+        XCTAssertTrue(app.buttons["today.me"].waitForExistence(timeout: Self.wait), "back didn't go home")
     }
 
     /// 招聘会 and 简历, top right on the coach's page.

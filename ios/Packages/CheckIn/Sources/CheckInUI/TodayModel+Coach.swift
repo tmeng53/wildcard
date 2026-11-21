@@ -37,7 +37,7 @@ extension TodayModel {
 
     /// The coach does one of its habits, by day on a plain scene.
     func coachDoesAHabit() {
-        guard stagePhase == .day, step == .scene, !isBurstOpen, arrival == nil else { return }
+        guard stagePhase == .day, step == .scene, !isCheckInMenuOpen, arrival == nil else { return }
         cast.coachDoesAHabit()
     }
 
