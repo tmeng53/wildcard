@@ -219,13 +219,12 @@ private struct OftenRow: View {
 }
 
 extension MapVisit {
-    /// When it was done, as the map and its list say it: 「18:42」. A moment is on the viewer's
-    /// clock; a start picked by hand is the author's own hour and minute, drawn on GMT so no zone
-    /// moves it.
+    /// When it was done, as the map and its list say it: 「18:42」. A picked start is the author's
+    /// own hour and minute, drawn on GMT so no zone moves it; a post time is on the viewer's clock.
     var clock: String {
         let locale = AppLanguage.current.locale
         switch time {
-        case .moment(let moment):
+        case .posted(let moment):
             return moment.date.formatted(Date.FormatStyle(locale: locale).hour().minute())
         case .wallClock(let start):
             var calendar = Calendar(identifier: .gregorian)

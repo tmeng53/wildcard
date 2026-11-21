@@ -49,19 +49,17 @@ struct SquadMapTests {
         return (SquadMapLayout(data: data, today: try LocalDay("2026-11-13")), posts)
     }
 
-    @Test func aVisitShowsWhenItWasDoneElseWhenItWasPosted() throws {
+    @Test func aVisitShowsTheStartPickedElseWhenItWasPosted() throws {
         let key = try #require(gym.key)
         let posted = Timestamp(millisecondsSince1970: 2_000_000)
-        let started = Timestamp(millisecondsSince1970: 1_000_000)
         let picked = try StartTime(hour: 7, minute: 30)
-        func visit(_ workout: Timestamp?, _ start: StartTime?) throws -> MapVisit {
+        func visit(_ start: StartTime?) throws -> MapVisit {
             MapVisit(
                 id: CheckInID(UUID()), author: Self.mia, kind: .trained, day: try LocalDay("2026-11-13"),
-                createdAt: posted, workoutStartedAt: workout, startTime: start, key: key)
+                createdAt: posted, startTime: start, key: key)
         }
-        #expect(try visit(started, picked).time == .moment(started))
-        #expect(try visit(nil, picked).time == .wallClock(picked))
-        #expect(try visit(nil, nil).time == .moment(posted))
+        #expect(try visit(picked).time == .wallClock(picked))
+        #expect(try visit(nil).time == .posted(posted))
     }
 
     @Test func theSampleMapTakesAHandPickedStart() throws {

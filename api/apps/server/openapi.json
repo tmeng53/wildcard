@@ -6483,11 +6483,6 @@
             "minimum": 1,
             "description": "A 训练’s minutes, when it has them."
           },
-          "workoutStartedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "When a 训练 posted from Apple Health began, which the map shows in place of `createdAt`."
-          },
           "startTime": {
             "type": "string",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",

@@ -104,8 +104,8 @@ extension MapVisit {
         guard let key = PlaceKey(rawValue: wire.key) else { throw .invalidID(wire.key) }
         self.init(
             id: tile.id, author: tile.author, kind: tile.kind, activity: tile.activity, day: tile.day,
-            createdAt: Timestamp(wire.createdAt), workoutStartedAt: wire.workoutStartedAt.map(Timestamp.init),
-            startTime: wire.startTime.flatMap { try? StartTime(wire: $0) }, key: key)
+            createdAt: Timestamp(wire.createdAt), startTime: wire.startTime.flatMap { try? StartTime(wire: $0) },
+            key: key)
     }
 }
 

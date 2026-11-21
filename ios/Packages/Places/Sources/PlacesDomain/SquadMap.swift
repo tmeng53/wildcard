@@ -71,26 +71,20 @@ public struct MapVisit: Hashable, Sendable, Identifiable {
 
     /// When a post was done, as the map says it.
     public enum Time: Hashable, Sendable {
-        /// A moment, on the viewer's clock: a 训练's Apple Health workout start, else when it was
-        /// posted.
-        case moment(Timestamp)
-        /// The start the author picked for a 训练 made by hand, on their own clock.
+        /// The start the author picked for a 训练, on their own clock.
         case wallClock(StartTime)
+        /// When it was posted, on the viewer's clock: a post with no start picked.
+        case posted(Timestamp)
     }
 
-    /// `workoutStartedAt` is a 训练's Apple Health workout start and `startTime` the start picked
-    /// by hand; the map shows the first there is, else `createdAt`.
+    /// `startTime` is the start picked for a 训练; the map shows it, else `createdAt`.
     public init(
         id: CheckInID, author: MemberID, kind: CheckInKind, activity: Activity? = nil, day: LocalDay,
-        createdAt: Timestamp, workoutStartedAt: Timestamp? = nil, startTime: StartTime? = nil,
-        key: PlaceKey
+        createdAt: Timestamp, startTime: StartTime? = nil, key: PlaceKey
     ) {
         (self.id, self.author, self.kind, self.activity) = (id, author, kind, activity)
         (self.day, self.createdAt, self.key) = (day, createdAt, key)
-        self.time =
-            if let workoutStartedAt { .moment(workoutStartedAt) } else if let startTime {
-                .wallClock(startTime)
-            } else { .moment(createdAt) }
+        self.time = startTime.map(Time.wallClock) ?? .posted(createdAt)
     }
 }
 

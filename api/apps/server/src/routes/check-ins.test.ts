@@ -1971,7 +1971,7 @@ describe('a squad’s places', () => {
     return id;
   }
 
-  it('gives a 训练 on the map when it was done: its workout’s start, else the start picked', async () => {
+  it('gives a 训练 on the map the start picked by hand, never its workout’s', async () => {
     const [me, friend] = [await signUp(), await signUp()];
     const squad = await squadOf(me, friend);
     const started = new Date(Date.now() - 50 * 60 * 1000);
@@ -2012,18 +2012,16 @@ describe('a squad’s places', () => {
         recent: z.array(
           z.object({
             checkIn: z.string(),
-            workoutStartedAt: z.string().optional(),
             startTime: z.string().optional(),
           }),
         ),
       })
       .parse(listed.body);
-    const times = new Map(
-      recent.map((visit) => [visit.checkIn, [visit.workoutStartedAt, visit.startTime]]),
-    );
-    expect(times.get(fromHealth)).toStrictEqual([started.toISOString(), undefined]);
-    expect(times.get(byHand)).toStrictEqual([undefined, '06:45']);
-    expect(times.get(meal)).toStrictEqual([undefined, undefined]);
+    const times = new Map(recent.map((visit) => [visit.checkIn, visit.startTime]));
+    expect([...times.keys()].sort()).toStrictEqual([fromHealth, byHand, meal].sort());
+    expect(times.get(fromHealth)).toBeUndefined();
+    expect(times.get(byHand)).toBe('06:45');
+    expect(times.get(meal)).toBeUndefined();
   });
 
   it('lists the places the squad’s posts were tagged with, with no score', async () => {

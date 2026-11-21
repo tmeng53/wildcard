@@ -106,12 +106,11 @@ extension FeedPlaceSource {
         let recent = tagged.filter { $0.day >= since }.compactMap { checkIn -> MapVisit? in
             guard let key = checkIn.entry.place?.key else { return nil }
             let tile = PlaceVisit(checkIn)
-            var training: Training?
-            if case .trained(let trained) = checkIn.entry { training = trained }
+            var startTime: StartTime?
+            if case .trained(let training) = checkIn.entry { startTime = training.startTime }
             return MapVisit(
                 id: tile.id, author: tile.author, kind: tile.kind, activity: tile.activity, day: tile.day,
-                createdAt: checkIn.createdAt, workoutStartedAt: training?.workout?.startedAt,
-                startTime: training?.startTime, key: key)
+                createdAt: checkIn.createdAt, startTime: startTime, key: key)
         }
         return SquadMapData(places: places, recent: recent)
     }
