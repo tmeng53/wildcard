@@ -192,6 +192,9 @@ final class PostManageUITests: XCTestCase {
             from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
             drags += 1
         }
+        // DIAGNOSTIC: scroll on by a cover's height, to where the 「…」 on the byline left the feed.
+        let extra = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        extra.press(forDuration: 0.05, thenDragTo: extra.withOffset(CGVector(dx: 0, dy: -280)))
         XCTAssertTrue(manage.isHittable, "my post shows no 「…」")
         assertClearOfTheTabBar(manage, in: app)
         XCTAssertEqual(
