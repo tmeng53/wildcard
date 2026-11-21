@@ -101,6 +101,16 @@ struct PostCard: View {
                 }
             }
         }
+        // The 「…」 at the end of the byline (feedback #74), laid over the whole card as it was
+        // before: inside the stub's rows, the feed slowed to a crawl after 编辑 in UI tests.
+        .overlayPreferenceValue(BylineEnd.self) { end in
+            if let end {
+                GeometryReader { proxy in
+                    let line = proxy[end]
+                    menu.position(x: line.maxX - Sizing.smallIcon / 2, y: line.midY)
+                }
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
@@ -199,8 +209,7 @@ struct PostCard: View {
             PostCharacter(model: model, post: post, width: Self.characterColumn)
                 .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
-                // Over the rows under it, so the 「…」's tap target reaching past it wins.
-                byline.zIndex(1)
+                byline
                 if !post.checkIn.inFeed { UnpostedTag() }
                 if let time = WorkoutTime(post.checkIn) { WorkoutTimeTag(time: time) }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
@@ -230,7 +239,7 @@ struct PostCard: View {
     }
 
     /// The 「…」 at the end of the byline, on the white stub, so it never covers the cover or the
-    /// block's words (feedback #74).
+    /// block's words (feedback #74); the card lays it over the room the byline keeps for it.
     @ViewBuilder private var menu: some View {
         if model.canManage(post) {
             manageMenu
@@ -264,11 +273,7 @@ struct PostCard: View {
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, hasMenu ? Sizing.smallIcon + Space.xs : 0)
-        // Laid over the byline's end, as the card's overlay was, so the popover's source sits
-        // outside the text row; its 44-point target is centred on the glyph's place.
-        .overlay(alignment: .trailing) {
-            menu.offset(x: (Sizing.minimumTapTarget - Sizing.smallIcon) / 2)
-        }
+        .anchorPreference(key: BylineEnd.self, value: .bounds) { $0 }
     }
 
     private var authorName: Text {
@@ -346,6 +351,15 @@ extension CheckIn {
 /// keeps the feed from scrolling when a swipe starts on a card, even alongside the scroll. This
 /// one fails once the finger moves first, so the scroll wins, and once it holds the scroll can't
 /// start, so the slide only picks.
+/// Where a post's byline is, for the card to lay its 「…」 at the end of it.
+private struct BylineEnd: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? { nil }
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = value ?? nextValue()
+    }
+}
+
 private struct HoldAndSlide: UIGestureRecognizerRepresentable {
     let isEnabled: Bool
     /// The press held, and each move after, in the feed's space.
