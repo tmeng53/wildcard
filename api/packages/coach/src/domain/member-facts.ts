@@ -1,6 +1,6 @@
 // What the coach can look up about each member beyond this week: their counts since they joined,
-// the sport they train most, the weekly titles they won, this week's plan (出赛表) and its
-// 饮食小目标. The model sees each member by name.
+// the sport they train most, the weekly titles they won and this week's plan (出赛表). The model
+// sees each member by name.
 
 import { writeIn, type ReaderLanguage } from '@wildcard/language-model';
 import { personOf, type Roster } from './roster.js';
@@ -23,8 +23,6 @@ export interface MemberFacts {
   readonly latestTitle?: string;
   /** This week's plan, Monday first. */
   readonly plan: readonly PlanDayFacts[];
-  /** This week's 饮食小目标 in words, in the order picked: eating habits, never a number. */
-  readonly fuelGoals: readonly string[];
 }
 
 const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -32,11 +30,6 @@ const WEEKDAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '�
 /** A plan day in words: `游泳`, `练` (any sport) or `休息`. */
 export function planDayWords(day: PlanDayFacts): string {
   return day.kind === 'rest' ? '休息' : (day.sport ?? '练');
-}
-
-/** This week's 饮食小目标 as a sentence. */
-function fuelWords(goals: readonly string[]): string {
-  return goals.length === 0 ? '这周没定饮食小目标' : `这周的饮食小目标：${goals.join('、')}`;
 }
 
 /** The `member_stats` tool's answer: a few lines a member. */
@@ -57,7 +50,7 @@ export function factsText(facts: readonly MemberFacts[], roster: Roster): string
       const plan = each.plan
         .map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`)
         .join('，');
-      return `${counts}${top}${titles}\n本周出赛表：${plan}。${fuelWords(each.fuelGoals)}。`;
+      return `${counts}${top}${titles}\n本周出赛表：${plan}。`;
     })
     .join('\n');
 }
@@ -85,8 +78,8 @@ export interface NoteBrief {
   readonly trainedDays: number;
   /** What they posted to the squad this week so far, oldest first. */
   readonly posts?: readonly WeekPost[];
-  /** This week's whole plan, Monday first, and its 饮食小目标, when they could be read. */
-  readonly plan?: { readonly week: readonly PlanDayFacts[]; readonly fuelGoals: readonly string[] };
+  /** This week's whole plan, Monday first, when it could be read. */
+  readonly plan?: { readonly week: readonly PlanDayFacts[] };
   /**
    * Today's (and yesterday's) weather where they are, in words starting 今天, and the city their
    * phone named there, when known.
@@ -132,9 +125,6 @@ export function briefBlock(brief: NoteBrief, roster: Roster): string {
       .map((day, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(day)}`)
       .join('，');
     lines.push(`- 本周出赛表：${plan}`);
-    lines.push(
-      `- 饮食小目标：${brief.plan.fuelGoals.length === 0 ? '这周没定' : brief.plan.fuelGoals.join('、')}`,
-    );
   }
   lines.push(`- 这周练了：${String(brief.trainedDays)} 天`);
   if (brief.posts !== undefined) lines.push(`- 这周发过：${postsWords(brief.posts)}`);

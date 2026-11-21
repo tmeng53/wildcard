@@ -21,8 +21,8 @@ import type { EvalCase, EvalSettings } from './eval-case.js';
 // wake would have saved and told is kept as the trial's outcome; nothing leaves this process but
 // the model's requests.
 //
-// Not yet held by a case, so told to the model empty: streaks, members' counts and 饮食小目标
-// (only their plans are held), memes, weather and holidays, and the coach's hire date (the
+// Not yet held by a case, so told to the model empty: streaks, members' counts (only
+// their plans are held), memes, weather and holidays, and the coach's hire date (the
 // epoch). A case about one of them needs it added here first.
 
 /** The squad every case runs in: cases name members and check-ins, never their squad. */
@@ -328,7 +328,6 @@ export async function runTrial(
                         ? { kind: 'train' }
                         : { kind: 'train', sport: day },
                   ),
-                  fuelGoals: [],
                 },
               ];
         }),

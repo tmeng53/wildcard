@@ -28,7 +28,6 @@ struct ScheduleStoreTemplateTests {
         #expect(store.board?.weekStart == nextWeek)
         #expect(store.board?.days == Fixtures.plan)
         #expect((0..<7).allSatisfy { store.board?.isEditable($0) == true })
-        #expect(store.canEditFuel == false)
         await store.show(thisWeek)
         #expect(store.showsTemplate == false)
         #expect(store.board?.tense == .current)

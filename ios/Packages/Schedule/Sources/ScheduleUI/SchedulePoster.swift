@@ -42,7 +42,6 @@ struct SchedulePoster: View {
     /// Saving: the one pose the character holds, since a picture can't move.
     var still: (drawing: FigureDrawing, placements: [Placement])?
     var onTapLane: (Int) -> Void = { _ in }
-    var onTapFuel: () -> Void = {}
 
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -78,7 +77,7 @@ struct SchedulePoster: View {
         } overlay: {
             stickers
         } strip: {
-            PosterBottomBar(content: content, theme: theme, colors: colors, onTapFuel: onTapFuel)
+            PosterBottomBar(content: content, theme: theme, colors: colors)
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: content)
     }

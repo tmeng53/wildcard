@@ -250,33 +250,6 @@ public final class ScheduleStore {
         await save(board.weekStart)
     }
 
-    // MARK: - 饮食小目标
-
-    /// Whether the shown week's 饮食小目标 can change: this week's and later ones'.
-    public var canEditFuel: Bool { board.map { $0.tense == .current || $0.tense == .upcoming } ?? false }
-
-    /// Adds a goal to the shown week, or takes it off; a fourth is ignored. Saved at once.
-    public func toggleFuel(_ goal: FuelGoal) async {
-        guard canEditFuel, let week = shownWeek, var draft = drafts[week] ?? sheets[week] else { return }
-        if let index = draft.fuel.firstIndex(of: goal) {
-            draft.fuel.remove(at: index)
-        } else if draft.fuel.count < FuelGoal.maxCount {
-            draft.fuel.append(goal)
-        } else {
-            return
-        }
-        drafts[week] = draft
-        await save(week)
-    }
-
-    /// Adds a goal in the member's own words; throws when it isn't one line of 1 to 8
-    /// characters.
-    public func addFuel(typed text: String) async throws(ScheduleError) {
-        let goal = try FuelGoal.own(typed: text)
-        guard shownWeek != nil, sheet?.fuel.contains(goal) == false else { return }
-        await toggleFuel(goal)
-    }
-
     // MARK: - Saving
 
     /// Sends the week's draft, one part at a time, until the server holds all of it; a save
@@ -304,15 +277,6 @@ public final class ScheduleStore {
                     withdrawOffer(for: week)
                     drafts[week]?.plan = held.plan
                     if showsBoard(of: week) { board?.reset(to: held.plan) }
-                }
-            } else if draft.fuel != held.fuel {
-                do {
-                    try await backend.saveFuel(draft.fuel, weekStart: week)
-                    sheets[week]?.fuel = draft.fuel
-                } catch {
-                    failure = error
-                    refused = true
-                    drafts[week]?.fuel = held.fuel
                 }
             } else {
                 drafts[week] = nil

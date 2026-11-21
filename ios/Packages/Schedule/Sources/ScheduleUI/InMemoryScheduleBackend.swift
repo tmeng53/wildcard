@@ -45,9 +45,8 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
                 }
             }
             let titles = offset < 0 ? Array(sampleTitles.shuffledBy(seed: offset).prefix(1 + (-offset % 3))) : []
-            let fuel: [FuelGoal] = offset < 1 ? [.suggested(.water), .suggested(.cookAtHome)] : [.suggested(.water)]
             return try? WeekSheet(
-                weekStart: weekStart, plan: plan, marks: marks, titles: titles, fuel: fuel)
+                weekStart: weekStart, plan: plan, marks: marks, titles: titles)
         }
         return InMemoryScheduleBackend(
             profile: ScheduleProfile(
@@ -109,13 +108,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         sheets[weekStart] = sheet
         saved.insert(weekStart)
         return days
-    }
-
-    public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        guard weekStart >= thisWeek else { throw .weekOver }
-        var sheet = try await week(starting: weekStart)
-        sheet.fuel = goals
-        sheets[weekStart] = sheet
     }
 
     public func template() async throws(ScheduleError) -> [PlanDay] { typicalWeek }

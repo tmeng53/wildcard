@@ -96,7 +96,6 @@ describe('the reply step', () => {
               { kind: 'rest' },
               { kind: 'rest' },
             ],
-            fuelGoals: [],
           },
         },
         talkedUnder: [run],

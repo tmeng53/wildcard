@@ -20,7 +20,7 @@ import { personOf, type Roster } from './roster.js';
 /** One member the run sets a challenge for. */
 export interface ChallengeMember {
   readonly member: string;
-  /** What the morning's brief knows of them: plan, 饮食小目标, days trained, weather, language. */
+  /** What the morning's brief knows of them: plan, days trained, weather, language. */
   readonly brief: NoteBrief;
   /** Their page in the coach's memory, with names, when it has one. */
   readonly about?: string;
@@ -54,7 +54,7 @@ export function todayHeading(day: string): string {
 
 /**
  * Each member's block under their name, as the morning reads them: today's plan and the week's,
- * 饮食小目标, days trained, their recent posts by number, recent challenges and how each went,
+ * days trained, their recent posts by number, recent challenges and how each went,
  * weather, what the coach knows of them and their language. `more` adds lines of a member's own
  * before their language (the notes' run: today's challenge, where they talked with the coach).
  * The posts are numbered in the order listed, from `numbered` on when it is given.
@@ -85,9 +85,6 @@ export function memberBlocks({
       lines.push(
         `- 这周出赛表：${plan.map((each, index) => `${WEEKDAYS[index] ?? ''}${planDayWords(each)}`).join('，')}`,
       );
-    }
-    if (brief.plan !== undefined && brief.plan.fuelGoals.length > 0) {
-      lines.push(`- 这周饮食小目标：${brief.plan.fuelGoals.join('、')}`);
     }
     lines.push(`- 这周练了：${String(brief.trainedDays)} 天`);
     const mine = posts.filter((each) => each.member === member);
