@@ -101,13 +101,6 @@ struct PostCard: View {
                 }
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if model.canManage(post) {
-                manageMenu.padding(Space.s)
-            } else if model.canModerate(post) {
-                ModerationMenu(model: model, post: post).padding(Space.s)
-            }
-        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
@@ -139,7 +132,7 @@ struct PostCard: View {
     /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
     private var manageMenu: some View {
         HeaderMenu(
-            Text(copy: "编辑或删除", bundle: .module), on: .ink,
+            Text(copy: "编辑或删除", bundle: .module), quiet: true,
             items: scoreCardItem + [
                 GlassMenuItem(Text(copy: "编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
                     model.edit(post)
@@ -235,6 +228,17 @@ struct PostCard: View {
         .padding(.bottom, Space.xs)
     }
 
+    /// The 「…」 at the end of the byline, on the white stub, so it never covers the cover or the
+    /// block's words (feedback #74): a quiet glyph, since 编辑 and 举报 are rare. It lays out as
+    /// the glyph's size and its 44-point tap target reaches past it.
+    @ViewBuilder private var menu: some View {
+        if model.canManage(post) {
+            manageMenu.frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
+        } else if model.canModerate(post) {
+            ModerationMenu(model: model, post: post).frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
+        }
+    }
+
     /// 我 下午11:02 · 训练 · 快走, and which day a 补打卡 counts for.
     private var byline: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
@@ -254,6 +258,10 @@ struct PostCard: View {
             }
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
+            if model.canManage(post) || model.canModerate(post) {
+                Spacer(minLength: Space.xs)
+                menu.alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.bottom] }
+            }
         }
         .lineLimit(1)
     }

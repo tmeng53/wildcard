@@ -138,7 +138,7 @@ final class PostManageUITests: XCTestCase {
     }
 
     /// My 练腿日's second page is its heart rate in zones on graphite: the warm-up and cool-down
-    /// under 轻松 dimmed, and the zones' axis under the 「…」, not behind it.
+    /// under 轻松 dimmed. The 「…」 is on the stub under the cover, never on it (feedback #74).
     func testHeartRateCover() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
@@ -153,14 +153,15 @@ final class PostManageUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post isn't on screen")
-        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
-            .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
-        guard let photos else { return XCTFail("my post's cover isn't under its 「…」") }
+        let covers = app.descendants(matching: .any).matching(identifier: "feed.photos").allElementsBoundByIndex
+        XCTAssertFalse(covers.contains { $0.frame.contains(manage.frame) }, "the 「…」 is on a cover")
+        let photos = covers.filter { $0.frame.maxY <= manage.frame.midY }.max { $0.frame.maxY < $1.frame.maxY }
+        guard let photos else { return XCTFail("my post's cover isn't over its 「…」") }
         // One flick at the cover's middle now and then leaves the pager on the photo (red on
-        // main 11-11 and 11-12, green between with nothing changed): drag level across the cover
-        // just under the 「…」, which is on screen, and again while the chart isn't there.
+        // main 11-11 and 11-12, green between with nothing changed): drag level across the
+        // cover's top, and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
-        let row = (manage.frame.midY - photos.frame.minY) / photos.frame.height
+        let row = 0.1
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
             let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row + 0.1))
