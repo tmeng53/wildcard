@@ -535,7 +535,6 @@ describe('when the coach wakes', () => {
                 { kind: 'rest' },
                 { kind: 'rest' },
               ],
-              fuelGoals: ['喝够水'],
             },
             weather: { words: '今天雨，8–13°C', city: '多伦多' },
           },
@@ -558,7 +557,7 @@ describe('when the coach wakes', () => {
         '## 便条（下面每人一张）\n小队的人（括号里是 user_id）：米亚（11111111）、队员2（22222222）。',
         // Each member's own day, posts by number, the challenge set for them and where they
         // talked with the coach, in their own language; never reactions or the talk itself.
-        '## 米亚（11111111）\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二跑步，周三游泳，周四休息，周五休息，周六休息，周日休息\n- 这周饮食小目标：喝够水\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 10-27 周二 跑步 30 分钟：「腿废了」（1 条评论）\n- 当地天气：多伦多，今天雨，8–13°C\n- 你对他的了解：\n- 米亚爱跑步\n- 今天的挑战：「游泳 30 分钟」，小字：雨天进泳池\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- 用繁體中文寫，照台灣的說法。',
+        '## 米亚（11111111）\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二跑步，周三游泳，周四休息，周五休息，周六休息，周日休息\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 10-27 周二 跑步 30 分钟：「腿废了」（1 条评论）\n- 当地天气：多伦多，今天雨，8–13°C\n- 你对他的了解：\n- 米亚爱跑步\n- 今天的挑战：「游泳 30 分钟」，小字：雨天进泳池\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- 用繁體中文寫，照台灣的說法。',
         '## 队员2（22222222）\n- 今天的计划：没填出赛表\n- 这周练了：0 天\n- 最近发的：没有\n- 今天的挑战：没有\n- 过去一天你们在 动态1 下面聊过（post_comments 可看）\n- Write in English.',
       ].join('\n\n'),
     );
@@ -656,7 +655,6 @@ describe('what the coach looks up', () => {
               rest,
               rest,
             ],
-            fuelGoals: ['喝够水', '奶茶减半'],
           },
           {
             member: leo,
@@ -666,7 +664,6 @@ describe('what the coach looks up', () => {
             disclaimers: 0,
             titles: 0,
             plan: [rest, rest, rest, rest, rest, rest, rest],
-            fuelGoals: [],
           },
         ],
         rosterOf(week),
@@ -674,9 +671,9 @@ describe('what the coach looks up', () => {
     ).toBe(
       [
         '米亚（11111111）：一共练了 50 天，健康餐 3 次，坦白放纵餐 1 次，请假条 2 次。最常练跑步（31 次）。拿过 2 个周奖，最近一个是「早起之王」。',
-        '本周出赛表：周一跑步，周二休息，周三练，周四休息，周五休息，周六休息，周日休息。这周的饮食小目标：喝够水、奶茶减半。',
+        '本周出赛表：周一跑步，周二休息，周三练，周四休息，周五休息，周六休息，周日休息。',
         '队员2（22222222）：一共练了 0 天，健康餐 0 次，坦白放纵餐 0 次，请假条 0 次。还没拿过周奖。',
-        '本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息。这周没定饮食小目标。',
+        '本周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日休息。',
       ].join('\n'),
     );
     expect(factsText([], rosterOf(week))).toBe('还没有队员的数据。');

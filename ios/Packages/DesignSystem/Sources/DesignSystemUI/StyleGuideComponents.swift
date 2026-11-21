@@ -156,7 +156,7 @@ struct PickSection: View {
     @State private var more: Set<Int> = [1]
     @State private var tile = 0
     @State private var swatch = 2
-    @State private var catchphrase = ""
+    @State private var squadName = ""
     @State private var query = ""
     @State private var minutes = 45
 
@@ -221,7 +221,7 @@ struct PickSection: View {
             }
             GuideGroup(Text(copy: "输入框", bundle: .module)) {
                 InputField(
-                    text: $catchphrase, label: Text(copy: "口头禅", bundle: .module),
+                    text: $squadName, label: Text(copy: "小队名", bundle: .module),
                     prompt: Text(copy: "冲冲冲！", bundle: .module),
                     limit: 10)
                 SearchField(text: $query, prompt: Text(copy: "搜索", bundle: .module))

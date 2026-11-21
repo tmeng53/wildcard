@@ -9,8 +9,8 @@ import SwiftUI
 
 /// 出赛表: the week as a poster the member plans on. Chips pick the week (back to the one they
 /// joined, this week, next week) or the 我的每周计划, on a graphite poster of its own; 存图 saves a
-/// week's poster to Photos; under the poster sit the picks for the day in hand, next week's
-/// 饮食小目标, or what sits under a week. It is pushed over 我, whose tab bar stays: this screen keeps to the
+/// week's poster to Photos; under the poster sit the picks for the day in hand or what sits under
+/// a week. It is pushed over 我, whose tab bar stays: this screen keeps to the
 /// safe area the app gives it, and the system's back button and swipe go back to 我.
 public struct ScheduleView: View {
     let model: ScheduleModel
@@ -18,15 +18,12 @@ public struct ScheduleView: View {
     @Environment(\.locale) private var locale
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var picksAll = false
-    @State private var ownFuel = ""
-    @FocusState private var typingFuel: Bool
     /// Bumps as 存图 takes its picture: the poster flashes white, like a screenshot.
     @State private var flashes = 0
     /// The picture 存图's sheet is open on, once the flash has played.
     @State private var sharing: ScheduleModel.SharedPoster?
 
     private static let panelID = "schedule.panel"
-    private static let posterID = "schedule.posterFrame"
     /// How long 没存上 stays before it goes.
     private let failedNoteHold: Duration = .seconds(5)
 
@@ -42,7 +39,6 @@ public struct ScheduleView: View {
                 VStack(alignment: .leading, spacing: Space.l) {
                     if let shown = shownContent {
                         poster(shown)
-                            .id(Self.posterID)
                         panel(store.sheet)
                             .id(Self.panelID)
                     } else {
@@ -56,14 +52,6 @@ public struct ScheduleView: View {
                 .padding(.top, Space.s)
                 .padding(.bottom, Space.l)
                 .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.panel)
-            }
-            // Typing a goal of their own: the poster's bottom, where it shows as it is typed, sits
-            // just over the field.
-            .onChange(of: model.writingFuel) { _, writing in
-                guard writing else { return }
-                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
-                    scroller.scrollTo(Self.posterID, anchor: .bottom)
-                }
             }
             // On a shorter phone the picks can open below the fold: bring them up over the bar.
             .onChange(of: model.panel) { _, panel in
@@ -90,9 +78,7 @@ public struct ScheduleView: View {
         // 只改了这一周 · 也改到模板 sits just over the tab bar, where it shows however long the
         // panel under the poster is.
         .safeAreaInset(edge: .bottom) {
-            if model.writingFuel {
-                fuelField
-            } else if store.templateOffer != nil {
+            if store.templateOffer != nil {
                 TemplateOffer(onCopy: model.copyToTemplate)
                     .padding(.horizontal, Space.pageMargin)
                     .padding(.bottom, Space.xs)
@@ -154,8 +140,7 @@ public struct ScheduleView: View {
     private func content(_ sheet: WeekSheet) -> PosterContent {
         PosterContent(
             sheet: sheet, board: store.board, nickname: store.profile?.nickname ?? "",
-            weekNumber: store.profile?.weekNumber(of: sheet.weekStart) ?? 1, fuelOpen: model.panel == .fuel,
-            typingFuel: model.writingFuel ? ownFuel : "")
+            weekNumber: store.profile?.weekNumber(of: sheet.weekStart) ?? 1)
     }
 
     /// The week shown, or the 我的每周计划.
@@ -169,8 +154,7 @@ public struct ScheduleView: View {
     private func poster(_ content: PosterContent) -> some View {
         GeometryReader { proxy in
             SchedulePoster(
-                content: content, player: model.player, onTapLane: model.tap,
-                onTapFuel: model.toggleFuelPanel
+                content: content, player: model.player, onTapLane: model.tap
             )
             .scaleEffect(proxy.size.width / SchedulePoster.size.width, anchor: .topLeading)
             .environment(\.sceneTheme, content.scene(now: theme))
@@ -208,8 +192,6 @@ public struct ScheduleView: View {
                         picksAll = true
                     }
                 }
-            case .fuel:
-                if let sheet { fuelPicks(sheet) }
             }
             PanelNote(store: store)
             if store.showsTemplate {
@@ -227,71 +209,6 @@ public struct ScheduleView: View {
         case (.upcoming, _): CountdownCard(store: store)
         case (.past, let sheet?), (nil, let sheet?): WeekAwards(titles: sheet.titles)
         default: EmptyView()
-        }
-    }
-
-    private func fuelPicks(_ sheet: WeekSheet) -> some View {
-        let full = sheet.fuel.count >= FuelGoal.maxCount
-        let own = sheet.fuel.filter { if case .own = $0 { true } else { false } }
-        let goals = FuelSuggestion.allCases.map(FuelGoal.suggested) + own
-        return VStack(alignment: .leading, spacing: Space.labelGap) {
-            SectionLabel(Text(copy: "饮食小目标 · \(sheet.fuel.count)/\(FuelGoal.maxCount)", bundle: .module))
-            FlowRow {
-                ForEach(goals, id: \.self) { goal in
-                    PickPill(ScheduleLabels.fuel(goal), isSelected: sheet.fuel.contains(goal)) {
-                        model.toggle(goal)
-                    }
-                    .accessibilityIdentifier("schedule.fuel.\(ScheduleLabels.fuelName(goal))")
-                }
-                PickPill(Text(copy: "自己写", bundle: .module), systemImage: "plus", isSelected: false) {
-                    ownFuel = ""
-                    model.writingFuel = true
-                    typingFuel = true
-                }
-                .disabled(full)
-                .opacity(full ? 0.4 : 1)
-                .accessibilityIdentifier("schedule.fuel.own")
-            }
-        }
-    }
-
-    // MARK: Own 饮食小目标
-
-    private var fuelField: some View {
-        HStack(spacing: Space.xs) {
-            InputField(
-                text: $ownFuel, label: Text(copy: "饮食小目标", bundle: .module),
-                limit: FuelGoal.maxLength
-            )
-            .focused($typingFuel)
-            .submitLabel(.done)
-            .onSubmit { Task { await addOwnFuel() } }
-            .accessibilityIdentifier("schedule.fuel.field")
-            Button {
-                Task { await addOwnFuel() }
-            } label: {
-                Text(copy: "加上", bundle: .module)
-            }
-            .buttonStyle(PrimaryButtonStyle(.regular))
-            .disabled(ownFuel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .accessibilityIdentifier("schedule.fuel.add")
-        }
-        .padding(.horizontal, Space.pageMargin)
-        .padding(.vertical, Space.xs)
-        .background(Color(role: .bgCanvas, in: theme))
-        .onChange(of: typingFuel) { _, focused in
-            if !focused { model.writingFuel = false }
-        }
-    }
-
-    private func addOwnFuel() async {
-        if await model.addFuel(typed: ownFuel) {
-            ownFuel = ""
-            typingFuel = false
-        } else {
-            // The tap on 加上 put the keyboard away; bring the typed goal back to try again.
-            model.writingFuel = true
-            typingFuel = true
         }
     }
 }

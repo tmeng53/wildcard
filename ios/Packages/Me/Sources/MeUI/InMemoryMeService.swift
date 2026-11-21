@@ -143,11 +143,6 @@ public actor InMemoryMeService: MeService {
         current.character = character
     }
 
-    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
-        if failsSaving { throw .unavailable }
-        current.jerseyNumber = jerseyNumber
-    }
-
     public func save(birthday: Birthday?) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.birthday = birthday
@@ -218,7 +213,7 @@ public struct InMemorySquadmateCards: SquadmateCards {
 
 extension MateSchedule {
     /// The approved card back's week (E1): 网球 and 跑步 trained, a 请假条 on Thursday, 力量训练
-    /// trained on Friday, 网球 still to come, and two 饮食小目标, in their third week (W3).
+    /// trained on Friday, 网球 still to come, in their third week (W3).
     static func sample(weekOf day: LocalDay) -> MateSchedule? {
         let tennis = PlanDay.train(.sport("tennis"))
         let run = PlanDay.train(.sport("run"))
@@ -230,7 +225,6 @@ extension MateSchedule {
                 .trained([.sport("tennis")]), .none, .trained([.sport("run")]), .disclaimer,
                 .trained([.sport("strength")]), .none, .none,
             ],
-            fuel: [.suggested(.veggies), .suggested(.lessBubbleTea)],
             firstWeek: day.weekStart.adding(days: -14), today: day)
     }
 }

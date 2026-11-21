@@ -80,13 +80,13 @@ public struct WildcardAPI: Sendable {
             try await client.putMyProfile(
                 body: .json(
                     .init(
-                        version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text,
+                        version: ._1, timeZone: profile.timeZone.identifier,
                         character: profile.character.map(Components.Schemas.Character.init),
                         jerseyNumber: profile.jerseyNumber?.value))
             ).ok.body.json
         }
         return try Profile(
-            timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character,
+            timeZone: saved.timeZone, character: saved.character,
             jerseyNumber: saved.jerseyNumber)
     }
 

@@ -45,9 +45,8 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
                 }
             }
             let titles = offset < 0 ? Array(sampleTitles.shuffledBy(seed: offset).prefix(1 + (-offset % 3))) : []
-            let fuel: [FuelGoal] = offset < 1 ? [.suggested(.water), .suggested(.cookAtHome)] : [.suggested(.water)]
             return try? WeekSheet(
-                weekStart: weekStart, plan: plan, marks: marks, titles: titles, fuel: fuel)
+                weekStart: weekStart, plan: plan, marks: marks, titles: titles)
         }
         return InMemoryScheduleBackend(
             profile: ScheduleProfile(
@@ -111,13 +110,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
         return days
     }
 
-    public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        guard weekStart >= thisWeek else { throw .weekOver }
-        var sheet = try await week(starting: weekStart)
-        sheet.fuel = goals
-        sheets[weekStart] = sheet
-    }
-
     public func template() async throws(ScheduleError) -> [PlanDay] { typicalWeek }
 
     /// Applies from next week, as the API's does: weeks after it not saved for themselves
@@ -125,7 +117,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     public func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
         guard days.count == WeeklyPlan.dayCount else { throw .refused }
         typicalWeek = days
-        // Their 饮食小目标 stay, as the API keeps them.
         for week in sheets.keys where week > thisWeek && !saved.contains(week) {
             sheets[week]?.plan = days
         }

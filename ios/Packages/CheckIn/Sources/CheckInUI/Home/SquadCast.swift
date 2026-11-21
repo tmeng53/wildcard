@@ -24,7 +24,7 @@ final class SquadCast {
         /// The species whose moves their clips play with.
         let species: String?
         let player: CharacterPlayer
-        /// What their character shouts in a cheer: their 口头禅, or their persona's own line.
+        /// What their character shouts in a cheer: their persona's own line.
         let line: String
         /// Their 请假条, held up on the scene.
         let disclaimer: String?
@@ -125,7 +125,7 @@ final class SquadCast {
             return Mate(
                 member: member, name: mate.character?.nickname.text, persona: persona, look: look, species: species,
                 player: player,
-                line: mate.catchphrase?.text ?? Self.personaLine(persona),
+                line: Self.personaLine(persona),
                 disclaimer: home.todaysDisclaimer(of: member.id),
                 caption: home.todaysCaption(of: member.id))
         }
@@ -313,7 +313,7 @@ final class SquadCast {
         mate.character.map { Outfit($0.look) } ?? StandInCharacter.look(of: mate.member)
     }
 
-    /// The line a persona shouts when its member hasn't set a 口头禅 (spec rev 221).
+    /// The line a persona shouts in a cheer (spec rev 221).
     static func personaLine(_ persona: Persona) -> String {
         switch persona {
         case .energetic: String(copy: "冲冲冲！", bundle: .module)

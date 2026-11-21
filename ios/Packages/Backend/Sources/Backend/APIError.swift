@@ -61,7 +61,7 @@ public enum Refusal: Equatable, Sendable {
     case sceneAlreadyPicked
     /// The week named isn't the one open for picking: a new week started meanwhile.
     case sceneWeekClosed
-    /// The week is over: its plan and 饮食小目标 stay as they are.
+    /// The week is over: its plan stays as they are.
     case weekClosed
     /// A day of this week that has started keeps its plan.
     case planDayStarted

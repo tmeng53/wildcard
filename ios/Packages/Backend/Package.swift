@@ -30,7 +30,7 @@ import PackageDescription
 // - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
 //   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
 // - `APIScheduleBackend`, the adapter behind `ScheduleDomain`'s `ScheduleBackend`: 出赛表's weekly
-//   plans and 饮食小目标, the days checked in, the week's titles and the squad's count.
+//   plans, the days checked in, the week's titles and the squad's count.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],

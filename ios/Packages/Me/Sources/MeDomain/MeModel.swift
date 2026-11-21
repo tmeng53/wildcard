@@ -145,21 +145,6 @@ public final class MeModel {
         load = .loaded(overview)
     }
 
-    /// Saves the number the member picked for their card, and shows it.
-    public func save(jerseyNumber: JerseyNumber) async {
-        saveFailed = false
-        do {
-            try await service.save(jerseyNumber: jerseyNumber)
-        } catch {
-            saveFailed = true
-            await signOutIfEnded(error)
-            return
-        }
-        guard case .loaded(var overview) = load else { return }
-        overview.jerseyNumber = jerseyNumber
-        load = .loaded(overview)
-    }
-
     /// Saves the member's birthday, or forgets it (nil), and shows it. Answers whether it was saved.
     @discardableResult
     public func save(birthday: Birthday?) async -> Bool {

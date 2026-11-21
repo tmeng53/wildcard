@@ -64,7 +64,7 @@ import Testing
     let member = try await stack.signedInMember()
     let zone = try #require(TimeZone(identifier: "America/Toronto"))
     _ = try await member.api.save(
-        Profile(timeZone: zone, catchphrase: try Catchphrase("冲就完了"), jerseyNumber: try JerseyNumber(7)))
+        Profile(timeZone: zone, jerseyNumber: try JerseyNumber(7)))
     let service = APIMeService(api: member.api)
 
     try await service.save(MeCharacter(nickname: "豆豆", outfit: Outfit(["body": "bear"]), persona: .shy))
@@ -72,7 +72,6 @@ import Testing
     let signedIn = try await member.api.me()
     let profile = try #require(signedIn.profile)
     #expect(profile.timeZone == zone)
-    #expect(profile.catchphrase == (try Catchphrase("冲就完了")))
     #expect(profile.jerseyNumber?.text == "07")
     #expect(signedIn.joinedAt != nil)
     #expect(
@@ -87,7 +86,7 @@ import Testing
     let stack = try LocalStack()
     let captain = try await stack.signedInMember()
     let member = try await stack.signedInMember()
-    _ = try await member.api.save(Profile(timeZone: .current, catchphrase: try Catchphrase("冲就完了")))
+    _ = try await member.api.save(Profile(timeZone: .current))
     _ = try await stack.squad(of: captain, member)
     let service = APIMeService(api: member.api)
 
@@ -96,12 +95,11 @@ import Testing
     #expect(before.jerseyNumber == nil)
     #expect(before.cardNumber?.text == "02")
 
-    try await service.save(jerseyNumber: try JerseyNumber(23))
+    _ = try await member.api.save(Profile(timeZone: .current, jerseyNumber: try JerseyNumber(23)))
     try await service.save(MeCharacter(nickname: "豆豆", outfit: Outfit(["body": "bear"]), persona: .shy))
 
     let after = try await service.overview()
     #expect(after.cardNumber?.text == "23")
-    #expect(try await member.api.me().profile?.catchphrase == (try Catchphrase("冲就完了")))
 }
 
 @Test func deletingTheAccountUnregistersFirstAndLeavesNothing() async throws {
@@ -170,7 +168,7 @@ private actor Flag {
 
     // 我's saves keep it: the profile is saved whole, the birthday apart.
     let service = APIMeService(api: member.api)
-    try await service.save(jerseyNumber: try JerseyNumber(7))
+    try await service.save(MeCharacter(nickname: "阿杰", outfit: Outfit(["body": "shiba"]), persona: .drama))
     #expect(try await service.overview().birthday == birthday)
 
     try await service.save(birthday: nil)

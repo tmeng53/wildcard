@@ -5,7 +5,7 @@ import SwiftUI
 /// What a character says, in a small bubble with a tail pointing down at them. Over the scene it
 /// is light Liquid Glass (the system's `glassEffect`, tinted white so ink words read on any scene,
 /// day or night), the bubble and its tail one piece of glass; on a page, plain light grey, since
-/// glass on a flat fill shows nothing. `.line` is a 口头禅 or a cheer, one line of 13/600 up to
+/// glass on a flat fill shows nothing. `.line` is a cheer, one line of 13/600 up to
 /// 160 wide; `.info` is what a tap on a person shows (their status, a 请假条's words, a caption), 13/400 up to 200 wide, with an
 /// optional title line (name · kind); it wraps to show all of it, since those are words people
 /// typed (a 请假条 is up to 80 characters) and a bubble can't be opened to read the rest.

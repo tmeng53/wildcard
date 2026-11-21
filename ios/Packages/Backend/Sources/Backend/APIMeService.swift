@@ -113,17 +113,6 @@ public struct APIMeService: MeService {
         return TrainingRecord(today: today, trainings: trainings)
     }
 
-    /// Saves the card's number on the profile, keeping the rest of it.
-    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
-        try await me { () throws(APIError) in
-            let profile = try await api.me().profile
-            _ = try await api.save(
-                Profile(
-                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
-                    character: profile?.character, jerseyNumber: jerseyNumber))
-        }
-    }
-
     /// Saves or forgets the birthday, apart from the profile, which keeps it.
     public func save(birthday: Birthday?) async throws(MeError) {
         try await me { () throws(APIError) in
@@ -143,7 +132,7 @@ public struct APIMeService: MeService {
             let profile = try await api.me().profile
             _ = try await api.save(
                 Profile(
-                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
+                    timeZone: profile?.timeZone ?? .current,
                     character: MemberCharacter(
                         nickname: nickname, look: CharacterLook(outfit: character.outfit, persona: character.persona)
                     ), jerseyNumber: profile?.jerseyNumber))

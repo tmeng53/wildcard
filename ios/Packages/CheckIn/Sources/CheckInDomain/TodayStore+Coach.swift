@@ -25,7 +25,22 @@ extension TodayStore {
             loadedCoach = (home.squad.id, try await backend.coach(in: home.squad.id))
         } catch {}
         await loadUnseenCoachCards(in: home)
+        await loadUnopenedGift(in: home)
         await loadChallenge(in: home)
+    }
+
+    /// The newest boxed gift; what was shown stays while the server can't be reached.
+    private func loadUnopenedGift(in home: Home) async {
+        do {
+            loadedUnopenedGift = (home.squad.id, try await backend.unopenedCoachGift(in: home.squad.id))
+        } catch {}
+    }
+
+    /// A gift from the coach still in its box, for the round gift button on the home (Tracy,
+    /// 2026-11-21): any day, until it is opened.
+    public var unopenedCoachGift: CoachPageCard? {
+        guard let loadedUnopenedGift, loadedUnopenedGift.squad == savedHome?.squad.id else { return nil }
+        return loadedUnopenedGift.card
     }
 
     /// The server says which challenge is today's, on the squad's clock (which may differ from the

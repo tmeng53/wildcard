@@ -24,6 +24,13 @@ public final class RecapModel {
     private let service: (any WeekStoryService)?
     /// The reader nudged the organizers about the late titles.
     private(set) var nudged = false
+    /// 佩戴头衔 on the titles page: the reader's own title from this week, worn on their card from
+    /// the tap; nil when they won none, or where there is nowhere to save it (the sample's own
+    /// shelf without a profile).
+    private(set) var ownTitle: String?
+    /// The reader's title is the one on their card: from the tap, or already before it.
+    private(set) var wearsOwnTitle = false
+    @ObservationIgnored private let wearTitle: (@MainActor (String) async -> Bool)?
     /// 冠军专属: the scene pick on the last page, for whoever picks next week's scene (last
     /// week's crown winner, else the captain) while nobody has; nil for everyone else. It can
     /// arrive after the story opens, once the squad's scene is read.
@@ -41,9 +48,12 @@ public final class RecapModel {
     ///   - scenePicked: the reveal of the picked scene filled the screen: the story is done and
     ///     home takes over on that scene.
     ///   - heldReveal: holds the reveal of a scene on one moment, for screenshots.
+    ///   - titles: wears a title on the reader's card, answering whether it saved, and the title
+    ///     they wear now; nil leaves 佩戴头衔 out.
     public init(
         story: WeekStory, cast: StoryCast, service: (any WeekStoryService)?, now: Date = .now,
         scenePicker: ScenePicker? = nil, heldReveal: (scene: SceneTheme, at: Double)? = nil,
+        titles: TitleWearing? = nil,
         close: @escaping @MainActor () -> Void, finished: @escaping @MainActor () -> Void = {},
         planNextWeek: @escaping @MainActor () -> Void,
         scenePicked: @escaping @MainActor (SceneTheme, Date) -> Void = { _, _ in }
@@ -61,6 +71,11 @@ public final class RecapModel {
         wardrobe = StoryWardrobe(cast: cast)
         epoch = now
         playback = StoryPlayback(durations: pages.map(\.duration), startingAt: 0)
+        wearTitle = titles?.wear
+        if titles != nil {
+            ownTitle = story.titles.first { $0.member == cast.viewer }?.titles.first?.title
+            wearsOwnTitle = ownTitle != nil && ownTitle == titles?.worn
+        }
     }
 
     func seconds(_ date: Date) -> Double { date.timeIntervalSince(epoch) }
@@ -123,6 +138,17 @@ public final class RecapModel {
     /// The picked scene's reveal is over: the story closes onto home on that scene.
     func revealed(_ scene: SceneTheme, coveredAt: Date) { scenePicked(scene, coveredAt) }
 
+    /// 佩戴头衔: the reader's title goes on their card at once, and the button says so; a save that
+    /// fails puts the button back.
+    func wearOwnTitle() {
+        guard let ownTitle, let wearTitle, !wearsOwnTitle else { return }
+        wearsOwnTitle = true
+        Task {
+            let saved = await wearTitle(ownTitle)
+            if !saved { wearsOwnTitle = false }
+        }
+    }
+
     /// 催一下主办方. It always lands as far as the reader can tell: a nudge that doesn't reach the
     /// API changes nothing they could act on, and the hourly retry runs anyway.
     func nudge() {
@@ -131,6 +157,19 @@ public final class RecapModel {
         let squad = story.squad
         let monday = story.week.monday
         Task { try? await service.nudge(squad: squad, week: monday) }
+    }
+}
+
+/// Where the 战报's 佩戴头衔 saves: the reader's card, as 我 keeps it.
+public struct TitleWearing {
+    /// The title the reader wears now, if known.
+    public let worn: String?
+    /// Wears the title, answering whether it saved.
+    public let wear: @MainActor (String) async -> Bool
+
+    public init(worn: String?, wear: @escaping @MainActor (String) async -> Bool) {
+        self.worn = worn
+        self.wear = wear
     }
 }
 #endif

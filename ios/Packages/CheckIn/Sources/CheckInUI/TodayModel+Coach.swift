@@ -123,6 +123,15 @@ extension TodayModel {
         openCoach()
     }
 
+    /// A gift from the coach still in its box, for the round gift button (Tracy, 2026-11-21).
+    var unopenedGift: CoachPageCard? { store.unopenedCoachGift }
+
+    /// The gift button was tapped: the gift's card opens over the coach's page, to 拆开 there.
+    func openUnopenedGift() {
+        guard arrival == nil, let unopenedGift else { return }
+        openGift(unopenedGift)
+    }
+
     /// The squad on the home, whose coach's page opens.
     public var squadID: SquadID? { home?.squad.id }
 }

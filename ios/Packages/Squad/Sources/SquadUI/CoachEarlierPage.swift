@@ -54,6 +54,8 @@ public struct CoachEarlierPage: View {
         case .all: Text(copy: "还没有看过的", bundle: .module)
         case .unseen: Text(copy: "没有未读的", bundle: .module)
         case .challenges: Text(copy: "还没有挑战", bundle: .module)
+        // Never a tab of 以前: only the home's gift button lists them.
+        case .gifts: Text(copy: "还没有看过的", bundle: .module)
         }
     }
 

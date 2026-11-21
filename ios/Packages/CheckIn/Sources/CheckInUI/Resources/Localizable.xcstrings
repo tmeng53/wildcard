@@ -2576,6 +2576,22 @@
           }
         }
       }
+    },
+    "教练的礼物": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gift from your coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練的禮物"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
