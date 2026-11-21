@@ -90,6 +90,28 @@ private let newYorkMorning = Date(timeIntervalSince1970: 1_793_714_400)
     #expect(today.newestUnseenCoachCard == nil)
 }
 
+@MainActor @Test func aBoxedGiftShowsUntilItIsOpened() async {
+    let backend = ScriptedBackend(server: sampleHome())
+    let today = store(backend)
+    await today.load()
+    #expect(today.unopenedCoachGift == nil)
+    let gift = CoachPageCard(
+        kind: .gift, id: "gift-sheeptowel", coach: maotou, look: "xiaohun", time: Date(timeIntervalSince1970: 1_000),
+        gift: CoachPageCard.Gift(piece: "gift-sheeptowel"))
+    await backend.set(unopenedGift: gift)
+    await today.load()
+    #expect(today.unopenedCoachGift?.id == "gift-sheeptowel")
+    // What was shown stays while the server can't be reached.
+    await backend.set(failure: .notSent)
+    await today.loadCoach()
+    #expect(today.unopenedCoachGift?.id == "gift-sheeptowel")
+    // Opened on the coach's page, the next load takes it away.
+    await backend.set(failure: nil)
+    await backend.set(unopenedGift: nil)
+    await today.loadCoach()
+    #expect(today.unopenedCoachGift == nil)
+}
+
 @MainActor @Test func theCoachKeptOnThePhoneStandsOnTheSidelineWhileTheServerCantBeReached() async throws {
     let home = sampleHome()
     let backend = ScriptedBackend(saved: home, server: home)

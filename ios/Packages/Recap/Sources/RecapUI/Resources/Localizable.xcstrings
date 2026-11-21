@@ -1379,6 +1379,38 @@
           }
         }
       }
+    },
+    "佩戴头衔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wear title"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "佩戴頭銜"
+          }
+        }
+      }
+    },
+    "已佩戴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wearing"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已佩戴"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

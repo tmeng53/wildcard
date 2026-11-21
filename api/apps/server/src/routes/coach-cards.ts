@@ -279,7 +279,8 @@ export function coachCards(deps: {
       'it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older ' +
       'than today); each card says whether it was seen. `challenges` keeps ' +
       'only the challenges, every one since the caller joined, those in the stack too (挑战, ' +
-      'Tracy 2026-11-09).',
+      'Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button ' +
+      '(Tracy, 2026-11-21).',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: {
@@ -294,6 +295,12 @@ export function coachCards(deps: {
           .optional()
           .meta({
             description: `\`true\` keeps only the challenges, from when the caller joined (not only the last ${String(CARDS_DAYS)} days).`,
+          }),
+        gifts: z
+          .enum(['true', 'false'])
+          .optional()
+          .meta({
+            description: `\`true\` keeps only the gifts, from when the caller joined (not only the last ${String(CARDS_DAYS)} days).`,
           }),
       }),
     },
@@ -446,12 +453,13 @@ export function coachCards(deps: {
     })
     .openapi(earlierRoute, async (c) => {
       const { squadId } = c.req.valid('param');
-      const { cursor, unseen, challenges } = c.req.valid('query');
-      const onlyChallenges = challenges === 'true';
+      const { cursor, unseen, challenges, gifts } = c.req.valid('query');
+      // One kind, every card of it since the caller joined, those in the stack too.
+      const only = challenges === 'true' ? 'challenge' : gifts === 'true' ? 'gift' : undefined;
       const listed = (
-        await sorted({ squadId, member: c.var.caller.userId, sinceJoined: onlyChallenges })
+        await sorted({ squadId, member: c.var.caller.userId, sinceJoined: only !== undefined })
       )
-        .filter((card) => (onlyChallenges ? card.wire.kind === 'challenge' : !card.stacked))
+        .filter((card) => (only === undefined ? !card.stacked : card.wire.kind === only))
         .reverse();
       const shown = (card: (typeof listed)[number]) => unseen !== 'true' || !card.seen;
       // The page starts after the card the cursor names. Found in the whole list, so one seen since

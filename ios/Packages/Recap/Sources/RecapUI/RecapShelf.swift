@@ -69,6 +69,7 @@ public final class RecapShelf {
     @ObservationIgnored private let scenePicker: @MainActor (WeekStory) async -> ScenePicker?
     @ObservationIgnored private let scenePicked: @MainActor (SceneTheme) -> Void
     @ObservationIgnored private let seenStore: RecapSeen
+    @ObservationIgnored private let titles: @MainActor () -> TitleWearing?
 
     /// - Parameters:
     ///   - squad: the squad and its people as the app holds them now; nil before the home loads.
@@ -77,8 +78,10 @@ public final class RecapShelf {
     ///     and nobody has yet; nil otherwise.
     ///   - scenePicked: the reader picked, and the reveal filled the screen with that scene.
     ///   - seen: where the weeks watched to the end are kept.
+    ///   - titles: where 佩戴头衔 saves, read as each story opens; nil leaves it out.
     public init(
         service: any WeekStoryService, squad: @escaping @MainActor () -> Squad?, seen: RecapSeen = RecapSeen(),
+        titles: @escaping @MainActor () -> TitleWearing? = { nil },
         scenePicker: @escaping @MainActor (WeekStory) async -> ScenePicker? = { _ in nil },
         scenePicked: @escaping @MainActor (SceneTheme) -> Void = { _ in }
     ) {
@@ -87,6 +90,7 @@ public final class RecapShelf {
         self.scenePicker = scenePicker
         self.scenePicked = scenePicked
         seenStore = seen
+        self.titles = titles
         self.seen = seen.weeks()
     }
 
@@ -174,7 +178,7 @@ public final class RecapShelf {
     private func show(_ story: WeekStory, viewer: MemberID) {
         guard story.isPublished else { return }
         let model = RecapModel(
-            story: story, cast: StoryCast(story: story, viewer: viewer), service: service,
+            story: story, cast: StoryCast(story: story, viewer: viewer), service: service, titles: titles(),
             close: { [weak self] in self?.open = nil },
             finished: { [weak self] in self?.watched(story) },
             planNextWeek: { [weak self] in

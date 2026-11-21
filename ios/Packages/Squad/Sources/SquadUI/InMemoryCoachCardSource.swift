@@ -132,6 +132,7 @@ public actor InMemoryCoachCardSource: CoachCardSource {
             case .all: earlier
             case .unseen: earlier.filter { !$0.isSeen }
             case .challenges: (stack.reversed() + earlier).filter { $0.kind == .challenge }
+            case .gifts: (stack.reversed() + earlier).filter { $0.kind == .gift }
             }
         let start =
             cursor.flatMap { after in listed.firstIndex { "\($0.kind.rawValue):\($0.id)" == after } }

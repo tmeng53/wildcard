@@ -96,7 +96,8 @@ struct WildcardApp: App {
             now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
             patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
             coachNote: LaunchOptions.coachNote, coachLetter: LaunchOptions.coachLetter,
-            together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge)
+            together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge,
+            gift: LaunchOptions.coachGift)
         let today = TodayModel(
             store: TodayStore(
                 backend: backend,
@@ -113,13 +114,14 @@ struct WildcardApp: App {
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _squadPlaces = State(initialValue: Self.sampleSquadPlaces(backend: backend, member: member))
-        _profile = State(initialValue: Self.sampleProfile())
+        let profile = Self.sampleProfile()
+        _profile = State(initialValue: profile)
         _squad = State(
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
                     seat: LaunchOptions.squadSeat, longNames: LaunchOptions.longNames)))
         _schedule = State(initialValue: Self.sampleSchedule())
-        _recap = State(initialValue: Self.sampleRecap(today: today))
+        _recap = State(initialValue: Self.sampleRecap(today: today, profile: profile))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -192,19 +194,6 @@ struct WildcardApp: App {
             ) { _ in Task { await service.set(stock: later) } }
         }
         return MeModel(service: service, confirm: { .signedInSession }, signOut: {})
-    }
-
-    /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
-    /// its last page puts 今天 there.
-    private static func sampleRecap(today: TodayModel) -> RecapShelf {
-        RecapShelf(
-            service: RecapSample.Service(),
-            squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
-            seen: .onlyThisLaunch(),
-            scenePicker: { _ in
-                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
-            },
-            scenePicked: { scene in today.scene = scene })
     }
 
     /// The sample squad's week, no posts at all (`-uitest-empty-feed`) or none that can be read
