@@ -3697,13 +3697,18 @@
               "left",
               "removed"
             ],
-            "description": "`left`: the member left it; `removed`: its captain took them out."
+            "description": "`left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it."
+          },
+          "disbanded": {
+            "type": "boolean",
+            "description": "Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`."
           }
         },
         "required": [
           "id",
           "name",
-          "how"
+          "how",
+          "disbanded"
         ],
         "additionalProperties": false,
         "description": "In no squad now, the squad the member was last in and how they came out of it; left out while they are in a squad, or were never in one."
@@ -11752,6 +11757,72 @@
           },
           "403": {
             "description": "The member isn’t in this squad (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "disbandSquad",
+        "summary": "Disband a squad (解散小队)",
+        "description": "Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Disbanded"
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

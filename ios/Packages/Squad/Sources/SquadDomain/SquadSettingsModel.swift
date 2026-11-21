@@ -53,7 +53,7 @@ public final class SquadSettingsModel {
     /// The last change didn't go through; the page says so until the next one.
     public private(set) var changeFailed = false
     /// The member left the squad: the app takes them back to sign-up's squad step.
-    public private(set) var hasLeft = false
+    public internal(set) var hasLeft = false
     /// The scene picker, while the member may pick and has opened it (换场地).
     public private(set) var picker: ScenePicker?
     /// 教练招聘会, read each time it opens.
@@ -282,15 +282,6 @@ public final class SquadSettingsModel {
             try await service.remove(member, from: settings.squad.id)
             await self.reload()
             self.changed()
-        }
-    }
-
-    /// Leaves the squad. The app then goes back to sign-up's squad step.
-    public func leave() async {
-        guard let settings else { return }
-        await change { service throws(SquadError) in
-            try await service.remove(settings.viewer, from: settings.squad.id)
-            self.hasLeft = true
         }
     }
 
