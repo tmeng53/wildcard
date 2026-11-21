@@ -117,8 +117,7 @@ public struct HeaderTextButton: View {
 
 /// The 「…」 that opens a glass menu for a rare action beside a line of words (a post's 编辑 or
 /// 举报): a small muted glyph with no glass, so it never covers what it sits by (feedback #74),
-/// still a 44-point tap target. It lays out at the glyph's size; the tap target reaches past it.
-/// `.ink` is for one on a dark face.
+/// still a 44-point tap target, its glyph centred in it. `.ink` is for one on a dark face.
 public struct HeaderMenu: View {
     @Environment(\.sceneTheme) private var theme
     private let label: Text
@@ -150,7 +149,6 @@ public struct HeaderMenu: View {
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .glassMenu(isPresented: $isOpen, items: items)
-        .frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
     }
 }
 

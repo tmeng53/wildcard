@@ -239,8 +239,7 @@ struct PostCard: View {
         }
     }
 
-    /// How far above the byline's baseline the 「…」's dots sit: mid-height of its small letters.
-    private static let menuRise: Double = 4
+    private var hasMenu: Bool { model.canManage(post) || model.canModerate(post) }
 
     /// 我 下午11:02 · 训练 · 快走, and which day a 补打卡 counts for.
     private var byline: some View {
@@ -261,12 +260,15 @@ struct PostCard: View {
             }
             .typeStyle(TypeRamp.footnote)
             .foregroundStyle(Color(role: .fgMuted, in: theme))
-            if model.canManage(post) || model.canModerate(post) {
-                Spacer(minLength: Space.xs)
-                menu.alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + Self.menuRise }
-            }
         }
         .lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.trailing, hasMenu ? Sizing.smallIcon + Space.xs : 0)
+        // Laid over the byline's end, as the card's overlay was, so the popover's source sits
+        // outside the text row; its 44-point target is centred on the glyph's place.
+        .overlay(alignment: .trailing) {
+            menu.offset(x: (Sizing.minimumTapTarget - Sizing.smallIcon) / 2)
+        }
     }
 
     private var authorName: Text {
