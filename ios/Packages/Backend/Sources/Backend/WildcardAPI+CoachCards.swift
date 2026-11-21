@@ -14,15 +14,17 @@ extension WildcardAPI {
 
     /// A page of 以前 in `squad`, newest first, from `cursor` (the page before's `next`); only the
     /// cards not seen yet when `unseenOnly`; every challenge since the member joined when
-    /// `challengesOnly`.
+    /// `challengesOnly`, and every gift when `giftsOnly`.
     public func earlierCoachCards(
-        in squad: SquadID, from cursor: String?, unseenOnly: Bool, challengesOnly: Bool = false
+        in squad: SquadID, from cursor: String?, unseenOnly: Bool, challengesOnly: Bool = false,
+        giftsOnly: Bool = false
     ) async throws(APIError) -> CoachEarlierCards {
         let wire = try await call {
             try await client.getEarlierCoachCards(
                 path: .init(squadId: squad.description),
                 query: .init(
-                    cursor: cursor, unseen: unseenOnly ? ._true : nil, challenges: challengesOnly ? ._true : nil)
+                    cursor: cursor, unseen: unseenOnly ? ._true : nil, challenges: challengesOnly ? ._true : nil,
+                    gifts: giftsOnly ? ._true : nil)
             ).ok.body.json
         }
         return CoachEarlierCards(wire)

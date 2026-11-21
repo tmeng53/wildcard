@@ -15,6 +15,23 @@ extension MainTabs {
     func opensCoachPagesFromToday() {
         today.openCoach = { openCoachDeck() }
         today.openChallenge = { openChallengeCard($0) }
+        today.openGift = { openGiftCard($0) }
+    }
+
+    /// Opens a boxed gift's card from the home's gift button (Tracy, 2026-11-21): over the coach's
+    /// page, so 拆开 is right there and 返回 lands on the page; the page alone when the card can't
+    /// be read.
+    func openGiftCard(_ gift: CoachPageCard) {
+        guard let deck = readyDeck() else {
+            openCoachDeck()
+            return
+        }
+        Task {
+            let card = await deck.giftCard(piece: gift.id)
+            guard selection == .today, todayPages.isEmpty else { return }
+            let page: [TodayPage] = deckCoach == nil ? [] : [.coachDeck]
+            todayPages = page + (card.map { [.coachCard($0)] } ?? [])
+        }
     }
 
     /// Opens the card of today's challenge, from a tap on its coach's head on the squad card (Tracy,

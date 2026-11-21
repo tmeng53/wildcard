@@ -8,7 +8,7 @@ BadgeBoardUITests 182
 BroadcastCelebrationUITests 64
 CharacterEditorUITests 309
 CheckInMenuUITests 77
-CoachDeckUITests 249
+CoachDeckUITests 309
 CoachFeedUITests 100
 CoachHireUITests 222
 CoachLetterUITests 164
@@ -35,7 +35,7 @@ PatUITests 133
 PostManageUITests 621
 PushBannerUITests 296
 PushLongPressUITests 117
-RecapUITests 465
+RecapUITests 515
 RejoinUITests 74
 ScenePickUITests 319
 ScheduleUITests 328

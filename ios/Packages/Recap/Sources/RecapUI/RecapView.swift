@@ -181,7 +181,12 @@ public struct RecapView: View {
             PendingPage(page: context, stuck: model.story.stuck, nudged: model.nudged, nudge: model.nudge)
                 .storyPage("pending")
         case .podium(let podium): PodiumPage(podium: podium, page: context).storyPage("podium")
-        case .titles(let rows): TitlesPage(rows: rows, page: context).storyPage("titles")
+        case .titles(let rows):
+            TitlesPage(
+                rows: rows, page: context, ownTitle: model.ownTitle, wearsOwnTitle: model.wearsOwnTitle,
+                wear: model.wearOwnTitle
+            )
+            .storyPage("titles")
         case .myWeek(let week): MyWeekPage(week: week, page: context).storyPage("myWeek")
         case .squadWeek(let week): SquadWeekPage(week: week, page: context).storyPage("squadWeek")
         case .hottest(let hottest):

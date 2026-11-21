@@ -40,6 +40,9 @@ public protocol CheckInBackend: Sendable {
     /// line, their morning note, a challenge or a gift), for the dot on its phone and the coach's
     /// row on the squad card; nil once they have seen them all.
     func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard?
+    /// The newest gift the squad's coaches gave the member that they haven't opened (拆开), any
+    /// day, for the home's gift button (Tracy, 2026-11-21); nil once every one is opened.
+    func unopenedCoachGift(in squad: SquadID) async throws(CheckInError) -> CoachPageCard?
     /// The challenge in the member's morning note today in `squad`, answered or not; nil when
     /// there is none.
     func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge?

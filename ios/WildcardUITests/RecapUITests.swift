@@ -114,6 +114,30 @@ final class RecapUITests: XCTestCase {
         "bestDisclaimer", "ending",
     ]
 
+    /// 佩戴头衔 under the titles wears the reader's own title from that week; the button says so at
+    /// once (Tracy, 2026-11-21).
+    func testWearingMyTitleFromTheStory() {
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
+        let tile = app.buttons["recap.entry"]
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
+        tile.tap()
+        show("podium", in: app)
+        next(in: app)
+        show("titles", in: app)
+        let wear = app.buttons["recap.wearTitle"]
+        XCTAssertTrue(wear.waitForExistence(timeout: Self.wait), "no 佩戴头衔 for the reader's title")
+        Thread.sleep(forTimeInterval: 2.5)
+        XCTAssertTrue(wear.isHittable, "佩戴头衔 is covered")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(wear.frame), "佩戴头衔 runs off the screen")
+        keepScreenshot(named: "7b-recap-wear-title")
+        wear.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "已佩戴"), evaluatedWith: wear)
+        waitForExpectations(timeout: Self.wait)
+        keepScreenshot(named: "7c-recap-title-worn")
+        // Still on the titles page: the tap wore the title, it didn't turn the page.
+        show("titles", in: app)
+    }
+
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
     func testPendingTitlesCanBeNudged() {
         let app = launch(language: "zh-Hans", extra: ["-recap-pending"])
