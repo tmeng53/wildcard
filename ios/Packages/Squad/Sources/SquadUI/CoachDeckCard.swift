@@ -90,7 +90,7 @@ struct CoachDeckCard: View {
         // As tall as what it says (Tracy, 2026-11-21): a short note no longer sits on a card
         // stretched to the screen's foot.
         .frame(maxWidth: .infinity, alignment: .top)
-        .frame(height: height, alignment: .top)
+        .frame(height: height.map { CGFloat($0) }, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
         .clipShape(RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous))
         .overlay {
