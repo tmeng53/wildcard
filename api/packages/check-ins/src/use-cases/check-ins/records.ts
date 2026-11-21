@@ -63,7 +63,10 @@ export async function records(
       trainings: mine,
       healthyMealDays: rows.healthyMealDays,
       cheatMealDays: rows.cheatMealDays,
-      restDays: await restDays(deps, { member, days: mine.map((training) => training.day) }),
+      restDays: await restDays(deps, {
+        member,
+        days: [...mine.map((training) => training.day), ...rows.healthyMealDays],
+      }),
       leaveDays: new Set(rows.leaveDays),
       timeZone,
     }),
