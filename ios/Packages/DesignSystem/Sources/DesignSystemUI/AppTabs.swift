@@ -46,7 +46,9 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
 /// brand dot, no number: something new there since the member last looked. `backToRoot` is
 /// called with the tab left and with the open tab tapped again, for it to close the pages pushed
 /// over it, as iOS's own apps do, so every tab opens from the bar on its own page. `action`, when
-/// given, is the round button apart at the bar's trailing end (`TabBarAction`).
+/// given, is the round button apart at the bar's trailing end (`TabBarAction`). `barTapped` is
+/// told each time a tab is tapped in the bar, a new one or the open one, never when the selection
+/// changes from code.
 public struct AppTabs<ID: Hashable, Content: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let items: [TabBarItem<ID>]
@@ -55,6 +57,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
     private let dotted: Set<ID>
     private let backToRoot: (ID) -> Void
     private let action: TabBarAction?
+    private let barTapped: (ID) -> Void
     private let content: (ID) -> Content
 
     /// What the bar selects: a tab, or the action, which is never kept selected.
@@ -66,6 +69,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
     public init(
         _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true, dotted: Set<ID> = [],
         backToRoot: @escaping (ID) -> Void = { _ in }, action: TabBarAction? = nil,
+        barTapped: @escaping (ID) -> Void = { _ in },
         @ViewBuilder content: @escaping (ID) -> Content
     ) {
         self.items = items
@@ -74,6 +78,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
         self.dotted = dotted
         self.backToRoot = backToRoot
         self.action = action
+        self.barTapped = barTapped
         self.content = content
         Self.paintDots()
     }
@@ -87,7 +92,9 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
             set: { slot in
                 switch slot {
                 case .action: action?.perform()
-                case .tab(let tab): if tab == selection { backToRoot(tab) } else { selection = tab }
+                case .tab(let tab):
+                    barTapped(tab)
+                    if tab == selection { backToRoot(tab) } else { selection = tab }
                 }
             })
     }

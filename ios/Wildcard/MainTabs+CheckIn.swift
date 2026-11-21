@@ -7,10 +7,13 @@ import SwiftUI
 // check-in kinds it opens into over the tab on screen.
 
 extension MainTabs {
-    /// The ＋, a cross while the kinds are open; a tap opens or closes them.
+    /// The ＋, a cross (收起) while the kinds are open; a tap opens or closes them. A tab tapped in
+    /// the bar also closes them (`barTapped`); a tab picked from code, as a push or widget that
+    /// opens them on 小队 does, leaves them open.
     static func checkInButton(isOpen: Bool, toggle: @escaping () -> Void) -> TabBarAction {
         TabBarAction(
-            title: Text(copy: "打卡", bundle: .main), systemImage: isOpen ? "xmark" : "plus",
+            title: isOpen ? Text(copy: "收起", bundle: .main) : Text(copy: "打卡", bundle: .main),
+            systemImage: isOpen ? "xmark" : "plus",
             accessibilityIdentifier: "today.checkin", perform: toggle)
     }
 

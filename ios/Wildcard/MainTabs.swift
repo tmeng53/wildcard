@@ -129,7 +129,7 @@ struct MainTabs: View {
     var body: some View {
         AppTabs(
             Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot,
-            action: checkInAction
+            action: checkInAction, barTapped: { _ in today.isCheckInMenuOpen = false }
         ) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
@@ -139,8 +139,6 @@ struct MainTabs: View {
             }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
-        // Another tab picked while the check-in kinds are open puts them away.
-        .onChange(of: selection) { today.isCheckInMenuOpen = false }
         // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
         .environment(\.placePage, composePlacePage)
         // A post's page, the coach's page and every place opened read the notices about them.

@@ -140,7 +140,7 @@ final class SignUpUITests: XCTestCase {
             XCTAssertTrue(card.waitForExistence(timeout: Self.wait), "the squad card never dropped in")
         }
         // 上场 shows the tab bar too, so home is its own 打卡.
-        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")
+        XCTAssertTrue(app.buttons["today.me"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "48-signup-home")
     }
 

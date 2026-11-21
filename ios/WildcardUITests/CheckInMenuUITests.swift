@@ -65,13 +65,20 @@ final class CheckInMenuUITests: XCTestCase {
         XCTAssertTrue(meal.waitForExistence(timeout: Self.wait), "the kinds didn't open on 动态")
         XCTAssertTrue(app.buttons["tab.feed"].isSelected, "the ＋ left 动态")
         XCTAssertTrue(app.buttons["tab.feed"].isHittable, "the bar stepped aside for the kinds")
+        XCTAssertEqual(plus.label, "收起", "the cross isn't 收起")
         settle()
         keepScreenshot(named: "14c-checkin-menu-on-feed")
         plus.tap()
         waitFor(meal, "exists == false", "the cross didn't put the kinds away")
 
+        // A tab tapped in the bar puts them away too, the open one included.
         plus.tap()
         XCTAssertTrue(meal.waitForExistence(timeout: Self.wait), "the kinds didn't open again")
+        app.buttons["tab.feed"].tap()
+        waitFor(meal, "exists == false", "tapping the open tab didn't put the kinds away")
+
+        plus.tap()
+        XCTAssertTrue(meal.waitForExistence(timeout: Self.wait), "the kinds didn't open a third time")
         meal.tap()
         XCTAssertTrue(app.buttons["compose.post"].waitForExistence(timeout: Self.wait), "the compose page never opened")
         waitFor(app.buttons["tab.feed"], "exists == false", "the tab bar stayed over the compose page")

@@ -70,7 +70,7 @@ final class TabsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["tab.today"].isSelected, "小队 left 今天")
         backButton(in: app).tap()
         waitFor(squadPage, "exists == false", "返回 didn't close 小队")
-        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: 30), "返回 didn't go back home")
+        XCTAssertTrue(app.buttons["today.me"].waitForExistence(timeout: 30), "返回 didn't go back home")
     }
 
     /// `-tab` opens straight on another tab, as screenshots of later tabs need; `-tab schedule`

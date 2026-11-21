@@ -51,7 +51,7 @@ public struct CheckInMenu: View {
                                 onPick(kind)
                             }
                             .accessibilityIdentifier("\(identifierPrefix).capsule.\(kind.rawValue)")
-                            // The one next to the ＋ first, the rest following up the stack.
+                                                // The one next to the ＋ first, the rest following up the stack.
                             .transition(pop(index: kinds.count - 1 - index, of: kinds.count))
                         }
                     }
@@ -61,7 +61,6 @@ public struct CheckInMenu: View {
             }
         }
         .background { measuring }
-        .accessibilityAction(.escape) { close() }
         // Haptics only where the spec puts them: the menu opening and picking a kind.
         .haptic(.appear, trigger: isOpen) { _, opened in opened }
         .haptic(.pick, trigger: picks)
