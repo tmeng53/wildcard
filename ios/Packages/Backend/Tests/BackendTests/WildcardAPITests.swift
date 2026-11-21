@@ -58,14 +58,13 @@ func photoBytes() -> Data {
     #expect(try await member.api.save(profile) == profile)
     #expect(try await member.api.me().profile == profile)
 
-    // Saving again replaces it, catchphrase and character included.
+    // Saving again replaces it, character included.
     let character = MemberCharacter(
         nickname: try Nickname(" 小周 "),
         look: CharacterLook(
             persona: "deadpan", variants: ["body": "tuxedo", "top": "warmup-hoodie"], colors: ["top": "#2D5BA0"]))
     let moved = Profile(
-        timeZone: try #require(TimeZone(identifier: "America/Toronto")), catchphrase: try Catchphrase("冲就完了🔥"),
-        character: character)
+        timeZone: try #require(TimeZone(identifier: "America/Toronto")), character: character)
     #expect(try await member.api.save(moved) == moved)
     #expect(try await member.api.me().profile == moved)
 

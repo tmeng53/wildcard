@@ -116,7 +116,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
         nickname: try Nickname("小周"), look: CharacterLook(persona: "deadpan", variants: ["body": "tuxedo"], colors: [:])
     )
     let before = Profile(
-        timeZone: losAngeles, catchphrase: try Catchphrase("冲就完了"), character: character,
+        timeZone: losAngeles, character: character,
         jerseyNumber: try JerseyNumber(7))
     _ = try await traveller.api.save(before)
 
@@ -127,7 +127,7 @@ private func jpeg(_ byte: UInt8) -> PreparedPhoto {
     #expect(
         try await traveller.api.me().profile
             == Profile(
-                timeZone: shanghai, catchphrase: before.catchphrase, character: character,
+                timeZone: shanghai, character: character,
                 jerseyNumber: before.jerseyNumber))
     // Already in the phone's zone: nothing to save.
     #expect(try await backend.followPhoneZone() == false)

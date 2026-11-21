@@ -89,7 +89,7 @@ public struct APICheckInBackend: CheckInBackend {
             // The profile is saved whole, so the rest of it is kept.
             _ = try await api.save(
                 Profile(
-                    timeZone: zone, catchphrase: profile.catchphrase, character: profile.character,
+                    timeZone: zone, character: profile.character,
                     jerseyNumber: profile.jerseyNumber))
             return true
         } catch {

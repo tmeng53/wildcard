@@ -71,7 +71,7 @@ extension SquadToday {
 extension SquadmateToday {
     init(_ wire: Components.Schemas.SquadToday.MembersPayloadPayload) throws(ContractsError) {
         self.init(
-            member: try MemberID(wire: wire.member), catchphrase: try wire.catchphrase.map(Catchphrase.init),
+            member: try MemberID(wire: wire.member),
             character: try wire.character.map(MemberCharacter.init),
             day: try LocalDay(wire.day),
             training: TrainingStatus(wire.training), latestMeal: wire.latestMeal.map(MealKind.init),

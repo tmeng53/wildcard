@@ -12,8 +12,7 @@ import UIKit
 /// and an ink switch; 偏好's Apple 健康 and 桌面小组件 push their own pages, and 位置 asks for approximate location
 /// once, then opens iOS Settings. Signing out and deleting the account come last. It holds only the app's
 /// own settings: what belongs to the squad or the week lives with them (2026-11-02), with only a way
-/// to 小队设置 here (2026-11-12), and 球衣号码
-/// with the character editor (2026-11-03).
+/// to 小队设置 here (2026-11-12).
 struct SettingsView: View {
     @Bindable var model: MeModel
     let destinations: MeDestinations

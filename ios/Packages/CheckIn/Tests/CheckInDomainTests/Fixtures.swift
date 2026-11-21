@@ -19,7 +19,7 @@ func entry(_ member: MemberID, _ training: TrainingStatus, plannedRest: Bool = f
     -> SquadmateToday
 {
     SquadmateToday(
-        member: member, catchphrase: nil, character: nil, day: tuesday, training: training, latestMeal: nil,
+        member: member, character: nil, day: tuesday, training: training, latestMeal: nil,
         plannedRest: plannedRest,
         firstCheckInAt: since.map(Timestamp.init(millisecondsSince1970:)))
 }

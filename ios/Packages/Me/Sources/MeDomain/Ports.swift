@@ -8,8 +8,6 @@ public protocol MeService: Sendable {
     func records() async throws(MeError) -> WildcardRecords
     /// Saves the character after the member edits it in the character editor.
     func save(_ character: MeCharacter) async throws(MeError)
-    /// Saves the number the member picked for their player card.
-    func save(jerseyNumber: JerseyNumber) async throws(MeError)
     /// Saves the birthday the member chose to give, or forgets it (nil).
     func save(birthday: Birthday?) async throws(MeError)
     func setDailyPush(_ isOn: Bool) async throws(MeError)
