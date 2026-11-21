@@ -132,7 +132,7 @@ struct PostCard: View {
     /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
     private var manageMenu: some View {
         HeaderMenu(
-            Text(copy: "编辑或删除", bundle: .module), quiet: true,
+            Text(copy: "编辑或删除", bundle: .module),
             items: scoreCardItem + [
                 GlassMenuItem(Text(copy: "编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
                     model.edit(post)
@@ -199,7 +199,8 @@ struct PostCard: View {
             PostCharacter(model: model, post: post, width: Self.characterColumn)
                 .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
-                byline
+                // Over the rows under it, so the 「…」's tap target reaching past it wins.
+                byline.zIndex(1)
                 if !post.checkIn.inFeed { UnpostedTag() }
                 if let time = WorkoutTime(post.checkIn) { WorkoutTimeTag(time: time) }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
@@ -229,15 +230,17 @@ struct PostCard: View {
     }
 
     /// The 「…」 at the end of the byline, on the white stub, so it never covers the cover or the
-    /// block's words (feedback #74): a quiet glyph, since 编辑 and 举报 are rare. It lays out as
-    /// the glyph's size and its 44-point tap target reaches past it.
+    /// block's words (feedback #74).
     @ViewBuilder private var menu: some View {
         if model.canManage(post) {
-            manageMenu.frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
+            manageMenu
         } else if model.canModerate(post) {
-            ModerationMenu(model: model, post: post).frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
+            ModerationMenu(model: model, post: post)
         }
     }
+
+    /// How far above the byline's baseline the 「…」's dots sit: mid-height of its small letters.
+    private static let menuRise: Double = 4
 
     /// 我 下午11:02 · 训练 · 快走, and which day a 补打卡 counts for.
     private var byline: some View {
@@ -260,7 +263,7 @@ struct PostCard: View {
             .foregroundStyle(Color(role: .fgMuted, in: theme))
             if model.canManage(post) || model.canModerate(post) {
                 Spacer(minLength: Space.xs)
-                menu.alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.bottom] }
+                menu.alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + Self.menuRise }
             }
         }
         .lineLimit(1)

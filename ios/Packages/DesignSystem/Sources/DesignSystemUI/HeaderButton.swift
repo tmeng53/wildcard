@@ -115,69 +115,42 @@ public struct HeaderTextButton: View {
     }
 }
 
-/// `HeaderButton`'s look for a button that opens a glass menu: the same 44-point Liquid Glass
-/// circle and glyph, the menu growing out of it. `.ink` is for a button over any photo or post
-/// face, light or dark: a white glyph on glass darkened as the photo tiles' × is, so it reads on
-/// both. `quiet` is for a rare action beside a line of words (a post's 编辑 or 举报, feedback
-/// #74): a small muted glyph with no glass, still a 44-point tap target.
+/// The 「…」 that opens a glass menu for a rare action beside a line of words (a post's 编辑 or
+/// 举报): a small muted glyph with no glass, so it never covers what it sits by (feedback #74),
+/// still a 44-point tap target. It lays out at the glyph's size; the tap target reaches past it.
+/// `.ink` is for one on a dark face.
 public struct HeaderMenu: View {
     @Environment(\.sceneTheme) private var theme
     private let label: Text
     private let systemImage: String
     private let surface: HeaderButton.Surface
     private let items: [GlassMenuItem]
-    private let quiet: Bool
     @State private var isOpen = false
-    private let glyph: Double = 17
-    /// How dark the glass is on a dark or photo face.
-    private let inkTint: Double = 0.5
 
     public init(
         _ label: Text, systemImage: String = "ellipsis", on surface: HeaderButton.Surface = .page,
-        quiet: Bool = false, items: [GlassMenuItem]
+        items: [GlassMenuItem]
     ) {
         self.label = label
         self.systemImage = systemImage
         self.surface = surface
-        self.quiet = quiet
         self.items = items
     }
 
     public var body: some View {
-        if quiet {
-            Button {
-                isOpen = true
-            } label: {
-                Image(systemName: systemImage)
-                    .font(.system(size: Sizing.smallIcon, weight: .semibold))
-                    .foregroundStyle(Color(role: surface == .ink ? .fgOnInkMuted : .fgSubtle, in: theme))
-                    .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(label)
-            .glassMenu(isPresented: $isOpen, items: items)
-        } else {
-            Button {
-                isOpen = true
-            } label: {
-                Image(systemName: systemImage)
-                    .font(.system(size: glyph, weight: .semibold))
-                    .foregroundStyle(Color(role: surface == .ink ? .fgOnInk : .fgDefault, in: theme))
-                    .frame(width: Sizing.control, height: Sizing.control)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .glassEffect(glass, in: Circle())
-            .accessibilityLabel(label)
-            .glassMenu(isPresented: $isOpen, items: items)
+        Button {
+            isOpen = true
+        } label: {
+            Image(systemName: systemImage)
+                .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                .foregroundStyle(Color(role: surface == .ink ? .fgOnInkMuted : .fgSubtle, in: theme))
+                .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
+                .contentShape(Rectangle())
         }
-    }
-
-    private var glass: Glass {
-        surface == .ink
-            ? .regular.tint(Color(role: .bgInk, in: theme).opacity(inkTint)).interactive()
-            : .regular.interactive()
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .glassMenu(isPresented: $isOpen, items: items)
+        .frame(width: Sizing.smallIcon, height: Sizing.smallIcon)
     }
 }
 

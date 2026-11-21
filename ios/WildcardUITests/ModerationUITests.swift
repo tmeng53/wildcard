@@ -90,9 +90,12 @@ final class ModerationUITests: XCTestCase {
         XCTAssertTrue(moderate.isHittable, "a teammate's post shows no 「…」")
         // Feedback #74: the 「…」 sits on the white stub, never over a cover or a block's words.
         let centre = CGPoint(x: moderate.frame.midX, y: moderate.frame.midY)
-        for face in app.descendants(matching: .any).matching(identifier: "post.block").allElementsBoundByIndex
-        where face.exists {
-            XCTAssertFalse(face.frame.contains(centre), "the 「…」 covers a post's block")
+        let faces = ["post.block", "feed.photos"].flatMap {
+            app.descendants(matching: .any).matching(identifier: $0).allElementsBoundByIndex
+        }
+        XCTAssertFalse(faces.isEmpty, "no post faces on screen")
+        for face in faces where face.exists {
+            XCTAssertFalse(face.frame.contains(centre), "the 「…」 covers a post's face")
         }
         settle()
         keepScreenshot(named: "159-feed-teammate-menu-button")

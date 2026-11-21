@@ -112,7 +112,7 @@ struct ModerationMenu: View {
 
     var body: some View {
         HeaderMenu(
-            Text(copy: "举报或拉黑", bundle: .module), quiet: true,
+            Text(copy: "举报或拉黑", bundle: .module),
             items: [
                 FeedModel.reportItem(Text(copy: "举报这条动态？", bundle: .module), id: "post.report") {
                     model.report(.post(post.id))
