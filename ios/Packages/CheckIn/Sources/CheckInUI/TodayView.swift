@@ -127,10 +127,10 @@ public struct TodayView: View {
                 iSleep: model.myPose(at: .night) == .asleep, iHoldSign: model.myPose(at: .day) == .holdingSign,
                 myDoze: model.myDoze, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
-                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
-                tapVacancy: model.tapVacancy, clock: model.now
+                pats: model.pats, together: model.together, canPat: model.canPat,
+                tapMate: model.tapMate, doubleTapMate: model.doubleTapMate, tapMe: model.tapMe, patMate: model.patMate,
+                arrival: model.arrival, tapCoach: model.tapCoach, coachHasNews: model.coachHasNews,
+                coachAt: { coachCenter = $0 }, tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model) }
             .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)

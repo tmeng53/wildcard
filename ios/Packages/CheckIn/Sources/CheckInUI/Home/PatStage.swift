@@ -89,11 +89,15 @@ final class PatStage {
     // MARK: Tapping a teammate
 
     /// A teammate was tapped: they hop and cheer if awake and not mid-sport, and any bubble
-    /// closes; their card opens over the app. Returns their pose, nil while a pat plays.
+    /// closes; their card opens over the app. A tap works while a pat plays too (Tracy,
+    /// 2026-11-21: a pat locked every other teammate for its seconds); someone in that pat keeps
+    /// playing it instead of hopping. Returns their pose.
     @discardableResult
-    func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) -> StagePose? {
-        guard pat == nil else { return nil }
+    func tap(_ mate: SquadCast.Mate, cast: SquadCast, phase: DayPhase, now: Date = .now) -> StagePose {
         bubble = nil
+        if let pat, pat.patter == .mate(mate.id) || pat.patted == .mate(mate.id) {
+            return cast.stage.pose(of: mate.member, at: phase)
+        }
         return hop(mate, cast: cast, phase: phase, now: now)
     }
 
@@ -147,11 +151,28 @@ final class PatStage {
 
     // MARK: Patting
 
-    /// I pat `mate` from where I stand, unless another pat is playing; says whether it started,
-    /// so the caller sends only a pat that was seen.
+    /// I pat `mate` from where I stand; while another pat plays, it waits its turn and plays
+    /// right after, so patting one teammate after another never drops one. Says whether it
+    /// started or waits, so the caller sends only a pat that will be seen.
     @discardableResult
     func pat(_ mate: SquadCast.Mate, mine: CharacterPlayer?, now: Date = .now) -> Bool {
-        guard pat == nil, let mine, let jab = try? PlaceholderCharacter.patMove(),
+        guard let mine else { return false }
+        guard pat == nil else {
+            guard pat?.patted != .mate(mate.id), !waiting.contains(where: { $0.mate.id == mate.id }) else {
+                return false
+            }
+            waiting.append((mate, mine))
+            return true
+        }
+        return start(mate, mine: mine, now: now)
+    }
+
+    /// My pats waiting for the one playing to end, in the order I made them.
+    private var waiting: [(mate: SquadCast.Mate, mine: CharacterPlayer)] = []
+
+    /// Plays my pat on `mate` now.
+    private func start(_ mate: SquadCast.Mate, mine: CharacterPlayer, now: Date) -> Bool {
+        guard let jab = try? PlaceholderCharacter.patMove(),
             let reaction = try? PlaceholderCharacter.pattedMove(mate.persona)
         else { return false }
         bubble = nil
@@ -213,6 +234,15 @@ final class PatStage {
             guard let self, self.pat == current else { return }
             self.pat = nil
             finished()
+            self.playWaiting()
+        }
+    }
+
+    /// The next of my pats waiting, if nothing else started meanwhile.
+    private func playWaiting() {
+        while pat == nil, !waiting.isEmpty {
+            let next = waiting.removeFirst()
+            _ = start(next.mate, mine: next.mine, now: .now)
         }
     }
 

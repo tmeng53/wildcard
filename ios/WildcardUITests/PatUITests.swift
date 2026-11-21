@@ -69,6 +69,40 @@ final class PatUITests: XCTestCase {
         closePopup(today, in: app)
     }
 
+    /// A double tap pats 阿杰 at once, with no card; while it plays, a tap on 大卫 still opens
+    /// his card, and his 拍一拍 there waits its turn instead of being dropped (Tracy, 2026-11-21).
+    func testDoubleTapAndPatsInTurn() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += [
+            "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+            "-today.cardPage", "0", "-uitest-card-folded", "-uitest-bubble-hold",
+        ]
+        app.launch()
+        let today = app.descendants(matching: .any).matching(identifier: "today.mateToday").firstMatch
+        let pat = app.buttons["today.pat"]
+        XCTAssertTrue(mate("阿杰", in: app).waitForExistence(timeout: Self.wait), "阿杰 never appeared")
+        mate("阿杰", in: app).doubleTap()
+        Thread.sleep(forTimeInterval: 0.4)
+        XCTAssertFalse(today.exists, "a double tap opened 阿杰's card")
+        keepScreenshot(named: "55b-double-tap-pat")
+        mate("大卫", in: app).tap()
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "a tap during a pat didn't open 大卫's card")
+        keepScreenshot(named: "55c-card-during-pat")
+        XCTAssertEqual(pat.label, "拍一拍")
+        pat.tap()
+        XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "拍一拍 didn't close 大卫's card")
+        Thread.sleep(forTimeInterval: 5)
+        for name in ["阿杰", "大卫"] {
+            mate(name, in: app).tap()
+            XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "tapping \(name) didn't open their today")
+            XCTAssertEqual(
+                app.descendants(matching: .any).matching(identifier: "today.pat").firstMatch.label, "拍过了",
+                "\(name) wasn't patted")
+            closePopup(today, in: app)
+        }
+    }
+
     /// Whoever posted a meal last eats it on the home, and their today says so with their words:
     /// 小米 had a salad after her run, Leo a boba without training.
     func testTeammatesEatingTheirLatestPost() {
