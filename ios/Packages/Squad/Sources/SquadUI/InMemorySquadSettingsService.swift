@@ -113,6 +113,12 @@ public actor InMemorySquadSettingsService: SquadSettingsService {
         current.squad = current.squad.with(members: left).with(captain: captain)
     }
 
+    public func disband(_ squad: SquadID) async throws(SquadError) {
+        if failsSaving { throw .unavailable }
+        guard current.squad.captain == current.viewer else { throw .outdated }
+        current.squad = current.squad.with(members: []).with(captain: nil)
+    }
+
     public func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(SquadError) -> SquadScene {
         if failsSaving { throw .unavailable }
         guard current.scene.canPick else { throw .outdated }

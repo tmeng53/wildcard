@@ -216,7 +216,12 @@ const SquadBody = z.object({
 const SquadListBody = z.object({
   squads: z.array(SquadBody),
   lastSquad: z
-    .object({ id: z.uuid(), name: z.string(), how: z.enum(['left', 'removed']) })
+    .object({
+      id: z.uuid(),
+      name: z.string(),
+      how: z.enum(['left', 'removed']),
+      disbanded: z.boolean(),
+    })
     .optional(),
 });
 
@@ -711,7 +716,7 @@ describe('reading and leaving squads', () => {
     const after = await call({ method: 'GET', path: '/me/squads', token: me.token });
     expect(SquadListBody.parse(after.body)).toMatchObject({
       squads: [],
-      lastSquad: { id: mine.id, name: '一', how: 'left' },
+      lastSquad: { id: mine.id, name: '一', how: 'left', disbanded: false },
     });
     const gone = await call({ method: 'GET', path: `/squads/${mine.id}`, token: me.token });
     expect(reason(gone)).toBe('SQUAD_NOT_JOINED');
@@ -763,6 +768,30 @@ describe('the captain’s settings', () => {
     expect(tooLong.status).toBe(400);
   });
 
+  it('lets only the captain disband the squad, ending it for everyone', async () => {
+    const { squad, people } = await squadOf(2);
+    const [ann, bo] = [nth(people, 0), nth(people, 1)];
+    const path = `/squads/${squad.id}`;
+    const byBo = await call({ method: 'DELETE', path, token: bo.token });
+    expect([byBo.status, reason(byBo)]).toStrictEqual([403, 'NOT_SQUAD_CAPTAIN']);
+    const byAnn = await call({ method: 'DELETE', path, token: ann.token });
+    expect(byAnn.status).toBe(204);
+    const lists = await Promise.all(
+      [ann, bo].map(async ({ token }) =>
+        SquadListBody.parse((await call({ method: 'GET', path: '/me/squads', token })).body),
+      ),
+    );
+    expect(lists).toStrictEqual([
+      { squads: [], lastSquad: { id: squad.id, name: squad.name, how: 'left', disbanded: false } },
+      {
+        squads: [],
+        lastSquad: { id: squad.id, name: squad.name, how: 'removed', disbanded: true },
+      },
+    ]);
+    const again = await call({ method: 'DELETE', path, token: ann.token });
+    expect([again.status, reason(again)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
+  });
+
   it('hands the captaincy on, and the new captain removes members', async () => {
     const { squad, people } = await squadOf(3);
     const [ann, bo, cy] = [nth(people, 0), nth(people, 1), nth(people, 2)];
@@ -799,7 +828,7 @@ describe('the captain’s settings', () => {
     const removed = await call({ method: 'GET', path: '/me/squads', token: cy.token });
     expect(SquadListBody.parse(removed.body)).toMatchObject({
       squads: [],
-      lastSquad: { id: squad.id, name: squad.name, how: 'removed' },
+      lastSquad: { id: squad.id, name: squad.name, how: 'removed', disbanded: false },
     });
     const elsewhere = await newSquad(cy.token, { name: '新队' });
     const rejoined = SquadListBody.parse(

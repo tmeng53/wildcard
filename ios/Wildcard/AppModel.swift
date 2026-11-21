@@ -55,8 +55,8 @@ final class AppModel {
     private(set) var isSigningIn = false {
         didSet { if isSigningIn, !oldValue { coverSince = .now } }
     }
-    /// The squad whose captain removed the member, said once on this phone.
-    var removedFromName: String?
+    /// The squad whose captain removed the member or disbanded it, said once on this phone.
+    var toldExit: SquadExit?
     /// Whether the signed-in member is an admin, read as the tabs open: 设置 then offers 预览注册.
     private(set) var isAdmin = false
     /// 设置 › 管理员 › 演示账号, for an admin or one of their demo accounts; nil for everyone else.

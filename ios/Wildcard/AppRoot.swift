@@ -114,7 +114,7 @@ struct AppRoot: View {
         .animation(.easeOut(duration: TicketRock.fadeOut), value: app.isStarting)
         // Signing in on the open screen: the tickets rock over it until the next screen opens.
         .loadingCover(app.isSigningIn) { LaunchCover(start: app.coverSince) }
-        .removalAlert(Binding(get: { app.removedFromName }, set: { app.removedFromName = $0 }))
+        .removalAlert(Binding(get: { app.toldExit }, set: { app.toldExit = $0 }))
         .task { await app.run() }
         // An invite link: universal links come here in a SwiftUI app.
         .onOpenURL { url in

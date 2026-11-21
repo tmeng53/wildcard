@@ -20,14 +20,23 @@ public struct Squad: Hashable, Sendable {
     }
 }
 
-/// The squad a member in none was last in, and whether its captain took them out of it.
+/// The squad a member in none was last in, and how they came out of it.
 public struct SquadExit: Hashable, Sendable {
+    /// How a member came out of a squad.
+    public enum How: Hashable, Sendable {
+        /// They left it themselves (the captain who disbanded it too).
+        case left
+        /// Its captain took them out.
+        case removed
+        /// Its captain disbanded it (解散小队), taking everyone out.
+        case disbanded
+    }
+
     public let id: SquadID
     public let name: String
-    /// True when its captain removed the member; false when they left it themselves.
-    public let wasRemoved: Bool
+    public let how: How
 
-    public init(id: SquadID, name: String, wasRemoved: Bool) {
-        (self.id, self.name, self.wasRemoved) = (id, name, wasRemoved)
+    public init(id: SquadID, name: String, how: How) {
+        (self.id, self.name, self.how) = (id, name, how)
     }
 }
