@@ -184,17 +184,17 @@ final class PostManageUITests: XCTestCase {
         let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
         let feed = app.scrollViews.firstMatch
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
-        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar.
+        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar. Shorter
+        // still once my post is near, so it stops at the screen's foot with the next day off it:
+        // with the next day on screen, 保存 stalls the app for a minute in CI (#924).
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         var drags = 0
         while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY <= tabBarTop) {
             let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            let step: Double = manage.exists ? -100 : -240
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: step)))
             drags += 1
         }
-        // DIAGNOSTIC: scroll on by a cover's height, to where the 「…」 on the byline left the feed.
-        let extra = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-        extra.press(forDuration: 0.05, thenDragTo: extra.withOffset(CGVector(dx: 0, dy: -280)))
         XCTAssertTrue(manage.isHittable, "my post shows no 「…」")
         assertClearOfTheTabBar(manage, in: app)
         XCTAssertEqual(

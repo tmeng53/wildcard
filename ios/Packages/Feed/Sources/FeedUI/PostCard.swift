@@ -103,7 +103,14 @@ struct PostCard: View {
         }
         // The 「…」 at the end of the byline (feedback #74), laid over the whole card as it was
         // before: inside the stub's rows, the feed slowed to a crawl after 编辑 in UI tests.
-        .overlay(alignment: .topTrailing) { menu.padding(Space.s) }  // DIAGNOSTIC: main's place
+        .overlayPreferenceValue(BylineEnd.self) { end in
+            if let end {
+                GeometryReader { proxy in
+                    let line = proxy[end]
+                    menu.position(x: line.maxX - Sizing.smallIcon / 2, y: line.midY)
+                }
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
