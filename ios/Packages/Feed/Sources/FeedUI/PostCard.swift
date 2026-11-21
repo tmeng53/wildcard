@@ -346,11 +346,6 @@ extension CheckIn {
     }
 }
 
-/// Press and hold a card to open the emoji bar over it, then slide along the bar and let go on an
-/// emoji to pick it. A UIKit long press, not a SwiftUI one: a SwiftUI gesture with a drag in it
-/// keeps the feed from scrolling when a swipe starts on a card, even alongside the scroll. This
-/// one fails once the finger moves first, so the scroll wins, and once it holds the scroll can't
-/// start, so the slide only picks.
 /// Where a post's byline is, for the card to lay its 「…」 at the end of it.
 private struct BylineEnd: PreferenceKey {
     static var defaultValue: Anchor<CGRect>? { nil }
@@ -360,6 +355,11 @@ private struct BylineEnd: PreferenceKey {
     }
 }
 
+/// Press and hold a card to open the emoji bar over it, then slide along the bar and let go on an
+/// emoji to pick it. A UIKit long press, not a SwiftUI one: a SwiftUI gesture with a drag in it
+/// keeps the feed from scrolling when a swipe starts on a card, even alongside the scroll. This
+/// one fails once the finger moves first, so the scroll wins, and once it holds the scroll can't
+/// start, so the slide only picks.
 private struct HoldAndSlide: UIGestureRecognizerRepresentable {
     let isEnabled: Bool
     /// The press held, and each move after, in the feed's space.
