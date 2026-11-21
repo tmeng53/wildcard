@@ -115,10 +115,9 @@ public struct HeaderTextButton: View {
     }
 }
 
-/// `HeaderButton`'s look for a button that opens a glass menu (the 「…」 on the member's own
-/// post): the same 44-point Liquid Glass circle and glyph, the menu growing out of it. `.ink` is
-/// for a button over any photo or post face, light or dark: a white glyph on glass darkened as
-/// the photo tiles' × is, so it reads on both.
+/// The 「…」 that opens a glass menu for a rare action beside a line of words (a post's 编辑 or
+/// 举报): a small muted glyph with no glass, so it never covers what it sits by (feedback #74),
+/// still a 44-point tap target, its glyph centred in it. `.ink` is for one on a dark face.
 public struct HeaderMenu: View {
     @Environment(\.sceneTheme) private var theme
     private let label: Text
@@ -126,9 +125,6 @@ public struct HeaderMenu: View {
     private let surface: HeaderButton.Surface
     private let items: [GlassMenuItem]
     @State private var isOpen = false
-    private let glyph: Double = 17
-    /// How dark the glass is on a dark or photo face.
-    private let inkTint: Double = 0.5
 
     public init(
         _ label: Text, systemImage: String = "ellipsis", on surface: HeaderButton.Surface = .page,
@@ -145,21 +141,14 @@ public struct HeaderMenu: View {
             isOpen = true
         } label: {
             Image(systemName: systemImage)
-                .font(.system(size: glyph, weight: .semibold))
-                .foregroundStyle(Color(role: surface == .ink ? .fgOnInk : .fgDefault, in: theme))
-                .frame(width: Sizing.control, height: Sizing.control)
-                .contentShape(Circle())
+                .font(.system(size: Sizing.smallIcon, weight: .semibold))
+                .foregroundStyle(Color(role: surface == .ink ? .fgOnInkMuted : .fgSubtle, in: theme))
+                .frame(width: Sizing.minimumTapTarget, height: Sizing.minimumTapTarget)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .glassEffect(glass, in: Circle())
         .accessibilityLabel(label)
         .glassMenu(isPresented: $isOpen, items: items)
-    }
-
-    private var glass: Glass {
-        surface == .ink
-            ? .regular.tint(Color(role: .bgInk, in: theme).opacity(inkTint)).interactive()
-            : .regular.interactive()
     }
 }
 

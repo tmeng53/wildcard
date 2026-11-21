@@ -138,7 +138,7 @@ final class PostManageUITests: XCTestCase {
     }
 
     /// My 练腿日's second page is its heart rate in zones on graphite: the warm-up and cool-down
-    /// under 轻松 dimmed, and the zones' axis under the 「…」, not behind it.
+    /// under 轻松 dimmed. The 「…」 is on the stub under the cover, never on it (feedback #74).
     func testHeartRateCover() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
@@ -153,20 +153,22 @@ final class PostManageUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post isn't on screen")
-        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
-            .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
-        guard let photos else { return XCTFail("my post's cover isn't under its 「…」") }
+        let covers = app.descendants(matching: .any).matching(identifier: "feed.photos").allElementsBoundByIndex
+        XCTAssertFalse(covers.contains { $0.frame.contains(manage.frame) }, "the 「…」 is on a cover")
+        let photos = covers.filter { $0.frame.maxY <= manage.frame.midY }.max { $0.frame.maxY < $1.frame.maxY }
+        guard let photos else { return XCTFail("my post's cover isn't over its 「…」") }
         // One flick at the cover's middle now and then leaves the pager on the photo (red on
-        // main 11-11 and 11-12, green between with nothing changed): drag level across the cover
-        // just under the 「…」, which is on screen, and again while the chart isn't there.
+        // main 11-11 and 11-12, green between with nothing changed): drag level across the
+        // cover's foot, just above the stub with the 「…」, on screen while the cover's top may not be,
+        // and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
-        let row = (manage.frame.midY - photos.frame.minY) / photos.frame.height
+        let row = 0.85
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
-            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row + 0.1))
+            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row))
             from.press(
                 forDuration: 0.05,
-                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row + 0.1)),
+                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row)),
                 withVelocity: .default, thenHoldForDuration: 0)
             turns += 1
         }
@@ -182,12 +184,15 @@ final class PostManageUITests: XCTestCase {
         let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
         let feed = app.scrollViews.firstMatch
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
-        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar.
+        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar. Shorter
+        // still once my post is near, so it stops at the screen's foot with the next day off it:
+        // with the next day on screen, 保存 stalls the app for a minute in CI (#924).
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         var drags = 0
         while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY <= tabBarTop) {
             let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            let step: Double = manage.exists ? -100 : -240
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: step)))
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post shows no 「…」")
