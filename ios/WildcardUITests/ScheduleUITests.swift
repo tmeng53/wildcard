@@ -139,8 +139,8 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertTrue(
             app.windows.firstMatch.frame.contains(template.frame), "我的每周计划 runs off the screen: \(template.frame)")
         past.tap()
-        let weeks = app.buttons.matching(
-            NSPredicate(format: "identifier BEGINSWITH 'schedule.week.' AND label BEGINSWITH 'W'"))
+        // A menu's buttons may not carry their identifiers to XCUITest, so they are found by label.
+        let weeks = app.buttons.matching(NSPredicate(format: "label MATCHES 'W[0-9]+'"))
         let lastWeek = weeks.element(boundBy: 0)
         XCTAssertTrue(lastWeek.waitForExistence(timeout: 10), "往期 opened no weeks")
         XCTAssertTrue(lastWeek.label.hasPrefix("W"), "往期's first line isn't a week: \(lastWeek.label)")

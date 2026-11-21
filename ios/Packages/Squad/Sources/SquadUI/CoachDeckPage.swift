@@ -134,6 +134,10 @@ public struct CoachDeckPage: View {
                         deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
                         isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
                     )
+                    // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
+                    .frame(
+                        maxHeight: proxy.size.height - 2 * DeckMetrics.peek - Sizing.control - Space.m, alignment: .top
+                    )
                     .onGeometryChange(for: Double.self) {
                         $0.size.height
                     } action: { height in
