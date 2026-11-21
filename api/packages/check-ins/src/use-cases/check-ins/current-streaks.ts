@@ -8,9 +8,9 @@ import { restDays } from './rest-days.js';
 
 /** The streaks still going that the player card's 外卡 show; each left out once broken. */
 export interface CurrentStreaks {
-  /** Days trained in a row, a planned rest day or a 请假条 between them neither breaking nor adding. */
+  /** Days trained in a row, a planned rest day or an old 请假条 between them neither breaking nor adding. */
   readonly training?: Streak;
-  /** Days in a row with a 健康餐; a 坦白放纵餐 or a 请假条 neither breaks nor adds (`mealBridges`). */
+  /** Days in a row with a 健康餐; a 坦白放纵餐, a planned rest day or an old 请假条 neither breaks nor adds (`mealBridges`). */
   readonly meals?: Streak;
 }
 
@@ -36,30 +36,37 @@ export async function currentStreaks(
   ]);
   const today = localDayAt(deps.clock(), calendar?.timeZone ?? UNSAVED_MEMBER_ZONE);
   const leave = new Set(days.leave);
-  const meals = currentRun(new Set(days.healthyMeals), {
-    today,
-    bridges: mealBridges({ cheatMeals: days.cheatMeals, leave }),
-  }).streak;
-  const trained = new Set(days.trained);
-  // Rest days only as far back as the run reaches: read more weeks while it breaks before them.
+  const cheatMeals = new Set(days.cheatMeals);
+  // Rest days only as far back as a run reaches: read more weeks while one breaks before them.
   let from = addDays(weekStartOf(today), -7 * (FIRST_WEEKS - 1));
-  const bridges = await restDays(deps, { member, days: [from, today] });
-  for (const day of leave) bridges.add(day);
-  let run = currentRun(trained, { today, bridges });
-  while (run.brokeOn !== undefined && run.brokeOn < from) {
+  const rest = await restDays(deps, { member, days: [from, today] });
+  const runs = () => ({
+    training: currentRun(new Set(days.trained), {
+      today,
+      bridges: new Set([...rest, ...leave]),
+    }),
+    meals: currentRun(new Set(days.healthyMeals), {
+      today,
+      bridges: mealBridges({ cheatMeals, restDays: rest, leave }),
+    }),
+  });
+  let { training, meals } = runs();
+  const brokeEarly = () =>
+    [training.brokeOn, meals.brokeOn].some((day) => day !== undefined && day < from);
+  while (brokeEarly()) {
     const earlier = addDays(
       from,
       -7 * Math.max(FIRST_WEEKS, Math.round(daysBetween(from, today) / 7)),
     );
     for (const day of await restDays(deps, { member, days: [earlier, addDays(from, -1)] })) {
-      bridges.add(day);
+      rest.add(day);
     }
     from = earlier;
-    run = currentRun(trained, { today, bridges });
+    ({ training, meals } = runs());
   }
   return {
-    ...(run.streak === undefined ? {} : { training: run.streak }),
-    ...(meals === undefined ? {} : { meals }),
+    ...(training.streak === undefined ? {} : { training: training.streak }),
+    ...(meals.streak === undefined ? {} : { meals: meals.streak }),
   };
 }
 

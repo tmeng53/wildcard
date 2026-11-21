@@ -146,12 +146,12 @@ describe('memberRecords', () => {
     expect(records.longestMinutes).toBe(95);
   });
 
-  it('bridges the planned rest day in the training streak but not the meal streak', () => {
+  it('bridges the planned rest day in both streaks without counting it', () => {
     expect(records.longestStreak).toEqual({ days: 3, from: '2026-11-02', to: '2026-11-05' });
-    expect(records.mealStreak).toEqual({ days: 3, from: '2026-11-01', to: '2026-11-03' });
+    expect(records.mealStreak).toEqual({ days: 4, from: '2026-11-01', to: '2026-11-05' });
   });
 
-  it('runs both streaks through a 请假条 day without counting it', () => {
+  it('runs both streaks through an old 请假条 day without counting it', () => {
     const withLeave = memberRecords({
       trainings: [
         training({ day: '2026-11-02', hourUtc: 0, sport: 'run' }),

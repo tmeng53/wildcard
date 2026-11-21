@@ -129,11 +129,36 @@ describe('currentStreaks', () => {
     });
   });
 
+  it('runs the meal streak through a planned rest day without counting it', async () => {
+    const member = await newMember();
+    await plans.save({
+      member,
+      weekStart: WeekStart.parse('2026-11-02'),
+      days: [train, train, train, train, train, rest, train],
+    });
+    await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-06' });
+    // Saturday 11-07 is a planned rest day with no 健康餐: no break, no day added.
+    await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-08' });
+    await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-09' });
+
+    expect(await checkIns.currentStreaks({ member })).toStrictEqual({
+      meals: { days: 3, from: '2026-11-06', to: '2026-11-09' },
+    });
+  });
+
   it('runs through a 坦白放纵餐 without counting it, keeps going while today has none, and only shared posts for a squad', async () => {
     const member = await newMember();
     const squad = await newSquad(member);
+    // No planned rest days, so only the 坦白放纵餐 bridges.
+    for (const monday of ['2026-11-02', '2026-11-09']) {
+      await plans.save({
+        member,
+        weekStart: WeekStart.parse(monday),
+        days: Array<PlanDay>(7).fill(train),
+      });
+    }
     await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-06', audience: [squad] });
-    // A 坦白放纵餐 bridges the run like a 请假条: no break, no day added.
+    // A 坦白放纵餐 bridges the run like a planned rest day: no break, no day added.
     await checkedIn(member, { kind: 'cheatMeal', day: '2026-11-07', audience: [squad] });
     // 仅自己可见: only the member's own view counts it.
     await checkedIn(member, { kind: 'healthyMeal', day: '2026-11-08' });
