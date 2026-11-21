@@ -159,15 +159,16 @@ final class PostManageUITests: XCTestCase {
         guard let photos else { return XCTFail("my post's cover isn't over its 「…」") }
         // One flick at the cover's middle now and then leaves the pager on the photo (red on
         // main 11-11 and 11-12, green between with nothing changed): drag level across the
-        // cover's top, and again while the chart isn't there.
+        // cover's foot, just over the 「…」, which is on screen while the cover's top may not be,
+        // and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
-        let row = 0.1
+        let row = 0.85
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
-            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row + 0.1))
+            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row))
             from.press(
                 forDuration: 0.05,
-                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row + 0.1)),
+                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row)),
                 withVelocity: .default, thenHoldForDuration: 0)
             turns += 1
         }
