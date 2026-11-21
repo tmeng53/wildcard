@@ -56,6 +56,10 @@ public struct APISquadSettingsService: SquadSettingsService {
         try await self.squad { () throws(APIError) in try await api.remove(member, from: squad) }
     }
 
+    public func disband(_ squad: SquadID) async throws(SquadError) {
+        try await self.squad { () throws(APIError) in try await api.disband(squad) }
+    }
+
     public func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(SquadError) -> SquadScene {
         try await self.squad { () throws(APIError) in try await api.pick(scene, for: squad, week: week) }
     }

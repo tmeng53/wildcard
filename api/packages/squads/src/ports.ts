@@ -72,11 +72,14 @@ export type AskOutcome =
 export type AnswerOutcome =
   'approved' | 'declined' | 'answered' | 'notCaptain' | 'unknown' | 'squadFull' | 'squadLimit';
 
-/** How a member came out of the squad they were last in. */
+/**
+ * How a member came out of the squad they were last in: `left` it themselves (the captain who
+ * disbanded it too), `removed` by its captain, or taken out when its captain `disbanded` it.
+ */
 export interface SquadExit {
   readonly squad: SquadId;
   readonly name: string;
-  readonly how: 'left' | 'removed';
+  readonly how: 'left' | 'removed' | 'disbanded';
 }
 
 /** Where squads and their members are kept. */
@@ -88,7 +91,7 @@ export interface SquadStore {
   squadsOf(member: MemberId): Promise<Squad[]>;
   /**
    * The squad `member` was last in, when they are in none now and their last change of squad
-   * took them out of one: how they went (`left` themselves or `removed` by its captain).
+   * took them out of one, and how.
    */
   lastExit(member: MemberId): Promise<SquadExit | undefined>;
   /** The ids of the squads `member` is in now. */
@@ -140,6 +143,11 @@ export interface SquadStore {
     readonly actor: MemberId;
     readonly member: MemberId;
   }): Promise<CaptainOutcome>;
+  /**
+   * Disbands the squad (解散小队), if `actor` is its captain: takes everyone out at once and
+   * ends it, as when its last member leaves.
+   */
+  disband(change: { readonly squad: SquadId; readonly actor: MemberId }): Promise<CaptainOutcome>;
   /**
    * The squad's weekly goal settings, the earliest week first, a week's later settings after its
    * earlier ones.

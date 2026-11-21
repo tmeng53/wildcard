@@ -33,7 +33,7 @@ extension AppModel {
         }
         let last = try? await api.lastSquad()
         if let last, await model.rejoin() {
-            if last.wasRemoved, RemovalNotice.isNew(last.id) { removedFromName = last.name }
+            if last.how != .left, RemovalNotice.isNew(last.id) { toldExit = last }
         } else {
             model.signedIn(name: name)
         }

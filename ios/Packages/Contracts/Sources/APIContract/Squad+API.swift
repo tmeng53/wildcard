@@ -15,7 +15,12 @@ extension Squad {
 
 extension SquadExit {
     public init(_ wire: Components.Schemas.SquadExit) throws(ContractsError) {
-        self.init(id: try SquadID(wire: wire.id), name: wire.name, wasRemoved: wire.how == .removed)
+        let how: How =
+            switch wire.how {
+            case .left: .left
+            case .removed: wire.disbanded ? .disbanded : .removed
+            }
+        self.init(id: try SquadID(wire: wire.id), name: wire.name, how: how)
     }
 }
 
