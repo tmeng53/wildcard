@@ -117,7 +117,6 @@ public actor InMemoryScheduleBackend: ScheduleBackend {
     public func saveTemplate(_ days: [PlanDay]) async throws(ScheduleError) {
         guard days.count == WeeklyPlan.dayCount else { throw .refused }
         typicalWeek = days
-        // Their 饮食小目标 stay, as the API keeps them.
         for week in sheets.keys where week > thisWeek && !saved.contains(week) {
             sheets[week]?.plan = days
         }

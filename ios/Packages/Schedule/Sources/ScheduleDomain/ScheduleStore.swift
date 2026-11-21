@@ -9,7 +9,7 @@ import Observation
 /// A change shows at once and is saved right after. Each week saves one thing at a time: a
 /// change made while a save is on its way goes out once it answers, whichever week is shown by
 /// then, so the server ends on the last change. When a save fails that part of the week (its
-/// plan or its 饮食小目标) goes back to what the server has, and `failure` says why.
+/// plan) goes back to what the server has, and `failure` says why.
 ///
 /// Beside the weeks it shows the member's typical week (我的每周计划), which the weeks from next
 /// week on follow until one is changed for itself. It is planned like a week and saved the

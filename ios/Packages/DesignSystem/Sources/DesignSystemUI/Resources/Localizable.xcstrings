@@ -833,18 +833,18 @@
         }
       }
     },
-    "口头禅": {
+    "小队名": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Catchphrase"
+            "value": "Squad name"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "口頭禪"
+            "value": "小隊名"
           }
         }
       }
