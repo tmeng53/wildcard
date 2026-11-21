@@ -279,7 +279,7 @@ public enum ColorRole: String, CaseIterable, Sendable {
 
 /// Whose colour a screen's primary button and selection marks wear. Brand screens (opening,
 /// sign-up, 我, the tab bar, writing a post, 请假条, the feed) use `.brand`; the squad's own turf
-/// (home, the check-in burst, the 出赛表 poster, 战报) uses `.scene`. 我's 设置 and 注销账号
+/// (home, the check-in kinds, the 出赛表 poster, 战报) uses `.scene`. 我's 设置 and 注销账号
 /// pages stay ink and white, so they use `.ink`.
 public enum AccentTone: Sendable {
     case scene
