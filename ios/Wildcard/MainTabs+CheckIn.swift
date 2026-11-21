@@ -21,6 +21,9 @@ extension MainTabs {
         Self.checkInButton(isOpen: today.isCheckInMenuOpen) { [today] in today.isCheckInMenuOpen.toggle() }
     }
 
+    /// A tab tapped in the bar puts the kinds away.
+    func closeCheckInMenu(_: Tab) { today.isCheckInMenuOpen = false }
+
     /// The ＋ as home has it, for 上场, whose end hands over to home: nothing opens until it has.
     static var entranceCheckInAction: TabBarAction { checkInButton(isOpen: false) {} }
 }

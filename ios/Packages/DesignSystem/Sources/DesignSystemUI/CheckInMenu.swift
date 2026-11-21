@@ -51,7 +51,8 @@ public struct CheckInMenu: View {
                                 onPick(kind)
                             }
                             .accessibilityIdentifier("\(identifierPrefix).capsule.\(kind.rawValue)")
-                                                // The one next to the ＋ first, the rest following up the stack.
+                            .accessibilityAction(.escape) { close() }
+                            // The one next to the ＋ first, the rest following up the stack.
                             .transition(pop(index: kinds.count - 1 - index, of: kinds.count))
                         }
                     }

@@ -129,7 +129,7 @@ struct MainTabs: View {
     var body: some View {
         AppTabs(
             Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot,
-            action: checkInAction, barTapped: { _ in today.isCheckInMenuOpen = false }
+            action: checkInAction, barTapped: closeCheckInMenu
         ) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
