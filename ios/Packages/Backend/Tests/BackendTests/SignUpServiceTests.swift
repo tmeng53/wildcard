@@ -238,14 +238,14 @@ private func character(_ nickname: String, body: String, persona: Persona) throw
     #expect(try await member.api.lastSquad() == nil)
 
     try await captain.api.remove(member.id, from: squad.id)
-    #expect(try await member.api.lastSquad() == SquadExit(id: squad.id, name: "晨跑搭子", wasRemoved: true))
+    #expect(try await member.api.lastSquad() == SquadExit(id: squad.id, name: "晨跑搭子", how: .removed))
     #expect(try await signUp.character()?.nickname == made.nickname)
 
     // Making another squad ends it; leaving that one says so, not removed.
     let own = try await signUp.create(named: try SquadName("小林的队"), daysPerMember: 3, timeZone: "America/New_York")
     #expect(try await member.api.lastSquad() == nil)
     try await member.api.remove(member.id, from: own.id)
-    #expect(try await member.api.lastSquad() == SquadExit(id: own.id, name: "小林的队", wasRemoved: false))
+    #expect(try await member.api.lastSquad() == SquadExit(id: own.id, name: "小林的队", how: .left))
 }
 
 /// The squad joined, where the squad's captain doesn't let members in (the switch is off locally).

@@ -52,6 +52,15 @@ export async function removeMember(
   );
 }
 
+/** Disbands the squad (解散小队), for its captain: everyone is out of it at once and it ends. */
+export async function disbandSquad(
+  deps: Deps,
+  input: { readonly squad: SquadId; readonly member: MemberId },
+): Promise<void> {
+  await findSquad(deps, { squad: input.squad, viewer: input.member });
+  settled(await deps.store.disband({ squad: input.squad, actor: input.member }), input.member);
+}
+
 function settled(outcome: CaptainOutcome, member: MemberId) {
   if (outcome === 'notCaptain') throw new NotSquadCaptainError();
   if (outcome === 'notMember') throw new SquadMemberUnknownError(member);
