@@ -865,6 +865,22 @@
         }
       }
     },
+    "你拍了拍%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You patted %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你拍了拍%@"
+          }
+        }
+      }
+    },
     "%@ 也拍了拍你": {
       "localizations": {
         "en": {

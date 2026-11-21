@@ -56,7 +56,15 @@ final class PatStage {
         let id: Int
     }
 
+    /// What my latest pat said, in 打卡's spot for a moment: 「你拍了拍小米」 (Tracy, 2026-11-21).
+    struct Told: Equatable {
+        let name: String
+        /// Bumps with each pat, so a second pat's pill replaces the first's.
+        let id: Int
+    }
+
     private(set) var pat: Pat?
+    private(set) var told: Told?
     private(set) var bubble: Bubble?
     private(set) var myLine: MyLine?
     /// When each teammate last hopped at a tap.
@@ -71,6 +79,8 @@ final class PatStage {
     /// When in a pat the dot leaves my hand, lands, and how long the dot rests after.
     nonisolated static let dotLeaves = 0.45
     nonisolated static let dotLands = PlaceholderCharacter.patContact - 0.1
+    /// How long 「你拍了拍…」 stays in 打卡's spot.
+    nonisolated static let toldHold = 2.0
     /// How long a tapped teammate's bubble stays up.
     nonisolated static let bubbleHold = 5.0
     /// How long this stage's bubbles stay up: `bubbleHold`, or longer for UI tests, whose slow
@@ -164,20 +174,22 @@ final class PatStage {
             waiting.append((mate, mine))
             return true
         }
+        bubble = nil
         return start(mate, mine: mine, now: now)
     }
 
     /// My pats waiting for the one playing to end, in the order I made them.
     private var waiting: [(mate: SquadCast.Mate, mine: CharacterPlayer)] = []
 
-    /// Plays my pat on `mate` now.
+    /// Plays my pat on `mate` now. A pat that waited its turn leaves the bubble the one before
+    /// it raised (「小米拍了拍你」) up.
     private func start(_ mate: SquadCast.Mate, mine: CharacterPlayer, now: Date) -> Bool {
         guard let jab = try? PlaceholderCharacter.patMove(),
             let reaction = try? PlaceholderCharacter.pattedMove(mate.persona)
         else { return false }
-        bubble = nil
         play(patter: (.mine, mine, jab), patted: (.mate(mate.id), mate.player, reaction), now: now) { [weak self] in
             self?.landed += 1
+            self?.tell(mate)
         } finished: {
         }
         return true
@@ -247,6 +259,16 @@ final class PatStage {
     }
 
     // MARK: Helpers
+
+    /// 「你拍了拍…」 for `toldHold`, as my pat lands on `mate`.
+    private func tell(_ mate: SquadCast.Mate) {
+        let new = Told(name: mate.name ?? String(copy: "队友", bundle: .module), id: nextBubble())
+        told = new
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(Self.toldHold))
+            if self?.told == new { self?.told = nil }
+        }
+    }
 
     private func nextBubble() -> Int {
         bubbles += 1

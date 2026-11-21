@@ -37,7 +37,6 @@ struct SquadSceneView: View {
     /// Whether I can still pat a teammate today; else their bubble says 「拍过了」.
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
-    /// I tapped a teammate twice: I pat them at once.
     var doubleTapMate: (MemberID) -> Void = { _ in }
     /// I tapped my own character: it plays its signature move and my card opens.
     let tapMe: () -> Void
@@ -144,6 +143,7 @@ struct SquadSceneView: View {
                         .accessibilityLabel(Text(verbatim: nickname(of: figure.id) ?? ""))
                         .accessibilityIdentifier(figure.id == .mine ? "today.me" : "today.mate")
                         .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { tap(figure.id.mate, twice: false) }
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
                 }

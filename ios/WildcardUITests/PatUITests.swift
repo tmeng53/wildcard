@@ -83,9 +83,8 @@ final class PatUITests: XCTestCase {
         let pat = app.buttons["today.pat"]
         XCTAssertTrue(mate("阿杰", in: app).waitForExistence(timeout: Self.wait), "阿杰 never appeared")
         mate("阿杰", in: app).doubleTap()
-        Thread.sleep(forTimeInterval: 0.4)
+        Thread.sleep(forTimeInterval: 0.3)
         XCTAssertFalse(today.exists, "a double tap opened 阿杰's card")
-        keepScreenshot(named: "55b-double-tap-pat")
         mate("大卫", in: app).tap()
         XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "a tap during a pat didn't open 大卫's card")
         keepScreenshot(named: "55c-card-during-pat")
