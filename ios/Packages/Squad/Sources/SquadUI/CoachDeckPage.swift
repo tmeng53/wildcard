@@ -127,9 +127,9 @@ public struct CoachDeckPage: View {
     private var stack: some View {
         GeometryReader { proxy in
             let shown = Array(deck.stack.prefix(3))
-            // The stack and its pager sit together in the middle of the page, so a short card
-            // leaves even room above and below it (Tracy, 2026-11-21).
-            VStack(spacing: DeckMetrics.peek * Double(max(shown.count - 1, 0)) + Space.m) {
+            // The stack at the top, its pager at the page's foot, just above the tab bar
+            // (Tracy, 2026-11-21).
+            VStack(spacing: 0) {
                 ZStack(alignment: .top) {
                     ForEach(Array(shown.enumerated().reversed()), id: \.element.key) { depth, card in
                         let isTop = depth == 0
@@ -162,11 +162,12 @@ public struct CoachDeckPage: View {
                             deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
                     }
                 }
+                Spacer(minLength: DeckMetrics.peek * Double(max(shown.count - 1, 0)) + Space.m)
                 if let top = shown.first {
                     pager(top, left: deck.stack.count - 1)
                 }
             }
-            .frame(width: proxy.size.width, height: proxy.size.height - 2 * DeckMetrics.peek)
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
     }
 
