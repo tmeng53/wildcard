@@ -244,8 +244,8 @@ export interface PublicRoutes {
 /**
  * Squads: create one with a name, preview and join one by invite code, list mine, read one,
  * leave, and the captain's settings (rename, remove a member, hand on the captaincy, disband).
- * No route deletes a squad: disbanded or left by everyone, it ends, and it goes only with its
- * last member's account.
+ * No route removes a squad's rows: disbanded or left by everyone, it ends, and it goes only with
+ * its last member's account.
  */
 export function squads(
   deps: JoinRequestNewsDependencies & {
