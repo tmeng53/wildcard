@@ -71,7 +71,7 @@ struct WildcardApp: App {
     @State private var editor: CharacterEditorModel?
     @State private var signUp: SignUpModel?
     /// The squad the sample member was removed from, with `-onboarding-rejoin`.
-    @State private var removedFrom: String?
+    @State private var removedFrom: SquadExit?
     /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
     /// made their squad only once the squad is dropping onto the scene they picked, so the
     /// tabs never show the squad's old scene first.
@@ -286,7 +286,7 @@ struct WildcardApp: App {
             .task {
                 // Once: a language switch makes the view again, and its task with it.
                 guard LaunchOptions.rejoins, !signUp.isRejoining, await signUp.rejoin() else { return }
-                removedFrom = InMemorySignUpService.formerSquadName
+                removedFrom = SquadExit(id: SquadID(UUID()), name: InMemorySignUpService.formerSquadName, how: .removed)
             }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }

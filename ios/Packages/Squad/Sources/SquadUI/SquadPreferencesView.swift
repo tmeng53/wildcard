@@ -8,7 +8,8 @@ import SwiftUI
 /// 小队设置 (Tracy, 2026-11-08: what is a setting rather than the squad's play leaves 小队), pushed
 /// from the gear on 小队's header and from 我's 设置 (Tracy, 2026-11-12), which reads the squad first
 /// when 小队 hasn't yet: for the captain, 入队申请 while anyone waits; 邀请队友 while the squad has
-/// room; the captain's 入队需要审核; 比赛时区 as a plain row, then 退出小队. The captain's zone row
+/// room; the captain's 入队需要审核; 比赛时区 as a plain row, then 退出小队 and, for the captain while
+/// anyone else is in the squad, 解散小队 (Tracy, 2026-11-21). The captain's zone row
 /// opens the system's zone list, the one sign-up's 建小队 shows, and a change counts at once (Tracy,
 /// 2026-11-08), or from next week once this week's Sunday 8pm has passed on either clock (Tracy,
 /// 2026-11-13); the row shows the pick either way. Everyone else only reads it. Then 小队语言, the
@@ -23,6 +24,8 @@ public struct SquadPreferencesView: View {
     @State private var isChoosingLanguage = false
     @State private var isLeaving = false
     @State private var isLeavingNow = false
+    @State private var isDisbanding = false
+    @State private var isDisbandingNow = false
     @Environment(\.sceneTheme) private var theme
 
     public init(model: SquadSettingsModel) {
@@ -58,7 +61,10 @@ public struct SquadPreferencesView: View {
                 }
                 timeZone
                 language
-                leaveButton
+                VStack(spacing: Space.xs) {
+                    leaveButton
+                    if model.canDisband { disbandButton }
+                }
             }
             .padding(.horizontal, Space.pageMargin)
             .padding(.top, Space.xs)
@@ -204,6 +210,37 @@ public struct SquadPreferencesView: View {
             ) {
                 isLeavingNow = true
                 Task { await model.leave() }
+            }
+        )
+    }
+
+    // MARK: 解散小队
+
+    /// Ends the squad for everyone at once, after the same menu and confirm 退出小队 asks, whose
+    /// line says what goes with it and how to keep the 战报.
+    private var disbandButton: some View {
+        Button {
+            isDisbanding = true
+        } label: {
+            Text(copy: "解散小队", bundle: .module)
+                .loadingLabel(isDisbandingNow && model.isSaving)
+        }
+        .buttonStyle(TextButtonStyle(.danger))
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier("squad.disband")
+        .glassConfirm(
+            isPresented: $isDisbanding,
+            GlassMenuItem(
+                Text(copy: "解散小队", bundle: .module), systemImage: "trash",
+                role: .destructive,
+                id: "squad.disband.menu",
+                confirm: .init(
+                    Text(copy: "解散「\(settings?.squad.name ?? "")」？", bundle: .module),
+                    message: Text(copy: "所有人都会离开小队，动态和往期战报都看不到了。想留战报，先在往期战报里存图", bundle: .module),
+                    label: Text(copy: "解散小队", bundle: .module), id: "squad.disband.confirm")
+            ) {
+                isDisbandingNow = true
+                Task { await model.disband() }
             }
         )
     }

@@ -2228,6 +2228,54 @@
           }
         }
       }
+    },
+    "解散小队": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disband squad"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解散小隊"
+          }
+        }
+      }
+    },
+    "解散「%@」？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disband “%@”?"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要解散「%@」嗎？"
+          }
+        }
+      }
+    },
+    "所有人都会离开小队，动态和往期战报都看不到了。想留战报，先在往期战报里存图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everyone leaves the squad, and its feed and past recaps will be gone. To keep a recap, save it as a picture from past recaps first."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有人都會離開小隊，動態和往期戰報都看不到了。想留戰報，先在往期戰報裡存圖"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

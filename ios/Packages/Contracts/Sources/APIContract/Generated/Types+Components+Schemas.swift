@@ -6140,36 +6140,44 @@ extension Components {
             public var id: Swift.String
             /// - Remark: Generated from `#/components/schemas/SquadExit/name`.
             public var name: Swift.String
-            /// `left`: the member left it; `removed`: its captain took them out.
+            /// `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
             @frozen public enum HowPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case left = "left"
                 case removed = "removed"
             }
-            /// `left`: the member left it; `removed`: its captain took them out.
+            /// `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
             public var how: Components.Schemas.SquadExit.HowPayload
+            /// Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadExit/disbanded`.
+            public var disbanded: Swift.Bool
             /// Creates a new `SquadExit`.
             ///
             /// - Parameters:
             ///   - id:
             ///   - name:
-            ///   - how: `left`: the member left it; `removed`: its captain took them out.
+            ///   - how: `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
+            ///   - disbanded: Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`.
             public init(
                 id: Swift.String,
                 name: Swift.String,
-                how: Components.Schemas.SquadExit.HowPayload
+                how: Components.Schemas.SquadExit.HowPayload,
+                disbanded: Swift.Bool
             ) {
                 self.id = id
                 self.name = name
                 self.how = how
+                self.disbanded = disbanded
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case name
                 case how
+                case disbanded
             }
         }
         /// - Remark: Generated from `#/components/schemas/NewSquad`.

@@ -250,6 +250,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
     func createSquad(_ input: Operations.CreateSquad.Input) async throws -> Operations.CreateSquad.Output
+    /// Disband a squad (解散小队)
+    ///
+    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/delete(disbandSquad)`.
+    func disbandSquad(_ input: Operations.DisbandSquad.Input) async throws -> Operations.DisbandSquad.Output
     /// Rename a squad
     ///
     /// Only its captain. The same name again changes nothing.
@@ -1181,6 +1188,21 @@ extension APIProtocol {
             path: path,
             headers: headers,
             body: body
+        ))
+    }
+    /// Disband a squad (解散小队)
+    ///
+    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/delete(disbandSquad)`.
+    public func disbandSquad(
+        path: Operations.DisbandSquad.Input.Path,
+        headers: Operations.DisbandSquad.Input.Headers = .init()
+    ) async throws -> Operations.DisbandSquad.Output {
+        try await disbandSquad(Operations.DisbandSquad.Input(
+            path: path,
+            headers: headers
         ))
     }
     /// Rename a squad

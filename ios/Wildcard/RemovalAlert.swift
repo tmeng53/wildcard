@@ -4,24 +4,31 @@ import Foundation
 import SwiftUI
 
 extension View {
-    /// 「你已被移出 X」 with 确认, while `squad` names the squad whose captain removed the member.
-    func removalAlert(_ squad: Binding<String?>) -> some View {
+    /// 「你已被移出 X」, or 「X」已解散 when its captain disbanded it, with 确认, while `exit` is the
+    /// squad the captain took the member out of.
+    func removalAlert(_ exit: Binding<SquadExit?>) -> some View {
         alert(
-            Text(copy: "你已被移出 \(squad.wrappedValue ?? "")", bundle: .main),
+            title(exit.wrappedValue),
             isPresented: Binding(
-                get: { squad.wrappedValue != nil },
-                set: { shown in if !shown { squad.wrappedValue = nil } })
+                get: { exit.wrappedValue != nil },
+                set: { shown in if !shown { exit.wrappedValue = nil } })
         ) {
             Button {
-                squad.wrappedValue = nil
+                exit.wrappedValue = nil
             } label: {
                 Text(copy: "确认", bundle: .main)
             }
         }
     }
+
+    private func title(_ exit: SquadExit?) -> Text {
+        let name = exit?.name ?? ""
+        return exit?.how == .disbanded
+            ? Text(copy: "「\(name)」已解散", bundle: .main) : Text(copy: "你已被移出 \(name)", bundle: .main)
+    }
 }
 
-/// Which removal this phone has told the member of, so 「你已被移出」 shows once for each.
+/// Which removal this phone has told the member of, so 「你已被移出」 or 「已解散」 shows once for each.
 enum RemovalNotice {
     private static let key = "toldRemovalFromSquad"
 
