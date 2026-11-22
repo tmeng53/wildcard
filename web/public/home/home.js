@@ -25,11 +25,7 @@
       ['我先打卡，你跟上', '我先打卡，你跟上', 'I logged my workout. Your turn?'],
     ],
     garfield: [
-      [
-        '不想练？写张请假条也算',
-        '不想練？寫張請假條也算',
-        'Skipping? File an excuse. Still counts.',
-      ],
+      ['不想练？排个休息日', '不想練？排個休息日', 'Not feeling it? Plan a rest day.'],
       ['你来，我就动一下', '你來，我就動一下', "You show up, I'll do one rep. Maybe."],
       ['坦白放纵餐也算打卡', '坦白放縱餐也算打卡', 'Ate the whole pizza? Confess. It counts.'],
     ],
