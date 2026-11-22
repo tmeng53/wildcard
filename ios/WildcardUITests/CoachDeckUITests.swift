@@ -14,13 +14,15 @@ final class CoachDeckUITests: XCTestCase {
     func testEveryCardIsSeenInTurnAndGoesIntoEarlier() {
         continueAfterFailure = false
         let app = launch()
-        let checkIn = app.buttons["today.checkin"]
-        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "the home didn't open")
+        // The squad card says the home is up; 打卡 is the system tab bar's ＋ since #929, which
+        // doesn't always carry its identifier.
+        let squadCard = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+        XCTAssertTrue(squadCard.waitForExistence(timeout: Self.wait), "the home didn't open")
         let coach = app.buttons["today.coach"]
         XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "毛头 isn't on the sideline")
         expectation(for: NSPredicate(format: "value == %@", "有新消息"), evaluatedWith: coach)
         waitForExpectations(timeout: Self.wait)
-        XCTAssertTrue(checkIn.isHittable, "打卡 is covered")
+        XCTAssertTrue(coach.isHittable, "毛头 is covered")
         keepScreenshot(named: "105-coach-note-waiting")
 
         coach.tap()
