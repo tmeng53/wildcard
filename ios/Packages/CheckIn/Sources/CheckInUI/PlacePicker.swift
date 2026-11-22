@@ -145,6 +145,9 @@ struct PlacePickerSheet: View {
                     map(list)
                     SearchField(text: $query, prompt: Text(copy: "搜索地点", bundle: .module))
                         .onSubmit {
+                            // Full height, as typing had it, so what 搜索 found and 新建 under it
+                            // show without a scroll (Tracy, 2026-11-22).
+                            detent = .large
                             Task {
                                 let places = await search.placesForTyped()
                                 reveal(places)

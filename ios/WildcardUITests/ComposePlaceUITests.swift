@@ -102,8 +102,8 @@ final class ComposePlaceUITests: XCTestCase {
         keepScreenshot(named: "15-compose-place-new-picked")
     }
 
-    /// 搜索 on the keyboard keeps 新建 as the list's last row, under what it found (Tracy,
-    /// 2026-11-22); without Apple Maps, 搜索 finds one fixed place.
+    /// 搜索 on the keyboard keeps the sheet at full height and 新建 as the list's last row, under
+    /// what it found (Tracy, 2026-11-22); without Apple Maps, 搜索 finds one fixed place.
     func testSearchKeepsTheNewPlace() {
         let app = launch(extra: ["-today.cardPage", "0", "-uitest-no-maps"])
         let checkIn = app.buttons["today.checkin"]
@@ -123,13 +123,8 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
         app.typeText("\n")
         XCTAssertTrue(app.buttons["place.row"].waitForExistence(timeout: Self.wait), "搜索 found nothing")
-        // 搜索 puts the keyboard away and the sheet back to half height, where the list shows about
-        // a row and a half: 新建, its third row, is under the found place.
-        let list = app.collectionViews.firstMatch
-        for _ in 0..<3 where !(new.waitForExistence(timeout: 2) && new.isHittable) {
-            list.swipeUp()
-        }
-        XCTAssertTrue(new.exists, "搜索 took 新建 away")
+        // The sheet stays at full height, so 新建 shows under the found place without a scroll.
+        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "搜索 took 新建 away")
         XCTAssertTrue(new.isHittable, "新建 can't be tapped after 搜索")
         settle()
         keepScreenshot(named: "15-compose-place-new-after-search")
