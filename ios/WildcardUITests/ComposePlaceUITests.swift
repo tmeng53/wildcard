@@ -125,6 +125,8 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(app.buttons["place.row"].waitForExistence(timeout: Self.wait), "搜索 found nothing")
         XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "搜索 took 新建 away")
         XCTAssertTrue(new.isHittable, "新建 can't be tapped after 搜索")
+        settle()
+        keepScreenshot(named: "15-compose-place-new-after-search")
     }
 
     /// Typing the name of a place the squad already has offers no new one.
