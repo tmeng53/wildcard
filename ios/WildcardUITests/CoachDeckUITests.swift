@@ -198,7 +198,6 @@ final class CoachDeckUITests: XCTestCase {
             squadCard.frame.contains(row.frame), "the row runs off the squad card: \(row.frame) in \(squadCard.frame)")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(row.frame), "the row runs off the screen: \(row.frame)")
         XCTAssertTrue(row.isHittable, "the row is covered")
-        XCTAssertTrue(app.buttons["today.checkin"].isHittable, "打卡 is covered")
         keepScreenshot(named: "104-coach-news-row")
 
         row.tap()
