@@ -94,6 +94,12 @@ xcrun simctl spawn "$udid" log show --last 2h --style compact \
   --predicate 'process == "WildcardWidgets" AND eventMessage CONTAINS "Fatal error"' 2>/dev/null |
   grep "Fatal error" | tail -20 | sed 's/^/widget extension: /' || true
 
+# The app's main thread busy 5 seconds or more (Debug builds' `StallLog`): its stack each time,
+# demangled, so a screen that froze on a slow Mac says what held it.
+xcrun simctl spawn "$udid" log show --last 2h --style compact \
+  --predicate 'subsystem == "com.wildcardsquad.wildcard" AND category == "stall"' 2>/dev/null |
+  grep "stall " | xcrun swift-demangle --simplified | tail -4000 | sed 's/^/stall: /' || true
+
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then
   raw="$out/attachments"
