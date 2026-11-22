@@ -186,7 +186,6 @@ import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
-import { coachMessageTools } from './admin-mcp/tools/coach-messages.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
 import { moderationTools } from './admin-mcp/tools/moderation.js';
@@ -1011,7 +1010,6 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         clock: () => new Date(),
       }),
-      ...coachMessageTools({ messages: coachMessagesOn(scope), clock: () => new Date() }),
       ...artTools({ art: artOn(scope) }),
       ...campaignTools({
         campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),
