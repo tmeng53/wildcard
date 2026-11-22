@@ -198,13 +198,13 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
   }
 
   /** Runs `change` if `actor` captains the squad now. */
-  async function asCaptain(
+  async function asCaptain<Outcome = CaptainOutcome>(
     { squad, actor }: { readonly squad: SquadId; readonly actor: MemberId },
     change: (
       trx: Transaction<SquadTables>,
       now: NonNullable<Awaited<ReturnType<typeof lockSquad>>>,
-    ) => Promise<CaptainOutcome>,
-  ): Promise<CaptainOutcome> {
+    ) => Promise<Outcome>,
+  ): Promise<Outcome | 'notCaptain'> {
     return db.transaction().execute(async (trx) => {
       const now = await lockSquad(trx, squad);
       if (now?.captain !== actor) return 'notCaptain';
@@ -578,7 +578,7 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           )
           .execute();
         await end(trx, { squad, actor, name: now.name });
-        return 'changed';
+        return { name: now.name, members: now.members.map(({ member }) => member) };
       });
     },
 

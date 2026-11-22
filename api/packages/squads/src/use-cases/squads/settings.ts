@@ -1,6 +1,6 @@
 import type { MemberId, Squad, SquadId, SquadName } from '../../domain/squad.js';
 import { NotSquadCaptainError, SquadMemberUnknownError } from '../../errors.js';
-import type { CaptainOutcome, SquadStore } from '../../ports.js';
+import type { CaptainOutcome, DisbandedSquad, SquadStore } from '../../ports.js';
 import { findSquad } from './find-squad.js';
 
 interface Deps {
@@ -56,9 +56,11 @@ export async function removeMember(
 export async function disbandSquad(
   deps: Deps,
   input: { readonly squad: SquadId; readonly member: MemberId },
-): Promise<void> {
+): Promise<DisbandedSquad> {
   await findSquad(deps, { squad: input.squad, viewer: input.member });
-  settled(await deps.store.disband({ squad: input.squad, actor: input.member }), input.member);
+  const outcome = await deps.store.disband({ squad: input.squad, actor: input.member });
+  if (outcome === 'notCaptain') throw new NotSquadCaptainError();
+  return outcome;
 }
 
 function settled(outcome: CaptainOutcome, member: MemberId) {

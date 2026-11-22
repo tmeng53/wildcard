@@ -5267,7 +5267,7 @@ internal struct Client: APIProtocol {
     }
     /// Disband a squad (解散小队)
     ///
-    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded.
+    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded, and every member but the captain is told in 通知 (`squadDisbanded`), never by push.
     ///
     /// - Remark: HTTP `DELETE /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/delete(disbandSquad)`.

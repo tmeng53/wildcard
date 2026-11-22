@@ -27,6 +27,7 @@ import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { LookBody } from './character.js';
 import { tellCaptain, type JoinRequestNewsDependencies } from '../flows/join-requests.js';
+import { tellDisbanded } from '../flows/squad-disbanded.js';
 import { JoinRequest, wireJoinRequest } from './squad-join-requests.js';
 import { squadTimeZoneField } from './squad-time-zone.js';
 
@@ -400,7 +401,8 @@ export function squads(
     description:
       'Only its captain: everyone is out of it at once and it ends for good, as when its last ' +
       'member leaves. Its invite stops working and nothing runs for it any more. Each member ' +
-      'keeps their own posts; `GET /me/squads` then says it was disbanded.',
+      'keeps their own posts; `GET /me/squads` then says it was disbanded, and every member ' +
+      'but the captain is told in 通知 (`squadDisbanded`), never by push.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
     request: { params: squadParams },
@@ -586,10 +588,10 @@ export function squads(
       return c.body(null, 204);
     })
     .openapi(disband, async (c) => {
-      await deps.squads.disband({
-        squad: c.req.valid('param').squadId,
-        member: caller(c.var.caller.userId),
-      });
+      const squad = c.req.valid('param').squadId;
+      const captain = caller(c.var.caller.userId);
+      const disbanded = await deps.squads.disband({ squad, member: captain });
+      await tellDisbanded(deps, { squad, captain, disbanded });
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {

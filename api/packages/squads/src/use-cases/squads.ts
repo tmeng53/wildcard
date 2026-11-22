@@ -7,7 +7,13 @@ import {
   type Scene,
 } from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
-import type { AiConsentCheck, PickOutcome, SquadExit, SquadStore } from '../ports.js';
+import type {
+  AiConsentCheck,
+  DisbandedSquad,
+  PickOutcome,
+  SquadExit,
+  SquadStore,
+} from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -127,7 +133,7 @@ export interface Squads {
    * Disbands the squad (解散小队), for its captain: everyone is out of it at once and it ends, as
    * when its last member leaves.
    */
-  disband(input: { squad: SquadId; member: MemberId }): Promise<void>;
+  disband(input: { squad: SquadId; member: MemberId }): Promise<DisbandedSquad>;
   /**
    * The squad's weekly goal (人均 N 次) in the viewer's week (its Monday, `YYYY-MM-DD`) and the
    * next.

@@ -53,6 +53,12 @@ export type SceneWeekAt = (moment: Date, squad: SquadId) => Promise<SceneWeek>;
 /** What a captain's change did. `notCaptain`: the actor isn't the captain now. */
 export type CaptainOutcome = 'changed' | 'unchanged' | 'notCaptain' | 'notMember';
 
+/** A squad its captain disbanded: its name then and everyone it took out, the captain too. */
+export interface DisbandedSquad {
+  readonly name: string;
+  readonly members: readonly MemberId[];
+}
+
 /** What picking a scene did. `taken`: the week has a pick already. */
 export type PickOutcome = 'picked' | 'taken';
 
@@ -147,7 +153,10 @@ export interface SquadStore {
    * Disbands the squad (解散小队), if `actor` is its captain: takes everyone out at once and
    * ends it, as when its last member leaves.
    */
-  disband(change: { readonly squad: SquadId; readonly actor: MemberId }): Promise<CaptainOutcome>;
+  disband(change: {
+    readonly squad: SquadId;
+    readonly actor: MemberId;
+  }): Promise<DisbandedSquad | 'notCaptain'>;
   /**
    * The squad's weekly goal settings, the earliest week first, a week's later settings after its
    * earlier ones.

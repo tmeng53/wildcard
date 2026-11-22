@@ -65,6 +65,8 @@ extension Notice {
             return .goalSuggestion(GoalSuggestion(weeks: weeks, daysPerMember: days))
         case "joinRequest", "joinAnswered":
             return joining(wire)
+        case "squadDisbanded":
+            return wire.squadName.map { .squadDisbanded(name: $0) }
         default:
             return nil
         }
