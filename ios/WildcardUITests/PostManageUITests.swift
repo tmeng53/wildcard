@@ -24,7 +24,19 @@ final class PostManageUITests: XCTestCase {
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         // Below the one line, so the cursor goes to its end.
         caption.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()
-        caption.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20) + "扶手是我的好朋友")
+        // Clears the line, then types the new one in a call of its own, checking each landed: on
+        // CI one string of deletes and words left the field empty, and the failure blamed the card.
+        caption.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
+        let count = app.staticTexts["compose.count"]
+        waitFor(count, "label BEGINSWITH '0/'", "the old line wasn't cleared")
+        caption.typeText("扶手是我的好朋友")
+        // The simulator's 拼音 keyboard has dropped a whole typed string; nothing landed, so the
+        // same words go in once more. Anything partial still fails below.
+        let landed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '8/'"), object: count)
+        if XCTWaiter().wait(for: [landed], timeout: 5) != .completed, count.label.hasPrefix("0/") {
+            caption.typeText("扶手是我的好朋友")
+        }
+        waitFor(count, "label BEGINSWITH '8/'", "the new line didn't land in the field")
         settle()
         keepScreenshot(named: "54-compose-editing")
         save.tap()

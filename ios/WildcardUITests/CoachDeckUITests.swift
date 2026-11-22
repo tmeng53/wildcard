@@ -198,7 +198,11 @@ final class CoachDeckUITests: XCTestCase {
             squadCard.frame.contains(row.frame), "the row runs off the squad card: \(row.frame) in \(squadCard.frame)")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(row.frame), "the row runs off the screen: \(row.frame)")
         XCTAssertTrue(row.isHittable, "the row is covered")
-        XCTAssertTrue(app.buttons["today.checkin"].isHittable, "打卡 is covered")
+        // 打卡 is the tab bar's ＋ (#929), which the system floats over the page, so XCUITest never
+        // calls it hittable; what matters is that the row stays clear of it.
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.exists, "no 打卡 button")
+        XCTAssertFalse(row.frame.intersects(checkIn.frame), "the row runs under 打卡: \(row.frame), \(checkIn.frame)")
         keepScreenshot(named: "104-coach-news-row")
 
         row.tap()

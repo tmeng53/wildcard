@@ -298,7 +298,7 @@ public struct TodayView: View {
     }
 
     /// From the screen's right edge to the cord's frame: its centre sits 40 points in.
-    private static let cordInset = 40 - PullCord.size.width / 2
+    static let cordInset = 40 - PullCord.size.width / 2
 
     /// A teammate's head in the squad card's ring.
     @ViewBuilder
