@@ -146,7 +146,7 @@ struct MainTabs: View {
         // The place picker lists the squad's own places and adds new ones.
         .environment(\.squadPlaces, squadPlaceBook)
         // `-uitest-no-maps`: Apple Maps answers differently each run, so the place picker's UI tests
-        // list only the squad's places and 新建.
+        // run on fixed places instead.
         .environment(\.asksAppleMaps, !ProcessInfo.processInfo.arguments.contains("-uitest-no-maps"))
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {

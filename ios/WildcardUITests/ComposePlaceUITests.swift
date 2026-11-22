@@ -102,6 +102,31 @@ final class ComposePlaceUITests: XCTestCase {
         keepScreenshot(named: "15-compose-place-new-picked")
     }
 
+    /// 搜索 on the keyboard keeps 新建 as the list's last row, under what it found (Tracy,
+    /// 2026-11-22); without Apple Maps, 搜索 finds one fixed place.
+    func testSearchKeepsTheNewPlace() {
+        let app = launch(extra: ["-today.cardPage", "0", "-uitest-no-maps"])
+        let checkIn = app.buttons["today.checkin"]
+        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button")
+        checkIn.tap()
+        let trained = app.buttons["today.capsule.trained"]
+        XCTAssertTrue(trained.waitForExistence(timeout: Self.wait), "no 训练 capsule")
+        trained.tap()
+        let pill = app.buttons["compose.place"]
+        XCTAssertTrue(pill.waitForExistence(timeout: Self.wait), "no 添加位置 on the compose page")
+        pill.tap()
+        let search = app.descendants(matching: .any).matching(identifier: "place.search").firstMatch
+        XCTAssertTrue(search.waitForExistence(timeout: Self.wait), "no search field")
+        search.tap()
+        app.typeText("健身房")
+        let new = app.buttons["place.new"]
+        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
+        app.typeText("\n")
+        XCTAssertTrue(app.buttons["place.row"].waitForExistence(timeout: Self.wait), "搜索 found nothing")
+        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "搜索 took 新建 away")
+        XCTAssertTrue(new.isHittable, "新建 can't be tapped after 搜索")
+    }
+
     /// Typing the name of a place the squad already has offers no new one.
     func testANameTheSquadHasOffersNoNewPlace() {
         let app = launch(extra: ["-today.cardPage", "0", "-uitest-no-maps"])
