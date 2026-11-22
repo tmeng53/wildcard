@@ -123,7 +123,13 @@ final class ComposePlaceUITests: XCTestCase {
         XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "typing doesn't offer a new place")
         app.typeText("\n")
         XCTAssertTrue(app.buttons["place.row"].waitForExistence(timeout: Self.wait), "搜索 found nothing")
-        XCTAssertTrue(new.waitForExistence(timeout: Self.wait), "搜索 took 新建 away")
+        // 搜索 puts the keyboard away and the sheet back to half height, where the list shows about
+        // a row and a half: 新建, its third row, is under the found place.
+        let list = app.collectionViews.firstMatch
+        for _ in 0..<3 where !(new.waitForExistence(timeout: 2) && new.isHittable) {
+            list.swipeUp()
+        }
+        XCTAssertTrue(new.exists, "搜索 took 新建 away")
         XCTAssertTrue(new.isHittable, "新建 can't be tapped after 搜索")
         settle()
         keepScreenshot(named: "15-compose-place-new-after-search")
