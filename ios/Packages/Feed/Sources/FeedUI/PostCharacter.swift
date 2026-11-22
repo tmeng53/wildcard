@@ -24,7 +24,7 @@ struct PostCharacter: View {
     var body: some View {
         if let player = model.player(for: post) {
             let played = model.played[post.id]
-            figure(player, moving: (played != nil || model.loops(post)) && !reduceMotion)
+            figure(player, moving: (played != nil || model.loops(post)) && !reduceMotion && !model.isCovered)
                 .overlay {
                     if model.holdsSign(post) {
                         GeometryReader { proxy in
