@@ -84,10 +84,6 @@ struct PostManaging: ViewModifier {
 
 // The member's own posts.
 extension FeedModel {
-    /// A page of the member's own is over the feed (the compose page or the 成绩卡), so the
-    /// cards' characters hold still under it instead of drawing every frame unseen (#924).
-    var isCovered: Bool { editing != nil || scoreCard != nil }
-
     /// Whether the member can edit and delete `post`: it is theirs.
     func canManage(_ post: FeedPost) -> Bool { editor != nil && post.author == viewer }
 
