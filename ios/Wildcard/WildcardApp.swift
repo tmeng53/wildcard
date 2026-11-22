@@ -141,6 +141,9 @@ struct WildcardApp: App {
     /// What every launch does first, before any model or screen is made.
     private static func startUp() {
         CrashReports.start()
+        #if DEBUG
+        StallLog.start()
+        #endif
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
         AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
         // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
