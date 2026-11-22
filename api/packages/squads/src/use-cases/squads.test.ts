@@ -491,7 +491,10 @@ describe('the captain', () => {
     await expect(squads.disband({ squad: squad.id, member: bo })).rejects.toMatchObject({
       reason: 'NOT_SQUAD_CAPTAIN',
     });
-    await squads.disband({ squad: squad.id, member: ann });
+    expect(await squads.disband({ squad: squad.id, member: ann })).toStrictEqual({
+      name: squad.name,
+      members: [ann, bo, cy],
+    });
     expect(await squads.membersOf(squad.id)).toStrictEqual([]);
     expect([...(await squads.endedAmong([squad.id])).keys()]).toStrictEqual([squad.id]);
     const { rows } = await sql<{ member_id: string; kind: string; actor_id: string }>`

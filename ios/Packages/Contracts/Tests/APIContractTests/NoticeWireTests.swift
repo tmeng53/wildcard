@@ -151,3 +151,18 @@ private func entry(
         of: #""joinRequest": "b0000000-0000-4000-8000-000000000001""#, with: #""x": 1"#)
     #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(partial.utf8))) == nil)
 }
+
+@Test func aDisbandedSquadIsNamedAndOpensNothing() throws {
+    let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
+    let told = #"""
+        {"id": 22, "kind": "squadDisbanded", "at": "2026-11-22T22:00:00Z",
+         "squadId": "3a7e9c1b-2d4f-4b6a-8e0c-5f1d2b3c4a59", "squadName": "周末早起队"}
+        """#
+    let notice = try #require(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(told.utf8))))
+    #expect(notice.subject == .squadDisbanded(name: "周末早起队"))
+    #expect(notice.destination == nil)
+    // Without the squad's name, this build can't show it.
+    let unnamed = told.replacingOccurrences(of: #", "squadName": "周末早起队""#, with: "")
+    #expect(Notice(try decoder.decode(Components.Schemas.NoticeEntry.self, from: Data(unnamed.utf8))) == nil)
+}

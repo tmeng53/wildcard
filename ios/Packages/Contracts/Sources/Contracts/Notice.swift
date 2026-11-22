@@ -47,6 +47,9 @@ public struct Notice: Hashable, Sendable, Identifiable {
         case joinRequest(PushAlert, request: JoinRequestID)
         /// The captain answered the member's request to join, in the words its push was put in.
         case joinAnswered(PushAlert, approved: Bool)
+        /// The captain disbanded the member's squad (解散小队), named as it was then; told only
+        /// in 通知, never by push.
+        case squadDisbanded(name: String)
     }
 
     public let id: NoticeID

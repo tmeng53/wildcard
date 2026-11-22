@@ -788,6 +788,19 @@ describe('the captain’s settings', () => {
         lastSquad: { id: squad.id, name: squad.name, how: 'removed', disbanded: true },
       },
     ]);
+    const told = await Promise.all(
+      [ann, bo].map(async ({ token }) =>
+        z
+          .object({ notices: z.array(z.object({ kind: z.string() }).loose()) })
+          .parse((await call({ method: 'GET', path: '/me/notices', token })).body)
+          .notices.filter(({ kind }) => kind === 'squadDisbanded')
+          .map(({ kind, squadId, squadName }) => ({ kind, squadId, squadName })),
+      ),
+    );
+    expect(told).toStrictEqual([
+      [],
+      [{ kind: 'squadDisbanded', squadId: squad.id, squadName: squad.name }],
+    ]);
     const again = await call({ method: 'DELETE', path, token: ann.token });
     expect([again.status, reason(again)]).toStrictEqual([403, 'SQUAD_NOT_JOINED']);
   });

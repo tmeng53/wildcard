@@ -221,7 +221,8 @@ extension MainTabs {
     func tellToldLive() {
         for notice in inbox.takeToldLive() {
             switch notice.subject {
-            case .broadcast, .goalSuggestion:
+            // A disbanded squad is told by the alert the app shows once it reads it is out.
+            case .broadcast, .goalSuggestion, .squadDisbanded:
                 continue
             case .joinRequest:
                 // 小队 reads who waits again: its banner (`tellJoinRequests`) and dots follow.

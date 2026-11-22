@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -205,6 +205,10 @@
           "approved": {
             "type": "boolean",
             "description": "Whether the captain let the caller in (`joinAnswered`)."
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad’s name when it was disbanded (`squadDisbanded`)."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -11780,7 +11784,7 @@
       "delete": {
         "operationId": "disbandSquad",
         "summary": "Disband a squad (解散小队)",
-        "description": "Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded.",
+        "description": "Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded, and every member but the captain is told in 通知 (`squadDisbanded`), never by push.",
         "security": [
           {
             "bearer": []

@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -210,6 +210,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/approved`.
             public var approved: Swift.Bool?
+            /// The squad’s name when it was disbanded (`squadDisbanded`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadName`.
+            public var squadName: Swift.String?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -412,7 +416,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - opened: True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): it is read, even when newer than `seenThrough`. Left out otherwise.
             ///   - squadId: The squad it is about, if any.
@@ -441,6 +445,7 @@ extension Components {
             ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
             ///   - joinRequest: The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
             ///   - approved: Whether the captain let the caller in (`joinAnswered`).
+            ///   - squadName: The squad’s name when it was disbanded (`squadDisbanded`).
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -479,6 +484,7 @@ extension Components {
                 adopted: Swift.String? = nil,
                 joinRequest: Swift.String? = nil,
                 approved: Swift.Bool? = nil,
+                squadName: Swift.String? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -517,6 +523,7 @@ extension Components {
                 self.adopted = adopted
                 self.joinRequest = joinRequest
                 self.approved = approved
+                self.squadName = squadName
                 self.title = title
                 self.body = body
                 self.action = action
@@ -556,6 +563,7 @@ extension Components {
                 case adopted
                 case joinRequest
                 case approved
+                case squadName
                 case title
                 case body
                 case action
