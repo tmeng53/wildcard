@@ -67,7 +67,7 @@ public final class FeedModel {
     var barFrame: CGRect?
     /// The post whose who-reacted panel is open.
     var listing: CheckInID?
-    /// The post to scroll to next: one opened from the home.
+    /// The post to scroll to next: one opened from the home, or one just edited.
     var focus: CheckInID?
     /// The post whose own page is open over the feed, with its comments. The app hides its tab
     /// bar while one is.
