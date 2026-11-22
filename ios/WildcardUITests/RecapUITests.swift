@@ -207,9 +207,11 @@ final class RecapUITests: XCTestCase {
 
         tile.tap()
         let ending = app.descendants(matching: .any).matching(identifier: "recap.page.ending").firstMatch
+        let menu = app.descendants(matching: .any).matching(identifier: "recap.page.menu").firstMatch
         for _ in 0..<14 where !ending.exists {
             XCTAssertTrue(app.buttons["recap.close"].waitForExistence(timeout: Self.wait), "the story didn't open")
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.9)).tap()
+            // Low only on 小队菜单, under its cards; lower down on 头衔 is 佩戴头衔.
+            next(in: app, from: menu.exists ? "menu" : nil)
         }
         XCTAssertTrue(ending.waitForExistence(timeout: Self.wait), "the last page never showed")
         app.buttons["recap.close"].tap()
