@@ -23,12 +23,9 @@ extension LaunchOptions {
     }
 
     /// The coach's cards on the sample squad: the sample deck, with `-uitest-coach-seen`
-    /// everything seen already, in 以前, or with `-uitest-coach-message` two coach messages.
+    /// everything seen already, in 以前.
     static var coachCards: any CoachCardSource {
-        if ProcessInfo.processInfo.arguments.contains("-uitest-coach-message") {
-            return InMemoryCoachCardSource.sampleMessages(now: now())
-        }
-        return InMemoryCoachCardSource.sample(
+        InMemoryCoachCardSource.sample(
             now: now(), empty: ProcessInfo.processInfo.arguments.contains("-uitest-coach-seen"))
     }
 
