@@ -26,8 +26,12 @@ final class PostManageUITests: XCTestCase {
         caption.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()
         // Clears the line, then types the new one in a call of its own, checking each landed: on
         // CI one string of deletes and words left the field empty, and the failure blamed the card.
-        caption.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
+        let deletes = String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20)
+        caption.typeText(deletes)
         let count = app.staticTexts["compose.count"]
+        // The keyboard has dropped the deletes too (CI, 2026-11-22): what is left goes once more.
+        let cleared = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '0/'"), object: count)
+        if XCTWaiter().wait(for: [cleared], timeout: 5) != .completed { caption.typeText(deletes) }
         waitFor(count, "label BEGINSWITH '0/'", "the old line wasn't cleared")
         caption.typeText("扶手是我的好朋友")
         // The simulator's 拼音 keyboard has dropped a whole typed string; nothing landed, so the
