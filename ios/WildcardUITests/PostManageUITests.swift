@@ -169,16 +169,28 @@ final class PostManageUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post isn't on screen")
-        let covers = app.descendants(matching: .any).matching(identifier: "feed.photos").allElementsBoundByIndex
-        XCTAssertFalse(covers.contains { $0.frame.contains(manage.frame) }, "the 「…」 is on a cover")
-        let photos = covers.filter { $0.frame.maxY <= manage.frame.midY }.max { $0.frame.maxY < $1.frame.maxY }
-        guard let photos else { return XCTFail("my post's cover isn't over its 「…」") }
+        // Those drags are 240 points, so the 「…」 can stop anywhere from 240 points over the tab
+        // bar to the top of the screen; at the top (the days above it lay out shorter on a
+        // Monday, 2026-11-23), the cover over it has scrolled off. Short drags back down until the
+        // cover's foot, where the swipe below turns its pages, is clear of the status bar.
+        let row = 0.85
+        let visibleTop = app.windows.firstMatch.frame.minY + 120
+        var cover = myCover(over: manage, in: app)
+        var backs = 0
+        while backs < 4, cover.map({ $0.frame.minY + $0.frame.height * row < visibleTop }) ?? true {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: 150)))
+            backs += 1
+            cover = myCover(over: manage, in: app)
+        }
+        guard let photos = cover else { return XCTFail("my post's cover isn't over its 「…」") }
+        XCTAssertGreaterThanOrEqual(
+            photos.frame.minY + photos.frame.height * row, visibleTop, "my post's cover is off the screen")
         // One flick at the cover's middle now and then leaves the pager on the photo (red on
         // main 11-11 and 11-12, green between with nothing changed): drag level across the
         // cover's foot, just above the stub with the 「…」, on screen while the cover's top may not be,
         // and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
-        let row = 0.85
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
             let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row))
@@ -191,6 +203,13 @@ final class PostManageUITests: XCTestCase {
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
         settle()
         keepScreenshot(named: "52-feed-heart-rate-cover")
+    }
+
+    /// My post's cover: the one just over its 「…」, which is never on a cover.
+    private func myCover(over manage: XCUIElement, in app: XCUIApplication) -> XCUIElement? {
+        let covers = app.descendants(matching: .any).matching(identifier: "feed.photos").allElementsBoundByIndex
+        XCTAssertFalse(covers.contains { $0.frame.contains(manage.frame) }, "the 「…」 is on a cover")
+        return covers.filter { $0.frame.maxY <= manage.frame.midY }.max { $0.frame.maxY < $1.frame.maxY }
     }
 
     /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.
