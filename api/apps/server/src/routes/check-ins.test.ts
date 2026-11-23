@@ -895,17 +895,19 @@ describe('GET /me/records', () => {
     // Three days in a row, then three without: the default plan never rests two days running,
     // so one of them breaks the run whatever the weekday.
     for (const day of [daysAgo(6), daysAgo(5), daysAgo(4), today]) await put(day, run);
-    // 健康餐 four and two days ago, a 坦白放纵餐 between bridging them: yesterday had none, so
-    // that run is over.
+    // 健康餐 six and four days ago, a 坦白放纵餐 between bridging them, then three days without
+    // (two before today on the member's clock even while UTC is a day ahead): a planned rest day
+    // bridges meals too, but the default plan never rests two days running, so that run is over
+    // whatever the weekday.
+    await put(daysAgo(6), { kind: 'healthyMeal', meal: {} });
+    await put(daysAgo(5), { kind: 'cheatMeal', meal: {} });
     await put(daysAgo(4), { kind: 'healthyMeal', meal: {} });
-    await put(daysAgo(3), { kind: 'cheatMeal', meal: {} });
-    await put(daysAgo(2), { kind: 'healthyMeal', meal: {} });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
     expect(body).toMatchObject({
       longestStreak: { days: 3, from: daysAgo(6), to: daysAgo(4) },
       currentStreak: { days: 1, from: today, to: today },
-      mealStreak: { days: 2, from: daysAgo(4), to: daysAgo(2) },
+      mealStreak: { days: 2, from: daysAgo(6), to: daysAgo(4) },
     });
     expect(body).not.toHaveProperty('currentMealStreak');
   });
