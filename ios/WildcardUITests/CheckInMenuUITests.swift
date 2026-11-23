@@ -123,7 +123,7 @@ final class CheckInMenuUITests: XCTestCase {
                 let context = CGContext(
                     data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
                     bytesPerRow: width * 4,
-                    space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
+                    space: CGColorSpaceCreateDeviceRGB(),
                     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
             else { return false }
             context.draw(picture, in: CGRect(x: 0, y: 0, width: width, height: height))
