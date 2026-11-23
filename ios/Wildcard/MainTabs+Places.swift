@@ -38,7 +38,6 @@ extension MainTabs {
             today: LocalDay(at: LaunchOptions.now(), in: .autoupdatingCurrent), writesNote: writesNote,
             openPost: openPost
         )
-        .environment(\.sceneTheme, today.scene)
     }
 
     /// The squad 小队地图 shows: none, and no map button, for a member in no squad.
@@ -52,7 +51,6 @@ extension MainTabs {
                 source: places, openPlace: { feedPages.append(.place($0)) },
                 openPost: { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
             )
-            .environment(\.sceneTheme, today.scene)
         }
     }
 }

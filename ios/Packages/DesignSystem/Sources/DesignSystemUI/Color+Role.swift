@@ -20,8 +20,9 @@ extension Color {
 }
 
 extension EnvironmentValues {
-    /// The scene the squad picked. Views read it to color their accent roles.
-    @Entry public var sceneTheme: SceneTheme = .pool
+    /// The scene the squad picked. Views read it to color their accent roles. A screen sets it
+    /// once at its root; until then it is the gym, the scene of a squad that hasn't picked one.
+    @Entry public var sceneTheme: SceneTheme = .gym
     /// Whose colour primary buttons and selection marks wear here. A brand screen sets `.brand`
     /// once at its root (`.accentTone(.brand)`); everything inside follows.
     @Entry public var accentTone: AccentTone = .scene

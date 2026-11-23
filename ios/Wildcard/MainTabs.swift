@@ -127,6 +127,13 @@ struct MainTabs: View {
     }
 
     var body: some View {
+        // The squad's scene, set once here for everything the tabs show: each screen, the tab bar,
+        // the ＋'s kinds over it, the banners and popups. A view left to the environment's default
+        // wears the gym, never the squad's colour.
+        tabs.environment(\.sceneTheme, today.scene)
+    }
+
+    private var tabs: some View {
         AppTabs(
             Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot,
             action: checkInAction, barTapped: closeCheckInMenu
@@ -207,7 +214,6 @@ struct MainTabs: View {
                     }
                     TeammateCard(model: teammate)
                 }
-                .environment(\.sceneTheme, today.scene)
             }
         }
         // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
@@ -305,7 +311,6 @@ struct MainTabs: View {
                 }
             }
         }
-        .environment(\.sceneTheme, today.scene)
         .onChange(of: feed.opened) { _, id in pushCardPost(id) }
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
@@ -366,13 +371,11 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                 case .coachDeck, .coachEarlier, .coachCard:
                     coachDeckPage(page)
-                        .environment(\.sceneTheme, today.scene)
                 case .place(let place):
                     placePage(place) { todayPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 case .post(let opened):
                     PostDetailView(model: opened.model, post: opened.id) { todayPages.removeLast() }
                         .readsNotices(about: .place(.post(opened.id)))
-                        .environment(\.sceneTheme, today.scene)
                 }
             }
         }
