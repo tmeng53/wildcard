@@ -16,12 +16,14 @@ public struct FeedView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: FeedModel
-    /// The post the list holds at its top: the one opened from the home or just edited, then
-    /// whichever the member scrolls to. The system's scroll position keeps it there while what is
-    /// above it (the 战报's tile, the posts the server lists, cards the lazy list measures only
-    /// when drawn) arrives; a hand-made pin that scrolled back on every height change chased the
-    /// lazy list's own measuring and froze the app (#924).
-    @State private var position: CheckInID?
+    /// The post opened from the home, held at the top for a moment or until the member scrolls:
+    /// what is above it (the 战报's tile, the posts the server lists, cards the lazy list measures
+    /// only when drawn) keeps arriving after the first move and would push it away.
+    @State private var pinned: CheckInID?
+    /// How many more times the pin may put its post back. Each put back moves the lazy list, which
+    /// measures cards again and can change its height again; on a slow Mac that chased itself in
+    /// one update for minutes and froze the app (#924), so the pin gives up after a few.
+    @State private var repins = 0
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -32,6 +34,10 @@ public struct FeedView: View {
     /// The feed's coordinate space: where the emoji bar is, where a finger slides and where emoji
     /// fly.
     static let space = "feed"
+    /// How long a post opened from the home stays held at the top.
+    static let pinFor = Duration.seconds(2)
+    /// How many times a pin puts its post back at most.
+    static let maxRepins = 6
 
     public init(model: FeedModel, header: AnyView? = nil, accessory: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
@@ -48,40 +54,61 @@ public struct FeedView: View {
     }
 
     private var feed: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: Space.m) {
-                HStack(alignment: .center, spacing: Space.s) {
-                    Text(copy: "动态", bundle: .module)
-                        .typeStyle(TypeRamp.largeTitle)
-                        .foregroundStyle(Color(role: .fgDefault, in: theme))
-                        .accessibilityAddTraits(.isHeader)
-                        .accessibilityIdentifier("feed.title")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    accessory
+        ScrollViewReader { scroller in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: Space.m) {
+                    HStack(alignment: .center, spacing: Space.s) {
+                        Text(copy: "动态", bundle: .module)
+                            .typeStyle(TypeRamp.largeTitle)
+                            .foregroundStyle(Color(role: .fgDefault, in: theme))
+                            .accessibilityAddTraits(.isHeader)
+                            .accessibilityIdentifier("feed.title")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        accessory
+                    }
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                    header
+                    content
                 }
-                .blur(radius: model.lifted ? Scrim.blurRadius : 0)
-                header
-                content
+                .padding(.horizontal, Space.pageMargin)
+                .padding(.top, Space.l)
+                .padding(.bottom, Space.l)
             }
-            .scrollTargetLayout()
-            .padding(.horizontal, Space.pageMargin)
-            .padding(.top, Space.l)
-            .padding(.bottom, Space.l)
-        }
-        .scrollPosition(id: $position, anchor: .top)
-        .scrollDismissesKeyboard(.immediately)
-        // A held card's slide picks an emoji; the list stays put under it.
-        .scrollDisabled(model.lifted)
-        .refreshable { await model.load() }
-        .task(id: model.focus) {
-            guard let focus = model.focus else { return }
-            // Waits a frame, so the list has the post before scrolling to it: opened from the
-            // home, it hasn't yet.
-            await Task.yield()
-            withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
-                position = focus
+            // Each time the list's height changes, puts the pinned post back at the top.
+            .onScrollGeometryChange(for: CGFloat.self) {
+                $0.contentSize.height
+            } action: { old, new in
+                guard let pinned, repins > 0, abs(new - old) >= 1 else { return }
+                repins -= 1
+                scroller.scrollTo(pinned, anchor: .top)
             }
-            model.focus = nil
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting { pinned = nil }
+            }
+            // Lets go once the list has settled, so the pin can't keep moving the list.
+            .task(id: pinned) {
+                guard pinned != nil else { return }
+                try? await Task.sleep(for: Self.pinFor)
+                // A newer pin or leaving 动态 cancels this wait; only a wait that ran out lets go.
+                guard !Task.isCancelled else { return }
+                pinned = nil
+            }
+            .scrollDismissesKeyboard(.immediately)
+            // A held card's slide picks an emoji; the list stays put under it.
+            .scrollDisabled(model.lifted)
+            .refreshable { await model.load() }
+            .task(id: model.focus) {
+                guard let focus = model.focus else { return }
+                // Waits a frame, so the list has laid out the post before scrolling to it: opened
+                // from the home, it hasn't yet, and the scroll would do nothing.
+                await Task.yield()
+                pinned = focus
+                repins = Self.maxRepins
+                withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
+                    scroller.scrollTo(focus, anchor: .top)
+                }
+                model.focus = nil
+            }
         }
         .feedSurface(model, isActive: model.opened == nil)
         .managesPosts(model, isActive: model.opened == nil)
