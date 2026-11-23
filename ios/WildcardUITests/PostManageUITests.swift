@@ -179,6 +179,7 @@ final class PostManageUITests: XCTestCase {
         // and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
         let row = 0.85
+        keepScreenshot(named: "90a-debug-before-turn")
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
             let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row))
@@ -187,7 +188,9 @@ final class PostManageUITests: XCTestCase {
                 thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row)),
                 withVelocity: .default, thenHoldForDuration: 0)
             turns += 1
+            keepScreenshot(named: "90b-debug-after-turn-\(turns)")
         }
+        print("debug-tree: \(app.debugDescription)")
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
         settle()
         keepScreenshot(named: "52-feed-heart-rate-cover")
