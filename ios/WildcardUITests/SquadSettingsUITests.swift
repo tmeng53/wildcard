@@ -282,7 +282,9 @@ final class SquadSettingsUITests: XCTestCase {
                 "the name runs under the rename button")
         }
     }
+}
 
+extension SquadSettingsUITests {
     /// The characters and springs settle before a screenshot.
     private func settle() {
         Thread.sleep(forTimeInterval: 1)
@@ -309,5 +311,4 @@ final class SquadSettingsUITests: XCTestCase {
         waitFor(app.buttons["squad.goal.pick.5"], "exists == false", "完成 didn't fold the picker")
         XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "下周起人均 5 次", "the waiting change went quiet")
     }
-
 }
