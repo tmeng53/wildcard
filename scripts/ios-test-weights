@@ -1,56 +1,58 @@
-# Seconds each UI test class took on CI (run 43622811673 on main, 2026-11-14; WidgetUITests's
-# English test from run 43597660221, as the first was cut off), so SHARD in scripts/ios-test.sh
-# splits the suite into parts that take about as long. A class missing here counts as 60; add a
-# new class's time once a run has it, and refresh the numbers when a part runs much longer than
-# the others.
-BackfillUITests 178
-BadgeBoardUITests 182
-BroadcastCelebrationUITests 64
-CharacterEditorUITests 309
-CheckInMenuUITests 77
-CoachDeckUITests 309
-CoachFeedUITests 100
-CoachHireUITests 222
-CoachLetterUITests 164
-CoachSidelineUITests 58
-CommentButtonUITests 40
-ComposePhotoUITests 119
-ComposePlaceUITests 265
-ComposeStartTimeUITests 117
-DailyPushUITests 56
-FeedUITests 766
-HealthUITests 174
-HomeScreenWidgetUITests 43
-LanguageUITests 171
-LightsUITests 69
-LoadingUITests 92
-MeUITests 591
-NightlyRecapUITests 55
-NoticeBellUITests 160
-NoticeUITests 90
-NotificationPromptUITests 71
-OpeningUITests 67
-PatUITests 133
-PostManageUITests 621
-PushBannerUITests 296
-PushLongPressUITests 117
-RecapUITests 515
-RejoinUITests 74
-ScenePickUITests 319
-ScheduleUITests 328
-ShoppingStreetUITests 111
-SignUpUITests 302
-SquadJoinRequestUITests 25
-SquadMapUITests 47
-SquadSceneUITests 30
-SquadSettingsUITests 230
-TabsUITests 170
+# Seconds each UI test class took on CI (main run 45153025691, 2026-11-23, retries included;
+# TeamLetterUITests and TodayCapsuleUITests from run 43622811673, as that run didn't reach them),
+# so SHARD in scripts/ios-test.sh splits the suite into parts that take about as long. A class
+# missing here counts as 60; add a new class's time once a run has it, and refresh the numbers
+# when a part runs much longer than the others.
+BackfillUITests 275
+BadgeBoardUITests 179
+BroadcastCelebrationUITests 97
+CharacterEditorUITests 316
+CheckInMenuUITests 191
+CoachDeckUITests 382
+CoachFeedUITests 132
+CoachHireUITests 206
+CoachLetterUITests 227
+CoachSidelineUITests 71
+CommentButtonUITests 43
+ComposePhotoUITests 93
+ComposePlaceUITests 268
+ComposeStartTimeUITests 91
+DailyPushUITests 79
+FeedUITests 782
+HealthUITests 143
+HomeScreenWidgetUITests 44
+LanguageUITests 118
+LightsUITests 52
+LoadingUITests 122
+MeUITests 561
+ModerationUITests 124
+NightlyRecapUITests 41
+NoticeBellUITests 180
+NoticeUITests 61
+NotificationPromptUITests 77
+OpeningUITests 63
+PatUITests 194
+PostManageUITests 1402
+PushBannerUITests 271
+PushLongPressUITests 103
+RecapUITests 545
+RejoinUITests 76
+SavedPlacesUITests 109
+ScenePickUITests 314
+ScheduleUITests 366
+ShoppingStreetUITests 156
+SignUpUITests 282
+SquadJoinRequestUITests 33
+SquadMapUITests 43
+SquadSceneUITests 41
+SquadSettingsUITests 285
+TabsUITests 363
 TeamLetterUITests 74
-TeammateCardUITests 305
+TeammateCardUITests 308
 TodayCapsuleUITests 122
-TodayUITests 387
-TogetherUITests 83
-UnlockNoticeUITests 96
-WeekChallengeUITests 61
-WelcomeUITests 39
-WidgetUITests 700
+TodayUITests 152
+TogetherUITests 80
+UnlockNoticeUITests 82
+WeekChallengeUITests 46
+WelcomeUITests 36
+WidgetUITests 849
