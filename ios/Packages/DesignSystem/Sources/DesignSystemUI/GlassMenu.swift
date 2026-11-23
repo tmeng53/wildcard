@@ -35,18 +35,22 @@ public struct GlassMenuItem: Identifiable {
     let systemImage: String?
     let role: Role
     let isSelected: Bool
+    /// False for a row shown greyed that can't be picked (出赛表's 还未入队).
+    let isEnabled: Bool
     let confirmation: Confirmation?
     public let action: @MainActor () -> Void
 
     /// `isSelected` ticks the row (the language spoken now).
     public init(
-        _ title: Text, systemImage: String? = nil, role: Role = .standard, isSelected: Bool = false, id: String,
-        confirm confirmation: Confirmation? = nil, action: @escaping @MainActor () -> Void
+        _ title: Text, systemImage: String? = nil, role: Role = .standard, isSelected: Bool = false,
+        isEnabled: Bool = true, id: String, confirm confirmation: Confirmation? = nil,
+        action: @escaping @MainActor () -> Void
     ) {
         self.title = title
         self.systemImage = systemImage
         self.role = role
         self.isSelected = isSelected
+        self.isEnabled = isEnabled
         self.id = id
         self.confirmation = confirmation
         self.action = action
@@ -135,7 +139,10 @@ struct GlassMenu: View {
     }
 
     private func row(_ item: GlassMenuItem) -> some View {
-        GlassMenuRow(item.title, systemImage: item.systemImage, role: item.role, isSelected: item.isSelected) {
+        GlassMenuRow(
+            item.title, systemImage: item.systemImage, role: item.role, isSelected: item.isSelected,
+            isEnabled: item.isEnabled
+        ) {
             if item.confirmation != nil {
                 confirming = item.id
             } else {
@@ -184,18 +191,20 @@ struct GlassMenuRow: View {
     private let role: GlassMenuItem.Role
     private let isSelected: Bool
     private let isEmphasized: Bool
+    private let isEnabled: Bool
     private let action: @MainActor () -> Void
 
     static let height: Double = 48
 
     init(
         _ title: Text, systemImage: String? = nil, role: GlassMenuItem.Role = .standard, isSelected: Bool = false,
-        isEmphasized: Bool = false, action: @escaping @MainActor () -> Void
+        isEnabled: Bool = true, isEmphasized: Bool = false, action: @escaping @MainActor () -> Void
     ) {
         self.title = title
         self.systemImage = systemImage
         self.role = role
         self.isSelected = isSelected
+        self.isEnabled = isEnabled
         self.isEmphasized = isEmphasized
         self.action = action
     }
@@ -220,12 +229,15 @@ struct GlassMenuRow: View {
                         .accessibilityHidden(true)
                 }
             }
-            .foregroundStyle(Color(role: role == .destructive ? .fgDanger : .fgDefault, in: theme))
+            .foregroundStyle(
+                Color(role: !isEnabled ? .fgSubtle : role == .destructive ? .fgDanger : .fgDefault, in: theme)
+            )
             .padding(.horizontal, Space.m)
             .frame(maxWidth: .infinity, minHeight: Self.height, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(GlassMenuRowStyle())
+        .disabled(!isEnabled)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

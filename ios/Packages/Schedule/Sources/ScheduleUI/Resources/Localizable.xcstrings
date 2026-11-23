@@ -593,6 +593,22 @@
         }
       }
     },
+    "往期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "往期"
+          }
+        }
+      }
+    },
     "还未入队": {
       "comment": "出赛表's greyed chip before the week the member joined their squad.",
       "localizations": {

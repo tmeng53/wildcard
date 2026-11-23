@@ -1,14 +1,15 @@
 import XCTest
 
-/// 补打卡: a post can count for today or a day of the week before it, picked on the 日期 strip of
-/// its page; 动态 shows it on the day it went up, with 「补昨天的」 after its time. The 健康餐
-/// compose page has its own placeholder, no sport row, and the one photo as cover.
+/// 补打卡: a post can count for today or a day of the week before it, picked from its page's 日期
+/// pill, which opens the week's strip (Tracy, 2026-11-21); 动态 shows it on the day it went up,
+/// with 「补昨天的」 after its time. The 健康餐 compose page has its own placeholder, no sport row,
+/// and the one photo as cover.
 @MainActor
 final class BackfillUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
-    /// The strip opens on today; picking yesterday and posting a 健康餐 puts it in 动态 today,
-    /// marked 补昨天的.
+    /// The pill says 今天 and opens the strip on today; picking yesterday and 完成 puts 昨天 on
+    /// it, and posting a 健康餐 puts it in 动态 today, marked 补昨天的.
     func testPostForYesterday() {
         let app = launch()
         app.buttons["today.checkin"].tap()
@@ -25,24 +26,7 @@ final class BackfillUITests: XCTestCase {
         settle()
         keepScreenshot(named: "22-compose-healthy-meal")
 
-        // Eight days, the earliest first: today is the last, and picked.
-        let today = app.buttons["dayStrip.7"]
-        let yesterday = app.buttons["dayStrip.6"]
-        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "no 日期 strip")
-        XCTAssertTrue(app.buttons["dayStrip.0"].exists, "the strip doesn't reach a week back")
-        XCTAssertFalse(app.buttons["dayStrip.8"].exists, "the strip reaches past a week back")
-        XCTAssertTrue(today.isSelected, "the strip didn't open on today")
-        XCTAssertTrue(today.label.hasPrefix("今天"), "today isn't called 今天: \(today.label)")
-        for index in 0...7 {
-            let day = app.buttons["dayStrip.\(index)"]
-            XCTAssertTrue(app.windows.firstMatch.frame.contains(day.frame), "day \(index) is cut off: \(day.frame)")
-        }
-
-        yesterday.tap()
-        waitFor(yesterday, "isSelected == true", "tapping yesterday didn't pick it")
-        XCTAssertFalse(today.isSelected, "today stayed picked")
-        settle()
-        keepScreenshot(named: "62-compose-backfill-yesterday")
+        pickYesterday(in: app)
         rateTheMeal(in: app)
 
         caption.tap()
@@ -60,6 +44,35 @@ final class BackfillUITests: XCTestCase {
         assertRatedFiveAndFour(in: app)
         settle()
         keepScreenshot(named: "63-feed-backfill")
+    }
+
+    /// The 日期 pill opens a week of days, today picked; yesterday and 完成 put 昨天 on the pill.
+    private func pickYesterday(in app: XCUIApplication) {
+        let dayPill = app.buttons["compose.day"]
+        XCTAssertTrue(dayPill.waitForExistence(timeout: Self.wait), "no 日期 pill")
+        XCTAssertEqual(dayPill.value as? String, "今天")
+        XCTAssertFalse(app.buttons["dayStrip.7"].exists, "the strip shows before the pill is tapped")
+        dayPill.tap()
+        let today = app.buttons["dayStrip.7"]
+        let yesterday = app.buttons["dayStrip.6"]
+        XCTAssertTrue(today.waitForExistence(timeout: Self.wait), "no 日期 strip")
+        XCTAssertTrue(app.buttons["dayStrip.0"].exists, "the strip doesn't reach a week back")
+        XCTAssertFalse(app.buttons["dayStrip.8"].exists, "the strip reaches past a week back")
+        XCTAssertTrue(today.isSelected, "the strip didn't open on today")
+        XCTAssertTrue(today.label.hasPrefix("今天"), "today isn't called 今天: \(today.label)")
+        for index in 0...7 {
+            let day = app.buttons["dayStrip.\(index)"]
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(day.frame), "day \(index) is cut off: \(day.frame)")
+        }
+
+        yesterday.tap()
+        waitFor(yesterday, "isSelected == true", "tapping yesterday didn't pick it")
+        XCTAssertFalse(today.isSelected, "today stayed picked")
+        settle()
+        keepScreenshot(named: "62-compose-backfill-yesterday")
+        app.buttons["day.done"].tap()
+        XCTAssertTrue(today.waitForNonExistence(timeout: Self.wait), "完成 didn't close the strip")
+        XCTAssertEqual(dayPill.value as? String, "昨天", "the pill doesn't say the day picked")
     }
 
     /// A meal's page asks 这顿怎么样 under 日期: five stars for 健康 and five for 好吃, picked by a

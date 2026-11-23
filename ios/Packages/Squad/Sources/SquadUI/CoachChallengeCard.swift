@@ -13,11 +13,14 @@ struct ChallengeAnswers: View {
     @Binding var reason: String
     var typing: FocusState<Bool>.Binding
     let putAway: ((CoachPageCard) -> Void)?
+    /// 不接挑战 was tapped once: the field for why and the button that sends it are out.
+    @State private var passing = false
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    /// 接受挑战, big, on top; under it a small field to tell the coach why and 不接挑战 (Tracy,
-    /// 2026-11-08). Accepting stamps the card and pops the button before the card goes; declining
+    /// 接受挑战, big, on top; under it only a quiet 不接挑战, which opens a small field to tell the
+    /// coach why and the 不接挑战 that sends it (Tracy, 2026-11-08; folded away until wanted,
+    /// 2026-11-21). Accepting stamps the card and pops the button before the card goes; declining
     /// sends the card away at once, with what was typed.
     var body: some View {
         VStack(spacing: Space.s) {
@@ -37,14 +40,25 @@ struct ChallengeAnswers: View {
             }
             .haptic(.land, trigger: stamped)
             .accessibilityIdentifier("coachDeck.accept")
-            HStack(spacing: Space.xs) {
-                reasonField
-                Button(action: decline) { Text(copy: "不接挑战", bundle: .module) }
-                    .buttonStyle(SecondaryButtonStyle(.onInk))
-                    .overlay {
-                        Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
-                    }
-                    .accessibilityIdentifier("coachDeck.decline")
+            if passing {
+                HStack(spacing: Space.xs) {
+                    reasonField
+                    Button(action: decline) { Text(copy: "不接挑战", bundle: .module) }
+                        .buttonStyle(SecondaryButtonStyle(.onInk))
+                        .overlay {
+                            Capsule().strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+                        }
+                        .accessibilityIdentifier("coachDeck.decline")
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else {
+                Button {
+                    withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { passing = true }
+                } label: {
+                    Text(copy: "不接挑战", bundle: .module)
+                }
+                .buttonStyle(TextButtonStyle())
+                .accessibilityIdentifier("coachDeck.pass")
             }
         }
     }
