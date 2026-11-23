@@ -84,14 +84,15 @@ final class CheckInMenuUITests: XCTestCase {
         waitFor(app.buttons["tab.feed"], "exists == false", "the tab bar stayed over the compose page")
     }
 
-    /// The kinds' icons wear the squad's scene colour, on every tab: on the track, its red, never
-    /// the blue of a scene nobody picked (Tracy, 2026-11-23: the menu sat outside where the
-    /// scene was set and fell back to the pool's blue).
+    /// The kinds' icons wear the squad's scene colour on any tab: on the track, its red, never the
+    /// blue of a scene nobody picked (Tracy, 2026-11-23: the menu sat outside where the scene was
+    /// set and fell back to the pool's blue). Checked over 动态 and 我, whose pages behind the glass
+    /// aren't the track's red themselves, so only the icon can make the pixel red.
     func testKindsWearTheSquadsScene() {
         let app = launch(language: "zh-Hans", size: "UICTContentSizeCategoryL", scene: "track")
         let plus = app.buttons["today.checkin"]
         XCTAssertTrue(plus.waitForExistence(timeout: Self.wait), "no ＋")
-        for tab in ["tab.today", "tab.feed", "tab.me"] {
+        for tab in ["tab.feed", "tab.me"] {
             app.buttons[tab].tap()
             plus.tap()
             let capsule = app.buttons["today.capsule.trained"]
@@ -109,9 +110,12 @@ final class CheckInMenuUITests: XCTestCase {
         }
     }
 
-    /// The most saturated pixel of a picture, in 0...1 channels: an icon's ink on clear glass.
+    /// The most saturated pixel of a capsule's leading square, where its icon is, in 0...1
+    /// channels: the icon's ink on clear glass.
     private static func mostColourful(in image: UIImage) -> (red: Double, green: Double, blue: Double)? {
-        guard let picture = image.cgImage else { return nil }
+        guard let capsule = image.cgImage,
+            let picture = capsule.cropping(to: CGRect(x: 0, y: 0, width: capsule.height, height: capsule.height))
+        else { return nil }
         let (width, height) = (picture.width, picture.height)
         var bytes = [UInt8](repeating: 0, count: width * height * 4)
         let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
