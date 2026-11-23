@@ -13,7 +13,7 @@ import PackageDescription
 // - `APIDeviceRegistry` puts it behind the `DeviceRegistry` that push registration talks to, and
 //   `APINoticeSource` behind `NoticeInbox`'s `NoticeSource`: 通知, the bell on 动态.
 // - `APIWeekStoryService`, the Sunday 战报 behind `RecapDomain`'s `WeekStoryService`.
-// - `APICheckInBackend`, `DeviceOutbox` and `APIDisclaimerWriter`, the adapters behind
+// - `APICheckInBackend` and `DeviceOutbox`, the adapters behind
 //   `CheckInDomain`'s ports: the home and 打卡 over the API, with a copy of the home and the
 //   posts still to go out kept on the device, in the member's own `MemberFolders` folder.
 // - `APISignUpService`, the adapter behind `OnboardingDomain`'s `SignUpService`: the squad, the
@@ -30,7 +30,7 @@ import PackageDescription
 // - `APISquadSettingsService`, behind `SquadDomain`'s `SquadSettingsService`: 小队设置; and
 //   `APIScenePickService`, behind `ScenePickDomain`'s `ScenePickService`: the 战报's scene pick.
 // - `APIScheduleBackend`, the adapter behind `ScheduleDomain`'s `ScheduleBackend`: 出赛表's weekly
-//   plans and 饮食小目标, the days checked in, the week's titles and the squad's count.
+//   plans, the days checked in, the week's titles and the squad's count.
 let package = Package(
     name: "Backend",
     platforms: [.iOS("26.0"), .macOS("26.0")],

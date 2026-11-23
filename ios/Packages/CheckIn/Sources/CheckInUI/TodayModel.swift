@@ -27,12 +27,12 @@ public final class TodayModel {
     enum Step: Equatable {
         case scene
         case composing(CheckInKind)
-        case disclaimer
     }
 
-    /// Opening it closes a teammate's bubble, which would otherwise stay sharp over the blur.
-    var isBurstOpen = false {
-        didSet { if isBurstOpen { pats.dismissBubble() } }
+    /// 打卡's ＋ opened into the kinds (`CheckInMenu`, over every tab); opening it closes a
+    /// teammate's bubble, which would otherwise stay sharp over the blur.
+    public var isCheckInMenuOpen = false {
+        didSet { if isCheckInMenuOpen { pats.dismissBubble() } }
     }
     /// Everyone else on the scene.
     let cast = SquadCast()
@@ -48,15 +48,12 @@ public final class TodayModel {
     let outgoingHold: Double
     private(set) var step = Step.scene
 
-    /// Whether the app's tab bar shows: on the scene, but not while the 打卡 burst is open (a tap
-    /// anywhere outside its capsules closes it), a check-in is being written (the compose and
-    /// 请假条 pages take the whole screen) or the squad is dropping in, until 打卡 is back.
+    /// Whether the app's tab bar shows: on the scene, with 打卡's ＋ in it, but not while a
+    /// check-in is being written (the compose page takes the whole screen) or the squad is
+    /// dropping in.
     public var showsTabBar: Bool {
         guard !holdsTabBar, opening == nil, shownLetter == nil, shownTeamLetter == nil else { return false }
-        return switch step {
-        case .scene: !isBurstOpen
-        case .composing, .disclaimer: false
-        }
+        return step == .scene
     }
 
     /// The open compose page's state.
@@ -90,7 +87,6 @@ public final class TodayModel {
     public let health: HealthConnection?
     /// The workout a widget's 打卡 asked to start a 训练 from, until it opens (`openAskedWorkout`).
     var askedToPost: WorkoutSource?
-    private let writer: any DisclaimerWriter
     private let posted: @MainActor () -> Void
     private let noSquad: @MainActor () -> Void
     let now: () -> Date
@@ -106,7 +102,7 @@ public final class TodayModel {
     ///   - noSquad: called when a load finds the member in no squad any more: the captain
     ///     removed them, or they left on another phone.
     public init(
-        store: TodayStore, writer: any DisclaimerWriter, photoSource: PhotoSource = .library,
+        store: TodayStore, photoSource: PhotoSource = .library,
         scene: SceneTheme = .gym, health: HealthConnection? = nil, now: @escaping () -> Date = Date.init,
         defaults: UserDefaults = .standard,
         bubbleHold: Double? = nil, celebratesTogether: Bool = true, posted: @escaping @MainActor () -> Void,
@@ -121,7 +117,6 @@ public final class TodayModel {
         self.store = store
         self.health = health
         self.now = now
-        self.writer = writer
         self.photoSource = photoSource
         self.posted = posted
         self.noSquad = noSquad
@@ -141,6 +136,8 @@ public final class TodayModel {
     /// Opens the card of a challenge on its coach's page, from a tap on the coach's head on the
     /// squad card's challenge row; the app sets it.
     @ObservationIgnored public var openChallenge: (DayChallenge) -> Void = { _ in }
+    /// Opens a boxed gift's card on its coach's page, from the home's gift button; the app sets it.
+    @ObservationIgnored public var openGift: (CoachPageCard) -> Void = { _ in }
 
     /// The squad dropping onto a newly picked scene (`TodayModel+DropIn.swift`), the tab bar held meanwhile.
     var arrival: Arrival?
@@ -236,21 +233,6 @@ public final class TodayModel {
         if opening != nil { standOpeningSquad() }
     }
 
-    /// A 请假条 is on offer while some day it can count for is free of a 练了 (补打卡).
-    var unavailable: Set<CheckInKind> {
-        let blocked = blockedForDisclaimer
-        return disclaimerDays.contains { !blocked.contains($0) } ? [] : [.disclaimer]
-    }
-
-    /// The days a 请假条 can count for, today last.
-    var disclaimerDays: [LocalDay] { store.postableDays }
-
-    /// The days a 请假条 can't go on: one with a 练了.
-    var blockedForDisclaimer: Set<LocalDay> { store.disclaimerBlockedDays }
-
-    /// The scene blurs behind an open burst. The 请假条 bubble keeps it sharp: the member writes on the scene itself.
-    var isSceneDimmed: Bool { isBurstOpen }
-
     /// Loads the home, on opening 今天, on coming back to the app, and on a tapped notification.
     public func load() async {
         // Health is read on the phone alongside the server's round trips, so a workout Health
@@ -268,9 +250,9 @@ public final class TodayModel {
     static let rereadEvery = Duration.seconds(60)
 
     /// Reads the home again while the scene shows nothing in hand: not while a check-in is being
-    /// made, the burst is open or the squad is dropping in.
+    /// made, the check-in menu is open or the squad is dropping in.
     func reread() async {
-        guard step == .scene, !isBurstOpen, arrival == nil else { return }
+        guard step == .scene, !isCheckInMenuOpen, arrival == nil else { return }
         await store.refresh()
         showLoaded()
     }
@@ -286,12 +268,20 @@ public final class TodayModel {
         Task { await playOpening() }
     }
 
+    /// 打卡's ＋ picked `kind`, from any tab: its page, over the scene. A page already open stays as
+    /// it is.
+    public func startCheckIn(_ kind: CheckInKind) {
+        isCheckInMenuOpen = false
+        guard step == .scene else { return }
+        pick(kind)
+    }
+
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
     func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
-        // Straight to the page: photos are added there, with its 「+ 照片」 (the 请假条's too).
+        // Straight to the page: photos are added there, with its 「+ 照片」.
         compose = newPost(kind, from: workout)
-        step = kind == .disclaimer ? .disclaimer : .composing(kind)
+        step = .composing(kind)
     }
 
     /// The compose page for a post the server refused, with its photos, words, sport, workout and
@@ -309,10 +299,6 @@ public final class TodayModel {
         step = .scene
         compose = nil
         sendFailed = false
-    }
-
-    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
-        await writer.suggestions(for: reason, style: style)
     }
 
     /// Posts `draft` to the squad, in its 动态 unless not `inFeed`, for `day`, today when left out.
@@ -354,12 +340,8 @@ public final class TodayModel {
         _ draft: CheckInDraft, weekBefore: (squad: WeekCount, mine: WeekCount)?, isBackfill: Bool
     ) {
         posts += 1
-        // A 请假条 has no cheer; the sleep cap and sign come with their art.
-        let cheer =
-            draft.kind == .disclaimer
-            ? nil
-            : try? PlaceholderCharacter.clip(
-                "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
+        let cheer = try? PlaceholderCharacter.clip(
+            "cheer", persona: myPersona, species: PlaceholderCharacter.species(of: myLook))
         // A clip would stop a hop into the kit halfway, in the clothes on screen.
         if let cheer, !isChanging { try? player?.play(cheer) }
         guard draft.kind == .trained, !isBackfill else { return }

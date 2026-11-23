@@ -152,6 +152,8 @@ extension Notice {
         case .goalSuggestion: .squad
         case .joinRequest: .squadPreferences
         case .joinAnswered: .squad
+        // The squad is gone: there is nowhere to open.
+        case .squadDisbanded: nil
         }
     }
 }

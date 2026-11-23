@@ -49,6 +49,29 @@ struct SquadMapTests {
         return (SquadMapLayout(data: data, today: try LocalDay("2026-11-13")), posts)
     }
 
+    @Test func aVisitShowsTheStartPickedElseWhenItWasPosted() throws {
+        let key = try #require(gym.key)
+        let posted = Timestamp(millisecondsSince1970: 2_000_000)
+        let picked = try StartTime(hour: 7, minute: 30)
+        func visit(_ start: StartTime?) throws -> MapVisit {
+            MapVisit(
+                id: CheckInID(UUID()), author: Self.mia, kind: .trained, day: try LocalDay("2026-11-13"),
+                createdAt: posted, startTime: start, key: key)
+        }
+        #expect(try visit(picked).time == .wallClock(picked))
+        #expect(try visit(nil).time == .posted(posted))
+    }
+
+    @Test func theSampleMapTakesAHandPickedStart() throws {
+        let picked = try StartTime(hour: 6, minute: 45)
+        let post = CheckIn(
+            id: CheckInID(UUID()), member: Self.mia, day: try LocalDay("2026-11-13"),
+            createdAt: Timestamp(millisecondsSince1970: 60_000), audience: try Audience([Self.squad]),
+            inFeed: true, entry: .trained(Training(activity: .sport("run"), startTime: picked, place: gym)))
+        let data = FeedPlaceSource.map(from: [post], today: try LocalDay("2026-11-13"))
+        #expect(data.recent.map(\.time) == [.wallClock(picked)])
+    }
+
     @Test func oftenListsEveryTaggedPlaceMostVisitedFirst() throws {
         let (view, _) = try map()
         #expect(view.oftenPlaces.map(\.place.name) == ["Equinox", "Sweetgreen", "Hudson River Park"])

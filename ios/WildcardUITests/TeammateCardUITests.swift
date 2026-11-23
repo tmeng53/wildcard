@@ -34,8 +34,8 @@ final class TeammateCardUITests: XCTestCase {
         }
         XCTAssertLessThanOrEqual(today.frame.maxY, card.frame.minY, "her today covers her card: \(today.frame)")
 
-        // Turned over, it is her 出赛表 this week: a row a day, her 饮食小目标, and her badges
-        // along the bottom, which open her badge board.
+        // Turned over, it is her 出赛表 this week: a row a day and her badges along
+        // the bottom, which open her badge board.
         card.tap()
         let schedule = app.descendants(matching: .any).matching(identifier: "me.cardSchedule").firstMatch
         XCTAssertTrue(schedule.waitForExistence(timeout: 5), "her card didn't turn over to her 出赛表")
@@ -43,9 +43,6 @@ final class TeammateCardUITests: XCTestCase {
         keepScreenshot(named: "57-teammate-card-back")
         let back = app.descendants(matching: .any).matching(identifier: "me.cardBack").firstMatch
         XCTAssertTrue(back.frame.contains(schedule.frame), "her week runs off her card: \(schedule.frame)")
-        let fuel = app.descendants(matching: .any).matching(identifier: "me.cardFuel").firstMatch
-        XCTAssertTrue(fuel.exists, "her 饮食小目标 isn't on her card")
-        XCTAssertTrue(back.frame.contains(fuel.frame), "her 饮食小目标 runs off her card: \(fuel.frame)")
         let openBoard = app.buttons["me.cardBadges"]
         XCTAssertTrue(openBoard.exists, "no badges on her card's back")
         XCTAssertTrue(back.frame.contains(openBoard.frame), "her badges run off her card: \(openBoard.frame)")

@@ -33,7 +33,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                 squad: SquadID(try #require(UUID(uuidString: squad))),
                 members: [
                     SquadmateToday(
-                        member: MemberID(try #require(UUID(uuidString: mate))), catchphrase: try Catchphrase("冲就完了"),
+                        member: MemberID(try #require(UUID(uuidString: mate))),
                         character: MemberCharacter(
                             nickname: try Nickname("阿杰"),
                             look: CharacterLook(
@@ -41,7 +41,7 @@ private let squad = "33333333-3333-3333-3333-333333333333"
                         day: day, training: .trained, latestMeal: .cheatMeal, plannedRest: false,
                         firstCheckInAt: Timestamp(millisecondsSince1970: 1_792_422_000_250)),
                     SquadmateToday(
-                        member: MemberID(try #require(UUID(uuidString: myID))), catchphrase: nil, character: nil,
+                        member: MemberID(try #require(UUID(uuidString: myID))), character: nil,
                         day: day, training: .notCheckedIn, latestMeal: nil, plannedRest: true, firstCheckInAt: nil),
                 ],
                 today: TodayCounts(trained: 1, disclaimer: 0, resting: 1),

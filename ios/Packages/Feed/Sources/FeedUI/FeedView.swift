@@ -20,6 +20,10 @@ public struct FeedView: View {
     /// what is above it (the 战报's tile, the posts the server lists, cards the lazy list measures
     /// only when drawn) keeps arriving after the first move and would push it away.
     @State private var pinned: CheckInID?
+    /// How many more times the pin may put its post back. Each put back moves the lazy list, which
+    /// measures cards again and can change its height again; on a slow Mac that chased itself in
+    /// one update for minutes and froze the app (#924), so the pin gives up after a few.
+    @State private var repins = 0
     /// Opens 今天 to check in, from the empty feed.
     private let checkIn: () -> Void
     /// What the app shows under the title, before the posts: the squad's latest 战报.
@@ -32,6 +36,8 @@ public struct FeedView: View {
     static let space = "feed"
     /// How long a post opened from the home stays held at the top.
     static let pinFor = Duration.seconds(2)
+    /// How many times a pin puts its post back at most.
+    static let maxRepins = 6
 
     public init(model: FeedModel, header: AnyView? = nil, accessory: AnyView? = nil, checkIn: @escaping () -> Void) {
         _model = State(initialValue: model)
@@ -71,8 +77,10 @@ public struct FeedView: View {
             // Each time the list's height changes, puts the pinned post back at the top.
             .onScrollGeometryChange(for: CGFloat.self) {
                 $0.contentSize.height
-            } action: { _, _ in
-                if let pinned { scroller.scrollTo(pinned, anchor: .top) }
+            } action: { old, new in
+                guard let pinned, repins > 0, abs(new - old) >= 1 else { return }
+                repins -= 1
+                scroller.scrollTo(pinned, anchor: .top)
             }
             .onScrollPhaseChange { _, phase in
                 if phase == .interacting { pinned = nil }
@@ -95,6 +103,7 @@ public struct FeedView: View {
                 // from the home, it hasn't yet, and the scroll would do nothing.
                 await Task.yield()
                 pinned = focus
+                repins = Self.maxRepins
                 withAnimation(.wildcard(Motion.page, reduceMotion: reduceMotion)) {
                     scroller.scrollTo(focus, anchor: .top)
                 }

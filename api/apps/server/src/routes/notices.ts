@@ -47,8 +47,9 @@ export const NoticeEntry = z
         '`broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad ' +
         'trained over its weekly goal some weeks in a row, so its captain is suggested a higher ' +
         'one), `thanks` (we used feedback the caller sent, so they got its thank-you ' +
-        'rewards), `joinRequest` (someone asked to join the squad the caller captains) or ' +
-        '`joinAnswered` (the captain answered the caller’s request to join). ' +
+        'rewards), `joinRequest` (someone asked to join the squad the caller captains), ' +
+        '`joinAnswered` (the captain answered the caller’s request to join) or ' +
+        '`squadDisbanded` (the captain disbanded the caller’s squad). ' +
         'More kinds may come: skip one you don’t know.',
     }),
     at: z.iso.datetime().meta({ description: 'When it was told, in UTC.' }),
@@ -169,6 +170,9 @@ export const NoticeEntry = z
     }),
     approved: z.boolean().optional().meta({
       description: 'Whether the captain let the caller in (`joinAnswered`).',
+    }),
+    squadName: z.string().optional().meta({
+      description: 'The squad’s name when it was disbanded (`squadDisbanded`).',
     }),
     title: LocalizedWords.optional(),
     body: LocalizedWords.optional(),
@@ -550,6 +554,8 @@ function wireNotice(
         joinRequest: notice.subject.request,
         approved: notice.subject.approved,
       };
+    case 'squadDisbanded':
+      return { ...common, squadName: notice.subject.name };
     case 'goalSuggestion':
       return {
         ...common,

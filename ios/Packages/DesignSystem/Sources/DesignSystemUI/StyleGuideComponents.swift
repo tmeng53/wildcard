@@ -156,7 +156,7 @@ struct PickSection: View {
     @State private var more: Set<Int> = [1]
     @State private var tile = 0
     @State private var swatch = 2
-    @State private var catchphrase = ""
+    @State private var squadName = ""
     @State private var query = ""
     @State private var minutes = 45
 
@@ -221,7 +221,7 @@ struct PickSection: View {
             }
             GuideGroup(Text(copy: "输入框", bundle: .module)) {
                 InputField(
-                    text: $catchphrase, label: Text(copy: "口头禅", bundle: .module),
+                    text: $squadName, label: Text(copy: "小队名", bundle: .module),
                     prompt: Text(copy: "冲冲冲！", bundle: .module),
                     limit: 10)
                 SearchField(text: $query, prompt: Text(copy: "搜索", bundle: .module))
@@ -248,7 +248,6 @@ struct PickSection: View {
 
 struct KindSection: View {
     @Environment(\.sceneTheme) private var theme
-    @State private var isOpen = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
@@ -271,9 +270,13 @@ struct KindSection: View {
                 }
             }
             GuideGroup(Text(copy: "打卡展开", bundle: .module)) {
-                CheckInBurst(isOpen: $isOpen, unavailable: [.disclaimer], identifierPrefix: "styleguide") { _ in }
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, BurstLayout.radius + Sizing.control)
+                // Open as it stands above the tab bar's ＋, over a page of the scene's colour.
+                CheckInMenu(isOpen: .constant(true), identifierPrefix: "styleguide") { _ in
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 4 * Sizing.control)
+                .background(Color(role: .bgScene, in: theme))
+                .clipShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             }
         }
     }

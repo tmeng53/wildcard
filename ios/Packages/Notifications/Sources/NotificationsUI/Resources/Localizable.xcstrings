@@ -593,6 +593,22 @@
         }
       }
     },
+    "「%@」已解散": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” was disbanded"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已解散"
+          }
+        }
+      }
+    },
     "队长同意了你的申请": {
       "localizations": {
         "en": {

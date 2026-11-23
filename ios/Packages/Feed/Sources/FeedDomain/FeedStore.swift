@@ -227,8 +227,11 @@ public final class FeedStore {
 
     /// Shows the member's change to one of their own posts at once: edited in place, or gone.
     public func apply(_ change: PostChange) {
-        for (id, post) in loaded { loaded[id] = post.applying(change) }
-        for (id, post) in ownNotYetListed { ownNotYetListed[id] = post.applying(change) }
+        // Only the post the change is about is written, so every other card the feed shows
+        // stays as it was instead of being handed a new value (#924).
+        let id = change.post
+        if let post = loaded[id] { loaded[id] = post.applying(change) }
+        if let post = ownNotYetListed[id] { ownNotYetListed[id] = post.applying(change) }
         if case .deleted(let id) = change {
             wishes[id] = nil
             pendingComments[id] = nil

@@ -80,13 +80,13 @@ public struct WildcardAPI: Sendable {
             try await client.putMyProfile(
                 body: .json(
                     .init(
-                        version: ._1, timeZone: profile.timeZone.identifier, catchphrase: profile.catchphrase?.text,
+                        version: ._1, timeZone: profile.timeZone.identifier,
                         character: profile.character.map(Components.Schemas.Character.init),
                         jerseyNumber: profile.jerseyNumber?.value))
             ).ok.body.json
         }
         return try Profile(
-            timeZone: saved.timeZone, catchphrase: saved.catchphrase, character: saved.character,
+            timeZone: saved.timeZone, character: saved.character,
             jerseyNumber: saved.jerseyNumber)
     }
 
@@ -174,31 +174,6 @@ public struct WildcardAPI: Sendable {
     public func removeReaction(from checkIn: CheckInID) async throws(APIError) {
         try await call {
             _ = try await client.removeMyReaction(path: .init(checkInId: checkIn.description)).noContent
-        }
-    }
-
-    // MARK: - 请假条 drafts
-
-    /// What the AI writer made of the member's reason, in a style; nil when it doesn't write
-    /// about this reason, and the dice stand in.
-    public func disclaimerDrafts(reason: String, style: DisclaimerStyle) async throws(APIError)
-        -> DisclaimerSuggestions?
-    {
-        let wireStyle: Components.Schemas.DisclaimerDraftRequest.StylePayload =
-            switch style {
-            case .funny: .funny
-            case .unhinged: .unhinged
-            case .heroic: .heroic
-            case .stubborn: .stubborn
-            }
-        let answer = try await call {
-            try await client.writeDisclaimerDrafts(body: .json(.init(version: ._1, reason: reason, style: wireStyle)))
-                .ok.body.json
-        }
-        return switch answer {
-        case .case1(let drafts): .drafts(drafts.drafts)
-        case .case2: .blocked
-        case .case3: nil
         }
     }
 

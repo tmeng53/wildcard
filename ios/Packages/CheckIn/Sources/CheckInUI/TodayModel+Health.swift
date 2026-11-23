@@ -26,7 +26,7 @@ extension TodayModel {
     /// Opens the check-in kinds, as the 打卡 button does: the 6pm push's 我去发一个 and a widget's
     /// plain 打卡 land here.
     public func openCheckIn() {
-        if step == .scene { isBurstOpen = true }
+        if step == .scene { isCheckInMenuOpen = true }
     }
 
     /// A home screen widget's 打卡: the 训练 page started from `source`, as the home's card starts
@@ -58,7 +58,7 @@ extension TodayModel {
         guard step == .scene else { return true }
         switch outcome {
         case .open(let workout):
-            isBurstOpen = false
+            isCheckInMenuOpen = false
             pick(.trained, workout: workout)
         case .kinds, .wait:
             openCheckIn()

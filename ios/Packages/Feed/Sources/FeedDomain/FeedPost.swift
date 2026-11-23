@@ -31,6 +31,16 @@ public enum PostChange: Hashable, Sendable {
     case deleted(CheckInID)
 }
 
+extension PostChange {
+    /// The post the change is about.
+    public var post: CheckInID {
+        switch self {
+        case .edited(let checkIn): checkIn.id
+        case .deleted(let id): id
+        }
+    }
+}
+
 extension FeedPost {
     /// The post after `change`; nil once it is deleted.
     public func applying(_ change: PostChange) -> FeedPost? {

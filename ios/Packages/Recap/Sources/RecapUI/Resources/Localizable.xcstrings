@@ -130,22 +130,6 @@
         }
       }
     },
-    "%lld 个回应": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld reactions"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld 個回應"
-          }
-        }
-      }
-    },
     "一": {
       "localizations": {
         "en": {
@@ -590,22 +574,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "日"
-          }
-        }
-      }
-    },
-    "最佳请假条": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Best day-off note"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最佳假單"
           }
         }
       }
@@ -1376,6 +1344,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "輕點翻面"
+          }
+        }
+      }
+    },
+    "佩戴头衔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wear title"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "佩戴頭銜"
+          }
+        }
+      }
+    },
+    "已佩戴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wearing"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已佩戴"
           }
         }
       }

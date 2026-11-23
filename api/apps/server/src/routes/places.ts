@@ -3,6 +3,7 @@ import {
   LocalDay,
   MemberId,
   Place,
+  StartTime,
   SportKey,
   SquadId,
   photosOf,
@@ -105,6 +106,11 @@ const Visit = z
         'The post’s first photo, for its tile; missing when it has none (or its file is gone).',
     }),
     minutes: z.int().min(1).optional().meta({ description: 'A 训练’s minutes, when it has them.' }),
+    startTime: StartTime.optional().meta({
+      description:
+        'The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the ' +
+        'map shows in place of `createdAt`.',
+    }),
     stars: Stars.nullable().meta({
       description: 'No longer given: always null (places have no score, Tracy 2026-11-13).',
     }),
@@ -237,6 +243,9 @@ function visitOf(record: CheckInRecord, at: VisitContext): z.infer<typeof Visit>
           ? {}
           : { customSport: record.training.customSport }),
         ...(record.training.minutes === undefined ? {} : { minutes: record.training.minutes }),
+        ...(record.training.startTime === undefined
+          ? {}
+          : { startTime: record.training.startTime }),
         stars: null,
         calorieValue: null,
       };

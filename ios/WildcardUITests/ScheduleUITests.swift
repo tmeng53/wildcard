@@ -73,7 +73,7 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertTrue(find(app, "schedule.tally").label.contains("6"), "the week's count didn't grow")
     }
 
-    func testNextWeekChangesFreelyWithFoodGoals() {
+    func testNextWeekChangesFreely() {
         let app = launch()
         let tabBar = tabButton("tab.me", in: app)
         // The bar opens on 本周 with 下周 beside it, in view and tappable.
@@ -105,26 +105,6 @@ final class ScheduleUITests: XCTestCase {
         settle()
         keepScreenshot(named: "64-schedule-next-week-rest")
         lane(app, 0).tap()
-
-        // 饮食小目标: up to three, from the list or written.
-        app.buttons["schedule.fuel"].tap()
-        let own = app.buttons["schedule.fuel.own"]
-        XCTAssertTrue(own.waitForExistence(timeout: 10), "the food goals didn't open")
-        XCTAssertLessThanOrEqual(own.frame.maxY, tabBar.frame.minY, "the food goals open under the tab bar")
-        app.buttons["schedule.fuel.每天有菜"].tap()
-        settle()
-        keepScreenshot(named: "65-schedule-food-goals")
-        own.tap()
-        let field = app.textFields["schedule.fuel.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "no field for my own goal")
-        field.typeText("少喝咖啡")
-        let add = app.buttons["schedule.fuel.add"]
-        XCTAssertTrue(add.isHittable, "加上 is covered by the keyboard")
-        settle()
-        keepScreenshot(named: "66-schedule-own-food-goal")
-        add.tap()
-        waitFor(app.buttons["schedule.fuel"], "label CONTAINS '少喝咖啡'", "my goal isn't on the poster")
-        XCTAssertFalse(app.buttons["schedule.fuel.own"].isEnabled, "a fourth goal can still be added")
     }
 
     func testPastWeekShowsItsTitlesAndSaves() {

@@ -37,7 +37,7 @@ extension TodayModel {
 
     /// The coach does one of its habits, by day on a plain scene.
     func coachDoesAHabit() {
-        guard stagePhase == .day, step == .scene, !isBurstOpen, arrival == nil else { return }
+        guard stagePhase == .day, step == .scene, !isCheckInMenuOpen, arrival == nil else { return }
         cast.coachDoesAHabit()
     }
 
@@ -58,19 +58,6 @@ extension TodayModel {
         return home.today.members.filter { $0.member != home.member }.map {
             (SquadCast.look(of: $0), SquadCast.persona(of: $0))
         }
-    }
-
-    /// Everyone in the squad by id, me too, as they made their characters (a stand-in before), for a
-    /// coach message that names who stands with the coach.
-    public var squadCharactersByMember: [MemberID: (look: Outfit, persona: Persona)] {
-        guard let home else { return [:] }
-        var characters: [MemberID: (look: Outfit, persona: Persona)] = [:]
-        for member in home.today.members {
-            characters[member.member] = (SquadCast.look(of: member), SquadCast.persona(of: member))
-        }
-        // Mine as I'm dressed now, as the coach's page stands me beside the coach.
-        characters[home.member] = myCharacter
-        return characters
     }
 
     /// The coach on the sideline, as last read; nil while the squad has none.
@@ -104,13 +91,11 @@ extension TodayModel {
     }
 
     /// What the coach said that I haven't seen, for its row on the squad card: its name and the
-    /// start of its newest line (a coach message's first line in the app's language), a gift
-    /// without one saying 送你一样东西.
+    /// start of its newest line, a gift without one saying 送你一样东西.
     var coachNews: CoachNewsLine? {
         guard let card = store.newestUnseenCoachCard else { return nil }
         let line =
-            card.newsLine ?? card.message?.cards.first?.line.localized(in: [AppLanguage.current.rawValue])
-            ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
+            card.newsLine ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
         return CoachNewsLine(name: card.coach.name, line: line)
     }
 
@@ -121,6 +106,15 @@ extension TodayModel {
     func openCoachNews() {
         guard arrival == nil else { return }
         openCoach()
+    }
+
+    /// A gift from the coach still in its box, for the round gift button (Tracy, 2026-11-21).
+    var unopenedGift: CoachPageCard? { store.unopenedCoachGift }
+
+    /// The gift button was tapped: the gift's card opens over the coach's page, to 拆开 there.
+    func openUnopenedGift() {
+        guard arrival == nil, let unopenedGift else { return }
+        openGift(unopenedGift)
     }
 
     /// The squad on the home, whose coach's page opens.

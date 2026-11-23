@@ -37,6 +37,7 @@ struct SquadSceneView: View {
     /// Whether I can still pat a teammate today; else their bubble says 「拍过了」.
     let canPat: (MemberID) -> Bool
     let tapMate: (MemberID) -> Void
+    var doubleTapMate: (MemberID) -> Void = { _ in }
     /// I tapped my own character: it plays its signature move and my card opens.
     let tapMe: () -> Void
     let patMate: (MemberID) -> Void
@@ -133,18 +134,16 @@ struct SquadSceneView: View {
             ZStack(alignment: .topLeading) {
                 ForEach(figures) { figure in
                     StageFigure(figure: figure, unit: unit, date: timeline.date, reduceMotion: reduceMotion)
-                        .onTapGesture {
-                            guard arrival == nil else { return }
-                            switch figure.id {
-                            case .mate(let id): tapMate(id)
-                            case .mine: tapMe()
-                            }
-                        }
+                        .gesture(
+                            TapGesture(count: 2).onEnded { tap(figure.id.mate, twice: true) }
+                                .exclusively(before: TapGesture().onEnded { tap(figure.id.mate, twice: false) })
+                        )
                         // Each teammate is a button by their nickname, and I am one by 我, for VoiceOver and UI tests.
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(Text(verbatim: nickname(of: figure.id) ?? ""))
                         .accessibilityIdentifier(figure.id == .mine ? "today.me" : "today.mate")
                         .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { tap(figure.id.mate, twice: false) }
                         .accessibilityHidden(nickname(of: figure.id) == nil)
                         .zIndex(figure.depth)
                 }
@@ -250,6 +249,7 @@ private struct Placed: Identifiable {
     enum ID: Hashable {
         case mine
         case mate(MemberID)
+        var mate: MemberID? { if case .mate(let id) = self { id } else { nil } }
     }
 
     let id: ID

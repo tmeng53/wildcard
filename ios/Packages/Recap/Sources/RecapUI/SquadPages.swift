@@ -74,69 +74,6 @@ struct MealsPage: View {
     }
 }
 
-/// 最佳请假条: the note, its author acting it out (the AI picks how), two teammates reacting.
-struct BestDisclaimerPage: View {
-    let note: BestDisclaimer
-    let page: PageContext
-    @Environment(\.sceneTheme) private var theme
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let floor = proxy.size.height - StoryLayout.groundLow
-            let teammates = Array(page.lineup.filter { $0 != note.author }.prefix(2))
-            ZStack(alignment: .topLeading) {
-                Ground(height: StoryLayout.groundLow)
-                ForEach(Array(teammates.enumerated()), id: \.element) { index, member in
-                    page.character(
-                        member,
-                        act: Act(
-                            clip: .award((note.squadMove ?? .laugh).solo), start: 1.3 + Double(index) * 0.2,
-                            seed: Double(index) * 0.4)
-                    )
-                    .standing(feetAt: CGPoint(x: index == 0 ? 50 : width - 40, y: floor + 6), scale: 0.44)
-                }
-                page.character(
-                    note.author, act: Act(clip: .award((note.authorMove ?? .flat).solo), start: 0.5, hold: 3.2)
-                )
-                .standing(feetAt: CGPoint(x: width * 0.58, y: floor), scale: 0.56)
-            }
-        }
-        .overlay(alignment: .top) {
-            VStack(alignment: .leading, spacing: Space.l) {
-                PageTitle(
-                    label: Text(copy: "本周", bundle: .module), systemImage: "bubble.left.fill",
-                    title: Text(copy: "最佳请假条", bundle: .module))
-                card
-                    .padding(.horizontal, Space.l)
-                    .offset(y: 24 * (1 - page.pop(0, 0.5)))
-                    .opacity(page.ramp(0, 0.2))
-            }
-        }
-    }
-
-    private var card: some View {
-        VStack(alignment: .leading, spacing: Space.l) {
-            Text(verbatim: note.text)
-                .typeStyle(TypeRamp.taskTitle)
-                .foregroundStyle(Color(role: .fgDefault, in: theme))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: Space.s) {
-                Text(verbatim: page.cast.nickname(of: note.author))
-                    .typeStyle(TypeRamp.calloutEmphasis)
-                    .foregroundStyle(Color(role: .fgDefault, in: theme))
-                Spacer(minLength: 0)
-                Text(copy: "\(note.reactions) 个回应", bundle: .module)
-                    .typeStyle(TypeRamp.callout)
-                    .foregroundStyle(Color(role: .fgMuted, in: theme))
-            }
-        }
-        .padding(.vertical, Space.xs)
-        .card(on: .scene)
-        .accessibilityElement(children: .combine)
-    }
-}
-
 /// 这一周: the squad's 训练 against its weekly goal, the AI's headline and line, and its
 /// finale. Never red, never guilt. 存图 and 排下周 wait here.
 struct EndingPage: View {

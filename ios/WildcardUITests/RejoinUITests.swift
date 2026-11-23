@@ -46,7 +46,7 @@ final class RejoinUITests: XCTestCase {
             app.descendants(matching: .any)["entrance"].waitForExistence(timeout: Self.wait),
             "joining didn't go 上场")
         XCTAssertFalse(app.buttons["sports.done"].exists, "关于你 came again")
-        XCTAssertTrue(app.buttons["today.checkin"].waitForExistence(timeout: Self.wait), "home never took over")
+        XCTAssertTrue(app.buttons["today.me"].waitForExistence(timeout: Self.wait), "home never took over")
         keepScreenshot(named: "143-rejoin-home")
     }
 

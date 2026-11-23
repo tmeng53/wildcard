@@ -19,9 +19,9 @@ extension TodayModel {
     }
 
     /// The letter over 今天 now, once the scene is free for it: not while a check-in is being
-    /// written, the burst is open or the squad is dropping in.
+    /// written, the check-in menu is open or the squad is dropping in.
     var shownTeamLetter: ShownTeamLetter? {
-        guard step == .scene, !isBurstOpen, arrival == nil else { return nil }
+        guard step == .scene, !isCheckInMenuOpen, arrival == nil else { return nil }
         return teamLetter
     }
 

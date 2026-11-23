@@ -1,16 +1,16 @@
 import XCTest
 
 /// 补打卡: a post can count for today or a day of the week before it, picked from its page's 日期
-/// pill, which opens the week's strip (Tracy, 2026-11-21); 动态 shows it on the day it went up, with 「补昨天的」 after its time. One launch walks
-/// both pages, the 健康餐 compose page first (its own placeholder, no sport row, the one photo as
-/// cover), since each launch costs a CI simulator about ten seconds.
+/// pill, which opens the week's strip (Tracy, 2026-11-21); 动态 shows it on the day it went up,
+/// with 「补昨天的」 after its time. The 健康餐 compose page has its own placeholder, no sport row,
+/// and the one photo as cover.
 @MainActor
 final class BackfillUITests: XCTestCase {
     private static let wait: TimeInterval = 30
 
-    /// The pill says 今天 and opens the strip on today; picking yesterday and 完成 puts 昨天 on it,
-    /// and posting a 健康餐 puts it in 动态 today, marked 补昨天的. Then the 请假条 page has the same strip, its title following the day picked.
-    func testPostForYesterdayThenADisclaimerForAPastDay() {
+    /// The pill says 今天 and opens the strip on today; picking yesterday and 完成 puts 昨天 on
+    /// it, and posting a 健康餐 puts it in 动态 today, marked 补昨天的.
+    func testPostForYesterday() {
         let app = launch()
         app.buttons["today.checkin"].tap()
         let meal = app.buttons["today.capsule.healthyMeal"]
@@ -44,12 +44,9 @@ final class BackfillUITests: XCTestCase {
         assertRatedFiveAndFour(in: app)
         settle()
         keepScreenshot(named: "63-feed-backfill")
-
-        disclaimerForAPastDay(in: app)
     }
 
-    /// One pill, today to begin with, whose tap opens eight days, the earliest first: today is the
-    /// last, and picked. Yesterday, then 完成, puts 昨天 on the pill.
+    /// The 日期 pill opens a week of days, today picked; yesterday and 完成 put 昨天 on the pill.
     private func pickYesterday(in app: XCUIApplication) {
         let dayPill = app.buttons["compose.day"]
         XCTAssertTrue(dayPill.waitForExistence(timeout: Self.wait), "no 日期 pill")
@@ -102,33 +99,6 @@ final class BackfillUITests: XCTestCase {
         XCTAssertTrue(healthy.label.hasPrefix("5"), "健康 reads \(healthy.label)")
         let tasty = rated.descendants(matching: .any).matching(identifier: "strip.tasty").firstMatch
         XCTAssertTrue(tasty.label.hasPrefix("4"), "好吃 reads \(tasty.label)")
-    }
-
-    /// Back on 今天, the 请假条 page has the same strip, its title following the day picked.
-    private func disclaimerForAPastDay(in app: XCUIApplication) {
-        tabButton("tab.today", in: app).tap()
-        let checkIn = app.buttons["today.checkin"]
-        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "no 打卡 button back on 今天")
-        checkIn.tap()
-        let disclaimer = app.buttons["today.capsule.disclaimer"]
-        XCTAssertTrue(disclaimer.waitForExistence(timeout: Self.wait), "no 请假条 capsule")
-        disclaimer.tap()
-        // A week ago is never in the sample's week, so it has no 练了.
-        let weekAgo = app.buttons["dayStrip.0"]
-        XCTAssertTrue(weekAgo.waitForExistence(timeout: Self.wait), "no 日期 strip on the 请假条 page")
-        XCTAssertTrue(app.staticTexts["今日请假条"].exists, "today's 请假条 isn't 今日请假条")
-        // The page opens with the keyboard up for the excuse; the 日期 strip sits under the ticket,
-        // so Return puts the keyboard away first.
-        if app.keyboards.firstMatch.exists {
-            app.typeText("\n")
-            waitFor(app.keyboards.firstMatch, "exists == false", "Return left the keyboard up")
-        }
-        XCTAssertTrue(weekAgo.isHittable, "the 日期 strip is covered")
-        weekAgo.tap()
-        waitFor(weekAgo, "isSelected == true", "tapping a week ago didn't pick it")
-        XCTAssertTrue(app.staticTexts["请假条"].waitForExistence(timeout: Self.wait), "the title didn't follow the day")
-        settle()
-        keepScreenshot(named: "64-disclaimer-backfill")
     }
 
     private func launch() -> XCUIApplication {

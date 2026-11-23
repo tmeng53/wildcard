@@ -54,6 +54,8 @@ public struct CoachEarlierPage: View {
         case .all: Text(copy: "还没有看过的", bundle: .module)
         case .unseen: Text(copy: "没有未读的", bundle: .module)
         case .challenges: Text(copy: "还没有挑战", bundle: .module)
+        // Never a tab of 以前: only the home's gift button lists them.
+        case .gifts: Text(copy: "还没有看过的", bundle: .module)
         }
     }
 
@@ -166,7 +168,6 @@ public struct CoachEarlierPage: View {
         case .note: "text.bubble"
         case .challenge: "flag"
         case .gift: "gift"
-        case .message: "bubble.left"
         }
     }
 
@@ -184,8 +185,6 @@ public struct CoachEarlierPage: View {
             } else if let gift = card.gift {
                 (gift.isOpen ? places.giftName(gift.piece) : Text(copy: "送你一样东西", bundle: .module))
                     .typeStyle(TypeRamp.calloutEmphasis)
-            } else if let message = card.message, let first = message.card(at: "") {
-                Text(verbatim: CoachMessageWords.text(first.line)).typeStyle(TypeRamp.callout)
             } else {
                 Text(verbatim: card.text ?? "").typeStyle(TypeRamp.callout)
             }

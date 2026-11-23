@@ -74,6 +74,16 @@ PY
   for test in $part; do only+=("-only-testing:WildcardUITests/$test"); done
   echo "==> shard $SHARD: $part"
 fi
+# The app's main thread busy 5 seconds or more (Debug builds' `StallLog`), printed as it happens:
+# a job that hits CI's time limit is cancelled before the demangled list below, and the stalls
+# are what tell why it ran long. These lines are mangled; the list after the tests is the same,
+# demangled.
+xcrun simctl spawn "$udid" log stream --style compact \
+  --predicate 'subsystem == "com.wildcardsquad.wildcard" AND category == "stall"' \
+  2>/dev/null > >(grep --line-buffered "stall " | sed -l 's/^/stall (live): /') &
+stalls=$!
+trap 'kill "$stalls" 2>/dev/null || true' EXIT
+
 echo "==> xcodebuild test on $sim"
 status=0
 xcodebuild test \
@@ -87,12 +97,19 @@ xcodebuild test \
   -retry-tests-on-failure -test-iterations 2 \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
+kill "$stalls" 2>/dev/null || true
 
 # The widgets' extension stopping on its own (a WidgetKit fatal error leaves no crash report in
 # the UI test, only a blank widget or an app missing from the widget gallery): its last words.
 xcrun simctl spawn "$udid" log show --last 2h --style compact \
   --predicate 'process == "WildcardWidgets" AND eventMessage CONTAINS "Fatal error"' 2>/dev/null |
   grep "Fatal error" | tail -20 | sed 's/^/widget extension: /' || true
+
+# The app's main thread busy 5 seconds or more (Debug builds' `StallLog`): its stack each time,
+# demangled, so a screen that froze on a slow Mac says what held it.
+xcrun simctl spawn "$udid" log show --last 2h --style compact \
+  --predicate 'subsystem == "com.wildcardsquad.wildcard" AND category == "stall"' 2>/dev/null |
+  grep "stall " | xcrun swift-demangle --simplified | tail -4000 | sed 's/^/stall: /' || true
 
 # Export screenshots even when a test failed: they show what went wrong.
 if [ -d "$out/Wildcard.xcresult" ]; then

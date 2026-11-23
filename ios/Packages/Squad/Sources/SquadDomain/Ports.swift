@@ -64,6 +64,8 @@ public protocol SquadSettingsService: Sendable {
     func handCaptaincy(of squad: SquadID, to member: MemberID) async throws(SquadError) -> Squad
     /// Takes a member out: the member themselves (leaving), or anyone, for the captain.
     func remove(_ member: MemberID, from squad: SquadID) async throws(SquadError)
+    /// Disbands the squad (解散小队), for its captain: everyone is out of it at once and it ends.
+    func disband(_ squad: SquadID) async throws(SquadError)
     /// Picks the scene for the week open now, once.
     func pick(_ scene: SceneID, for squad: SquadID, week: LocalDay) async throws(SquadError) -> SquadScene
     /// The coaches a squad can hire now (教练招聘会).

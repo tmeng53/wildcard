@@ -20,6 +20,6 @@ struct MateScheduleTests {
     private func week(from monday: LocalDay, today: LocalDay) throws -> MateSchedule {
         try MateSchedule(
             weekStart: monday, days: Array(repeating: .rest, count: 7), marks: Array(repeating: .none, count: 7),
-            fuel: [], firstWeek: monday, today: today)
+            firstWeek: monday, today: today)
     }
 }

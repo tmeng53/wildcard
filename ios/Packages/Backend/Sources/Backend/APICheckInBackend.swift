@@ -89,7 +89,7 @@ public struct APICheckInBackend: CheckInBackend {
             // The profile is saved whole, so the rest of it is kept.
             _ = try await api.save(
                 Profile(
-                    timeZone: zone, catchphrase: profile.catchphrase, character: profile.character,
+                    timeZone: zone, character: profile.character,
                     jerseyNumber: profile.jerseyNumber))
             return true
         } catch {
@@ -156,6 +156,17 @@ public struct APICheckInBackend: CheckInBackend {
 
     public func newestUnseenCoachCard(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
         do { return try await api.coachCards(in: squad).stack.last } catch { throw CheckInError(error) }
+    }
+
+    public func unopenedCoachGift(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
+        do {
+            // Every gift since the member joined, newest first; at most one a week, so a page holds
+            // months of them.
+            return try await api.earlierCoachCards(in: squad, from: nil, unseenOnly: false, giftsOnly: true)
+                .cards.first { $0.gift?.isOpen == false }
+        } catch {
+            throw CheckInError(error)
+        }
     }
 
     public func todayChallenge(in squad: SquadID) async throws(CheckInError) -> DayChallenge? {

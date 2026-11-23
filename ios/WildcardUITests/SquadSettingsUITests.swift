@@ -163,6 +163,33 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "69-squad-time-zone-member")
     }
 
+    /// 解散小队, under 退出小队 on the captain's 小队设置: it asks first, saying what goes with it.
+    /// A member has none.
+    func testOnlyTheCaptainIsOfferedToDisbandTheSquad() {
+        let app = launch()
+        let gear = app.buttons["squad.preferences.open"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+        gear.tap()
+        let disband = app.buttons["squad.disband"]
+        XCTAssertTrue(disband.waitForExistence(timeout: 30), "no 解散小队 on the captain's 小队设置")
+        let leave = app.buttons["squad.leave"]
+        XCTAssertLessThan(leave.frame.minY, disband.frame.minY, "解散小队 isn't under 退出小队")
+        disband.tap()
+        let confirm = app.buttons["squad.disband.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解散小队 doesn't ask first")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(confirm.frame), "the confirm runs off the screen")
+        settle()
+        keepScreenshot(named: "69b-squad-disband-confirm")
+
+        app.terminate()
+        let member = launch(extra: ["-squad-seat", "member"])
+        let memberGear = member.buttons["squad.preferences.open"]
+        XCTAssertTrue(memberGear.waitForExistence(timeout: 30), "a member has no 小队设置")
+        memberGear.tap()
+        XCTAssertTrue(member.buttons["squad.leave"].waitForExistence(timeout: 30), "a member has no 退出小队")
+        XCTAssertFalse(member.buttons["squad.disband"].exists, "a member can disband the squad")
+    }
+
     func testTheCaptainPicksTheSquadsLanguage() {
         let app = launch()
         let gear = app.buttons["squad.preferences.open"]

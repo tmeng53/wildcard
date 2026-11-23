@@ -97,6 +97,9 @@ extension FeedModel {
             saved: { [weak self] checkIn in
                 self?.apply(.edited(checkIn))
                 self?.editing = nil
+                // Back on 动态, the edited post is held at the top, so the change is what the
+                // member sees even when the list moved under the compose page (#924).
+                self?.focus = checkIn.id
             },
             close: { [weak self] in self?.editing = nil })
     }

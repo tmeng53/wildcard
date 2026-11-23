@@ -29,9 +29,6 @@ private final class CardsInMemory: CoachCardSource {
         var down = false
         /// The challenges' day is over on the server.
         var dayOver = false
-        /// What the member answered on coach messages, by path; the first part stands.
-        var messageAnswers: [String: CoachMessage.Answered] = [:]
-        var parts: [(path: String, part: CoachMessage.Part)] = []
     }
 
     let state: Mutex<State>
@@ -56,6 +53,7 @@ private final class CardsInMemory: CoachCardSource {
                 case .all: state.cards.earlier
                 case .unseen: state.cards.earlier.filter { !$0.isSeen }
                 case .challenges: (state.cards.stack.reversed() + state.cards.earlier).filter { $0.kind == .challenge }
+                case .gifts: (state.cards.stack.reversed() + state.cards.earlier).filter { $0.kind == .gift }
                 }
             let start = cursor.flatMap { after in listed.firstIndex { $0.id == after } }.map { $0 + 1 } ?? 0
             let page = Array(listed.dropFirst(start).prefix(2))
@@ -87,23 +85,6 @@ private final class CardsInMemory: CoachCardSource {
             let standing = state.answers[note] ?? answer
             state.answers[note] = standing
             return standing
-        }
-    }
-
-    func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
-        async throws(SquadError) -> [String: CoachMessage.Answered]
-    {
-        try state.withLock { state throws(SquadError) in
-            if state.down { throw .unavailable }
-            state.parts.append((path, part))
-            let was = state.messageAnswers[path] ?? CoachMessage.Answered()
-            state.messageAnswers[path] =
-                switch part {
-                case .tap(let button): CoachMessage.Answered(tap: was.tap ?? button, stars: was.stars, text: was.text)
-                case .stars(let stars): CoachMessage.Answered(tap: was.tap, stars: was.stars ?? stars, text: was.text)
-                case .text(let text): CoachMessage.Answered(tap: was.tap, stars: was.stars, text: was.text ?? text)
-                }
-            return state.messageAnswers
         }
     }
 }
@@ -309,6 +290,21 @@ func onlyADeclineSendsWhatWasTyped(answer: CoachChallengeAnswer, typed: String, 
     // Swiping today's challenge away leaves the list as it is: it was in it already.
     deck.seen(today)
     #expect(deck.earlier.map(\.id) == ["41", "30"])
+}
+
+@MainActor @Test func aBoxedGiftFromOutsideThePageOpensInPlace() async {
+    // A gift older than 以前's first page: only the gifts' own list has it.
+    let boxed = card(
+        .gift, "gift-sheeptowel", minutes: -60 * 24 * 40, gift: CoachPageCard.Gift(piece: "gift-sheeptowel"))
+    let source = CardsInMemory(CoachPageCards(stack: [], earlier: [oldNote, boxed]))
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    let found = await deck.giftCard(piece: "gift-sheeptowel")
+    #expect(found?.key == boxed.key)
+    #expect(source.state.withLock(\.filters) == [.gifts])
+    // Opened on its own page, the page shows it opened.
+    if let found { #expect(await deck.open(found, worn: false)) }
+    #expect(deck.current(boxed).gift?.isOpen == true)
+    #expect(await deck.giftCard(piece: "gift-nothing") == nil)
 }
 
 @MainActor @Test func aChallengeCardIsFoundByItsNoteHereOrInEarlier() async {

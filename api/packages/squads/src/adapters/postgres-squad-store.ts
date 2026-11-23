@@ -165,24 +165,8 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       .execute();
     const left = before.members.filter((each) => each.member !== member);
     if (left.length === 0) {
-      // The last one out ends the squad, for good: its invite stops and nothing runs for it.
-      await trx
-        .updateTable('squads')
-        .set({ ended_at: sql<Date>`now()`, captain_id: null })
-        .where('id', '=', squad)
-        .execute();
-      await trx
-        .insertInto('squad_events')
-        .values({
-          squad_id: squad,
-          actor_id: actor,
-          kind: 'ended',
-          name: before.name,
-          captain_id: null,
-        })
-        .execute();
-      // Nobody can be let in any more.
-      await closeWaiting(trx, { squad, kind: 'cancelled', actor: null });
+      // The last one out ends the squad.
+      await end(trx, { squad, actor, name: before.name });
       return true;
     }
     const captain = captainOf(before.captain === member ? null : before.captain, left);
@@ -192,14 +176,35 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
     return true;
   }
 
+  /** Ends the squad, for good: its invite stops, nobody can be let in and nothing runs for it. */
+  async function end(
+    trx: Transaction<SquadTables>,
+    {
+      squad,
+      actor,
+      name,
+    }: { readonly squad: SquadId; readonly actor: MemberId; readonly name: string },
+  ) {
+    await trx
+      .updateTable('squads')
+      .set({ ended_at: sql<Date>`now()`, captain_id: null })
+      .where('id', '=', squad)
+      .execute();
+    await trx
+      .insertInto('squad_events')
+      .values({ squad_id: squad, actor_id: actor, kind: 'ended', name, captain_id: null })
+      .execute();
+    await closeWaiting(trx, { squad, kind: 'cancelled', actor: null });
+  }
+
   /** Runs `change` if `actor` captains the squad now. */
-  async function asCaptain(
+  async function asCaptain<Outcome = CaptainOutcome>(
     { squad, actor }: { readonly squad: SquadId; readonly actor: MemberId },
     change: (
       trx: Transaction<SquadTables>,
       now: NonNullable<Awaited<ReturnType<typeof lockSquad>>>,
-    ) => Promise<CaptainOutcome>,
-  ): Promise<CaptainOutcome> {
+    ) => Promise<Outcome>,
+  ): Promise<Outcome | 'notCaptain'> {
     return db.transaction().execute(async (trx) => {
       const now = await lockSquad(trx, squad);
       if (now?.captain !== actor) return 'notCaptain';
@@ -370,15 +375,27 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
       const last = await db
         .selectFrom('squad_membership_events')
         .innerJoin('squads', 'squads.id', 'squad_membership_events.squad_id')
-        .select(['squad_membership_events.squad_id', 'squad_membership_events.kind', 'squads.name'])
+        .select([
+          'squad_membership_events.squad_id',
+          'squad_membership_events.kind',
+          'squad_membership_events.actor_id',
+          'squads.name',
+        ])
         .where('squad_membership_events.member_id', '=', member)
         .orderBy('squad_membership_events.id', 'desc')
         .limit(1)
         .executeTakeFirst();
-      if (last === undefined || (last.kind !== 'left' && last.kind !== 'removed')) return undefined;
+      if (last === undefined || last.kind === 'joined') return undefined;
       // A later join of another squad logs its own event, so the last one being an exit means
       // the member is in no squad now.
-      return { squad: SquadId.parse(last.squad_id), name: last.name, how: last.kind };
+      // The captain who disbanded the squad left it of their own accord.
+      const how =
+        last.kind === 'removed'
+          ? 'removed'
+          : last.kind === 'disbanded' && last.actor_id !== member
+            ? 'disbanded'
+            : 'left';
+      return { squad: SquadId.parse(last.squad_id), name: last.name, how };
     },
 
     async squadIdsOf(member) {
@@ -543,6 +560,25 @@ export function createPostgresSquadStore(db: Kysely<SquadTables>): SquadStore {
           captain: to,
         });
         return 'changed';
+      });
+    },
+
+    disband({ squad, actor }) {
+      return asCaptain({ squad, actor }, async (trx, now) => {
+        await trx.deleteFrom('squad_members').where('squad_id', '=', squad).execute();
+        await trx
+          .insertInto('squad_membership_events')
+          .values(
+            now.members.map(({ member }) => ({
+              squad_id: squad,
+              member_id: member,
+              kind: 'disbanded',
+              actor_id: actor,
+            })),
+          )
+          .execute();
+        await end(trx, { squad, actor, name: now.name });
+        return { name: now.name, members: now.members.map(({ member }) => member) };
       });
     },
 

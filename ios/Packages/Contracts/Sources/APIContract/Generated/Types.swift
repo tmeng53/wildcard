@@ -250,6 +250,13 @@ public protocol APIProtocol: Sendable {
     /// - Remark: HTTP `PUT /squads/{squadId}`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/put(createSquad)`.
     func createSquad(_ input: Operations.CreateSquad.Input) async throws -> Operations.CreateSquad.Output
+    /// Disband a squad (解散小队)
+    ///
+    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded, and every member but the captain is told in 通知 (`squadDisbanded`), never by push.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/delete(disbandSquad)`.
+    func disbandSquad(_ input: Operations.DisbandSquad.Input) async throws -> Operations.DisbandSquad.Output
     /// Rename a squad
     ///
     /// Only its captain. The same name again changes nothing.
@@ -469,7 +476,7 @@ public protocol APIProtocol: Sendable {
     func getCoachCards(_ input: Operations.GetCoachCards.Input) async throws -> Operations.GetCoachCards.Output
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button (Tracy, 2026-11-21).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.
@@ -1183,6 +1190,21 @@ extension APIProtocol {
             body: body
         ))
     }
+    /// Disband a squad (解散小队)
+    ///
+    /// Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded, and every member but the captain is told in 通知 (`squadDisbanded`), never by push.
+    ///
+    /// - Remark: HTTP `DELETE /squads/{squadId}`.
+    /// - Remark: Generated from `#/paths//squads/{squadId}/delete(disbandSquad)`.
+    public func disbandSquad(
+        path: Operations.DisbandSquad.Input.Path,
+        headers: Operations.DisbandSquad.Input.Headers = .init()
+    ) async throws -> Operations.DisbandSquad.Output {
+        try await disbandSquad(Operations.DisbandSquad.Input(
+            path: path,
+            headers: headers
+        ))
+    }
     /// Rename a squad
     ///
     /// Only its captain. The same name again changes nothing.
@@ -1658,7 +1680,7 @@ extension APIProtocol {
     }
     /// The coach page’s 以前, a page at a time
     ///
-    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).
+    /// The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button (Tracy, 2026-11-21).
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards/earlier`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/earlier/get(getEarlierCoachCards)`.

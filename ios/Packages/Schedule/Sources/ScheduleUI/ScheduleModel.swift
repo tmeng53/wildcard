@@ -19,8 +19,6 @@ public final class ScheduleModel {
         case weekNote
         /// The picks for the selected day.
         case dayPicks(Int)
-        /// Next week's 饮食小目标.
-        case fuel
     }
 
     /// Where 存图 stands: drawing the poster, then sharing the picture (the poster flashes as a
@@ -63,9 +61,6 @@ public final class ScheduleModel {
     private var played: Play?
     /// What `player` was made from, for drawing its key pose when the poster is saved.
     private var loop: (figure: Figure, clip: Clip)?
-    private(set) var fuelOpen = false
-    /// Typing a 饮食小目标 of their own.
-    var writingFuel = false
     private(set) var saving = Saving.idle
     private var shares = 0
 
@@ -152,7 +147,6 @@ public final class ScheduleModel {
     }
 
     var panel: Panel {
-        if fuelOpen, store.canEditFuel { return .fuel }
         if case .selected(let index) = store.board?.focus { return .dayPicks(index) }
         return .weekNote
     }
@@ -166,8 +160,6 @@ public final class ScheduleModel {
 
     func show(_ week: LocalDay) {
         watchedDay = nil
-        fuelOpen = false
-        writingFuel = false
         Task { await store.show(week) }
     }
 
@@ -180,8 +172,6 @@ public final class ScheduleModel {
     /// Shows the 我的每周计划 instead of a week, from its chip.
     func showTemplate() {
         watchedDay = nil
-        fuelOpen = false
-        writingFuel = false
         Task { await store.showTemplate() }
     }
 
@@ -196,7 +186,6 @@ public final class ScheduleModel {
     /// a day that can't change lets go of the one held, so the picks never change a day the
     /// character isn't playing.
     func tap(_ day: Int) {
-        fuelOpen = false
         watchedDay = day
         dressPlayer()
         Task {
@@ -210,30 +199,6 @@ public final class ScheduleModel {
 
     func rest() {
         Task { await store.rest() }
-    }
-
-    // MARK: 饮食小目标
-
-    func toggleFuelPanel() {
-        guard store.canEditFuel else { return }
-        store.release()
-        fuelOpen.toggle()
-        writingFuel = false
-    }
-
-    func toggle(_ goal: FuelGoal) {
-        Task { await store.toggleFuel(goal) }
-    }
-
-    /// Adds the typed goal; false when it isn't one line of 1 to 8 characters.
-    func addFuel(typed text: String) async -> Bool {
-        do {
-            try await store.addFuel(typed: text)
-            writingFuel = false
-            return true
-        } catch {
-            return false
-        }
     }
 
     // MARK: Saving the poster

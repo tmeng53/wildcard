@@ -357,14 +357,6 @@ struct MotionTests {
         #expect(abs(Motion.page.exit.response - 0.288) < 0.001)
         #expect(Motion.page.exit.dampingFraction == Motion.page.dampingFraction)
     }
-
-    @Test func capsulesLandOnTheArcAboveTheButton() {
-        let rounded = CheckInKind.allCases.map { kind in
-            let offset = BurstLayout.offset(for: kind)
-            return [(offset.x * 10).rounded() / 10, (offset.y * 10).rounded() / 10]
-        }
-        #expect(rounded == [[-121.7, -39.6], [-60.1, -113.0], [60.1, -113.0], [121.7, -39.6]])
-    }
 }
 
 struct BrandTests {

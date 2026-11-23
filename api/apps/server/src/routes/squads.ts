@@ -27,6 +27,7 @@ import { rateLimited } from '../rate-limited.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 import { LookBody } from './character.js';
 import { tellCaptain, type JoinRequestNewsDependencies } from '../flows/join-requests.js';
+import { tellDisbanded } from '../flows/squad-disbanded.js';
 import { JoinRequest, wireJoinRequest } from './squad-join-requests.js';
 import { squadTimeZoneField } from './squad-time-zone.js';
 
@@ -93,7 +94,14 @@ const SquadExit = z
     id: SquadId,
     name: z.string(),
     how: z.enum(['left', 'removed']).meta({
-      description: '`left`: the member left it; `removed`: its captain took them out.',
+      description:
+        '`left`: the member left it (a captain who disbanded it too); `removed`: its captain ' +
+        'took them out, or disbanded it.',
+    }),
+    disbanded: z.boolean().meta({
+      description:
+        'Whether its captain disbanded it (解散小队), taking the member out with everyone else ' +
+        '(`how` is then `removed`); false for that captain, who `left`.',
     }),
   })
   .openapi('SquadExit');
@@ -236,8 +244,9 @@ export interface PublicRoutes {
 
 /**
  * Squads: create one with a name, preview and join one by invite code, list mine, read one,
- * leave, and the captain's settings (rename, remove a member, hand on the captaincy). No route
- * deletes a squad: its members leave, and it goes only with its last member's account.
+ * leave, and the captain's settings (rename, remove a member, hand on the captaincy, disband).
+ * No route removes a squad's rows: disbanded or left by everyone, it ends, and it goes only with
+ * its last member's account.
  */
 export function squads(
   deps: JoinRequestNewsDependencies & {
@@ -384,6 +393,27 @@ export function squads(
     },
   });
 
+  const disband = createRoute({
+    method: 'delete',
+    path: '/squads/{squadId}',
+    operationId: 'disbandSquad',
+    summary: 'Disband a squad (解散小队)',
+    description:
+      'Only its captain: everyone is out of it at once and it ends for good, as when its last ' +
+      'member leaves. Its invite stops working and nothing runs for it any more. Each member ' +
+      'keeps their own posts; `GET /me/squads` then says it was disbanded, and every member ' +
+      'but the captain is told in 通知 (`squadDisbanded`), never by push.',
+    security: [{ bearer: [] }],
+    middleware: [requireCaller(deps.verifyToken)] as const,
+    request: { params: squadParams },
+    responses: {
+      204: { description: 'Disbanded' },
+      400: problem('Not a valid squad id'),
+      403: captainOnly,
+      ...signedInFailures,
+    },
+  });
+
   const preview = createRoute({
     method: 'get',
     path: '/squad-invites/{inviteCode}',
@@ -496,7 +526,14 @@ export function squads(
           squads: mine.map(wire),
           ...(last === undefined
             ? {}
-            : { lastSquad: { id: last.squad, name: last.name, how: last.how } }),
+            : {
+                lastSquad: {
+                  id: last.squad,
+                  name: last.name,
+                  how: last.how === 'left' ? ('left' as const) : ('removed' as const),
+                  disbanded: last.how === 'disbanded',
+                },
+              }),
         },
         200,
       );
@@ -548,6 +585,13 @@ export function squads(
         member: caller(c.var.caller.userId),
         removed: memberId,
       });
+      return c.body(null, 204);
+    })
+    .openapi(disband, async (c) => {
+      const squad = c.req.valid('param').squadId;
+      const captain = caller(c.var.caller.userId);
+      const disbanded = await deps.squads.disband({ squad, member: captain });
+      await tellDisbanded(deps, { squad, captain, disbanded });
       return c.body(null, 204);
     })
     .openapi(preview, async (c) => {

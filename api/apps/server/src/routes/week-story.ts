@@ -1,5 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { Emoji, LocalDay, MealRating, Place, SquadId, WeekStart } from '@wildcard/check-ins';
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { PlaceKey } from '@wildcard/place-ids';
 import {
   CheckInKind,
@@ -428,6 +429,8 @@ export function weekStory(
   > & {
     readonly verifyToken: VerifyToken;
     readonly photos: PhotoStorage;
+    /** What each member blocked or reported; a post they reported is left off their story. */
+    readonly moderation: Pick<Moderation, 'hiddenFor'>;
   },
 ) {
   const params = z.strictObject({
@@ -532,11 +535,25 @@ export function weekStory(
     .openapi(route, async (c) => {
       const { squadId, weekStart } = c.req.valid('param');
       const viewer = c.var.caller.userId;
-      const story = await squadStory(deps, {
-        viewer,
-        squad: AwardsSquad.parse(squadId),
-        weekStart: AwardsWeek.parse(weekStart),
-      });
+      const [frozen, hidden] = await Promise.all([
+        squadStory(deps, {
+          viewer,
+          squad: AwardsSquad.parse(squadId),
+          weekStart: AwardsWeek.parse(weekStart),
+        }),
+        deps.moderation.hiddenFor(ModerationMember.parse(viewer)),
+      ]);
+      // A post the reader reported is gone for them at once, here too; blocked members stay on
+      // the frozen week (Tracy, 2026-11-20).
+      const menu = frozen.menu?.filter(({ checkIn }) => !hidden.checkIns.has(checkIn));
+      const story = {
+        ...frozen,
+        menu: menu === undefined || menu.length === 0 ? undefined : menu,
+        bestDisclaimer:
+          frozen.bestDisclaimer === undefined || hidden.checkIns.has(frozen.bestDisclaimer.checkIn)
+            ? undefined
+            : frozen.bestDisclaimer,
+      };
       const hottest = story.mine?.hottest;
       const urls = await deps.photos.createViewUrls(
         [

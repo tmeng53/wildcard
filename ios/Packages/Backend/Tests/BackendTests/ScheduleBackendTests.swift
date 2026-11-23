@@ -8,7 +8,7 @@ import Testing
 @testable import Backend
 
 // 出赛表's adapter against the built API and local Supabase: who the poster is for, a week with
-// the days checked in, and saving a plan and 饮食小目标.
+// the days checked in, and saving a plan.
 
 private func scheduleMember(_ stack: LocalStack) async throws -> (SignedInMember, APIScheduleBackend) {
     let member = try await stack.signedInMember()
@@ -47,7 +47,6 @@ private var thisWeek: LocalDay {
     #expect(week.marks.filter(\.isTrained).count == 1)
     #expect(week.plan.count == 7)
     #expect(week.titles.isEmpty)
-    #expect(week.fuel.isEmpty)
 }
 
 @Test func aPastWeekHasNoTitlesUntilTheAwards() async throws {
@@ -61,31 +60,18 @@ private var thisWeek: LocalDay {
     #expect(week.marks == Array(repeating: .none, count: 7))
 }
 
-@Test func nextWeeksPlanAndFoodGoalsAreSaved() async throws {
+@Test func nextWeeksPlanIsSaved() async throws {
     let (_, backend) = try await scheduleMember(try LocalStack())
     let nextWeek = try thisWeek.adding(days: 7)
     let plan: [PlanDay] = [
         .train(.sport("run")), .rest, .train(.custom(try CustomSport("飞盘"))), .train(nil), .rest, .rest,
         .train(.sport("swim")),
     ]
-    let goals: [FuelGoal] = [.suggested(.water), .own("少喝可乐")]
 
     #expect(try await backend.savePlan(plan, weekStart: nextWeek) == plan)
-    try await backend.saveFuel(goals, weekStart: nextWeek)
 
     let week = try await backend.week(starting: nextWeek)
     #expect(week.plan == plan)
-    #expect(week.fuel == goals)
-}
-
-@Test func thisWeeksFoodGoalsChangeAndLastWeeksDont() async throws {
-    let (_, backend) = try await scheduleMember(try LocalStack())
-
-    try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek)
-    #expect(try await backend.week(starting: try thisWeek).fuel == [.suggested(.breakfast)])
-    await #expect(throws: ScheduleError.weekOver) {
-        try await backend.saveFuel([.suggested(.breakfast)], weekStart: try thisWeek.adding(days: -7))
-    }
 }
 
 // The adapter's own rules, with no stack.

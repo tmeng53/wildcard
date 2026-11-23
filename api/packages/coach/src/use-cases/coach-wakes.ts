@@ -999,7 +999,7 @@ function factsFor(
 
 /**
  * What the daily wake tells the coach about each member it writes a morning note to: this week's
- * whole plan and 饮食小目标, what they posted to the squad so far and how many days they trained,
+ * whole plan, what they posted to the squad so far and how many days they trained,
  * so it needn't look them up. Without the plans (no `memberFacts`, or they can't be read), only
  * the posts and days trained.
  */
@@ -1062,9 +1062,7 @@ async function briefsOf(
         trainedDays,
         posts,
         ...(weather.has(member) ? { weather: weather.get(member) } : {}),
-        ...(mine === undefined || mine.plan.length === 0
-          ? {}
-          : { plan: { week: mine.plan, fuelGoals: mine.fuelGoals } }),
+        ...(mine === undefined || mine.plan.length === 0 ? {} : { plan: { week: mine.plan } }),
       },
     ];
   });

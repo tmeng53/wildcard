@@ -16,7 +16,7 @@ import Testing
         let day = LocalDay(at: Date(timeIntervalSince1970: 1_792_515_600), in: .gmt)
         let today = mates.map {
             SquadmateToday(
-                member: $0, catchphrase: nil, character: nil, day: day, training: .notCheckedIn, latestMeal: nil,
+                member: $0, character: nil, day: day, training: .notCheckedIn, latestMeal: nil,
                 plannedRest: false, firstCheckInAt: nil)
         }
         return ComposeModel(
@@ -88,7 +88,7 @@ import Testing
             createdAt: Timestamp(millisecondsSince1970: 0), audience: try Audience([squad.id]),
             entry: .trained(Training(activity: .sport("run"), trainedWith: try TrainedWith([gone, mia]))))
         let today = SquadmateToday(
-            member: mia, catchphrase: nil, character: nil, day: saved.day, training: .notCheckedIn, latestMeal: nil,
+            member: mia, character: nil, day: saved.day, training: .notCheckedIn, latestMeal: nil,
             plannedRest: false, firstCheckInAt: nil)
         let model = ComposeModel(
             kind: .trained, purpose: .edit(saved), suggestedActivity: .sport("run"), recentActivities: [],

@@ -28,7 +28,7 @@ public enum SampleBoard {
         let monday = day.weekStart
         func row(_ member: MemberID, _ training: TrainingStatus) -> SquadmateToday {
             SquadmateToday(
-                member: member, catchphrase: nil, character: nil, day: day, training: training, latestMeal: nil,
+                member: member, character: nil, day: day, training: training, latestMeal: nil,
                 plannedRest: false, firstCheckInAt: nil)
         }
         let today = SquadToday(

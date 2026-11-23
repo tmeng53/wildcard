@@ -19,7 +19,8 @@ public struct APICoachCardSource: CoachCardSource {
     {
         try await coach { () throws(APIError) in
             try await api.earlierCoachCards(
-                in: squad, from: cursor, unseenOnly: filter == .unseen, challengesOnly: filter == .challenges)
+                in: squad, from: cursor, unseenOnly: filter == .unseen, challengesOnly: filter == .challenges,
+                giftsOnly: filter == .gifts)
         }
     }
 
@@ -38,12 +39,6 @@ public struct APICoachCardSource: CoachCardSource {
         return try await coach { () throws(APIError) in
             try await api.answerChallenge(of: id, in: squad, with: answer, reason: reason)
         }
-    }
-
-    public func answerMessage(_ message: String, in squad: SquadID, on path: String, _ part: CoachMessage.Part)
-        async throws(SquadError) -> [String: CoachMessage.Answered]
-    {
-        try await coach { () throws(APIError) in try await api.answerMessage(message, in: squad, on: path, part) }
     }
 
     private func coach<T>(_ call: () async throws(APIError) -> T) async throws(SquadError) -> T {

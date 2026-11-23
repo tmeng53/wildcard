@@ -895,17 +895,19 @@ describe('GET /me/records', () => {
     // Three days in a row, then three without: the default plan never rests two days running,
     // so one of them breaks the run whatever the weekday.
     for (const day of [daysAgo(6), daysAgo(5), daysAgo(4), today]) await put(day, run);
-    // 健康餐 four and two days ago, a 坦白放纵餐 between bridging them: yesterday had none, so
-    // that run is over.
+    // 健康餐 six and four days ago, a 坦白放纵餐 between bridging them, then three days without
+    // (two before today on the member's clock even while UTC is a day ahead): a planned rest day
+    // bridges meals too, but the default plan never rests two days running, so that run is over
+    // whatever the weekday.
+    await put(daysAgo(6), { kind: 'healthyMeal', meal: {} });
+    await put(daysAgo(5), { kind: 'cheatMeal', meal: {} });
     await put(daysAgo(4), { kind: 'healthyMeal', meal: {} });
-    await put(daysAgo(3), { kind: 'cheatMeal', meal: {} });
-    await put(daysAgo(2), { kind: 'healthyMeal', meal: {} });
 
     const { body } = await call({ method: 'GET', path: '/me/records', token: me.token });
     expect(body).toMatchObject({
       longestStreak: { days: 3, from: daysAgo(6), to: daysAgo(4) },
       currentStreak: { days: 1, from: today, to: today },
-      mealStreak: { days: 2, from: daysAgo(4), to: daysAgo(2) },
+      mealStreak: { days: 2, from: daysAgo(6), to: daysAgo(4) },
     });
     expect(body).not.toHaveProperty('currentMealStreak');
   });
@@ -1970,6 +1972,59 @@ describe('a squad’s places', () => {
     expect(saved.status).toBe(201);
     return id;
   }
+
+  it('gives a 训练 on the map the start picked by hand, never its workout’s', async () => {
+    const [me, friend] = [await signUp(), await signUp()];
+    const squad = await squadOf(me, friend);
+    const started = new Date(Date.now() - 50 * 60 * 1000);
+    started.setUTCMilliseconds(0);
+    const fromHealth = await post({
+      member: me,
+      squad,
+      entry: {
+        kind: 'trained',
+        training: {
+          sport: 'run',
+          place: park,
+          workout: {
+            provider: 'apple_health',
+            providerWorkoutId: randomUUID(),
+            startedAt: started.toISOString(),
+            endedAt: new Date(started.getTime() + 30 * 60 * 1000).toISOString(),
+            summary: { durationSec: 1800 },
+          },
+        },
+      },
+    });
+    const byHand = await post({
+      member: friend,
+      squad,
+      entry: { kind: 'trained', training: { sport: 'run', startTime: '06:45', place: park } },
+    });
+    const meal = await post({
+      member: me,
+      squad,
+      entry: { kind: 'healthyMeal', meal: { place: noodles } },
+    });
+
+    const listed = await call({ method: 'GET', path: `/squads/${squad}/places`, token: me.token });
+    expect(listed.status).toBe(200);
+    const { recent } = z
+      .object({
+        recent: z.array(
+          z.object({
+            checkIn: z.string(),
+            startTime: z.string().optional(),
+          }),
+        ),
+      })
+      .parse(listed.body);
+    const times = new Map(recent.map((visit) => [visit.checkIn, visit.startTime]));
+    expect([...times.keys()].sort()).toStrictEqual([fromHealth, byHand, meal].sort());
+    expect(times.get(fromHealth)).toBeUndefined();
+    expect(times.get(byHand)).toBe('06:45');
+    expect(times.get(meal)).toBeUndefined();
+  });
 
   it('lists the places the squad’s posts were tagged with, with no score', async () => {
     const [me, friend, outsider] = [await signUp(), await signUp(), await signUp()];

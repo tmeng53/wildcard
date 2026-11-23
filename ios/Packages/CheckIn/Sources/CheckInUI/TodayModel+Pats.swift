@@ -8,12 +8,12 @@ import Foundation
 extension TodayModel {
     /// The squad's news since the home was last shown, once: who joined walks in with a bubble,
     /// and a member made captain hears 「你现在是队长了」. Leaving says nothing. Kept for the next
-    /// load while the scene is covered (writing a check-in, the burst open).
+    /// load while the scene is covered (writing a check-in, the check-in menu open).
     func tellNews() async {
         guard !store.news.isEmpty else { return }
         try? await Task.sleep(for: .seconds(PatStage.patMeDelay))
         await untilArrived()
-        guard step == .scene, !isBurstOpen else { return }
+        guard step == .scene, !isCheckInMenuOpen else { return }
         let news = store.takeNews()
         guard !news.isEmpty else { return }
         let joined = news.joined.compactMap { id in cast.mates.first { $0.id == id } }
@@ -26,10 +26,17 @@ extension TodayModel {
     /// A teammate on the scene was tapped: they hop, and their card opens with their today and
     /// 「拍一拍」 over it.
     func tapMate(_ id: MemberID) {
-        guard let mate = cast.mates.first(where: { $0.id == id }),
-            pats.tap(mate, cast: cast, phase: stagePhase) != nil
-        else { return }
+        guard let mate = cast.mates.first(where: { $0.id == id }) else { return }
+        pats.tap(mate, cast: cast, phase: stagePhase)
         openTeammate(id)
+    }
+
+    /// A teammate on the scene was tapped twice: I pat them at once, as WeChat's 拍一拍 does,
+    /// with no card (Tracy, 2026-11-21: opening the card first was slow); once they're patted
+    /// today, their card opens instead, saying 「拍过了」.
+    func doubleTapMate(_ id: MemberID) {
+        guard store.canPat(id) else { return tapMate(id) }
+        patMate(id)
     }
 
     /// A ring in the squad card's 今天 row was tapped: that member's card opens (mine too), as from

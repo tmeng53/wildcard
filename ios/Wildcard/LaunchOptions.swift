@@ -311,12 +311,6 @@ enum LaunchOptions {
         return [Unlock(kind: .store, id: "deuce", unlockedAt: now(), sports: ["tennis"], checkIns: 3)]
     }
 
-    /// `-uitest-care`: a writer that reads every reason as self-harm, so UI tests can reach the
-    /// care line before the AI writer exists.
-    static var disclaimerWriter: any DisclaimerWriter {
-        ProcessInfo.processInfo.arguments.contains("-uitest-care") ? CareWriter() : DiceDisclaimerWriter()
-    }
-
     /// `-uitest-noon`: the clock starts at noon today and runs on from there, so the scene is in
     /// daylight and the squad cheers whatever time CI runs the UI tests. `-uitest-evening` starts
     /// it at 21:30 instead, when 今日赛况 is on the card, and `-uitest-night` at 23:30, when the
@@ -389,12 +383,5 @@ enum LaunchOptions {
         }
         guard let jpeg = image.jpegData(compressionQuality: 0.7), let pixels = image.cgImage else { return nil }
         return PreparedPhoto(id: UUID(), jpeg: jpeg, size: try? PhotoSize(width: pixels.width, height: pixels.height))
-    }
-}
-
-/// Blocks every reason (`-uitest-care`).
-private struct CareWriter: DisclaimerWriter {
-    func suggestions(for reason: String, style: DisclaimerStyle) async -> DisclaimerSuggestions {
-        .blocked
     }
 }

@@ -17,7 +17,7 @@ final class RecapUITests: XCTestCase {
 
         let pages = [
             ("podium", 4.0), ("titles", 2.5), ("myWeek", 1.5), ("squadWeek", 1.5), ("favoritePlace", 3.0),
-            ("discovery", 3.0), ("hottest", 2.5), ("meals", 3.0), ("menu", 1.5), ("bestDisclaimer", 3.5),
+            ("discovery", 3.0), ("hottest", 2.5), ("meals", 3.0), ("menu", 1.5),
             ("ending", 3.0),
         ]
         for (index, (page, settle)) in pages.enumerated() {
@@ -105,14 +105,38 @@ final class RecapUITests: XCTestCase {
         show("menu", in: app)
         // Back from a place, a tap still moves the story on.
         next(in: app, from: "menu")
-        show("bestDisclaimer", in: app)
+        show("ending", in: app)
     }
 
     /// Every page of the sample week, in order.
     private static let pages = [
         "podium", "titles", "myWeek", "squadWeek", "favoritePlace", "discovery", "hottest", "meals", "menu",
-        "bestDisclaimer", "ending",
+        "ending",
     ]
+
+    /// 佩戴头衔 under the titles wears the reader's own title from that week; the button says so at
+    /// once (Tracy, 2026-11-21).
+    func testWearingMyTitleFromTheStory() {
+        let app = launch(language: "zh-Hans", extra: ["-tab", "feed"], demo: false)
+        let tile = app.buttons["recap.entry"]
+        XCTAssertTrue(tile.waitForExistence(timeout: Self.wait), "no 战报 tile")
+        tile.tap()
+        show("podium", in: app)
+        next(in: app)
+        show("titles", in: app)
+        let wear = app.buttons["recap.wearTitle"]
+        XCTAssertTrue(wear.waitForExistence(timeout: Self.wait), "no 佩戴头衔 for the reader's title")
+        Thread.sleep(forTimeInterval: 2.5)
+        XCTAssertTrue(wear.isHittable, "佩戴头衔 is covered")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(wear.frame), "佩戴头衔 runs off the screen")
+        keepScreenshot(named: "7b-recap-wear-title")
+        wear.tap()
+        expectation(for: NSPredicate(format: "label CONTAINS %@", "已佩戴"), evaluatedWith: wear)
+        waitForExpectations(timeout: Self.wait)
+        keepScreenshot(named: "7c-recap-title-worn")
+        // Still on the titles page: the tap wore the title, it didn't turn the page.
+        show("titles", in: app)
+    }
 
     /// Only the titles wait while the AI run is late: the out-of-funds page and its nudge.
     func testPendingTitlesCanBeNudged() {
@@ -183,9 +207,11 @@ final class RecapUITests: XCTestCase {
 
         tile.tap()
         let ending = app.descendants(matching: .any).matching(identifier: "recap.page.ending").firstMatch
+        let menu = app.descendants(matching: .any).matching(identifier: "recap.page.menu").firstMatch
         for _ in 0..<14 where !ending.exists {
             XCTAssertTrue(app.buttons["recap.close"].waitForExistence(timeout: Self.wait), "the story didn't open")
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.9)).tap()
+            // Low only on 小队菜单, under its cards; lower down on 头衔 is 佩戴头衔.
+            next(in: app, from: menu.exists ? "menu" : nil)
         }
         XCTAssertTrue(ending.waitForExistence(timeout: Self.wait), "the last page never showed")
         app.buttons["recap.close"].tap()

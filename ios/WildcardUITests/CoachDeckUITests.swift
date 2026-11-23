@@ -14,13 +14,15 @@ final class CoachDeckUITests: XCTestCase {
     func testEveryCardIsSeenInTurnAndGoesIntoEarlier() {
         continueAfterFailure = false
         let app = launch()
-        let checkIn = app.buttons["today.checkin"]
-        XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "the home didn't open")
+        // The squad card says the home is up; 打卡 is the system tab bar's ＋ since #929, which
+        // doesn't always carry its identifier.
+        let squadCard = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+        XCTAssertTrue(squadCard.waitForExistence(timeout: Self.wait), "the home didn't open")
         let coach = app.buttons["today.coach"]
         XCTAssertTrue(coach.waitForExistence(timeout: Self.wait), "毛头 isn't on the sideline")
         expectation(for: NSPredicate(format: "value == %@", "有新消息"), evaluatedWith: coach)
         waitForExpectations(timeout: Self.wait)
-        XCTAssertTrue(checkIn.isHittable, "打卡 is covered")
+        XCTAssertTrue(coach.isHittable, "毛头 is covered")
         keepScreenshot(named: "105-coach-note-waiting")
 
         coach.tap()
@@ -143,6 +145,28 @@ final class CoachDeckUITests: XCTestCase {
         waitFor(note, "exists == false", "下一张 didn't put the note away")
     }
 
+    /// A gift still in its box puts a round gift button under the card (Tracy, 2026-11-21), which
+    /// opens the gift's card over the coach's page, ready to 拆开, both folded and open.
+    func testTheHomesGiftButtonOpensTheBoxedGift() {
+        continueAfterFailure = false
+        for folded in [true, false] {
+            let app = launch(extra: ["-uitest-coach-gift"], folded: folded)
+            let button = app.buttons["today.gift"]
+            XCTAssertTrue(button.waitForExistence(timeout: Self.wait), "no gift button")
+            XCTAssertTrue(button.isHittable, "the gift button is covered")
+            let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+            XCTAssertGreaterThanOrEqual(button.frame.minY, card.frame.maxY, "the gift button sits on the card")
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(button.frame), "the gift button is off screen")
+            keepScreenshot(named: folded ? "116-home-gift-button-folded" : "117-home-gift-button")
+            button.tap()
+            let unwrap = app.buttons["coachDeck.unwrap"]
+            XCTAssertTrue(unwrap.waitForExistence(timeout: Self.wait), "the gift button didn't open the boxed gift")
+            assertOnScreen(self.card("gift", in: app), unwrap, in: app)
+            keepScreenshot(named: folded ? "118-home-gift-opened-card" : "119-home-gift-opened-card-open")
+            app.terminate()
+        }
+    }
+
     /// 送你的: 拆开, then 立刻穿上, then 去衣橱看看.
     private func openAndWear(in app: XCUIApplication) {
         let gift = card("gift", in: app)
@@ -193,7 +217,6 @@ final class CoachDeckUITests: XCTestCase {
             squadCard.frame.contains(row.frame), "the row runs off the squad card: \(row.frame) in \(squadCard.frame)")
         XCTAssertTrue(app.windows.firstMatch.frame.contains(row.frame), "the row runs off the screen: \(row.frame)")
         XCTAssertTrue(row.isHittable, "the row is covered")
-        XCTAssertTrue(app.buttons["today.checkin"].isHittable, "打卡 is covered")
         keepScreenshot(named: "104-coach-news-row")
 
         row.tap()

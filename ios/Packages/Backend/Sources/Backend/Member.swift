@@ -21,9 +21,6 @@ public struct Member: Hashable, Sendable {
 public struct Profile: Hashable, Sendable {
     /// Where the member lives, for their weekly reset.
     public let timeZone: TimeZone
-    /// What their character shouts when the squad cheers a teammate's 练了. Nil until they pick
-    /// one, and the app uses their persona's own line.
-    public let catchphrase: Catchphrase?
     /// Their nickname and character's look. Nil until they make it, right after signing in.
     /// A save without it clears it, since the profile is saved whole.
     public let character: MemberCharacter?
@@ -32,24 +29,22 @@ public struct Profile: Hashable, Sendable {
     public let jerseyNumber: JerseyNumber?
 
     public init(
-        timeZone: TimeZone, catchphrase: Catchphrase? = nil, character: MemberCharacter? = nil,
+        timeZone: TimeZone, character: MemberCharacter? = nil,
         jerseyNumber: JerseyNumber? = nil
     ) {
         self.timeZone = timeZone
-        self.catchphrase = catchphrase
         self.character = character
         self.jerseyNumber = jerseyNumber
     }
 
     init(
-        timeZone identifier: String, catchphrase: String?, character: Components.Schemas.Character?,
+        timeZone identifier: String, character: Components.Schemas.Character?,
         jerseyNumber: Int?
     ) throws(APIError) {
         guard let timeZone = TimeZone(identifier: identifier) else { throw .unreadableResponse }
         do {
             self.init(
                 timeZone: timeZone,
-                catchphrase: try catchphrase.map { text throws(ContractsError) in try Catchphrase(text) },
                 character: try character.map { wire throws(ContractsError) in try MemberCharacter(wire) },
                 jerseyNumber: try jerseyNumber.map { number throws(ContractsError) in try JerseyNumber(number) })
         } catch {
@@ -59,7 +54,7 @@ public struct Profile: Hashable, Sendable {
 
     init(_ wire: Components.Schemas.Me.ProfilePayload) throws(APIError) {
         try self.init(
-            timeZone: wire.timeZone, catchphrase: wire.catchphrase, character: wire.character,
+            timeZone: wire.timeZone, character: wire.character,
             jerseyNumber: wire.jerseyNumber)
     }
 }

@@ -6,6 +6,23 @@ import SwiftUI
 import UIKit
 #endif
 
+/// The round button the bar keeps apart at its trailing end, as iOS 26 keeps a search tab: an
+/// action, never a page, so a tap runs `perform` and the open tab stays open (打卡's ＋ on every
+/// tab, Tracy 2026-11-21).
+public struct TabBarAction {
+    public let title: Text
+    public let systemImage: String
+    public let accessibilityIdentifier: String
+    public let perform: () -> Void
+
+    public init(title: Text, systemImage: String, accessibilityIdentifier: String, perform: @escaping () -> Void) {
+        self.title = title
+        self.systemImage = systemImage
+        self.accessibilityIdentifier = accessibilityIdentifier
+        self.perform = perform
+    }
+}
+
 /// One tab: its name and SF Symbol.
 public struct TabBarItem<ID: Hashable>: Identifiable {
     public let id: ID
@@ -28,7 +45,10 @@ public struct TabBarItem<ID: Hashable>: Identifiable {
 /// `showsBar` false hides the bar (a tab's full-screen step). A tab in `dotted` carries a small
 /// brand dot, no number: something new there since the member last looked. `backToRoot` is
 /// called with the tab left and with the open tab tapped again, for it to close the pages pushed
-/// over it, as iOS's own apps do, so every tab opens from the bar on its own page.
+/// over it, as iOS's own apps do, so every tab opens from the bar on its own page. `action`, when
+/// given, is the round button apart at the bar's trailing end (`TabBarAction`). `barTapped` is
+/// told each time a tab is tapped in the bar, a new one or the open one, never when the selection
+/// changes from code.
 public struct AppTabs<ID: Hashable, Content: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let items: [TabBarItem<ID>]
@@ -36,11 +56,20 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
     private let showsBar: Bool
     private let dotted: Set<ID>
     private let backToRoot: (ID) -> Void
+    private let action: TabBarAction?
+    private let barTapped: (ID) -> Void
     private let content: (ID) -> Content
+
+    /// What the bar selects: a tab, or the action, which is never kept selected.
+    private enum Slot: Hashable {
+        case tab(ID)
+        case action
+    }
 
     public init(
         _ items: [TabBarItem<ID>], selection: Binding<ID>, showsBar: Bool = true, dotted: Set<ID> = [],
-        backToRoot: @escaping (ID) -> Void = { _ in },
+        backToRoot: @escaping (ID) -> Void = { _ in }, action: TabBarAction? = nil,
+        barTapped: @escaping (ID) -> Void = { _ in },
         @ViewBuilder content: @escaping (ID) -> Content
     ) {
         self.items = items
@@ -48,17 +77,25 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
         self.showsBar = showsBar
         self.dotted = dotted
         self.backToRoot = backToRoot
+        self.action = action
+        self.barTapped = barTapped
         self.content = content
         Self.paintDots()
     }
 
     /// The selection as the bar sets it: a tap on the tab already open is a reselection, which
-    /// the system also reports through the binding.
-    private var tapped: Binding<ID> {
+    /// the system also reports through the binding; a tap on the action runs it and leaves the
+    /// open tab selected.
+    private var tapped: Binding<Slot> {
         Binding(
-            get: { selection },
-            set: { tab in
-                if tab == selection { backToRoot(tab) } else { selection = tab }
+            get: { .tab(selection) },
+            set: { slot in
+                switch slot {
+                case .action: action?.perform()
+                case .tab(let tab):
+                    barTapped(tab)
+                    if tab == selection { backToRoot(tab) } else { selection = tab }
+                }
             })
     }
 
@@ -72,7 +109,7 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
     public var body: some View {
         TabView(selection: tapped) {
             ForEach(items) { item in
-                Tab(value: item.id) {
+                Tab(value: Slot.tab(item.id)) {
                     content(item.id)
                         // Back to the system's tint inside: only the bar's selected tab is ink.
                         .tint(Color?.none)
@@ -87,6 +124,20 @@ public struct AppTabs<ID: Hashable, Content: View>: View {
                 // An empty badge is the system's dot, without a number.
                 .badge(dotted.contains(item.id) ? Text(verbatim: "") : nil)
                 .accessibilityIdentifier(item.accessibilityIdentifier ?? "")
+            }
+            if let action {
+                // The search role is how the system sets a round button apart at the bar's end;
+                // its page is never shown, since selecting it runs the action instead.
+                Tab(value: Slot.action, role: .search) {
+                    Color.clear
+                } label: {
+                    Label {
+                        action.title
+                    } icon: {
+                        Image(systemName: action.systemImage)
+                    }
+                }
+                .accessibilityIdentifier(action.accessibilityIdentifier)
             }
         }
         .tint(Color(role: .fgDefault, in: theme))
