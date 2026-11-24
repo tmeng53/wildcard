@@ -84,16 +84,19 @@ export interface GiftStore {
   /** Whether `member` holds `piece` by any way (training, a coach, the team). */
   holds(member: MemberId, piece: PieceId): Promise<boolean>;
   /**
-   * Keeps `gift` for `member`, counting for the week that began at `weekStart`; `undefined`
-   * when they already have that piece or a gift for that week.
+   * Keeps `gift` for `member`, counting for the week that began at `weekStart`: `owned` when they
+   * already have that piece, and `weekFull` when `coachLimit` is given and the coach on its own
+   * gave them that many since `weekStart`, counted together with the gift so two at once can't
+   * both pass.
    */
   give(
     member: MemberId,
     gift: Omit<CoachGift, 'givenAt' | 'opened'> & {
       readonly admin?: MemberId;
       readonly weekStart: Date;
+      readonly coachLimit?: number;
     },
-  ): Promise<CoachGift | undefined>;
+  ): Promise<CoachGift | 'owned' | 'weekFull'>;
   /**
    * Keeps that `member` opened their gift of `piece` and whether they put it on; false when they
    * weren't given it. Opening it again keeps the first.

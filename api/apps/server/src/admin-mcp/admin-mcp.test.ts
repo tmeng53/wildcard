@@ -1477,7 +1477,7 @@ describe('the admin MCP server', () => {
     await client.close();
   });
 
-  it('gives a member a gift from their squad’s coach, one a week, and logs it', async () => {
+  it('gives a member gifts from their squad’s coach, with no weekly limit, and logs it', async () => {
     const admin = await member({ admin: true });
     const [friend, outsider] = [await member({ admin: false }), await member({ admin: false })];
     const client = await connect(clientSignedInAs(admin));
@@ -1509,10 +1509,9 @@ describe('the admin MCP server', () => {
       version: 1,
       gift: { piece: scarf, coach: 'xiaohun', squad, line: '天冷了，围上。', givenBy: 'admin' },
     });
-    // One a member a week, and only to a member of the squad.
-    const refusedGiftWeeklyLimit = await call('give_gift', { ...gift, piece: cap });
-    expect(refusedGiftWeeklyLimit.isError).toBe(true);
-    expect(refusedGiftWeeklyLimit.text).toContain('GIFT_WEEKLY_LIMIT');
+    // An admin isn't held to the coach's weekly count, but only gives to a member of the squad.
+    const second = await call('give_gift', { ...gift, piece: cap });
+    expect(second.isError).toBe(false);
     const refusedGiftMemberNotInSquad = await call('give_gift', {
       ...gift,
       member: outsider.userId,
@@ -1522,7 +1521,10 @@ describe('the admin MCP server', () => {
     const kept = await sql<{ via: string; admin_id: string | null }>`
       select via, admin_id from public.grants where member_id = ${friend.userId} and via = 'coach'
     `.execute(db);
-    expect(kept.rows).toStrictEqual([{ via: 'coach', admin_id: admin.userId }]);
+    expect(kept.rows).toStrictEqual([
+      { via: 'coach', admin_id: admin.userId },
+      { via: 'coach', admin_id: admin.userId },
+    ]);
     const logged = await sql<{ action: { tool: string } }>`
       select action from public.admin_actions where admin_id = ${admin.userId} order by at
     `.execute(db);

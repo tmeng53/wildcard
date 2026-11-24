@@ -160,8 +160,8 @@ public struct APICheckInBackend: CheckInBackend {
 
     public func unopenedCoachGift(in squad: SquadID) async throws(CheckInError) -> CoachPageCard? {
         do {
-            // Every gift since the member joined, newest first; at most one a week, so a page holds
-            // months of them.
+            // Every gift since the member joined, newest first; rarely more than two a week, so a
+            // page holds weeks of them.
             return try await api.earlierCoachCards(in: squad, from: nil, unseenOnly: false, giftsOnly: true)
                 .cards.first { $0.gift?.isOpen == false }
         } catch {

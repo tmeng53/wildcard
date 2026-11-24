@@ -90,5 +90,11 @@ export type {
   UnlockStore,
   Unlocked,
 } from './ports.js';
-export { createCoachGifts, type CoachGifts, type GiftsAdmin } from './use-cases/gifts.js';
+export {
+  COACH_GIFTS_A_WEEK,
+  coachMayGive,
+  createCoachGifts,
+  type CoachGifts,
+  type GiftsAdmin,
+} from './use-cases/gifts.js';
 export { createUnlocks, type Unlocks, type UnlocksAdmin } from './use-cases/unlocks.js';

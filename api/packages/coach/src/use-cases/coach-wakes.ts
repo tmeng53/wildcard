@@ -150,8 +150,8 @@ export interface CoachWakes {
    * wake. Works while coaching is off too. With `deliver` (Tracy, 2026-11-09: 要让他真的发给我自己)
    * the member's note, with its challenge, is saved as a real note of today, every time it is
    * asked, so it reaches their phone and coach page like the morning one, and the newest is the
-   * day's; the 战术板 line and the gift stay a preview, since the board is the squad's and a gift
-   * is one a week.
+   * day's; the 战术板 line and the gift stay a preview, since the board is the squad's and the
+   * coach's gifts are counted by the week.
    */
   preview(input: {
     readonly squad: SquadId;
@@ -409,7 +409,7 @@ async function previewDaily(
     ...(gift === undefined
       ? giftable
         ? {}
-        : { noGift: 'no gift can go to the member now (one a week, or no AI consent)' }
+        : { noGift: 'no gift can go to the member now (two this week already, or no AI consent)' }
       : { gift }),
     ...(delivered === undefined ? {} : { delivered }),
     files: [...draft.changed].map((path) => ({

@@ -628,7 +628,8 @@ export interface CoachReportStore {
 
 /**
  * Coaches' gifts, kept by the unlocks module: the pool a coach may give from, who in a squad may
- * get one now (one a member a week at most, on the squad's clock; Tracy, 2026-11-08), and giving.
+ * get one now (two of the coach's own a member a week at most, on the squad's clock; Tracy,
+ * 2026-11-24), and giving.
  */
 export interface CoachGifting {
   /**

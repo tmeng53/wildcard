@@ -10,11 +10,22 @@ import type { GiftStore } from '../ports.js';
 
 /**
  * Gifts from a squad's coach: what a coach may give, and giving it. The rules every gift keeps
- * are here, whoever gives it (the coach's own tool or an admin in its name): the piece is
- * offered, the member hasn't got it, and they got no gift since their week began (one a week at
- * most; Tracy, 2026-11-08). Whether the member may get gifts at all (their AI consent, their
- * squad) is the caller's to check.
+ * are here, whoever gives it (the coach's own tool or an admin in its name): the piece is offered
+ * and the member hasn't got it. The coach on its own gives a member at most
+ * {@link COACH_GIFTS_A_WEEK} since their week began; an admin gives as many as they like (Tracy,
+ * 2026-11-24). Whether the member may get gifts at all (their AI consent, their squad) is the
+ * caller's to check.
  */
+export const COACH_GIFTS_A_WEEK = 2;
+
+/** Whether the coach on its own may still give a member a gift this week, from what they had. */
+export function coachMayGive(had: readonly CoachGift[], weekStart: Date): boolean {
+  return (
+    had.filter(({ givenAt, givenBy }) => givenBy === 'coach' && givenAt >= weekStart).length <
+    COACH_GIFTS_A_WEEK
+  );
+}
+
 export interface CoachGifts {
   /** The pieces coaches may give now, by id. */
   offered(): Promise<GiftPiece[]>;
@@ -55,9 +66,6 @@ export function createCoachGifts(deps: {
       }
       // A member holds each piece once, whichever way they got it.
       if (await deps.store.holds(member, piece)) throw new GiftAlreadyOwnedError(piece);
-      const had = await deps.store.giftsOf(member);
-      const thisWeek = had.filter(({ givenAt }) => givenAt >= weekStart).at(-1);
-      if (thisWeek !== undefined) throw new GiftWeeklyLimitError(thisWeek.givenAt);
       const gift = await deps.store.give(member, {
         piece,
         coach,
@@ -66,12 +74,12 @@ export function createCoachGifts(deps: {
         givenBy,
         ...(admin === undefined ? {} : { admin }),
         weekStart,
+        ...(givenBy === 'coach' ? { coachLimit: COACH_GIFTS_A_WEEK } : {}),
       });
-      if (gift === undefined) {
-        // Given meanwhile by another call: that piece, or another this week.
-        if (await deps.store.holds(member, piece)) throw new GiftAlreadyOwnedError(piece);
-        const now = await deps.store.giftsOf(member);
-        throw new GiftWeeklyLimitError(now.at(-1)?.givenAt ?? weekStart);
+      if (gift === 'owned') throw new GiftAlreadyOwnedError(piece);
+      if (gift === 'weekFull') {
+        const had = await deps.store.giftsOf(member);
+        throw new GiftWeeklyLimitError(had.at(-1)?.givenAt ?? weekStart);
       }
       await deps.gifted?.(member, gift);
       return gift;

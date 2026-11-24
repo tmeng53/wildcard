@@ -101,32 +101,41 @@ describe('coach gifts', () => {
     });
   });
 
-  it('refuses a second gift in the same week and a piece the member already has', async () => {
+  it('lets the coach give two a week, refuses a third and a piece the member already has', async () => {
     const gifts = giftsWith();
-    const [member, coach, first, second] = [
-      await newMember(),
-      await aCoach(),
-      newPiece(),
-      newPiece(),
-    ];
-    await gifts.putPiece({ id: first, offered: true });
-    await gifts.putPiece({ id: second, offered: true });
-    const request = { member, coach, squad: randomUUID(), line: '给你', givenBy: 'admin' as const };
-    await gifts.give({ ...request, piece: first, weekStart });
+    const [member, coach] = [await newMember(), await aCoach()];
+    const pieces = [newPiece(), newPiece(), newPiece(), newPiece()] as const;
+    for (const id of pieces) await gifts.putPiece({ id, offered: true });
+    const request = { member, coach, squad: randomUUID(), line: '给你', givenBy: 'coach' as const };
+    await gifts.give({ ...request, piece: pieces[0], weekStart });
+    await gifts.give({ ...request, piece: pieces[1], weekStart });
 
-    await expect(gifts.give({ ...request, piece: second, weekStart })).rejects.toThrow(
+    await expect(gifts.give({ ...request, piece: pieces[2], weekStart })).rejects.toThrow(
       GiftWeeklyLimitError,
     );
     await expect(
-      gifts.give({ ...request, piece: first, weekStart: new Date(Date.now() + 60_000) }),
+      gifts.give({ ...request, piece: pieces[0], weekStart: new Date(Date.now() + 60_000) }),
     ).rejects.toThrow(GiftAlreadyOwnedError);
     // Next week, another piece is fine.
     const next = await gifts.give({
       ...request,
-      piece: second,
+      piece: pieces[2],
       weekStart: new Date(Date.now() + 60_000),
     });
-    expect(next).toMatchObject({ piece: second, givenBy: 'admin' });
+    expect(next).toMatchObject({ piece: pieces[2], givenBy: 'coach' });
+    // An admin's gifts don't count toward the coach's two, and have no limit of their own.
+    const [other, ...more] = [await newMember(), newPiece(), newPiece(), newPiece()];
+    for (const id of more) await gifts.putPiece({ id, offered: true });
+    const admin = {
+      ...request,
+      member: other,
+      givenBy: 'admin' as const,
+      admin: await newMember(),
+    };
+    for (const piece of more) await gifts.give({ ...admin, piece, weekStart });
+    const fromCoach = await gifts.give({ ...request, member: other, piece: pieces[3], weekStart });
+    expect(fromCoach).toMatchObject({ piece: pieces[3], givenBy: 'coach' });
+    expect(await gifts.of(other)).toHaveLength(4);
   });
 
   it('refuses a piece the member already holds another way, as already theirs', async () => {
@@ -152,27 +161,26 @@ describe('coach gifts', () => {
     expect(await gifts.of(member)).toStrictEqual([]);
   });
 
-  it('gives only one of two gifts made at once in the same week', async () => {
+  it('gives only two of three coach gifts made at once in the same week', async () => {
     const gifts = giftsWith();
-    const [member, coach, first, second] = [
+    const [member, coach, ...pieces] = [
       await newMember(),
       await aCoach(),
       newPiece(),
       newPiece(),
+      newPiece(),
     ];
-    await gifts.putPiece({ id: first, offered: true });
-    await gifts.putPiece({ id: second, offered: true });
+    for (const id of pieces) await gifts.putPiece({ id, offered: true });
     const request = { member, coach, squad: randomUUID(), line: '给你', givenBy: 'coach' as const };
-    const both = await Promise.allSettled([
-      gifts.give({ ...request, piece: first, weekStart }),
-      gifts.give({ ...request, piece: second, weekStart }),
-    ]);
-    expect(both.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
-    const refused = both.find((each) => each.status === 'rejected');
-    expect(refused?.status === 'rejected' ? String(refused.reason) : '').toContain(
-      'GiftWeeklyLimitError: The member was given a gift this week already',
+    const all = await Promise.allSettled(
+      pieces.map((piece) => gifts.give({ ...request, piece, weekStart })),
     );
-    expect(await gifts.of(member)).toHaveLength(1);
+    expect(all.filter(({ status }) => status === 'fulfilled')).toHaveLength(2);
+    const refused = all.find((each) => each.status === 'rejected');
+    expect(refused?.status === 'rejected' ? String(refused.reason) : '').toContain(
+      'GiftWeeklyLimitError',
+    );
+    expect(await gifts.of(member)).toHaveLength(2);
   });
 
   it('keeps when a gift was opened and whether it was put on, once', async () => {

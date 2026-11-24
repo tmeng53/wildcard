@@ -66,14 +66,16 @@ export class GiftAlreadyOwnedError extends AppError {
   }
 }
 
-/** Thrown when a member who was given a gift this week is given another (one a week at most). */
+/** Thrown when the coach on its own gives a member more gifts this week than it may. */
 export class GiftWeeklyLimitError extends AppError {
   override readonly name = 'GiftWeeklyLimitError';
   readonly reason = 'GIFT_WEEKLY_LIMIT';
   readonly status = 'FAILED_PRECONDITION';
 
   constructor(readonly lastGivenAt: Date) {
-    super(`The member was given a gift this week already (${lastGivenAt.toISOString()}).`);
+    super(
+      `The coach gave the member all the gifts it may this week (last ${lastGivenAt.toISOString()}).`,
+    );
   }
 }
 

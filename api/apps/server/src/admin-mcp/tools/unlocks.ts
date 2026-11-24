@@ -227,8 +227,8 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
     description:
       'Gives a member a piece from the gift pool (get_gift_pieces) in the name of their squad’s ' +
       'coach, with your own line, which only they see, on the coach page. The same rules as the ' +
-      'coach’s own gifts: an offered piece they don’t have, and at most one gift a member a week ' +
-      '(on the squad’s clock); a refused gift says why. Logged as yours. Never taken back.',
+      'coach’s own gifts: an offered piece they don’t have, but no weekly limit, which holds only ' +
+      'for the coach’s own; a refused gift says why. Logged as yours. Never taken back.',
     changes: true,
     input: z.strictObject({
       squad: z.uuid().describe('The squad’s id; its coach gives it.'),

@@ -47,8 +47,8 @@ export interface GiftRequest {
   /** The admin who gave it in the coach's name. */
   readonly admin?: MemberId;
   /**
-   * The start of the member's week: a member gets at most one gift a week (Tracy, 2026-11-08),
-   * so a member given one since then is refused.
+   * The start of the member's week, on the squad's clock: the coach on its own gives a member
+   * at most two gifts since then, an admin any number (Tracy, 2026-11-24).
    */
   readonly weekStart: Date;
 }

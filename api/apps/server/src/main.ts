@@ -697,7 +697,7 @@ const coachWakes =
           );
           return members.filter((_, index) => on[index] === true);
         },
-        // At most one gift a member a week, from the pool admins keep (Tracy, 2026-11-08).
+        // At most two of its own gifts a member a week, from the pool admins keep (Tracy, 2026-11-24).
         gifting: coachGifting({
           gifts: createCoachGifts({ store: createPostgresGiftStore(db) }),
           weekStart: giftWeekStart,

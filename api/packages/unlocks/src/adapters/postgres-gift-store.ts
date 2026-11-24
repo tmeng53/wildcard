@@ -1,4 +1,4 @@
-import type { Kysely } from 'kysely';
+import { sql, type Kysely } from 'kysely';
 
 import { CoachId, GivenBy, type CoachGift } from '../domain/gifts.js';
 import { PieceId } from '../domain/unlocks.js';
@@ -104,27 +104,45 @@ export function createPostgresGiftStore(db: Kysely<DB>): GiftStore {
       return held !== undefined;
     },
 
-    async give(member, { piece, coach, squad, line, givenBy, admin, weekStart }) {
-      const inserted = await db
-        .insertInto('grants')
-        .values({
-          member_id: member,
-          reward_kind: 'piece',
-          reward_id: piece,
-          via: 'coach',
-          coach_id: coach,
-          squad_id: squad,
-          line: line ?? null,
-          given_by: givenBy,
-          admin_id: admin ?? null,
-          week_from: weekStart.toISOString(),
-          at: new Date().toISOString(),
-        })
-        // Either the piece or the week: the caller reads which.
-        .onConflict((conflict) => conflict.doNothing())
-        .returningAll()
-        .executeTakeFirst();
-      return inserted === undefined ? undefined : shown(inserted);
+    async give(member, { piece, coach, squad, line, givenBy, admin, weekStart, coachLimit }) {
+      const keep = async (trx: Kysely<DB>) => {
+        if (coachLimit !== undefined) {
+          // One gift to a member at a time, so the count and the gift agree.
+          await sql`select pg_advisory_xact_lock(hashtextextended(${`coach_gifts:${member}`}, 0))`.execute(
+            trx,
+          );
+          const { count } = await trx
+            .selectFrom('grants')
+            .select((eb) => eb.fn.countAll<string>().as('count'))
+            .where('member_id', '=', member)
+            .where('via', '=', 'coach')
+            .where('given_by', '=', 'coach')
+            .where('at', '>=', weekStart)
+            .executeTakeFirstOrThrow();
+          if (Number(count) >= coachLimit) return 'weekFull' as const;
+        }
+        const inserted = await trx
+          .insertInto('grants')
+          .values({
+            member_id: member,
+            reward_kind: 'piece',
+            reward_id: piece,
+            via: 'coach',
+            coach_id: coach,
+            squad_id: squad,
+            line: line ?? null,
+            given_by: givenBy,
+            admin_id: admin ?? null,
+            week_from: weekStart.toISOString(),
+            at: new Date().toISOString(),
+          })
+          // The member holds the piece already.
+          .onConflict((conflict) => conflict.doNothing())
+          .returningAll()
+          .executeTakeFirst();
+        return inserted === undefined ? ('owned' as const) : shown(inserted);
+      };
+      return db.isTransaction ? keep(db) : db.transaction().execute(keep);
     },
 
     async open({ member, piece, worn }) {
