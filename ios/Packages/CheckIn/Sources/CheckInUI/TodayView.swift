@@ -137,7 +137,7 @@ public struct TodayView: View {
                             HealthHomeCard.Offer(model: model)
                         }
                         .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
-                        .overlay(alignment: .bottomTrailing) { GiftButton(model: model) }
+                        .overlay(alignment: .bottomTrailing) { SideButtons(model: model) }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
