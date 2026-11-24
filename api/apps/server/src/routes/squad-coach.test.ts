@@ -692,8 +692,8 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       return id;
     };
     // The squad is on New York's clock. 7 to 8 hours behind it, a day starts on the same squad
-    // day; 18 to 19 hours ahead, a day starts on the squad's day before, whose note (written at
-    // the squad's 6am) reached them on their own morning.
+    // day; 18 to 19 hours ahead, a day starts on the squad's day before (until the squad's today
+    // reaches them, which challenge-day.test.ts covers).
     for (const { member, zone, squadDay } of [
       { member: behind, zone: 'Etc/GMT+12', squadDay: dayIn('Etc/GMT+12') },
       {
