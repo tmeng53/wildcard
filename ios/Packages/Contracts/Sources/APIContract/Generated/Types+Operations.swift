@@ -21038,7 +21038,7 @@ public enum Operations {
     }
     /// The caller’s challenge today (今日挑战)
     ///
-    /// The day’s challenge the squad’s coach set the caller on today’s morning note (today on the caller’s own clock), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
+    /// The day’s challenge the squad’s coach set the caller on today’s morning note (the earlier of the caller’s today and the squad’s), once the note reached them: what it is, what they said to it, and whether it is done, by them (我完成了) or by the coach from their check-ins. Only the caller sees it.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/challenge/get(getCoachChallenge)`.
@@ -21378,7 +21378,7 @@ public enum Operations {
     }
     /// Mark the challenge on the caller’s morning note done (我完成了)
     ///
-    /// The caller did the day’s challenge their morning note sets. Only on its own day, on the caller’s own clock, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
+    /// The caller did the day’s challenge their morning note sets. Only on its own day, until it is over on both the caller’s clock and the squad’s, and not once they let it go (算了). The first completion stands, theirs or the coach’s, and is what comes back, so repeating it is safe.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge/completion`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/completion/put(completeCoachChallenge)`.
@@ -21836,7 +21836,7 @@ public enum Operations {
     }
     /// Accept or decline the challenge on the caller’s morning note
     ///
-    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on the caller’s own clock. The coach sees it when the member next checks in.
+    /// 接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it go if they say (their coach remembers it; squadmates never see it). The first answer stands; answering again gets it back. Only until its day is over on both the caller’s clock and the squad’s. The coach sees it when the member next checks in.
     ///
     /// - Remark: HTTP `PUT /squads/{squadId}/coach/notes/{noteId}/challenge`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)`.
@@ -21977,7 +21977,7 @@ public enum Operations {
                     self.body = body
                 }
             }
-            /// Not a valid squad or note id, not an answer, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the caller’s own clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)
+            /// Not a valid squad or note id, not an answer, a note with no challenge (`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on both the caller’s clock and the squad’s (`COACH_CHALLENGE_DAY_OVER`: 已过期)
             ///
             /// - Remark: Generated from `#/paths//squads/{squadId}/coach/notes/{noteId}/challenge/put(answerCoachChallenge)/responses/400`.
             ///
@@ -22652,7 +22652,7 @@ public enum Operations {
     }
     /// What the squad’s coach said to the caller, as cards (the coach page)
     ///
-    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on the caller’s own clock) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
+    /// A card for each thing the squad’s coach said to the caller since they joined, up to 30 days back: its 战术板 lines, their morning notes and challenges once delivered (while their `coach` switch is on), its gifts and coach messages (given to the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins and replies show only under the posts. The unseen ones from today (on both the caller’s clock and the squad’s) from the coach the squad has now are the stack; the rest, a coach’s that left too, are 以前.
     ///
     /// - Remark: HTTP `GET /squads/{squadId}/coach/cards`.
     /// - Remark: Generated from `#/paths//squads/{squadId}/coach/cards/get(getCoachCards)`.

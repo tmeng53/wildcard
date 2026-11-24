@@ -666,7 +666,7 @@ describe('GET /squads/{squadId}/coach/activity', () => {
     await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
   });
 
-  it('keeps a challenge until the member’s own midnight, behind or ahead of the squad (Tracy, 2026-11-20)', async () => {
+  it('keeps a challenge until its day is over on both the member’s and the squad’s clock (Tracy, 2026-11-20)', async () => {
     const [captain, behind, ahead] = [await signUp(), await signUp(), await signUp()];
     const squad = await squadOf(captain, behind, ahead);
     await call({
@@ -691,15 +691,14 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       );
       return id;
     };
-    // The squad is on New York's clock. 7 to 8 hours behind it, a day starts on the same squad
-    // day; 18 to 19 hours ahead, a day starts on the squad's day before (until the squad's today
-    // reaches them, which challenge-day.test.ts covers).
+    // The squad is on New York's clock. 7 to 8 hours behind it, the member's own today counts;
+    // 18 to 19 hours ahead, the squad's (challenge-day.test.ts covers the hours in between).
     for (const { member, zone, squadDay } of [
       { member: behind, zone: 'Etc/GMT+12', squadDay: dayIn('Etc/GMT+12') },
       {
         member: ahead,
         zone: 'Pacific/Kiritimati',
-        squadDay: dayBefore(dayIn('Pacific/Kiritimati')),
+        squadDay: dayIn('America/New_York'),
       },
     ]) {
       const saved = await call({

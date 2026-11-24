@@ -392,7 +392,7 @@ export function coachActivity(deps: {
     description:
       '接受挑战 or 算了 on the day’s challenge the caller’s morning note sets, with why they let it ' +
       'go if they say (their coach remembers it; squadmates never see it). The first answer ' +
-      'stands; answering again gets it back. Only until its day is over on the caller’s own clock. ' +
+      'stands; answering again gets it back. Only until its day is over on both the caller’s clock and the squad’s. ' +
       'The coach sees it when the member next checks in.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -427,8 +427,8 @@ export function coachActivity(deps: {
       },
       400: problem(
         'Not a valid squad or note id, not an answer, a note with no challenge ' +
-          '(`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on the ' +
-          'caller’s own clock (`COACH_CHALLENGE_DAY_OVER`: 已过期)',
+          '(`COACH_NOTE_NO_CHALLENGE`), or an unanswered challenge whose day is over on both ' +
+          'the caller’s clock and the squad’s (`COACH_CHALLENGE_DAY_OVER`: 已过期)',
       ),
       401: problem('No bearer token, or not a valid one'),
       403: problem('The caller isn’t in this squad (`SQUAD_NOT_JOINED`)'),
@@ -444,8 +444,8 @@ export function coachActivity(deps: {
     operationId: 'getCoachChallenge',
     summary: 'The caller’s challenge today (今日挑战)',
     description:
-      'The day’s challenge the squad’s coach set the caller on today’s morning note (today on ' +
-      'the caller’s own clock), once the note reached them: what it is, what they said to it, and ' +
+      'The day’s challenge the squad’s coach set the caller on today’s morning note (the earlier ' +
+      'of the caller’s today and the squad’s), once the note reached them: what it is, what they said to it, and ' +
       'whether it is done, by them (我完成了) or by the coach from their check-ins. Only the ' +
       'caller sees it.',
     security: [{ bearer: [] }],
@@ -469,8 +469,8 @@ export function coachActivity(deps: {
     operationId: 'completeCoachChallenge',
     summary: 'Mark the challenge on the caller’s morning note done (我完成了)',
     description:
-      'The caller did the day’s challenge their morning note sets. Only on its own day, on the ' +
-      'caller’s own clock, and not once they let it go (算了). The first completion stands, theirs or ' +
+      'The caller did the day’s challenge their morning note sets. Only on its own day, until ' +
+      'it is over on both the caller’s clock and the squad’s, and not once they let it go (算了). The first completion stands, theirs or ' +
       'the coach’s, and is what comes back, so repeating it is safe.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -506,7 +506,7 @@ export function coachActivity(deps: {
     },
   });
 
-  /** Today on the caller's own clock, the day their challenge counts on. */
+  /** The squad day the caller's challenge counts on: the earlier of their today and the squad's. */
   const todayOf = (squad: z.infer<typeof SquadId>, member: string) =>
     challengeToday(deps, { squad, member, now: new Date() });
 

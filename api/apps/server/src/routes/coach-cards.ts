@@ -76,7 +76,7 @@ const CoachCardBody = z
       .optional()
       .meta({
         description:
-          '`true` on a `challenge` whose day is over on the caller’s own clock: it can no longer be ' +
+          '`true` on a `challenge` whose day is over on both the caller’s clock and the squad’s: it can no longer be ' +
           'answered or marked done (已过期).',
       }),
     gift: z
@@ -105,7 +105,7 @@ const CoachCardsBody = z
     version: bodyVersion(1),
     stack: z.array(CoachCardBody).meta({
       description:
-        'The cards not seen yet from today on the caller’s own clock, oldest first: the stack.',
+        'The cards not seen yet from today on both the caller’s clock and the squad’s, oldest first: the stack.',
     }),
     earlier: z.array(CoachCardBody).meta({
       description: `Every other card from the last ${String(CARDS_DAYS)} days, newest first: 以前.`,
@@ -228,7 +228,7 @@ export function coachCards(deps: {
       'delivered (while their `coach` switch is on), its gifts and coach messages (given to ' +
       'the caller on this read while one runs for them and the squad has a coach). Its lines to their check-ins ' +
       'and replies show only under the posts. The unseen ones from ' +
-      'today (on the caller’s own clock) from the coach the squad has now are the stack; ' +
+      'today (on both the caller’s clock and the squad’s) from the coach the squad has now are the stack; ' +
       'the rest, a coach’s that left too, are 以前.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,
@@ -383,8 +383,8 @@ export function coachCards(deps: {
     const byId = new Map<string, Coach>(coaches.map((coach) => [coach.id, coach]));
     // Only today's stack (Tracy, 2026-11-12): a card left unseen yesterday waits in 以前, so the
     // stack never piles up. A card is today's by the day it is for, as the coach wrote it, and
-    // today is the member's own (Tracy, 2026-11-20): their challenge stays theirs to take up
-    // until their own midnight, however far the squad's clock is ahead of it.
+    // today is the earlier of the member's and the squad's (Tracy, 2026-11-20): their challenge
+    // stays theirs to take up until its day is over on both clocks.
     const zone = (await deps.squads.timeZonesAt([squad.id], now))(squad.id);
     const today = await challengeToday(deps, { squad: squad.id, member, now });
     return (
