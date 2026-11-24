@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createLog } from '../log.js';
 import { notifyComment, pushCoachLine, recipients } from './comment-push.js';
+import { nothingHidden } from '../test-kit/nothing-hidden.js';
 
 const [writer, author, other] = [
   '00000000-0000-4000-8000-00000000000a',
@@ -70,6 +71,7 @@ describe('a comment push', () => {
       [1, 2].map(() =>
         notifyComment(
           {
+            moderation: nothingHidden,
             members: {
               squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
             },
@@ -102,10 +104,77 @@ describe('a comment push', () => {
     expect(sent).toStrictEqual([author]);
   });
 
+  it('never tells a member blocked either way with the commenter', async () => {
+    const sent: string[] = [];
+    const told: string[] = [];
+    await notifyComment(
+      {
+        moderation: {
+          blockedAmong: (_commenter, members) =>
+            Promise.resolve(new Set<string>(members.filter((member) => member === author))),
+        },
+        members: {
+          squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
+        },
+        push: {
+          settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true, teammate: true }),
+          notifyMembers: ({ members }) => {
+            sent.push(...members);
+            return Promise.resolve({ sent: members.length, gone: 0, off: 0, failures: [] });
+          },
+        },
+        notices: {
+          tell: (notices) => {
+            told.push(...notices.map(({ member }) => member));
+            return Promise.resolve(notices.map(({ member }) => member));
+          },
+        },
+        log: createLog(() => undefined),
+      },
+      { ...comment, mentions: [other] },
+    );
+
+    expect(told).toStrictEqual([other]);
+    expect(sent).toStrictEqual([other]);
+  });
+
+  it('never tells a member blocked either way with the post’s author, whose post they can’t open', async () => {
+    const told: string[] = [];
+    await notifyComment(
+      {
+        moderation: {
+          blockedAmong: (who, members) =>
+            Promise.resolve(
+              new Set<string>(who === author ? members.filter((member) => member === other) : []),
+            ),
+        },
+        members: {
+          squadmates: () => Promise.resolve(new Map([[MemberId.parse(writer), profile]])),
+        },
+        push: {
+          settingsOf: () => Promise.resolve({ dailyProgress: true, coach: true, teammate: true }),
+          notifyMembers: ({ members }) =>
+            Promise.resolve({ sent: members.length, gone: 0, off: 0, failures: [] }),
+        },
+        notices: {
+          tell: (notices) => {
+            told.push(...notices.map(({ member }) => member));
+            return Promise.resolve(notices.map(({ member }) => member));
+          },
+        },
+        log: createLog(() => undefined),
+      },
+      { ...comment, mentions: [other] },
+    );
+
+    expect(told).toStrictEqual([author]);
+  });
+
   it('throws when it can’t read the commenter, so the event comes again', async () => {
     await expect(
       notifyComment(
         {
+          moderation: nothingHidden,
           members: { squadmates: () => Promise.reject(new Error('database down')) },
           push: { settingsOf: unused, notifyMembers: unused },
           notices: { tell: unused },

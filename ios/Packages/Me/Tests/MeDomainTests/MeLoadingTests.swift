@@ -11,7 +11,6 @@ private struct Unreachable: MeService {
     func overview() async throws(MeError) -> MeOverview { throw .unavailable }
     func records() async throws(MeError) -> WildcardRecords { throw .unavailable }
     func save(_ character: MeCharacter) async throws(MeError) { throw .unavailable }
-    func save(jerseyNumber: JerseyNumber) async throws(MeError) { throw .unavailable }
     func save(birthday: Birthday?) async throws(MeError) { throw .unavailable }
     func setDailyPush(_ isOn: Bool) async throws(MeError) { throw .unavailable }
     func setCoachPush(_ isOn: Bool) async throws(MeError) { throw .unavailable }
@@ -19,6 +18,8 @@ private struct Unreachable: MeService {
     func equip(_ wearable: Wearable?) async throws(MeError) -> TitleBoard { throw .unavailable }
     func claim(piece: String) async throws(MeError) { throw .unavailable }
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) { throw .unavailable }
+    func blocked() async throws(MeError) -> [BlockedMember] { throw .unavailable }
+    func unblock(_ member: MemberID) async throws(MeError) { throw .unavailable }
 }
 
 @MainActor private func page() -> MeModel {

@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { MemberId as CheckInMember, SquadId, type CheckIns } from '@wildcard/check-ins';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import {
@@ -82,6 +83,8 @@ export interface DailyProgressDependencies {
   readonly notices: Notices;
   readonly clock: () => Date;
   readonly log: Log;
+  /** What each member blocked or reported, left out of what their push carries. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
 }
 
 /** What a run did, member by member. */
@@ -225,11 +228,13 @@ async function compose(
   if (squad === undefined) return undefined;
   const window = { member, since, until };
   const squadId = SquadId.parse(squad.id);
-  const [today, ...received] = await Promise.all([
+  const [today, hidden, ...received] = await Promise.all([
     deps.checkIns.squadToday({ viewer: CheckInMember.parse(member), squad: squadId }),
+    deps.moderation.hiddenFor(ModerationMember.parse(member)),
     ...deps.interactions.map((source) => source(window)),
   ]);
-  const byKind = mergeInteractions(received);
+  // Nothing from a member blocked either way: neither is told of the other.
+  const byKind = withoutMembers(mergeInteractions(received), hidden.members);
   const squadCheckedIn = today.members.some(({ firstCheckInAt }) => firstCheckInAt !== undefined);
   if (!squadCheckedIn && byKind.size === 0) return undefined;
   const told = {
@@ -253,6 +258,14 @@ async function compose(
       return undefined;
     }),
   });
+}
+
+/** The interactions with `members` left out, and any kind left with nobody dropped. */
+function withoutMembers(interactions: Interactions, members: ReadonlySet<string>): Interactions {
+  const kept = [...interactions]
+    .map(([kind, each]) => [kind, new Set([...each].filter((who) => !members.has(who)))] as const)
+    .filter(([, each]) => each.size > 0);
+  return new Map(kept);
 }
 
 /** The most bytes APNs takes in a push's payload. */

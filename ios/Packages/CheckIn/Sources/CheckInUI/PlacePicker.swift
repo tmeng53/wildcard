@@ -52,14 +52,15 @@ struct PlacePill: View {
 /// A tap on a row or a pin only selects it (Tracy, 2026-11-13: she couldn't tell which pin a row
 /// was): the map moves to it, its pin turns graphite under its name, its row darkens and the list
 /// scrolls to it. 添加 in the header picks the selected place. The places the squad's members
-/// added (自建地点) come first, with who added each; while typing, the last row adds what was
-/// typed as a new one (Tracy, 2026-11-16; last, and only when no squad place has that name,
-/// 2026-11-20),
+/// added (自建地点) come first, with who added each; while typing and after 搜索, the last row adds
+/// what was typed as a new one (Tracy, 2026-11-16; last, and only when no squad place has that
+/// name, 2026-11-20; under at most 3 of Apple Maps' suggestions and kept after 搜索, 2026-11-22),
 /// on 新建地点 pushed in the sheet.
 struct PlacePickerSheet: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.squadPlaces) private var book
+    @Environment(\.asksAppleMaps) private var asksAppleMaps
     @State private var squadPlaces: [SquadPlace] = []
     /// What 新建地点 starts from, while it is pushed.
     @State private var creating: NewPlace?
@@ -144,6 +145,9 @@ struct PlacePickerSheet: View {
                     map(list)
                     SearchField(text: $query, prompt: Text(copy: "搜索地点", bundle: .module))
                         .onSubmit {
+                            // Full height, as typing had it, so what 搜索 found and 新建 under it
+                            // show without a scroll (Tracy, 2026-11-22).
+                            detent = .large
                             Task {
                                 let places = await search.placesForTyped()
                                 reveal(places)
@@ -185,7 +189,9 @@ struct PlacePickerSheet: View {
                                 .accessibilityIdentifier("place.row")
                             }
                         }
-                        if search.isSuggesting, book.wired != nil, let typed = newName {
+                        // While typing and after 搜索 too, not after a suggestion was picked
+                        // (Tracy, 2026-11-22).
+                        if chosen == nil, book.wired != nil, let typed = newName {
                             Button {
                                 // Where the phone is, else the place selected or the squad's first, so the map
                                 // opens near.
@@ -210,7 +216,10 @@ struct PlacePickerSheet: View {
         }
         .background(Color(role: .bgCanvas, in: theme).ignoresSafeArea())
         .haptic(.pick, trigger: selections)
-        .task { await search.lookAround() }
+        .task {
+            search.asksAppleMaps = asksAppleMaps
+            await search.lookAround()
+        }
         .onChange(of: query) { _, query in
             // A suggestion's title put in the field is no new typing.
             guard query != chosen else { return }
@@ -316,5 +325,11 @@ struct PlacePickerSheet: View {
             }
         }
     }
+}
+
+extension EnvironmentValues {
+    /// Whether the place picker asks Apple Maps; the app turns it off for UI tests
+    /// (`-uitest-no-maps`).
+    @Entry public var asksAppleMaps = true
 }
 #endif

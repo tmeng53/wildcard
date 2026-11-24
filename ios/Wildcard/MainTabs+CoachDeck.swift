@@ -15,6 +15,23 @@ extension MainTabs {
     func opensCoachPagesFromToday() {
         today.openCoach = { openCoachDeck() }
         today.openChallenge = { openChallengeCard($0) }
+        today.openGift = { openGiftCard($0) }
+    }
+
+    /// Opens a boxed gift's card from the home's gift button (Tracy, 2026-11-21): over the coach's
+    /// page, so 拆开 is right there and 返回 lands on the page; the page alone when the card can't
+    /// be read.
+    func openGiftCard(_ gift: CoachPageCard) {
+        guard let deck = readyDeck() else {
+            openCoachDeck()
+            return
+        }
+        Task {
+            let card = await deck.giftCard(piece: gift.id)
+            guard selection == .today, todayPages.isEmpty else { return }
+            let page: [TodayPage] = deckCoach == nil ? [] : [.coachDeck]
+            todayPages = page + (card.map { [.coachCard($0)] } ?? [])
+        }
     }
 
     /// Opens the card of today's challenge, from a tap on its coach's head on the squad card (Tracy,
@@ -77,9 +94,7 @@ extension MainTabs {
                     await profile.reload()
                     await today.reloadCoach()
                 }
-            },
-            open: { address in openMessageAddress(address) },
-            sendFeedback: { [profile] sent in await Self.send(sent, through: profile.feedback) })
+            })
         coachDeck = deck
         return deck
     }
@@ -116,33 +131,7 @@ extension MainTabs {
         let mine = today.myCharacter
         return DeckCast(
             member: DeckCharacter(look: mine.look, persona: mine.persona),
-            mates: today.squadmateCharacters.map { DeckCharacter(look: $0.look, persona: $0.persona) },
-            byMember: today.squadCharactersByMember.mapValues { DeckCharacter(look: $0.look, persona: $0.persona) })
-    }
-
-    /// A coach message's `open` step: a place in the app by its address, or an https page; an
-    /// address this build doesn't know opens nothing.
-    private func openMessageAddress(_ address: String) {
-        if let destination = AppDestination(address: address) {
-            open(destination)
-        } else if let url = URL(string: address), url.scheme == "https" {
-            UIApplication.shared.open(url)
-        }
-    }
-
-    /// A coach message's `feedback` step: the box's words as 意见反馈, of the kind it names (an
-    /// idea unless it says `problem`); true once they went.
-    @MainActor private static func send(_ sent: MessageFeedback, through feedback: any FeedbackService) async -> Bool {
-        guard let words = try? FeedbackText(sent.text) else { return false }
-        let message = FeedbackMessage(
-            id: sent.id, kind: FeedbackKind(rawValue: sent.kind) ?? .idea, text: words, screenshots: [],
-            app: FeedbackApp.current)
-        do {
-            try await feedback.send(message)
-            return true
-        } catch {
-            return false
-        }
+            mates: today.squadmateCharacters.map { DeckCharacter(look: $0.look, persona: $0.persona) })
     }
 
     private var deckPlaces: CoachDeckPlaces {

@@ -106,17 +106,11 @@ struct EntranceScreen<Tabs: View>: View {
                 .padding(.top, Space.xs)
                 Spacer()
             }
-
-            if stage.showsChrome {
-                chrome
-                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
-            }
         }
         .environment(\.sceneTheme, scene)
-        // Home's own turf from here: its card, 打卡 and rings wear the scene, as home does.
+        // Home's own turf from here: its card and rings wear the scene, as home does.
         .accentTone(.scene)
         .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsCard)
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: stage.showsChrome)
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: stage.countFlipped)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: stage.myHeadIn)
         .contentShape(Rectangle())
@@ -148,17 +142,6 @@ struct EntranceScreen<Tabs: View>: View {
                 }
             }
         }
-    }
-
-    /// The 打卡 button where home has it, on the tab bar; for show until home takes over.
-    private var chrome: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            CheckInBurst(isOpen: .constant(false), identifierPrefix: "entrance") { _ in }
-                .padding(.bottom, Space.l)
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     /// My week as the card's second page shows it: the template just made, counted from today as

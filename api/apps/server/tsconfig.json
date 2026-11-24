@@ -102,6 +102,9 @@
     },
     {
       "path": "../../packages/saved-places"
+    },
+    {
+      "path": "../../packages/moderation"
     }
   ]
 }

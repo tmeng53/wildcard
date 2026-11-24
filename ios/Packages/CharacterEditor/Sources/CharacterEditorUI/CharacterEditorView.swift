@@ -9,28 +9,26 @@ import SwiftUI
 /// under its feet and the day the member signed up in the corner; tabs of choices below; and one
 /// button to finish. In sign-up it shows the step, a back button and the title 创建你的外卡运动员;
 /// from 我 it is a pushed page: the system's back (asking first once something changed), the
-/// member's 球衣号码 when the app passes one and undo and shuffle in the bar, and it saves.
+/// undo and shuffle in the bar, and it saves.
 public struct CharacterEditorView: View {
     @Bindable private var model: CharacterEditorModel
     private let context: EditorContext
     private let issued: Date?
     private let onBack: () -> Void
     private let onDone: (EditedCharacter) -> Void
-    private let jerseyNumber: JerseyNumberEntry?
     @FocusState private var isNaming: Bool
     @State private var isDiscarding = false
     @Environment(\.sceneTheme) private var theme
 
     public init(
         model: CharacterEditorModel, context: EditorContext, issued: Date?, onBack: @escaping () -> Void,
-        onDone: @escaping (EditedCharacter) -> Void, jerseyNumber: JerseyNumberEntry? = nil
+        onDone: @escaping (EditedCharacter) -> Void
     ) {
         self.model = model
         self.context = context
         self.issued = issued
         self.onBack = onBack
         self.onDone = onDone
-        self.jerseyNumber = jerseyNumber
     }
 
     public var body: some View {
@@ -83,7 +81,7 @@ public struct CharacterEditorView: View {
         }
         .toolbar {
             if context == .profile {
-                EditorBarItems(model: model, jerseyNumber: jerseyNumber) { isDiscarding = true }
+                EditorBarItems(model: model) { isDiscarding = true }
             }
         }
         // An alert, not a confirmation dialog: iOS 26 drops a dialog's cancel button.
@@ -108,19 +106,6 @@ public struct CharacterEditorView: View {
     private var showsTitle: Bool {
         guard case .signUp = context else { return false }
         return !isNaming
-    }
-}
-
-/// The member's 球衣号码 as the editor opened from 我 shows it, and what a tap on it opens: the
-/// number lives on the player card, whose page the app passes in.
-public struct JerseyNumberEntry {
-    /// The number as the card prints it ("07"), nil before the member picks one.
-    public let number: String?
-    public let open: () -> Void
-
-    public init(number: String?, open: @escaping () -> Void) {
-        self.number = number
-        self.open = open
     }
 }
 
@@ -150,12 +135,10 @@ private struct EditorHeader: View {
     }
 }
 
-/// From 我, in the pushed page's bar: the 球衣号码 in the middle, undo and shuffle on the trailing
-/// side. While the draft has changes the page hides the system's back (and its swipe), and this
+/// From 我, in the pushed page's bar: undo and shuffle on the trailing side. While the draft has changes the page hides the system's back (and its swipe), and this
 /// back in its place asks before they are lost (Tracy, 2026-11-11).
 private struct EditorBarItems: ToolbarContent {
     let model: CharacterEditorModel
-    let jerseyNumber: JerseyNumberEntry?
     let discard: () -> Void
 
     var body: some ToolbarContent {
@@ -169,15 +152,6 @@ private struct EditorBarItems: ToolbarContent {
                     }
                 }
                 .accessibilityIdentifier("editor.back")
-            }
-        }
-        if let jerseyNumber {
-            ToolbarItem(placement: .principal) {
-                Button(action: jerseyNumber.open) {
-                    Text(copy: "球衣号码 \(jerseyNumber.number ?? "--")", bundle: .module)
-                }
-                .buttonStyle(TextButtonStyle(.plain))
-                .accessibilityIdentifier("editor.jerseyNumber")
             }
         }
         ToolbarItemGroup(placement: .topBarTrailing) {

@@ -485,6 +485,53 @@ describe('the captain', () => {
     ]);
   });
 
+  it('disbands the squad for everyone at once, only for the captain, and says so to each', async () => {
+    const { squad, people } = await squadOf(3);
+    const [ann, bo, cy] = [nth(people, 0), nth(people, 1), nth(people, 2)];
+    await expect(squads.disband({ squad: squad.id, member: bo })).rejects.toMatchObject({
+      reason: 'NOT_SQUAD_CAPTAIN',
+    });
+    expect(await squads.disband({ squad: squad.id, member: ann })).toStrictEqual({
+      name: squad.name,
+      members: [ann, bo, cy],
+    });
+    expect(await squads.membersOf(squad.id)).toStrictEqual([]);
+    expect([...(await squads.endedAmong([squad.id])).keys()]).toStrictEqual([squad.id]);
+    const { rows } = await sql<{ member_id: string; kind: string; actor_id: string }>`
+      select member_id, kind, actor_id from public.squad_membership_events
+        where squad_id = ${squad.id} order by id
+    `.execute(db);
+    expect(rows.slice(3)).toStrictEqual([
+      { member_id: ann, kind: 'disbanded', actor_id: ann },
+      { member_id: bo, kind: 'disbanded', actor_id: ann },
+      { member_id: cy, kind: 'disbanded', actor_id: ann },
+    ]);
+    expect(await settingsLog(squad.id)).toContainEqual({
+      actor_id: ann,
+      kind: 'ended',
+      name: '早八跑团',
+      captain_id: null,
+    });
+    // The captain left it of their own accord; the others were taken out with it.
+    expect(await squads.lastExit(ann)).toStrictEqual({
+      squad: squad.id,
+      name: '早八跑团',
+      how: 'left',
+    });
+    expect(await squads.lastExit(bo)).toStrictEqual({
+      squad: squad.id,
+      name: '早八跑团',
+      how: 'disbanded',
+    });
+    await expect(squads.join({ inviteCode: squad.inviteCode, member: bo })).rejects.toMatchObject({
+      reason: 'INVITE_CODE_UNKNOWN',
+    });
+    // Nobody is in it any more, so nobody can disband it again.
+    await expect(squads.disband({ squad: squad.id, member: ann })).rejects.toMatchObject({
+      reason: 'SQUAD_NOT_JOINED',
+    });
+  });
+
   it('passes to the earliest member left when the captain leaves', async () => {
     const { squad, people } = await squadOf(3);
     const [ann, bo] = [nth(people, 0), nth(people, 1)];

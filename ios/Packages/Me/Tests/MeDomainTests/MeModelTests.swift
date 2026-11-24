@@ -42,11 +42,6 @@ actor FakeService: MeService {
         current.character = character
     }
 
-    func save(jerseyNumber: JerseyNumber) async throws(MeError) {
-        if let failing { throw failing }
-        current.jerseyNumber = jerseyNumber
-    }
-
     func save(birthday: Birthday?) async throws(MeError) {
         if let failing { throw failing }
         current.birthday = birthday
@@ -90,6 +85,16 @@ actor FakeService: MeService {
         if holdsDeletes { await withCheckedContinuation { heldDelete = $0 } }
         if let failing { throw failing }
         deletedWith = confirmation
+    }
+    var blockedList: [BlockedMember] = []
+    func setBlocked(_ list: [BlockedMember]) { blockedList = list }
+    func blocked() async throws(MeError) -> [BlockedMember] {
+        if let failing { throw failing }
+        return blockedList
+    }
+    func unblock(_ member: MemberID) async throws(MeError) {
+        if let failing { throw failing }
+        blockedList.removeAll { $0.id == member }
     }
 }
 
@@ -224,23 +229,6 @@ struct MeModelTests {
         let refused = MeCharacter(nickname: "x", outfit: PlaceholderCharacter.lifter, persona: .drama)
         await page.save(refused)
         #expect(page.overview?.character == edited)
-        #expect(page.saveFailed)
-    }
-
-    @Test func savesThePickedNumberAndKeepsTheOldOneWhenSavingFails() async throws {
-        let service = FakeService(sample)
-        let page = model(service)
-        await page.reload()
-        // Before a pick, the card wears the member's place in their squad.
-        #expect(page.overview?.cardNumber?.text == "02")
-
-        await page.save(jerseyNumber: try JerseyNumber(0))
-        #expect(page.overview?.cardNumber?.text == "00")
-        #expect(await service.current.jerseyNumber == (try JerseyNumber(0)))
-
-        await service.fail(with: .unavailable)
-        await page.save(jerseyNumber: try JerseyNumber(99))
-        #expect(page.overview?.cardNumber?.text == "00")
         #expect(page.saveFailed)
     }
 

@@ -4,7 +4,8 @@ import ScenePickDomain
 import SquadDomain
 import Testing
 
-/// The squad's settings the captain changes and everyone else reads: its weekly goal and language.
+/// The squad's settings the captain changes and everyone else reads: its weekly goal and language,
+/// and disbanding it.
 @MainActor struct SquadSettingsChangeTests {
     @Test func theCaptainSetsTheGoalForNextWeekAndAMateOnlyReadsIt() async throws {
         let captain = SquadSettingsModel(
@@ -64,5 +65,29 @@ import Testing
         await model.setLanguage(.simplifiedChinese)
         #expect(model.changeFailed)
         #expect(model.language?.language == .traditionalChinese)
+    }
+
+    @Test func onlyTheCaptainDisbandsAndTheAppLeavesAsAfterLeaving() async throws {
+        let mate = SquadSettingsModel(
+            service: try Squad3(viewer: coco, scene: try scene(pickers: .captain(lin), canPick: false)))
+        await mate.reload()
+        #expect(!mate.canDisband)
+        await mate.disband()
+        #expect(!mate.hasLeft)
+
+        let captain = SquadSettingsModel(
+            service: try Squad3(viewer: lin, scene: try scene(pickers: .captain(lin), canPick: true)))
+        await captain.reload()
+        #expect(captain.canDisband)
+        await captain.disband()
+        #expect(captain.hasLeft)
+    }
+}
+
+extension Squad3 {
+    func disband(_ squad: SquadID) async throws(SquadError) {
+        if let failing { throw failing }
+        let now = current.squad
+        current.squad = Squad(id: now.id, name: now.name, inviteCode: now.inviteCode, members: [], captain: nil)
     }
 }

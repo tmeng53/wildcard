@@ -6,7 +6,7 @@ import FeedDomain
 import SwiftUI
 
 /// Where a post's floating piece belongs: its button for the emoji bar, its row for who reacted.
-struct FeedAnchor {
+struct FeedAnchor: Equatable {
     let post: CheckInID
     let bounds: Anchor<CGRect>
 }
@@ -14,7 +14,9 @@ struct FeedAnchor {
 /// Where the feed's floating pieces go: the open emoji bar's button, the row whose who-reacted
 /// panel is open, and each author's character on screen, for emoji to fly to.
 struct FeedAnchors: PreferenceKey {
-    struct Value {
+    /// Equatable, so the layer over the feed is laid out again only when an anchor changed, not
+    /// on every frame a character on a card draws (#924).
+    struct Value: Equatable {
         var bar: FeedAnchor?
         var who: FeedAnchor?
         var heads: [CheckInID: Anchor<CGRect>] = [:]

@@ -9,18 +9,22 @@ import ScheduleDomain
 /// A member kept in memory, for previews, UI tests and builds before the API client is wired.
 public actor InMemoryMeService: MeService {
     private var current: MeOverview
+    private var blocks: [BlockedMember]
     private let failsSaving: Bool
 
-    /// `failsSaving` refuses every switch, so UI tests can see one flip back.
-    public init(overview: MeOverview, failsSaving: Bool = false) {
+    /// `failsSaving` refuses every switch, so UI tests can see one flip back; `blocked` is whom
+    /// 设置 › 已拉黑 starts with.
+    public init(overview: MeOverview, failsSaving: Bool = false, blocked: [BlockedMember] = []) {
         current = overview
+        blocks = blocked
         self.failsSaving = failsSaving
     }
 
     /// The member the screens are reviewed against: 小林 of 周三不练腿俱乐部, number 22 since 2026,
     /// 128 days trained, 3 of 5 this week and the approved board's seven titles, ten won in all.
     public static func sample(
-        failsSaving: Bool = false, unlocks: [Unlock] = [], stock: StreetStock? = nil, gifts: [String] = []
+        failsSaving: Bool = false, unlocks: [Unlock] = [], stock: StreetStock? = nil, gifts: [String] = [],
+        blocksCoco: Bool = false
     ) -> InMemoryMeService {
         InMemoryMeService(
             overview: MeOverview(
@@ -42,7 +46,15 @@ public actor InMemoryMeService: MeService {
                     trainedDays: [0, 2, 3], today: 3),
                 record: sampleRecord,
                 streaks: CardStreaks(training: 5, meals: 12)),
-            failsSaving: failsSaving)
+            failsSaving: failsSaving,
+            blocked: blocksCoco ? [sampleBlocked] : [])
+    }
+
+    /// Coco, blocked on 2026-11-04, for 设置 › 已拉黑.
+    static var sampleBlocked: BlockedMember {
+        BlockedMember(
+            id: sampleCoco.member, character: sampleCoco.character,
+            since: Date(timeIntervalSince1970: 1_793_793_600))
     }
 
     /// The sample's 训练记录: 21 weeks to Thursday 2026-11-05, a 练了 on about three days in five
@@ -71,13 +83,9 @@ public actor InMemoryMeService: MeService {
         return TrainingRecord(today: today, trainings: trainings)
     }
 
-    /// The sample's 外卡记录, the approved design's numbers: 27 days, mostly at 7pm and on
-    /// Tuesdays, a 6-day run, 32 days of 健康餐 to today, and Coco as the best partner.
-    static var sampleRecords: WildcardRecords {
-        func day(_ month: Int, _ day: Int) -> LocalDay {
-            (try? LocalDay(year: 2026, month: month, day: day)) ?? LocalDay(at: .now, in: .current)
-        }
-        let coco = RecordMate(
+    /// Coco, the sample's training partner.
+    static var sampleCoco: RecordMate {
+        RecordMate(
             member: MemberID(UUID(uuidString: "00000000-0000-0000-0000-00000000c0c0") ?? UUID()),
             character: MeCharacter(
                 nickname: "Coco",
@@ -85,6 +93,15 @@ public actor InMemoryMeService: MeService {
                     "body": "lop", "eyes": "happy", "mouth": "cat", "cheeks": "rosy", "hat": "warmup-headband",
                     "top": "warmup-hoodie", "bottom": "warmup-joggers", "shoes": "warmup-canvas",
                 ]), persona: .shy))
+    }
+
+    /// The sample's 外卡记录, the approved design's numbers: 27 days, mostly at 7pm and on
+    /// Tuesdays, a 6-day run, 32 days of 健康餐 to today, and Coco as the best partner.
+    static var sampleRecords: WildcardRecords {
+        func day(_ month: Int, _ day: Int) -> LocalDay {
+            (try? LocalDay(year: 2026, month: month, day: day)) ?? LocalDay(at: .now, in: .current)
+        }
+        let coco = sampleCoco
         var hours = Array(repeating: 0, count: 24)
         for (hour, count) in [6: 2, 7: 3, 8: 3, 9: 1, 12: 2, 13: 1, 17: 2, 18: 4, 19: 7, 20: 5, 21: 3, 22: 1] {
             hours[hour] = count
@@ -126,11 +143,6 @@ public actor InMemoryMeService: MeService {
         current.character = character
     }
 
-    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
-        if failsSaving { throw .unavailable }
-        current.jerseyNumber = jerseyNumber
-    }
-
     public func save(birthday: Birthday?) async throws(MeError) {
         if failsSaving { throw .unavailable }
         current.birthday = birthday
@@ -165,6 +177,13 @@ public actor InMemoryMeService: MeService {
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {
         if failsSaving { throw .unavailable }
     }
+
+    public func blocked() async throws(MeError) -> [BlockedMember] { blocks }
+
+    public func unblock(_ member: MemberID) async throws(MeError) {
+        if failsSaving { throw .unavailable }
+        blocks.removeAll { $0.id == member }
+    }
 }
 
 /// Squadmates' cards kept in memory, for the sample squad: every teammate shows the same sample
@@ -194,7 +213,7 @@ public struct InMemorySquadmateCards: SquadmateCards {
 
 extension MateSchedule {
     /// The approved card back's week (E1): 网球 and 跑步 trained, a 请假条 on Thursday, 力量训练
-    /// trained on Friday, 网球 still to come, and two 饮食小目标, in their third week (W3).
+    /// trained on Friday, 网球 still to come, in their third week (W3).
     static func sample(weekOf day: LocalDay) -> MateSchedule? {
         let tennis = PlanDay.train(.sport("tennis"))
         let run = PlanDay.train(.sport("run"))
@@ -206,7 +225,6 @@ extension MateSchedule {
                 .trained([.sport("tennis")]), .none, .trained([.sport("run")]), .disclaimer,
                 .trained([.sport("strength")]), .none, .none,
             ],
-            fuel: [.suggested(.veggies), .suggested(.lessBubbleTea)],
             firstWeek: day.weekStart.adding(days: -14), today: day)
     }
 }

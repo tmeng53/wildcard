@@ -3,7 +3,7 @@ import Contracts
 import Foundation
 import ScheduleDomain
 
-/// 出赛表 over our API: the member's weekly plans with their 饮食小目标 and their typical week
+/// 出赛表 over our API: the member's weekly plans and their typical week
 /// (我的每周计划), the days they checked in and the titles the weekly awards gave them.
 public struct APIScheduleBackend: ScheduleBackend {
     private let api: WildcardAPI
@@ -53,8 +53,7 @@ public struct APIScheduleBackend: ScheduleBackend {
             do {
                 return try WeekSheet(
                     weekStart: weekStart, plan: plan.days, marks: Self.marks(of: checkIns, weekStart: weekStart),
-                    titles: story.titles,
-                    fuel: try wire.fuelGoals.map(FuelGoal.init), scene: story.scene)
+                    titles: story.titles, scene: story.scene)
             } catch {
                 throw .unreadableResponse
             }
@@ -63,12 +62,6 @@ public struct APIScheduleBackend: ScheduleBackend {
 
     public func savePlan(_ days: [PlanDay], weekStart: LocalDay) async throws(ScheduleError) -> [PlanDay] {
         try await schedule { () throws(APIError) in try await api.save(days, weekStart: weekStart).days }
-    }
-
-    public func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        try await schedule { () throws(APIError) in
-            try await api.saveFuelGoalsWire(goals.map(\.wire), weekStart: weekStart)
-        }
     }
 
     public func template() async throws(ScheduleError) -> [PlanDay] {
@@ -180,39 +173,5 @@ extension ScheduleError {
             case .refused(.planDayStarted): .dayStarted
             case .refused, .unreadableResponse: .refused
             }
-    }
-}
-
-extension FuelGoal {
-    init(_ wire: Components.Schemas.FuelGoalsPayload) throws(ScheduleError) {
-        switch wire {
-        case .case1(let suggested):
-            guard let suggestion = FuelSuggestion(rawValue: suggested.suggestion.rawValue) else { throw .refused }
-            self = .suggested(suggestion)
-        case .case2(let own):
-            self = try .own(typed: own.text)
-        }
-    }
-
-    var wire: Components.Schemas.FuelGoalsPayload {
-        switch self {
-        case .suggested(let suggestion):
-            .case1(.init(kind: .suggested, suggestion: suggestion.wire))
-        case .own(let text):
-            .case2(.init(kind: .own, text: text))
-        }
-    }
-}
-
-extension FuelSuggestion {
-    var wire: Components.Schemas.FuelGoalsPayload.Case1Payload.SuggestionPayload {
-        switch self {
-        case .water: .water
-        case .cookAtHome: .cookAtHome
-        case .veggies: .veggies
-        case .lessBubbleTea: .lessBubbleTea
-        case .breakfast: .breakfast
-        case .earlyDinner: .earlyDinner
-        }
     }
 }

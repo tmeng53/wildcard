@@ -49,6 +49,10 @@ final class PlaceSearch {
     private var typed = ""
     /// Counts what was typed, so a search that answers after the member typed on is dropped.
     private var asked = 0
+    /// Whether Apple Maps is asked at all; off, the list holds only the squad's places and 新建, and
+    /// 搜索 finds one fixed place named what was typed, as the UI tests need, since what Maps
+    /// answers changes from run to run.
+    var asksAppleMaps = true
     private let completer = MKLocalSearchCompleter()
     @ObservationIgnored private var completions: [MKLocalSearchCompletion] = []
     @ObservationIgnored private var listener: CompleterListener?
@@ -67,6 +71,7 @@ final class PlaceSearch {
     }
 
     func lookAround() async {
+        guard asksAppleMaps else { return }
         let reader = CoreLocationReader(locale: { AppLanguage.current.locale })
         // The approximate place first, so suggestions lean near the phone while iOS asks for the
         // precise one.
@@ -96,6 +101,7 @@ final class PlaceSearch {
         isSuggesting = true
         completions = []
         suggestions = []
+        guard asksAppleMaps else { return }
         completer.queryFragment = typed
     }
 
@@ -110,6 +116,7 @@ final class PlaceSearch {
     /// Every place what is typed finds, as the keyboard's 搜索 asks.
     func placesForTyped() async -> [FoundPlace] {
         guard !typed.isEmpty else { return [] }
+        guard asksAppleMaps else { return showing(Self.fixed(named: typed)) }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = typed
         return await show(request)
@@ -121,11 +128,24 @@ final class PlaceSearch {
         asked += 1
         let asking = asked
         let results = await places(MKLocalSearch(request: request), byDistance: false)
-        // Dropped once the member typed on or asked again; nothing found, the suggestions stay.
-        guard asking == asked, !results.isEmpty else { return [] }
+        // Dropped once the member typed on or asked again.
+        guard asking == asked else { return [] }
+        return showing(results)
+    }
+
+    /// What a search found becomes the list; nothing found, the suggestions stay.
+    private func showing(_ results: [FoundPlace]) -> [FoundPlace] {
+        guard !results.isEmpty else { return [] }
         isSuggesting = false
         found = results
         return results
+    }
+
+    /// The one place 搜索 finds without Apple Maps: named what was typed, near the sample squad.
+    private static func fixed(named name: String) -> [FoundPlace] {
+        guard let place = try? Place(name: name, appleID: nil, category: nil, latitude: 40.7484, longitude: -73.9857)
+        else { return [] }
+        return [FoundPlace(place: place, address: nil, distance: nil)]
     }
 
     private var region: MKCoordinateRegion? {
@@ -143,8 +163,13 @@ final class PlaceSearch {
         guard isSuggesting else { return }
         completions = completer.results
         var seen = Set<Suggestion.ID>()
-        suggestions = completions.map(Self.suggestion).filter { seen.insert($0.id).inserted }
+        suggestions = Array(
+            completions.map(Self.suggestion).filter { seen.insert($0.id).inserted }.prefix(Self.shownSuggestions))
     }
+
+    /// How many of Apple Maps' suggestions the list shows while typing, so 新建 under them stays
+    /// above the keyboard on the smallest phone (Tracy, 2026-11-22).
+    private static let shownSuggestions = 3
 
     private static func suggestion(_ completion: MKLocalSearchCompletion) -> Suggestion {
         Suggestion(title: completion.title, subtitle: completion.subtitle.isEmpty ? nil : completion.subtitle)

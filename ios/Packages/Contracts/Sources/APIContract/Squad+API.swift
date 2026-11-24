@@ -15,7 +15,12 @@ extension Squad {
 
 extension SquadExit {
     public init(_ wire: Components.Schemas.SquadExit) throws(ContractsError) {
-        self.init(id: try SquadID(wire: wire.id), name: wire.name, wasRemoved: wire.how == .removed)
+        let how: How =
+            switch wire.how {
+            case .left: .left
+            case .removed: wire.disbanded ? .disbanded : .removed
+            }
+        self.init(id: try SquadID(wire: wire.id), name: wire.name, how: how)
     }
 }
 
@@ -71,7 +76,7 @@ extension SquadToday {
 extension SquadmateToday {
     init(_ wire: Components.Schemas.SquadToday.MembersPayloadPayload) throws(ContractsError) {
         self.init(
-            member: try MemberID(wire: wire.member), catchphrase: try wire.catchphrase.map(Catchphrase.init),
+            member: try MemberID(wire: wire.member),
             character: try wire.character.map(MemberCharacter.init),
             day: try LocalDay(wire.day),
             training: TrainingStatus(wire.training), latestMeal: wire.latestMeal.map(MealKind.init),

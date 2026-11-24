@@ -76,6 +76,7 @@ import {
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import { createPostgresSquadPlaceStore, createSquadPlaces } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
+import { createModeration, createPostgresModerationStore } from '@wildcard/moderation';
 import { NEW_YORK, UNSAVED_MEMBER_ZONE, wallClockAt } from '@wildcard/time-zones';
 import {
   createPostgresPlaceStore,
@@ -185,9 +186,9 @@ import { sportTools } from './admin-mcp/tools/sports.js';
 import { rewardTools } from './admin-mcp/tools/rewards.js';
 import { unlockTools } from './admin-mcp/tools/unlocks.js';
 import { broadcastTools } from './admin-mcp/tools/broadcasts.js';
-import { coachMessageTools } from './admin-mcp/tools/coach-messages.js';
 import { artTools } from './admin-mcp/tools/art.js';
 import { testPushTools } from './admin-mcp/tools/test-push.js';
+import { moderationTools } from './admin-mcp/tools/moderation.js';
 import { createSentryErrorReports } from './adapters/sentry.js';
 import { createGitHubIssueTracker } from './adapters/github-issues.js';
 import { createSupabaseArtStorage } from './adapters/supabase-art-storage.js';
@@ -532,6 +533,10 @@ const nudges = createNudges({
   clock: () => new Date(),
 });
 // The places each member saved (收藏).
+const moderation = createModeration({
+  store: createPostgresModerationStore(db),
+  clock: () => new Date(),
+});
 const savedPlaces = createSavedPlaces({
   store: createPostgresSavedPlaceStore(db),
   clock: () => new Date(),
@@ -649,7 +654,7 @@ const coachWakes =
         ended: endedSquads,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),
-        memberFacts: coachMemberFacts({ checkIns, plans: weeklyPlans, awards, sports }),
+        memberFacts: coachMemberFacts({ checkIns, awards, sports }),
         streaks: coachStreaks(checkIns),
         // Today's weather where each member is, on their own clock (Tracy, 2026-11-08).
         weatherOf: async ({ members: ids, day }) => {
@@ -806,6 +811,7 @@ const app = createApp({
   switches,
   nudges,
   savedPlaces,
+  moderation,
   squadPlaces,
   weather,
   feedback: feedbackInbox,
@@ -1004,7 +1010,6 @@ const app = createApp({
         unlocks: unlocksOn(scope),
         clock: () => new Date(),
       }),
-      ...coachMessageTools({ messages: coachMessagesOn(scope), clock: () => new Date() }),
       ...artTools({ art: artOn(scope) }),
       ...campaignTools({
         campaigns: createCampaigns({ store: createPostgresCampaignStore(scope) }),
@@ -1028,7 +1033,8 @@ const app = createApp({
         memory: createCoachMemory({ memory: createPostgresCoachStores(scope).memory }),
         clock: () => new Date(),
       }),
-      ...testPushTools({ push, squads, checkIns, members, clock: () => new Date() }),
+      ...testPushTools({ push, squads, checkIns, members, moderation, clock: () => new Date() }),
+      ...moderationTools({ checkIns }),
       // Only with OpenAI's key, as the coach itself.
       ...(coachWakes === undefined
         ? []

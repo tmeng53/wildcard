@@ -226,7 +226,7 @@ public struct PlayerCardFace: Hashable, Sendable {
 }
 
 /// A squadmate's 出赛表 for this week only, as the back of their card shows it: the plan's seven
-/// days, how each went, and the week's 饮食小目标.
+/// days and how each went.
 public struct MateSchedule: Hashable, Sendable {
     /// The week's Monday on the squad's clock, the same week for every squadmate.
     public let weekStart: LocalDay
@@ -234,19 +234,17 @@ public struct MateSchedule: Hashable, Sendable {
     public let days: [PlanDay]
     /// Seven, Monday first.
     public let marks: [DayMark]
-    /// Empty when they set none, and then the card says nothing about them.
-    public let fuel: [FuelGoal]
     /// The week the card counts as W1: their squad's first week.
     public let firstWeek: LocalDay
     /// Today on the squad's clock.
     public let today: LocalDay
 
     public init(
-        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], fuel: [FuelGoal], firstWeek: LocalDay,
+        weekStart: LocalDay, days: [PlanDay], marks: [DayMark], firstWeek: LocalDay,
         today: LocalDay
     ) throws(MeError) {
         guard days.count == WeeklyPlan.dayCount, marks.count == WeeklyPlan.dayCount else { throw .rejected }
-        (self.weekStart, self.days, self.marks, self.fuel) = (weekStart, days, marks, fuel)
+        (self.weekStart, self.days, self.marks) = (weekStart, days, marks)
         (self.firstWeek, self.today) = (firstWeek, today)
     }
 

@@ -21,8 +21,8 @@ import SquadUI
 import SwiftUI
 
 /// The app once the member is signed in and in a squad: the three tabs (小队, 动态, 我) in the
-/// system's Liquid Glass tab bar (`AppTabs`); the squad's settings open inside 小队 from the
-/// home's squad card.
+/// system's Liquid Glass tab bar (`AppTabs`), with 打卡's ＋ at its end on every tab
+/// (`MainTabs+CheckIn`); the squad's settings open inside 小队 from the home's squad card.
 /// Each tab screen keeps to the safe area, which the system raises above the bar, so none of
 /// them draws the bar itself. Each tab is a NavigationStack: every page that opens over a tab's
 /// screen is pushed on it, so going back (the back button, a swipe right) is the system's.
@@ -127,10 +127,23 @@ struct MainTabs: View {
     }
 
     var body: some View {
-        AppTabs(Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot) { tab in
+        // The squad's scene, set once here for everything the tabs show: each screen, the tab bar,
+        // the ＋'s kinds over it, the banners and popups. A view left to the environment's default
+        // wears the gym, never the squad's colour.
+        tabs.environment(\.sceneTheme, today.scene)
+    }
+
+    private var tabs: some View {
+        AppTabs(
+            Self.tabs, selection: $selection, showsBar: showsTabBar, dotted: dots, backToRoot: backToRoot,
+            action: checkInAction, barTapped: closeCheckInMenu
+        ) { tab in
             // Only the tab on screen has its screen, made anew on each visit, as every tab expects:
             // a hidden tab kept alive would hold a scroll or a picked day nobody sees.
-            if tab == selection { screen(tab) }
+            if tab == selection {
+                screen(tab)
+                    .modifier(CheckInMenuCover(today: today, selection: $selection, todayPages: $todayPages))
+            }
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: showsTabBar)
         // The compose page's place pill pushes the place's page, on 今天 and over a post being edited.
@@ -139,6 +152,9 @@ struct MainTabs: View {
         .environment(\.noticeVisits) { [inbox] visit in Task { await inbox.visited(visit) } }
         // The place picker lists the squad's own places and adds new ones.
         .environment(\.squadPlaces, squadPlaceBook)
+        // `-uitest-no-maps`: Apple Maps answers differently each run, so the place picker's UI tests
+        // run on fixed places instead.
+        .environment(\.asksAppleMaps, !ProcessInfo.processInfo.arguments.contains("-uitest-no-maps"))
         // A 练了 that opens a store or prop says so on 今天; a tap opens the editor there.
         .task {
             // 「还有新通知」 and a broadcast's button on 今天 open here too.
@@ -198,7 +214,6 @@ struct MainTabs: View {
                     }
                     TeammateCard(model: teammate)
                 }
-                .environment(\.sceneTheme, today.scene)
             }
         }
         // A celebration broadcast (「感恩节快到了」) over everything, told only while 今天 is in front.
@@ -296,7 +311,6 @@ struct MainTabs: View {
                 }
             }
         }
-        .environment(\.sceneTheme, today.scene)
         .onChange(of: feed.opened) { _, id in pushCardPost(id) }
         // 通知 popped, or 动态 left with it open: what is told from now on lights the bell again.
         .onChange(of: showsNotices) { _, shown in if !shown { inbox.close() } }
@@ -357,13 +371,11 @@ extension MainTabs {
                     .environment(\.sceneTheme, squad.scene)
                 case .coachDeck, .coachEarlier, .coachCard:
                     coachDeckPage(page)
-                        .environment(\.sceneTheme, today.scene)
                 case .place(let place):
                     placePage(place) { todayPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
                 case .post(let opened):
                     PostDetailView(model: opened.model, post: opened.id) { todayPages.removeLast() }
                         .readsNotices(about: .place(.post(opened.id)))
-                        .environment(\.sceneTheme, today.scene)
                 }
             }
         }

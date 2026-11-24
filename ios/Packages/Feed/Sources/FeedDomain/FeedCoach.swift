@@ -32,7 +32,8 @@ public final class FeedCoach {
     public static let askLimit = 100
 
     private let source: any CoachSource
-    private let squad: SquadID
+    /// The squad whose coach this is.
+    public let squad: SquadID
     private let now: @Sendable () -> Date
 
     public init(source: any CoachSource, squad: SquadID, now: @escaping @Sendable () -> Date) {
@@ -49,6 +50,10 @@ public final class FeedCoach {
 
     /// The coach's reply to a post, if it said or left anything.
     public func reply(to post: CheckInID) -> CoachReply? { replies[post] }
+
+    func forgetReply(on post: CheckInID) { replies[post] = nil }
+
+    func forgetAnswer(to comment: CommentID, on post: CheckInID) { answers[post]?.removeAll { $0.comment == comment } }
 
     /// The coach's answers to members' replies to it under a post, oldest first.
     public func answers(on post: CheckInID) -> [CoachAnswer] { answers[post] ?? [] }

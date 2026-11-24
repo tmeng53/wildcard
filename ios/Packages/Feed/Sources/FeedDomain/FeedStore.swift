@@ -29,7 +29,7 @@ public final class FeedStore {
 
     public private(set) var phase = Phase.loading
     /// The latest response that couldn't go out, until `dismissFailure()`.
-    public private(set) var failure: FeedError?
+    public internal(set) var failure: FeedError?
     /// Whether scrolling further back can still find posts.
     public private(set) var hasEarlier = true
     /// Whether the week before the earliest loaded is being read.
@@ -38,7 +38,7 @@ public final class FeedStore {
     public private(set) var characters: [MemberID: MemberCharacter] = [:]
 
     /// The posts as the server last sent them, with the responses the server took since.
-    private var loaded: [CheckInID: FeedPost] = [:]
+    var loaded: [CheckInID: FeedPost] = [:]
     /// The member's responses not yet taken by the server, latest wish per post.
     private var wishes: [CheckInID: Wish] = [:]
     private var sending: Set<CheckInID> = []
@@ -227,8 +227,11 @@ public final class FeedStore {
 
     /// Shows the member's change to one of their own posts at once: edited in place, or gone.
     public func apply(_ change: PostChange) {
-        for (id, post) in loaded { loaded[id] = post.applying(change) }
-        for (id, post) in ownNotYetListed { ownNotYetListed[id] = post.applying(change) }
+        // Only the post the change is about is written, so every other card the feed shows
+        // stays as it was instead of being handed a new value (#924).
+        let id = change.post
+        if let post = loaded[id] { loaded[id] = post.applying(change) }
+        if let post = ownNotYetListed[id] { ownNotYetListed[id] = post.applying(change) }
         if case .deleted(let id) = change {
             wishes[id] = nil
             pendingComments[id] = nil
@@ -305,7 +308,7 @@ public final class FeedStore {
 
     /// The server says the post is gone: it leaves, unless it is the member's own that the server
     /// hasn't saved yet.
-    private func forget(_ id: CheckInID) {
+    func forget(_ id: CheckInID) {
         loaded[id] = ownNotYetListed[id]
     }
 

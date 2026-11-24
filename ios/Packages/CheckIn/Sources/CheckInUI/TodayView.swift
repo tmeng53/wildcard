@@ -8,8 +8,8 @@ import SportsUI
 import SwiftUI
 
 /// The 小队 tab (`.today`): the whole squad on its scene with the week's card on top, me front and centre,
-/// and 打卡. Every check-in starts and ends here: the burst opens over the lightly blurred scene,
-/// and after posting you stay on the scene for the payoff (the approved home, version 15).
+/// and what became of my post. Every check-in ends here: 打卡's ＋ in the tab bar opens it from any
+/// tab, and after posting you stay on the scene for the payoff (the approved home, version 15).
 public struct TodayView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
@@ -24,8 +24,8 @@ public struct TodayView: View {
     /// The day picked on the card's second page; nil shows today. Leaving home forgets it: this
     /// view is made anew on coming back to the tab, and going to the background clears it.
     @State private var pickedDay: Int?
-    /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡 stands on:
-    /// measured while the bar shows and kept while it hides, so 打卡 stays put when the burst opens.
+    /// How far above the screen's bottom edge the app's tab bar reaches, which 打卡's spot stands on:
+    /// measured while the bar shows and kept while it hides.
     @State private var barRoom = Self.barRoomBeforeMeasured
     /// The day whose 今日赛况 was last opened on this phone (`LocalDay`'s description): its tag shows a dot until then.
     @AppStorage("today.recapSeen") private var recapSeen = ""
@@ -51,17 +51,10 @@ public struct TodayView: View {
 
     public var body: some View {
         let theme = model.scene
-        // The 请假条 composer and the compose page make room for the keyboard. The scene sits in
-        // the background, so it neither sizes this stack nor moves with the keyboard: as a layer
-        // of it, the scene, taller than what the keyboard leaves, would push the composer and the
-        // page up under the status bar.
+        // The compose page makes room for the keyboard. The scene sits in the background, so it
+        // neither sizes this stack nor moves with the keyboard: as a layer of it, the scene,
+        // taller than what the keyboard leaves, would push the page up under the status bar.
         ZStack {
-            if model.step == .disclaimer {
-                DisclaimerComposer(model: model)
-                    .accentTone(.brand)
-                    .transition(.opacity)
-            }
-
             if case .composing = model.step, let compose = model.compose {
                 ComposeView(model: compose)
                     .accentTone(.brand)
@@ -119,7 +112,7 @@ public struct TodayView: View {
         }
     }
 
-    /// The squad on its scene, the week's card, my payoff and the 打卡 burst.
+    /// The squad on its scene, the week's card, my payoff and 打卡's spot.
     private var scene: some View {
         ZStack {
             SquadSceneView(
@@ -127,14 +120,12 @@ public struct TodayView: View {
                 iSleep: model.myPose(at: .night) == .asleep, iHoldSign: model.myPose(at: .day) == .holdingSign,
                 myDoze: model.myDoze, phase: model.phase,
                 lightsOn: model.lightsOn, lightsPull: model.lightsPull, celebration: model.celebrations,
-                pats: model.pats, together: model.together, canPat: model.canPat, tapMate: model.tapMate,
-                tapMe: model.tapMe, patMate: model.patMate, arrival: model.arrival, tapCoach: model.tapCoach,
-                coachHasNews: model.coachHasNews, coachAt: { coachCenter = $0 },
-                tapVacancy: model.tapVacancy, clock: model.now
+                pats: model.pats, together: model.together, canPat: model.canPat,
+                tapMate: model.tapMate, doubleTapMate: model.doubleTapMate, tapMe: model.tapMe, patMate: model.patMate,
+                arrival: model.arrival, tapCoach: model.tapCoach, coachHasNews: model.coachHasNews,
+                coachAt: { coachCenter = $0 }, tapVacancy: model.tapVacancy, clock: model.now
             )
             .overlay { MyPayoff(model: model) }
-            .blur(radius: model.isSceneDimmed ? Scrim.blurRadius : 0)
-            .overlay(Color(Scrim.tint).opacity(model.isSceneDimmed ? Scrim.tintOpacity : 0))
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -146,13 +137,10 @@ public struct TodayView: View {
                             HealthHomeCard.Offer(model: model)
                         }
                         .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
+                        .overlay(alignment: .bottomTrailing) { GiftButton(model: model) }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
-                    .blur(radius: model.isBurstOpen ? Scrim.blurRadius : 0)
-                    // Out of the way while the 请假条 composer is up.
-                    .opacity(model.step == .disclaimer ? 0 : 1)
-                    .offset(y: model.step == .disclaimer ? -Space.s : 0)
                 }
                 Spacer()
             }
@@ -165,34 +153,19 @@ public struct TodayView: View {
                     canPat: model.canPat, pat: model.patMate)
             }
             .ignoresSafeArea()
-            .opacity(model.step == .disclaimer ? 0 : 1)
 
-            if model.isBurstOpen {
-                // A tap anywhere outside the capsules closes the burst.
+            VStack {
+                Spacer()
+                checkInSpot
+                    .padding(.bottom, Space.l)
+                    .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
+                // Room for the app's tab bar, which floats over this screen, measured from the
+                // screen's bottom edge.
                 Color.clear
-                    .contentShape(Rectangle())
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.wildcard(Motion.sheet, reduceMotion: reduceMotion)) { model.isBurstOpen = false }
-                    }
+                    .frame(height: barRoom)
                     .accessibilityHidden(true)
             }
-
-            if model.step != .disclaimer {
-                VStack {
-                    Spacer()
-                    checkInSpot
-                        .padding(.bottom, Space.l)
-                        .modifier(Arriving(arrival: model.arrival) { $0.buttonOffset(at: $1) })
-                    // Room for the app's tab bar, which floats over this screen, measured from the
-                    // screen's bottom edge.
-                    Color.clear
-                        .frame(height: barRoom)
-                        .accessibilityHidden(true)
-                }
-                .ignoresSafeArea(edges: .bottom)
-                .transition(.opacity)
-            }
+            .ignoresSafeArea(edges: .bottom)
         }
         .overlay { letter }
     }
@@ -301,7 +274,7 @@ public struct TodayView: View {
     private static let barRoomBeforeMeasured: Double = 88
 
     /// The pull cord under the card at night (the approved 开灯), 40 points from the right edge,
-    /// `short` under the folded capsule; it fades out while the 打卡 burst is open.
+    /// `short` under the folded capsule; it fades out while the check-in menu is open.
     @ViewBuilder
     private func lightCord(short: Bool) -> some View {
         if model.phase == .night {
@@ -316,16 +289,16 @@ public struct TodayView: View {
             // Hangs from the card's bottom edge: the overlay puts its bottom there, so it moves
             // down by its own height (an offset moves its taps and VoiceOver frame with it).
             .offset(y: PullCord.frameSize(chain: chain).height)
-            .opacity(model.isBurstOpen ? 0 : 1)
-            .allowsHitTesting(!model.isBurstOpen)
-            .accessibilityHidden(model.isBurstOpen)
-            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isBurstOpen)
+            .opacity(model.isCheckInMenuOpen ? 0 : 1)
+            .allowsHitTesting(!model.isCheckInMenuOpen)
+            .accessibilityHidden(model.isCheckInMenuOpen)
+            .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isCheckInMenuOpen)
             .transition(.opacity)
         }
     }
 
     /// From the screen's right edge to the cord's frame: its centre sits 40 points in.
-    private static let cordInset = 40 - PullCord.size.width / 2
+    static let cordInset = 40 - PullCord.size.width / 2
 
     /// A teammate's head in the squad card's ring.
     @ViewBuilder
@@ -352,26 +325,9 @@ private struct Arriving: ViewModifier {
 }
 
 extension TodayView {
-    /// 打卡 and its burst, or, while my post goes out behind the scene, what became of it.
+    /// For a moment, what became of my post or my pat.
     fileprivate var checkInSpot: some View {
-        Group {
-            if let outgoing = model.outgoing {
-                OutgoingPill(
-                    outgoing: outgoing, progress: model.outgoingProgress, open: { openPost($0) },
-                    dismiss: { model.dismissOutgoing() }
-                )
-                .frame(height: Sizing.primaryControl)
-                .transition(.blurReplace)
-            } else {
-                CheckInBurst(
-                    isOpen: $model.isBurstOpen, unavailable: model.unavailable, identifierPrefix: "today"
-                ) { kind in
-                    model.pick(kind)
-                }
-                .transition(.blurReplace)
-            }
-        }
-        .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.outgoing == nil)
+        CheckInSpot(model: model) { openPost($0) }
     }
 }
 

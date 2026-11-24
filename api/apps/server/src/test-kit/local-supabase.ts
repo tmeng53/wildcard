@@ -19,6 +19,7 @@ import {
 import { createNudges, createPostgresNudgeStore } from '@wildcard/nudges';
 import { createPostgresSquadPlaceStore, createSquadPlaces } from '@wildcard/places';
 import { createPostgresSavedPlaceStore, createSavedPlaces } from '@wildcard/saved-places';
+import { createModeration, createPostgresModerationStore } from '@wildcard/moderation';
 import {
   createOffSender,
   createPostgresDailyPushSettings,
@@ -167,6 +168,11 @@ export function placesOn(db: Database) {
 /** Saved places on local Supabase. */
 export function savedPlacesOn(db: Database) {
   return createSavedPlaces({ store: createPostgresSavedPlaceStore(db), clock: () => new Date() });
+}
+
+/** Blocks and reports on local Supabase. */
+export function moderationOn(db: Database) {
+  return createModeration({ store: createPostgresModerationStore(db), clock: () => new Date() });
 }
 
 /** Nudges on local Supabase, between squadmates as the squads module keeps them. */

@@ -32,6 +32,16 @@ extension InMemoryCheckInBackend {
             text: String(copyKey: "昨天三个人上场，我光在场边记笔记就累了。今天随缘，来了就算。", bundle: words))
     }
 
+    /// 毛头's boxed gift, the one the sample coach page has.
+    static func sampleGift(now: Date) -> CoachPageCard {
+        let words = Bundle.module.inAppLanguage
+        return CoachPageCard(
+            kind: .gift, id: "gift-sheeptowel",
+            coach: CoachSpeaker(id: "xiaohun", name: String(copyKey: "毛头", bundle: words)),
+            look: "xiaohun", time: now.addingTimeInterval(-3600),
+            gift: CoachPageCard.Gift(piece: "gift-sheeptowel", line: nil))
+    }
+
     /// 帕帕, the coach a squad changes to in the samples.
     static var papa: CoachSpeaker {
         CoachSpeaker(

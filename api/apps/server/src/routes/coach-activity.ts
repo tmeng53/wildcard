@@ -1,4 +1,5 @@
 import { TimeZone } from '@wildcard/time-zones';
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import {
   CHALLENGE_AMOUNT_MAX,
@@ -21,6 +22,7 @@ import { MemberId, SquadId, type Squads } from '@wildcard/squads';
 
 import { bodyVersion } from '../body-version.js';
 import type { CoachNames } from '../flows/coach-names.js';
+import { visibleCoachLines } from '../flows/hidden-content.js';
 import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
@@ -351,6 +353,8 @@ export function coachActivity(deps: {
   readonly coachNames: CoachNames;
   /** The caller's own time zone, the clock their challenge's day is on. */
   readonly members: Pick<Members, 'findProfile'>;
+  /** Coach lines the reader reported stay hidden from them. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
 }) {
   const read = createRoute({
     method: 'get',
@@ -584,17 +588,16 @@ export function coachActivity(deps: {
       // Throws `SquadNotJoinedError` for anyone not in the squad.
       await deps.squads.find({ squad: squadId, viewer: MemberId.parse(c.var.caller.userId) });
       const zone = (await deps.squads.timeZonesAt([squadId], new Date()))(squadId);
-      const {
-        note,
-        replies,
-        answers,
-        memberNote: written,
-        letter,
-      } = await deps.coachActivity.squad({
-        squad: CoachSquadId.parse(squadId),
-        checkIns: c.req.valid('query').checkIns,
-        reader: c.var.caller.userId,
-      });
+      const [activity, hidden] = await Promise.all([
+        deps.coachActivity.squad({
+          squad: CoachSquadId.parse(squadId),
+          checkIns: c.req.valid('query').checkIns,
+          reader: c.var.caller.userId,
+        }),
+        deps.moderation.hiddenFor(ModerationMember.parse(c.var.caller.userId)),
+      ]);
+      const { note, memberNote: written, letter } = activity;
+      const { replies, answers } = visibleCoachLines(hidden, activity);
       // A switch that can't be read counts as off, so the rest of the activity still shows.
       const memberNote =
         written !== undefined &&

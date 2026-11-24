@@ -17,6 +17,7 @@ extension MealScoreCell.Label {
 struct CalorieValueInfo<Face: View>: View {
     @ViewBuilder let face: Face
     @State private var showsInfo = false
+    @Environment(\.sceneTheme) private var theme
 
     var body: some View {
         Button {
@@ -28,6 +29,8 @@ struct CalorieValueInfo<Face: View>: View {
         .popover(isPresented: $showsInfo) {
             Text(copy: "卡路里性价比", bundle: .module)
                 .typeStyle(TypeRamp.footnote)
+                // Its own colour: the popover would take the strip's white and vanish on glass.
+                .foregroundStyle(Color(role: .fgDefault, in: theme))
                 .padding(.horizontal, Space.m)
                 .padding(.vertical, Space.s)
                 .presentationCompactAdaptation(.popover)

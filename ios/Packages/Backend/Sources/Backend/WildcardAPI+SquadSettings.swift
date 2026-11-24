@@ -41,6 +41,13 @@ extension WildcardAPI {
         }
     }
 
+    /// Disbands the squad (解散小队), for its captain: everyone is out of it at once and it ends.
+    public func disband(_ squad: SquadID) async throws(APIError) {
+        _ = try await call {
+            try await client.disbandSquad(path: .init(squadId: squad.description)).noContent
+        }
+    }
+
     /// The squad's scene this week and who picks it.
     public func scene(of squad: SquadID) async throws(APIError) -> SquadScene {
         let wire = try await call {

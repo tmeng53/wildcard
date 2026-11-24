@@ -3,6 +3,7 @@ import {
   LocalDay,
   MemberId,
   Place,
+  StartTime,
   SportKey,
   SquadId,
   photosOf,
@@ -16,6 +17,7 @@ import {
   type SquadPlace,
   type SquadPlaces,
 } from '@wildcard/places';
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 
 import { bodyVersion } from '../body-version.js';
 import {
@@ -104,6 +106,11 @@ const Visit = z
         'The post’s first photo, for its tile; missing when it has none (or its file is gone).',
     }),
     minutes: z.int().min(1).optional().meta({ description: 'A 训练’s minutes, when it has them.' }),
+    startTime: StartTime.optional().meta({
+      description:
+        'The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the ' +
+        'map shows in place of `createdAt`.',
+    }),
     stars: Stars.nullable().meta({
       description: 'No longer given: always null (places have no score, Tracy 2026-11-13).',
     }),
@@ -236,6 +243,9 @@ function visitOf(record: CheckInRecord, at: VisitContext): z.infer<typeof Visit>
           ? {}
           : { customSport: record.training.customSport }),
         ...(record.training.minutes === undefined ? {} : { minutes: record.training.minutes }),
+        ...(record.training.startTime === undefined
+          ? {}
+          : { startTime: record.training.startTime }),
         stars: null,
         calorieValue: null,
       };
@@ -301,9 +311,22 @@ export function places(deps: {
   readonly photos: PhotoStorage;
   readonly log: Log;
   readonly squadPlaces: SquadPlaces;
+  /** Posts of members blocked either way, and posts the viewer reported, are left out. */
+  readonly moderation: Pick<Moderation, 'hiddenFor'>;
   readonly clock?: () => Date;
 }) {
   const clock = deps.clock ?? (() => new Date());
+
+  /** The squad's tagged posts the viewer still sees. */
+  async function visiblePlaced(squad: SquadId, viewer: MemberId) {
+    const [posts, hidden] = await Promise.all([
+      deps.checkIns.placedPosts({ squad, viewer }),
+      deps.moderation.hiddenFor(ModerationMember.parse(viewer)),
+    ]);
+    return posts.filter(
+      (post) => !hidden.members.has(post.member) && !hidden.checkIns.has(post.id),
+    );
+  }
 
   const list = createRoute({
     method: 'get',
@@ -424,7 +447,7 @@ export function places(deps: {
     .openapi(list, async (c) => {
       const { squadId } = c.req.valid('param');
       const viewer = MemberId.parse(c.var.caller.userId);
-      const posts = await deps.checkIns.placedPosts({ squad: squadId, viewer });
+      const posts = await visiblePlaced(squadId, viewer);
       const grouped = byPlace(posts);
       const summaries = [...grouped].map(([key, each]) => summaryOf({ key, posts: each }));
       summaries.sort((a, b) => b.visits - a.visits || b.lastAt.getTime() - a.lastAt.getTime());
@@ -441,7 +464,7 @@ export function places(deps: {
     .openapi(read, async (c) => {
       const { squadId, key } = c.req.valid('param');
       const viewer = MemberId.parse(c.var.caller.userId);
-      const posts = byPlace(await deps.checkIns.placedPosts({ squad: squadId, viewer })).get(key);
+      const posts = byPlace(await visiblePlaced(squadId, viewer)).get(key);
       if (posts === undefined) throw new PlaceNotFoundError(key);
       const urls = await viewUrls(deps, posts);
       return c.json(wireDetail(detailOf({ key, posts }), { urls }), 200);

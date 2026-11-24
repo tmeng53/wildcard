@@ -35,9 +35,6 @@ public struct SquadToday: Hashable, Sendable {
 /// One member's today in a squad.
 public struct SquadmateToday: Hashable, Sendable {
     public let member: MemberID
-    /// What their character shouts when the squad cheers a teammate's 练了; nil for their
-    /// persona's own line.
-    public let catchphrase: Catchphrase?
     /// Their nickname and character's look; nil until they make it in sign-up.
     public var character: MemberCharacter?
     /// Their own today, in their time zone.
@@ -52,13 +49,12 @@ public struct SquadmateToday: Hashable, Sendable {
     public let title: WornTitle?
 
     public init(
-        member: MemberID, catchphrase: Catchphrase?, character: MemberCharacter?, day: LocalDay,
+        member: MemberID, character: MemberCharacter?, day: LocalDay,
         training: TrainingStatus,
         latestMeal: MealKind?,
         plannedRest: Bool, firstCheckInAt: Timestamp?, title: WornTitle? = nil
     ) {
         self.member = member
-        self.catchphrase = catchphrase
         self.character = character
         self.day = day
         self.training = training

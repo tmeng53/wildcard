@@ -1208,7 +1208,6 @@ describe('the coach', () => {
             disclaimers: 0,
             titles: 0,
             plan: [],
-            fuelGoals: [],
           })),
         );
       const coach = wakes(fixture, { agent, welcomed, memberFacts, at: now });
@@ -1883,7 +1882,6 @@ describe('the coach', () => {
             disclaimers: 0,
             titles: 0,
             plan: Array.from({ length: 7 }, () => ({ kind: 'rest' as const })),
-            fuelGoals: [],
           })),
         );
       };
@@ -2033,7 +2031,7 @@ describe('the coach', () => {
     });
   });
 
-  it('gives the daily wake each member’s day: today’s plan, 饮食小目标 and yesterday’s posts', async () => {
+  it('gives the daily wake each member’s day: today’s plan and yesterday’s posts', async () => {
     await rolledBack(async (fixture) => {
       const { squad, mia, leo } = fixture;
       const asked: unknown[] = [];
@@ -2050,7 +2048,6 @@ describe('the coach', () => {
             titles: 0,
             // Sunday, the wake's day, is the last.
             plan: [rest, rest, rest, rest, rest, rest, { kind: 'train', sport: '游泳' }],
-            fuelGoals: ['喝够水'],
           },
         ]);
       };
@@ -2085,7 +2082,7 @@ describe('the coach', () => {
       });
       expect(daily?.task).toContain('# 早上\n今天是 2026-11-01，周日。');
       expect(daily?.task).toContain(
-        '## 米亚（aaaa1111）\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳\n- 这周饮食小目标：喝够水\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 11-01 周日 跑步\n',
+        '## 米亚（aaaa1111）\n- 今天的计划：游泳\n- 这周出赛表：周一休息，周二休息，周三休息，周四休息，周五休息，周六休息，周日游泳\n- 这周练了：1 天\n- 最近发的：\n  - 动态1 · 11-01 周日 跑步\n',
       );
       // A member whose plan it couldn't read still gets a note; yesterday's posts are under
       // whoever made them, by number, without reactions.

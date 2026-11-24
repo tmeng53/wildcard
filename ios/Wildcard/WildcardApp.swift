@@ -71,7 +71,7 @@ struct WildcardApp: App {
     @State private var editor: CharacterEditorModel?
     @State private var signUp: SignUpModel?
     /// The squad the sample member was removed from, with `-onboarding-rejoin`.
-    @State private var removedFrom: String?
+    @State private var removedFrom: SquadExit?
     /// Whether `-onboarding`'s sign-up has handed over to the tabs: after it ends, and for whoever
     /// made their squad only once the squad is dropping onto the scene they picked, so the
     /// tabs never show the squad's old scene first.
@@ -96,13 +96,13 @@ struct WildcardApp: App {
             now: LaunchOptions.now(), size: LaunchOptions.squadSize, member: member, squad: squad,
             patted: LaunchOptions.pattedMe, coach: LaunchOptions.sidelineCoach,
             coachNote: LaunchOptions.coachNote, coachLetter: LaunchOptions.coachLetter,
-            together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge)
+            together: LaunchOptions.together, meals: LaunchOptions.meals, challenge: LaunchOptions.challenge,
+            gift: LaunchOptions.coachGift)
         let today = TodayModel(
             store: TodayStore(
                 backend: backend,
                 outbox: InMemoryOutbox(), unlocks: SampleUnlockLedger(unlocks: LaunchOptions.unlocked),
                 now: LaunchOptions.now, newID: { UUID() }),
-            writer: LaunchOptions.disclaimerWriter,
             photoSource: LaunchOptions.photoSource,
             scene: LaunchOptions.scene,
             health: Self.sampleHealth(),
@@ -113,13 +113,14 @@ struct WildcardApp: App {
             posted: Self.askForNotifications)
         _today = State(initialValue: today)
         _squadPlaces = State(initialValue: Self.sampleSquadPlaces(backend: backend, member: member))
-        _profile = State(initialValue: Self.sampleProfile())
+        let profile = Self.sampleProfile()
+        _profile = State(initialValue: profile)
         _squad = State(
             initialValue: SquadSettingsModel(
                 service: InMemorySquadSettingsService.sample(
                     seat: LaunchOptions.squadSeat, longNames: LaunchOptions.longNames)))
         _schedule = State(initialValue: Self.sampleSchedule())
-        _recap = State(initialValue: Self.sampleRecap(today: today))
+        _recap = State(initialValue: Self.sampleRecap(today: today, profile: profile))
         #if DEBUG
         let usesApple = LaunchOptions.testMember == nil
         #else
@@ -140,6 +141,9 @@ struct WildcardApp: App {
     /// What every launch does first, before any model or screen is made.
     private static func startUp() {
         CrashReports.start()
+        #if DEBUG
+        StallLog.start()
+        #endif
         // The 6pm push's view speaks the app's language, picked in the app or iOS Settings.
         AppLanguage.current.share(in: AppGroup.defaults, folder: AppGroup.directory)
         // The lines put over the app's own words, as the last launch kept them (`AppModel` keeps
@@ -184,7 +188,7 @@ struct WildcardApp: App {
     private static func sampleProfile() -> MeModel {
         let service = InMemoryMeService.sample(
             failsSaving: LaunchOptions.meFailsSaving, unlocks: LaunchOptions.profileUnlocks, stock: LaunchOptions.stock,
-            gifts: LaunchOptions.teamGifts)
+            gifts: LaunchOptions.teamGifts, blocksCoco: LaunchOptions.blocksCoco)
         // What the server would work out while the app was away, for the test that 商店街 reads it again.
         if let later = LaunchOptions.stockOnReturn {
             _ = NotificationCenter.default.addObserver(
@@ -192,19 +196,6 @@ struct WildcardApp: App {
             ) { _ in Task { await service.set(stock: later) } }
         }
         return MeModel(service: service, confirm: { .signedInSession }, signOut: {})
-    }
-
-    /// The sample squad's story, as the in-memory squad has no awards of its own; a scene picked on
-    /// its last page puts 今天 there.
-    private static func sampleRecap(today: TodayModel) -> RecapShelf {
-        RecapShelf(
-            service: RecapSample.Service(),
-            squad: { RecapSample.squad(today: LocalDay(at: LaunchOptions.now(), in: .current)) },
-            seen: .onlyThisLaunch(),
-            scenePicker: { _ in
-                LaunchOptions.recapPicker ? RecapSample.scenePicker(winter: LaunchOptions.recapWinter) : nil
-            },
-            scenePicked: { scene in today.scene = scene })
     }
 
     /// The sample squad's week, no posts at all (`-uitest-empty-feed`) or none that can be read
@@ -297,7 +288,7 @@ struct WildcardApp: App {
             .task {
                 // Once: a language switch makes the view again, and its task with it.
                 guard LaunchOptions.rejoins, !signUp.isRejoining, await signUp.rejoin() else { return }
-                removedFrom = InMemorySignUpService.formerSquadName
+                removedFrom = SquadExit(id: SquadID(UUID()), name: InMemorySignUpService.formerSquadName, how: .removed)
             }
             .onChange(of: signUp.finished) { _, finished in
                 guard finished != nil else { return }

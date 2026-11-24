@@ -120,6 +120,11 @@ export const NoticeSubjects = {
     request: z.uuid(),
     approved: z.boolean(),
   }),
+  /**
+   * The captain disbanded the squad the member was in (解散小队): its name then. Told in 通知
+   * only, never pushed.
+   */
+  squadDisbanded: z.strictObject({ version: z.literal(1), name: z.string().min(1) }),
   /** A broadcast every member is told (`broadcast.ts`); its words are read when shown. */
   broadcast: z.strictObject({ version: z.literal(1), broadcast: BroadcastId }),
   /** A store opened or a prop unlocked for the member, by training or as a gift. */
@@ -155,6 +160,7 @@ const KindAndSubject = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('thanks'), subject: NoticeSubjects.thanks }),
   z.object({ kind: z.literal('joinRequest'), subject: NoticeSubjects.joinRequest }),
   z.object({ kind: z.literal('joinAnswered'), subject: NoticeSubjects.joinAnswered }),
+  z.object({ kind: z.literal('squadDisbanded'), subject: NoticeSubjects.squadDisbanded }),
 ]);
 type KindAndSubject = z.infer<typeof KindAndSubject>;
 

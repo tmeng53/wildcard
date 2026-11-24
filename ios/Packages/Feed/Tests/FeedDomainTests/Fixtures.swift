@@ -64,6 +64,8 @@ actor FakeSource: FeedSource {
         case post(CheckInID)
         case comment(CommentID, String, ReplyTarget?, CheckInID)
         case deleteComment(CommentID, CheckInID)
+        case report(ReportTarget)
+        case block(MemberID)
     }
 
     private(set) var calls: [Call] = []
@@ -143,6 +145,18 @@ actor FakeSource: FeedSource {
 
     func deleteComment(_ id: CommentID, on checkIn: CheckInID) async throws(FeedError) {
         calls.append(.deleteComment(id, checkIn))
+        await wait()
+        if let failure { throw failure }
+    }
+
+    func report(_ target: ReportTarget) async throws(FeedError) {
+        calls.append(.report(target))
+        await wait()
+        if let failure { throw failure }
+    }
+
+    func block(_ member: MemberID) async throws(FeedError) {
+        calls.append(.block(member))
         await wait()
         if let failure { throw failure }
     }

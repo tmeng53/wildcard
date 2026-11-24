@@ -30,7 +30,7 @@ struct PosterColors: Equatable {
 /// The week as the 出赛表's 3:4 poster (`WeekPoster`) in the scene's color: who and which dates,
 /// the week's number, a swim lane a day, the member's character in the corner doing the scene's
 /// sport, the titles the weekly awards gave them as stickers (their 颁奖词 sit under the poster),
-/// and the week's 饮食小目标 and count along the bottom. Drawn at 360 × 480 points and scaled to
+/// and the week's count along the bottom. Drawn at 360 × 480 points and scaled to
 /// fit, so the saved picture and the screen are the same drawing.
 struct SchedulePoster: View {
     /// The poster's own size, in points; 3:4.
@@ -42,7 +42,6 @@ struct SchedulePoster: View {
     /// Saving: the one pose the character holds, since a picture can't move.
     var still: (drawing: FigureDrawing, placements: [Placement])?
     var onTapLane: (Int) -> Void = { _ in }
-    var onTapFuel: () -> Void = {}
 
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -78,7 +77,7 @@ struct SchedulePoster: View {
         } overlay: {
             stickers
         } strip: {
-            PosterBottomBar(content: content, theme: theme, colors: colors, onTapFuel: onTapFuel)
+            PosterBottomBar(content: content, theme: theme, colors: colors)
         }
         .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: content)
     }

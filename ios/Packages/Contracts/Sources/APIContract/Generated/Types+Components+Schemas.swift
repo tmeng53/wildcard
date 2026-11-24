@@ -65,7 +65,7 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/id`.
             public var id: Swift.Int
-            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
+            /// What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know.
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/kind`.
             public var kind: Swift.String
@@ -210,6 +210,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/approved`.
             public var approved: Swift.Bool?
+            /// The squad’s name when it was disbanded (`squadDisbanded`).
+            ///
+            /// - Remark: Generated from `#/components/schemas/NoticeEntry/squadName`.
+            public var squadName: Swift.String?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/title`.
             public var title: Components.Schemas.LocalizedWords?
             /// - Remark: Generated from `#/components/schemas/NoticeEntry/body`.
@@ -412,7 +416,7 @@ extension Components {
             ///
             /// - Parameters:
             ///   - id: The order notices were told in: a later one is larger.
-            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know.
+            ///   - kind: What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know.
             ///   - at: When it was told, in UTC.
             ///   - opened: True once the caller opened what it is about somewhere else (`PUT /me/notices/opened`): it is read, even when newer than `seenThrough`. Left out otherwise.
             ///   - squadId: The squad it is about, if any.
@@ -441,6 +445,7 @@ extension Components {
             ///   - adopted: What we used it as (`thanks`): `bug` (a bug we confirmed) or `idea` (an idea that shipped). Skip another.
             ///   - joinRequest: The request to join (`joinRequest`, `joinAnswered`); the captain answers it on 小队设置.
             ///   - approved: Whether the captain let the caller in (`joinAnswered`).
+            ///   - squadName: The squad’s name when it was disbanded (`squadDisbanded`).
             ///   - title:
             ///   - body:
             ///   - action: A button that opens a place in the app (`broadcast`), if any: its `label`.
@@ -479,6 +484,7 @@ extension Components {
                 adopted: Swift.String? = nil,
                 joinRequest: Swift.String? = nil,
                 approved: Swift.Bool? = nil,
+                squadName: Swift.String? = nil,
                 title: Components.Schemas.LocalizedWords? = nil,
                 body: Components.Schemas.LocalizedWords? = nil,
                 action: Components.Schemas.NoticeEntry.ActionPayload? = nil,
@@ -517,6 +523,7 @@ extension Components {
                 self.adopted = adopted
                 self.joinRequest = joinRequest
                 self.approved = approved
+                self.squadName = squadName
                 self.title = title
                 self.body = body
                 self.action = action
@@ -556,6 +563,7 @@ extension Components {
                 case adopted
                 case joinRequest
                 case approved
+                case squadName
                 case title
                 case body
                 case action
@@ -6140,36 +6148,44 @@ extension Components {
             public var id: Swift.String
             /// - Remark: Generated from `#/components/schemas/SquadExit/name`.
             public var name: Swift.String
-            /// `left`: the member left it; `removed`: its captain took them out.
+            /// `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
             @frozen public enum HowPayload: String, Codable, Hashable, Sendable, CaseIterable {
                 case left = "left"
                 case removed = "removed"
             }
-            /// `left`: the member left it; `removed`: its captain took them out.
+            /// `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
             ///
             /// - Remark: Generated from `#/components/schemas/SquadExit/how`.
             public var how: Components.Schemas.SquadExit.HowPayload
+            /// Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/SquadExit/disbanded`.
+            public var disbanded: Swift.Bool
             /// Creates a new `SquadExit`.
             ///
             /// - Parameters:
             ///   - id:
             ///   - name:
-            ///   - how: `left`: the member left it; `removed`: its captain took them out.
+            ///   - how: `left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it.
+            ///   - disbanded: Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`.
             public init(
                 id: Swift.String,
                 name: Swift.String,
-                how: Components.Schemas.SquadExit.HowPayload
+                how: Components.Schemas.SquadExit.HowPayload,
+                disbanded: Swift.Bool
             ) {
                 self.id = id
                 self.name = name
                 self.how = how
+                self.disbanded = disbanded
             }
             public enum CodingKeys: String, CodingKey {
                 case id
                 case name
                 case how
+                case disbanded
             }
         }
         /// - Remark: Generated from `#/components/schemas/NewSquad`.
@@ -10206,6 +10222,10 @@ extension Components {
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/minutes`.
             public var minutes: Swift.Int?
+            /// The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the map shows in place of `createdAt`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/PlaceVisit/startTime`.
+            public var startTime: Swift.String?
             /// No longer given: always null (places have no score, Tracy 2026-11-13).
             ///
             /// - Remark: Generated from `#/components/schemas/PlaceVisit/stars`.
@@ -10227,6 +10247,7 @@ extension Components {
             ///   - key: Which place: `apple:` and Apple Maps' identifier, as the post's place carries it.
             ///   - cover:
             ///   - minutes: A 训练’s minutes, when it has them.
+            ///   - startTime: The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the map shows in place of `createdAt`.
             ///   - stars: No longer given: always null (places have no score, Tracy 2026-11-13).
             ///   - calorieValue: No longer given: always null (a place’s tiles show no score).
             public init(
@@ -10240,6 +10261,7 @@ extension Components {
                 key: Swift.String,
                 cover: Components.Schemas.PlaceVisit.CoverPayload? = nil,
                 minutes: Swift.Int? = nil,
+                startTime: Swift.String? = nil,
                 stars: Swift.Int? = nil,
                 calorieValue: Swift.Double? = nil
             ) {
@@ -10253,6 +10275,7 @@ extension Components {
                 self.key = key
                 self.cover = cover
                 self.minutes = minutes
+                self.startTime = startTime
                 self.stars = stars
                 self.calorieValue = calorieValue
             }
@@ -10267,6 +10290,7 @@ extension Components {
                 case key
                 case cover
                 case minutes
+                case startTime
                 case stars
                 case calorieValue
             }
@@ -10686,6 +10710,173 @@ extension Components {
                 case version
                 case place
                 case note
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/BlockedMemberList`.
+        public struct BlockedMemberList: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/version`.
+            public var version: Components.Schemas.BlockedMemberList.VersionPayload
+            /// Newest blocked first.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMemberList/blocked`.
+            public var blocked: [Components.Schemas.BlockedMember]
+            /// Creates a new `BlockedMemberList`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - blocked: Newest blocked first.
+            public init(
+                version: Components.Schemas.BlockedMemberList.VersionPayload,
+                blocked: [Components.Schemas.BlockedMember]
+            ) {
+                self.version = version
+                self.blocked = blocked
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case blocked
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/BlockedMember`.
+        public struct BlockedMember: Codable, Hashable, Sendable {
+            /// Who is blocked.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/member`.
+            public var member: Swift.String
+            /// Their nickname; left out without one.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/nickname`.
+            public var nickname: Swift.String?
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/look`.
+            public var look: Components.Schemas.Look?
+            /// When they were blocked, in UTC.
+            ///
+            /// - Remark: Generated from `#/components/schemas/BlockedMember/since`.
+            public var since: Foundation.Date
+            /// Creates a new `BlockedMember`.
+            ///
+            /// - Parameters:
+            ///   - member: Who is blocked.
+            ///   - nickname: Their nickname; left out without one.
+            ///   - look:
+            ///   - since: When they were blocked, in UTC.
+            public init(
+                member: Swift.String,
+                nickname: Swift.String? = nil,
+                look: Components.Schemas.Look? = nil,
+                since: Foundation.Date
+            ) {
+                self.member = member
+                self.nickname = nickname
+                self.look = look
+                self.since = since
+            }
+            public enum CodingKeys: String, CodingKey {
+                case member
+                case nickname
+                case look
+                case since
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReportSent`.
+        public struct ReportSent: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReportSent/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReportSent/version`.
+            public var version: Components.Schemas.ReportSent.VersionPayload
+            /// - Remark: Generated from `#/components/schemas/ReportSent/id`.
+            public var id: Swift.String
+            /// Creates a new `ReportSent`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id:
+            public init(
+                version: Components.Schemas.ReportSent.VersionPayload,
+                id: Swift.String
+            ) {
+                self.version = version
+                self.id = id
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+            }
+        }
+        /// - Remark: Generated from `#/components/schemas/ReportDraft`.
+        public struct ReportDraft: Codable, Hashable, Sendable {
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/version`.
+            @frozen public enum VersionPayload: Int, Codable, Hashable, Sendable, CaseIterable {
+                case _1 = 1
+            }
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/version`.
+            public var version: Components.Schemas.ReportDraft.VersionPayload
+            /// Made by the app, so sending again reports once.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/id`.
+            public var id: Swift.String
+            /// A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/kind`.
+            @frozen public enum KindPayload: String, Codable, Hashable, Sendable, CaseIterable {
+                case checkIn = "checkIn"
+                case comment = "comment"
+                case coachReply = "coachReply"
+                case coachAnswer = "coachAnswer"
+            }
+            /// A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/kind`.
+            public var kind: Components.Schemas.ReportDraft.KindPayload
+            /// The post, or the post it is under.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/checkIn`.
+            public var checkIn: Swift.String
+            /// For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/item`.
+            public var item: Swift.String?
+            /// For a coach’s line, the squad whose coach said it. Left out otherwise.
+            ///
+            /// - Remark: Generated from `#/components/schemas/ReportDraft/squad`.
+            public var squad: Swift.String?
+            /// Creates a new `ReportDraft`.
+            ///
+            /// - Parameters:
+            ///   - version:
+            ///   - id: Made by the app, so sending again reports once.
+            ///   - kind: A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there.
+            ///   - checkIn: The post, or the post it is under.
+            ///   - item: For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`.
+            ///   - squad: For a coach’s line, the squad whose coach said it. Left out otherwise.
+            public init(
+                version: Components.Schemas.ReportDraft.VersionPayload,
+                id: Swift.String,
+                kind: Components.Schemas.ReportDraft.KindPayload,
+                checkIn: Swift.String,
+                item: Swift.String? = nil,
+                squad: Swift.String? = nil
+            ) {
+                self.version = version
+                self.id = id
+                self.kind = kind
+                self.checkIn = checkIn
+                self.item = item
+                self.squad = squad
+            }
+            public enum CodingKeys: String, CodingKey {
+                case version
+                case id
+                case kind
+                case checkIn
+                case item
+                case squad
             }
         }
         /// - Remark: Generated from `#/components/schemas/FeedbackSent`.

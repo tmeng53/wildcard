@@ -113,17 +113,6 @@ public struct APIMeService: MeService {
         return TrainingRecord(today: today, trainings: trainings)
     }
 
-    /// Saves the card's number on the profile, keeping the rest of it.
-    public func save(jerseyNumber: JerseyNumber) async throws(MeError) {
-        try await me { () throws(APIError) in
-            let profile = try await api.me().profile
-            _ = try await api.save(
-                Profile(
-                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
-                    character: profile?.character, jerseyNumber: jerseyNumber))
-        }
-    }
-
     /// Saves or forgets the birthday, apart from the profile, which keeps it.
     public func save(birthday: Birthday?) async throws(MeError) {
         try await me { () throws(APIError) in
@@ -143,7 +132,7 @@ public struct APIMeService: MeService {
             let profile = try await api.me().profile
             _ = try await api.save(
                 Profile(
-                    timeZone: profile?.timeZone ?? .current, catchphrase: profile?.catchphrase,
+                    timeZone: profile?.timeZone ?? .current,
                     character: MemberCharacter(
                         nickname: nickname, look: CharacterLook(outfit: character.outfit, persona: character.persona)
                     ), jerseyNumber: profile?.jerseyNumber))
@@ -169,6 +158,22 @@ public struct APIMeService: MeService {
 
     public func setTeammatePush(_ isOn: Bool) async throws(MeError) {
         try await me { () throws(APIError) in try await api.setTeammatePush(isOn) }
+    }
+
+    public func blocked() async throws(MeError) -> [BlockedMember] {
+        try await me { () throws(APIError) in
+            try await api.blocked().map { blocked in
+                BlockedMember(
+                    id: blocked.member,
+                    character: blocked.character.map {
+                        MeCharacter(nickname: $0.nickname.text, outfit: Outfit($0.look), persona: Persona($0.look))
+                    }, since: blocked.since)
+            }
+        }
+    }
+
+    public func unblock(_ member: MemberID) async throws(MeError) {
+        try await me { () throws(APIError) in try await api.unblock(member) }
     }
 
     public func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError) {

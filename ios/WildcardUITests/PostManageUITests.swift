@@ -24,7 +24,23 @@ final class PostManageUITests: XCTestCase {
         let caption = app.descendants(matching: .any).matching(identifier: "compose.caption").firstMatch
         // Below the one line, so the cursor goes to its end.
         caption.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)).tap()
-        caption.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20) + "扶手是我的好朋友")
+        // Clears the line, then types the new one in a call of its own, checking each landed: on
+        // CI one string of deletes and words left the field empty, and the failure blamed the card.
+        let deletes = String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20)
+        caption.typeText(deletes)
+        let count = app.staticTexts["compose.count"]
+        // The keyboard has dropped the deletes too (CI, 2026-11-22): what is left goes once more.
+        let cleared = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '0/'"), object: count)
+        if XCTWaiter().wait(for: [cleared], timeout: 5) != .completed { caption.typeText(deletes) }
+        waitFor(count, "label BEGINSWITH '0/'", "the old line wasn't cleared")
+        caption.typeText("扶手是我的好朋友")
+        // The simulator's 拼音 keyboard has dropped a whole typed string; nothing landed, so the
+        // same words go in once more. Anything partial still fails below.
+        let landed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '8/'"), object: count)
+        if XCTWaiter().wait(for: [landed], timeout: 5) != .completed, count.label.hasPrefix("0/") {
+            caption.typeText("扶手是我的好朋友")
+        }
+        waitFor(count, "label BEGINSWITH '8/'", "the new line didn't land in the field")
         settle()
         keepScreenshot(named: "54-compose-editing")
         save.tap()
@@ -138,7 +154,7 @@ final class PostManageUITests: XCTestCase {
     }
 
     /// My 练腿日's second page is its heart rate in zones on graphite: the warm-up and cool-down
-    /// under 轻松 dimmed, and the zones' axis under the 「…」, not behind it.
+    /// under 轻松 dimmed. The 「…」 is on the stub under the cover, never on it (feedback #74).
     func testHeartRateCover() {
         continueAfterFailure = false
         let app = launch(language: "zh-Hans")
@@ -153,26 +169,47 @@ final class PostManageUITests: XCTestCase {
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post isn't on screen")
-        let photos = app.descendants(matching: .any).matching(identifier: "feed.photos")
-            .allElementsBoundByIndex.first { $0.frame.contains(manage.frame) }
-        guard let photos else { return XCTFail("my post's cover isn't under its 「…」") }
+        // Those drags are 240 points, so the 「…」 can stop anywhere from 240 points over the tab
+        // bar to the top of the screen; at the top (the days above it lay out shorter on a
+        // Monday, 2026-11-23), the cover over it has scrolled off. Short drags back down until the
+        // cover's foot, where the swipe below turns its pages, is clear of the status bar.
+        let row = 0.85
+        let visibleTop = app.windows.firstMatch.frame.minY + 120
+        var cover = myCover(over: manage, in: app)
+        var backs = 0
+        while backs < 4, cover.map({ $0.frame.minY + $0.frame.height * row < visibleTop }) ?? true {
+            let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: 150)))
+            backs += 1
+            cover = myCover(over: manage, in: app)
+        }
+        guard let photos = cover else { return XCTFail("my post's cover isn't over its 「…」") }
+        XCTAssertGreaterThanOrEqual(
+            photos.frame.minY + photos.frame.height * row, visibleTop, "my post's cover is off the screen")
         // One flick at the cover's middle now and then leaves the pager on the photo (red on
-        // main 11-11 and 11-12, green between with nothing changed): drag level across the cover
-        // just under the 「…」, which is on screen, and again while the chart isn't there.
+        // main 11-11 and 11-12, green between with nothing changed): drag level across the
+        // cover's foot, just above the stub with the 「…」, on screen while the cover's top may not be,
+        // and again while the chart isn't there.
         let chart = app.descendants(matching: .any).matching(identifier: "feed.chart").firstMatch
-        let row = (manage.frame.midY - photos.frame.minY) / photos.frame.height
         var turns = 0
         while turns < 3, !chart.waitForExistence(timeout: turns == 0 ? 0 : 5) {
-            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row + 0.1))
+            let from = photos.coordinate(withNormalizedOffset: CGVector(dx: 0.75, dy: row))
             from.press(
                 forDuration: 0.05,
-                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row + 0.1)),
+                thenDragTo: photos.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: row)),
                 withVelocity: .default, thenHoldForDuration: 0)
             turns += 1
         }
         XCTAssertTrue(chart.waitForExistence(timeout: Self.wait), "my post's second page isn't its chart")
         settle()
         keepScreenshot(named: "52-feed-heart-rate-cover")
+    }
+
+    /// My post's cover: the one just over its 「…」, which is never on a cover.
+    private func myCover(over manage: XCUIElement, in app: XCUIApplication) -> XCUIElement? {
+        let covers = app.descendants(matching: .any).matching(identifier: "feed.photos").allElementsBoundByIndex
+        XCTAssertFalse(covers.contains { $0.frame.contains(manage.frame) }, "the 「…」 is on a cover")
+        return covers.filter { $0.frame.maxY <= manage.frame.midY }.max { $0.frame.maxY < $1.frame.maxY }
     }
 
     /// Scrolls to my post, the only one with a 「…」, and opens it on 编辑 and 删除.
@@ -182,12 +219,15 @@ final class PostManageUITests: XCTestCase {
         let manage = app.descendants(matching: .any).matching(identifier: "post.manage").firstMatch
         let feed = app.scrollViews.firstMatch
         XCTAssertTrue(feed.waitForExistence(timeout: Self.wait), "no 动态")
-        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar.
+        // Short drags, not swipes: a swipe's fling can stop with the 「…」 under the tab bar. Shorter
+        // still once my post is near, so it stops at the screen's foot with the next day off it:
+        // with the next day on screen, 保存 stalls the app for a minute in CI (#924).
         let tabBarTop = tabButton("tab.feed", in: app).frame.minY
         var drags = 0
         while drags < Self.maxSwipes, !(manage.exists && manage.isHittable && manage.frame.maxY <= tabBarTop) {
             let from = feed.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: -240)))
+            let step: Double = manage.exists ? -100 : -240
+            from.press(forDuration: 0.05, thenDragTo: from.withOffset(CGVector(dx: 0, dy: step)))
             drags += 1
         }
         XCTAssertTrue(manage.isHittable, "my post shows no 「…」")

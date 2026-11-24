@@ -52,10 +52,6 @@ public enum ContractsError: Error, Equatable, Sendable {
     case commentLength(Int)
     /// Feedback that is empty or longer than `FeedbackText.maxLength` characters.
     case feedbackLength(Int)
-    /// A catchphrase that is empty or longer than `Catchphrase.maxLength` characters.
-    case catchphraseLength(Int)
-    /// A catchphrase with a line break; it is one line.
-    case multilineCatchphrase
     /// A nickname that is empty or longer than `Nickname.maxLength` characters.
     case nicknameLength(Int)
     /// A nickname with a line break, tab or other control character.

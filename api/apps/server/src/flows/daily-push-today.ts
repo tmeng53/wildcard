@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import {
   MemberId as CheckInMember,
   type CheckIns,
@@ -5,6 +6,8 @@ import {
   type SquadToday,
 } from '@wildcard/check-ins';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
+
+import { visiblePosts } from './hidden-content.js';
 
 /** The most of today's check-ins the push carries; the app's push view shows them all. */
 export const TODAY_POSTS = 4;
@@ -81,6 +84,8 @@ export async function pushToday(
   deps: {
     readonly checkIns: Pick<CheckIns, 'listForSquad'>;
     readonly members: Pick<Members, 'squadmates'>;
+    /** Posts and pats of members blocked either way, and posts the viewer reported, are left out. */
+    readonly moderation: Pick<Moderation, 'hiddenFor'>;
   },
   {
     viewer,
@@ -107,15 +112,17 @@ export async function pushToday(
   const dayOf = new Map<string, string>(today.members.map(({ member, day }) => [member, day]));
   const days = [...dayOf.values()].sort();
   const [from, to] = [days[0], days.at(-1)];
-  const listed =
+  const [listed, hidden] = await Promise.all([
     from === undefined || to === undefined
       ? []
-      : await deps.checkIns.listForSquad({
+      : deps.checkIns.listForSquad({
           viewer: CheckInMember.parse(viewer),
           squad,
           days: { from, to },
-        });
-  const posts = listed
+        }),
+    deps.moderation.hiddenFor(ModerationMember.parse(viewer)),
+  ]);
+  const posts = visiblePosts(hidden, listed)
     .filter(({ checkIn }) => checkIn.member !== viewer && dayOf.get(checkIn.member) === checkIn.day)
     .sort((a, b) => b.checkIn.createdAt.getTime() - a.checkIn.createdAt.getTime());
 
@@ -127,7 +134,7 @@ export async function pushToday(
     return ids.length - 1;
   };
   const patted = pokers
-    .filter((each) => each !== viewer)
+    .filter((each) => each !== viewer && !hidden.members.has(each))
     .slice(0, POKERS)
     .map(index);
   const shown = posts.map(({ checkIn, reactions }): PushPost => {

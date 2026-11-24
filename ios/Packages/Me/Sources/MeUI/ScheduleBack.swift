@@ -10,8 +10,7 @@ import SwiftUI
 
 /// A squadmate's card turned over (Tracy, 2026-11-07, design E1): their name and number, W6 出赛表
 /// with 本周 x/y, a row a day of this week (the day's sport in a disc, its name, a tick for a day
-/// trained, 请假 for a 请假条; today shaded), their 饮食小目标 when they set any, and along the
-/// bottom their newest badges and how many, which open the badge board, beside 穿搭 and the first
+/// trained, 请假 for a 请假条; today shaded), and along the bottom their newest badges and how many, which open the badge board, beside 穿搭 and the first
 /// pieces they wear, which open what they wear (Tracy, 2026-11-10, A).
 struct ScheduleBack: View {
     let face: PlayerCardFace
@@ -45,7 +44,6 @@ struct ScheduleBack: View {
             .padding(.top, Space.xxs)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("me.cardSchedule")
-            if !schedule.fuel.isEmpty { fuel }
             Spacer(minLength: Space.xs)
             HStack(spacing: 0) {
                 badges
@@ -126,31 +124,6 @@ struct ScheduleBack: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(dayRow.accessibilityText)
-    }
-
-    /// 饮食小目标 and the goals, on one line.
-    private var fuel: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Space.xs) {
-            Text(copy: "饮食小目标", bundle: .module)
-                .typeStyle(TypeRamp.caption)
-                .foregroundStyle(muted)
-                .fixedSize()
-            fuelLine
-                .typeStyle(TypeRamp.footnoteEmphasis)
-                .foregroundStyle(ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-        .padding(.horizontal, Space.xxs)
-        .padding(.top, Space.xs)
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("me.cardFuel")
-    }
-
-    /// The goals in the order picked, as the poster joins them.
-    private var fuelLine: Text {
-        let goals = schedule.fuel.map(\.label)
-        return goals.dropFirst().reduce(goals.first ?? Text(verbatim: "")) { $0 + Text(verbatim: " · ") + $1 }
     }
 
     /// 徽章, the newest badges and how many, opening the board. On a narrow card fewer badges show,

@@ -35,8 +35,6 @@ public enum Refusal: Equatable, Sendable {
     case timeZoneUnknown
     /// The check-in is gone, or the member can't see it.
     case checkInNotFound
-    /// Today's AI 请假条 drafts are used up.
-    case disclaimerDraftsUsedUp
     /// The week's 战报 isn't out yet: its awards come on Sunday at 8pm Eastern.
     case weekStoryNotReady
     /// No squad has this invite code.
@@ -63,7 +61,7 @@ public enum Refusal: Equatable, Sendable {
     case sceneAlreadyPicked
     /// The week named isn't the one open for picking: a new week started meanwhile.
     case sceneWeekClosed
-    /// The week is over: its plan and 饮食小目标 stay as they are.
+    /// The week is over: its plan stays as they are.
     case weekClosed
     /// A day of this week that has started keeps its plan.
     case planDayStarted
@@ -93,7 +91,6 @@ public enum Refusal: Equatable, Sendable {
         "PHOTO_NOT_UPLOADED": .photoNotUploaded,
         "TIME_ZONE_UNKNOWN": .timeZoneUnknown,
         "CHECK_IN_NOT_FOUND": .checkInNotFound,
-        "DISCLAIMER_DRAFTS_USED_UP": .disclaimerDraftsUsedUp,
         "WEEK_STORY_NOT_READY": .weekStoryNotReady,
         "INVITE_CODE_UNKNOWN": .inviteCodeUnknown,
         "SQUAD_FULL": .squadFull,

@@ -73,7 +73,7 @@ final class ScheduleUITests: XCTestCase {
         XCTAssertTrue(find(app, "schedule.tally").label.contains("6"), "the week's count didn't grow")
     }
 
-    func testNextWeekChangesFreelyWithFoodGoals() {
+    func testNextWeekChangesFreely() {
         let app = launch()
         let tabBar = tabButton("tab.me", in: app)
         // The bar opens on 本周 with 下周 beside it, in view and tappable.
@@ -105,39 +105,29 @@ final class ScheduleUITests: XCTestCase {
         settle()
         keepScreenshot(named: "64-schedule-next-week-rest")
         lane(app, 0).tap()
-
-        // 饮食小目标: up to three, from the list or written.
-        app.buttons["schedule.fuel"].tap()
-        let own = app.buttons["schedule.fuel.own"]
-        XCTAssertTrue(own.waitForExistence(timeout: 10), "the food goals didn't open")
-        XCTAssertLessThanOrEqual(own.frame.maxY, tabBar.frame.minY, "the food goals open under the tab bar")
-        app.buttons["schedule.fuel.每天有菜"].tap()
-        settle()
-        keepScreenshot(named: "65-schedule-food-goals")
-        own.tap()
-        let field = app.textFields["schedule.fuel.field"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "no field for my own goal")
-        field.typeText("少喝咖啡")
-        let add = app.buttons["schedule.fuel.add"]
-        XCTAssertTrue(add.isHittable, "加上 is covered by the keyboard")
-        settle()
-        keepScreenshot(named: "66-schedule-own-food-goal")
-        add.tap()
-        waitFor(app.buttons["schedule.fuel"], "label CONTAINS '少喝咖啡'", "my goal isn't on the poster")
-        XCTAssertFalse(app.buttons["schedule.fuel.own"].isEnabled, "a fourth goal can still be added")
     }
 
     func testPastWeekShowsItsTitlesAndSaves() {
         let app = launch()
-        // Last week: the chip just before 本周.
+        // Last week: the first in 往期's menu, newest first (Tracy, 2026-11-21: one chip for the
+        // weeks before, so the row no longer runs off the screen).
         let thisWeek = app.buttons["本周"]
         XCTAssertTrue(thisWeek.waitForExistence(timeout: 10))
-        let chips = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'schedule.week.'"))
-        let labels = chips.allElementsBoundByIndex.map(\.label)
-        guard let index = labels.firstIndex(of: thisWeek.label), index > 0 else {
-            return XCTFail("no week before this one: \(labels)")
-        }
-        chips.element(boundBy: index - 1).tap()
+        let past = app.buttons["schedule.past"]
+        XCTAssertTrue(past.exists, "no 往期")
+        let template = app.buttons["schedule.template"]
+        XCTAssertTrue(
+            app.windows.firstMatch.frame.contains(template.frame), "我的每周计划 runs off the screen: \(template.frame)")
+        past.tap()
+        // A menu's buttons may not carry their identifiers to XCUITest, so they are found by label.
+        let weeks = app.buttons.matching(NSPredicate(format: "label MATCHES 'W[0-9]+'"))
+        let lastWeek = weeks.element(boundBy: 0)
+        XCTAssertTrue(lastWeek.waitForExistence(timeout: 10), "往期 opened no weeks")
+        XCTAssertTrue(lastWeek.label.hasPrefix("W"), "往期's first line isn't a week: \(lastWeek.label)")
+        settle()
+        keepScreenshot(named: "67-schedule-past-menu")
+        lastWeek.tap()
+        waitFor(past, "label BEGINSWITH 'W'", "往期 doesn't name the week shown")
 
         lane(app, 4).tap()
         XCTAssertFalse(app.buttons["schedule.pick.more"].waitForExistence(timeout: 2), "a past week can change")

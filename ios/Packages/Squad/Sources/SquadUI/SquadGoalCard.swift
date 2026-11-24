@@ -7,13 +7,21 @@ import SwiftUI
 
 /// 小队's 每周目标 (approved 2026-11-06): the goal and how the squad did lately as two
 /// scoreboard numbers on graphite, 「目标 · 人均 3 次」 and 「最近 4 周 · 人均 3.4 次」 (left out
-/// until a week has finished). The captain picks 1 to 7 under them; a change counts from next
-/// week, which the line under the card says. Everyone else reads it only.
+/// until a week has finished). The captain's small 修改 on the card opens 1 to 7 under them
+/// (Tracy, 2026-11-21: the picker stays folded until asked); a change counts from next week,
+/// which the line under the card says while the picker is open or a change waits. Everyone
+/// else reads it only.
 struct SquadGoalCard: View {
     let goal: SquadWeeklyGoal
     let canChange: Bool
     let pick: (Int) -> Void
+    @State private var editing = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.sceneTheme) private var theme
+
+    private var showsNote: Bool {
+        canChange && (editing || goal.nextDaysPerMember != goal.daysPerMember)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs) {
@@ -36,9 +44,13 @@ struct SquadGoalCard: View {
                         )
                         .accessibilityIdentifier("squad.goal.recent")
                     }
+                    if canChange {
+                        Spacer(minLength: 0)
+                        editButton
+                    }
                 }
                 .fixedSize(horizontal: false, vertical: true)
-                if canChange {
+                if canChange && editing {
                     HStack(spacing: Space.xxs) {
                         ForEach(Array(SquadWeeklyGoal.choices), id: \.self) { days in
                             PickPill(
@@ -50,11 +62,12 @@ struct SquadGoalCard: View {
                             .accessibilityIdentifier("squad.goal.pick.\(days)")
                         }
                     }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .inkCard()
-            if canChange {
+            if showsNote {
                 Group {
                     if goal.nextDaysPerMember != goal.daysPerMember {
                         Text(copy: "下周起人均 \(goal.nextDaysPerMember) 次", bundle: .module)
@@ -69,6 +82,21 @@ struct SquadGoalCard: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("squad.goal")
+    }
+
+    /// 修改 while the picker is folded, 完成 while it is open.
+    private var editButton: some View {
+        Button {
+            withAnimation(.wildcard(Motion.change, reduceMotion: reduceMotion)) { editing.toggle() }
+        } label: {
+            if editing {
+                Text(copy: "完成", bundle: .module)
+            } else {
+                Text(copy: "修改", bundle: .module)
+            }
+        }
+        .buttonStyle(SecondaryButtonStyle(.onInk, size: .compact))
+        .accessibilityIdentifier("squad.goal.edit")
     }
 }
 

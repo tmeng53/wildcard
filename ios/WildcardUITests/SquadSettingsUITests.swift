@@ -8,8 +8,8 @@ final class SquadSettingsUITests: XCTestCase {
     func testTheCaptainsPage() {
         let app = launch()
         XCTAssertEqual(app.staticTexts["squad.name"].label, "晨跑五人组")
-        XCTAssertTrue(app.buttons["squad.goal.pick.3"].isSelected, "the goal's pill isn't on 3")
-        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "改动下周生效")
+        XCTAssertFalse(app.buttons["squad.goal.pick.3"].exists, "the goal's picker shows before 修改")
+        XCTAssertFalse(app.staticTexts["squad.goal.note"].exists, "the note shows with nothing to change")
         XCTAssertTrue(
             app.descendants(matching: .any)["squad.member.captain"].exists, "the captain's row has no 队长 tag")
         XCTAssertTrue(app.buttons["squad.rename"].exists, "the captain can't rename")
@@ -24,10 +24,7 @@ final class SquadSettingsUITests: XCTestCase {
         settle()
         keepScreenshot(named: "60-squad-captain")
 
-        // The captain's change counts from next week: this week's number stays, the line says so.
-        app.buttons["squad.goal.pick.5"].tap()
-        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 次'", "the change didn't wait for next week")
-        XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
+        changeTheGoal(in: app)
 
         app.buttons.matching(identifier: "squad.member.more").element(boundBy: 3).tap()
         let remove = app.buttons["squad.member.remove"]
@@ -166,6 +163,33 @@ final class SquadSettingsUITests: XCTestCase {
         keepScreenshot(named: "69-squad-time-zone-member")
     }
 
+    /// 解散小队, under 退出小队 on the captain's 小队设置: it asks first, saying what goes with it.
+    /// A member has none.
+    func testOnlyTheCaptainIsOfferedToDisbandTheSquad() {
+        let app = launch()
+        let gear = app.buttons["squad.preferences.open"]
+        XCTAssertTrue(gear.waitForExistence(timeout: 30), "no 小队设置 on 小队's header")
+        gear.tap()
+        let disband = app.buttons["squad.disband"]
+        XCTAssertTrue(disband.waitForExistence(timeout: 30), "no 解散小队 on the captain's 小队设置")
+        let leave = app.buttons["squad.leave"]
+        XCTAssertLessThan(leave.frame.minY, disband.frame.minY, "解散小队 isn't under 退出小队")
+        disband.tap()
+        let confirm = app.buttons["squad.disband.confirm"].firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 30), "解散小队 doesn't ask first")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(confirm.frame), "the confirm runs off the screen")
+        settle()
+        keepScreenshot(named: "69b-squad-disband-confirm")
+
+        app.terminate()
+        let member = launch(extra: ["-squad-seat", "member"])
+        let memberGear = member.buttons["squad.preferences.open"]
+        XCTAssertTrue(memberGear.waitForExistence(timeout: 30), "a member has no 小队设置")
+        memberGear.tap()
+        XCTAssertTrue(member.buttons["squad.leave"].waitForExistence(timeout: 30), "a member has no 退出小队")
+        XCTAssertFalse(member.buttons["squad.disband"].exists, "a member can disband the squad")
+    }
+
     func testTheCaptainPicksTheSquadsLanguage() {
         let app = launch()
         let gear = app.buttons["squad.preferences.open"]
@@ -258,7 +282,9 @@ final class SquadSettingsUITests: XCTestCase {
                 "the name runs under the rename button")
         }
     }
+}
 
+extension SquadSettingsUITests {
     /// The characters and springs settle before a screenshot.
     private func settle() {
         Thread.sleep(forTimeInterval: 1)
@@ -269,5 +295,20 @@ final class SquadSettingsUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    /// 修改 opens the picker; the captain's change counts from next week: this week's number
+    /// stays, the line says so, and stays once the picker folds again.
+    private func changeTheGoal(in app: XCUIApplication) {
+        app.buttons["squad.goal.edit"].tap()
+        XCTAssertTrue(app.buttons["squad.goal.pick.3"].waitForExistence(timeout: 5), "修改 didn't open the picker")
+        XCTAssertTrue(app.buttons["squad.goal.pick.3"].isSelected, "the goal's pill isn't on 3")
+        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "改动下周生效")
+        app.buttons["squad.goal.pick.5"].tap()
+        waitFor(app.staticTexts["squad.goal.note"], "label == '下周起人均 5 次'", "the change didn't wait for next week")
+        XCTAssertTrue(app.buttons["squad.goal.pick.5"].isSelected, "the pill didn't move to 5")
+        app.buttons["squad.goal.edit"].tap()
+        waitFor(app.buttons["squad.goal.pick.5"], "exists == false", "完成 didn't fold the picker")
+        XCTAssertEqual(app.staticTexts["squad.goal.note"].label, "下周起人均 5 次", "the waiting change went quiet")
     }
 }

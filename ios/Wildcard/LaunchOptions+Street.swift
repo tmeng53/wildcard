@@ -7,6 +7,11 @@ extension LaunchOptions {
     /// What the team gave the sample member: with `-uitest-broadcast thanks`, the letter's piece,
     /// unless `-uitest-letter-piece-unlocked` says they had unlocked it by training already, so the
     /// team's gift left it as it was (it waits on 商店街 instead).
+    /// `-uitest-blocked`: the sample member blocked Coco, so 设置 shows 已拉黑.
+    static var blocksCoco: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uitest-blocked")
+    }
+
     static var teamGifts: [String] {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flag = arguments.firstIndex(of: "-uitest-broadcast"), flag + 1 < arguments.count,

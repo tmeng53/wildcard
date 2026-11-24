@@ -5,8 +5,6 @@ import Foundation
 public struct AppCatalog: Hashable, Sendable {
     /// Every sport the pickers show.
     public let sports: SportCatalog
-    /// The ready-made 请假条 lines rolled when the AI can't write.
-    public let diceLines: [CatalogNames]
     /// The 商店街 of a member who hasn't trained yet, for an editor opened before the member's own
     /// street is read (signing up, the sample squad): the free stores and their starters. A store
     /// or piece on a switch is left out, since only the server says whether a switch is on.
@@ -26,17 +24,17 @@ public struct AppCatalog: Hashable, Sendable {
     public let copy: AppCopy
 
     public init(
-        sports: SportCatalog, diceLines: [CatalogNames], starterStock: StreetStock = .empty,
+        sports: SportCatalog, starterStock: StreetStock = .empty,
         art: ArtManifest = .none, scenes: [CatalogScene] = [], switches: [CatalogSwitch] = [],
         minimumBuild: AppBuild? = nil, quickReactions: [Emoji] = [], copy: AppCopy = .none
     ) {
-        (self.sports, self.diceLines, self.starterStock, self.art) = (sports, diceLines, starterStock, art)
+        (self.sports, self.starterStock, self.art) = (sports, starterStock, art)
         (self.scenes, self.switches, self.copy) = (scenes, switches, copy)
         (self.minimumBuild, self.quickReactions) = (minimumBuild, quickReactions)
     }
 
     /// Nothing at all.
-    public static let empty = AppCatalog(sports: .empty, diceLines: [])
+    public static let empty = AppCatalog(sports: .empty)
 }
 
 /// The art files the API serves over the ones the app bundles (the catalog's `art`): each at a

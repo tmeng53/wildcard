@@ -37,7 +37,6 @@ public struct WeekStory: Hashable, Sendable {
     public let squadWeek: SquadWeek?
     public let hottest: Hottest?
     public let meals: Meals?
-    public let bestDisclaimer: BestDisclaimer?
     /// 小队菜单: up to 3 of the week's rated meals, the best 卡价比 first.
     public let menu: [MenuDish]
     /// Every place the squad trained at that week, the most 训练 first, for 小队最爱去 and 新发现.
@@ -48,7 +47,7 @@ public struct WeekStory: Hashable, Sendable {
         status: Status, stuck: Bool = false, squad: SquadID, squadName: String, week: Week, scene: SceneTheme,
         squadmates: [Squadmate], order: [PageID]? = nil, podium: Podium? = nil, titles: [MemberTitles] = [],
         myWeek: MyWeek? = nil, squadWeek: SquadWeek? = nil, hottest: Hottest? = nil,
-        meals: Meals? = nil, bestDisclaimer: BestDisclaimer? = nil, menu: [MenuDish] = [], places: [PlaceWeek] = [],
+        meals: Meals? = nil, menu: [MenuDish] = [], places: [PlaceWeek] = [],
         ending: Ending? = nil
     ) {
         self.status = status
@@ -65,7 +64,6 @@ public struct WeekStory: Hashable, Sendable {
         self.squadWeek = squadWeek
         self.hottest = hottest
         self.meals = meals
-        self.bestDisclaimer = bestDisclaimer
         self.menu = Array(menu.prefix(3))
         self.places = places
         self.ending = ending
@@ -111,7 +109,6 @@ public struct WeekStory: Hashable, Sendable {
         switch id {
         case .hottest: hottest.map(StoryPage.hottest)
         case .meals: meals.map(StoryPage.meals)
-        case .bestDisclaimer: bestDisclaimer.map(StoryPage.bestDisclaimer)
         case .menu: menu.isEmpty ? nil : .menu(menu)
         case .favoritePlace: favoritePlace.map(StoryPage.favoritePlace)
         case .discovery: discovery.map(StoryPage.discovery)
@@ -132,7 +129,6 @@ public struct WeekStory: Hashable, Sendable {
         if let podium { ([podium.champion] + podium.sides).forEach(add) }
         titles.map(\.member).forEach(add)
         meals?.eaters.map(\.member).forEach(add)
-        bestDisclaimer.map { add($0.author) }
         return ids
     }
 }
@@ -162,12 +158,11 @@ public struct Week: Hashable, Sendable {
 
 /// Which page, as the API names it in `order`.
 public enum PageID: String, CaseIterable, Hashable, Sendable {
-    case podium, titles, myWeek, squadWeek, favoritePlace, discovery, hottest, meals, menu, bestDisclaimer, ending
+    case podium, titles, myWeek, squadWeek, favoritePlace, discovery, hottest, meals, menu, ending
 
     /// The order when the AI didn't pick one: the awards first, the ending last.
     public static let defaultOrder: [PageID] = [
-        .podium, .titles, .myWeek, .squadWeek, .favoritePlace, .discovery, .hottest, .meals, .menu,
-        .bestDisclaimer, .ending,
+        .podium, .titles, .myWeek, .squadWeek, .favoritePlace, .discovery, .hottest, .meals, .menu, .ending,
     ]
 
     /// Where a page an order leaves out goes: after this one, in this order, so each finds the
@@ -188,7 +183,6 @@ public enum StoryPage: Hashable, Sendable {
     case squadWeek(SquadWeek)
     case hottest(Hottest)
     case meals(Meals)
-    case bestDisclaimer(BestDisclaimer)
     /// 小队菜单.
     case menu([MenuDish])
     /// 小队最爱去.
@@ -334,35 +328,11 @@ public struct Meals: Hashable, Sendable {
     }
 }
 
-/// 最佳请假条: the 请假条 with the most reactions.
-public struct BestDisclaimer: Hashable, Sendable {
-    public let checkIn: CheckInID
-    public let author: MemberID
-    public let text: String
-    public let reactions: Int
-    /// The author acting the note out.
-    public let authorMove: AwardMove?
-    /// How two teammates react.
-    public let squadMove: AwardMove?
-
-    public init(
-        checkIn: CheckInID, author: MemberID, text: String, reactions: Int, authorMove: AwardMove? = nil,
-        squadMove: AwardMove? = nil
-    ) {
-        self.checkIn = checkIn
-        self.author = author
-        self.text = text
-        self.reactions = reactions
-        self.authorMove = authorMove
-        self.squadMove = squadMove
-    }
-}
-
 /// 这一周: the squad's training days against its plans. Never red, never guilt.
 public struct Ending: Hashable, Sendable {
     public let done: Int
     public let plan: Int
-    /// ≤ 4 characters, such as 稳了 or 差一点.
+    /// ≤ 4 characters, such as 超额完成 or 差一点.
     public let headline: String?
     public let line: String?
     public let move: AwardMove?

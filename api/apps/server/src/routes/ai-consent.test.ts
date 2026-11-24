@@ -31,6 +31,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -99,6 +100,7 @@ const app = createApp({
   nudges: nudgesOn(db),
   ...placesOn(db),
   savedPlaces: savedPlacesOn(db),
+  moderation: moderationOn(db),
   weather: weatherOn(db),
   disclaimerDrafts: createDisclaimerDrafts({
     model: {

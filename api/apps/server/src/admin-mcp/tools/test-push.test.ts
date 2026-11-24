@@ -26,6 +26,7 @@ import { TestPushNoSquadError } from '../../errors.js';
 import { memberCalendar } from '../../member-calendar.js';
 import { config, pushOn, signUp } from '../../test-kit/local-supabase.js';
 import { sendTestPush } from './test-push.js';
+import { nothingHidden } from '../../test-kit/nothing-hidden.js';
 
 // The test push on local Supabase: squads and phones are real; the sender records what it
 // would send to whom.
@@ -81,6 +82,7 @@ async function squadOf(...joined: readonly { readonly userId: string }[]) {
 function setup(answer: 'sent' | 'off' = 'sent') {
   const sent: { token: string; notification: PushNotification }[] = [];
   const tool = sendTestPush({
+    moderation: nothingHidden,
     push: pushOn(db, {
       send: (device, notification) => {
         sent.push({ token: device.token, notification });

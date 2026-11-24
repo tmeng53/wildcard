@@ -49,6 +49,38 @@
         }
       }
     },
+    "打卡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check in"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打卡"
+          }
+        }
+      }
+    },
+    "收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起"
+          }
+        }
+      }
+    },
     "push.coach.note": {
       "comment": "Push notification (APNs loc-key); the API sends the coach's name and the note, which only the app shows, never the lock screen.",
       "extractionState": "manual",
@@ -517,6 +549,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@ @了你：你們一起練了，點開也發一則"
+          }
+        }
+      }
+    },
+    "「%@」已解散": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” was disbanded"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」已解散"
           }
         }
       }

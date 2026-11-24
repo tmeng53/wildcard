@@ -61,7 +61,7 @@
           },
           "kind": {
             "type": "string",
-            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains) or `joinAnswered` (the captain answered the caller’s request to join). More kinds may come: skip one you don’t know."
+            "description": "What it is about: `dailyProgress` (the 6pm push), `weeklyAwards` (the week’s 战报 is in), `sceneMoved` (a teammate moved the squad to another scene), `coachReply` (the squad’s coach answered the caller’s check-in), `coachNote` (the squad’s coach left the caller its morning note, 便条), `coachLetter` (the squad changed coach and the one that left wrote the next a letter), `unlocked` (a store, prop or piece opened), `comment` (a teammate commented on the caller’s check-in or replied to them), `trainedWith` (a teammate’s 训练 named the caller as one it was done with, 一起练), `broadcast` (a notice we sent everyone), `goalSuggestion` (the caller’s squad trained over its weekly goal some weeks in a row, so its captain is suggested a higher one), `thanks` (we used feedback the caller sent, so they got its thank-you rewards), `joinRequest` (someone asked to join the squad the caller captains), `joinAnswered` (the captain answered the caller’s request to join) or `squadDisbanded` (the captain disbanded the caller’s squad). More kinds may come: skip one you don’t know."
           },
           "at": {
             "type": "string",
@@ -205,6 +205,10 @@
           "approved": {
             "type": "boolean",
             "description": "Whether the captain let the caller in (`joinAnswered`)."
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad’s name when it was disbanded (`squadDisbanded`)."
           },
           "title": {
             "$ref": "#/components/schemas/LocalizedWords"
@@ -3697,13 +3701,18 @@
               "left",
               "removed"
             ],
-            "description": "`left`: the member left it; `removed`: its captain took them out."
+            "description": "`left`: the member left it (a captain who disbanded it too); `removed`: its captain took them out, or disbanded it."
+          },
+          "disbanded": {
+            "type": "boolean",
+            "description": "Whether its captain disbanded it (解散小队), taking the member out with everyone else (`how` is then `removed`); false for that captain, who `left`."
           }
         },
         "required": [
           "id",
           "name",
-          "how"
+          "how",
+          "disbanded"
         ],
         "additionalProperties": false,
         "description": "In no squad now, the squad the member was last in and how they came out of it; left out while they are in a squad, or were never in one."
@@ -6483,6 +6492,11 @@
             "minimum": 1,
             "description": "A 训练’s minutes, when it has them."
           },
+          "startTime": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "description": "The start the member picked for a 训练 made by hand, `HH:mm` on their clock, which the map shows in place of `createdAt`."
+          },
           "stars": {
             "type": [
               "integer",
@@ -6821,6 +6835,125 @@
         "required": [
           "version",
           "place"
+        ],
+        "additionalProperties": false
+      },
+      "BlockedMemberList": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "blocked": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockedMember"
+            },
+            "description": "Newest blocked first."
+          }
+        },
+        "required": [
+          "version",
+          "blocked"
+        ],
+        "additionalProperties": false
+      },
+      "BlockedMember": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Who is blocked."
+          },
+          "nickname": {
+            "type": "string",
+            "description": "Their nickname; left out without one."
+          },
+          "look": {
+            "$ref": "#/components/schemas/Look"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When they were blocked, in UTC."
+          }
+        },
+        "required": [
+          "member",
+          "since"
+        ],
+        "additionalProperties": false
+      },
+      "ReportSent": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "version",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "ReportDraft": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Made by the app, so sending again reports once."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "checkIn",
+              "comment",
+              "coachReply",
+              "coachAnswer"
+            ],
+            "description": "A teammate’s post (`checkIn`), a comment under one (`comment`), or the coach’s reply (`coachReply`) or answer (`coachAnswer`) there."
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The post, or the post it is under."
+          },
+          "item": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "For `comment`, the comment’s id; for `coachReply`, the coach’s id; for `coachAnswer`, the id of the member’s comment it answers. Left out for `checkIn`."
+          },
+          "squad": {
+            "type": "string",
+            "format": "uuid",
+            "description": "For a coach’s line, the squad whose coach said it. Left out otherwise."
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "kind",
+          "checkIn"
         ],
         "additionalProperties": false
       },
@@ -11647,6 +11780,72 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "disbandSquad",
+        "summary": "Disband a squad (解散小队)",
+        "description": "Only its captain: everyone is out of it at once and it ends for good, as when its last member leaves. Its invite stops working and nothing runs for it any more. Each member keeps their own posts; `GET /me/squads` then says it was disbanded, and every member but the captain is told in 通知 (`squadDisbanded`), never by push.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "squadId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Disbanded"
+          },
+          "400": {
+            "description": "Not a valid squad id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller isn’t the squad’s captain (`NOT_SQUAD_CAPTAIN`), or isn’t in it (`SQUAD_NOT_JOINED`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/squads/{squadId}/name": {
@@ -14225,7 +14424,7 @@
       "get": {
         "operationId": "getEarlierCoachCards",
         "summary": "The coach page’s 以前, a page at a time",
-        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09).",
+        "description": "The cards that aren’t in the stack, newest first, as `GET …/coach/cards` has them, 20 at a time: pass the reply’s `next` as `cursor` for the page after it. `unseen` keeps only the cards the caller hasn’t seen (a coach’s that left, or older than today); each card says whether it was seen. `challenges` keeps only the challenges, every one since the caller joined, those in the stack too (挑战, Tracy 2026-11-09). `gifts` keeps only the gifts the same way, for the home’s gift button (Tracy, 2026-11-21).",
         "security": [
           {
             "bearer": []
@@ -14279,6 +14478,20 @@
             "required": false,
             "description": "`true` keeps only the challenges, from when the caller joined (not only the last 30 days).",
             "name": "challenges",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "description": "`true` keeps only the gifts, from when the caller joined (not only the last 30 days)."
+            },
+            "required": false,
+            "description": "`true` keeps only the gifts, from when the caller joined (not only the last 30 days).",
+            "name": "gifts",
             "in": "query"
           }
         ],
@@ -15279,6 +15492,277 @@
           },
           "401": {
             "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/blocks": {
+      "get": {
+        "operationId": "listMyBlocks",
+        "summary": "The members the signed-in member blocked (已拉黑)",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Who they blocked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockedMemberList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/blocks/{memberId}": {
+      "put": {
+        "operationId": "blockMember",
+        "summary": "Block a member (拉黑)",
+        "description": "Two-way: neither sees the other’s posts, comments or reactions, nor is pushed about them. Both stay in their squads. The blocked member isn’t told. Safe to repeat.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Blocked"
+          },
+          "400": {
+            "description": "Not a member id, or the member’s own (`BLOCK_SELF`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such member (`MEMBER_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unblockMember",
+        "summary": "Unblock a member (解除拉黑)",
+        "description": "One not blocked answers 204 too, so a retry is safe.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "memberId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Unblocked, or not blocked"
+          },
+          "400": {
+            "description": "Not a member id",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sign-in can’t be checked right now",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reports": {
+      "post": {
+        "operationId": "report",
+        "summary": "Report a post, a comment or a coach’s line (举报)",
+        "description": "Hides it from the reporter at once (a post leaves their feed, a comment or line its post) and files it for an admin to look at within 24 hours. Reporting the same thing again keeps the first report.",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reported before",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSent"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Reported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSent"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Not a valid report",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No bearer token, or not a valid one",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nothing like it the member can see (`CHECK_IN_NOT_FOUND`, `REPORTED_ITEM_NOT_FOUND`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another member’s report has this id (`REPORT_ID_TAKEN`)",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The body isn’t sent as `application/json` (`MEDIA_TYPE_UNSUPPORTED`)",
             "content": {
               "application/problem+json": {
                 "schema": {

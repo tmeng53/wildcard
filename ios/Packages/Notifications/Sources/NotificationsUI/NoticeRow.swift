@@ -186,6 +186,10 @@ struct NoticeWords {
                 title: Self.pushParts(alert).map { Text(verbatim: $0.title) }
                     ?? Text(copy: "队长同意了你的申请", bundle: .module),
                 detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.crop.circle.badge.checkmark")))
+        case .squadDisbanded(let name):
+            return Words(
+                title: Text(copy: "「\(name)」已解散", bundle: .module),
+                detail: nil, icon: AnyView(NoticeSymbol(systemImage: "person.2.slash")))
         }
     }
 

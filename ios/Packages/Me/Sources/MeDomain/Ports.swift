@@ -8,8 +8,6 @@ public protocol MeService: Sendable {
     func records() async throws(MeError) -> WildcardRecords
     /// Saves the character after the member edits it in the character editor.
     func save(_ character: MeCharacter) async throws(MeError)
-    /// Saves the number the member picked for their player card.
-    func save(jerseyNumber: JerseyNumber) async throws(MeError)
     /// Saves the birthday the member chose to give, or forgets it (nil).
     func save(birthday: Birthday?) async throws(MeError)
     func setDailyPush(_ isOn: Bool) async throws(MeError)
@@ -25,6 +23,10 @@ public protocol MeService: Sendable {
     /// Deletes the account and everything that is the member's, for good. Signing out on this phone
     /// is the app's to do after.
     func deleteAccount(_ confirmation: DeletionConfirmation) async throws(MeError)
+    /// The teammates the member blocked (已拉黑), newest first.
+    func blocked() async throws(MeError) -> [BlockedMember]
+    /// 解除拉黑: they see each other's posts, comments and reactions again. Safe to repeat.
+    func unblock(_ member: MemberID) async throws(MeError)
 }
 
 /// How a squadmate's player card is read, for the sheet a teammate's name opens.

@@ -1,3 +1,4 @@
+import { MemberId as ModerationMember, type Moderation } from '@wildcard/moderation';
 import { MemberId as ProfileMember, type Members } from '@wildcard/members';
 import { MemberId as NoticeMember, type Notices } from '@wildcard/notices';
 import { MemberId as PushMember, type Push, type PushNotification } from '@wildcard/push';
@@ -11,6 +12,8 @@ export interface CommentPushDependencies {
   readonly push: Pick<Push, 'settingsOf' | 'notifyMembers'>;
   readonly notices: Pick<Notices, 'tell'>;
   readonly log: Log;
+  /** Members blocked either way with the commenter are never told of their comments. */
+  readonly moderation: Pick<Moderation, 'blockedAmong'>;
 }
 
 /** A comment just written, and who it concerns. */
@@ -44,7 +47,16 @@ export async function notifyComment(
   deps: CommentPushDependencies,
   comment: NewComment,
 ): Promise<void> {
-  const told = recipients(comment);
+  const everyone = recipients(comment);
+  if (everyone.length === 0) return;
+  // Nobody blocked either way with the commenter, nor with the post's author, whose post they
+  // can't open.
+  const among = everyone.map(({ member }) => ModerationMember.parse(member));
+  const [byCommenter, byAuthor] = await Promise.all([
+    deps.moderation.blockedAmong(ModerationMember.parse(comment.commenter), among),
+    deps.moderation.blockedAmong(ModerationMember.parse(comment.author), among),
+  ]);
+  const told = everyone.filter(({ member }) => !byCommenter.has(member) && !byAuthor.has(member));
   if (told.length === 0) return;
   const profiles = await deps.members.squadmates([ProfileMember.parse(comment.commenter)]);
   const nickname = profiles.get(ProfileMember.parse(comment.commenter))?.character?.nickname;

@@ -53,6 +53,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -123,6 +124,7 @@ const app = createApp({
   nudges: nudgesOn(db),
   ...placesOn(db),
   savedPlaces: savedPlacesOn(db),
+  moderation: moderationOn(db),
   weather: weatherOn(db),
   scenes: scenesOn(db),
   switches: switchesOn(db),
@@ -1155,6 +1157,57 @@ describe('/squads/{squadId}/coach/cards', () => {
     // 以前 itself keeps to its 30 days and leaves the stack out.
     const all = Page.parse((await call({ method: 'GET', path, token: mate.token })).body);
     expect(all.cards.filter((card) => card.kind === 'challenge')).toStrictEqual([]);
+    await fire(captain, squad);
+  });
+
+  it('lists only the gifts when asked, every one since the caller joined, opened ones marked', async () => {
+    const [captain, mate] = [await signUp(), await signUp()];
+    const squad = await squadOf(captain, mate);
+    await hire(captain, squad);
+    await sql`update public.squad_members set joined_at = now() - interval '60 days'
+      where squad_id = ${squad} and member_id = ${mate.userId}`.execute(db);
+    const gift = async (piece: string, daysAgo: number) => {
+      await sql`insert into public.rewards (kind, id) values ('piece', ${piece}) on conflict do nothing`.execute(
+        db,
+      );
+      await sql`insert into public.reward_triggers (reward_kind, reward_id, kind)
+        values ('piece', ${piece}, 'coach') on conflict do nothing`.execute(db);
+      await sql`insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, line, given_by, at)
+        values (${mate.userId}, 'piece', ${piece}, 'coach', 'xiaohun', ${squad}, '送你', 'coach',
+          now() - make_interval(days => ${daysAgo}))`.execute(db);
+    };
+    // One from 40 days ago, past 以前's 30 days, still boxed; one from today, in the stack.
+    await gift('gifts-old-towel', 40);
+    await gift('gifts-new-towel', 0);
+    await coachSaid(squad, { day: new Date().toISOString().slice(0, 10), text: '今天谁先动' });
+    const opened = await call({
+      method: 'PUT',
+      path: '/me/gifts/gifts-new-towel/open',
+      token: mate.token,
+      body: { version: 1, worn: false },
+    });
+    expect(opened.status).toBe(200);
+
+    const Page = z.object({
+      cards: z.array(
+        z.object({ kind: z.string(), id: z.string(), gift: z.unknown().optional() }).loose(),
+      ),
+    });
+    const path = `/squads/${squad}/coach/cards/earlier`;
+    const only = Page.parse(
+      (await call({ method: 'GET', path: `${path}?gifts=true`, token: mate.token })).body,
+    );
+    expect(only.cards.map((card) => [card.kind, card.id])).toStrictEqual([
+      ['gift', 'gifts-new-towel'],
+      ['gift', 'gifts-old-towel'],
+    ]);
+    expect(only.cards[0]?.gift).toHaveProperty('openedAt');
+    expect(only.cards[1]?.gift).not.toHaveProperty('openedAt');
+    // Another squadmate's gifts are theirs alone.
+    const theirs = Page.parse(
+      (await call({ method: 'GET', path: `${path}?gifts=true`, token: captain.token })).body,
+    );
+    expect(theirs.cards).toStrictEqual([]);
     await fire(captain, squad);
   });
 

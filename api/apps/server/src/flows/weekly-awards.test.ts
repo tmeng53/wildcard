@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { AI_CONSENT_COPY_VERSION, MemberId as ConsentMember } from '@wildcard/ai-consent';
 import {
   CheckInId,
+  Disclaimer,
   MemberId as CheckInMember,
   SquadId as CheckInSquad,
   createCheckIns,
@@ -68,6 +69,7 @@ import {
   nudgesOn,
   placesOn,
   savedPlacesOn,
+  moderationOn,
   weatherOn,
   pushOn,
   signUp,
@@ -231,6 +233,7 @@ function setup(options: { answer?: (prompt: string) => Promise<unknown> } = {}) 
     nudges: nudgesOn(db),
     ...placesOn(db),
     savedPlaces: savedPlacesOn(db),
+    moderation: moderationOn(db),
     weather: weatherOn(db),
     ...unusedFeedback,
     log: createLog(() => undefined),
@@ -1045,6 +1048,57 @@ describe('weekly awards', () => {
         where squad_id = ${squad} and story::text like '%河边公园%'`.execute(db)
       ).rows[0]?.n,
     ).toBe(0);
+  });
+
+  it('leaves off a reader’s story the meal or 请假条 they reported, for them only', async () => {
+    const { read, app } = setup();
+    const [ana, bo] = [await member(), await member()];
+    const squad = await squadOf(ana, bo);
+    const ramen = await ate(bo, { squad, rating: { healthy: 5, tasty: 5 } });
+    const salad = await ate(bo, { squad, rating: { healthy: 5, tasty: 4 } });
+    const leave = CheckInId.parse(randomUUID());
+    expect(
+      await checkInStore.insert({
+        id: leave,
+        member: CheckInMember.parse(bo.userId),
+        day: '2026-10-22',
+        createdAt: new Date('2026-10-22T12:00:00.000Z'),
+        inFeed: true,
+        audience: [CheckInSquad.parse(squad)],
+        kind: 'disclaimer',
+        disclaimer: Disclaimer.parse({ text: '今天腿软' }),
+      }),
+    ).toStrictEqual({ saved: true });
+    await reactions.save(leave, {
+      member: CheckInMember.parse(ana.userId),
+      emoji: Emoji.parse('😂'),
+      reactedAt: BEFORE_AWARDS,
+    });
+    const report = async (checkIn: string) => {
+      const response = await app.request('/reports', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${ana.token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ version: 1, id: randomUUID(), kind: 'checkIn', checkIn }),
+      });
+      expect(response.status).toBe(201);
+    };
+
+    const before = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(before.menu?.map(({ checkIn }) => checkIn)).toStrictEqual([ramen, salad]);
+    expect(before.bestDisclaimer).toMatchObject({ checkIn: leave });
+
+    await report(ramen);
+    await report(leave);
+    const anaSees = Story.parse((await read({ token: ana.token, squad })).body);
+    expect(anaSees.menu?.map(({ checkIn }) => checkIn)).toStrictEqual([salad]);
+    expect(anaSees.bestDisclaimer).toBeUndefined();
+    const boSees = Story.parse((await read({ token: bo.token, squad })).body);
+    expect(boSees.menu?.map(({ checkIn }) => checkIn)).toStrictEqual([ramen, salad]);
+    expect(boSees.bestDisclaimer).toMatchObject({ checkIn: leave });
+
+    // A menu with every dish reported is no page at all.
+    await report(salad);
+    expect(Story.parse((await read({ token: ana.token, squad })).body).menu).toBeUndefined();
   });
 
   it('names a place as its latest post tagged it, whoever joined first', async () => {

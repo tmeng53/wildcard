@@ -129,27 +129,69 @@ struct PodiumPage: View {
 }
 
 /// 本周头衔: every member's first title and its 颁奖词; each one does the move the AI picked as
-/// its row lands.
+/// its row lands. A reader who won one wears it on their card from 佩戴头衔 under the rows.
 struct TitlesPage: View {
     let rows: [MemberTitles]
     let page: PageContext
+    /// The reader's own title, for 佩戴头衔; nil leaves the button out.
+    var ownTitle: String?
+    var wearsOwnTitle = false
+    var wear: () -> Void = {}
     @Environment(\.sceneTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: Space.l) {
             PageTitle(label: Text(copy: "本周", bundle: .module), title: Text(copy: "头衔", bundle: .module))
-            VStack(spacing: Space.xs) {
-                ForEach(Array(rows.enumerated()), id: \.element.member) { index, row in
-                    let start = 0.15 + Double(index) * 0.3
-                    let landed = page.pop(start, start + 0.45)
-                    titleRow(row, index: index, start: start)
-                        .offset(x: 40 * (1 - landed))
-                        .opacity(page.ramp(start, start + 0.15))
+            // A full squad and 佩戴头衔 don't fit the smallest phone: the rows scroll there.
+            ViewThatFits(in: .vertical) {
+                titleRows
+                ScrollView { titleRows }.scrollBounceBehavior(.basedOnSize)
+            }
+            Spacer(minLength: 0)
+            if ownTitle != nil {
+                wearButton
+                    .padding(.horizontal, Space.l)
+                    .padding(.bottom, Space.xl)
+                    .opacity(page.ramp(0.15 + Double(rows.count) * 0.3, 0.3 + Double(rows.count) * 0.3))
+            }
+        }
+        .haptic(.pick, trigger: wearsOwnTitle) { old, new in !old && new }
+    }
+
+    private var titleRows: some View {
+        VStack(spacing: Space.xs) {
+            ForEach(Array(rows.enumerated()), id: \.element.member) { index, row in
+                let start = 0.15 + Double(index) * 0.3
+                let landed = page.pop(start, start + 0.45)
+                titleRow(row, index: index, start: start)
+                    .offset(x: 40 * (1 - landed))
+                    .opacity(page.ramp(start, start + 0.15))
+            }
+        }
+        .padding(.horizontal, Space.l)
+    }
+
+    private var wearButton: some View {
+        Button(action: wear) {
+            ZStack {
+                if wearsOwnTitle {
+                    Label {
+                        Text(copy: "已佩戴", bundle: .module)
+                    } icon: {
+                        Image(systemName: "checkmark")
+                    }
+                    .transition(.scale(scale: 0.8).combined(with: .opacity))
+                } else {
+                    Text(copy: "佩戴头衔", bundle: .module)
+                        .transition(.opacity)
                 }
             }
-            .padding(.horizontal, Space.l)
-            Spacer(minLength: 0)
+            .frame(maxWidth: .infinity)
         }
+        .buttonStyle(PrimaryButtonStyle(.large))
+        .animation(.wildcard(Motion.change, reduceMotion: reduceMotion), value: wearsOwnTitle)
+        .accessibilityIdentifier("recap.wearTitle")
     }
 
     private func titleRow(_ row: MemberTitles, index: Int, start: Double) -> some View {

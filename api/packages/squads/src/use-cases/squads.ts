@@ -7,7 +7,13 @@ import {
   type Scene,
 } from '../domain/scene.js';
 import type { MemberId, Squad, SquadId, SquadName } from '../domain/squad.js';
-import type { AiConsentCheck, PickOutcome, SquadExit, SquadStore } from '../ports.js';
+import type {
+  AiConsentCheck,
+  DisbandedSquad,
+  PickOutcome,
+  SquadExit,
+  SquadStore,
+} from '../ports.js';
 import { createSquad, type CreatedSquad, type CreateSquadInput } from './squads/create-squad.js';
 import { findSquad } from './squads/find-squad.js';
 import { joinSquad, type JoinedSquad, type JoinSquadInput } from './squads/join-squad.js';
@@ -25,7 +31,7 @@ import {
   type PublicInvitePreview,
 } from './squads/preview-invite.js';
 import type { InviteCode } from '../domain/invite-code.js';
-import { handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
+import { disbandSquad, handCaptaincy, removeMember, renameSquad } from './squads/settings.js';
 import { setSquadLanguage } from './squads/language.js';
 import { setSquadTimeZone, squadTimeZone, type SquadTimeZone } from './squads/time-zone.js';
 import { setWeeklyGoal, weeklyGoal, type WeeklyGoal } from './squads/weekly-goal.js';
@@ -123,6 +129,11 @@ export interface Squads {
    * repeat.
    */
   removeMember(input: { squad: SquadId; member: MemberId; removed: MemberId }): Promise<void>;
+  /**
+   * Disbands the squad (解散小队), for its captain: everyone is out of it at once and it ends, as
+   * when its last member leaves.
+   */
+  disband(input: { squad: SquadId; member: MemberId }): Promise<DisbandedSquad>;
   /**
    * The squad's weekly goal (人均 N 次) in the viewer's week (its Monday, `YYYY-MM-DD`) and the
    * next.
@@ -249,6 +260,7 @@ export function createSquads(deps: {
     rename: (input) => renameSquad(deps, input),
     handCaptaincy: (input) => handCaptaincy(deps, input),
     removeMember: (input) => removeMember(deps, input),
+    disband: (input) => disbandSquad(deps, input),
     weeklyGoal: (input) => weeklyGoal(deps, { ...input, week: SceneWeek.parse(input.week) }),
     setWeeklyGoal: (input) => setWeeklyGoal(deps, { ...input, week: SceneWeek.parse(input.week) }),
     weeklyGoals: (squad) => deps.store.weeklyGoals(squad),

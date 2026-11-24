@@ -26,25 +26,23 @@ struct PosterContentTests {
         try WeekSheet(
             weekStart: weekStart, plan: plan,
             marks: [.trained([.sport("run")]), .disclaimer, .none, .trained([.sport("tennis")]), .none, .none, .none],
-            titles: titles, fuel: [.suggested(.water)])
+            titles: titles)
     }
 
     @Test func thisWeekShadesTodayAndCountsTrainedDays() throws {
         let board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         let content = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
         #expect(content.tally == .trained(2, planned: 5, isPast: false))
         #expect(content.titles.isEmpty, "titles wait for the week's awards")
-        #expect(content.fuelOpen, "this week's goals open too")
-        #expect(content.fuelEditable)
         #expect(content.weekEnd == Self.day("2026-10-25"))
     }
 
     @Test func aDayShowsItsPlanTickedOnlyWhenThatSportWasTrained() throws {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         let content = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(content.lanes[0].face.shown == .train(.sport("run")))
         #expect(content.lanes[0].face.mark == .trained([.sport("run")]))
         #expect(content.lanes[3].face.shown == .train(.sport("strength")), "strength was planned, tennis was played")
@@ -56,7 +54,7 @@ struct PosterContentTests {
         board.pick(.sport("tennis"))
         board.release()
         let changed = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(changed.lanes[3].face.shown == .train(.sport("tennis")))
         #expect(changed.lanes[3].face.mark == .trained([.sport("tennis")]))
 
@@ -64,7 +62,7 @@ struct PosterContentTests {
         board.tap(3)
         board.pick(.sport("yoga"))
         let held = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(held.lanes[3].face.shown == .train(.sport("yoga")), "a day being changed shows the plan")
         #expect(held.lanes[3].face.mark == .none)
     }
@@ -73,7 +71,7 @@ struct PosterContentTests {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         board.tap(5)
         let content = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false)
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(content.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .held, .plain])
     }
 
@@ -85,21 +83,17 @@ struct PosterContentTests {
         #expect(content.lanes.map(\.look) == [.plain, .plain, .held, .plain, .plain, .plain, .plain])
         #expect(content.lanes.allSatisfy { $0.mark == .none && !$0.isToday })
         #expect(content.tally == .typical(train: 5))
-        #expect(content.fuel.isEmpty)
-        #expect(content.fuelEditable == false)
         #expect(content.titles.isEmpty)
     }
 
-    @Test func nextWeekCountsThePlanAndOpensItsGoals() throws {
+    @Test func nextWeekCountsThePlan() throws {
         let next = monday.adding(days: 7)
         var board = WeekBoard(weekStart: next, days: plan, today: thursday)
         board.tap(2)
         let content = PosterContent(
-            sheet: try sheet(next), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true)
+            sheet: try sheet(next), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(content.tally == .planned(train: 5, rest: 2))
         #expect(content.lanes[2].look == .held)
-        #expect(content.fuelOpen)
-        #expect(content.fuelEditable)
     }
 
     @Test func eachWeekWearsItsOwnSceneAndWhatIsNotPickedYetIsGraphite() throws {
@@ -108,7 +102,7 @@ struct PosterContentTests {
                 weekStart: weekStart, plan: plan, marks: Array(repeating: .none, count: 7), scene: scene)
             return PosterContent(
                 sheet: sheet, board: WeekBoard(weekStart: weekStart, days: plan, today: thursday), nickname: "Tracy",
-                weekNumber: 3, fuelOpen: false
+                weekNumber: 3
             ).paint
         }
         #expect(try paint(monday.adding(days: -7), scene: .tennis) == .scene(.tennis))
@@ -126,7 +120,7 @@ struct PosterContentTests {
             sheet: try WeekSheet(
                 weekStart: monday.adding(days: -7), plan: plan, marks: Array(repeating: .none, count: 7),
                 scene: .pool),
-            board: nil, nickname: "Tracy", weekNumber: 2, fuelOpen: false)
+            board: nil, nickname: "Tracy", weekNumber: 2)
         #expect(past.scene(now: .climbing) == .pool)
         #expect(past.forSaving.paint == .scene(.pool), "the saved picture wears the same")
     }
@@ -135,22 +129,9 @@ struct PosterContentTests {
         let last = monday.adding(days: -7)
         let board = WeekBoard(weekStart: last, days: plan, today: thursday)
         let content = PosterContent(
-            sheet: try sheet(last), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true)
+            sheet: try sheet(last), board: board, nickname: "Tracy", weekNumber: 3)
         #expect(content.titles == titles)
         #expect(content.tally == .trained(2, planned: 5, isPast: true))
-        #expect(!content.fuelOpen)
-    }
-
-    @Test func aGoalBeingTypedShowsOnThePoster() throws {
-        let next = monday.adding(days: 7)
-        let board = WeekBoard(weekStart: next, days: plan, today: thursday)
-        let typing = PosterContent(
-            sheet: try sheet(next), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true, typingFuel: " 少喝咖啡 "
-        )
-        #expect(typing.fuel.last == .own("少喝咖啡"))
-        let blank = PosterContent(
-            sheet: try sheet(next), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: true, typingFuel: "  ")
-        #expect(blank.fuel == (try sheet(next)).fuel)
     }
 
     @Test func theSavedPictureHoldsNothing() throws {
@@ -158,13 +139,12 @@ struct PosterContentTests {
         var board = WeekBoard(weekStart: monday, days: plan, today: thursday)
         board.tap(5)
         let held = PosterContent(
-            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3, fuelOpen: false
+            sheet: try sheet(monday), board: board, nickname: "Tracy", weekNumber: 3
         ).forSaving
         #expect(held.lanes.map(\.look) == [.plain, .plain, .plain, .today, .plain, .plain, .plain])
         let award = PosterContent(
             sheet: try sheet(last), board: WeekBoard(weekStart: last, days: plan, today: thursday), nickname: "Tracy",
-            weekNumber: 3,
-            fuelOpen: false
+            weekNumber: 3
         ).forSaving
         #expect(award.titles == titles, "the stickers stay on the picture")
     }
@@ -206,11 +186,5 @@ struct InMemoryScheduleBackendTests {
         await #expect(throws: ScheduleError.weekOver) {
             try await backend.savePlan(original, weekStart: monday.adding(days: -7))
         }
-        await #expect(throws: ScheduleError.weekOver) {
-            try await backend.saveFuel([.suggested(.water)], weekStart: monday.adding(days: -7))
-        }
-        try await backend.saveFuel([.suggested(.water)], weekStart: monday)
-        try await backend.saveFuel([.suggested(.veggies)], weekStart: monday.adding(days: 7))
-        #expect(try await backend.week(starting: monday.adding(days: 7)).fuel == [.suggested(.veggies)])
     }
 }

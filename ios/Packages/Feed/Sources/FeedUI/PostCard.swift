@@ -101,9 +101,14 @@ struct PostCard: View {
                 }
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if model.canManage(post) {
-                manageMenu.padding(Space.s)
+        // The 「…」 at the end of the byline (feedback #74), on the stub, never over the cover or
+        // the block's words; laid over the whole card so its 44-point target sits over the rows.
+        .overlayPreferenceValue(BylineEnd.self) { end in
+            if let end {
+                GeometryReader { proxy in
+                    let line = proxy[end]
+                    menu.position(x: line.maxX - Sizing.smallIcon / 2, y: line.midY)
+                }
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
@@ -137,7 +142,7 @@ struct PostCard: View {
     /// 「…」 on the member's own post: 编辑 opens the compose page on it, 删除 asks first, in the menu.
     private var manageMenu: some View {
         HeaderMenu(
-            Text(copy: "编辑或删除", bundle: .module), on: .ink,
+            Text(copy: "编辑或删除", bundle: .module),
             items: scoreCardItem + [
                 GlassMenuItem(Text(copy: "编辑", bundle: .module), systemImage: "pencil", id: "post.edit") {
                     model.edit(post)
@@ -233,6 +238,18 @@ struct PostCard: View {
         .padding(.bottom, Space.xs)
     }
 
+    /// The 「…」 at the end of the byline, on the white stub, so it never covers the cover or the
+    /// block's words (feedback #74); the card lays it over the room the byline keeps for it.
+    @ViewBuilder private var menu: some View {
+        if model.canManage(post) {
+            manageMenu
+        } else if model.canModerate(post) {
+            ModerationMenu(model: model, post: post)
+        }
+    }
+
+    private var hasMenu: Bool { model.canManage(post) || model.canModerate(post) }
+
     /// 我 下午11:02 · 训练 · 快走, and which day a 补打卡 counts for.
     private var byline: some View {
         HStack(alignment: .firstTextBaseline, spacing: Space.xxs) {
@@ -254,6 +271,9 @@ struct PostCard: View {
             .foregroundStyle(Color(role: .fgMuted, in: theme))
         }
         .lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.trailing, hasMenu ? Sizing.smallIcon + Space.xs : 0)
+        .anchorPreference(key: BylineEnd.self, value: .bounds) { $0 }
     }
 
     private var authorName: Text {
@@ -323,6 +343,15 @@ extension CheckIn {
         case .healthyMeal(let meal), .cheatMeal(let meal): meal.photos
         case .disclaimer(let disclaimer): disclaimer.photos
         }
+    }
+}
+
+/// Where a post's byline is, for the card to lay its 「…」 at the end of it.
+private struct BylineEnd: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? { nil }
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = value ?? nextValue()
     }
 }
 

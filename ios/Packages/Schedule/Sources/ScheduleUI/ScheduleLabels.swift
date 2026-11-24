@@ -43,21 +43,6 @@ enum ScheduleLabels {
         }
     }
 
-    static func fuel(_ goal: FuelGoal) -> Text {
-        switch goal {
-        case .suggested(let suggestion): Text(copyKey: suggestion.key, bundle: .module)
-        case .own(let text): Text(verbatim: text)
-        }
-    }
-
-    static func fuelName(_ goal: FuelGoal) -> String {
-        switch goal {
-        case .suggested(let suggestion):
-            String(copyKey: suggestion.key, bundle: Bundle.module)
-        case .own(let text): text
-        }
-    }
-
     /// What went wrong saving, in friendly words; never a warning.
     static func failure(_ error: ScheduleError) -> Text {
         switch error {
@@ -65,19 +50,8 @@ enum ScheduleLabels {
         case .signedOut: Text(copy: "登录过期了，重新登录再来排", bundle: .module)
         case .weekOver: Text(copy: "这周已经结束了，就让它留在这儿吧", bundle: .module)
         case .dayStarted: Text(copy: "已经开始的日子改不了啦", bundle: .module)
-        case .invalidFuelGoal: Text(copy: "小目标写 1 到 8 个字就好", bundle: .module)
         case .refused: Text(copy: "没存上，换个排法试试", bundle: .module)
         }
     }
 }
-extension FuelGoal {
-    /// The goal's words, as the poster writes them.
-    public var label: Text { ScheduleLabels.fuel(self) }
-}
-
 #endif
-
-extension FuelSuggestion {
-    /// The String Catalog key for the words people see.
-    var key: String { "fuel.\(rawValue)" }
-}

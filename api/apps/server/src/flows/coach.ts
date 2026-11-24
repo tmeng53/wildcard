@@ -5,8 +5,6 @@ import {
   photosOf,
   type CheckInRecord,
   type CheckIns,
-  type FuelSuggestion,
-  type WeeklyPlans,
 } from '@wildcard/check-ins';
 import type {
   CoachMemberFacts,
@@ -28,16 +26,6 @@ import { squadLanguages } from './squad-language.js';
 
 // The coach across modules: who is in a squad from squads, its week from check-ins, its members'
 // nicknames from members and sports' names from sports, in the shape the coach reads.
-
-/** The suggested 饮食小目标 as the app's Simplified Chinese shows them (ScheduleUI's catalog). */
-export const FUEL_WORDS: Readonly<Record<FuelSuggestion, string>> = {
-  water: '喝够水',
-  cookAtHome: '自己做饭',
-  veggies: '每天有菜',
-  lessBubbleTea: '奶茶减半',
-  breakfast: '好好吃早餐',
-  earlyDinner: '晚饭早点吃',
-};
 
 /** A squad's week as the coach sees it, up to `now`. */
 export function coachSquadWeek(deps: {
@@ -210,8 +198,8 @@ function entryOf(
 
 /**
  * What the coach can look up about members: their lifetime counts and top sport from
- * check-ins, their weekly titles from the awards, and this week's plan from the weekly plans,
- * the same numbers 我 and 出赛表 show.
+ * check-ins, their weekly titles from the awards, and this week's plan as the squad sees it, the
+ * same numbers 我 and 出赛表 show.
  */
 /** A member's streaks still going as their squad sees them, in days, for a 请假条's wake. */
 export function coachStreaks(checkIns: Pick<CheckIns, 'currentStreaks'>): CoachStreaks {
@@ -229,7 +217,6 @@ export function coachStreaks(checkIns: Pick<CheckIns, 'currentStreaks'>): CoachS
 
 export function coachMemberFacts(deps: {
   readonly checkIns: CheckIns;
-  readonly plans: WeeklyPlans;
   readonly awards: Pick<WeeklyAwards, 'titlesWon'>;
   readonly sports: Sports;
 }): CoachMemberFacts {
@@ -242,15 +229,11 @@ export function coachMemberFacts(deps: {
       custom ?? (sport === undefined ? undefined : (sportNames.get(sport) ?? sport));
     return Promise.all(
       members.map(async (member): Promise<MemberFacts> => {
-        const [totals, plan, won] = await Promise.all([
+        const [totals, won] = await Promise.all([
           // Only what reached this squad: nothing from before the member joined it.
           deps.checkIns.totalsSharedTo({
             member: CheckInMember.parse(member),
             squad: CheckInSquad.parse(squad),
-          }),
-          deps.plans.find({
-            member: CheckInMember.parse(member),
-            weekStart: CheckInWeek.parse(weekStart),
           }),
           deps.awards.titlesWon(AwardsMember.parse(member)),
         ]);
@@ -278,9 +261,6 @@ export function coachMemberFacts(deps: {
             const sport = nameOf(day.sport, day.customSport);
             return sport === undefined ? { kind: 'train' } : { kind: 'train', sport };
           }),
-          fuelGoals: plan.fuelGoals.map((goal) =>
-            goal.kind === 'own' ? goal.text : FUEL_WORDS[goal.suggestion],
-          ),
         };
       }),
     );

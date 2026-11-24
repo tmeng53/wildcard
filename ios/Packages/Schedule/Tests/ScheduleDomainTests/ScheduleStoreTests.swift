@@ -187,7 +187,6 @@ struct ScheduleStoreTests {
         #expect(await store.tap(0) == .locked)
         await store.pick(.sport("swim"))
         #expect(await backend.savedPlans.isEmpty)
-        #expect(!store.canEditFuel)
     }
 
     @Test func suggestedSportsStartWithTheWeeksOwn() async {
@@ -198,44 +197,6 @@ struct ScheduleStoreTests {
                 .sport("run"), .sport("tennis"), .sport("strength"), .sport("yoga"), .sport("swim"),
             ]
         )
-    }
-
-    @Test func fuelGoalsChangeThisWeekAndLaterAndHoldThree() async throws {
-        let backend = FakeBackend()
-        let store = store(backend)
-        await store.load()
-        #expect(store.canEditFuel, "this week's goals change too")
-        await store.toggleFuel(.suggested(.water))
-        #expect(await backend.savedFuel.count == 1)
-
-        await store.show(thisWeek.adding(days: 7))
-        #expect(store.canEditFuel)
-        await store.toggleFuel(.suggested(.water))
-        await store.toggleFuel(.suggested(.veggies))
-        try await store.addFuel(typed: "  少喝咖啡 ")
-        await store.toggleFuel(.suggested(.breakfast))
-        #expect(store.sheet?.fuel == [.suggested(.water), .suggested(.veggies), .own("少喝咖啡")])
-        await store.toggleFuel(.suggested(.water))
-        #expect(store.sheet?.fuel == [.suggested(.veggies), .own("少喝咖啡")])
-        #expect(await backend.savedFuel.count == 5)
-    }
-
-    @Test func anOwnFuelGoalIsOneShortLine() throws {
-        #expect(throws: ScheduleError.invalidFuelGoal) { try FuelGoal.own(typed: "   ") }
-        #expect(throws: ScheduleError.invalidFuelGoal) { try FuelGoal.own(typed: "一二三四五六七八九") }
-        #expect(throws: ScheduleError.invalidFuelGoal) { try FuelGoal.own(typed: "早\n睡") }
-        #expect(try FuelGoal.own(typed: "一二三四五六七八") == .own("一二三四五六七八"))
-    }
-
-    @Test func aFailedFuelSaveTakesTheGoalOff() async {
-        let backend = FakeBackend()
-        await backend.failSaves(with: .notSent)
-        let store = store(backend)
-        await store.load()
-        await store.show(thisWeek.adding(days: 7))
-        await store.toggleFuel(.suggested(.water))
-        #expect(store.sheet?.fuel == [])
-        #expect(store.failure == .notSent)
     }
 
     @Test func theCountdownRunsToMidnightOnMonday() async {

@@ -47,6 +47,11 @@ public final class MeModel {
         self.signOutHere = signOut
     }
 
+    /// 设置 › 已拉黑, read through the same service.
+    public func blockedMembersModel() -> BlockedMembersModel {
+        BlockedMembersModel(service: service)
+    }
+
     /// 外卡记录's model, reading through the same service.
     public func recordsModel() -> RecordsModel {
         RecordsModel(service: service)
@@ -137,21 +142,6 @@ public final class MeModel {
         }
         guard case .loaded(var overview) = load else { return }
         overview.character = character
-        load = .loaded(overview)
-    }
-
-    /// Saves the number the member picked for their card, and shows it.
-    public func save(jerseyNumber: JerseyNumber) async {
-        saveFailed = false
-        do {
-            try await service.save(jerseyNumber: jerseyNumber)
-        } catch {
-            saveFailed = true
-            await signOutIfEnded(error)
-            return
-        }
-        guard case .loaded(var overview) = load else { return }
-        overview.jerseyNumber = jerseyNumber
         load = .loaded(overview)
     }
 

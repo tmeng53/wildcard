@@ -11,8 +11,6 @@ public protocol ScheduleBackend: Sendable {
     func week(starting weekStart: LocalDay) async throws(ScheduleError) -> WeekSheet
     /// Replaces a week's plan and answers with the plan saved. Safe to repeat.
     func savePlan(_ days: [PlanDay], weekStart: LocalDay) async throws(ScheduleError) -> [PlanDay]
-    /// Replaces a week's 饮食小目标. Safe to repeat.
-    func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError)
     /// The member's typical week (我的每周计划): seven days, Monday first, which every week not
     /// changed for itself follows.
     func template() async throws(ScheduleError) -> [PlanDay]
@@ -68,8 +66,6 @@ public enum ScheduleError: Error, Equatable, Sendable {
     case weekOver
     /// A day that has started can't change any more.
     case dayStarted
-    /// A 饮食小目标 of the member's own must be one line of 1 to 8 characters.
-    case invalidFuelGoal
     /// The server said no for a reason this build doesn't know. Trying again won't help.
     case refused
 }

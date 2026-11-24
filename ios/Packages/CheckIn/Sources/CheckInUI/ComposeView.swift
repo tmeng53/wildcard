@@ -44,16 +44,11 @@ public struct ComposeView: View {
                         if model.kind == .trained, !model.isEditing, !model.healthWorkouts.isEmpty {
                             HealthChips(model: model)
                         }
-                        if let today = model.postableDays.last, model.postableDays.count > 1 {
+                        // 补打卡's day: on the start pill of a 训练 made by hand, else a pill of its own.
+                        if let dayChoice, !startCarriesDay {
                             VStack(alignment: .leading, spacing: Space.xxs) {
                                 SectionLabel(Text(copy: "日期", bundle: .module))
-                                DayPick(
-                                    days: model.postableDays,
-                                    picked: Binding {
-                                        model.day ?? today
-                                    } set: {
-                                        model.day = $0 == today ? nil : $0
-                                    })
+                                DayPill(choice: dayChoice)
                             }
                         }
                         if model.ratesMeal {
@@ -67,7 +62,7 @@ public struct ComposeView: View {
                                 ScoreRow(model: model)
                             } else {
                                 MinutesRow(
-                                    startTime: $model.startTime, minutes: $model.minutes,
+                                    startTime: $model.startTime, day: dayChoice, minutes: $model.minutes,
                                     isRuling: $isRulingMinutes
                                 )
                                 .id(Self.minutesID)
@@ -133,6 +128,16 @@ public struct ComposeView: View {
     }
 
     private static let minutesID = "minutes"
+
+    /// The days this post may count for (补打卡), when there is one besides today.
+    private var dayChoice: DayChoice? {
+        DayChoice(days: model.postableDays, picked: $model.day)
+    }
+
+    /// A 训练 made by hand picks its day with its start, on one pill (Tracy, 2026-11-21).
+    private var startCarriesDay: Bool {
+        model.kind == .trained && model.workout == nil
+    }
 
     private var failedLine: Text {
         model.isEditing ? Text(copy: "没保存上，再点一次保存", bundle: .module) : Text(copy: "没发出去，再点一次发布", bundle: .module)
@@ -238,6 +243,7 @@ private struct SportRow: View {
 private struct MinutesRow: View {
     @Environment(\.sceneTheme) private var theme
     @Binding var startTime: StartTime?
+    let day: DayChoice?
     @Binding var minutes: WorkoutMinutes?
     @Binding var isRuling: Bool
     @State private var ruled = Self.rulerStart
@@ -247,7 +253,7 @@ private struct MinutesRow: View {
             SectionLabel(Text(copy: "开始 · 时长", bundle: .module))
             ScrollView(.horizontal) {
                 HStack(spacing: Space.xs) {
-                    StartTimePill(startTime: $startTime)
+                    StartTimePill(startTime: $startTime, day: day)
                     Rectangle()
                         .fill(Color(role: .borderDefault, in: theme))
                         .frame(width: 1, height: Self.dividerHeight)

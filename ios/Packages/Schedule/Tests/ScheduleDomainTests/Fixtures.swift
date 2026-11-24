@@ -36,7 +36,6 @@ actor FakeBackend: ScheduleBackend {
     /// With a count, only plan saves fail.
     var savesBeforeError: Int?
     private(set) var savedPlans: [[PlanDay]] = []
-    private(set) var savedFuel: [[FuelGoal]] = []
     private(set) var savedTemplates: [[PlanDay]] = []
     /// The member's typical week; the plan every week not set for itself follows here.
     var templateDays: [PlanDay] = Fixtures.plan
@@ -105,15 +104,6 @@ actor FakeBackend: ScheduleBackend {
         sheet.plan = keeps?(days) ?? days
         sheets[weekStart] = sheet
         return sheet.plan
-    }
-
-    func saveFuel(_ goals: [FuelGoal], weekStart: LocalDay) async throws(ScheduleError) {
-        savedFuel.append(goals)
-        if holdsSaves { await withCheckedContinuation { held.append($0) } }
-        if let saveError, savesBeforeError == nil { throw saveError }
-        var sheet = try stored(weekStart)
-        sheet.fuel = goals
-        sheets[weekStart] = sheet
     }
 
     func template() async throws(ScheduleError) -> [PlanDay] {
