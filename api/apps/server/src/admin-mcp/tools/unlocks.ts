@@ -54,7 +54,8 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
       'Shows everything a member can get (a store, prop, piece, badge or voucher) and every way ' +
       'they get it, one trigger per way: training (sports, empty = any; after = days with 训练, ' +
       'counted from countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may ' +
-      'give it, one a member a week; offered and the description its model reads; change with ' +
+      'give it, at most two a member a week on its own, an admin any number; offered and the ' +
+      'description its model reads; change with ' +
       'put_gift_piece), team (only the Wildcard team gives it, with give_reward) or event (the ' +
       'named events give it, such as bug-adopted and idea-adopted from adopt_feedback; change ' +
       'team and event triggers with put_reward_trigger). give_unlocks gives what has a training ' +
@@ -227,8 +228,8 @@ export function giveGift({ giveGift: give }: UnlockToolDependencies) {
     description:
       'Gives a member a piece from the gift pool (get_gift_pieces) in the name of their squad’s ' +
       'coach, with your own line, which only they see, on the coach page. The same rules as the ' +
-      'coach’s own gifts: an offered piece they don’t have, and at most one gift a member a week ' +
-      '(on the squad’s clock); a refused gift says why. Logged as yours. Never taken back.',
+      'coach’s own gifts: an offered piece they don’t have, but no weekly limit, which holds only ' +
+      'for the coach’s own; a refused gift says why. Logged as yours. Never taken back.',
     changes: true,
     input: z.strictObject({
       squad: z.uuid().describe('The squad’s id; its coach gives it.'),

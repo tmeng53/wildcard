@@ -115,19 +115,20 @@ select throws_ok(
   '23514', null, 'a coach''s gift names the squad it was coaching'
 );
 
--- One gift a member a week, whoever gives it; opened once, and the opening stays.
+-- Gifts in one week aren't capped here (the coach's own count is the code's); opened once, and the
+-- opening stays.
 insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, week_from,
   given_by, at)
 values ('e0000000-0000-0000-0000-000000000001', 'piece', 'gift-cap', 'coach',
   (select id from public.coaches limit 1), 'e2000000-0000-0000-0000-000000000001',
   '2026-11-02T05:00:00Z', 'coach', now());
-select throws_ok(
+select lives_ok(
   $$insert into public.grants (member_id, reward_kind, reward_id, via, coach_id, squad_id, week_from,
       given_by, admin_id, at)
     values ('e0000000-0000-0000-0000-000000000001', 'piece', 'gift-scarf-2', 'coach',
       (select id from public.coaches limit 1), 'e2000000-0000-0000-0000-000000000001',
       '2026-11-02T05:00:00Z', 'admin', 'e0000000-0000-0000-0000-000000000009', now())$$,
-  '23505', null, 'one gift a member a week'
+  'an admin gives a second gift in the same week'
 );
 select throws_ok(
   $$insert into public.grants (member_id, reward_kind, reward_id, via, sports, after, admin_id, at)

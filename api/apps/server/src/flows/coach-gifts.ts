@@ -7,6 +7,7 @@ import { createPostgresSquadStore, SquadId } from '@wildcard/squads';
 import { momentAt, mondayOf, wallClockAt } from '@wildcard/time-zones';
 import {
   CoachId,
+  coachMayGive,
   createCoachGifts,
   createPostgresGiftStore,
   GiftMemberNotInSquadError,
@@ -22,8 +23,8 @@ import type { Database } from '../ports.js';
 
 // A coach's gifts span modules: the unlocks module keeps the pool and who got what, and the
 // squads module the clock a member's gift week runs on (the squad's, as the coach's day does).
-// At most one gift a member a week, enforced by the unlocks module whoever gives it (the coach
-// on its daily wake, or an admin in its name; Tracy, 2026-11-08).
+// The coach on its daily wake gives a member at most two a week, an admin in its name any number
+// (Tracy, 2026-11-24), enforced by the unlocks module.
 
 /** When the squad's week began at `now`, on its clock (小队时区). */
 export type SquadWeekStart = (squad: string, now: Date) => Promise<Date>;
@@ -80,7 +81,7 @@ export function coachGifting(deps: {
       const open = new Map<string, readonly string[]>();
       for (const member of members) {
         const had = await deps.gifts.of(MemberId.parse(member));
-        if (had.some(({ givenAt }) => givenAt >= weekStart)) continue;
+        if (!coachMayGive(had, weekStart)) continue;
         open.set(
           member,
           had.map(({ piece }) => piece),
