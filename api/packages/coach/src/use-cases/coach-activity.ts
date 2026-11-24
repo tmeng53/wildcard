@@ -58,7 +58,7 @@ export interface CoachActivity {
    * The reader's answer to their morning note's challenge (接受挑战 or 算了, with why if they
    * say), answered with the one that stands: the first. Throws `CoachNoteNotFoundError` when the note isn't theirs in
    * this squad, `CoachNoteNoChallengeError` when it sets none and `CoachChallengeDayOverError`
-   * when it was unanswered and its day is before `today` (the squad's): an expired challenge
+   * when it was unanswered and its day is before `today` (the member's own): an expired challenge
    * (已过期) is never taken up.
    */
   answerChallenge(input: {
@@ -71,8 +71,8 @@ export interface CoachActivity {
     readonly today: string;
   }): Promise<ChallengeAnswered>;
   /**
-   * The reader's challenge today (`today`, the squad's day), once their note reached them: what
-   * it is, what they said to it and whether it is done. The caller checks they are in the squad.
+   * The reader's challenge today (`today`, the earlier of theirs and the squad's), once their
+   * note reached them: what it is, what they said to it and whether it is done. The caller checks they are in the squad.
    */
   challenge(input: {
     readonly squad: SquadId;
@@ -80,11 +80,11 @@ export interface CoachActivity {
     readonly today: string;
   }): Promise<DayChallenge | undefined>;
   /**
-   * The reader did their note's challenge (我完成了), on its own day (`today`, the squad's):
-   * answered with the completion that stands, the first, theirs or the coach's. Throws
-   * `CoachNoteNotFoundError` when the note isn't theirs in this squad, `CoachNoteNoChallengeError`
-   * when it sets none, `CoachChallengeDeclinedError` when they let it go and
-   * `CoachChallengeDayOverError` when it was another day's.
+   * The reader did their note's challenge (我完成了) while its day isn't over (`today`, the
+   * earlier of theirs and the squad's): answered with the completion that stands, the first,
+   * theirs or the coach's. Throws `CoachNoteNotFoundError` when the note isn't theirs in this
+   * squad, `CoachNoteNoChallengeError` when it sets none, `CoachChallengeDeclinedError` when they
+   * let it go and `CoachChallengeDayOverError` when its day was before `today`.
    */
   completeChallenge(input: {
     readonly squad: SquadId;

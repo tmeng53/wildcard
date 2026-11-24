@@ -665,7 +665,8 @@ export function createPostgresCoachActivity(db: Kysely<DB>): CoachActivityStore 
       // The first one stands, whoever marked it, even once the day is over.
       if (done !== undefined) return done;
       if (mine.answer === 'declined') return 'declined';
-      if (mine.day !== today) return 'dayOver';
+      // Until its day is over: a member behind the squad may have the next day's note already.
+      if (mine.day < today) return 'dayOver';
       await sql`
         insert into public.coach_challenge_completions (note_id, by)
         values (${String(note)}::bigint, 'member')
