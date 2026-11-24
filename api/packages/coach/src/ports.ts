@@ -401,9 +401,9 @@ export interface CoachActivityStore {
     readonly day: string;
   }): Promise<DayChallenge | undefined>;
   /**
-   * The member marks their note's challenge done (我完成了) on `today`, the squad's day:
+   * The member marks their note's challenge done (我完成了) while its day isn't over, by `today`:
    * `noNote` when the note isn't theirs in the squad or hasn't reached them, `noChallenge` when
-   * it set none, `declined` when they let it go, `dayOver` when it was another day's. The first
+   * it set none, `declined` when they let it go, `dayOver` when its day was before `today`. The first
    * one stands, the coach's too, and is what comes back.
    */
   completeChallenge(input: {

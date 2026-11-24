@@ -469,8 +469,8 @@ export function coachActivity(deps: {
     operationId: 'completeCoachChallenge',
     summary: 'Mark the challenge on the caller’s morning note done (我完成了)',
     description:
-      'The caller did the day’s challenge their morning note sets. Only on its own day, until ' +
-      'it is over on both the caller’s clock and the squad’s, and not once they let it go (算了). The first completion stands, theirs or ' +
+      'The caller did the day’s challenge their morning note sets. Only once it reached them and ' +
+      'until its day is over on both the caller’s clock and the squad’s, and not once they let it go (算了). The first completion stands, theirs or ' +
       'the coach’s, and is what comes back, so repeating it is safe.',
     security: [{ bearer: [] }],
     middleware: [requireCaller(deps.verifyToken)] as const,

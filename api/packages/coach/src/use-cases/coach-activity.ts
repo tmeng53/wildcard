@@ -71,8 +71,8 @@ export interface CoachActivity {
     readonly today: string;
   }): Promise<ChallengeAnswered>;
   /**
-   * The reader's challenge today (`today`, the earlier of their day and the squad's), once their note reached them: what
-   * it is, what they said to it and whether it is done. The caller checks they are in the squad.
+   * The reader's challenge today (`today`, the earlier of theirs and the squad's), once their
+   * note reached them: what it is, what they said to it and whether it is done. The caller checks they are in the squad.
    */
   challenge(input: {
     readonly squad: SquadId;
@@ -80,11 +80,11 @@ export interface CoachActivity {
     readonly today: string;
   }): Promise<DayChallenge | undefined>;
   /**
-   * The reader did their note's challenge (我完成了), on its own day (`today`, the earlier of theirs and the squad's):
-   * answered with the completion that stands, the first, theirs or the coach's. Throws
-   * `CoachNoteNotFoundError` when the note isn't theirs in this squad, `CoachNoteNoChallengeError`
-   * when it sets none, `CoachChallengeDeclinedError` when they let it go and
-   * `CoachChallengeDayOverError` when it was another day's.
+   * The reader did their note's challenge (我完成了) while its day isn't over (`today`, the
+   * earlier of theirs and the squad's): answered with the completion that stands, the first,
+   * theirs or the coach's. Throws `CoachNoteNotFoundError` when the note isn't theirs in this
+   * squad, `CoachNoteNoChallengeError` when it sets none, `CoachChallengeDeclinedError` when they
+   * let it go and `CoachChallengeDayOverError` when its day was before `today`.
    */
   completeChallenge(input: {
     readonly squad: SquadId;

@@ -197,13 +197,21 @@ async function call({
 
 const SquadBody = z.object({ id: z.uuid(), inviteCode: z.string() });
 
-/** A squad `captain` made, with `others` in it too. */
-async function squadOf(captain: { token: string }, ...others: { token: string }[]) {
+/** A squad `captain` made, with `others` in it too, on New York's clock. */
+function squadOf(captain: { token: string }, ...others: { token: string }[]) {
+  return squadIn('America/New_York', [captain, ...others]);
+}
+
+/** A squad the first member made on `timeZone`'s clock, with the others in it too. */
+async function squadIn(
+  timeZone: string,
+  [captain, ...others]: readonly [{ token: string }, ...{ token: string }[]],
+) {
   const made = await call({
     method: 'PUT',
     path: `/squads/${randomUUID()}`,
     token: captain.token,
-    body: { version: 1, name: '早八跑团', timeZone: 'America/New_York' },
+    body: { version: 1, name: '早八跑团', timeZone },
   });
   expect(made.status).toBe(201);
   const squad = SquadBody.parse(made.body);
@@ -667,23 +675,35 @@ describe('GET /squads/{squadId}/coach/activity', () => {
   });
 
   it('keeps a challenge until its day is over on both the member’s and the squad’s clock (Tracy, 2026-11-20)', async () => {
-    const [captain, behind, ahead] = [await signUp(), await signUp(), await signUp()];
-    const squad = await squadOf(captain, behind, ahead);
+    const [captain, behind] = [await signUp(), await signUp()];
+    // The squad is on UTC+14 and the member on UTC-10: their own day is always the squad's day
+    // before, so the squad's today counts only from their own midnight.
+    const squad = await squadIn('Pacific/Kiritimati', [captain, behind]);
     await call({
       method: 'PUT',
       path: `/squads/${squad}/coach`,
       token: captain.token,
       body: { version: 1, coach: 'xiaohun' },
     });
+    const saved = await call({
+      method: 'PUT',
+      path: '/me/profile',
+      token: behind.token,
+      body: { version: 1, timeZone: 'Etc/GMT+10' },
+    });
+    expect(saved.status).toBe(200);
     const dayIn = (timeZone: string) =>
       new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
     const dayBefore = (day: string) =>
       new Date(Date.parse(day) - 24 * 60 * 60_000).toISOString().slice(0, 10);
-    const note = async (member: string, day: string) => {
+    const own = dayIn('Etc/GMT+10');
+    const squadToday = dayIn('Pacific/Kiritimati');
+    expect(dayBefore(squadToday)).toBe(own);
+    const note = async (day: string) => {
       const written = await sql<{ id: string }>`
         insert into public.coach_member_notes
           (squad_id, member_id, coach_id, day, text, challenge_title, challenge_amount, challenge_unit)
-        values (${squad}, ${member}, 'xiaohun', ${day}::date, '今天多喝水', '喝水', 8, '杯')
+        values (${squad}, ${behind.userId}, 'xiaohun', ${day}::date, '今天多喝水', '喝水', 8, '杯')
         returning id`.execute(db);
       const id = Number(written.rows[0]?.id);
       await sql`insert into public.coach_member_note_deliveries (note_id) values (${id})`.execute(
@@ -691,63 +711,54 @@ describe('GET /squads/{squadId}/coach/activity', () => {
       );
       return id;
     };
-    // The squad is on New York's clock. 7 to 8 hours behind it, the member's own today counts;
-    // 18 to 19 hours ahead, the squad's (challenge-day.test.ts covers the hours in between).
-    for (const { member, zone, squadDay } of [
-      { member: behind, zone: 'Etc/GMT+12', squadDay: dayIn('Etc/GMT+12') },
-      {
-        member: ahead,
-        zone: 'Pacific/Kiritimati',
-        squadDay: dayIn('America/New_York'),
-      },
-    ]) {
-      const saved = await call({
-        method: 'PUT',
-        path: '/me/profile',
-        token: member.token,
-        body: { version: 1, timeZone: zone },
-      });
-      expect(saved.status).toBe(200);
-      const old = await note(member.userId, dayBefore(squadDay));
-      const id = await note(member.userId, squadDay);
-      expect(
+    const [old, mine, next] = [await note(dayBefore(own)), await note(own), await note(squadToday)];
+    // Their own today's, though the squad's clock is a day on.
+    expect(
+      await call({ method: 'GET', path: `/squads/${squad}/coach/challenge`, token: behind.token }),
+    ).toMatchObject({ status: 200, body: { today: { noteId: mine, day: own } } });
+    const cards = CardBody.parse(
+      (
         await call({
           method: 'GET',
-          path: `/squads/${squad}/coach/challenge`,
-          token: member.token,
-        }),
-      ).toMatchObject({ status: 200, body: { today: { noteId: id, day: squadDay } } });
-      const cards = CardBody.parse(
-        (
-          await call({
-            method: 'GET',
-            path: `/squads/${squad}/coach/cards/earlier?challenges=true`,
-            token: member.token,
-          })
-        ).body,
-      );
-      expect(
-        cards.cards
-          .filter((each) => each.kind === 'challenge')
-          .map((each) => [each.id, each.expired === true]),
-      ).toStrictEqual(expect.arrayContaining([[String(old), true]]));
-      const answer = (noteId: number) =>
-        call({
-          method: 'PUT',
-          path: `/squads/${squad}/coach/notes/${String(noteId)}/challenge`,
-          token: member.token,
-          body: { version: 1, answer: 'accepted' },
-        });
-      const stale = await answer(old);
-      expect([stale.status, reason(stale)]).toStrictEqual([400, 'COACH_CHALLENGE_DAY_OVER']);
-      expect((await answer(id)).status).toBe(200);
-      const done = await call({
+          path: `/squads/${squad}/coach/cards/earlier?challenges=true`,
+          token: behind.token,
+        })
+      ).body,
+    );
+    expect(
+      cards.cards
+        .filter((each) => each.kind === 'challenge')
+        .map((each) => [each.id, each.expired === true]),
+    ).toStrictEqual(
+      expect.arrayContaining([
+        [String(old), true],
+        [String(mine), false],
+        [String(next), false],
+      ]),
+    );
+    const answer = (noteId: number) =>
+      call({
         method: 'PUT',
-        path: `/squads/${squad}/coach/notes/${String(id)}/challenge/completion`,
-        token: member.token,
+        path: `/squads/${squad}/coach/notes/${String(noteId)}/challenge`,
+        token: behind.token,
+        body: { version: 1, answer: 'accepted' },
+      });
+    const complete = (noteId: number) =>
+      call({
+        method: 'PUT',
+        path: `/squads/${squad}/coach/notes/${String(noteId)}/challenge/completion`,
+        token: behind.token,
         body: { version: 1 },
       });
-      expect(done).toMatchObject({ status: 200, body: { noteId: id, completedBy: 'member' } });
+    const stale = await answer(old);
+    expect([stale.status, reason(stale)]).toStrictEqual([400, 'COACH_CHALLENGE_DAY_OVER']);
+    // Today's, and the squad's next one, which reached them before their own day turned.
+    for (const id of [mine, next]) {
+      expect((await answer(id)).status).toBe(200);
+      expect(await complete(id)).toMatchObject({
+        status: 200,
+        body: { noteId: id, completedBy: 'member' },
+      });
     }
     await call({ method: 'DELETE', path: `/squads/${squad}/coach`, token: captain.token });
   });
