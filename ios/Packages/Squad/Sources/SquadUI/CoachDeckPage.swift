@@ -137,15 +137,25 @@ public struct CoachDeckPage: View {
                             deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
                             isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
                         )
-                        // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
+                        .accessibilityHidden(!isTop)
+                        // A tall card stops short of the pager under it, as it stopped at the stack's edge
+                        // before. Fixed, so the frame is the card's own height and never grows to the room
+                        // it is offered: the cards under it take this height, and only their edges peek out.
                         .frame(
                             maxHeight: proxy.size.height - 2 * DeckMetrics.peek - Sizing.control - Space.m,
                             alignment: .top
                         )
+                        .fixedSize(horizontal: false, vertical: true)
                         .onGeometryChange(for: Double.self) {
                             $0.size.height
                         } action: { height in
                             if isTop { topHeight = height }
+                        }
+                        // A card under the top one, by its own bounds, for the UI tests: only its edge shows.
+                        .background {
+                            if !isTop {
+                                Color.clear.accessibilityElement().accessibilityIdentifier("coachDeck.under")
+                            }
                         }
                         .padding(.horizontal, Double(depth) * DeckMetrics.peek)
                         .offset(y: Double(depth) * DeckMetrics.peek)
@@ -153,9 +163,8 @@ public struct CoachDeckPage: View {
                         .rotationEffect(.degrees(isTop ? drag.width / proxy.size.width * 8 : 0), anchor: .bottom)
                         .modifier(FlyIntoClock(isFlying: flying == card.key, size: proxy.size))
                         .allowsHitTesting(isTop)
-                        .accessibilityHidden(!isTop)
                         .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
-                        .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
+                        .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { if isTop { putAway(card) } }
                     }
                     if shown.isEmpty {
                         CoachDeckCard(

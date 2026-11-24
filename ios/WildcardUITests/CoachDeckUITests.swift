@@ -42,6 +42,7 @@ final class CoachDeckUITests: XCTestCase {
             XCTAssertGreaterThanOrEqual(under.frame.minY, board.frame.maxY, "it is on the card")
         }
         XCTAssertTrue(next.isHittable, "下一张 is covered")
+        assertOnlyEdgesPeek(under: board, in: app)
         keepScreenshot(named: "106-coach-deck-board")
         putAway(board, in: app)
 
@@ -250,6 +251,16 @@ final class CoachDeckUITests: XCTestCase {
 
     private func element(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
+    }
+
+    /// The cards under the top one show only their edges, never their words below it (Tracy, 2026-11-24).
+    private func assertOnlyEdgesPeek(under top: XCUIElement, in app: XCUIApplication) {
+        let under = app.descendants(matching: .any).matching(identifier: "coachDeck.under").allElementsBoundByIndex
+        XCTAssertEqual(under.count, 2, "the next two cards don't peek out under the top one")
+        for card in under {
+            XCTAssertLessThanOrEqual(
+                card.frame.maxY, top.frame.maxY + 2 * 12 + 1, "a card shows below the top one: \(card.frame)")
+        }
     }
 
     /// The card is all on screen, and its button is free and on it.
