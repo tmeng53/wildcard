@@ -137,23 +137,40 @@ public struct CoachDeckPage: View {
                             deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
                             isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
                         )
-                        // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
-                        .frame(
-                            maxHeight: proxy.size.height - 2 * DeckMetrics.peek - Sizing.control - Space.m,
-                            alignment: .top
-                        )
+                        .accessibilityHidden(!isTop)
+                        // The card's own height, before the frame below grows it to the room it is offered:
+                        // the cards under it take this height, so only their edges peek out.
                         .onGeometryChange(for: Double.self) {
                             $0.size.height
                         } action: { height in
-                            if isTop { topHeight = height }
+                            if isTop { topHeight = min(height, cap(proxy.size.height)) }
                         }
+                        // A card under the top one is a blank edge: its words would show through the strip.
+                        .overlay {
+                            RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous)
+                                .fill(Color(role: .bgCanvas, in: theme))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous)
+                                        .strokeBorder(
+                                            Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+                                }
+                                .opacity(isTop ? 0 : 1)
+                                .allowsHitTesting(false)
+                        }
+                        // A card under the top one, by its own bounds, for the UI tests: only its edge shows.
+                        .background {
+                            if !isTop {
+                                Color.clear.accessibilityElement().accessibilityIdentifier("coachDeck.under")
+                            }
+                        }
+                        // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
+                        .frame(maxHeight: cap(proxy.size.height), alignment: .top)
                         .padding(.horizontal, Double(depth) * DeckMetrics.peek)
                         .offset(y: Double(depth) * DeckMetrics.peek)
                         .offset(isTop ? drag : .zero)
                         .rotationEffect(.degrees(isTop ? drag.width / proxy.size.width * 8 : 0), anchor: .bottom)
                         .modifier(FlyIntoClock(isFlying: flying == card.key, size: proxy.size))
                         .allowsHitTesting(isTop)
-                        .accessibilityHidden(!isTop)
                         .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
                         .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
                     }
@@ -169,6 +186,11 @@ public struct CoachDeckPage: View {
             }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
+    }
+
+    /// How tall a card may be: it stops short of the pager under it.
+    private func cap(_ height: Double) -> Double {
+        height - 2 * DeckMetrics.peek - Sizing.control - Space.m
     }
 
     /// Right, far or fast enough, puts the card away; anything else springs it back.
