@@ -2593,6 +2593,22 @@
         }
       }
     },
+    "教练有话说": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From your coach"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "教練有話說"
+          }
+        }
+      }
+    },
     "教练的礼物": {
       "localizations": {
         "en": {
