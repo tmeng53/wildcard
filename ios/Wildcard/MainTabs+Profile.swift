@@ -46,7 +46,6 @@ extension MainTabs {
             .navigationRoot()
             .navigationDestination(isPresented: $showsSchedule) {
                 ScheduleView(model: schedule)
-                    .environment(\.sceneTheme, today.scene)
                     // Its buttons keep the scene's colour, as its poster does; 我's own are brand.
                     .accentTone(.scene)
             }
@@ -78,7 +77,6 @@ extension MainTabs {
                     .navigationDestination(item: $post) { opened in
                         PostDetailView(model: opened.model, post: opened.id) { post = nil }
                             .readsNotices(about: .place(.post(opened.id)))
-                            .environment(\.sceneTheme, today.scene)
                             .navigationDestination(item: $profilePlace) { place in
                                 profilePlacePage(place, over: wall)
                             }
@@ -89,7 +87,6 @@ extension MainTabs {
             .navigationDestination(item: recordPost) { opened in
                 PostDetailView(model: opened.model, post: opened.id) { post = nil }
                     .readsNotices(about: .place(.post(opened.id)))
-                    .environment(\.sceneTheme, today.scene)
                     .navigationDestination(item: $profilePlace) { place in
                         profilePlacePage(place, over: nil)
                     }
@@ -124,7 +121,6 @@ extension MainTabs {
         .navigationDestination(item: $profilePlacePost) { opened in
             PostDetailView(model: opened.model, post: opened.id) { profilePlacePost = nil }
                 .readsNotices(about: .place(.post(opened.id)))
-                .environment(\.sceneTheme, today.scene)
         }
     }
 
