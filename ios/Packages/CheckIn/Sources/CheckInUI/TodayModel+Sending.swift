@@ -3,7 +3,7 @@ import CheckInDomain
 import Contracts
 import Foundation
 
-/// A post going out behind the scene once its page closed, told on 打卡's spot: 正在发送… with
+/// A post going out behind the scene once its page closed, told at the top: 正在发送… with
 /// how far it is, then 已发出 with 查看, or 没网 when it has to wait. A post the server refuses
 /// is told by the home's refusal banner instead.
 extension TodayModel {
@@ -16,7 +16,7 @@ extension TodayModel {
         case waiting
     }
 
-    /// How long 已发出 or 没网 stays before 打卡 comes back, as UI tests ask with a longer `bubbleHold`.
+    /// How long 已发出 or 没网 stays before its banner goes, as UI tests ask with a longer `bubbleHold`.
     static let defaultOutgoingHold = 3.0
 
     /// How far the post going out is, from 0 to 1; nil when none is.
@@ -46,7 +46,8 @@ extension TodayModel {
         }
     }
 
-    /// Puts 打卡 back at once, as a tap on 没网 or 查看 does; never while the post is going out.
+    /// Puts the banner away at once, as a tap on 没网 or 查看 or a swipe up does; never while the
+    /// post is going out.
     func dismissOutgoing() {
         if case .sending = outgoing { return }
         outgoing = nil

@@ -34,6 +34,8 @@ public struct TodayView: View {
     @State private var openRecapDay: LocalDay?
     /// Where the coach stands on screen, which its letter flies from.
     @State private var coachCenter: CGPoint?
+    /// My character's middle, as a point of the compose page, which a post shrinks into.
+    @State private var myAnchor = UnitPoint(x: 0.5, y: 0.75)
 
     /// Opens the post my caption's bubble is from in 动态; nil while it is still waiting to go
     /// out, which opens 动态 at the top.
@@ -58,14 +60,21 @@ public struct TodayView: View {
             if case .composing = model.step, let compose = model.compose {
                 ComposeView(model: compose)
                     .accentTone(.brand)
-                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
+                    .transition(composeTransition)
                     .zIndex(1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onGeometryChange(for: CGRect.self) {
+            $0.frame(in: .global)
+        } action: {
+            myAnchor = Self.myAnchor(in: $0)
+        }
         .background {
             scene.ignoresSafeArea(.keyboard)
         }
+        // A post going out, told at the top.
+        .overlay(alignment: .top) { OutgoingBanner(model: model) { openPost($0) } }
         .environment(\.sceneTheme, theme)
         .animation(.wildcard(Motion.page, reduceMotion: reduceMotion), value: model.step)
         .animation(.wildcard(Motion.celebrate, reduceMotion: reduceMotion), value: model.home)
@@ -325,9 +334,34 @@ private struct Arriving: ViewModifier {
 }
 
 extension TodayView {
-    /// For a moment, what became of my post or my pat.
+    /// For a moment, what became of my pat.
     fileprivate var checkInSpot: some View {
-        CheckInSpot(model: model) { openPost($0) }
+        CheckInSpot(model: model)
+    }
+
+    /// The compose page slides in; posted, it shrinks into my character, where the payoff plays
+    /// (the approved motion mockup, 2026-11-24); 取消 slides it away. A fade with Reduce Motion.
+    fileprivate var composeTransition: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        let away: AnyTransition =
+            model.composeLandsOnMe
+            ? .scale(scale: Self.landedScale, anchor: myAnchor).combined(with: .opacity)
+            : .move(edge: .trailing)
+        return .asymmetric(insertion: .move(edge: .trailing), removal: away)
+    }
+
+    /// How small the page is when it reaches me, about my character's width.
+    private static let landedScale = 0.05
+
+    /// My character's middle on the scene, which fills the screen from its top edge, as a point of
+    /// `frame`, the compose page's, both in global coordinates.
+    fileprivate static func myAnchor(in frame: CGRect) -> UnitPoint {
+        guard frame.width > 0, frame.height > 0 else { return UnitPoint(x: 0.5, y: 0.75) }
+        let unit = frame.width / StageLayout.width
+        let middle = CGPoint(
+            x: StageLayout.mySpot.x * unit,
+            y: (StageLayout.mySpot.y - MyPayoff.headHeight / 2 * StageLayout.myScale) * unit)
+        return UnitPoint(x: (middle.x - frame.minX) / frame.width, y: (middle.y - frame.minY) / frame.height)
     }
 }
 

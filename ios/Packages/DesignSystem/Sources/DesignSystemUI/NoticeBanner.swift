@@ -7,7 +7,8 @@ import SwiftUI
 /// like the Dynamic Island opening (approved 2026-11-02, design A; glass on every page 2026-11-08).
 /// A round icon on the left, which carries the news's colour, one line of title, an optional
 /// muted line under it (up to two, so a broadcast's message mostly reads whole; 通知 shows all of
-/// it), and its button's words in a graphite pill: a tap anywhere on the banner takes it.
+/// it), and its button's words in a graphite pill, if it has a button: a tap anywhere on the
+/// banner takes it.
 ///
 /// Shown with `.noticeBanner(item:onTap:content:)`, which drops it in, keeps it
 /// `Motion.noticeHold`, and puts it away on a swipe up or a tap.
@@ -15,7 +16,7 @@ public struct NoticeBanner<Icon: View>: View {
     @Environment(\.sceneTheme) private var theme
     private let title: Text
     private let detail: Text?
-    private let action: Text
+    private let action: Text?
     private let icon: Icon
 
     /// The icon's circle.
@@ -24,10 +25,11 @@ public struct NoticeBanner<Icon: View>: View {
     private static var inset: Double { 9 }
 
     /// - Parameters:
-    ///   - action: the button's words (去看看, 查看, 重发), in a pill at the end.
+    ///   - action: the button's words (去看看, 查看, 重发), in a pill at the end; nil for news
+    ///     that only tells, like a post still going out.
     ///   - icon: filled into a 36-point circle: a scene's `SceneBadge`, a store's mark, a
     ///     `NoticeSymbol` in the squad's colour.
-    public init(_ title: Text, detail: Text? = nil, action: Text, @ViewBuilder icon: () -> Icon) {
+    public init(_ title: Text, detail: Text? = nil, action: Text?, @ViewBuilder icon: () -> Icon) {
         self.title = title
         self.detail = detail
         self.action = action
@@ -54,7 +56,7 @@ public struct NoticeBanner<Icon: View>: View {
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
-            NoticeActionLabel(action)
+            if let action { NoticeActionLabel(action) }
         }
         .padding(.leading, Self.inset)
         .padding(.trailing, Self.inset)

@@ -228,7 +228,8 @@ extension TodayModel {
     /// Whether the next notice can be told: nothing told is on screen, and no check-in, check-in menu,
     /// opening or screen over the tabs is in front.
     var isFreeForNotices: Bool {
-        notice == nil && celebration == nil && teamLetter == nil && opening == nil && step == .scene
+        // A post going out has the top of the screen to itself until it is told.
+        notice == nil && outgoing == nil && celebration == nil && teamLetter == nil && opening == nil && step == .scene
             && !isCheckInMenuOpen
             && !isCovered
     }

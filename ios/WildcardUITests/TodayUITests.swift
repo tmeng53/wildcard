@@ -46,7 +46,7 @@ final class TodayUITests: XCTestCase {
         // Frames of the check-in moment from when the scene is back, named with when each was
         // taken, for a recording of it.
         XCTAssertTrue(post.waitForNonExistence(timeout: Self.wait), "the compose page didn't close after posting")
-        // The post goes out behind the scene, told on 打卡's spot.
+        // The post shrinks into my character and goes out behind the scene, told at the top.
         let outgoing = app.buttons["today.outgoing"]
         XCTAssertTrue(outgoing.waitForExistence(timeout: Self.wait), "nothing told the post was going out")
         let posted = Date()
@@ -64,7 +64,7 @@ final class TodayUITests: XCTestCase {
         keepScreenshot(named: "16-today-trained-payoff")
         tapMeInMyKit(in: app)
 
-        // 已发出 gives 打卡 its spot back.
+        // 打卡's ＋ is there once 已发出 is told.
         XCTAssertTrue(checkIn.waitForExistence(timeout: Self.wait), "打卡 didn't come back after 已发出")
         checkIn.tap()
         XCTAssertTrue(app.buttons["today.capsule.trained"].waitForExistence(timeout: Self.wait))

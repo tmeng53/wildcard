@@ -112,6 +112,7 @@ struct PostCard: View {
             }
         }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
+        .zoomSource(of: post.id)
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
         .blur(radius: model.lifted && !isLifted ? Scrim.blurRadius : 0)
