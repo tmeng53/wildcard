@@ -31,7 +31,7 @@ public struct DayCells: View {
 }
 
 /// Two dots at the card's foot, the current page's solid. Tapping one goes to it.
-struct PageDots: View {
+struct SquadCardPageDots: View {
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var page: SquadCardPage
