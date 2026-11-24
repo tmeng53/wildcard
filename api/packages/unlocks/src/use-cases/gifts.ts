@@ -79,7 +79,8 @@ export function createCoachGifts(deps: {
       if (gift === 'owned') throw new GiftAlreadyOwnedError(piece);
       if (gift === 'weekFull') {
         const had = await deps.store.giftsOf(member);
-        throw new GiftWeeklyLimitError(had.at(-1)?.givenAt ?? weekStart);
+        const last = had.filter(({ givenBy: by }) => by === 'coach').at(-1);
+        throw new GiftWeeklyLimitError(last?.givenAt ?? weekStart);
       }
       await deps.gifted?.(member, gift);
       return gift;

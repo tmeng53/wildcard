@@ -54,7 +54,8 @@ export function getRewards({ unlocks }: UnlockToolDependencies) {
       'Shows everything a member can get (a store, prop, piece, badge or voucher) and every way ' +
       'they get it, one trigger per way: training (sports, empty = any; after = days with 训练, ' +
       'counted from countsFrom; change with put_unlock_rule), coach (a squad’s AI coach may ' +
-      'give it, one a member a week; offered and the description its model reads; change with ' +
+      'give it, at most two a member a week on its own, an admin any number; offered and the ' +
+      'description its model reads; change with ' +
       'put_gift_piece), team (only the Wildcard team gives it, with give_reward) or event (the ' +
       'named events give it, such as bug-adopted and idea-adopted from adopt_feedback; change ' +
       'team and event triggers with put_reward_trigger). give_unlocks gives what has a training ' +

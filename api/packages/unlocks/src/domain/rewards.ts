@@ -41,7 +41,7 @@ export type EventName = z.infer<typeof EventName>;
 export const TRIGGER_KINDS = [
   /** The days the member has 练了 in its sports (many on one day count once). */
   'training',
-  /** A squad's AI coach may give it (a piece, at most one a member a week). */
+  /** A squad's AI coach may give it (a piece, at most two a member a week on its own; an admin any number). */
   'coach',
   /** Only the Wildcard team gives it, through admin tools; no coach or rule ever does. */
   'team',
