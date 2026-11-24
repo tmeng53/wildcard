@@ -151,6 +151,14 @@ public struct CoachDeckPage: View {
                         } action: { height in
                             if isTop { topHeight = height }
                         }
+                        // A card under the top one is a blank edge: its words would show through the strip.
+                        .overlay {
+                            if !isTop {
+                                RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous)
+                                    .fill(Color(role: .bgCanvas, in: theme))
+                                    .strokeBorder(Color(role: .borderDefault, in: theme), lineWidth: Sizing.hairline)
+                            }
+                        }
                         // A card under the top one, by its own bounds, for the UI tests: only its edge shows.
                         .background {
                             if !isTop {
