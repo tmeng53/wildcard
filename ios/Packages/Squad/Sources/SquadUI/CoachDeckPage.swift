@@ -171,7 +171,7 @@ public struct CoachDeckPage: View {
                                 deck: deck, card: latest, coach: latest.coach, coachLook: latest.look, cast: cast,
                                 places: places, height: cap(proxy.size.height), isLatest: true
                             )
-                        } else if deck.load == .loaded {
+                        } else if deck.load == .loaded, deck.latestKnown {
                             CoachDeckCard(
                                 deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places,
                                 height: cap(proxy.size.height))
