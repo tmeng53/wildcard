@@ -12,7 +12,7 @@ struct FeedAnchor: Equatable {
 }
 
 /// Where the feed's floating pieces go: the open emoji bar's button, the row whose who-reacted
-/// panel is open, and the character an emoji is flying to.
+/// panel is open, and each author's character on screen, for emoji to fly to.
 struct FeedAnchors: PreferenceKey {
     /// Equatable, so the layer over the feed is laid out again only when an anchor changed, not
     /// on every frame a character on a card draws (#924).
