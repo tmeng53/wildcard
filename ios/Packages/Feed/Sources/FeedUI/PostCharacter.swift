@@ -22,6 +22,7 @@ struct PostCharacter: View {
     private static let room = CGRect(x: -40, y: 0, width: 320, height: 320)
 
     var body: some View {
+        let _ = Self._logChanges()
         if let player = model.player(for: post) {
             let played = model.played[post.id]
             figure(player, moving: (played != nil || model.loops(post)) && !reduceMotion)
@@ -84,6 +85,7 @@ private struct ArrivalBubble: View {
     private static let tail = CGSize(width: 12, height: 6)
 
     var body: some View {
+        let _ = Self._logChanges()
         HStack(spacing: Space.xxs) {
             MemberHead(player: model.head(of: arrival.member), size: Self.head)
             Text(verbatim: arrival.emoji.text).font(.system(size: Self.emojiSize))

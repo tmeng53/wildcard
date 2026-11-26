@@ -45,6 +45,7 @@ struct PostPhotos: View {
     }
 
     var body: some View {
+        let _ = Self._logChanges()
         Color.clear
             .aspectRatio(aspectRatio, contentMode: .fit)
             .overlay {
@@ -145,6 +146,7 @@ private struct FeedPhoto: View {
     @State private var failed = false
 
     var body: some View {
+        let _ = Self._logChanges()
         Color(role: .bgSubtle, in: theme)
             .overlay {
                 if let image {
