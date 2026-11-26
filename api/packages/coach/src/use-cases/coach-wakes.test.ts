@@ -37,6 +37,7 @@ import type {
   CoachGifting,
   CoachHiringStore,
   CoachMemberFacts,
+  CoachMemberTimeZone,
   CoachMemes,
   CoachPhotoUrls,
   CoachTool,
@@ -286,6 +287,7 @@ function wakes(
     relayFeedback,
     relayingOn,
     ended,
+    timeZoneOf,
   }: {
     readonly agent: CoachAgent;
     readonly usage?: CoachUsage;
@@ -304,6 +306,7 @@ function wakes(
     readonly relayFeedback?: CoachFeedback;
     readonly relayingOn?: (day: string) => Promise<boolean>;
     readonly ended?: boolean;
+    readonly timeZoneOf?: CoachMemberTimeZone;
   },
 ) {
   const stores = createPostgresCoachStores(trx);
@@ -341,6 +344,7 @@ function wakes(
     ...(relayFeedback === undefined ? {} : { relayFeedback }),
     ...(ended === true ? { ended: (squads) => Promise.resolve(new Set(squads)) } : {}),
     ...(relayingOn === undefined ? {} : { relayingOn }),
+    ...(timeZoneOf === undefined ? {} : { timeZoneOf }),
   });
 }
 
@@ -353,6 +357,7 @@ const quietPorts = {
   memberFacts: () => Promise.resolve([]),
   streaks: () => Promise.resolve({}),
   timeZonesAt: () => Promise.resolve(() => 'America/New_York'),
+  timeZoneOf: () => Promise.resolve(undefined),
   ended: () => Promise.resolve(new Set()),
   memes: () => Promise.resolve([]),
   weatherOf: () => Promise.resolve(new Map()),
@@ -2392,6 +2397,47 @@ describe('the coach', () => {
         today: '2026-11-01',
       });
     });
+  });
+
+  it('looks up the challenge of a member behind the squad on their own day', async () => {
+    /** What day_challenge tells of 米亚 under her check-in, her own zone from `timeZoneOf`. */
+    const lookUp = async (timeZoneOf?: CoachMemberTimeZone) => {
+      let told: string | undefined;
+      await rolledBack(async (fixture) => {
+        const { trx, squad, mia, checkIn } = fixture;
+        // Sunday's challenge, which reached 米亚.
+        await createPostgresCoachStores(trx).memberNotes.save({
+          squad,
+          member: mia,
+          coach: CoachId.parse('xiaohun'),
+          day: '2026-11-01',
+          text: '今天多喝水',
+          challenge: { title: '喝水', amount: 8, unit: '杯' },
+          deliveredNow: true,
+        });
+        const { agent, runs } = scriptedAgent((task) =>
+          task.includes('# 早上')
+            ? []
+            : [{ tool: 'day_challenge', input: { user_id: 'aaaa1111' } }],
+        );
+        // 01:00 on Monday in the squad's New York, still 22:00 on Sunday in Vancouver.
+        const at = new Date('2026-11-02T06:00:00Z');
+        await wakes(fixture, {
+          agent,
+          at,
+          ...(timeZoneOf === undefined ? {} : { timeZoneOf }),
+        }).checkedIn({ checkIn, squads: [squad] });
+        expect(runs).toHaveLength(1);
+        told = runs[0]?.answers.at(-1);
+      });
+      return told;
+    };
+    // On her own clock it is still Sunday: the challenge she sees in the app.
+    expect(await lookUp(() => Promise.resolve('America/Vancouver'))).toBe(
+      '米亚（aaaa1111） 今天的挑战：喝水 8 杯\n- 没回应',
+    );
+    // With no zone saved, she goes by the squad's Monday, which has none yet.
+    expect(await lookUp()).toBe('米亚（aaaa1111） 今天没有挑战。');
   });
 
   it('reads yesterday from last week on a Monday, with only consented members’ posts', async () => {

@@ -85,6 +85,7 @@ export type {
   CoachOccasions,
   CoachPhotoUrls,
   CoachTimeZones,
+  CoachMemberTimeZone,
   CoachEndedSquads,
   CoachTool,
   ToolAnswer,

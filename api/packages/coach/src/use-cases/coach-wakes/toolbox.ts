@@ -289,10 +289,13 @@ export function toolbox({
   to,
   relaying = 'nothing',
   numbers = new PostNumbers(),
-  challenges,
+  challenge,
 }: {
-  /** On a check-in's or a reply's wake, today's challenges in the squad, looked up on demand. */
-  readonly challenges?: () => Promise<readonly DayChallengeFacts[]>;
+  /**
+   * On a check-in's or a reply's wake, a member's challenge on the day it counts for them, looked
+   * up on demand.
+   */
+  readonly challenge?: (member: string) => Promise<DayChallengeFacts | undefined>;
   /** Each post's number for the run, the same as the task's. */
   readonly numbers?: PostNumbers;
   readonly week: SquadWeek;
@@ -620,8 +623,8 @@ export function toolbox({
       }),
     );
   }
-  if (replying && challenges !== undefined)
-    tools.push(dayChallenge(draft.steps, { roster, challenges }));
+  if (replying && challenge !== undefined)
+    tools.push(dayChallenge(draft.steps, { roster, challenge }));
   if (photos !== undefined && (kind === 'checkIn' || kind === 'comment')) {
     tools.push(lookAtPhotos(draft.steps, photos));
   }
@@ -637,10 +640,10 @@ function dayChallenge(
   steps: WakeStep[],
   {
     roster,
-    challenges,
+    challenge: lookUp,
   }: {
     readonly roster: Roster;
-    readonly challenges: () => Promise<readonly DayChallengeFacts[]>;
+    readonly challenge: (member: string) => Promise<DayChallengeFacts | undefined>;
   },
 ): CoachTool {
   return defineTool(steps, {
@@ -656,13 +659,12 @@ function dayChallenge(
       if (id === undefined) {
         return `没有 user_id 是「${userId}」的人。小队的人：${peopleOf(roster)}。`;
       }
-      let today: readonly DayChallengeFacts[];
+      let found: DayChallengeFacts | undefined;
       try {
-        today = await challenges();
+        found = await lookUp(id);
       } catch {
         return '挑战现在查不到，先不提。';
       }
-      const found = today.find(({ member }) => member === id);
       if (found === undefined) return `${personOf(roster, id)} 今天没有挑战。`;
       const { challenge } = found;
       return [

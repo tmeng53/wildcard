@@ -651,6 +651,8 @@ const coachWakes =
         clock: () => new Date(),
         // The daily wake and its 战术板 keep each squad's own clock (小队时区).
         timeZonesAt: squadZonesAt,
+        timeZoneOf: async (member) =>
+          (await members.findProfile(ProfileMember.parse(member)))?.timeZone,
         ended: endedSquads,
         // A holiday or any moment reaches the coach as its switches' notes while they are on.
         occasions: async (day) => coachNotesOn(await switches.list(), day),

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   TimeZone,
+  challengeDay,
   isKnownTimeZone,
   mondayOf,
   momentAt,
@@ -65,5 +66,32 @@ describe('time zones', () => {
     expect(weekFreezesAt('2026-10-26', 'America/New_York').toISOString()).toBe(
       '2026-11-02T01:00:00.000Z',
     );
+  });
+});
+
+describe('challengeDay', () => {
+  const at = (iso: string) => new Date(iso);
+
+  it('goes by the squad’s day for a member with no zone saved', () => {
+    // 01:00 on the 20th in Toronto.
+    expect(challengeDay(at('2026-11-20T06:00:00Z'), { squad: 'America/Toronto' })).toBe(
+      '2026-11-20',
+    );
+  });
+
+  it('keeps a member behind the squad on their own day until their midnight', () => {
+    const vancouver = { squad: 'America/Toronto', own: 'America/Vancouver' };
+    // 22:00 on the 19th in Vancouver, already 01:00 on the 20th in Toronto.
+    expect(challengeDay(at('2026-11-20T06:00:00Z'), vancouver)).toBe('2026-11-19');
+    // 00:30 on the 20th in Vancouver.
+    expect(challengeDay(at('2026-11-20T08:30:00Z'), vancouver)).toBe('2026-11-20');
+  });
+
+  it('keeps a member ahead of the squad on the squad’s day until the squad’s midnight', () => {
+    const shanghai = { squad: 'America/Toronto', own: 'Asia/Shanghai' };
+    // 08:00 on the 21st in Shanghai, still 19:00 on the 20th in Toronto.
+    expect(challengeDay(at('2026-11-21T00:00:00Z'), shanghai)).toBe('2026-11-20');
+    // 13:30 on the 21st in Shanghai, 00:30 on the 21st in Toronto.
+    expect(challengeDay(at('2026-11-21T05:30:00Z'), shanghai)).toBe('2026-11-21');
   });
 });

@@ -334,6 +334,8 @@ export async function runTrial(
       ),
     streaks: () => Promise.resolve({}),
     timeZonesAt: () => Promise.resolve(() => testCase.timeZone),
+    // Every member lives on the squad's clock in an eval case.
+    timeZoneOf: () => Promise.resolve(undefined),
     ended: () => Promise.resolve(new Set()),
     memes: () => Promise.resolve([]),
     weatherOf: () => Promise.resolve(new Map()),

@@ -522,6 +522,9 @@ export type CoachTimeZones = (
   moment: Date,
 ) => Promise<(squad: SquadId) => string>;
 
+/** A member's own time zone (their profile's), or none when they never saved one. */
+export type CoachMemberTimeZone = (member: string) => Promise<string | undefined>;
+
 /** Which of these squads ended (everyone left): the coach never wakes for one. */
 export type CoachEndedSquads = (squads: readonly SquadId[]) => Promise<ReadonlySet<SquadId>>;
 

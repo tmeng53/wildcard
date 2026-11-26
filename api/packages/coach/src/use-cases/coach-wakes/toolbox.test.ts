@@ -129,17 +129,19 @@ describe('day_challenge', () => {
       kind,
       pastWeek: () => Promise.reject(new Error('not read')),
       commentsOf: () => Promise.reject(new Error('not read')),
-      challenges: () =>
-        Promise.resolve([
-          {
-            day: '2026-11-13',
-            member: mia,
-            challenge: { title: '吃不同颜色的菜', amount: 5, unit: '种', line: '休息日也能玩' },
-            answer: 'accepted' as const,
-            reason: undefined,
-            completion: undefined,
-          },
-        ]),
+      challenge: (member) =>
+        Promise.resolve(
+          [
+            {
+              day: '2026-11-13',
+              member: mia,
+              challenge: { title: '吃不同颜色的菜', amount: 5, unit: '种', line: '休息日也能玩' },
+              answer: 'accepted' as const,
+              reason: undefined,
+              completion: undefined,
+            },
+          ].find((each) => each.member === member),
+        ),
     });
 
   it('tells a member’s challenge today by user_id, only when a reply looks it up', async () => {

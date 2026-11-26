@@ -61,13 +61,14 @@ import type {
   CoachSettingsStore,
   CoachStores,
   CoachTimeZones,
+  CoachMemberTimeZone,
   CoachEndedSquads,
   CoachTransaction,
   CoachUsage,
   SquadWeekSource,
 } from '../ports.js';
 import { challengeTools, toolbox, type WakeDraft } from './coach-wakes/toolbox.js';
-import { mondayOf, wallClockAt } from '@wildcard/time-zones';
+import { challengeDay, mondayOf, wallClockAt } from '@wildcard/time-zones';
 import { personOf, rosterOf, type Roster } from '../domain/roster.js';
 
 /**
@@ -209,6 +210,11 @@ export interface CoachWakesDependencies {
   readonly streaks: CoachStreaks;
   /** The clock of each squad's daily wake and of the day it tells the coach. */
   readonly timeZonesAt: CoachTimeZones;
+  /**
+   * Each member's own clock, for the day of their challenge a post or reply asks about: the
+   * earlier of theirs and the squad's, as the app shows it.
+   */
+  readonly timeZoneOf: CoachMemberTimeZone;
   /** Squads everyone left, which the coach never wakes for, whoever is hired there. */
   readonly ended: CoachEndedSquads;
   /** The meme library the coach draws humour from. */
@@ -832,7 +838,12 @@ async function think(
         ? { relaying: 'off' as const }
         : {}),
       ...photosOf(deps.photoUrls, { week, wake }),
-      challenges: () => challengesToday(deps, { squad: wake.squad, day }),
+      challenge: async (member) =>
+        challengeOf(deps, {
+          squad: wake.squad,
+          member,
+          day: challengeDay(now, { squad: zone, own: await deps.timeZoneOf(member) }),
+        }),
       ...factsFor(deps, { squad: wake.squad, week, roster }),
       memes: deps.memes,
       noteTo,
@@ -1301,16 +1312,21 @@ function dayBefore(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) - days * 86_400_000).toISOString().slice(0, 10);
 }
 
-/** The photos of the check-in a wake is about, to look at on demand, when it has any. */
-/** Today's challenges in the squad, only of members who agree to AI use. */
-async function challengesToday(
+/** A member's challenge on `day`, only while they agree to AI use. */
+async function challengeOf(
   deps: CoachWakesDependencies,
-  { squad, day }: { readonly squad: SquadId; readonly day: string },
-): Promise<readonly DayChallengeFacts[]> {
+  {
+    squad,
+    member,
+    day,
+  }: { readonly squad: SquadId; readonly member: string; readonly day: string },
+): Promise<DayChallengeFacts | undefined> {
+  if ((await deps.aiConsented([member])).length === 0) return undefined;
   const set = await deps.stores.memberNotes.challengesOn({ squad, day });
-  const consented = new Set(await deps.aiConsented(set.map(({ member }) => member)));
-  return set.filter(({ member }) => consented.has(member));
+  return set.find((each) => each.member === member);
 }
+
+/** The photos of the check-in a wake is about, to look at on demand, when it has any. */
 
 function photosOf(
   photoUrls: CoachPhotoUrls,
