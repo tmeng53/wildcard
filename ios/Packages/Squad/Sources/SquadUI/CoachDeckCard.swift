@@ -47,7 +47,7 @@ struct CoachDeckCard: View {
     var isTop = true
     /// Swipes the card into 以前, once its challenge is answered; nil on a card opened from 以前.
     var putAway: ((CoachPageCard) -> Void)?
-    /// A card under the top one is cut to the top one's height, so only its edge peeks out; nil
+    /// The page's one card height, which every card on it takes; nil (a card opened from 以前)
     /// lets the card be as tall as what it says.
     var height: Double?
     /// The newest card already seen, shown once nothing is new.
@@ -77,17 +77,15 @@ struct CoachDeckCard: View {
                 kindLine
                 content
             }
-            .padding(.horizontal, Space.m + Space.xxs)
-            .padding(.top, Space.m)
-            .padding(.bottom, Space.m)
+            .padding(Space.cardPadding)
+            // Every card on the page is the same size (Tracy, 2026-11-26): what it says at the
+            // top, its buttons at its foot.
+            Spacer(minLength: 0)
             if isTop {
                 buttons
-                    .padding(.horizontal, Space.s + Space.xxs)
-                    .padding(.bottom, Space.s + Space.xxs)
+                    .padding([.horizontal, .bottom], Space.cardPadding)
             }
         }
-        // As tall as what it says (Tracy, 2026-11-21): a short note no longer sits on a card
-        // stretched to the screen's foot.
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: height.map { CGFloat($0) }, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
