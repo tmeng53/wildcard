@@ -1327,7 +1327,6 @@ async function challengeOf(
 }
 
 /** The photos of the check-in a wake is about, to look at on demand, when it has any. */
-
 function photosOf(
   photoUrls: CoachPhotoUrls,
   { week, wake }: { readonly week: SquadWeek; readonly wake: NewWake },
