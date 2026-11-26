@@ -125,10 +125,6 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
     var challengeCoach: AnyView?
     /// Opens the coach's card for today's challenge, from a tap on the coach's head.
     var openChallenge: (() -> Void)?
-    /// The coach's row while it said something not seen yet (`coachNews(_:open:head:)`).
-    var coachNews: CoachNewsLine?
-    var coachNewsHead: AnyView?
-    var openCoachNews: (() -> Void)?
     /// Opens a member's player card, from a tap on their ring in the 今天 row.
     private var openMember: ((SquadMember) -> Void)?
     /// How far a swipe up has lifted the card, while the finger is down.
@@ -154,8 +150,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
                     SquadPage(
                         squad: squad, challenge: mine.challenge, challengeCoach: challengeCoach, avatar: avatar,
                         footer: footer, openSquad: openSquad, openMember: openMember,
-                        completeChallenge: completeChallenge, openChallenge: openChallenge,
-                        coachNews: coachNews, coachNewsHead: coachNewsHead, openCoachNews: openCoachNews
+                        completeChallenge: completeChallenge, openChallenge: openChallenge
                     )
                     .squadCardPage()
                     .id(SquadCardPage.squad)
@@ -269,11 +264,6 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
     let openMember: ((SquadMember) -> Void)?
     let completeChallenge: (() -> Void)?
     let openChallenge: (() -> Void)?
-    /// What the coach said that the member hasn't seen; its row shows only without an accepted
-    /// challenge, whose row has the coach's head too (Tracy, 2026-11-13).
-    let coachNews: CoachNewsLine?
-    let coachNewsHead: AnyView?
-    let openCoachNews: (() -> Void)?
 
     var body: some View {
         // With a footer the rows sit 8 apart instead of 12, so the page grows as little as it can.
@@ -297,8 +287,6 @@ private struct SquadPage<Avatar: View, Footer: View>: View {
             if let challenge {
                 ChallengeRow(
                     challenge: challenge, coach: challengeCoach, complete: completeChallenge, open: openChallenge)
-            } else if let coachNews, let openCoachNews {
-                CoachNewsRow(news: coachNews, head: coachNewsHead, open: openCoachNews)
             }
         }
         .accessibilityElement(children: .contain)

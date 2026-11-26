@@ -90,24 +90,6 @@ extension TodayModel {
         openChallenge(myChallenge)
     }
 
-    /// What the coach said that I haven't seen, for its row on the squad card: its name and the
-    /// start of its newest line, a gift without one saying 送你一样东西.
-    var coachNews: CoachNewsLine? {
-        guard let card = store.newestUnseenCoachCard else { return nil }
-        let line =
-            card.newsLine ?? String(copyKey: "送你一样东西", bundle: Bundle.module.inAppLanguage)
-        return CoachNewsLine(name: card.coach.name, line: line)
-    }
-
-    /// The coach whose words wait unseen, whose head starts its row.
-    var coachNewsSpeaker: CoachSpeaker? { store.newestUnseenCoachCard?.coach }
-
-    /// The coach's row on the squad card was tapped: its page opens on what it said today.
-    func openCoachNews() {
-        guard arrival == nil else { return }
-        openCoach()
-    }
-
     /// A gift from the coach still in its box, for the round gift button (Tracy, 2026-11-21).
     var unopenedGift: CoachPageCard? { store.unopenedCoachGift }
 
