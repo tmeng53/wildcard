@@ -203,6 +203,7 @@ final class CoachDeckUITests: XCTestCase {
         assertOnScreen(challenge, accept, in: app)
         assertSame(challenge, as: cardFrame)
         XCTAssertTrue(app.buttons["coachDeck.pass"].isHittable, "不接挑战 is covered")
+        XCTAssertTrue(challenge.frame.contains(app.buttons["coachDeck.pass"].frame), "不接挑战 runs off its card")
         keepScreenshot(named: "111-coach-deck-challenge")
         accept.tap()
         waitFor(challenge, "exists == false", "the challenge stayed after it was accepted")

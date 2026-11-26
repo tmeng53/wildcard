@@ -317,8 +317,9 @@ struct CoachDeckCard: View {
 }
 
 enum DeckMetrics {
-    /// The stage's height on a card, as the approved deck has it on a 390-point phone.
-    static let stageHeight: Double = 300
+    /// The stage's height on a card: the approved deck's 300 points less the empty wall above the
+    /// figures, so a challenge's two buttons fit on a card the page's one size.
+    static let stageHeight: Double = 236
     static let corner: Double = 24
     /// An opened gift's picture tile.
     static let giftTile: Double = 84
