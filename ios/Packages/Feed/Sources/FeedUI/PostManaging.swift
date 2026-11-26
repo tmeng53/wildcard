@@ -96,10 +96,10 @@ extension FeedModel {
             editing: post.checkIn, editor: editor, loadPhoto: { await store.photo($0) },
             saved: { [weak self] checkIn in
                 self?.apply(.edited(checkIn))
-                // 动态 stays still under the compose page, so the edited post is where the member
-                // left it. Scrolling the lazy list to it as the page closed re-placed every card
-                // above it in one update that never ended and froze the app (#924).
                 self?.editing = nil
+                // Back on 动态, the edited post is held at the top, so the change is what the
+                // member sees even when the list moved under the compose page (#924).
+                self?.focus = checkIn.id
             },
             close: { [weak self] in self?.editing = nil })
     }
