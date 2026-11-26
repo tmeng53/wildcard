@@ -35,7 +35,7 @@ public struct CoachDeckPlaces {
 /// One of the coach's cards (the approved deck, 2026-11-08): its stage on top, then what kind it
 /// is and when, what the coach said, and its buttons at the bottom. A gift opens in place
 /// (拆开 → 一会儿再说 | 立刻穿上) and a challenge is answered in place (接受挑战, or 不接挑战 with an
-/// optional word to the coach on why). `card` nil is the last card, once everything is seen.
+/// optional word to the coach on why). `card` nil is a coach who said nothing yet.
 struct CoachDeckCard: View {
     let deck: CoachDeck
     let card: CoachPageCard?
@@ -50,6 +50,8 @@ struct CoachDeckCard: View {
     /// A card under the top one is cut to the top one's height, so only its edge peeks out; nil
     /// lets the card be as tall as what it says.
     var height: Double?
+    /// The newest card already seen, shown once nothing is new.
+    var isLatest = false
     /// The gift's moment, kept here while it is opened as the member watches.
     @State private var moment: GiftMoment?
     /// 接受挑战 was tapped and went through: the stamp comes down and the button pops.
@@ -102,8 +104,14 @@ struct CoachDeckCard: View {
         .background {
             Color.clear
                 .accessibilityElement()
-                .accessibilityIdentifier(card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen")
+                .accessibilityIdentifier(markerID)
         }
+    }
+
+    /// The card's name for the UI tests.
+    private var markerID: String {
+        if isLatest { return "coachDeck.latest" }
+        return card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen"
     }
 
     /// The card as it stands now in the deck (a gift opened, a challenge answered).
@@ -240,8 +248,6 @@ struct CoachDeckCard: View {
             case .note, .challenge:
                 EmptyView()
             }
-        } else {
-            outline(Text(copy: "看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
         }
     }
 

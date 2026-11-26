@@ -123,6 +123,20 @@ private let oldNote = card(.note, "40", minutes: -1440, text: "昨天跑完 5 �
     #expect(deck.earlier.map(\.id) == ["b1", "40"])
     deck.seen(gift)
     #expect(deck.top == nil)
+    #expect(deck.latest?.id == "gift-sheeptowel")
+}
+
+@MainActor @Test func withNothingNewThePageShowsTheNewestCardSeen() async {
+    let deck = CoachDeck(squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [], earlier: [board, oldNote])))
+    await deck.reload()
+    #expect(deck.top == nil)
+    #expect(deck.latest?.id == "b1")
+}
+
+@MainActor @Test func aCoachWhoSaidNothingHasNoLatestCard() async {
+    let deck = CoachDeck(squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [], earlier: [])))
+    await deck.reload()
+    #expect(deck.latest == nil)
 }
 
 @MainActor @Test func openingAGiftToWearItPutsItOn() async {

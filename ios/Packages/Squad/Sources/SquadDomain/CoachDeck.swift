@@ -83,8 +83,12 @@ public final class CoachDeck {
         (self.squad, self.source, self.wear, self.changed) = (squad, source, wear, changed)
     }
 
-    /// The card on top, or nil once everything is seen (「暂时没有新消息」).
+    /// The card on top, or nil once everything is seen.
     public var top: CoachPageCard? { stack.first }
+
+    /// The newest card already seen, which the page shows once the stack is empty, so the coach's
+    /// page always has what it said last (Tracy, 2026-11-26); nil while the coach said nothing.
+    public private(set) var latest: CoachPageCard?
 
     public func reload() async {
         var stillUnmarked: [CoachPageCard.Key] = []
@@ -142,6 +146,7 @@ public final class CoachDeck {
             let fresh = Set(page.cards.map(\.key))
             let local = filter == .all ? swiped.filter { !fresh.contains($0.key) } : []
             earlier = (local + page.cards).sorted { $0.time > $1.time }
+            if filter == .all { latest = earlier.first }
         } else {
             let known = Set(earlier.map(\.key))
             earlier += page.cards.filter { !known.contains($0.key) }
@@ -155,6 +160,7 @@ public final class CoachDeck {
         let gone = stack.remove(at: index).with(isSeen: true)
         swiped.insert(gone, at: 0)
         if earlierFilter == .all { earlier.insert(gone, at: 0) }
+        if latest.map({ gone.time >= $0.time }) ?? true { latest = gone }
         putAway += 1
         if failed == card.key { failed = nil }
         Task {

@@ -11,8 +11,8 @@ import SwiftUI
 /// nothing turns by itself. Each card is as tall as what it says; under the stack, how many are
 /// left and 下一张, which puts the top one away as the swipe does (Tracy, 2026-11-21), and on
 /// opening the top card leans right and back once to show it (Tracy, 2026-11-09). Top right,
-/// from the left: 招聘会, 简历, 以前. Once all are seen,
-/// the last card says so with 看以前的.
+/// from the left: 招聘会, 简历, 以前. Once all are seen, the newest card stays up (Tracy,
+/// 2026-11-26); only a coach who said nothing yet shows 暂时没有新消息.
 public struct CoachDeckPage: View {
     private let deck: CoachDeck
     private let coach: CoachSpeaker
@@ -174,9 +174,19 @@ public struct CoachDeckPage: View {
                         .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
                         .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
                     }
+                    // Nothing new: what the coach said last stays up, not an empty card (Tracy,
+                    // 2026-11-26); 以前 is the clock, top right.
                     if shown.isEmpty {
-                        CoachDeckCard(
-                            deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
+                        if let latest = deck.latest {
+                            CoachDeckCard(
+                                deck: deck, card: latest, coach: latest.coach, coachLook: latest.look, cast: cast,
+                                places: places, isLatest: true
+                            )
+                            .frame(maxHeight: cap(proxy.size.height), alignment: .top)
+                        } else if deck.load == .loaded {
+                            CoachDeckCard(
+                                deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
+                        }
                     }
                 }
                 Spacer(minLength: DeckMetrics.peek * Double(max(shown.count - 1, 0)) + Space.m)

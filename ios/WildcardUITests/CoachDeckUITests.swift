@@ -5,7 +5,7 @@ import XCTest
 /// 毛头 opens its page, a stack of what it has for me, oldest on top. Each card is swiped right
 /// into 以前; a gift opens in place (拆开, then 立刻穿上) and a challenge is answered in place
 /// (接受挑战). Under the stack a line says how many are left (Tracy, 2026-11-09). Once all are seen,
-/// 看以前的 opens 以前, where every card is a row and 挑战 keeps only the challenges. Screenshots are
+/// what 毛头 said last stays up and the clock opens 以前, where every card is a row and 挑战 keeps only the challenges. Screenshots are
 /// kept for review.
 @MainActor
 final class CoachDeckUITests: XCTestCase {
@@ -52,13 +52,15 @@ final class CoachDeckUITests: XCTestCase {
         accept(in: app)
         // The coach's lines to my check-ins stay under the posts in 动态, never here.
 
-        // All seen: 看以前的 opens 以前, newest first.
-        let allSeen = element("coachDeck.allSeen", in: app)
-        XCTAssertTrue(allSeen.waitForExistence(timeout: Self.wait), "the last card isn't 暂时没有新消息")
-        let earlier = app.buttons["coachDeck.earlier"]
-        assertOnScreen(allSeen, earlier, in: app)
+        // All seen: the newest card stays up, with no empty card and no 以前 button (Tracy,
+        // 2026-11-26); the clock opens 以前, newest first.
+        let latest = element("coachDeck.latest", in: app)
+        XCTAssertTrue(latest.waitForExistence(timeout: Self.wait), "the newest card didn't stay up")
+        XCTAssertFalse(element("coachDeck.allSeen", in: app).exists, "the page shows an empty card")
+        XCTAssertFalse(app.buttons["coachDeck.earlier"].exists, "the page shows a 以前 button")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(latest.frame), "the newest card runs off the screen")
         keepScreenshot(named: "113-coach-deck-all-seen")
-        earlier.tap()
+        app.buttons["coachDeck.history"].tap()
         let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "coachEarlier.row."))
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: Self.wait), "以前 didn't open")
         XCTAssertEqual(rows.count, 4, "以前 doesn't list every card seen")
