@@ -85,8 +85,7 @@ public struct PostDetailView: View {
         ScrollViewReader { reader in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    // The card in the list is the one this page grows out of; this one isn't.
-                    PostCard(model: model, post: post).environment(\.postZoom, nil)
+                    PostCard(model: model, post: post)
                     comments(post).mentionTags(model)
                 }
                 .padding(.horizontal, Space.pageMargin)
