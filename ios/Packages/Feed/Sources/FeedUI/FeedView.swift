@@ -147,20 +147,20 @@ public struct FeedView: View {
                 CoachBoard(note: note)
                     .blur(radius: model.lifted ? Scrim.blurRadius : 0)
             }
+            // Each day's label is a row like its cards, never a Section's header: the lazy stack
+            // placing section headers while it re-estimated the cards around an edited post never
+            // finished, and froze the app (#924).
             ForEach(sections) { section in
-                Section {
-                    if section.heading == .today, let note = model.coachNote {
-                        CoachBoard(note: note)
-                            .blur(radius: model.lifted ? Scrim.blurRadius : 0)
-                    }
-                    ForEach(section.posts) { post in
-                        PostCard(model: model, post: post)
-                            .id(post.id)
-                    }
-                } header: {
-                    SectionLabel(section.heading.title)
-                        .padding(.top, section.id == sections.first?.id ? 0 : Space.xs)
+                SectionLabel(section.heading.title)
+                    .padding(.top, section.id == sections.first?.id ? 0 : Space.xs)
+                    .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                if section.heading == .today, let note = model.coachNote {
+                    CoachBoard(note: note)
                         .blur(radius: model.lifted ? Scrim.blurRadius : 0)
+                }
+                ForEach(section.posts) { post in
+                    PostCard(model: model, post: post)
+                        .id(post.id)
                 }
             }
             if model.store.hasEarlier {
