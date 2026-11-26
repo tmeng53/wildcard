@@ -203,28 +203,6 @@ final class CoachDeckUITests: XCTestCase {
 
     }
 
-    /// While 毛头 said something I haven't seen, the squad card's last row says its name and the
-    /// start of its newest line (Tracy, 2026-11-13, option 1); a tap opens its page on today's cards.
-    func testTheSquadCardsCoachRowOpensWhatTheCoachSaid() {
-        continueAfterFailure = false
-        let app = launch(folded: false)
-        let row = app.buttons["squadcard.coachNews"]
-        XCTAssertTrue(row.waitForExistence(timeout: Self.wait), "the squad card has no row for 毛头")
-        XCTAssertEqual(row.label, "毛头")
-        XCTAssertTrue(
-            (row.value as? String)?.hasPrefix("昨天三个人上场") ?? false, "the row doesn't say 毛头's line: \(row.value ?? "")")
-        let squadCard = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
-        XCTAssertTrue(
-            squadCard.frame.contains(row.frame), "the row runs off the squad card: \(row.frame) in \(squadCard.frame)")
-        XCTAssertTrue(app.windows.firstMatch.frame.contains(row.frame), "the row runs off the screen: \(row.frame)")
-        XCTAssertTrue(row.isHittable, "the row is covered")
-        keepScreenshot(named: "104-coach-news-row")
-
-        row.tap()
-        XCTAssertTrue(
-            card("board", in: app).waitForExistence(timeout: Self.wait), "the row didn't open 毛头's page")
-    }
-
     /// 教练有话说 hangs under the squad card's trailing end (Tracy, 2026-11-24), with a dot while 毛头
     /// has a card I haven't seen, above the gift button when a gift waits; a tap opens 毛头's page.
     func testTheHomesCoachButtonOpensWhatTheCoachSaid() {
