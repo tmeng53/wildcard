@@ -50,7 +50,6 @@ public struct FeedView: View {
     /// app pushes that post's page (`PostDetailView`) on the stack's own path, so every page over
     /// 动态 goes the one way and the feed keeps its place underneath.
     public var body: some View {
-        let _ = Self._logChanges()
         feed
     }
 

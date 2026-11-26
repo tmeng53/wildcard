@@ -82,13 +82,7 @@ xcrun simctl spawn "$udid" log stream --style compact \
   --predicate 'subsystem == "com.wildcardsquad.wildcard" AND category == "stall"' \
   2>/dev/null > >(grep --line-buffered "stall " | sed -l 's/^/stall (live): /') &
 stalls=$!
-# DEBUG (#924, not for merge): which views' bodies run again and why, each distinct line at its
-# 1st, 2nd, 4th, 8th... time, so a body that loops shows with a growing count.
-xcrun simctl spawn "$udid" log stream --style compact --level debug \
-  --predicate 'subsystem == "com.apple.SwiftUI" AND category == "Changed Body Properties"' \
-  2>/dev/null > >(awk '{ t = $1 " " $2; $1 = ""; $2 = ""; n[$0]++; c = n[$0]; while (c % 2 == 0) c /= 2; if (c == 1) { print "body " n[$0] " " t ":" $0; fflush() } }') &
-bodies=$!
-trap 'kill "$stalls" "$bodies" 2>/dev/null || true' EXIT
+trap 'kill "$stalls" 2>/dev/null || true' EXIT
 
 echo "==> xcodebuild test on $sim"
 status=0
@@ -103,7 +97,7 @@ xcodebuild test \
   -retry-tests-on-failure -test-iterations 2 \
   CODE_SIGNING_ALLOWED=NO \
   2>&1 | tee "$out/xcodebuild.log" || status=$?
-kill "$stalls" "$bodies" 2>/dev/null || true
+kill "$stalls" 2>/dev/null || true
 
 # The widgets' extension stopping on its own (a WidgetKit fatal error leaves no crash report in
 # the UI test, only a blank widget or an app missing from the widget gallery): its last words.

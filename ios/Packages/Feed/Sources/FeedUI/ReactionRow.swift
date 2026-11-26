@@ -38,7 +38,6 @@ struct ReactionRow: View {
     private var canRespond: Bool { post.canRespond(model.viewer) }
 
     var body: some View {
-        let _ = Self._logChanges()
         let reactions = post.reactions
         let coach = model.coachReply(on: post.id).flatMap { $0.emoji == nil ? nil : $0 }
         switch part {

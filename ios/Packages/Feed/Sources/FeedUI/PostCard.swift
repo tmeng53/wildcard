@@ -75,7 +75,6 @@ struct PostCard: View {
     }
 
     var body: some View {
-        let _ = Self._logChanges()
         CoverTicket(tear: strip == nil && mealStrip == nil ? .mist : .color) {
             if tiles.isEmpty {
                 block
@@ -317,7 +316,6 @@ struct BackfillLabel: View {
     let day: BackfillDay
 
     var body: some View {
-        let _ = Self._logChanges()
         switch day {
         case .yesterday: Text(copy: "补昨天的", bundle: .module)
         case .weekday(1): Text(copy: "补周一的", bundle: .module)

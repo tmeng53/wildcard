@@ -20,7 +20,6 @@ public struct TicketCard<Face: View, Stub: View>: View {
     }
 
     public var body: some View {
-        let _ = Self._logChanges()
         VStack(alignment: .leading, spacing: 0) {
             face
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -62,7 +61,6 @@ public struct CoverTicket<Cover: View, Stub: View>: View {
     }
 
     public var body: some View {
-        let _ = Self._logChanges()
         VStack(alignment: .leading, spacing: 0) {
             cover
                 .onGeometryChange(for: Double.self) {
@@ -95,7 +93,6 @@ private struct TearStroke: View {
     static let halfWidth = width / 2
 
     var body: some View {
-        let _ = Self._logChanges()
         TearLine()
             .stroke(ink, style: StrokeStyle(lineWidth: Self.width, dash: [4, 4]))
             .frame(height: Self.width)
@@ -119,7 +116,6 @@ public struct TicketStamp: View {
     public init() {}
 
     public var body: some View {
-        let _ = Self._logChanges()
         TicketW()
             .foregroundStyle(Color(role: .fgDefault, in: theme))
     }
@@ -128,7 +124,6 @@ public struct TicketStamp: View {
 /// The W itself, in the colour around it. A picture on the ticket, so it keeps its size.
 struct TicketW: View {
     var body: some View {
-        let _ = Self._logChanges()
         Text(verbatim: "W")
             .typeStyle(TypeRamp.ticketStamp)
             .dynamicTypeSize(.large)

@@ -44,7 +44,6 @@ struct FeedLayer: View {
     @State private var grid: CheckInID?
 
     var body: some View {
-        let _ = Self._logChanges()
         GeometryReader { proxy in
             if bar != nil || who != nil || grid != nil {
                 Color.clear
