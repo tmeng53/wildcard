@@ -65,8 +65,6 @@ struct MainTabs: View {
     /// The pages pushed over 动态: 通知, once the bell is tapped, and a post a notice opens, over
     /// 通知 or straight over 动态 (the home's banner, a push).
     @State var feedPages: [FeedPage] = []
-    /// Where 动态's cards and the post pages pushed straight from them zoom between each other.
-    @Namespace private var postZoom
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     /// 商店街 and the character editor, open from 我.
@@ -287,7 +285,6 @@ struct MainTabs: View {
                     })
             ) { selection = .today }
             .navigationRoot()
-            .environment(\.postZoom, postZoom)
             .task { await recap.refresh() }
             // The bell's dot, read each time 动态 opens, and the member 通知 shows: their character
             // when it is empty and their unlocks for how a store opened.
@@ -306,8 +303,6 @@ struct MainTabs: View {
                     PostDetailView(model: opened.model, post: opened.id) {
                         if case .post(let top) = feedPages.last, top.id == opened.id { feedPages.removeLast() }
                     }
-                    // Straight over 动态, it grows out of its card; over 通知 or a place, it is pushed.
-                    .zooms(fromCardOf: opened.id, in: feedPages.first == page ? postZoom : nil)
                     .readsNotices(about: .place(.post(opened.id)))
                 case .place(let place):
                     placePage(place) { feedPages.append(.post(OpenedPost(id: $0, model: feed.page(of: $0)))) }
