@@ -26,6 +26,6 @@ struct MyPayoff: View {
     }
 
     /// How far above the feet the top of the head is, in the rig's points.
-    private static let headHeight = 250.0
+    static let headHeight = 250.0
 }
 #endif

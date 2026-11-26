@@ -171,7 +171,7 @@ public struct SquadCard<Avatar: View, Footer: View>: View {
             .defaultScrollAnchor(anchor, for: .initialOffset)  // Reopened, it shows `page`,
             .defaultScrollAnchor(anchor, for: .sizeChanges)  // also while its glass grows.
             .scrollIndicators(.hidden)
-            PageDots(page: $page)
+            SquadCardPageDots(page: $page)
                 .padding(.bottom, Space.xs).zIndex(1)  // Over the grabber's tap area, which reaches up here.
             if let collapse {
                 Grabber(label: Text(copy: "收起小队卡片", bundle: .module), action: collapse)

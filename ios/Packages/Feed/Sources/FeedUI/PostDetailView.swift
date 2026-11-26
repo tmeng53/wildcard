@@ -28,6 +28,8 @@ public struct PostDetailView: View {
     @State private var holding: Comment.ID?
     /// The coach's line held, lifted under its glass menu.
     @State private var holdingCoach: CoachLine?
+    /// Whether the page has read its post once: from then on, a comment I send rises into place.
+    @State private var hasLoaded = false
 
     private static let faceSize: Double = 32
     /// A held comment's lift.
@@ -64,6 +66,7 @@ public struct PostDetailView: View {
         .task(id: id) {
             model.opened = id
             await model.loadPage(id)
+            hasLoaded = true
         }
         // Back in the app, read it again: what came meanwhile, and a comment whose answer was
         // lost while away shows as saved.
@@ -82,7 +85,8 @@ public struct PostDetailView: View {
         ScrollViewReader { reader in
             ScrollView {
                 VStack(alignment: .leading, spacing: Space.m) {
-                    PostCard(model: model, post: post)
+                    // The card in the list is the one this page grows out of; this one isn't.
+                    PostCard(model: model, post: post).environment(\.postZoom, nil)
                     comments(post).mentionTags(model)
                 }
                 .padding(.horizontal, Space.pageMargin)
@@ -137,23 +141,11 @@ public struct PostDetailView: View {
                     }
                     .accessibilityIdentifier("post.coachComment")
                 }
-                ForEach(thread) { entry in
-                    switch entry {
-                    case .comment(let comment):
-                        row(comment, on: post)
-                    case .answer(let answer, let member):
-                        replyToCoach(
-                            answer.coach, holding: .answer(answer.comment), text: answer.text, on: post.id
-                        ) {
-                            CoachCommentRow(
-                                model: model, coach: answer.coach, text: answer.text, mentions: answer.mentions,
-                                writtenAt: answer.writtenAt, recipient: model.displayName(of: member))
-                        }
-                        .accessibilityIdentifier("post.coachAnswer")
-                        .id(entry.id)
-                    }
-                }
+                threadRows(thread, on: post)
             }
+            // Only a comment I just sent rises in; what the page's first read brings is simply there.
+            .animation(
+                hasLoaded ? .wildcard(Motion.sheet, reduceMotion: reduceMotion) : nil, value: lastMine(in: thread))
         }
     }
 
@@ -291,5 +283,48 @@ public struct PostDetailView: View {
         .padding(.horizontal, Space.pageMargin)
         .padding(.top, Space.xs)
     }
+}
+
+extension PostDetailView {
+    /// The thread's comments and the coach's answers under them, in order.
+    fileprivate func threadRows(_ thread: [CommentThreadEntry], on post: FeedPost) -> some View {
+        ForEach(thread) { entry in
+            Group {
+                switch entry {
+                case .comment(let comment):
+                    row(comment, on: post)
+                case .answer(let answer, let member):
+                    replyToCoach(
+                        answer.coach, holding: .answer(answer.comment), text: answer.text, on: post.id
+                    ) {
+                        CoachCommentRow(
+                            model: model, coach: answer.coach, text: answer.text, mentions: answer.mentions,
+                            writtenAt: answer.writtenAt, recipient: model.displayName(of: member))
+                    }
+                    .accessibilityIdentifier("post.coachAnswer")
+                    .id(entry.id)
+                }
+            }
+            .transition(arriving)
+        }
+    }
+
+    /// A comment I just sent rises from the box under the page into its place at the end of the
+    /// list (the approved motion mockup, 2026-11-24); a fade with Reduce Motion.
+    fileprivate var arriving: AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        return .asymmetric(
+            insertion: .offset(y: Self.arrivingRise).combined(with: .opacity),
+            removal: .opacity)
+    }
+
+    /// The last comment of the thread when it is mine, which changes as I send one.
+    fileprivate func lastMine(in thread: [CommentThreadEntry]) -> Comment.ID? {
+        guard case .comment(let comment) = thread.last, comment.member == model.viewer else { return nil }
+        return comment.id
+    }
+
+    /// How far below its place a comment I sent starts, about where the comment box is.
+    fileprivate static let arrivingRise = 120.0
 }
 #endif

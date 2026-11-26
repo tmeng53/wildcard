@@ -58,10 +58,15 @@ struct PostPhotos: View {
                             .tag(index)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: tiles.count > 1 ? .always : .never))
+                .tabViewStyle(.page(indexDisplayMode: .never))
                 // The pages are square at the bottom, where the 成绩条 meets them: iOS 26 rounds
                 // a page's corners to its container's shape otherwise, and the card shows through.
                 .containerShape(Rectangle())
+            }
+            .overlay(alignment: .bottom) {
+                if tiles.count > 1 {
+                    PageDots(count: tiles.count, page: page).padding(.bottom, Space.s)
+                }
             }
             // The ticket rounds and notches it.
             .clipped()

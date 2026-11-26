@@ -86,7 +86,7 @@ struct FeedLayer: View {
                         model.barFrame = frame
                     }
                     .position(barCenter(over: button, in: proxy))
-                    .transition(.scale(scale: 0.3, anchor: .bottomTrailing).combined(with: .opacity))
+                    .transition(barTransition(from: button, in: proxy))
                 }
             }
             if let who, let post = model.store.post(who.post) {
@@ -124,6 +124,15 @@ struct FeedLayer: View {
         let above = button.minY - Space.xs - EmojiBar.height / 2
         let fitsAbove = above - EmojiBar.height / 2 > proxy.safeAreaInsets.top + Space.xs
         return CGPoint(x: midX, y: fitsAbove ? above : button.maxY + Space.xs + EmojiBar.height / 2)
+    }
+
+    /// The bar grows out of my smiley button and folds back into it; a fade with Reduce Motion.
+    private func barTransition(from button: CGRect, in proxy: GeometryProxy) -> AnyTransition {
+        guard !reduceMotion else { return .opacity }
+        let center = barCenter(over: button, in: proxy)
+        let size = CGSize(width: EmojiBar.width, height: EmojiBar.height)
+        let bar = CGRect(origin: CGPoint(x: center.x - size.width / 2, y: center.y - size.height / 2), size: size)
+        return AnyTransition(ButtonMorph(from: button, to: bar))
     }
 
     private func gridCenter(over button: CGRect, in proxy: GeometryProxy) -> CGPoint {

@@ -66,8 +66,11 @@ struct PageViewer<Page: View>: View {
                     .tag(index)
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: count > 1 ? .always : .never))
+        .tabViewStyle(.page(indexDisplayMode: .never))
         .ignoresSafeArea()
+        .overlay(alignment: .bottom) {
+            if count > 1 { PageDots(count: count, page: page).padding(.bottom, Space.l) }
+        }
         .overlay(alignment: .topTrailing) {
             HeaderButton(Text(copy: "关闭", bundle: .module), systemImage: "xmark", on: .ink) { dismiss() }
                 .padding(.horizontal, Space.m)

@@ -44,7 +44,7 @@ public final class TodayModel {
     private(set) var celebrations = 0
     /// How long a notice at the top stays up.
     let noticeHold: Double
-    /// How long 已发出 or 没网 holds 打卡's spot, in seconds.
+    /// How long 已发出 or 没网 stays at the top, in seconds.
     let outgoingHold: Double
     private(set) var step = Step.scene
 
@@ -61,8 +61,15 @@ public final class TodayModel {
     /// Counts posts, so the one strong haptic fires on each.
     private(set) var posts = 0
     private(set) var isSending = false
-    /// The latest post going out behind the scene, on 打卡's spot until it is told (`deliver`).
+    /// The latest post going out behind the scene, in a banner at the top until it is told
+    /// (`deliver`).
     var outgoing: Outgoing?
+    /// That post's cover, which its banner shows once it went out; nil when it has no photo.
+    private(set) var outgoingCover: PreparedPhoto?
+    /// Whether the open compose page, once it closes, shrinks into my character (it posted) rather
+    /// than sliding away (取消). Set as 发布 is tapped, before the page goes, since a view leaves by
+    /// the transition it had in its last frame.
+    private(set) var composeLandsOnMe = false
     /// The last post didn't go out; the open step says so and can try again.
     private(set) var sendFailed = false
 
@@ -279,6 +286,7 @@ public final class TodayModel {
     /// Opens the page for `kind`; a 训练 from the home's card starts from `workout`.
     func pick(_ kind: CheckInKind, workout: ImportedWorkout? = nil) {
         sendFailed = false
+        composeLandsOnMe = false
         // Straight to the page: photos are added there, with its 「+ 照片」.
         compose = newPost(kind, from: workout)
         step = .composing(kind)
@@ -288,6 +296,7 @@ public final class TodayModel {
     /// day as the member made it, to change and send again.
     func resend(_ post: PendingCheckIn) {
         sendFailed = false
+        composeLandsOnMe = false
         let kind = post.draft.kind
         let model = newPost(kind, from: nil)
         model.restore(post)
@@ -309,6 +318,7 @@ public final class TodayModel {
         guard !isSending else { return false }
         isSending = true
         sendFailed = false
+        composeLandsOnMe = true
         defer { isSending = false }
         let before = cardWeek
         // A past day's post (补打卡) leaves today's ring and kit as they are.
@@ -318,6 +328,7 @@ public final class TodayModel {
             queued = try await store.queue(draft, inFeed: inFeed, on: day)
         } catch {
             sendFailed = true
+            composeLandsOnMe = false
             return false
         }
         // Waiting to go out, it counts on the scene now. A 练了's kit goes on after its cheer.
@@ -330,6 +341,7 @@ public final class TodayModel {
         compose = nil
         land(draft, weekBefore: before, isBackfill: isBackfill)
         posted()
+        outgoingCover = draft.photos.first
         deliver(queued.id)
         return true
     }
