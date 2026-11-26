@@ -38,7 +38,17 @@ struct PostCharacter: View {
                 // that swings a prop past the canvas (快走's cup) shows whole, over the padding.
                 .frame(width: width * Self.room.width / 240, height: width * Self.room.height / 240)
                 .frame(width: width, height: width * 320 / 240)
-                .anchorPreference(key: FeedAnchors.self, value: .bounds) { FeedAnchors.Value(heads: [post.id: $0]) }
+                // Where an emoji flies to, only while one is on its way here: an anchor from every
+                // card of the lazy stack kept the layer over the feed re-reducing them and froze
+                // it (#924). Behind the figure, so adding it never rebuilds the character.
+                .background {
+                    if model.flights.contains(where: { $0.post == post.id }) {
+                        Color.clear
+                            .anchorPreference(key: FeedAnchors.self, value: .bounds) {
+                                FeedAnchors.Value(heads: [post.id: $0])
+                            }
+                    }
+                }
                 .overlay(alignment: .top) {
                     if let bubble = model.bubbles[post.id] {
                         ArrivalBubble(model: model, arrival: bubble.arrival)
