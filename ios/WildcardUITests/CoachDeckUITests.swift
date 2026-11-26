@@ -5,7 +5,7 @@ import XCTest
 /// 毛头 opens its page, a stack of what it has for me, oldest on top. Each card is swiped right
 /// into 以前; a gift opens in place (拆开, then 立刻穿上) and a challenge is answered in place
 /// (接受挑战). Under the stack a line says how many are left (Tracy, 2026-11-09). Once all are seen,
-/// 看以前的 opens 以前, where every card is a row and 挑战 keeps only the challenges. Screenshots are
+/// what 毛头 said last stays up and the clock opens 以前, where every card is a row and 挑战 keeps only the challenges. Screenshots are
 /// kept for review.
 @MainActor
 final class CoachDeckUITests: XCTestCase {
@@ -32,6 +32,8 @@ final class CoachDeckUITests: XCTestCase {
         // The top card leans right and back once as the page opens; let it settle first.
         Thread.sleep(forTimeInterval: 1.5)
         assertOnScreen(board, app.buttons["coachDeck.feed"], in: app)
+        assertUnderTheBar(board, in: app)
+        let cardFrame = board.frame
         // Under the stack: how many are left after this one, and 下一张.
         let hint = element("coachDeck.hint", in: app)
         XCTAssertTrue(hint.waitForExistence(timeout: Self.wait), "nothing says how many cards are left")
@@ -46,19 +48,22 @@ final class CoachDeckUITests: XCTestCase {
         keepScreenshot(named: "106-coach-deck-board")
         putAway(board, in: app)
 
-        turnTheNote(with: next, in: app)
+        turnTheNote(with: next, sameAs: cardFrame, in: app)
 
-        openAndWear(in: app)
-        accept(in: app)
+        openAndWear(sameAs: cardFrame, in: app)
+        accept(sameAs: cardFrame, in: app)
         // The coach's lines to my check-ins stay under the posts in 动态, never here.
 
-        // All seen: 看以前的 opens 以前, newest first.
-        let allSeen = element("coachDeck.allSeen", in: app)
-        XCTAssertTrue(allSeen.waitForExistence(timeout: Self.wait), "the last card isn't 暂时没有新消息")
-        let earlier = app.buttons["coachDeck.earlier"]
-        assertOnScreen(allSeen, earlier, in: app)
+        // All seen: the newest card stays up, with no empty card and no 以前 button (Tracy,
+        // 2026-11-26); the clock opens 以前, newest first.
+        let latest = element("coachDeck.latest", in: app)
+        XCTAssertTrue(latest.waitForExistence(timeout: Self.wait), "the newest card didn't stay up")
+        XCTAssertFalse(element("coachDeck.allSeen", in: app).exists, "the page shows an empty card")
+        XCTAssertFalse(app.buttons["coachDeck.earlier"].exists, "the page shows a 以前 button")
+        XCTAssertTrue(app.windows.firstMatch.frame.contains(latest.frame), "the newest card runs off the screen")
+        assertSame(latest, as: cardFrame)
         keepScreenshot(named: "113-coach-deck-all-seen")
-        earlier.tap()
+        app.buttons["coachDeck.history"].tap()
         let rows = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "coachEarlier.row."))
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: Self.wait), "以前 didn't open")
         XCTAssertEqual(rows.count, 4, "以前 doesn't list every card seen")
@@ -131,16 +136,15 @@ final class CoachDeckUITests: XCTestCase {
         keepScreenshot(named: "115-coach-earlier-gift-later")
     }
 
-    /// 今天对你说: no button of its own. The card is as tall as what it says, and 下一张 turns it.
-    private func turnTheNote(with next: XCUIElement, in app: XCUIApplication) {
+    /// 今天对你说: no button of its own. The card is the same size as the one before it (Tracy,
+    /// 2026-11-26), and 下一张 turns it.
+    private func turnTheNote(with next: XCUIElement, sameAs cardFrame: CGRect, in app: XCUIApplication) {
         let note = card("note", in: app)
         XCTAssertTrue(note.waitForExistence(timeout: Self.wait), "the morning note isn't next")
         Thread.sleep(forTimeInterval: 1)
         XCTAssertLessThan(
             note.frame.maxY, next.frame.minY, "下一张 isn't under the note: \(note.frame), \(next.frame)")
-        XCTAssertLessThan(
-            note.frame.height, app.windows.firstMatch.frame.height * 0.75,
-            "the note's card still stretches down the screen: \(note.frame)")
+        assertSame(note, as: cardFrame)
         keepScreenshot(named: "107-coach-deck-note")
         next.tap()
         waitFor(note, "exists == false", "下一张 didn't put the note away")
@@ -169,11 +173,12 @@ final class CoachDeckUITests: XCTestCase {
     }
 
     /// 送你的: 拆开, then 立刻穿上, then 去衣橱看看.
-    private func openAndWear(in app: XCUIApplication) {
+    private func openAndWear(sameAs cardFrame: CGRect, in app: XCUIApplication) {
         let gift = card("gift", in: app)
         XCTAssertTrue(gift.waitForExistence(timeout: Self.wait), "the gift isn't next")
         let unwrap = app.buttons["coachDeck.unwrap"]
         assertOnScreen(gift, unwrap, in: app)
+        assertSame(gift, as: cardFrame)
         keepScreenshot(named: "108-coach-deck-gift")
         unwrap.tap()
         let wear = app.buttons["coachDeck.wear"]
@@ -191,12 +196,14 @@ final class CoachDeckUITests: XCTestCase {
     }
 
     /// 今日挑战: 接受挑战 answers it, stamps the button, and the card goes on its own.
-    private func accept(in app: XCUIApplication) {
+    private func accept(sameAs cardFrame: CGRect, in app: XCUIApplication) {
         let challenge = card("challenge", in: app)
         XCTAssertTrue(challenge.waitForExistence(timeout: Self.wait), "the challenge isn't next")
         let accept = app.buttons["coachDeck.accept"]
         assertOnScreen(challenge, accept, in: app)
+        assertSame(challenge, as: cardFrame)
         XCTAssertTrue(app.buttons["coachDeck.pass"].isHittable, "不接挑战 is covered")
+        XCTAssertTrue(challenge.frame.contains(app.buttons["coachDeck.pass"].frame), "不接挑战 runs off its card")
         keepScreenshot(named: "111-coach-deck-challenge")
         accept.tap()
         waitFor(challenge, "exists == false", "the challenge stayed after it was accepted")
@@ -279,16 +286,6 @@ final class CoachDeckUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifier).firstMatch
     }
 
-    /// The cards under the top one show only their edges, never their words below it (Tracy, 2026-11-24).
-    private func assertOnlyEdgesPeek(under top: XCUIElement, in app: XCUIApplication) {
-        let under = app.descendants(matching: .any).matching(identifier: "coachDeck.under").allElementsBoundByIndex
-        XCTAssertEqual(under.count, 2, "the next two cards don't peek out under the top one")
-        for card in under {
-            XCTAssertLessThanOrEqual(
-                card.frame.maxY, top.frame.maxY + 2 * 12 + 1, "a card shows below the top one: \(card.frame)")
-        }
-    }
-
     /// The card is all on screen, and its button is free and on it.
     private func assertOnScreen(_ card: XCUIElement, _ button: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(button.waitForExistence(timeout: Self.wait), "\(card.identifier) has no \(button.identifier)")
@@ -308,5 +305,36 @@ final class CoachDeckUITests: XCTestCase {
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+}
+
+/// Where the coach page puts its cards.
+extension CoachDeckUITests {
+    /// The card starts under the navigation bar, and its sides line up with the bar's buttons: the
+    /// page's margin from the screen's edges.
+    func assertUnderTheBar(_ card: XCUIElement, in app: XCUIApplication) {
+        let bar = app.navigationBars.firstMatch.frame
+        let screen = app.windows.firstMatch.frame
+        XCTAssertGreaterThanOrEqual(
+            card.frame.minY, bar.maxY, "\(card.identifier) runs up under the bar: \(card.frame)")
+        XCTAssertEqual(card.frame.minX, screen.minX + 16, accuracy: 1, "\(card.identifier) isn't on the page margin")
+        XCTAssertEqual(card.frame.maxX, screen.maxX - 16, accuracy: 1, "\(card.identifier) isn't on the page margin")
+    }
+
+    /// Every card on the page is the same size, in the same place (Tracy, 2026-11-26).
+    func assertSame(_ card: XCUIElement, as cardFrame: CGRect) {
+        XCTAssertEqual(card.frame.minY, cardFrame.minY, accuracy: 1, "\(card.identifier) moved: \(card.frame)")
+        XCTAssertEqual(card.frame.height, cardFrame.height, accuracy: 1, "\(card.identifier) isn't the same size")
+        XCTAssertEqual(card.frame.width, cardFrame.width, accuracy: 1, "\(card.identifier) isn't the same width")
+    }
+
+    /// The cards under the top one show only their edges, never their words below it (Tracy, 2026-11-24).
+    func assertOnlyEdgesPeek(under top: XCUIElement, in app: XCUIApplication) {
+        let under = app.descendants(matching: .any).matching(identifier: "coachDeck.under").allElementsBoundByIndex
+        XCTAssertEqual(under.count, 2, "the next two cards don't peek out under the top one")
+        for card in under {
+            XCTAssertLessThanOrEqual(
+                card.frame.maxY, top.frame.maxY + 2 * 12 + 1, "a card shows below the top one: \(card.frame)")
+        }
     }
 }

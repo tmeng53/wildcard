@@ -53,7 +53,7 @@ struct CoachDeckStage: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let figure = size.height * 0.62
+            let figure = size.height * StageMetrics.figureShare
             ZStack(alignment: .bottom) {
                 SceneArt(scene: theme, layer: .day)
                     .frame(width: size.width, height: size.width * SceneArt.designHeight / StageMetrics.designWidth)
@@ -116,6 +116,9 @@ enum StageMetrics {
     static let squadOnStage = 5
     /// Room left at the line's two ends, in figure heights.
     static let squadLineMargin: Double = 0.15
+    /// A figure's height, in the stage's: the figures stand as tall as on the approved deck's
+    /// 300-point stage, the wall above them trimmed.
+    static let figureShare: Double = 0.78
 }
 
 /// The coach standing, idling; on a challenge, blowing its whistle now and then. A coach this

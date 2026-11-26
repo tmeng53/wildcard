@@ -35,7 +35,7 @@ public struct CoachDeckPlaces {
 /// One of the coach's cards (the approved deck, 2026-11-08): its stage on top, then what kind it
 /// is and when, what the coach said, and its buttons at the bottom. A gift opens in place
 /// (拆开 → 一会儿再说 | 立刻穿上) and a challenge is answered in place (接受挑战, or 不接挑战 with an
-/// optional word to the coach on why). `card` nil is the last card, once everything is seen.
+/// optional word to the coach on why). `card` nil is a coach who said nothing yet.
 struct CoachDeckCard: View {
     let deck: CoachDeck
     let card: CoachPageCard?
@@ -47,9 +47,11 @@ struct CoachDeckCard: View {
     var isTop = true
     /// Swipes the card into 以前, once its challenge is answered; nil on a card opened from 以前.
     var putAway: ((CoachPageCard) -> Void)?
-    /// A card under the top one is cut to the top one's height, so only its edge peeks out; nil
+    /// The page's one card height, which every card on it takes; nil (a card opened from 以前)
     /// lets the card be as tall as what it says.
     var height: Double?
+    /// The newest card already seen, shown once nothing is new.
+    var isLatest = false
     /// The gift's moment, kept here while it is opened as the member watches.
     @State private var moment: GiftMoment?
     /// 接受挑战 was tapped and went through: the stamp comes down and the button pops.
@@ -75,17 +77,15 @@ struct CoachDeckCard: View {
                 kindLine
                 content
             }
-            .padding(.horizontal, Space.m + Space.xxs)
-            .padding(.top, Space.m)
-            .padding(.bottom, Space.m)
+            .padding(Space.cardPadding)
+            // Every card on the page is the same size (Tracy, 2026-11-26): what it says at the
+            // top, its buttons at its foot.
+            Spacer(minLength: 0)
             if isTop {
                 buttons
-                    .padding(.horizontal, Space.s + Space.xxs)
-                    .padding(.bottom, Space.s + Space.xxs)
+                    .padding([.horizontal, .bottom], Space.cardPadding)
             }
         }
-        // As tall as what it says (Tracy, 2026-11-21): a short note no longer sits on a card
-        // stretched to the screen's foot.
         .frame(maxWidth: .infinity, alignment: .top)
         .frame(height: height.map { CGFloat($0) }, alignment: .top)
         .background(Color(role: .bgCanvas, in: theme))
@@ -102,8 +102,14 @@ struct CoachDeckCard: View {
         .background {
             Color.clear
                 .accessibilityElement()
-                .accessibilityIdentifier(card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen")
+                .accessibilityIdentifier(markerID)
         }
+    }
+
+    /// The card's name for the UI tests.
+    private var markerID: String {
+        if isLatest { return "coachDeck.latest" }
+        return card.map { "coachDeck.card.\($0.kind.rawValue)" } ?? "coachDeck.allSeen"
     }
 
     /// The card as it stands now in the deck (a gift opened, a challenge answered).
@@ -240,8 +246,6 @@ struct CoachDeckCard: View {
             case .note, .challenge:
                 EmptyView()
             }
-        } else {
-            outline(Text(copy: "看以前的", bundle: .module), id: "coachDeck.earlier", grows: true, action: places.earlier)
         }
     }
 
@@ -313,8 +317,9 @@ struct CoachDeckCard: View {
 }
 
 enum DeckMetrics {
-    /// The stage's height on a card, as the approved deck has it on a 390-point phone.
-    static let stageHeight: Double = 300
+    /// The stage's height on a card: the approved deck's 300 points less the empty wall above the
+    /// figures, so a challenge's two buttons fit on a card the page's one size.
+    static let stageHeight: Double = 236
     static let corner: Double = 24
     /// An opened gift's picture tile.
     static let giftTile: Double = 84

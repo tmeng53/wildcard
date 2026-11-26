@@ -123,6 +123,50 @@ private let oldNote = card(.note, "40", minutes: -1440, text: "昨天跑完 5 �
     #expect(deck.earlier.map(\.id) == ["b1", "40"])
     deck.seen(gift)
     #expect(deck.top == nil)
+    #expect(deck.latest?.id == "gift-sheeptowel")
+}
+
+@MainActor @Test func withNothingNewThePageShowsTheNewestCardSeen() async {
+    let seenBoard = board.with(isSeen: true)
+    let deck = CoachDeck(
+        squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [], earlier: [seenBoard, oldNote])))
+    await deck.reload()
+    #expect(deck.top == nil)
+    #expect(deck.latest?.id == "b1")
+}
+
+@MainActor @Test func anUnseenCardWaitingInEarlierIsNotTheLatest() async {
+    let seenNote = oldNote.with(isSeen: true)
+    let deck = CoachDeck(
+        squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [], earlier: [board, seenNote])))
+    await deck.reload()
+    #expect(!board.isSeen)
+    #expect(deck.latest?.id == oldNote.id)
+}
+
+@MainActor @Test func aCoachWhoSaidNothingHasNoLatestCard() async {
+    let deck = CoachDeck(squad: deckSquad, source: CardsInMemory(CoachPageCards(stack: [], earlier: [])))
+    #expect(!deck.latestKnown)
+    await deck.reload()
+    #expect(deck.latestKnown)
+    #expect(deck.latest == nil)
+}
+
+@MainActor @Test func aFailedReadLeavesTheLatestUnknown() async {
+    let source = CardsInMemory(CoachPageCards(stack: [], earlier: [oldNote.with(isSeen: true)]))
+    source.state.withLock { $0.down = true }
+    let deck = CoachDeck(squad: deckSquad, source: source)
+    await deck.reload()
+    #expect(!deck.latestKnown)
+}
+
+@MainActor @Test func onAnotherFilterTheLatestIsStillReadFromEveryCard() async {
+    let deck = CoachDeck(
+        squad: deckSquad,
+        source: CardsInMemory(CoachPageCards(stack: [], earlier: [board, oldNote.with(isSeen: true)])))
+    await deck.showEarlier(.challenges)
+    await deck.reload()
+    #expect(deck.latest?.id == oldNote.id)
 }
 
 @MainActor @Test func openingAGiftToWearItPutsItOn() async {

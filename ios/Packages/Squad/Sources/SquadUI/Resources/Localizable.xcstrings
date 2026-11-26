@@ -1733,22 +1733,6 @@
         }
       }
     },
-    "看以前的": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "See earlier"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看以前的"
-          }
-        }
-      }
-    },
     "立刻穿上": {
       "localizations": {
         "en": {

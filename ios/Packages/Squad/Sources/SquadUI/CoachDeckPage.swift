@@ -8,11 +8,11 @@ import SwiftUI
 /// The coach's page (the approved deck, 2026-11-08), pushed from a tap on the coach on 今天: what
 /// the coach has for the member that they haven't seen, a stack of cards, one thing each, oldest
 /// on top. Swiped right, a card flies into 以前 (the clock, top right, which gives a nudge);
-/// nothing turns by itself. Each card is as tall as what it says; under the stack, how many are
-/// left and 下一张, which puts the top one away as the swipe does (Tracy, 2026-11-21), and on
+/// nothing turns by itself. Every card is the same size, down to just above how many are
+/// left and 下一张 (Tracy, 2026-11-26), which puts the top one away as the swipe does (Tracy, 2026-11-21), and on
 /// opening the top card leans right and back once to show it (Tracy, 2026-11-09). Top right,
-/// from the left: 招聘会, 简历, 以前. Once all are seen,
-/// the last card says so with 看以前的.
+/// from the left: 招聘会, 简历, 以前. Once all are seen, the newest card stays up (Tracy,
+/// 2026-11-26); only a coach who said nothing yet shows 暂时没有新消息.
 public struct CoachDeckPage: View {
     private let deck: CoachDeck
     private let coach: CoachSpeaker
@@ -24,8 +24,6 @@ public struct CoachDeckPage: View {
     @State private var flying: CoachPageCard.Key?
     /// The top card has leaned right and back once since the page opened.
     @State private var nudged = false
-    /// The top card's height, which the cards under it take so only their edges peek out.
-    @State private var topHeight: Double?
     @Environment(\.sceneTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -135,16 +133,9 @@ public struct CoachDeckPage: View {
                         let isTop = depth == 0
                         CoachDeckCard(
                             deck: deck, card: card, coach: card.coach, coachLook: card.look, cast: cast, places: places,
-                            isTop: isTop, putAway: putAway, height: isTop ? nil : topHeight
+                            isTop: isTop, putAway: putAway, height: cap(proxy.size.height)
                         )
                         .accessibilityHidden(!isTop)
-                        // The card's own height, before the frame below grows it to the room it is offered:
-                        // the cards under it take this height, so only their edges peek out.
-                        .onGeometryChange(for: Double.self) {
-                            $0.size.height
-                        } action: { height in
-                            if isTop { topHeight = min(height, cap(proxy.size.height)) }
-                        }
                         // A card under the top one is a blank edge: its words would show through the strip.
                         .overlay {
                             RoundedRectangle(cornerRadius: DeckMetrics.corner, style: .continuous)
@@ -163,8 +154,6 @@ public struct CoachDeckPage: View {
                                 Color.clear.accessibilityElement().accessibilityIdentifier("coachDeck.under")
                             }
                         }
-                        // A tall card stops short of the pager under it, as it stopped at the stack's edge before.
-                        .frame(maxHeight: cap(proxy.size.height), alignment: .top)
                         .padding(.horizontal, Double(depth) * DeckMetrics.peek)
                         .offset(y: Double(depth) * DeckMetrics.peek)
                         .offset(isTop ? drag : .zero)
@@ -174,9 +163,19 @@ public struct CoachDeckPage: View {
                         .gesture(swipe(card, width: proxy.size.width), isEnabled: isTop)
                         .accessibilityAction(named: Text(copy: "收进以前", bundle: .module)) { putAway(card) }
                     }
+                    // Nothing new: what the coach said last stays up, not an empty card (Tracy,
+                    // 2026-11-26); 以前 is the clock, top right.
                     if shown.isEmpty {
-                        CoachDeckCard(
-                            deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places)
+                        if let latest = deck.latest {
+                            CoachDeckCard(
+                                deck: deck, card: latest, coach: latest.coach, coachLook: latest.look, cast: cast,
+                                places: places, height: cap(proxy.size.height), isLatest: true
+                            )
+                        } else if deck.load == .loaded, deck.latestKnown {
+                            CoachDeckCard(
+                                deck: deck, card: nil, coach: coach, coachLook: coachLook, cast: cast, places: places,
+                                height: cap(proxy.size.height))
+                        }
                     }
                 }
                 Spacer(minLength: DeckMetrics.peek * Double(max(shown.count - 1, 0)) + Space.m)
@@ -188,7 +187,8 @@ public struct CoachDeckPage: View {
         }
     }
 
-    /// How tall a card may be: it stops short of the pager under it.
+    /// The page's one card height: down to just short of the pager, the cards under the top one
+    /// peeking out below it.
     private func cap(_ height: Double) -> Double {
         height - 2 * DeckMetrics.peek - Sizing.control - Space.m
     }
