@@ -101,6 +101,16 @@ struct PostCard: View {
                 }
             }
         }
+        // The 「…」 at the end of the byline (feedback #74), on the stub, never over the cover or
+        // the block's words; laid over the whole card so its 44-point target sits over the rows.
+        .overlayPreferenceValue(BylineEnd.self) { end in
+            if let end {
+                GeometryReader { proxy in
+                    let line = proxy[end]
+                    menu.position(x: line.maxX - Sizing.smallIcon / 2, y: line.midY)
+                }
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: Radius.ticket, style: .continuous))
         .gesture(HoldAndSlide(isEnabled: canRespond, held: hold(at:), letGo: letGo(at:)))
         .scaleEffect(isLifted && !reduceMotion ? Self.liftScale : 1)
@@ -200,8 +210,6 @@ struct PostCard: View {
                 .padding(.top, -Self.characterLift)
             VStack(alignment: .leading, spacing: Space.xxs) {
                 byline
-                    // Over the rows under it, so the 「…」's 44-point target takes the tap there.
-                    .zIndex(1)
                 if !post.checkIn.inFeed { UnpostedTag() }
                 if let time = WorkoutTime(post.checkIn) { WorkoutTimeTag(time: time) }
                 if let place = post.checkIn.entry.place { PlaceTag(place, open: model.routes.openPlace) }
@@ -231,7 +239,7 @@ struct PostCard: View {
     }
 
     /// The 「…」 at the end of the byline, on the white stub, so it never covers the cover or the
-    /// block's words (feedback #74), laid over the room the byline keeps for it.
+    /// block's words (feedback #74); the card lays it over the room the byline keeps for it.
     @ViewBuilder private var menu: some View {
         if model.canManage(post) {
             manageMenu
@@ -265,11 +273,7 @@ struct PostCard: View {
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.trailing, hasMenu ? Sizing.smallIcon + Space.xs : 0)
-        // A plain overlay, never a GeometryReader reading an anchor: in every cell of 动态's lazy
-        // stack that one re-laid itself over and over and froze the feed (#924).
-        .overlay(alignment: .trailing) {
-            menu.frame(width: Sizing.smallIcon)
-        }
+        .anchorPreference(key: BylineEnd.self, value: .bounds) { $0 }
     }
 
     private var authorName: Text {
@@ -339,6 +343,15 @@ extension CheckIn {
         case .healthyMeal(let meal), .cheatMeal(let meal): meal.photos
         case .disclaimer(let disclaimer): disclaimer.photos
         }
+    }
+}
+
+/// Where a post's byline is, for the card to lay its 「…」 at the end of it.
+private struct BylineEnd: PreferenceKey {
+    static var defaultValue: Anchor<CGRect>? { nil }
+
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = value ?? nextValue()
     }
 }
 
