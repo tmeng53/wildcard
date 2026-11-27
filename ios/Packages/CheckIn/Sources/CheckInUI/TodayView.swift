@@ -146,7 +146,9 @@ public struct TodayView: View {
                             HealthHomeCard.Offer(model: model)
                         }
                         .overlay(alignment: .bottom) { lightCord(short: showsCapsule(day: day)) }
-                        .overlay(alignment: .bottomTrailing) { SideButtons(model: model) }
+                        .overlay(alignment: .bottomTrailing) {
+                            SideButtons(model: model, cordDrop: cordDrop(short: showsCapsule(day: day)))
+                        }
                     }
                     .padding(.top, Space.xs)
                     .modifier(Arriving(arrival: model.arrival) { $0.cardOffset(at: $1) })
@@ -304,6 +306,13 @@ public struct TodayView: View {
             .animation(.wildcard(Motion.sheet, reduceMotion: reduceMotion), value: model.isCheckInMenuOpen)
             .transition(.opacity)
         }
+    }
+
+    /// How far the pull cord hangs under the card at rest, to its bulb's foot; 0 by day.
+    private func cordDrop(short: Bool) -> Double {
+        guard model.phase == .night else { return 0 }
+        let chain = short ? PullCordMotion.shortLength : PullCordMotion.length
+        return PullCord.frameSize(chain: chain).height - PullCordMotion.maxPull
     }
 
     /// From the screen's right edge to the cord's frame: its centre sits 40 points in.

@@ -232,37 +232,12 @@ final class CoachDeckUITests: XCTestCase {
             card("board", in: app).waitForExistence(timeout: Self.wait), "the row didn't open 毛头's page")
     }
 
-    /// 教练有话说 hangs under the squad card's trailing end (Tracy, 2026-11-24), with a dot while 毛头
-    /// has a card I haven't seen, above the gift button when a gift waits; a tap opens 毛头's page.
-    func testTheHomesCoachButtonOpensWhatTheCoachSaid() {
-        continueAfterFailure = false
-        for folded in [true, false] {
-            let app = launch(extra: ["-uitest-coach-gift"], folded: folded)
-            let button = app.buttons["today.coachNews"]
-            XCTAssertTrue(button.waitForExistence(timeout: Self.wait), "no 教练有话说 button")
-            expectation(for: NSPredicate(format: "value == %@", "有新消息"), evaluatedWith: button)
-            waitForExpectations(timeout: Self.wait)
-            XCTAssertTrue(button.isHittable, "the 教练有话说 button is covered")
-            let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
-            XCTAssertGreaterThanOrEqual(button.frame.minY, card.frame.maxY, "the 教练有话说 button sits on the card")
-            XCTAssertTrue(app.windows.firstMatch.frame.contains(button.frame), "the 教练有话说 button is off screen")
-            let gift = app.buttons["today.gift"]
-            XCTAssertTrue(gift.waitForExistence(timeout: Self.wait), "no gift button")
-            XCTAssertGreaterThanOrEqual(gift.frame.minY, button.frame.maxY, "the gift button isn't under 教练有话说")
-            XCTAssertEqual(gift.frame.midX, button.frame.midX, accuracy: 1, "the two buttons aren't one column")
-            keepScreenshot(named: folded ? "120-home-coach-button-folded" : "121-home-coach-button")
-            button.tap()
-            XCTAssertTrue(
-                self.card("board", in: app).waitForExistence(timeout: Self.wait), "the button didn't open 毛头's page")
-            app.terminate()
-        }
-    }
-
-    private func launch(extra: [String] = [], folded: Bool = true) -> XCUIApplication {
+    private func launch(extra: [String] = [], folded: Bool = true, night: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments +=
             [
-                "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push", "-uitest-noon",
+                "-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh-Hans", "-uitest-no-push",
+                night ? "-uitest-night" : "-uitest-noon",
                 "-today.cardPage", "0", "-uitest-coach-note",
             ] + extra
         // Home opens on the folded capsule, as most of these tests were written for.
@@ -335,6 +310,44 @@ extension CoachDeckUITests {
         for card in under {
             XCTAssertLessThanOrEqual(
                 card.frame.maxY, top.frame.maxY + 2 * 12 + 1, "a card shows below the top one: \(card.frame)")
+        }
+    }
+
+    /// 教练有话说 hangs under the squad card's trailing end (Tracy, 2026-11-24), with a dot while 毛头
+    /// has a card I haven't seen, above the gift button when a gift waits; a tap opens 毛头's page.
+    /// At night the column hangs under the pull cord's bulb, on the same page margin (Tracy,
+    /// 2026-11-27).
+    func testTheHomesCoachButtonOpensWhatTheCoachSaid() {
+        continueAfterFailure = false
+        for (folded, night) in [(true, false), (false, false), (true, true), (false, true)] {
+            let app = launch(extra: ["-uitest-coach-gift"], folded: folded, night: night)
+            let button = app.buttons["today.coachNews"]
+            XCTAssertTrue(button.waitForExistence(timeout: Self.wait), "no 教练有话说 button")
+            expectation(for: NSPredicate(format: "value == %@", "有新消息"), evaluatedWith: button)
+            waitForExpectations(timeout: Self.wait)
+            XCTAssertTrue(button.isHittable, "the 教练有话说 button is covered")
+            let card = app.descendants(matching: .any).matching(identifier: "today.card").firstMatch
+            XCTAssertGreaterThanOrEqual(button.frame.minY, card.frame.maxY, "the 教练有话说 button sits on the card")
+            XCTAssertTrue(app.windows.firstMatch.frame.contains(button.frame), "the 教练有话说 button is off screen")
+            let gift = app.buttons["today.gift"]
+            XCTAssertTrue(gift.waitForExistence(timeout: Self.wait), "no gift button")
+            XCTAssertGreaterThanOrEqual(gift.frame.minY, button.frame.maxY, "the gift button isn't under 教练有话说")
+            XCTAssertEqual(gift.frame.midX, button.frame.midX, accuracy: 1, "the two buttons aren't one column")
+            let screen = app.windows.firstMatch.frame
+            XCTAssertEqual(button.frame.maxX, screen.maxX - 16, accuracy: 1, "the column isn't on the page margin")
+            if night {
+                let cord = app.buttons["today.lights"]
+                XCTAssertTrue(cord.waitForExistence(timeout: Self.wait), "no pull cord at night")
+                // The cord's frame takes in the 36 points it can be pulled down; its bulb rests above that.
+                XCTAssertGreaterThanOrEqual(
+                    button.frame.minY, cord.frame.maxY - 36, "the column isn't under the cord's bulb: \(cord.frame)")
+            }
+            let name = folded ? "120-home-coach-button-folded" : "121-home-coach-button"
+            keepScreenshot(named: night ? name + "-night" : name)
+            button.tap()
+            XCTAssertTrue(
+                self.card("board", in: app).waitForExistence(timeout: Self.wait), "the button didn't open 毛头's page")
+            app.terminate()
         }
     }
 }
