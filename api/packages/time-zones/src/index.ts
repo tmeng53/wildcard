@@ -91,6 +91,23 @@ export function wallClockAt(moment: Date, zone: string): WallClock {
 }
 
 /**
+ * The squad day whose challenge a member is on at `moment`: the earlier of today on their own
+ * clock (`own`, their profile's zone) and today on the squad's (Tracy, 2026-11-20). Notes are
+ * dated on the squad's clock, so a member behind the squad (Vancouver in a Toronto squad) keeps
+ * the day's until their own midnight, and one ahead of it (Shanghai) until the squad's. A member
+ * with no zone saved goes by the squad's.
+ */
+export function challengeDay(
+  moment: Date,
+  { squad, own }: { readonly squad: string; readonly own?: string | undefined },
+): string {
+  const squadToday = wallClockAt(moment, squad).day;
+  if (own === undefined) return squadToday;
+  const ownToday = wallClockAt(moment, own).day;
+  return ownToday < squadToday ? ownToday : squadToday;
+}
+
+/**
  * The moment the zone's wall clock shows `hour` o'clock on `day` (`YYYY-MM-DD`). A second pass
  * settles a day the offset changes on; an hour daylight saving skips is the hour after it.
  */

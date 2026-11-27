@@ -32,7 +32,7 @@ import {
   speakerIn,
   wireChallenge,
 } from './coach-activity.js';
-import { challengeToday } from './challenge-day.js';
+import { challengeToday } from '../flows/challenge-day.js';
 import { CoachMessageBody, wireMessage } from './coach-messages.js';
 
 // The coach page (Tracy, 2026-11-08): what the squad's coach said to the caller, a card a thing,

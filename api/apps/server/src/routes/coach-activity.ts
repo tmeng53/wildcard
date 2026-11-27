@@ -27,7 +27,7 @@ import type { VerifyToken } from '../ports.js';
 import { jsonBodyFailures, problem } from '../problem.js';
 import { requireCaller, type SignedIn } from '../require-caller.js';
 
-import { challengeToday } from './challenge-day.js';
+import { challengeToday } from '../flows/challenge-day.js';
 
 export const CoachSpeakerBody = z
   .strictObject({
